@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { healthRoutes } from "./health.js";
+import { healthRoutes, licenseActivateRoute } from "./health.js";
 import { sessionRoutes } from "./sessions.js";
 import { projectRoutes } from "./projects.js";
 import { telegramRoutes } from "./telegram.js";
@@ -38,6 +38,9 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   protectedApi.route("/fs", filesystemRoutes);
   protectedApi.route("/channels", channelRoutes);
   protectedApi.route("/settings", settingsRoutes);
+
+  // License activation (protected — only authenticated users can activate)
+  protectedApi.route("/license", licenseActivateRoute);
 
   api.route("/api", protectedApi);
 

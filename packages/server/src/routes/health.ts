@@ -1,9 +1,14 @@
 import { Hono } from "hono";
+import { z } from "zod";
+import { zValidator } from "@hono/zod-validator";
 import { getSqlite } from "../db/client.js";
 import { APP_VERSION } from "@companion/shared";
 import { countActiveSessions } from "../services/session-store.js";
-import { getLicense, getMaxSessions } from "../services/license.js";
+import { getLicense, getMaxSessions, verifyLicense } from "../services/license.js";
+import { createLogger } from "../logger.js";
 import type { HealthResponse } from "@companion/shared";
+
+const log = createLogger("routes:license");
 
 const startTime = Date.now();
 
@@ -51,5 +56,45 @@ healthRoutes.get("/license", (c) => {
     features: license.features,
     expiresAt: license.expiresAt,
     daysLeft: license.daysLeft,
+  });
+});
+
+// ── License activation (mounted under protected /api/license) ──────────────
+export const licenseActivateRoute = new Hono();
+
+const activateSchema = z.object({
+  key: z.string().min(10).max(100),
+});
+
+licenseActivateRoute.post("/activate", zValidator("json", activateSchema), async (c) => {
+  const { key } = c.req.valid("json");
+
+  log.info("License activation attempt", { keyPrefix: key.slice(0, 12) + "..." });
+
+  const license = await verifyLicense(key);
+
+  if (!license.valid) {
+    log.warn("License activation failed", { error: license.error });
+    return c.json({
+      success: false,
+      error: license.error ?? "Invalid or expired license key",
+      tier: "free",
+    }, 400);
+  }
+
+  log.info("License activated!", {
+    tier: license.tier,
+    maxSessions: license.maxSessions,
+    expiresAt: license.expiresAt,
+  });
+
+  return c.json({
+    success: true,
+    tier: license.tier,
+    maxSessions: license.maxSessions,
+    features: license.features,
+    expiresAt: license.expiresAt,
+    daysLeft: license.daysLeft,
+    message: `Pro activated! ${license.maxSessions} sessions, expires ${license.expiresAt?.split("T")[0]}`,
   });
 });

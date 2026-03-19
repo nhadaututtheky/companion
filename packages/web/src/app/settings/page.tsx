@@ -127,6 +127,126 @@ interface RunningBot {
 
 // ── Tabs ─────────────────────────────────────────────────────────────────────
 
+function LicenseSection() {
+  const [licenseKey, setLicenseKey] = useState("");
+  const [activating, setActivating] = useState(false);
+  const [license, setLicense] = useState<{
+    tier: string; valid: boolean; maxSessions: number; expiresAt: string; daysLeft?: number;
+  } | null>(null);
+
+  interface LicenseResponse {
+    tier: string; valid: boolean; maxSessions: number; expiresAt: string; daysLeft?: number;
+    success?: boolean; error?: string; message?: string;
+  }
+
+  // Fetch current license status
+  useEffect(() => {
+    api.get<LicenseResponse>("/api/license").then((res) => {
+      if (res.tier) setLicense(res);
+    }).catch(() => {});
+  }, []);
+
+  const handleActivate = useCallback(async () => {
+    if (!licenseKey.trim()) return;
+    setActivating(true);
+    try {
+      const res = await api.post<LicenseResponse>("/api/license/activate", { key: licenseKey.trim() });
+      if (res.success) {
+        toast.success(res.message ?? "License activated!");
+        setLicense({ tier: res.tier, valid: true, maxSessions: res.maxSessions, expiresAt: res.expiresAt, daysLeft: res.daysLeft });
+        setLicenseKey("");
+      } else {
+        toast.error(res.error ?? "Invalid license key");
+      }
+    } catch {
+      toast.error("Failed to activate license");
+    } finally {
+      setActivating(false);
+    }
+  }, [licenseKey]);
+
+  const tierColors: Record<string, string> = {
+    pro: "var(--color-success)",
+    trial: "var(--color-warning)",
+    free: "var(--color-text-muted)",
+  };
+
+  return (
+    <SettingSection
+      title="License"
+      description="Activate a Pro license key to unlock all features."
+    >
+      {/* Current status */}
+      {license && (
+        <div
+          className="flex items-center justify-between mb-4 px-3 py-2.5 rounded-lg text-xs"
+          style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
+        >
+          <div className="flex items-center gap-2">
+            <span
+              className="w-2 h-2 rounded-full"
+              style={{ background: tierColors[license.tier] ?? "var(--color-text-muted)" }}
+            />
+            <span className="font-semibold" style={{ color: "var(--color-text-primary)" }}>
+              {license.tier.toUpperCase()}
+            </span>
+            <span style={{ color: "var(--color-text-muted)" }}>
+              {license.tier === "pro"
+                ? `${license.maxSessions} sessions`
+                : license.tier === "trial"
+                  ? `${license.daysLeft ?? 0} days left`
+                  : "1 session"}
+            </span>
+          </div>
+          {license.expiresAt && (
+            <span style={{ color: "var(--color-text-muted)" }}>
+              Expires {license.expiresAt.split("T")[0]}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Activate key */}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={licenseKey}
+          onChange={(e) => setLicenseKey(e.target.value)}
+          placeholder="cmp_pro_XXXX_XXXX_XXXX"
+          className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
+          style={{
+            background: "var(--color-bg-elevated)",
+            border: "1px solid var(--color-border)",
+            color: "var(--color-text-primary)",
+            fontFamily: "var(--font-mono)",
+          }}
+          onKeyDown={(e) => e.key === "Enter" && handleActivate()}
+        />
+        <button
+          onClick={handleActivate}
+          disabled={activating || !licenseKey.trim()}
+          className="px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer transition-colors"
+          style={{
+            background: activating ? "var(--color-text-muted)" : "var(--color-accent)",
+            color: "#fff",
+            border: "none",
+            opacity: !licenseKey.trim() ? 0.5 : 1,
+          }}
+        >
+          {activating ? "..." : "Activate"}
+        </button>
+      </div>
+
+      <p className="text-xs mt-2" style={{ color: "var(--color-text-muted)" }}>
+        Get a key at{" "}
+        <a href="https://companion.theio.vn" target="_blank" rel="noopener" style={{ color: "var(--color-accent)" }}>
+          companion.theio.vn
+        </a>
+      </p>
+    </SettingSection>
+  );
+}
+
 function GeneralTab() {
   const [apiKey, setApiKey] = useState("");
   const [serverUrl, setServerUrl] = useState("");
@@ -216,6 +336,9 @@ function GeneralTab() {
           </div>
         </div>
       </SettingSection>
+
+      {/* License */}
+      <LicenseSection />
 
       {/* Save button */}
       <button
