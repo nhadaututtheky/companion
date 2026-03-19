@@ -9,21 +9,36 @@ services:
       - "3579:3579"  # Server API + WebSocket
       - "3580:3580"  # Web UI
     volumes:
-      - companion-data:/app/data          # SQLite database
-      - ${HOME:-~}/.claude:/root/.claude:ro  # Claude Code config (read-only)
+      # SQLite database persistence
+      - companion-data:/app/data
+
+      # Claude CLI auth — subscription tokens (read-write for token refresh)
+      - ${USERPROFILE:-${HOME}}/.claude:/root/.claude
+
+      # Project directories — mount your code folders
+      # Add your project paths here:
+      - D:/Project:/projects/all:ro
+      # - /Users/you/code:/projects/code:ro
+
     environment:
       - NODE_ENV=production
       - PORT=3579
-      # Required: set your API key for auth
+
+      # Auth for Companion web UI (set a password)
       - API_KEY=${COMPANION_API_KEY:-}
-      # Required: Anthropic API key for Claude CLI
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+
+      # NOT needed for subscription — Claude CLI uses ~/.claude/.credentials.json
+      # Only set if using API key auth instead:
+      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+
+      # Project browser — which dirs users can browse
+      - ALLOWED_BROWSE_ROOTS=/projects/all
+
       # Optional: Telegram bot
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
       - TELEGRAM_ALLOWED_CHAT_IDS=${TELEGRAM_ALLOWED_CHAT_IDS:-}
       - TELEGRAM_ALLOWED_USER_IDS=${TELEGRAM_ALLOWED_USER_IDS:-}
-      # Optional: allowed directories for project browser
-      - ALLOWED_BROWSE_ROOTS=${ALLOWED_BROWSE_ROOTS:-}
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3579/api/health"]
       interval: 30s

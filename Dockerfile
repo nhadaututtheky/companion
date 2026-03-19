@@ -3,13 +3,11 @@ FROM oven/bun:1.3 AS deps
 
 WORKDIR /app
 
-# Copy package files
 COPY package.json bun.lock ./
 COPY packages/shared/package.json packages/shared/
 COPY packages/server/package.json packages/server/
 COPY packages/web/package.json packages/web/
 
-# Install all dependencies
 RUN bun install --frozen-lockfile
 
 # ── Stage 2: Build web (Next.js) ──────────────────────────────────────────────
@@ -33,11 +31,13 @@ FROM oven/bun:1.3-slim AS runtime
 
 WORKDIR /app
 
-# Install Node.js (needed to spawn Claude CLI)
+# Install Node.js + Claude CLI
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nodejs \
     npm \
     curl \
+    git \
+    && npm install -g @anthropic-ai/claude-code \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependencies
@@ -56,11 +56,11 @@ COPY packages/web/tsconfig.json packages/web/tsconfig.json
 COPY packages/web/postcss.config.mjs packages/web/postcss.config.mjs
 COPY packages/web/public/ packages/web/public/
 
-# Copy built Next.js output
+# Copy built Next.js
 COPY --from=web-builder /app/packages/web/.next packages/web/.next
 
-# Create data directory for SQLite
-RUN mkdir -p data
+# Create data + projects directory
+RUN mkdir -p data /projects
 
 # Expose ports
 EXPOSE 3579 3580
@@ -69,5 +69,5 @@ EXPOSE 3579 3580
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD curl -f http://localhost:3579/api/health || exit 1
 
-# Start both server and web
+# Start server + web
 CMD ["sh", "-c", "bun run --hot packages/server/src/index.ts & bun --cwd packages/web run start & wait"]
