@@ -21,10 +21,16 @@ import type { ApiResponse } from "@companion/shared";
 
 const log = createLogger("routes:sessions");
 
+// Allowlist of valid Claude model identifiers — prevents CLI argument injection
+const ALLOWED_MODELS = [
+  "claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5",
+  "claude-sonnet-4-5-20250514", "claude-haiku-4-5-20251001",
+] as const;
+
 const createSessionSchema = z.object({
   projectSlug: z.string().optional(),
   projectDir: z.string().min(1).max(500),
-  model: z.string().optional(),
+  model: z.enum(ALLOWED_MODELS).optional(),
   permissionMode: z.enum(["default", "acceptEdits", "bypassPermissions", "plan"]).optional(),
   prompt: z.string().max(10000).optional(),
   resume: z.boolean().optional(),
@@ -110,6 +116,26 @@ export function sessionRoutes(bridge: WsBridge) {
 
   app.post("/", zValidator("json", createSessionSchema), async (c) => {
     const body = c.req.valid("json");
+
+    // Validate projectDir exists and is within allowed roots (prevents path traversal)
+    const { resolve: pathResolve, normalize } = require("node:path");
+    const { existsSync, statSync } = require("node:fs");
+    const resolved = pathResolve(normalize(body.projectDir));
+
+    if (!existsSync(resolved) || !statSync(resolved).isDirectory()) {
+      return c.json({ success: false, error: "projectDir does not exist or is not a directory" } satisfies ApiResponse, 400);
+    }
+
+    const allowedRoots = process.env.ALLOWED_BROWSE_ROOTS;
+    if (allowedRoots) {
+      const roots = allowedRoots.split(";").map((r: string) => pathResolve(normalize(r)));
+      const isAllowed = roots.some((root: string) => resolved.startsWith(root));
+      if (!isAllowed) {
+        log.warn("Session creation blocked — projectDir outside allowed roots", { projectDir: resolved, allowedRoots });
+        return c.json({ success: false, error: "projectDir is outside allowed directories" } satisfies ApiResponse, 403);
+      }
+    }
+
     let project = body.projectSlug ? getProject(body.projectSlug) : null;
 
     // Auto-create project if slug provided but doesn't exist

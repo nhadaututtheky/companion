@@ -10,8 +10,18 @@ import { createLogger } from "./logger.js";
 import { bulkEndSessions } from "./services/session-store.js";
 import { verifyLicense, checkOrActivateTrial, getLicense } from "./services/license.js";
 import { DEFAULT_PORT, APP_VERSION } from "@companion/shared";
+import { timingSafeEqual } from "node:crypto";
 
 const log = createLogger("server");
+
+/** Timing-safe string comparison for auth — prevents oracle attacks */
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    timingSafeEqual(Buffer.from(a), Buffer.from(a));
+    return false;
+  }
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 // ─── Initialize ──────────────────────────────────────────────────────────────
 
@@ -126,12 +136,14 @@ const server = Bun.serve<SocketData>({
         return new Response("Missing session ID", { status: 400 });
       }
 
-      // Authenticate WebSocket — check api_key query param or Authorization header
+      // Authenticate WebSocket — check Sec-WebSocket-Protocol, Authorization header, or query param (fallback)
       const configuredKey = process.env.API_KEY;
       if (configuredKey) {
-        const wsKey = url.searchParams.get("api_key") ??
-          req.headers.get("Authorization")?.replace("Bearer ", "");
-        if (!wsKey || wsKey !== configuredKey) {
+        const wsKey =
+          req.headers.get("Sec-WebSocket-Protocol") ??
+          req.headers.get("Authorization")?.replace("Bearer ", "") ??
+          url.searchParams.get("api_key"); // fallback for legacy clients
+        if (!wsKey || !safeCompare(wsKey, configuredKey)) {
           return new Response("Unauthorized", { status: 401 });
         }
       }

@@ -5,6 +5,8 @@ dist/
 data/*.db
 data/*.db-wal
 data/*.db-shm
+data/.license-cache.json
+data/.trial
 .env
 .env.*
 !.env.example

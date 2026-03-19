@@ -48,10 +48,16 @@ COPY packages/web/postcss.config.mjs packages/web/
 COPY --from=web-builder /app/packages/web/.next packages/web/.next
 COPY --from=web-builder /app/packages/web/node_modules packages/web/node_modules
 
-# Create data directory
-RUN mkdir -p data
+# Create non-root user for security
+RUN addgroup --system companion && adduser --system --ingroup companion companion
+
+# Create data directory with correct ownership
+RUN mkdir -p data && chown -R companion:companion /app
 
 EXPOSE 3579 3580
+
+# Run as non-root user
+USER companion
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD curl -f http://localhost:3579/api/health || exit 1

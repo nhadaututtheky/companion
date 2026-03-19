@@ -34,9 +34,10 @@ export function useWebSocket({
     if (!enabled || !sessionId) return;
 
     const apiKey = localStorage.getItem("api_key") ?? "";
-    const url = `${WS_BASE}/ws/${sessionId}?api_key=${apiKey}`;
+    const url = `${WS_BASE}/ws/${sessionId}`;
 
-    const ws = new WebSocket(url);
+    // Send API key via Sec-WebSocket-Protocol header (not URL query — avoids credential leaks in logs)
+    const ws = new WebSocket(url, apiKey || undefined);
     wsRef.current = ws;
     onStatusRef.current?.("connecting");
 
