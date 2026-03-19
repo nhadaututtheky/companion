@@ -103,8 +103,8 @@
   var BANK_NAME = "NGUYEN VIET NAM";
 
   var PRODUCTS = {
-    "CMP-MONTHLY": { name: "Companion Pro — Monthly", price: 375000, priceUSD: 15 },
-    "CMP-QUARTERLY": { name: "Companion Pro — Quarterly", price: 975000, priceUSD: 39 },
+    "CMP-MONTHLY": { name: "Companion Pro — Monthly", price: 375000, priceUSD: 15, polarUrl: "https://polar.sh/nhadaututheky/products/companion-pro-monthly" },
+    "CMP-QUARTERLY": { name: "Companion Pro — Quarterly", price: 975000, priceUSD: 39, polarUrl: "https://polar.sh/nhadaututheky/products/companion-pro-quarterly" },
   };
 
   var payState = {
@@ -127,8 +127,10 @@
 
     var vndEl = document.getElementById("pay-price-vnd");
     var usdEl = document.getElementById("pay-price-usd");
+    var polarLink = document.getElementById("pay-polar-link");
     if (vndEl) vndEl.textContent = info.price.toLocaleString("vi-VN") + " VND";
     if (usdEl) usdEl.textContent = "$" + info.priceUSD + " USD";
+    if (polarLink) polarLink.href = info.polarUrl;
 
     showPayStep(1);
     document.getElementById("pay-modal").hidden = false;
