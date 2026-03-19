@@ -19,7 +19,7 @@ function getSessionColor(id: string): string {
 /** Siri-style glowing orb with color bands */
 function SiriOrb({ sessionIds, size }: { sessionIds: string[]; size: number }) {
   const hasLinked = sessionIds.length > 0;
-  const colors = sessionIds.slice(0, 4).map((id) => getSessionColor(id));
+  const colors = sessionIds.map((id) => getSessionColor(id));
 
   // Default colors when no sessions linked — Google 4-color
   const orbColors = hasLinked ? colors : GOOGLE_COLORS;

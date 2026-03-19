@@ -41,7 +41,7 @@ export const useRingStore = create<RingStore>((set, get) => ({
 
   linkSession: (id) =>
     set((s) => {
-      if (s.linkedSessionIds.includes(id) || s.linkedSessionIds.length >= 4) return s;
+      if (s.linkedSessionIds.includes(id)) return s;
       return { linkedSessionIds: [...s.linkedSessionIds, id] };
     }),
 

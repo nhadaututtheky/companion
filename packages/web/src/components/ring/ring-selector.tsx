@@ -42,7 +42,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
-      } else if (next.size < 4) {
+      } else {
         next.add(id);
       }
       return next;
