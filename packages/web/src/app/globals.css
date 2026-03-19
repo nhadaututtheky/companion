@@ -1,0 +1,218 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap");
+
+@import "tailwindcss";
+
+/* ── Design Tokens ───────────────────────────────────────────────────────── */
+@theme {
+  /* Warm cream palette */
+  --color-bg-base: #F5F3EF;
+  --color-bg-card: #FFFFFF;
+  --color-bg-elevated: #F0EDE8;
+  --color-bg-sidebar: #FAFAF8;
+  --color-bg-hover: #EDE9E3;
+
+  --color-text-primary: #1F2D3D;
+  --color-text-secondary: #4B5563;
+  --color-text-muted: #9CA3AF;
+
+  --color-border: #E5E0D8;
+  --color-border-strong: #D0CAC0;
+
+  /* Google accent colors */
+  --color-google-blue: #4285F4;
+  --color-google-red: #EA4335;
+  --color-google-yellow: #FBBC04;
+  --color-google-green: #34A853;
+
+  /* Semantic */
+  --color-accent: #4285F4;
+  --color-success: #34A853;
+  --color-danger: #EA4335;
+  --color-warning: #FBBC04;
+
+  /* Dark mode */
+  --color-dark-bg: #0F0F0F;
+  --color-dark-card: #1A1A1A;
+  --color-dark-elevated: #242424;
+  --color-dark-border: #2E2E2E;
+  --color-dark-text: #F0F0F0;
+  --color-dark-muted: #808080;
+
+  /* Typography — FluentCap-inspired Inter system */
+  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+}
+
+/* ── Base Styles ─────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-weight: 400;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  line-height: 1.2;
+}
+
+h1 { font-weight: 800; }
+h2 { font-weight: 700; }
+h3, h4 { font-weight: 600; }
+
+p {
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* ── Dark Mode ───────────────────────────────────────────────────────────── */
+.dark {
+  --color-bg-base: var(--color-dark-bg);
+  --color-bg-card: var(--color-dark-card);
+  --color-bg-elevated: var(--color-dark-elevated);
+  --color-bg-sidebar: #141414;
+  --color-bg-hover: #2A2A2A;
+  --color-text-primary: var(--color-dark-text);
+  --color-text-secondary: #AAAAAA;
+  --color-text-muted: var(--color-dark-muted);
+  --color-border: var(--color-dark-border);
+  --color-border-strong: #3E3E3E;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ── Animations ─────────────────────────────────────────────────────────── */
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+@keyframes siri-glow {
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 8px rgba(66, 133, 244, 0.3)); transform: rotate(0deg); }
+  33% { filter: brightness(1.1) drop-shadow(0 0 12px rgba(234, 67, 53, 0.4)); }
+  50% { filter: brightness(1.15) drop-shadow(0 0 16px rgba(251, 188, 4, 0.4)); transform: rotate(180deg); }
+  66% { filter: brightness(1.1) drop-shadow(0 0 12px rgba(52, 168, 83, 0.4)); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ── Glass Overlay Animations ────────────────────────────────────────────── */
+
+/* Backdrop */
+.glass-backdrop-enter {
+  opacity: 0;
+  transition: opacity 250ms ease-out;
+}
+.glass-backdrop-enter-active {
+  opacity: 1;
+}
+.glass-backdrop-exit {
+  opacity: 1;
+  transition: opacity 200ms ease-in;
+}
+.glass-backdrop-exit-active {
+  opacity: 0;
+}
+
+/* Card */
+.glass-enter {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 250ms ease-out, transform 250ms ease-out;
+}
+.glass-enter-active {
+  opacity: 1;
+  transform: scale(1);
+}
+.glass-exit {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 200ms ease-in, transform 200ms ease-in;
+}
+.glass-exit-active {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+/* Dark mode glass card */
+.dark .dark\:bg-glass-dark {
+  background: rgba(30, 30, 30, 0.85) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-enter,
+  .glass-enter-active,
+  .glass-exit,
+  .glass-exit-active,
+  .glass-backdrop-enter,
+  .glass-backdrop-enter-active,
+  .glass-backdrop-exit,
+  .glass-backdrop-exit-active {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ── Focus Ring ──────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-google-blue);
+  outline-offset: 2px;
+}
+
+/* ── Mobile Responsive ───────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Hide sidebar on mobile */
+  .companion-sidebar {
+    display: none !important;
+  }
+  /* Hide corner SVG */
+  .companion-corner-arc {
+    display: none !important;
+  }
+  /* Full width header stats */
+  .header-stats {
+    display: none !important;
+  }
+  .session-grid-inner {
+    grid-template-columns: 1fr !important;
+  }
+}
+

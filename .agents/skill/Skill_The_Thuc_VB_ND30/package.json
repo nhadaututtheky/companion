@@ -1,0 +1,13 @@
+{
+  "name": "skill-the-thuc-vb-nd30",
+  "version": "1.0.0",
+  "description": "Skill for generating administrative documents based on Decree 30 (NĐ30)",
+  "main": "scripts/generate_docx.js",
+  "dependencies": {
+    "docx": "^9.0.3",
+    "minimist": "^1.2.8"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

@@ -1,0 +1,186 @@
+"use client";
+import { ArrowsOut, X, LinkSimple } from "@phosphor-icons/react";
+import { SessionSettingsButton } from "./session-settings";
+
+interface SessionHeaderProps {
+  sessionId: string;
+  projectName: string;
+  model: string;
+  status: string;
+  onExpand: () => void;
+  onClose: () => void;
+  channelId?: string | null;
+  channelTopic?: string | null;
+  channelStatus?: string | null;
+  contextPercent?: number;
+  totalTokens?: number;
+  maxTokens?: number;
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  starting: "#FBBC04",
+  idle: "#34A853",
+  running: "#4285F4",
+  busy: "#4285F4",
+  waiting: "#FBBC04",
+  ended: "#9AA0A6",
+  error: "#EA4335",
+};
+
+export function SessionHeader({
+  sessionId,
+  projectName,
+  model,
+  status,
+  onExpand,
+  onClose,
+  channelId,
+  channelTopic,
+  channelStatus,
+  contextPercent,
+  totalTokens,
+  maxTokens,
+}: SessionHeaderProps) {
+  const dotColor = STATUS_COLORS[status] ?? STATUS_COLORS.idle;
+  const modelShort = model.includes("opus") ? "Opus" : model.includes("haiku") ? "Haiku" : "Sonnet";
+  const channelColor = channelStatus === "active" ? "#4285F4" : "#9AA0A6";
+  const isActive = !["ended", "error"].includes(status);
+
+  const contextBarColor =
+    contextPercent === undefined
+      ? undefined
+      : contextPercent >= 80
+        ? "#EA4335"
+        : contextPercent >= 60
+          ? "#FBBC04"
+          : "#34A853";
+
+  const contextTooltip =
+    contextPercent !== undefined && totalTokens !== undefined && maxTokens !== undefined
+      ? `Context: ${Math.round(contextPercent)}% used (${(totalTokens / 1000).toFixed(0)}K / ${(maxTokens / 1000).toFixed(0)}K tokens)`
+      : undefined;
+
+  return (
+    <>
+    <div
+      className="flex items-center gap-2 px-3 py-2 flex-shrink-0"
+      style={{ borderBottom: contextPercent === undefined ? "1px solid var(--color-border)" : "none" }}
+    >
+      {/* Left: status dot + project name */}
+      <span
+        style={{
+          display: "inline-block",
+          width: 7,
+          height: 7,
+          borderRadius: "50%",
+          background: dotColor,
+          flexShrink: 0,
+        }}
+      />
+      <span
+        className="text-sm font-semibold truncate flex-1"
+        style={{ color: "var(--color-text-primary)" }}
+        title={projectName}
+      >
+        {projectName}
+      </span>
+
+      {/* Center: model badge */}
+      <span
+        className="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0"
+        style={{
+          background: "var(--color-bg-elevated)",
+          color: "var(--color-text-muted)",
+          fontFamily: "var(--font-mono)",
+        }}
+      >
+        {modelShort}
+      </span>
+
+      {/* Channel badge */}
+      {channelId && (
+        <span
+          className="flex-shrink-0 p-0.5 rounded"
+          style={{ color: channelColor }}
+          title={channelTopic ? `Linked to: ${channelTopic}` : "Linked to a shared channel"}
+          aria-label={channelTopic ? `Linked to channel: ${channelTopic}` : "Linked to shared channel"}
+        >
+          <LinkSimple size={12} weight="bold" aria-hidden="true" />
+        </span>
+      )}
+
+      {/* Settings gear — only for active sessions */}
+      {isActive && <SessionSettingsButton sessionId={sessionId} />}
+
+      {/* Right: expand + close */}
+      <button
+        onClick={onExpand}
+        className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"
+        style={{ color: "var(--color-text-muted)" }}
+        aria-label="Expand session"
+        title="Expand to full view"
+      >
+        <ArrowsOut size={14} />
+      </button>
+      <button
+        onClick={onClose}
+        className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"
+        style={{ color: "var(--color-text-muted)" }}
+        aria-label="Close session"
+        title="Stop & close session"
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.color = "#EA4335";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.color = "var(--color-text-muted)";
+        }}
+      >
+        <X size={14} weight="bold" />
+      </button>
+    </div>
+
+    {/* Context meter — thin progress bar */}
+    {contextPercent !== undefined && contextBarColor && (
+      <div
+        style={{
+          height: 2,
+          background: "var(--color-border)",
+          flexShrink: 0,
+          borderBottom: "1px solid var(--color-border)",
+        }}
+        title={contextTooltip}
+        aria-label={contextTooltip}
+        role="progressbar"
+        aria-valuenow={Math.round(contextPercent)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <div
+          style={{
+            height: "100%",
+            width: `${contextPercent}%`,
+            background: contextBarColor,
+            transition: "width 500ms ease, background 500ms ease",
+          }}
+        />
+      </div>
+    )}
+
+    {/* Compact warning banner */}
+    {contextPercent !== undefined && contextPercent >= 80 && (
+      <div
+        className="flex items-center justify-center px-3 py-0.5 flex-shrink-0 text-xs font-medium"
+        style={{
+          background: "#EA433510",
+          color: "#EA4335",
+          borderBottom: "1px solid var(--color-border)",
+          fontSize: 10,
+        }}
+        role="alert"
+      >
+        Context {Math.round(contextPercent)}% full — consider /compact
+      </div>
+    )}
+    </>
+  );
+}

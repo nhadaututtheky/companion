@@ -1,0 +1,233 @@
+"use client";
+import { useState, useCallback, type ReactNode } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Copy, Check } from "@phosphor-icons/react";
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [text]);
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="absolute top-2 right-2 p-1 rounded cursor-pointer transition-opacity opacity-0 group-hover:opacity-100"
+      style={{
+        background: "rgba(255,255,255,0.1)",
+        color: copied ? "#34A853" : "rgba(255,255,255,0.6)",
+      }}
+      aria-label="Copy code"
+    >
+      {copied ? <Check size={14} weight="bold" /> : <Copy size={14} />}
+    </button>
+  );
+}
+
+interface MarkdownMessageProps {
+  content: string;
+  compact?: boolean;
+}
+
+export function MarkdownMessage({ content, compact = false }: MarkdownMessageProps) {
+  const fontSize = compact ? 14 : 15;
+
+  return (
+    <div
+      className="markdown-content"
+      style={{ fontSize, lineHeight: 1.6 }}
+    >
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          // ── Code blocks ──────────────────────────────────
+          code({ className, children, ...props }) {
+            const isBlock = className?.startsWith("language-");
+            const lang = className?.replace("language-", "") ?? "";
+            const codeText = String(children).replace(/\n$/, "");
+
+            if (isBlock || codeText.includes("\n")) {
+              return (
+                <div className="relative group my-2 rounded-lg overflow-hidden" style={{ maxHeight: compact ? 200 : 400 }}>
+                  {lang && (
+                    <div
+                      className="px-3 py-1 text-xs font-mono"
+                      style={{ background: "#2d2d2d", color: "#999" }}
+                    >
+                      {lang}
+                    </div>
+                  )}
+                  <pre
+                    className="overflow-auto p-3 m-0"
+                    style={{
+                      background: "#1e1e1e",
+                      color: "#d4d4d4",
+                      fontSize: compact ? 12 : 13,
+                      lineHeight: 1.5,
+                      fontFamily: "var(--font-mono)",
+                    }}
+                  >
+                    <code {...props}>{codeText}</code>
+                  </pre>
+                  <CopyButton text={codeText} />
+                </div>
+              );
+            }
+
+            // Inline code
+            return (
+              <code
+                style={{
+                  background: "var(--color-bg-elevated)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: 4,
+                  padding: "1px 5px",
+                  fontSize: "0.9em",
+                  fontFamily: "var(--font-mono)",
+                }}
+                {...props}
+              >
+                {children}
+              </code>
+            );
+          },
+
+          // ── Tables ──────────────────────────────────────
+          table({ children }) {
+            return (
+              <div className="overflow-x-auto my-2" style={{ maxWidth: "100%" }}>
+                <table
+                  style={{
+                    borderCollapse: "collapse",
+                    width: "100%",
+                    fontSize: compact ? 12 : 13,
+                    fontFamily: "var(--font-body)",
+                  }}
+                >
+                  {children}
+                </table>
+              </div>
+            );
+          },
+          thead({ children }) {
+            return (
+              <thead
+                style={{
+                  background: "var(--color-bg-elevated)",
+                  borderBottom: "2px solid var(--color-border)",
+                }}
+              >
+                {children}
+              </thead>
+            );
+          },
+          th({ children }) {
+            return (
+              <th
+                className="text-left"
+                style={{
+                  padding: compact ? "4px 8px" : "6px 12px",
+                  fontWeight: 600,
+                  color: "var(--color-text-primary)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {children}
+              </th>
+            );
+          },
+          td({ children }) {
+            return (
+              <td
+                style={{
+                  padding: compact ? "3px 8px" : "5px 12px",
+                  borderBottom: "1px solid var(--color-border)",
+                  color: "var(--color-text-secondary)",
+                }}
+              >
+                {children}
+              </td>
+            );
+          },
+          tr({ children }) {
+            return <tr style={{ borderBottom: "1px solid var(--color-border)" }}>{children}</tr>;
+          },
+
+          // ── Block elements ──────────────────────────────
+          p({ children }) {
+            return <p style={{ margin: "4px 0", lineHeight: 1.6 }}>{children}</p>;
+          },
+          blockquote({ children }) {
+            return (
+              <blockquote
+                style={{
+                  borderLeft: "3px solid #4285F4",
+                  paddingLeft: 12,
+                  margin: "8px 0",
+                  color: "var(--color-text-secondary)",
+                  fontStyle: "italic",
+                }}
+              >
+                {children}
+              </blockquote>
+            );
+          },
+          ul({ children }) {
+            return <ul style={{ paddingLeft: 20, margin: "4px 0" }}>{children}</ul>;
+          },
+          ol({ children }) {
+            return <ol style={{ paddingLeft: 20, margin: "4px 0" }}>{children}</ol>;
+          },
+          li({ children }) {
+            return <li style={{ marginBottom: 2 }}>{children}</li>;
+          },
+
+          // ── Inline elements ─────────────────────────────
+          strong({ children }) {
+            return <strong style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>{children}</strong>;
+          },
+          em({ children }) {
+            return <em>{children}</em>;
+          },
+          a({ href, children }) {
+            return (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#4285F4", textDecoration: "none" }}
+                onMouseEnter={(e) => { (e.target as HTMLElement).style.textDecoration = "underline"; }}
+                onMouseLeave={(e) => { (e.target as HTMLElement).style.textDecoration = "none"; }}
+              >
+                {children}
+              </a>
+            );
+          },
+
+          // ── Headings (scale down for chat) ──────────────
+          h1({ children }) {
+            return <h3 style={{ fontSize: compact ? 15 : 17, fontWeight: 700, margin: "8px 0 4px" }}>{children}</h3>;
+          },
+          h2({ children }) {
+            return <h4 style={{ fontSize: compact ? 14 : 16, fontWeight: 600, margin: "6px 0 3px" }}>{children}</h4>;
+          },
+          h3({ children }) {
+            return <h5 style={{ fontSize: compact ? 13 : 15, fontWeight: 600, margin: "4px 0 2px" }}>{children}</h5>;
+          },
+
+          // ── Horizontal rule ─────────────────────────────
+          hr() {
+            return <hr style={{ border: "none", borderTop: "1px solid var(--color-border)", margin: "8px 0" }} />;
+          },
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}

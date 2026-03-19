@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "xlabs": {
+      "type": "url",
+      "url": "http://localhost:3461/mcp"
+    }
+  }
+}

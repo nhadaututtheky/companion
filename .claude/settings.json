@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "xlabs-remote": {
+      "type": "streamableHttp",
+      "url": "https://admin.theio.vn/api/mcp",
+      "headers": {
+        "Authorization": "Bearer xlabs-51c7dc363484ff116418c3cbe0f56101c5670e674146eafc"
+      }
+    }
+  }
+}

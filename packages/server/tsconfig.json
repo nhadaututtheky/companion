@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "types": ["bun"],
+    "paths": {
+      "@companion/shared": ["../shared/src"],
+      "@companion/shared/*": ["../shared/src/*"]
+    }
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "companion",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev:server": "bun run --hot packages/server/src/index.ts",
+    "dev:web": "bun run --cwd packages/web dev",
+    "build": "bun run --filter '*' build",
+    "check": "bun run --filter '*' check",
+    "db:generate": "bun run --filter '@companion/server' db:generate",
+    "db:migrate": "bun run --filter '@companion/server' db:migrate",
+    "db:studio": "bun run --filter '@companion/server' db:studio"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@companion/shared",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types/index.ts"
+  },
+  "scripts": {
+    "check": "tsc --noEmit"
+  }
+}

@@ -1,0 +1,16 @@
+node_modules/
+dist/
+**/.next/
+.next/
+data/*.db
+data/*.db-wal
+data/*.db-shm
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+.vscode/
+.idea/
+*.tsbuildinfo
+bun.lock

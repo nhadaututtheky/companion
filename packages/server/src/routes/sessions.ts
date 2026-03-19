@@ -1,0 +1,304 @@
+/**
+ * Session REST routes — create, list, get, send messages, kill sessions.
+ */
+
+import { Hono } from "hono";
+import { z } from "zod";
+import { zValidator } from "@hono/zod-validator";
+import { WsBridge } from "../services/ws-bridge.js";
+import {
+  getSessionRecord,
+  listSessions,
+  getSessionMessages,
+  countActiveSessions,
+  endSessionRecord,
+  listResumableSessions,
+} from "../services/session-store.js";
+import { getProject, upsertProject } from "../services/project-profiles.js";
+import { createLogger } from "../logger.js";
+import type { ApiResponse } from "@companion/shared";
+import { MAX_ACTIVE_SESSIONS } from "@companion/shared";
+
+const log = createLogger("routes:sessions");
+
+const createSessionSchema = z.object({
+  projectSlug: z.string().optional(),
+  projectDir: z.string().min(1).max(500),
+  model: z.string().optional(),
+  permissionMode: z.enum(["default", "acceptEdits", "bypassPermissions", "plan"]).optional(),
+  prompt: z.string().max(10000).optional(),
+  resume: z.boolean().optional(),
+  cliSessionId: z.string().uuid().optional(),
+  source: z.string().optional(),
+});
+
+const sendMessageSchema = z.object({
+  content: z.string().min(1).max(50000),
+  source: z.string().optional(),
+});
+
+const permissionResponseSchema = z.object({
+  behavior: z.enum(["allow", "deny"]),
+});
+
+const sessionSettingsSchema = z.object({
+  idleTimeoutMs: z.number().int().min(0).optional(),
+  keepAlive: z.boolean().optional(),
+});
+
+const paginationSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+export function sessionRoutes(bridge: WsBridge) {
+  const app = new Hono();
+
+  app.get("/", (c) => {
+    const projectSlug = c.req.query("project");
+    const status = c.req.query("status");
+    const { limit, offset } = paginationSchema.parse({
+      limit: c.req.query("limit"),
+      offset: c.req.query("offset"),
+    });
+
+    const { items, total } = listSessions({ projectSlug, status, limit, offset });
+
+    // Health-check: auto-fix sessions that appear active in DB but have no in-memory session
+    const activeStatuses = new Set(["starting", "running", "waiting", "idle", "busy", "compacting"]);
+    let selfHealedCount = 0;
+    for (const item of items) {
+      if (activeStatuses.has(item.status) && !bridge.getSession(item.id)) {
+        endSessionRecord(item.id);
+        item.status = "ended";
+        selfHealedCount++;
+      }
+    }
+    if (selfHealedCount > 0) {
+      log.info("Self-healed zombie sessions on list", { count: selfHealedCount });
+    }
+
+    return c.json({
+      success: true,
+      data: { sessions: items },
+      meta: { total, page: Math.floor(offset / limit) + 1, limit },
+    } satisfies ApiResponse);
+  });
+
+  // Cleanup zombie sessions (active in DB but no active in-memory session)
+  app.post("/cleanup", (c) => {
+    const cleaned = bridge.cleanupZombieSessions();
+    log.info("Session cleanup triggered via API", { cleaned });
+    return c.json({
+      success: true,
+      data: { cleaned },
+    } satisfies ApiResponse);
+  });
+
+  app.get("/active/count", (c) => {
+    return c.json({
+      success: true,
+      data: { count: countActiveSessions() },
+    } satisfies ApiResponse);
+  });
+
+  // Resumable sessions — must be before /:id to avoid route conflict
+  app.get("/resumable", (c) => {
+    const resumable = listResumableSessions();
+    return c.json({ success: true, data: resumable } satisfies ApiResponse);
+  });
+
+  app.post("/", zValidator("json", createSessionSchema), async (c) => {
+    const body = c.req.valid("json");
+    let project = body.projectSlug ? getProject(body.projectSlug) : null;
+
+    // Auto-create project if slug provided but doesn't exist
+    if (body.projectSlug && !project) {
+      const dirName = body.projectDir.split(/[\\/]/).filter(Boolean).pop() ?? body.projectSlug;
+      upsertProject({
+        slug: body.projectSlug,
+        name: dirName,
+        dir: body.projectDir,
+        defaultModel: body.model ?? "claude-sonnet-4-6",
+        permissionMode: body.permissionMode ?? "default",
+      });
+      project = getProject(body.projectSlug);
+      log.info("Auto-created project", { slug: body.projectSlug, dir: body.projectDir });
+    }
+
+    const model = body.model ?? project?.defaultModel ?? "claude-sonnet-4-6";
+    const permissionMode = body.permissionMode ?? project?.permissionMode ?? "default";
+
+    const activeCount = countActiveSessions();
+    if (activeCount >= MAX_ACTIVE_SESSIONS) {
+      log.warn("Session limit reached", { activeCount, limit: MAX_ACTIVE_SESSIONS });
+      return c.json(
+        {
+          success: false,
+          error: `Session limit reached (${MAX_ACTIVE_SESSIONS} active). Stop an existing session before creating a new one.`,
+        } satisfies ApiResponse,
+        429,
+      );
+    }
+
+    try {
+      const sessionId = await bridge.startSession({
+        projectSlug: body.projectSlug,
+        cwd: body.projectDir,
+        model,
+        permissionMode,
+        prompt: body.prompt,
+        resume: body.resume,
+        cliSessionId: body.cliSessionId,
+        source: body.source,
+        envVars: project?.envVars,
+      });
+
+      log.info("Session created via API", { sessionId, model });
+      return c.json({ success: true, data: { sessionId } } satisfies ApiResponse, 201);
+    } catch (err) {
+      log.error("Failed to create session", { error: String(err) });
+      return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
+    }
+  });
+
+  app.get("/:id", (c) => {
+    const id = c.req.param("id");
+    const active = bridge.getSession(id);
+    if (active) {
+      return c.json({ success: true, data: { ...active.state, isActive: true } } satisfies ApiResponse);
+    }
+    const record = getSessionRecord(id);
+    if (!record) {
+      return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
+    }
+    return c.json({ success: true, data: { ...record, isActive: false } } satisfies ApiResponse);
+  });
+
+  app.post("/:id/messages", zValidator("json", sendMessageSchema), (c) => {
+    const id = c.req.param("id");
+    const { content, source } = c.req.valid("json");
+    const session = bridge.getSession(id);
+    if (!session) {
+      return c.json({ success: false, error: "Session not active" } satisfies ApiResponse, 404);
+    }
+    bridge.sendUserMessage(id, content, source);
+    return c.json({ success: true } satisfies ApiResponse);
+  });
+
+  app.get("/:id/messages", (c) => {
+    const id = c.req.param("id");
+    const { limit, offset } = paginationSchema.parse({
+      limit: c.req.query("limit") ?? "200",
+      offset: c.req.query("offset"),
+    });
+    const { items: messages, total } = getSessionMessages(id, { limit, offset });
+    return c.json({
+      success: true,
+      data: messages,
+      meta: { total, page: Math.floor(offset / limit) + 1, limit },
+    } satisfies ApiResponse);
+  });
+
+  app.delete("/:id", (c) => {
+    const id = c.req.param("id");
+    bridge.killSession(id);
+    return c.json({ success: true } satisfies ApiResponse);
+  });
+
+  // Permission response — behavior required, no default to prevent accidental allow
+  app.post(
+    "/:id/permissions/:requestId",
+    zValidator("json", permissionResponseSchema),
+    (c) => {
+      const sessionId = c.req.param("id");
+      const requestId = c.req.param("requestId");
+      const { behavior } = c.req.valid("json");
+      const session = bridge.getSession(sessionId);
+      if (!session) {
+        return c.json({ success: false, error: "Session not active" } satisfies ApiResponse, 404);
+      }
+      bridge.handleBrowserMessage(sessionId, JSON.stringify({
+        type: "permission_response",
+        request_id: requestId,
+        behavior,
+      }));
+      log.info("Permission response", { sessionId, requestId, behavior });
+      return c.json({ success: true } satisfies ApiResponse);
+    },
+  );
+
+  // Session settings (idle timeout, keep-alive)
+  app.patch(
+    "/:id/settings",
+    zValidator("json", sessionSettingsSchema),
+    (c) => {
+      const sessionId = c.req.param("id");
+      const body = c.req.valid("json");
+      const session = bridge.getSession(sessionId);
+      if (!session) {
+        return c.json({ success: false, error: "Session not active" } satisfies ApiResponse, 404);
+      }
+      bridge.setSessionSettings(sessionId, body);
+      const settings = bridge.getSessionSettings(sessionId);
+      log.info("Session settings updated via API", { sessionId, settings });
+      return c.json({ success: true, data: settings } satisfies ApiResponse);
+    },
+  );
+
+  // Get session settings
+  app.get("/:id/settings", (c) => {
+    const sessionId = c.req.param("id");
+    const session = bridge.getSession(sessionId);
+    if (!session) {
+      return c.json({ success: false, error: "Session not active" } satisfies ApiResponse, 404);
+    }
+    return c.json({ success: true, data: bridge.getSessionSettings(sessionId) } satisfies ApiResponse);
+  });
+
+  // Resume an ended session
+  app.post("/:id/resume", async (c) => {
+    const id = c.req.param("id");
+    const record = getSessionRecord(id);
+    if (!record) {
+      return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
+    }
+    if (record.status !== "ended") {
+      return c.json({ success: false, error: "Session is not ended" } satisfies ApiResponse, 400);
+    }
+    if (!record.cliSessionId) {
+      return c.json({ success: false, error: "Session has no CLI session ID — cannot resume" } satisfies ApiResponse, 400);
+    }
+
+    const activeCount = countActiveSessions();
+    if (activeCount >= MAX_ACTIVE_SESSIONS) {
+      return c.json(
+        {
+          success: false,
+          error: `Session limit reached (${MAX_ACTIVE_SESSIONS} active). Stop an existing session before resuming.`,
+        } satisfies ApiResponse,
+        429,
+      );
+    }
+
+    try {
+      const sessionId = await bridge.startSession({
+        projectSlug: record.projectSlug ?? undefined,
+        cwd: record.cwd,
+        model: record.model,
+        permissionMode: record.permissionMode,
+        resume: true,
+        cliSessionId: record.cliSessionId,
+        source: "api",
+      });
+
+      log.info("Session resumed via API", { originalId: id, newSessionId: sessionId });
+      return c.json({ success: true, data: { sessionId } } satisfies ApiResponse, 201);
+    } catch (err) {
+      log.error("Failed to resume session", { id, error: String(err) });
+      return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
+    }
+  });
+
+  return app;
+}

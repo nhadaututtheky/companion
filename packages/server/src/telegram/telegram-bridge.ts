@@ -1,0 +1,928 @@
+/**
+ * TelegramBridge — Core bridge between Telegram and WsBridge/CLI.
+ * Manages chat-to-session mappings, routes messages, handles streaming.
+ */
+
+import { type Bot, type Context, InlineKeyboard } from "grammy";
+import { eq, and, isNull } from "drizzle-orm";
+import { getDb } from "../db/client.js";
+import { telegramSessionMappings } from "../db/schema.js";
+import { createBot, registerCommands, type BotConfig } from "./bot-factory.js";
+import { StreamHandler } from "./stream-handler.js";
+import {
+  toTelegramHTML,
+  escapeHTML,
+  splitMessage,
+  wrapExpandable,
+  formatPermission,
+} from "./formatter.js";
+import { registerSessionCommands } from "./commands/session.js";
+import { registerControlCommands } from "./commands/control.js";
+import { registerInfoCommands } from "./commands/info.js";
+import { registerConfigCommands } from "./commands/config.js";
+import { registerPanelCommands } from "./commands/panel.js";
+import { registerUtilityCommands } from "./commands/utility.js";
+import { createLogger } from "../logger.js";
+import { storeMessage } from "../services/session-store.js";
+import { getProject, listProjects } from "../services/project-profiles.js";
+import { randomUUID } from "crypto";
+import type { WsBridge } from "../services/ws-bridge.js";
+import type {
+  BrowserIncomingMessage,
+  CLIAssistantMessage,
+  CLIResultMessage,
+  PermissionRequest,
+} from "@companion/shared";
+
+const log = createLogger("telegram-bridge");
+
+// ─── File path detection (Phase 14) ─────────────────────────────────────────
+
+/**
+ * Extract backtick-wrapped file paths from assistant message text.
+ * Matches patterns like `src/index.ts`, `.rune/plan.md`, `packages/foo/bar.ts`.
+ * Returns unique paths only, limited to 5.
+ */
+function extractFilePaths(text: string): string[] {
+  // Match backtick-wrapped tokens that look like file paths (contain / or . with extension)
+  const regex = /`([^`\n]+\.[a-zA-Z0-9]{1,10}[^`\n]*)`/g;
+  const seen = new Set<string>();
+  const results: string[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text)) !== null) {
+    const candidate = match[1]!.trim();
+    // Must contain a path separator or start with . to be a file path
+    if ((candidate.includes("/") || candidate.startsWith(".")) && !seen.has(candidate)) {
+      // Skip URLs and other non-file patterns
+      if (!candidate.startsWith("http") && candidate.length < 200) {
+        seen.add(candidate);
+        results.push(candidate);
+        if (results.length >= 5) break;
+      }
+    }
+  }
+
+  return results;
+}
+
+// ─── Chat-Session Mapping ───────────────────────────────────────────────────
+
+interface ChatMapping {
+  sessionId: string;
+  projectSlug: string;
+  model: string;
+  topicId?: number;
+}
+
+/** Per-session panel + idle config stored in memory */
+interface SessionConfig {
+  /** Telegram message_id of the settings panel message (for editing) */
+  panelMessageId?: number;
+  /** Idle timeout in ms (0 = never) */
+  idleTimeoutMs: number;
+  /** Idle timeout timer handle */
+  idleTimer?: ReturnType<typeof setTimeout>;
+}
+
+/** Permission batch to avoid spamming */
+interface PermBatch {
+  perms: Array<{ requestId: string; toolName: string; description?: string }>;
+  timer: ReturnType<typeof setTimeout>;
+  sessionId: string;
+}
+
+// ─── Status emoji helpers ────────────────────────────────────────────────────
+
+export function statusEmoji(status: string): string {
+  switch (status) {
+    case "starting":
+    case "waiting":
+      return "🟡";
+    case "idle":
+      return "🟢";
+    case "running":
+    case "busy":
+    case "compacting":
+      return "🔵";
+    case "ended":
+      return "⚫";
+    case "error":
+      return "🔴";
+    default:
+      return "⚪";
+  }
+}
+
+// ─── TelegramBridge ─────────────────────────────────────────────────────────
+
+export class TelegramBridge {
+  readonly bot: Bot;
+  readonly wsBridge: WsBridge;
+  readonly config: BotConfig;
+  private streamHandler: StreamHandler;
+
+  /** chatId:topicId → mapping */
+  private mappings = new Map<string, ChatMapping>();
+  /** sessionId → per-session config (panel msg id, idle timeout, etc.) */
+  private sessionConfigs = new Map<string, SessionConfig>();
+  /** chatId:topicId → permission batch */
+  private permBatches = new Map<string, PermBatch>();
+  /** sessionId → unsubscribe function */
+  private subscriptions = new Map<string, () => void>();
+  /** sessionIds that already received a compact warning (prevent spam) */
+  private compactWarningSent = new Set<string>();
+  /** sessionId → stream-only subscriber key (chatId:topicId) — for /stream without owning the session */
+  private streamSubscriptions = new Map<string, string>();
+
+  constructor(wsBridge: WsBridge, config: BotConfig) {
+    this.wsBridge = wsBridge;
+    this.config = config;
+    this.bot = createBot(config);
+    this.streamHandler = new StreamHandler(this.bot.api);
+
+    // Register command handlers
+    registerSessionCommands(this);
+    registerControlCommands(this);
+    registerInfoCommands(this);
+    registerConfigCommands(this);
+    registerPanelCommands(this);
+    registerUtilityCommands(this);
+
+    // Handle text messages (not commands)
+    this.bot.on("message:text", async (ctx) => {
+      if (ctx.message.text.startsWith("/")) return; // Skip unregistered commands
+      await this.handleTextMessage(ctx);
+    });
+
+    // Load persisted mappings
+    this.loadMappings();
+  }
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────
+
+  async start(): Promise<void> {
+    await registerCommands(this.bot);
+    this.bot.start({
+      onStart: () => {
+        log.info("Bot started polling", { botId: this.config.botId, label: this.config.label });
+      },
+    });
+  }
+
+  async stop(): Promise<void> {
+    // Unsubscribe from all sessions
+    for (const unsub of this.subscriptions.values()) {
+      unsub();
+    }
+    this.subscriptions.clear();
+
+    // Clear permission batches
+    for (const batch of this.permBatches.values()) {
+      clearTimeout(batch.timer);
+    }
+    this.permBatches.clear();
+
+    // Clear idle timers
+    for (const cfg of this.sessionConfigs.values()) {
+      if (cfg.idleTimer) clearTimeout(cfg.idleTimer);
+    }
+    this.sessionConfigs.clear();
+
+    await this.bot.stop();
+    log.info("Bot stopped", { botId: this.config.botId });
+  }
+
+  // ── Session config (panel + idle) ────────────────────────────────────
+
+  getSessionConfig(sessionId: string): SessionConfig {
+    let cfg = this.sessionConfigs.get(sessionId);
+    if (!cfg) {
+      cfg = { idleTimeoutMs: 3_600_000 }; // default 1h
+      this.sessionConfigs.set(sessionId, cfg);
+    }
+    return cfg;
+  }
+
+  setSessionPanelMessageId(sessionId: string, messageId: number): void {
+    this.getSessionConfig(sessionId).panelMessageId = messageId;
+  }
+
+  setIdleTimeout(sessionId: string, ms: number): void {
+    const cfg = this.getSessionConfig(sessionId);
+    cfg.idleTimeoutMs = ms;
+    // Persist to DB
+    this.persistIdleTimeout(sessionId, ms);
+  }
+
+  private persistIdleTimeout(sessionId: string, ms: number): void {
+    try {
+      const db = getDb();
+      db.update(telegramSessionMappings)
+        .set({
+          idleTimeoutEnabled: ms > 0,
+          idleTimeoutMs: ms,
+        })
+        .where(eq(telegramSessionMappings.sessionId, sessionId))
+        .run();
+    } catch (err) {
+      log.error("Failed to persist idle timeout", { sessionId, error: String(err) });
+    }
+  }
+
+  /** Reset the idle timer for a session. Called on user message + result events. */
+  resetIdleTimer(sessionId: string, chatId: number, topicId?: number): void {
+    const cfg = this.getSessionConfig(sessionId);
+
+    if (cfg.idleTimer) {
+      clearTimeout(cfg.idleTimer);
+      cfg.idleTimer = undefined;
+    }
+
+    if (cfg.idleTimeoutMs <= 0) return;
+
+    cfg.idleTimer = setTimeout(async () => {
+      cfg.idleTimer = undefined;
+      const session = this.wsBridge.getSession(sessionId);
+      if (!session) return;
+
+      log.info("Idle timeout expired, stopping session", { sessionId, idleMs: cfg.idleTimeoutMs });
+      this.killSession(sessionId);
+      this.removeMapping(chatId, topicId);
+
+      const minutes = Math.round(cfg.idleTimeoutMs / 60_000);
+      const label = minutes >= 60 ? `${Math.round(minutes / 60)}h` : `${minutes}m`;
+      await this.bot.api
+        .sendMessage(chatId, `⏰ Session idle for ${label}, shutting down.`, {
+          message_thread_id: topicId,
+        })
+        .catch(() => {});
+    }, cfg.idleTimeoutMs);
+  }
+
+  // ── Mapping management ────────────────────────────────────────────────
+
+  private mapKey(chatId: number, topicId?: number): string {
+    return `${chatId}:${topicId ?? 0}`;
+  }
+
+  getMapping(chatId: number, topicId?: number): ChatMapping | undefined {
+    return this.mappings.get(this.mapKey(chatId, topicId));
+  }
+
+  setMapping(chatId: number, topicId: number | undefined, mapping: ChatMapping): void {
+    this.mappings.set(this.mapKey(chatId, topicId), mapping);
+    this.persistMapping(chatId, topicId, mapping);
+  }
+
+  removeMapping(chatId: number, topicId?: number): void {
+    this.mappings.delete(this.mapKey(chatId, topicId));
+  }
+
+  // ── Session management ────────────────────────────────────────────────
+
+  async startSessionForChat(
+    ctx: Context,
+    projectSlug: string,
+    opts?: { resume?: boolean; cliSessionId?: string },
+  ): Promise<void> {
+    const chatId = ctx.chat!.id;
+    const topicId = ctx.message?.message_thread_id ?? (ctx.callbackQuery?.message as { message_thread_id?: number })?.message_thread_id;
+
+    const project = getProject(projectSlug);
+    if (!project) {
+      await ctx.reply(`Project <code>${escapeHTML(projectSlug)}</code> not found.`, {
+        parse_mode: "HTML",
+      });
+      return;
+    }
+
+    // Kill existing session if any
+    const existing = this.getMapping(chatId, topicId);
+    if (existing) {
+      this.killSession(existing.sessionId);
+    }
+
+    try {
+      const sessionId = await this.wsBridge.startSession({
+        projectSlug: project.slug,
+        cwd: project.dir,
+        model: project.defaultModel,
+        permissionMode: project.permissionMode,
+        source: "telegram",
+        resume: opts?.resume,
+        cliSessionId: opts?.cliSessionId,
+      });
+
+      const mapping: ChatMapping = {
+        sessionId,
+        projectSlug: project.slug,
+        model: project.defaultModel,
+      };
+
+      this.setMapping(chatId, topicId, mapping);
+      this.subscribeToSession(sessionId, chatId, topicId);
+
+      // Send settings panel (includes status + inline keyboard)
+      const panelMsg = await this.sendSettingsPanel(chatId, topicId, sessionId, project.name, project.defaultModel);
+      if (panelMsg) {
+        this.setSessionPanelMessageId(sessionId, panelMsg.message_id);
+      }
+
+      log.info("Session started from Telegram", {
+        chatId,
+        topicId,
+        sessionId,
+        project: project.slug,
+        resume: opts?.resume ?? false,
+      });
+    } catch (err) {
+      log.error("Failed to start session", { error: String(err) });
+      await ctx.reply(`Failed to start session: ${String(err)}`);
+    }
+  }
+
+  /** Build and send (or edit) the settings panel message */
+  async sendSettingsPanel(
+    chatId: number,
+    topicId: number | undefined,
+    sessionId: string,
+    projectName: string,
+    model: string,
+    editMessageId?: number,
+  ): Promise<{ message_id: number } | undefined> {
+    const session = this.wsBridge.getSession(sessionId);
+    const cfg = this.getSessionConfig(sessionId);
+
+    const status = session?.state.status ?? "starting";
+    const cost = session?.state.total_cost_usd ?? 0;
+    const turns = session?.state.num_turns ?? 0;
+    const updatedAt = new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
+
+    const aa = session?.autoApproveConfig;
+    const aaLabel = !aa?.enabled ? "Off" : `${aa.timeoutSeconds}s`;
+    const idleMs = cfg.idleTimeoutMs;
+    const idleLabel = idleMs <= 0 ? "Never" : idleMs === 1_800_000 ? "30m" : idleMs === 3_600_000 ? "1h" : idleMs === 14_400_000 ? "4h" : idleMs === 43_200_000 ? "12h" : `${Math.round(idleMs / 60_000)}m`;
+    const permMode = session?.state.permissionMode ?? "default";
+
+    // Context meter
+    const state = session?.state;
+    let contextStr = "";
+    if (state) {
+      const totalTokens = state.total_input_tokens + state.total_output_tokens + state.cache_read_tokens;
+      if (totalTokens > 0) {
+        const maxTokens = state.model.includes("haiku") ? 200_000 : 1_000_000;
+        const pct = Math.min(100, Math.round((totalTokens / maxTokens) * 100));
+        contextStr = ` · Context: ${pct}%`;
+      }
+    }
+
+    const text = [
+      `<b>${escapeHTML(projectName)}</b> · <code>${escapeHTML(model)}</code> · ${statusEmoji(status)} ${status}`,
+      `$${cost.toFixed(4)} · ${turns} turns · Updated ${updatedAt}${contextStr}`,
+      `Auto-Approve: <b>${aaLabel}</b> · Timeout: <b>${idleLabel}</b>`,
+    ].join("\n");
+
+    // Build keyboard with styled buttons (Telegram Bot API style field)
+    type BtnStyle = "danger" | "success" | "primary" | undefined;
+    const btn = (text: string, data: string, style?: BtnStyle) => ({
+      text,
+      callback_data: data,
+      ...(style ? { style } : {}),
+    });
+
+    const aaOff = !aa?.enabled;
+    const aa15 = aa?.enabled && aa.timeoutSeconds === 15;
+    const aa30 = aa?.enabled && aa.timeoutSeconds === 30;
+    const aa60 = aa?.enabled && aa.timeoutSeconds === 60;
+    const aaSafe = permMode === "bypassPermissions";
+
+    const iNever = idleMs <= 0;
+    const i30m = idleMs === 1_800_000;
+    const i1h = idleMs === 3_600_000;
+    const i4h = idleMs === 14_400_000;
+    const i12h = idleMs === 43_200_000;
+
+    const keyboard = {
+      inline_keyboard: [
+        // Row 1: Model + Status
+        [
+          btn(`Model: ${model}`, `panel:model:${sessionId}`, "primary"),
+          btn("Status", `panel:status:${sessionId}`),
+        ],
+        // Row 2: Auto-approve presets
+        [
+          btn(`Off${aaOff ? " ✓" : ""}`, `panel:aa:off:${sessionId}`, aaOff ? "success" : undefined),
+          btn(`15s${aa15 ? " ✓" : ""}`, `panel:aa:15:${sessionId}`, aa15 ? "success" : undefined),
+          btn(`30s${aa30 ? " ✓" : ""}`, `panel:aa:30:${sessionId}`, aa30 ? "success" : undefined),
+          btn(`60s${aa60 ? " ✓" : ""}`, `panel:aa:60:${sessionId}`, aa60 ? "success" : undefined),
+          btn(`🛡 Safe${aaSafe ? " ✓" : ""}`, `panel:aa:safe:${sessionId}`, aaSafe ? "danger" : undefined),
+        ],
+        // Row 3: Idle timeout presets
+        [
+          btn(`Never${iNever ? " ✓" : ""}`, `panel:idle:0:${sessionId}`, iNever ? "success" : undefined),
+          btn(`30m${i30m ? " ✓" : ""}`, `panel:idle:1800:${sessionId}`, i30m ? "success" : undefined),
+          btn(`1h${i1h ? " ✓" : ""}`, `panel:idle:3600:${sessionId}`, i1h ? "success" : undefined),
+          btn(`4h${i4h ? " ✓" : ""}`, `panel:idle:14400:${sessionId}`, i4h ? "success" : undefined),
+          btn(`12h${i12h ? " ✓" : ""}`, `panel:idle:43200:${sessionId}`, i12h ? "success" : undefined),
+        ],
+        // Row 4: Actions
+        [
+          btn("↩ Back", `panel:back:${sessionId}`),
+          btn("Cancel", `panel:cancel:${sessionId}`),
+          btn("Stop", `panel:stop:${sessionId}`, "danger"),
+        ],
+      ],
+    };
+
+    // Cast raw keyboard for grammY (style field not in grammY types yet)
+    const replyMarkup = keyboard as unknown as import("grammy").InlineKeyboard;
+
+    try {
+      if (editMessageId) {
+        await this.bot.api.editMessageText(chatId, editMessageId, text, {
+          parse_mode: "HTML",
+          reply_markup: replyMarkup,
+        });
+        return { message_id: editMessageId };
+      } else {
+        const sent = await this.bot.api.sendMessage(chatId, text, {
+          parse_mode: "HTML",
+          reply_markup: replyMarkup,
+          message_thread_id: topicId,
+        });
+        return { message_id: sent.message_id };
+      }
+    } catch (err) {
+      log.error("Failed to send settings panel", { sessionId, error: String(err) });
+      return undefined;
+    }
+  }
+
+  killSession(sessionId: string): void {
+    // Clear idle timer
+    const cfg = this.sessionConfigs.get(sessionId);
+    if (cfg?.idleTimer) {
+      clearTimeout(cfg.idleTimer);
+      cfg.idleTimer = undefined;
+    }
+
+    this.wsBridge.killSession(sessionId);
+
+    const unsub = this.subscriptions.get(sessionId);
+    if (unsub) {
+      unsub();
+      this.subscriptions.delete(sessionId);
+    }
+
+    this.sessionConfigs.delete(sessionId);
+    this.compactWarningSent.delete(sessionId);
+    this.streamSubscriptions.delete(sessionId);
+  }
+
+  // ── Subscribe to CLI output ───────────────────────────────────────────
+
+  subscribeToSession(sessionId: string, chatId: number, topicId?: number): void {
+    const subscriberId = `telegram:${this.config.botId}:${chatId}:${topicId ?? 0}`;
+
+    const unsub = this.wsBridge.subscribe(sessionId, subscriberId, (msg) => {
+      this.handleSessionMessage(chatId, topicId, sessionId, msg as BrowserIncomingMessage);
+    });
+
+    this.subscriptions.set(sessionId, unsub);
+  }
+
+  /**
+   * Attach a chat to an existing session for stream-only observation.
+   * Does NOT create a new CLI process. Does NOT set a full mapping.
+   * The existing session keeps running normally; this just forwards events.
+   */
+  attachStreamToSession(sessionId: string, chatId: number, topicId?: number): boolean {
+    const session = this.wsBridge.getSession(sessionId);
+    if (!session) return false;
+
+    const subscriberId = `stream:${this.config.botId}:${chatId}:${topicId ?? 0}`;
+
+    // Remove any existing stream subscription for this chat
+    const existingKey = `${chatId}:${topicId ?? 0}`;
+    const existingSessionId = this.streamSubscriptions.get(existingKey);
+    if (existingSessionId) {
+      this.wsBridge.subscribe(existingSessionId, subscriberId, () => {})(); // unsubscribe immediately
+    }
+
+    const unsub = this.wsBridge.subscribe(sessionId, subscriberId, (msg) => {
+      this.handleSessionMessage(chatId, topicId, sessionId, msg as BrowserIncomingMessage);
+    });
+
+    // Track this stream subscription so we can detach it
+    const chatKey = `${chatId}:${topicId ?? 0}`;
+    this.streamSubscriptions.set(chatKey, sessionId);
+
+    // Store the unsubscribe function keyed by chatKey+sessionId
+    const unsubKey = `stream:${chatKey}:${sessionId}`;
+    this.subscriptions.set(unsubKey, unsub);
+
+    log.info("Stream subscriber attached", { sessionId, chatId, topicId });
+    return true;
+  }
+
+  /**
+   * Detach a stream-only subscription for a chat.
+   * Does NOT kill the session. Session continues running normally.
+   */
+  detachStream(chatId: number, topicId?: number): string | undefined {
+    const chatKey = `${chatId}:${topicId ?? 0}`;
+    const sessionId = this.streamSubscriptions.get(chatKey);
+    if (!sessionId) return undefined;
+
+    const unsubKey = `stream:${chatKey}:${sessionId}`;
+    const unsub = this.subscriptions.get(unsubKey);
+    if (unsub) {
+      unsub();
+      this.subscriptions.delete(unsubKey);
+    }
+
+    this.streamSubscriptions.delete(chatKey);
+    log.info("Stream subscriber detached", { sessionId, chatId, topicId });
+    return sessionId;
+  }
+
+  /** Get the sessionId this chat is stream-attached to (if any) */
+  getStreamMapping(chatId: number, topicId?: number): string | undefined {
+    return this.streamSubscriptions.get(`${chatId}:${topicId ?? 0}`);
+  }
+
+  private async handleSessionMessage(
+    chatId: number,
+    topicId: number | undefined,
+    sessionId: string,
+    msg: BrowserIncomingMessage,
+  ): Promise<void> {
+    try {
+      switch (msg.type) {
+        case "assistant":
+          await this.handleAssistantMessage(chatId, topicId, msg);
+          break;
+
+        case "stream_event":
+          await this.handleStreamEvent(chatId, topicId, msg);
+          break;
+
+        case "result":
+          await this.handleResultMessage(chatId, topicId, sessionId, msg.data);
+          break;
+
+        case "permission_request":
+          await this.handlePermissionRequest(chatId, topicId, sessionId, msg.request);
+          break;
+
+        case "session_init": {
+          // Store the cliSessionId in telegram_session_mappings when CLI initializes
+          const cliSessionId = (msg.session as { session_id?: string })?.session_id;
+          if (cliSessionId) {
+            this.updateMappingCliSessionId(sessionId, cliSessionId);
+          }
+          break;
+        }
+
+        case "context_update":
+          await this.handleContextUpdate(chatId, topicId, sessionId, msg.contextUsedPercent);
+          break;
+
+        case "status_change":
+          if (msg.status === "ended") {
+            this.removeMapping(chatId, topicId);
+          }
+          break;
+
+        case "error":
+          await this.bot.api.sendMessage(chatId, `⚠️ ${escapeHTML(msg.message)}`, {
+            parse_mode: "HTML",
+            message_thread_id: topicId,
+          });
+          break;
+      }
+    } catch (err) {
+      log.error("Error handling session message", { chatId, error: String(err) });
+    }
+  }
+
+  // ── Message handlers ──────────────────────────────────────────────────
+
+  private async handleTextMessage(ctx: Context): Promise<void> {
+    const chatId = ctx.chat!.id;
+    const topicId = ctx.message?.message_thread_id;
+    const text = ctx.message?.text ?? "";
+
+    if (!text.trim()) return;
+
+    const mapping = this.getMapping(chatId, topicId);
+
+    if (!mapping) {
+      // Auto-connect: if only 1 project, start session automatically
+      const projects = listProjects();
+      if (projects.length === 1) {
+        await this.startSessionForChat(ctx, projects[0]!.slug);
+        // Retry sending the message after session starts
+        setTimeout(() => {
+          const newMapping = this.getMapping(chatId, topicId);
+          if (newMapping) {
+            this.wsBridge.sendUserMessage(newMapping.sessionId, text, "telegram");
+          }
+        }, 2000);
+        return;
+      }
+
+      await ctx.reply("No active session. Use /start to select a project.");
+      return;
+    }
+
+    // Check if session is still alive
+    const activeSession = this.wsBridge.getSession(mapping.sessionId);
+    if (!activeSession) {
+      // Session died — clear stale mapping and notify user
+      this.removeMapping(chatId, topicId);
+      await ctx.reply("⚠️ Session expired. Use /start to begin a new session.");
+      return;
+    }
+
+    // Store message
+    storeMessage({
+      id: randomUUID(),
+      sessionId: mapping.sessionId,
+      role: "user",
+      content: text,
+      source: "telegram",
+      sourceId: String(ctx.message?.message_id),
+    });
+
+    // Send to CLI
+    this.wsBridge.sendUserMessage(mapping.sessionId, text, "telegram");
+
+    // User is active — clear idle timer
+    const cfg = this.getSessionConfig(mapping.sessionId);
+    if (cfg.idleTimer) {
+      clearTimeout(cfg.idleTimer);
+      cfg.idleTimer = undefined;
+    }
+
+    // Start streaming response
+    await this.streamHandler.startStream(chatId, topicId);
+  }
+
+  private async handleAssistantMessage(
+    chatId: number,
+    topicId: number | undefined,
+    msg: BrowserIncomingMessage & { type: "assistant" },
+  ): Promise<void> {
+    // Extract text from content blocks
+    const textParts: string[] = [];
+    for (const block of msg.message?.content ?? []) {
+      if (block.type === "text" && block.text) {
+        textParts.push(block.text);
+      }
+    }
+
+    if (textParts.length === 0) return;
+
+    const text = textParts.join("\n");
+    await this.streamHandler.appendText(chatId, text, topicId);
+
+    // Phase 14: detect file path references and add inline "View File" buttons
+    const filePaths = extractFilePaths(text);
+    if (filePaths.length > 0) {
+      // Find the sessionId for this chat
+      const mapping = this.getMapping(chatId, topicId);
+      if (mapping) {
+        const sessionId = mapping.sessionId;
+        const session = this.wsBridge.getSession(sessionId);
+        const cwd = session?.state.cwd;
+        if (cwd) {
+          const rows = filePaths.slice(0, 5).map((fp) => [
+            { text: `📂 ${fp}`, callback_data: `viewfile:${sessionId}:${fp}` },
+          ]);
+
+          await this.bot.api
+            .sendMessage(chatId, "📂 <b>Referenced files:</b>", {
+              parse_mode: "HTML",
+              message_thread_id: topicId,
+              reply_markup: { inline_keyboard: rows } as unknown as import("grammy").InlineKeyboard,
+            })
+            .catch(() => {});
+        }
+      }
+    }
+  }
+
+  private async handleStreamEvent(
+    chatId: number,
+    topicId: number | undefined,
+    msg: BrowserIncomingMessage & { type: "stream_event" },
+  ): Promise<void> {
+    // Extract text from stream event
+    const event = msg.event as { type?: string; text?: string; delta?: { text?: string } };
+    const text = event?.delta?.text ?? event?.text;
+
+    if (text) {
+      await this.streamHandler.appendText(chatId, text, topicId);
+    }
+  }
+
+  private async handleResultMessage(
+    chatId: number,
+    topicId: number | undefined,
+    sessionId: string,
+    result: CLIResultMessage,
+  ): Promise<void> {
+    // Complete the stream
+    await this.streamHandler.completeStream(chatId, topicId);
+
+    // Reset idle timer — session is now idle, start countdown
+    this.resetIdleTimer(sessionId, chatId, topicId);
+
+    // Send result summary if it was an error
+    if (result.is_error) {
+      const errorText = result.result ?? result.errors?.join("\n") ?? "Unknown error";
+      await this.bot.api.sendMessage(
+        chatId,
+        `⚠️ <b>Error:</b> ${escapeHTML(errorText)}`,
+        { parse_mode: "HTML", message_thread_id: topicId },
+      );
+    }
+  }
+
+  private async handleContextUpdate(
+    chatId: number,
+    topicId: number | undefined,
+    sessionId: string,
+    contextUsedPercent: number,
+  ): Promise<void> {
+    if (contextUsedPercent < 80) return;
+    if (this.compactWarningSent.has(sessionId)) return;
+
+    this.compactWarningSent.add(sessionId);
+    await this.bot.api.sendMessage(
+      chatId,
+      `⚠️ <b>Context ${Math.round(contextUsedPercent)}% full</b> — consider running <code>/compact</code> to compress history.`,
+      { parse_mode: "HTML", message_thread_id: topicId },
+    ).catch(() => {});
+  }
+
+  private async handlePermissionRequest(
+    chatId: number,
+    topicId: number | undefined,
+    sessionId: string,
+    request: PermissionRequest,
+  ): Promise<void> {
+    const key = this.mapKey(chatId, topicId);
+
+    // Batch permissions: collect in 2s window
+    const existing = this.permBatches.get(key);
+    if (existing && existing.sessionId === sessionId) {
+      existing.perms.push({
+        requestId: request.request_id,
+        toolName: request.tool_name,
+        description: request.description,
+      });
+      return;
+    }
+
+    // Start new batch
+    const batch: PermBatch = {
+      perms: [{
+        requestId: request.request_id,
+        toolName: request.tool_name,
+        description: request.description,
+      }],
+      sessionId,
+      timer: setTimeout(() => {
+        this.flushPermBatch(chatId, topicId, key);
+      }, 2000),
+    };
+
+    this.permBatches.set(key, batch);
+  }
+
+  private async flushPermBatch(
+    chatId: number,
+    topicId: number | undefined,
+    key: string,
+  ): Promise<void> {
+    const batch = this.permBatches.get(key);
+    if (!batch) return;
+    this.permBatches.delete(key);
+
+    const { perms, sessionId } = batch;
+
+    // Format permission message
+    const lines = perms.map((p) => formatPermission(p.toolName, p.description));
+    const text = lines.join("\n\n");
+
+    // Build keyboard with styled allow/deny buttons (Telegram Bot API style field)
+    type PermBtn = { text: string; callback_data: string; style?: string };
+    const permRows: PermBtn[][] = [];
+
+    if (perms.length === 1) {
+      permRows.push([
+        { text: "✅ Allow", callback_data: `perm:allow:${sessionId}:${perms[0]!.requestId}`, style: "success" },
+        { text: "❌ Deny", callback_data: `perm:deny:${sessionId}:${perms[0]!.requestId}`, style: "danger" },
+      ]);
+    } else {
+      for (const p of perms) {
+        permRows.push([
+          { text: `✅ ${p.toolName}`, callback_data: `perm:allow:${sessionId}:${p.requestId}`, style: "success" },
+          { text: "❌", callback_data: `perm:deny:${sessionId}:${p.requestId}`, style: "danger" },
+        ]);
+      }
+    }
+
+    await this.bot.api.sendMessage(chatId, text, {
+      parse_mode: "HTML",
+      reply_markup: { inline_keyboard: permRows } as unknown as import("grammy").InlineKeyboard,
+      message_thread_id: topicId,
+    }).catch((err) => {
+      log.error("Failed to send permission batch", { error: String(err) });
+    });
+  }
+
+  // ── Persistence ───────────────────────────────────────────────────────
+
+  private loadMappings(): void {
+    try {
+      const db = getDb();
+      const rows = db.select().from(telegramSessionMappings).all();
+
+      let loaded = 0;
+      let stale = 0;
+
+      for (const row of rows) {
+        // Only load mappings for sessions that are still active in memory
+        const activeSession = this.wsBridge.getSession(row.sessionId);
+        if (activeSession) {
+          const key = this.mapKey(row.chatId, row.topicId ?? undefined);
+          this.mappings.set(key, {
+            sessionId: row.sessionId,
+            projectSlug: row.projectSlug,
+            model: row.model,
+            topicId: row.topicId ?? undefined,
+          });
+          loaded++;
+        } else {
+          // Remove stale mapping from DB
+          db.delete(telegramSessionMappings)
+            .where(eq(telegramSessionMappings.id, row.id))
+            .run();
+          stale++;
+        }
+      }
+
+      log.info("Loaded Telegram mappings", { loaded, stale, total: rows.length });
+    } catch (err) {
+      log.error("Failed to load mappings", { error: String(err) });
+    }
+  }
+
+  private updateMappingCliSessionId(sessionId: string, cliSessionId: string): void {
+    try {
+      const db = getDb();
+      db.update(telegramSessionMappings)
+        .set({ cliSessionId })
+        .where(eq(telegramSessionMappings.sessionId, sessionId))
+        .run();
+    } catch (err) {
+      log.error("Failed to update mapping cliSessionId", { sessionId, error: String(err) });
+    }
+  }
+
+  private persistMapping(chatId: number, topicId: number | undefined, mapping: ChatMapping): void {
+    try {
+      const db = getDb();
+
+      // Upsert: delete existing for this chat+topic, then insert
+      db.delete(telegramSessionMappings)
+        .where(
+          and(
+            eq(telegramSessionMappings.chatId, chatId),
+            topicId !== undefined
+              ? eq(telegramSessionMappings.topicId, topicId)
+              : isNull(telegramSessionMappings.topicId),
+          ),
+        )
+        .run();
+
+      db.insert(telegramSessionMappings)
+        .values({
+          chatId,
+          sessionId: mapping.sessionId,
+          projectSlug: mapping.projectSlug,
+          model: mapping.model,
+          topicId: topicId ?? null,
+          createdAt: new Date(),
+          lastActivityAt: new Date(),
+        })
+        .run();
+    } catch (err) {
+      log.error("Failed to persist mapping", { error: String(err) });
+    }
+  }
+}

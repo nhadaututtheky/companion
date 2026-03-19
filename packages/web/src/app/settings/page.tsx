@@ -1,0 +1,871 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import {
+  ArrowLeft,
+  Key,
+  Globe,
+  Robot,
+  FloppyDisk,
+  Check,
+  TelegramLogo,
+  PaintBrush,
+  Gear,
+  Plus,
+  Eye,
+  EyeSlash,
+  ArrowsClockwise,
+} from "@phosphor-icons/react";
+import { useUiStore } from "@/lib/stores/ui-store";
+import { api } from "@/lib/api-client";
+import { toast } from "sonner";
+import Link from "next/link";
+import { TelegramBotCard } from "@/components/settings/telegram-bot-card";
+import { TelegramStreaming } from "@/components/settings/telegram-streaming";
+import { TelegramStatus } from "@/components/settings/telegram-status";
+import { TelegramPreview } from "@/components/settings/telegram-preview";
+
+// ── Shared primitives ─────────────────────────────────────────────────────────
+
+function SettingSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="p-5 rounded-xl"
+      style={{
+        background: "var(--color-bg-card)",
+        border: "1px solid var(--color-border)",
+      }}
+    >
+      <h2
+        className="text-sm font-semibold mb-1"
+        style={{ color: "var(--color-text-primary)" }}
+      >
+        {title}
+      </h2>
+      {description && (
+        <p className="text-xs mb-4" style={{ color: "var(--color-text-muted)" }}>
+          {description}
+        </p>
+      )}
+      {children}
+    </div>
+  );
+}
+
+function InputField({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  placeholder?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label
+        className="text-xs font-medium"
+        style={{ color: "var(--color-text-secondary)" }}
+      >
+        {label}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="px-3 py-2 rounded-lg text-sm outline-none transition-colors"
+        style={{
+          background: "var(--color-bg-elevated)",
+          border: "1px solid var(--color-border)",
+          color: "var(--color-text-primary)",
+        }}
+      />
+    </div>
+  );
+}
+
+// ── Tab types ────────────────────────────────────────────────────────────────
+
+type Tab = "general" | "telegram" | "appearance";
+
+const TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
+  { id: "general", label: "General", icon: <Gear size={15} weight="bold" /> },
+  { id: "telegram", label: "Telegram", icon: <TelegramLogo size={15} weight="fill" /> },
+  { id: "appearance", label: "Appearance", icon: <PaintBrush size={15} weight="bold" /> },
+];
+
+// ── Bot config types ─────────────────────────────────────────────────────────
+
+interface BotConfig {
+  id: string;
+  label: string;
+  role: "claude" | "anti" | "general";
+  enabled: boolean;
+  allowedChatIds: number[];
+  allowedUserIds: number[];
+}
+
+interface RunningBot {
+  botId: string;
+  label: string;
+  role: string;
+  running: boolean;
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+
+function GeneralTab() {
+  const [apiKey, setApiKey] = useState("");
+  const [serverUrl, setServerUrl] = useState("");
+  const [saved, setSaved] = useState(false);
+  const [serverStatus, setServerStatus] = useState<"unknown" | "online" | "offline">("unknown");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setApiKey(localStorage.getItem("api_key") ?? "");
+    setServerUrl(localStorage.getItem("server_url") ?? "");
+  }, []);
+
+  useEffect(() => {
+    api.health()
+      .then(() => setServerStatus("online"))
+      .catch(() => setServerStatus("offline"));
+  }, []);
+
+  const handleSave = useCallback(() => {
+    localStorage.setItem("api_key", apiKey);
+    localStorage.setItem("server_url", serverUrl);
+    setSaved(true);
+    toast.success("Settings saved");
+    setTimeout(() => setSaved(false), 2000);
+  }, [apiKey, serverUrl]);
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Server Connection */}
+      <SettingSection
+        title="Server Connection"
+        description="Configure the Companion server connection."
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <Globe size={14} weight="bold" style={{ color: "var(--color-text-muted)" }} />
+            <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+              Status:
+            </span>
+            <span
+              className="text-xs font-semibold"
+              style={{
+                color:
+                  serverStatus === "online"
+                    ? "var(--color-success)"
+                    : serverStatus === "offline"
+                      ? "var(--color-danger)"
+                      : "var(--color-text-muted)",
+              }}
+            >
+              {serverStatus === "online"
+                ? "Connected"
+                : serverStatus === "offline"
+                  ? "Offline"
+                  : "Checking..."}
+            </span>
+          </div>
+
+          <InputField
+            label="Server URL (leave empty for same-origin)"
+            value={serverUrl}
+            onChange={setServerUrl}
+            placeholder="http://localhost:3579"
+          />
+        </div>
+      </SettingSection>
+
+      {/* Authentication */}
+      <SettingSection
+        title="Authentication"
+        description="API key for authenticating with the server."
+      >
+        <div className="flex items-start gap-3">
+          <Key
+            size={16}
+            weight="bold"
+            style={{ color: "var(--color-text-muted)", marginTop: 8, flexShrink: 0 }}
+          />
+          <div className="flex-1">
+            <InputField
+              label="API Key"
+              value={apiKey}
+              onChange={setApiKey}
+              type="password"
+              placeholder="Enter your API key"
+            />
+          </div>
+        </div>
+      </SettingSection>
+
+      {/* Save button */}
+      <button
+        onClick={handleSave}
+        className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer"
+        style={{
+          background: saved ? "var(--color-success)" : "var(--color-accent)",
+          color: "#fff",
+          border: "none",
+        }}
+      >
+        {saved ? (
+          <>
+            <Check size={16} weight="bold" />
+            Saved
+          </>
+        ) : (
+          <>
+            <FloppyDisk size={16} weight="bold" />
+            Save Settings
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+
+function AppearanceTab() {
+  const theme = useUiStore((s) => s.theme);
+  const setTheme = useUiStore((s) => s.setTheme);
+
+  return (
+    <div className="flex flex-col gap-5">
+      <SettingSection title="Appearance">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-0.5">
+            <span
+              className="text-sm font-medium"
+              style={{ color: "var(--color-text-primary)" }}
+            >
+              Theme
+            </span>
+            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              Switch between light and dark mode
+            </span>
+          </div>
+          <button
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            style={{
+              background: "var(--color-bg-elevated)",
+              border: "1px solid var(--color-border)",
+              color: "var(--color-text-primary)",
+            }}
+          >
+            <Robot size={14} weight="bold" aria-hidden="true" />
+            {theme === "light" ? "Dark" : "Light"}
+          </button>
+        </div>
+      </SettingSection>
+    </div>
+  );
+}
+
+function TelegramTab() {
+  const [configs, setConfigs] = useState<BotConfig[]>([]);
+  const [running, setRunning] = useState<RunningBot[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedBotId, setExpandedBotId] = useState<string | null>(null);
+
+  // Add bot form state
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newLabel, setNewLabel] = useState("");
+  const [newRole, setNewRole] = useState<"claude" | "anti" | "general">("claude");
+  const [newToken, setNewToken] = useState("");
+  const [showNewToken, setShowNewToken] = useState(false);
+  const [newChatIds, setNewChatIds] = useState("");
+  const [newUserIds, setNewUserIds] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.telegram.bots();
+      setConfigs(res.data.configs as BotConfig[]);
+      setRunning(res.data.running);
+    } catch (err) {
+      toast.error(`Failed to load bots: ${String(err)}`);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  async function handleAddBot() {
+    if (!newLabel.trim() || !newToken.trim()) {
+      toast.error("Label and bot token are required");
+      return;
+    }
+
+    setAdding(true);
+    try {
+      const parsedChatIds = newChatIds
+        .split(",")
+        .map((s) => parseInt(s.trim(), 10))
+        .filter((n) => !isNaN(n));
+
+      const parsedUserIds = newUserIds
+        .split(",")
+        .map((s) => parseInt(s.trim(), 10))
+        .filter((n) => !isNaN(n));
+
+      await api.telegram.createBot({
+        label: newLabel,
+        role: newRole,
+        botToken: newToken,
+        allowedChatIds: parsedChatIds,
+        allowedUserIds: parsedUserIds,
+        enabled: true,
+      });
+
+      toast.success("Bot added");
+      setShowAddForm(false);
+      setNewLabel("");
+      setNewRole("claude");
+      setNewToken("");
+      setNewChatIds("");
+      setNewUserIds("");
+      await refresh();
+    } catch (err) {
+      toast.error(String(err));
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  const botOptions = configs.map((c) => ({ id: c.id, label: c.label }));
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Top row: 2 columns — Preview + Status/Streaming */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        {/* Left column */}
+        <SettingSection
+          title="Preview"
+          description="How your bot looks in Telegram."
+        >
+          <TelegramPreview />
+        </SettingSection>
+
+        {/* Right column — Status + Streaming stacked */}
+        <div className="flex flex-col gap-4">
+          <SettingSection title="Bot Status" description="Real-time status.">
+            <TelegramStatus />
+          </SettingSection>
+
+          {configs.length > 0 && (
+            <SettingSection
+              title="Session Streaming"
+              description="Stream session output to Telegram."
+            >
+              <div className="flex flex-col gap-3">
+                {configs.length > 1 && (
+                  <select
+                    value={expandedBotId ?? configs[0]?.id ?? ""}
+                    onChange={(e) => setExpandedBotId(e.target.value)}
+                    className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
+                    style={{
+                      background: "var(--color-bg-elevated)",
+                      border: "1px solid var(--color-border)",
+                      color: "var(--color-text-primary)",
+                    }}
+                  >
+                    {configs.map((c) => (
+                      <option key={c.id} value={c.id}>{c.label}</option>
+                    ))}
+                  </select>
+                )}
+                {(() => {
+                  const selectedId = expandedBotId ?? configs[0]?.id;
+                  const selectedBot = configs.find((c) => c.id === selectedId);
+                  if (!selectedBot) return null;
+                  return (
+                    <TelegramStreaming
+                      botId={selectedBot.id}
+                      botLabel={selectedBot.label}
+                      bots={botOptions}
+                    />
+                  );
+                })()}
+              </div>
+            </SettingSection>
+          )}
+
+          {/* Bot Management — same column */}
+          <SettingSection
+            title="Bot Management"
+            description="Add, configure, and control your Telegram bots."
+      >
+        <div className="flex flex-col gap-3">
+          {/* Add bot button */}
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer w-fit"
+            style={{
+              background: showAddForm ? "var(--color-bg-elevated)" : "var(--color-accent)",
+              border: "1px solid var(--color-border)",
+              color: showAddForm ? "var(--color-text-secondary)" : "#fff",
+            }}
+          >
+            <Plus size={12} weight="bold" aria-hidden="true" />
+            {showAddForm ? "Cancel" : "Add Bot"}
+          </button>
+
+          {/* Add bot form */}
+          {showAddForm && (
+            <div
+              className="flex flex-col gap-3 p-4 rounded-xl"
+              style={{
+                background: "var(--color-bg-elevated)",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              <h3 className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                New Bot
+              </h3>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+                  Label
+                </label>
+                <input
+                  type="text"
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  placeholder="My Claude Bot"
+                  className="px-3 py-2 rounded-lg text-sm outline-none"
+                  style={{
+                    background: "var(--color-bg-card)",
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+                  Role
+                </label>
+                <select
+                  value={newRole}
+                  onChange={(e) => setNewRole(e.target.value as "claude" | "anti" | "general")}
+                  className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
+                  style={{
+                    background: "var(--color-bg-card)",
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                >
+                  <option value="claude">Claude — handles Claude AI sessions</option>
+                  <option value="anti">Anti — human feedback / counterpoint</option>
+                  <option value="general">General — general purpose</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+                  Bot Token
+                </label>
+                <div className="relative">
+                  <input
+                    type={showNewToken ? "text" : "password"}
+                    value={newToken}
+                    onChange={(e) => setNewToken(e.target.value)}
+                    placeholder="1234567890:ABCdefGHI..."
+                    className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none font-mono"
+                    style={{
+                      background: "var(--color-bg-card)",
+                      border: "1px solid var(--color-border)",
+                      color: "var(--color-text-primary)",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewToken(!showNewToken)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-pointer"
+                    style={{ color: "var(--color-text-muted)" }}
+                    aria-label={showNewToken ? "Hide token" : "Show token"}
+                  >
+                    {showNewToken ? <EyeSlash size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+                  Allowed Chat IDs{" "}
+                  <span style={{ color: "var(--color-text-muted)" }}>(comma-separated, optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={newChatIds}
+                  onChange={(e) => setNewChatIds(e.target.value)}
+                  placeholder="-100123456789"
+                  className="px-3 py-2 rounded-lg text-sm outline-none font-mono"
+                  style={{
+                    background: "var(--color-bg-card)",
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+                  Admin User IDs{" "}
+                  <span style={{ color: "var(--color-text-muted)" }}>(comma-separated, only these users can use bot)</span>
+                </label>
+                <input
+                  type="text"
+                  value={newUserIds}
+                  onChange={(e) => setNewUserIds(e.target.value)}
+                  placeholder="123456789"
+                  className="px-3 py-2 rounded-lg text-sm outline-none font-mono"
+                  style={{
+                    background: "var(--color-bg-card)",
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                />
+                <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                  Get your ID: send /start to @userinfobot on Telegram
+                </span>
+              </div>
+
+              <button
+                onClick={handleAddBot}
+                disabled={adding}
+                className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold cursor-pointer"
+                style={{
+                  background: "var(--color-accent)",
+                  color: "#fff",
+                  border: "none",
+                  opacity: adding ? 0.7 : 1,
+                }}
+              >
+                {adding ? (
+                  <>
+                    <ArrowsClockwise size={12} className="animate-spin" aria-hidden="true" />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <Plus size={12} weight="bold" aria-hidden="true" />
+                    Add Bot
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* Bot list */}
+          {loading ? (
+            <div className="flex items-center gap-2 py-3" style={{ color: "var(--color-text-muted)" }}>
+              <ArrowsClockwise size={14} className="animate-spin" aria-hidden="true" />
+              <span className="text-xs">Loading bots...</span>
+            </div>
+          ) : configs.length === 0 ? (
+            <p className="text-xs py-2" style={{ color: "var(--color-text-muted)" }}>
+              No bots configured. Add one above.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {configs.map((config) => (
+                <TelegramBotCard
+                  key={config.id}
+                  config={config}
+                  running={running.find((r) => r.botId === config.id)}
+                  onRefresh={refresh}
+                  onDelete={(id) => setConfigs((prev) => prev.filter((c) => c.id !== id))}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+          </SettingSection>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────────
+
+function TelegramPreviewTab() {
+  return (
+    <SettingSection
+      title="Preview"
+      description="How your bot looks and what commands are available in Telegram."
+    >
+      <TelegramPreview />
+    </SettingSection>
+  );
+}
+
+function TelegramBotsTab() {
+  const [configs, setConfigs] = useState<BotConfig[]>([]);
+  const [running, setRunning] = useState<RunningBot[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newLabel, setNewLabel] = useState("");
+  const [newRole, setNewRole] = useState<"claude" | "anti" | "general">("claude");
+  const [newToken, setNewToken] = useState("");
+  const [showNewToken, setShowNewToken] = useState(false);
+  const [newChatIds, setNewChatIds] = useState("");
+  const [newUserIds, setNewUserIds] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.telegram.bots();
+      setConfigs(res.data.configs as BotConfig[]);
+      setRunning(res.data.running);
+    } catch (err) {
+      toast.error(`Failed to load bots: ${String(err)}`);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  async function handleAddBot() {
+    if (!newLabel.trim() || !newToken.trim()) {
+      toast.error("Label and bot token are required");
+      return;
+    }
+    setAdding(true);
+    try {
+      const parsedChatIds = newChatIds.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n));
+      const parsedUserIds = newUserIds.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n));
+      await api.telegram.createBot({
+        label: newLabel, role: newRole, botToken: newToken,
+        allowedChatIds: parsedChatIds, allowedUserIds: parsedUserIds, enabled: true,
+      });
+      toast.success("Bot added");
+      setShowAddForm(false);
+      setNewLabel(""); setNewRole("claude"); setNewToken(""); setNewChatIds(""); setNewUserIds("");
+      await refresh();
+    } catch (err) { toast.error(String(err)); } finally { setAdding(false); }
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      <SettingSection title="Bot Status" description="Real-time status of your Telegram bots.">
+        <TelegramStatus />
+      </SettingSection>
+
+      <SettingSection title="Bot Management" description="Add, configure, and control your Telegram bots.">
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer w-fit"
+            style={{
+              background: showAddForm ? "var(--color-bg-elevated)" : "var(--color-accent)",
+              border: "1px solid var(--color-border)",
+              color: showAddForm ? "var(--color-text-secondary)" : "#fff",
+            }}
+          >
+            <Plus size={12} weight="bold" aria-hidden="true" />
+            {showAddForm ? "Cancel" : "Add Bot"}
+          </button>
+
+          {showAddForm && (
+            <div className="flex flex-col gap-3 p-4 rounded-xl" style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}>
+              <InputField label="Label" value={newLabel} onChange={setNewLabel} placeholder="My Claude Bot" />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>Role</label>
+                <select value={newRole} onChange={(e) => setNewRole(e.target.value as "claude" | "anti" | "general")}
+                  className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
+                  style={{ background: "var(--color-bg-card)", border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}>
+                  <option value="claude">Claude</option>
+                  <option value="anti">Anti</option>
+                  <option value="general">General</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>Bot Token</label>
+                <div className="relative">
+                  <input type={showNewToken ? "text" : "password"} value={newToken} onChange={(e) => setNewToken(e.target.value)}
+                    placeholder="1234567890:ABCdefGHI..." className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none font-mono"
+                    style={{ background: "var(--color-bg-card)", border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }} />
+                  <button type="button" onClick={() => setShowNewToken(!showNewToken)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-pointer" style={{ color: "var(--color-text-muted)" }}
+                    aria-label={showNewToken ? "Hide" : "Show"}>
+                    {showNewToken ? <EyeSlash size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+              <InputField label="Allowed Chat IDs (comma-separated)" value={newChatIds} onChange={setNewChatIds} placeholder="-100123456789" />
+              <div className="flex flex-col gap-1.5">
+                <InputField label="Admin User IDs (comma-separated)" value={newUserIds} onChange={setNewUserIds} placeholder="123456789" />
+                <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>Get your ID: send /start to @userinfobot</span>
+              </div>
+              <button onClick={handleAddBot} disabled={adding}
+                className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold cursor-pointer"
+                style={{ background: "var(--color-accent)", color: "#fff", border: "none", opacity: adding ? 0.7 : 1 }}>
+                {adding ? <><ArrowsClockwise size={12} className="animate-spin" /> Adding...</> : <><Plus size={12} weight="bold" /> Add Bot</>}
+              </button>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="flex items-center gap-2 py-3" style={{ color: "var(--color-text-muted)" }}>
+              <ArrowsClockwise size={14} className="animate-spin" /> <span className="text-xs">Loading...</span>
+            </div>
+          ) : configs.length === 0 ? (
+            <p className="text-xs py-2" style={{ color: "var(--color-text-muted)" }}>No bots configured.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {configs.map((config) => (
+                <TelegramBotCard key={config.id} config={config} running={running.find((r) => r.botId === config.id)}
+                  onRefresh={refresh} onDelete={(id) => setConfigs((prev) => prev.filter((c) => c.id !== id))} />
+              ))}
+            </div>
+          )}
+        </div>
+      </SettingSection>
+    </div>
+  );
+}
+
+function TelegramStreamingTab() {
+  const [configs, setConfigs] = useState<BotConfig[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedBotId, setSelectedBotId] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.telegram.bots().then((res) => {
+      const c = res.data.configs as BotConfig[];
+      setConfigs(c);
+      if (c.length > 0) setSelectedBotId(c[0]!.id);
+    }).catch(() => {}).finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="py-4 text-xs" style={{ color: "var(--color-text-muted)" }}>Loading...</div>;
+  if (configs.length === 0) return <p className="text-xs py-4" style={{ color: "var(--color-text-muted)" }}>Add a bot first in Bot Management.</p>;
+
+  const selected = configs.find((c) => c.id === selectedBotId) ?? configs[0]!;
+
+  return (
+    <SettingSection title="Session Streaming" description="Configure session output streaming to Telegram.">
+      <div className="flex flex-col gap-4">
+        {configs.length > 1 && (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>Bot</label>
+            <select value={selectedBotId ?? ""} onChange={(e) => setSelectedBotId(e.target.value)}
+              className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
+              style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}>
+              {configs.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+            </select>
+          </div>
+        )}
+        <TelegramStreaming botId={selected.id} botLabel={selected.label} bots={configs.map((c) => ({ id: c.id, label: c.label }))} />
+      </div>
+    </SettingSection>
+  );
+}
+
+export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState<Tab>("general");
+
+  return (
+    <div
+      className="flex flex-col min-h-screen"
+      style={{ background: "var(--color-bg-base)" }}
+    >
+      {/* Header */}
+      <header
+        className="flex items-center gap-3 px-5 py-3 border-b"
+        style={{
+          background: "var(--color-bg-card)",
+          borderColor: "var(--color-border)",
+          height: 52,
+        }}
+      >
+        <Link
+          href="/"
+          className="p-1.5 rounded-lg transition-colors cursor-pointer"
+          style={{ color: "var(--color-text-secondary)" }}
+          aria-label="Back to dashboard"
+        >
+          <ArrowLeft size={18} weight="bold" />
+        </Link>
+        <h1
+          className="text-base font-semibold"
+          style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-display)" }}
+        >
+          Settings
+        </h1>
+      </header>
+
+      {/* Top tab bar */}
+      <div
+        className="flex items-center gap-1 px-5 border-b"
+        style={{
+          background: "var(--color-bg-card)",
+          borderColor: "var(--color-border)",
+        }}
+      >
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className="flex items-center gap-2 px-4 py-3 text-xs font-medium transition-colors cursor-pointer relative"
+            style={{
+              color: activeTab === tab.id ? "var(--color-accent)" : "var(--color-text-secondary)",
+              background: "none",
+              border: "none",
+            }}
+            aria-selected={activeTab === tab.id}
+            role="tab"
+          >
+            {tab.icon}
+            {tab.label}
+            {activeTab === tab.id && (
+              <span
+                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full"
+                style={{ background: "var(--color-accent)" }}
+              />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto py-8 px-5">
+          {activeTab === "general" && <GeneralTab />}
+          {activeTab === "telegram" && <TelegramTab />}
+          {activeTab === "appearance" && <AppearanceTab />}
+        </div>
+      </div>
+    </div>
+  );
+}
