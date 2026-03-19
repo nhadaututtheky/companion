@@ -48,8 +48,8 @@ COPY packages/web/postcss.config.mjs packages/web/
 COPY --from=web-builder /app/packages/web/.next packages/web/.next
 COPY --from=web-builder /app/packages/web/node_modules packages/web/node_modules
 
-# Create non-root user for security
-RUN addgroup --system companion && adduser --system --ingroup companion companion
+# Create non-root user for security (groupadd/useradd for Debian-slim)
+RUN groupadd --system companion && useradd --system --gid companion --home /app companion
 
 # Create data directory with correct ownership
 RUN mkdir -p data && chown -R companion:companion /app
