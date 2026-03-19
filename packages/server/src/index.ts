@@ -8,6 +8,7 @@ import { WsBridge } from "./services/ws-bridge.js";
 import { BotRegistry } from "./telegram/bot-registry.js";
 import { createLogger } from "./logger.js";
 import { bulkEndSessions } from "./services/session-store.js";
+import { verifyLicense, getLicense } from "./services/license.js";
 import { DEFAULT_PORT, APP_VERSION } from "@companion/shared";
 
 const log = createLogger("server");
@@ -34,6 +35,22 @@ runMigrations();
 const startupCleaned = bulkEndSessions();
 if (startupCleaned > 0) {
   log.info("Startup cleanup: marked zombie sessions as ended", { count: startupCleaned });
+}
+
+// ── License verification ────────────────────────────────────────────────────
+const licenseKey = process.env.COMPANION_LICENSE_KEY;
+if (licenseKey) {
+  verifyLicense(licenseKey).then((license) => {
+    if (license.valid) {
+      log.info(`License: ${license.tier.toUpperCase()} tier — ${license.features.length} features, max ${license.maxSessions} sessions`);
+    } else {
+      log.warn(`License invalid: ${license.error ?? "unknown"} — running in free mode`);
+    }
+  }).catch(() => {
+    log.warn("License check failed — running in free mode");
+  });
+} else {
+  log.info("No COMPANION_LICENSE_KEY set — running in free mode (1 session, basic features)");
 }
 
 // ─── WsBridge ────────────────────────────────────────────────────────────────

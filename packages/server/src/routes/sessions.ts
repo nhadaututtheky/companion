@@ -16,8 +16,8 @@ import {
 } from "../services/session-store.js";
 import { getProject, upsertProject } from "../services/project-profiles.js";
 import { createLogger } from "../logger.js";
+import { getMaxSessions } from "../services/license.js";
 import type { ApiResponse } from "@companion/shared";
-import { MAX_ACTIVE_SESSIONS } from "@companion/shared";
 
 const log = createLogger("routes:sessions");
 
@@ -130,12 +130,12 @@ export function sessionRoutes(bridge: WsBridge) {
     const permissionMode = body.permissionMode ?? project?.permissionMode ?? "default";
 
     const activeCount = countActiveSessions();
-    if (activeCount >= MAX_ACTIVE_SESSIONS) {
-      log.warn("Session limit reached", { activeCount, limit: MAX_ACTIVE_SESSIONS });
+    if (activeCount >= getMaxSessions()) {
+      log.warn("Session limit reached", { activeCount, limit: getMaxSessions() });
       return c.json(
         {
           success: false,
-          error: `Session limit reached (${MAX_ACTIVE_SESSIONS} active). Stop an existing session before creating a new one.`,
+          error: `Session limit reached (${getMaxSessions()} active). Stop an existing session before creating a new one.`,
         } satisfies ApiResponse,
         429,
       );
@@ -271,11 +271,11 @@ export function sessionRoutes(bridge: WsBridge) {
     }
 
     const activeCount = countActiveSessions();
-    if (activeCount >= MAX_ACTIVE_SESSIONS) {
+    if (activeCount >= getMaxSessions()) {
       return c.json(
         {
           success: false,
-          error: `Session limit reached (${MAX_ACTIVE_SESSIONS} active). Stop an existing session before resuming.`,
+          error: `Session limit reached (${getMaxSessions()} active). Stop an existing session before resuming.`,
         } satisfies ApiResponse,
         429,
       );

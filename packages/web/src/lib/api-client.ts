@@ -29,6 +29,8 @@ async function request<T>(path: string, opts?: RequestInit): Promise<T> {
 export const api = {
   health: () => request<{ success: boolean; data: { status: string } }>("/api/health"),
 
+  license: () => request<{ data: { valid: boolean; tier: string; features: string[]; maxSessions: number; expiresAt?: string } }>("/api/license"),
+
   // Sessions
   sessions: {
     list: () => request<{ data: { sessions: unknown[] } }>("/api/sessions"),

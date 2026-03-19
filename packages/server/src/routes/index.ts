@@ -7,14 +7,27 @@ import { filesystemRoutes } from "./filesystem.js";
 import { channelRoutes } from "./channels.js";
 import { settingsRoutes } from "./settings.js";
 import { apiKeyAuth } from "../middleware/auth.js";
+import { getLicense } from "../services/license.js";
 import type { WsBridge } from "../services/ws-bridge.js";
 import type { BotRegistry } from "../telegram/bot-registry.js";
+import type { ApiResponse } from "@companion/shared";
 
 export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   const api = new Hono();
 
   // Public routes
   api.route("/api", healthRoutes);
+
+  // License info (public — so web can check before auth)
+  const licenseRoute = new Hono();
+  licenseRoute.get("/license", (c) => {
+    const license = getLicense();
+    return c.json({
+      success: true,
+      data: license ?? { valid: false, tier: "free", features: [] },
+    } satisfies ApiResponse);
+  });
+  api.route("/api", licenseRoute);
 
   // Protected routes
   const protectedApi = new Hono();

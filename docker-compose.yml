@@ -27,6 +27,9 @@ services:
       # Auth for Companion web UI (set a password)
       - API_KEY=${COMPANION_API_KEY:-}
 
+      # License key (get from companion.theio.vn)
+      - COMPANION_LICENSE_KEY=${COMPANION_LICENSE_KEY:-}
+
       # NOT needed for subscription — Claude CLI uses ~/.claude/.credentials.json
       # Only set if using API key auth instead:
       # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
