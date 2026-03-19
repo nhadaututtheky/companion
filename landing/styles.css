@@ -99,8 +99,8 @@
   background-attachment: fixed;
 }
 
-/* Subtle grid overlay in dark mode */
-.dark body::before {
+/* Subtle grid overlay in dark mode — purely decorative, never blocks interaction */
+.dark body::after {
   content: "";
   position: fixed;
   inset: 0;
@@ -109,15 +109,9 @@
     linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
   background-size: 64px 64px;
   pointer-events: none;
-  z-index: 0;
+  z-index: -1;
   mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 80%);
   -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 80%);
-}
-
-/* Ensure all content sits above grid overlay */
-.dark body > * {
-  position: relative;
-  z-index: 1;
 }
 
 /* ── Base ────────────────────────────────────────────────────────────────── */
@@ -1151,22 +1145,40 @@ code {
 }
 
 .pay-option-flag {
-  font-size: 1.5rem;
   flex-shrink: 0;
 }
 
-.pay-option div {
-  display: flex;
-  flex-direction: column;
+.pay-option-flag svg {
+  display: block;
 }
 
-.pay-option strong {
+.pay-option-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.pay-option-info strong {
   font-size: 0.9375rem;
 }
 
-.pay-option span {
+.pay-option-info span {
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+.pay-option-price {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem !important;
+  font-weight: 600;
+  color: var(--text-primary) !important;
+  margin-top: 4px;
+}
+
+.pay-option-arrow {
+  font-size: 1.125rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 /* Form */

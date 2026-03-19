@@ -121,8 +121,14 @@
     var info = PRODUCTS[product];
     if (!info) return;
 
-    var label = document.getElementById("pay-plan-label");
-    label.textContent = info.name + " — " + info.price.toLocaleString("vi-VN") + "đ (~$" + info.priceUSD + ")";
+    // Update modal title + prices
+    var title = document.getElementById("pay-title");
+    title.textContent = "Get " + info.name.split(" — ")[0];
+
+    var vndEl = document.getElementById("pay-price-vnd");
+    var usdEl = document.getElementById("pay-price-usd");
+    if (vndEl) vndEl.textContent = info.price.toLocaleString("vi-VN") + " VND";
+    if (usdEl) usdEl.textContent = "$" + info.priceUSD + " USD";
 
     showPayStep(1);
     document.getElementById("pay-modal").hidden = false;

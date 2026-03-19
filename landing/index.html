@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 
@@ -516,22 +516,26 @@ docker compose restart
 
       <!-- Step 1: Method -->
       <div id="pay-step-1" class="pay-step">
-        <h3>Choose Payment Method</h3>
-        <p class="pay-plan-label" id="pay-plan-label"></p>
+        <h3 id="pay-title">Get Companion Pro</h3>
+        <p class="pay-step-desc">Choose your payment method</p>
         <div class="pay-methods">
           <button class="pay-option" onclick="showPayStep(2)">
-            <span class="pay-option-flag">🇻🇳</span>
-            <div>
-              <strong>Bank Transfer (VietQR)</strong>
-              <span>Scan with banking app</span>
+            <span class="pay-option-flag"><svg width="36" height="36" viewBox="0 0 36 36"><rect width="36" height="36" rx="6" fill="#da251d"/><polygon points="18,8 20.5,14.5 27,14.5 21.8,18.5 23.8,25 18,21 12.2,25 14.2,18.5 9,14.5 15.5,14.5" fill="#ffff00"/></svg></span>
+            <div class="pay-option-info">
+              <strong>Vietnam</strong>
+              <span>Bank Transfer (VietQR)</span>
+              <span class="pay-option-price" id="pay-price-vnd"></span>
             </div>
+            <span class="pay-option-arrow">→</span>
           </button>
           <a class="pay-option" href="https://github.com/sponsors/nhadaututtheky" target="_blank" rel="noopener">
-            <span class="pay-option-flag">🌐</span>
-            <div>
-              <strong>International (Stripe)</strong>
-              <span>Via GitHub Sponsors</span>
+            <span class="pay-option-flag"><svg width="36" height="36" viewBox="0 0 36 36"><rect width="36" height="36" rx="6" fill="#e8e4dc"/><circle cx="18" cy="18" r="10" fill="none" stroke="#7a9e6e" stroke-width="1.5"/><ellipse cx="18" cy="18" rx="5" ry="10" fill="none" stroke="#7a9e6e" stroke-width="1.5"/><line x1="8" y1="18" x2="28" y2="18" stroke="#7a9e6e" stroke-width="1.5"/><line x1="10" y1="13" x2="26" y2="13" stroke="#7a9e6e" stroke-width="1" opacity="0.6"/><line x1="10" y1="23" x2="26" y2="23" stroke="#7a9e6e" stroke-width="1" opacity="0.6"/></svg></span>
+            <div class="pay-option-info">
+              <strong>International</strong>
+              <span>GitHub Sponsors (Stripe)</span>
+              <span class="pay-option-price" id="pay-price-usd"></span>
             </div>
+            <span class="pay-option-arrow">→</span>
           </a>
         </div>
       </div>
@@ -581,6 +585,6 @@ docker compose restart
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=3"></script>
 </body>
 </html>
