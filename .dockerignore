@@ -1,0 +1,15 @@
+node_modules
+.next
+dist
+data/*.db
+data/*.db-wal
+data/*.db-shm
+.env
+.env.local
+.git
+.rune
+.agents
+*.log
+.DS_Store
+.vscode
+.idea

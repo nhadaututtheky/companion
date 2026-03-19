@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  companion:
+    build: .
+    container_name: companion
+    restart: unless-stopped
+    ports:
+      - "3579:3579"  # Server API + WebSocket
+      - "3580:3580"  # Web UI
+    volumes:
+      - companion-data:/app/data          # SQLite database
+      - ${HOME:-~}/.claude:/root/.claude:ro  # Claude Code config (read-only)
+    environment:
+      - NODE_ENV=production
+      - PORT=3579
+      # Required: set your API key for auth
+      - API_KEY=${COMPANION_API_KEY:-}
+      # Required: Anthropic API key for Claude CLI
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      # Optional: Telegram bot
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_ALLOWED_CHAT_IDS=${TELEGRAM_ALLOWED_CHAT_IDS:-}
+      - TELEGRAM_ALLOWED_USER_IDS=${TELEGRAM_ALLOWED_USER_IDS:-}
+      # Optional: allowed directories for project browser
+      - ALLOWED_BROWSE_ROOTS=${ALLOWED_BROWSE_ROOTS:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3579/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  companion-data:
