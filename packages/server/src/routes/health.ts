@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { getSqlite } from "../db/client.js";
 import { APP_VERSION } from "@companion/shared";
 import { countActiveSessions } from "../services/session-store.js";
+import { getLicense, getMaxSessions } from "../services/license.js";
 import type { HealthResponse } from "@companion/shared";
 
 const startTime = Date.now();
@@ -38,4 +39,17 @@ healthRoutes.get("/health", (c) => {
   };
 
   return c.json(response, dbStatus === "connected" ? 200 : 503);
+});
+
+// License status endpoint — for web UI to show trial banner etc.
+healthRoutes.get("/license", (c) => {
+  const license = getLicense();
+  return c.json({
+    tier: license.tier,
+    valid: license.valid,
+    maxSessions: license.maxSessions,
+    features: license.features,
+    expiresAt: license.expiresAt,
+    daysLeft: license.daysLeft,
+  });
 });

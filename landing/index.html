@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Companion — Your Claude Code Command Center</title>
+  <meta name="description" content="Run multiple Claude Code sessions from one dashboard. Web UI, Telegram bot, Magic Ring — all in a single Docker container.">
+  <meta property="og:title" content="Companion — Your Claude Code Command Center">
+  <meta property="og:description" content="Run multiple Claude Code sessions from one dashboard. Web UI, Telegram bot, Magic Ring.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ── Nav ──────────────────────────────────────────────────────────────── -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="#" class="logo" aria-label="Companion">
+        <span style="color:#4285F4">C</span><span style="color:#EA4335">o</span><span style="color:#FBBC04">m</span><span style="color:#4285F4">p</span><span style="color:#34A853">a</span><span style="color:#EA4335">n</span><span style="color:#FBBC04">i</span><span style="color:#4285F4">o</span><span style="color:#34A853">n</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+          <svg class="icon-sun" width="20" height="20" viewBox="0 0 256 256" fill="none"><circle cx="128" cy="128" r="60" stroke="currentColor" stroke-width="16"/><line x1="128" y1="36" x2="128" y2="16" stroke="currentColor" stroke-width="16" stroke-linecap="round"/><line x1="128" y1="240" x2="128" y2="220" stroke="currentColor" stroke-width="16" stroke-linecap="round"/><line x1="36" y1="128" x2="16" y2="128" stroke="currentColor" stroke-width="16" stroke-linecap="round"/><line x1="240" y1="128" x2="220" y2="128" stroke="currentColor" stroke-width="16" stroke-linecap="round"/><line x1="62.9" y1="62.9" x2="48.8" y2="48.8" stroke="currentColor" stroke-width="16" stroke-linecap="round"/><line x1="207.2" y1="207.2" x2="193.1" y2="193.1" stroke="currentColor" stroke-width="16" stroke-linecap="round"/><line x1="62.9" y1="193.1" x2="48.8" y2="207.2" stroke="currentColor" stroke-width="16" stroke-linecap="round"/><line x1="207.2" y1="48.8" x2="193.1" y2="62.9" stroke="currentColor" stroke-width="16" stroke-linecap="round"/></svg>
+          <svg class="icon-moon" width="20" height="20" viewBox="0 0 256 256" fill="none"><path d="M216 128A88 88 0 0 1 128 216 88 88 0 0 1 40 128a88 88 0 0 1 128-80 72 72 0 0 0-32 60 72 72 0 0 0 72 72 72 72 0 0 0 8-.4Z" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <a href="#pricing" class="btn btn-primary btn-sm">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Hero ─────────────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-inner">
+      <!-- Magic Ring SVG -->
+      <div class="hero-ring" aria-hidden="true">
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <defs>
+            <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#4285F4"/>
+              <stop offset="33%" stop-color="#EA4335"/>
+              <stop offset="66%" stop-color="#FBBC04"/>
+              <stop offset="100%" stop-color="#34A853"/>
+            </linearGradient>
+            <filter id="ring-glow">
+              <feGaussianBlur stdDeviation="6" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <circle cx="60" cy="60" r="48" fill="none" stroke="url(#ring-grad)" stroke-width="4" filter="url(#ring-glow)" class="ring-spin"/>
+          <circle cx="60" cy="60" r="38" fill="none" stroke="url(#ring-grad)" stroke-width="2" opacity="0.4" class="ring-spin-reverse"/>
+          <circle cx="60" cy="60" r="8" fill="url(#ring-grad)" opacity="0.6"/>
+        </svg>
+      </div>
+
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Open Source · BSL 1.1
+      </div>
+
+      <h1 class="hero-title">
+        Your <span class="gradient-text">Claude Code</span><br>Command Center
+      </h1>
+
+      <p class="hero-subtitle">
+        Run multiple Claude Code sessions from one dashboard.<br>
+        Web UI. Telegram bot. Magic Ring. All in a single Docker container.
+      </p>
+
+      <div class="hero-actions">
+        <a href="#pricing" class="btn btn-primary btn-lg">Start Free Trial</a>
+        <a href="#how-it-works" class="btn btn-ghost">See How It Works</a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-value" data-count="6">6+</span>
+          <span class="stat-label">Concurrent Sessions</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-value">Real-time</span>
+          <span class="stat-label">WebSocket Streaming</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat">
+          <span class="stat-value">1-click</span>
+          <span class="stat-label">Docker Deploy</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Why Companion ────────────────────────────────────────────────────── -->
+  <section class="section" id="why">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Why Companion</span>
+        <h2>Claude Code is powerful.<br><span class="gradient-text">Companion makes it manageable.</span></h2>
+        <p class="section-desc">Stop juggling terminals. Stop losing context. One dashboard, all sessions.</p>
+      </div>
+
+      <div class="comparison-grid">
+        <div class="comparison-card comparison-before">
+          <div class="comparison-header">
+            <span class="comparison-icon">😩</span>
+            <h3>Without Companion</h3>
+          </div>
+          <ul class="comparison-list">
+            <li>One terminal per session</li>
+            <li>No overview of all sessions</li>
+            <li>Can't monitor from phone</li>
+            <li>Manual session management</li>
+            <li>Context lost between sessions</li>
+            <li>No permission auto-approval</li>
+          </ul>
+        </div>
+        <div class="comparison-card comparison-after">
+          <div class="comparison-header">
+            <span class="comparison-icon">🚀</span>
+            <h3>With Companion</h3>
+          </div>
+          <ul class="comparison-list">
+            <li>All sessions in one grid</li>
+            <li>Real-time activity terminal</li>
+            <li>Telegram bot for mobile</li>
+            <li>Auto session lifecycle</li>
+            <li>Shared context across sessions</li>
+            <li>Permission gate UI</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ─────────────────────────────────────────────────────────── -->
+  <section class="section section-alt" id="features">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Features</span>
+        <h2>Everything you need to<br><span class="gradient-text">orchestrate AI coding.</span></h2>
+      </div>
+
+      <div class="features-grid">
+        <!-- Feature 1: Multi-Session -->
+        <div class="feature-card feature-card-wide">
+          <div class="feature-icon" style="background: linear-gradient(135deg, #4285F4, #6fa3f7)">
+            <svg width="28" height="28" viewBox="0 0 256 256" fill="none"><rect x="32" y="48" width="80" height="64" rx="8" stroke="white" stroke-width="16"/><rect x="144" y="48" width="80" height="64" rx="8" stroke="white" stroke-width="16"/><rect x="32" y="144" width="80" height="64" rx="8" stroke="white" stroke-width="16"/><rect x="144" y="144" width="80" height="64" rx="8" stroke="white" stroke-width="16"/></svg>
+          </div>
+          <h3>Multi-Session Grid</h3>
+          <p>Run 6+ Claude Code sessions simultaneously. Each gets its own terminal, status indicator, and quick controls. Expand any session for full interaction.</p>
+        </div>
+
+        <!-- Feature 2: Magic Ring -->
+        <div class="feature-card">
+          <div class="feature-icon" style="background: linear-gradient(135deg, #FBBC04, #f7d76a)">
+            <svg width="28" height="28" viewBox="0 0 256 256" fill="none"><circle cx="128" cy="128" r="96" stroke="white" stroke-width="16"/><circle cx="128" cy="128" r="60" stroke="white" stroke-width="16"/><circle cx="128" cy="128" r="24" fill="white" opacity="0.5"/></svg>
+          </div>
+          <h3>Magic Ring</h3>
+          <p>Siri-style glowing orb shows session health at a glance. Link sessions to the ring, drag to reorder, click to focus.</p>
+        </div>
+
+        <!-- Feature 3: Telegram -->
+        <div class="feature-card">
+          <div class="feature-icon" style="background: linear-gradient(135deg, #34A853, #6dce82)">
+            <svg width="28" height="28" viewBox="0 0 256 256" fill="none"><path d="M228 44 L132 176 L100 124 L28 100 Z" stroke="white" stroke-width="16" stroke-linejoin="round"/><path d="M132 176 L132 232 L172 188" stroke="white" stroke-width="16" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>Telegram Bot</h3>
+          <p>Start, monitor, and chat with Claude from Telegram. Get notifications, run commands, manage sessions — all from your phone.</p>
+        </div>
+
+        <!-- Feature 4: Activity Terminal -->
+        <div class="feature-card">
+          <div class="feature-icon" style="background: linear-gradient(135deg, #EA4335, #f28b83)">
+            <svg width="28" height="28" viewBox="0 0 256 256" fill="none"><rect x="32" y="48" width="192" height="160" rx="12" stroke="white" stroke-width="16"/><line x1="32" y1="88" x2="224" y2="88" stroke="white" stroke-width="16"/><circle cx="56" cy="68" r="6" fill="white"/><circle cx="80" cy="68" r="6" fill="white"/></svg>
+          </div>
+          <h3>Activity Terminal</h3>
+          <p>Live event stream from all sessions — tool calls, messages, errors — in one scrollable feed. Filter by session or event type.</p>
+        </div>
+
+        <!-- Feature 5: Permission Gate -->
+        <div class="feature-card">
+          <div class="feature-icon" style="background: linear-gradient(135deg, #4285F4, #8ab4f8)">
+            <svg width="28" height="28" viewBox="0 0 256 256" fill="none"><rect x="40" y="112" width="176" height="112" rx="12" stroke="white" stroke-width="16"/><path d="M80 112V80a48 48 0 0 1 96 0v32" stroke="white" stroke-width="16" stroke-linecap="round"/><circle cx="128" cy="164" r="12" fill="white"/></svg>
+          </div>
+          <h3>Permission Gate</h3>
+          <p>Claude asks to run a command? Approve or deny from the web UI or Telegram. Never miss a permission prompt again.</p>
+        </div>
+
+        <!-- Feature 6: Docker -->
+        <div class="feature-card">
+          <div class="feature-icon" style="background: linear-gradient(135deg, #1a73e8, #4fc3f7)">
+            <svg width="28" height="28" viewBox="0 0 256 256" fill="none"><path d="M40 128h176" stroke="white" stroke-width="16" stroke-linecap="round"/><rect x="88" y="88" width="36" height="36" rx="4" stroke="white" stroke-width="12"/><rect x="132" y="88" width="36" height="36" rx="4" stroke="white" stroke-width="12"/><rect x="88" y="48" width="36" height="36" rx="4" stroke="white" stroke-width="12"/><path d="M40 128c0 40 32 72 88 72s100-32 100-72" stroke="white" stroke-width="16" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Docker Ready</h3>
+          <p>One <code>docker compose up</code> and you're running. Server, web UI, and Telegram bot — all containerized.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── How It Works ─────────────────────────────────────────────────────── -->
+  <section class="section" id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">How It Works</span>
+        <h2>Up and running in<br><span class="gradient-text">under 3 minutes.</span></h2>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h3>Install</h3>
+          <div class="code-block">
+            <code>curl -fsSL pay.theio.vn/companion/install | sh</code>
+          </div>
+          <p>Downloads <code>docker-compose.yml</code> and <code>.env</code> template. No source code needed.</p>
+        </div>
+
+        <div class="step-connector" aria-hidden="true">
+          <svg width="40" height="2" viewBox="0 0 40 2"><line x1="0" y1="1" x2="40" y2="1" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/></svg>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h3>Launch</h3>
+          <div class="code-block">
+            <code>docker compose up -d</code>
+          </div>
+          <p>Pulls image from <code>ghcr.io</code> and starts everything.</p>
+        </div>
+
+        <div class="step-connector" aria-hidden="true">
+          <svg width="40" height="2" viewBox="0 0 40 2"><line x1="0" y1="1" x2="40" y2="1" stroke="currentColor" stroke-width="2" stroke-dasharray="4 4"/></svg>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h3>Code</h3>
+          <div class="code-block">
+            <code># Open browser → localhost:3580</code>
+            <code># Click "New Session"</code>
+            <code># Start coding with Claude</code>
+          </div>
+          <p>Create sessions, link to Magic Ring, chat from web or Telegram.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Pricing ──────────────────────────────────────────────────────────── -->
+  <section class="section section-alt" id="pricing">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Pricing</span>
+        <h2>Simple, honest pricing.<br><span class="gradient-text">Start free, scale when ready.</span></h2>
+      </div>
+
+      <p class="pricing-note">You bring your own Claude subscription. Companion is the management layer — we don't touch your API usage or billing.</p>
+
+      <div class="pricing-grid pricing-grid-3">
+        <!-- Free Trial -->
+        <div class="pricing-card">
+          <div class="pricing-header">
+            <h3>Free Trial</h3>
+            <div class="pricing-amount">
+              <span class="price">$0</span>
+              <span class="period">for 7 days</span>
+            </div>
+            <p class="pricing-desc">Full features, no credit card.</p>
+          </div>
+          <ul class="pricing-features">
+            <li class="check-icon">All Pro features included</li>
+            <li class="check-icon">6+ concurrent sessions</li>
+            <li class="check-icon">Telegram bot</li>
+            <li class="check-icon">Magic Ring + Stream Bridge</li>
+            <li class="check-icon">Shared context</li>
+            <li class="check-icon">7 days, then choose a plan</li>
+          </ul>
+          <a href="#get-started" class="btn btn-outline btn-full">Start Free Trial</a>
+        </div>
+
+        <!-- Monthly -->
+        <div class="pricing-card">
+          <div class="pricing-header">
+            <h3>Monthly</h3>
+            <div class="pricing-amount">
+              <span class="price">$15</span>
+              <span class="period">/month</span>
+            </div>
+            <p class="pricing-desc">Flexible, cancel anytime.</p>
+          </div>
+          <ul class="pricing-features">
+            <li class="check-icon">Everything in trial — forever</li>
+            <li class="check-icon">6+ concurrent sessions</li>
+            <li class="check-icon">Telegram bot + Stream Bridge</li>
+            <li class="check-icon">Magic Ring</li>
+            <li class="check-icon">Shared context across sessions</li>
+            <li class="check-icon">Priority support</li>
+          </ul>
+          <button class="btn btn-accent btn-full" onclick="openPayment('CMP-MONTHLY')">Buy Monthly — $15</button>
+        </div>
+
+        <!-- Quarterly — Best Value -->
+        <div class="pricing-card pricing-card-featured">
+          <div class="pricing-popular">Best Value</div>
+          <div class="pricing-header">
+            <h3>Quarterly</h3>
+            <div class="pricing-amount">
+              <span class="price">$39</span>
+              <span class="period">/3 months</span>
+            </div>
+            <p class="pricing-desc"><span class="pricing-save">Save 13%</span> — ~$13/mo</p>
+          </div>
+          <ul class="pricing-features">
+            <li class="check-icon">Everything in Monthly</li>
+            <li class="check-icon">6+ concurrent sessions</li>
+            <li class="check-icon">Telegram bot + Stream Bridge</li>
+            <li class="check-icon">Magic Ring</li>
+            <li class="check-icon">Shared context across sessions</li>
+            <li class="check-icon">Priority support</li>
+          </ul>
+          <button class="btn btn-primary btn-full" onclick="openPayment('CMP-QUARTERLY')">Buy Quarterly — $39</button>
+        </div>
+      </div>
+
+      <!-- Team teaser -->
+      <div class="team-teaser">
+        <p><strong>Team plan</strong> with unlimited sessions, multi-user access, and admin dashboard — <em>coming soon.</em></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Get Started ──────────────────────────────────────────────────────── -->
+  <section class="section" id="get-started">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-badge">Get Started</span>
+        <h2>Deploy in seconds.</h2>
+      </div>
+
+      <div class="install-info">
+        <div class="install-info-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 256 256" fill="none"><rect x="32" y="48" width="192" height="160" rx="12" stroke="currentColor" stroke-width="16"/><circle cx="128" cy="128" r="8" fill="currentColor"/></svg>
+        </div>
+        <p>Companion runs <strong>locally on your machine</strong> via Docker. It spawns Claude Code CLI processes using your own Claude subscription. Your code never leaves your computer.</p>
+      </div>
+
+      <div class="install-tabs">
+        <button class="tab-btn active" data-tab="docker">Install (Free)</button>
+        <button class="tab-btn" data-tab="license">Activate Pro</button>
+      </div>
+
+      <div class="install-content">
+        <div class="install-panel active" id="tab-docker">
+          <div class="code-block code-block-lg">
+            <div class="code-header">
+              <span class="code-lang">bash</span>
+              <button class="copy-btn" aria-label="Copy to clipboard">Copy</button>
+            </div>
+            <pre><code><span class="code-comment"># 1. One-line install (downloads docker-compose.yml + .env)</span>
+curl -fsSL https://pay.theio.vn/companion/install | sh
+<span class="code-keyword">cd</span> companion
+
+<span class="code-comment"># 2. Launch — 7-day free trial starts automatically</span>
+docker compose up -d
+
+<span class="code-comment"># ✓ Open http://localhost:3580</span>
+<span class="code-comment"># ✓ All features unlocked for 7 days</span>
+<span class="code-comment"># ✓ Uses your own Claude Code subscription</span></code></pre>
+          </div>
+          <p class="install-note">Requires Docker Desktop + your own <a href="https://claude.ai" target="_blank" rel="noopener">Claude subscription</a>. Image pulled from <code>ghcr.io</code>.</p>
+        </div>
+
+        <div class="install-panel" id="tab-license">
+          <div class="code-block code-block-lg">
+            <div class="code-header">
+              <span class="code-lang">bash</span>
+              <button class="copy-btn" aria-label="Copy to clipboard">Copy</button>
+            </div>
+            <pre><code><span class="code-comment"># After purchasing, add license key to .env</span>
+<span class="code-keyword">echo</span> "COMPANION_LICENSE=cmp_pro_xxxxxxxxxxxx" >> .env
+
+<span class="code-comment"># Restart to activate Pro</span>
+docker compose restart
+
+<span class="code-comment"># Verified on startup via pay.theio.vn</span>
+<span class="code-comment"># ✓ 6+ concurrent sessions</span>
+<span class="code-comment"># ✓ Telegram bot + Stream Bridge</span>
+<span class="code-comment"># ✓ Magic Ring + Shared context</span></code></pre>
+          </div>
+          <p class="install-note">License key emailed after payment. Verified once at startup — everything else runs 100% on your machine.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FAQ ──────────────────────────────────────────────────────────────── -->
+  <section class="section section-alt" id="faq">
+    <div class="container container-narrow">
+      <div class="section-header">
+        <span class="section-badge">FAQ</span>
+        <h2>Frequently asked questions.</h2>
+      </div>
+
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>Do I need my own Claude subscription?</summary>
+          <p>Yes. Companion uses <strong>your existing Claude Code subscription</strong> (Max or your own API key). We don't provide API access or charge for Claude usage — you pay Anthropic directly. Companion is purely the management layer on top.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>What does Companion actually do?</summary>
+          <p>Companion spawns and manages Claude Code CLI sessions on your machine. It gives you a web dashboard to run multiple sessions at once, a Telegram bot to chat with Claude from your phone, real-time activity monitoring, and shared context across sessions. Think of it as a command center for Claude Code.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Why does it run locally? Can I use it from a domain?</summary>
+          <p>Companion must run on the machine where your code lives — it spawns Claude Code processes that need direct filesystem access. The app runs on <code>localhost:3580</code>. The only external call is license verification via <code>pay.theio.vn</code>. Your code and credentials never leave your machine.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Do I need access to the source code?</summary>
+          <p>No. Companion is distributed as a Docker image on ghcr.io. Just download <code>docker-compose.yml</code>, set your <code>.env</code>, and run <code>docker compose up</code>. Source code is private — you only need the image.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>How does the free trial work?</summary>
+          <p>Install Companion and get <strong>7 days of full Pro features</strong> — no credit card, no license key. After 7 days, you'll need a license to keep Pro features (multi-session, Telegram, Magic Ring). You can buy monthly ($15) or quarterly ($39, saves 13%).</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>How does the Telegram bot work?</summary>
+          <p>Create a Telegram bot via BotFather, add the token to your <code>.env</code>. With Pro, you can start sessions, send messages to Claude, approve permissions, and get real-time notifications — all from Telegram. Stream Bridge lets you seamlessly switch between web and Telegram mid-conversation.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>How does licensing work?</summary>
+          <p>After payment, you receive a license key by email. Add it to your <code>.env</code> as <code>COMPANION_LICENSE</code> and restart. On startup, Companion verifies the key with <code>pay.theio.vn</code> and unlocks Pro features. Everything else runs 100% locally. The free trial auto-activates for 7 days — no key needed.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>What are the system requirements?</summary>
+          <p>Docker Desktop (recommended). Works on macOS, Linux, and Windows (WSL). Minimum 2GB RAM. You'll also need an active Claude Code subscription from Anthropic.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ──────────────────────────────────────────────────────────────── -->
+  <section class="section cta-section">
+    <div class="container">
+      <div class="cta-inner">
+        <div class="cta-ring" aria-hidden="true">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="32" fill="none" stroke="url(#ring-grad)" stroke-width="3" filter="url(#ring-glow)" class="ring-spin"/>
+          </svg>
+        </div>
+        <h2>Ready to level up your<br>Claude Code workflow?</h2>
+        <p>Join developers who ship faster with Companion.</p>
+        <a href="#get-started" class="btn btn-primary btn-lg">
+          Get Started — It's Free
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ───────────────────────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a href="#" class="logo logo-sm" aria-label="Companion">
+          <span style="color:#4285F4">C</span><span style="color:#EA4335">o</span><span style="color:#FBBC04">m</span><span style="color:#4285F4">p</span><span style="color:#34A853">a</span><span style="color:#EA4335">n</span><span style="color:#FBBC04">i</span><span style="color:#4285F4">o</span><span style="color:#34A853">n</span>
+        </a>
+        <p>Your Claude Code Command Center</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>Product</h4>
+          <a href="#features">Features</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#get-started">Get Started</a>
+          <a href="#faq">FAQ</a>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <a href="https://github.com/nhadaututtheky/companion" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://github.com/nhadaututtheky/companion/issues" target="_blank" rel="noopener">Issues</a>
+          <a href="https://github.com/nhadaututtheky/companion/blob/main/LICENSE" target="_blank" rel="noopener">License (BSL 1.1)</a>
+        </div>
+        <div class="footer-col">
+          <h4>XLabs</h4>
+          <a href="#">About</a>
+          <a href="#">Other Projects</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 XLabs. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- ── Payment Modal ────────────────────────────────────────────────────── -->
+  <div class="pay-modal" id="pay-modal" hidden>
+    <div class="pay-backdrop" onclick="closePayment()"></div>
+    <div class="pay-dialog">
+      <button class="pay-close" onclick="closePayment()" aria-label="Close">&times;</button>
+
+      <!-- Step 1: Method -->
+      <div id="pay-step-1" class="pay-step">
+        <h3>Choose Payment Method</h3>
+        <p class="pay-plan-label" id="pay-plan-label"></p>
+        <div class="pay-methods">
+          <button class="pay-option" onclick="showPayStep(2)">
+            <span class="pay-option-flag">🇻🇳</span>
+            <div>
+              <strong>Bank Transfer (VietQR)</strong>
+              <span>Scan with banking app</span>
+            </div>
+          </button>
+          <a class="pay-option" href="https://github.com/sponsors/nhadaututtheky" target="_blank" rel="noopener">
+            <span class="pay-option-flag">🌐</span>
+            <div>
+              <strong>International (Stripe)</strong>
+              <span>Via GitHub Sponsors</span>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Step 2: Info -->
+      <div id="pay-step-2" class="pay-step" hidden>
+        <h3>Your Details</h3>
+        <p class="pay-step-desc">We'll send the license key to your email.</p>
+        <div class="pay-form">
+          <label for="pay-email">Email <span class="required">*</span></label>
+          <input id="pay-email-input" type="email" placeholder="you@example.com" required>
+          <label for="pay-name">Name (optional)</label>
+          <input id="pay-name-input" type="text" placeholder="Your name">
+        </div>
+        <button class="btn btn-primary btn-full" onclick="createOrder()">Continue to Payment</button>
+        <button class="pay-back" onclick="showPayStep(1)">Back</button>
+      </div>
+
+      <!-- Step 3: QR -->
+      <div id="pay-step-3" class="pay-step" hidden>
+        <h3>Scan to Pay</h3>
+        <div class="pay-qr">
+          <img id="pay-qr-img" alt="VietQR Payment Code" width="240" height="240">
+        </div>
+        <div class="pay-details">
+          <div class="pay-detail-row"><span>Bank</span><strong>TPBank</strong></div>
+          <div class="pay-detail-row"><span>Account</span><strong>04162263666</strong></div>
+          <div class="pay-detail-row"><span>Name</span><strong>NGUYEN VIET NAM</strong></div>
+          <div class="pay-detail-row"><span>Amount</span><strong id="pay-detail-amount"></strong></div>
+          <div class="pay-detail-row"><span>Content</span><strong id="pay-detail-code" class="pay-code"></strong></div>
+        </div>
+        <div class="pay-status" id="pay-status">
+          <span class="pay-spinner"></span> Waiting for payment...
+        </div>
+      </div>
+
+      <!-- Step 4: Success -->
+      <div id="pay-step-4" class="pay-step" hidden>
+        <div class="pay-success-icon">
+          <svg width="48" height="48" viewBox="0 0 256 256" fill="none"><circle cx="128" cy="128" r="96" fill="#34A853" opacity="0.15"/><polyline points="80 128 112 160 176 96" stroke="#34A853" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Payment Confirmed!</h3>
+        <p>License key sent to <strong id="pay-success-email"></strong></p>
+        <p class="pay-step-desc">Check your inbox. Add the key to your <code>.env</code> file and restart Companion.</p>
+        <button class="btn btn-primary btn-full" onclick="closePayment()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

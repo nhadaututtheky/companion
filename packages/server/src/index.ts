@@ -8,7 +8,7 @@ import { WsBridge } from "./services/ws-bridge.js";
 import { BotRegistry } from "./telegram/bot-registry.js";
 import { createLogger } from "./logger.js";
 import { bulkEndSessions } from "./services/session-store.js";
-import { verifyLicense, getLicense } from "./services/license.js";
+import { verifyLicense, checkOrActivateTrial, getLicense } from "./services/license.js";
 import { DEFAULT_PORT, APP_VERSION } from "@companion/shared";
 
 const log = createLogger("server");
@@ -37,20 +37,31 @@ if (startupCleaned > 0) {
   log.info("Startup cleanup: marked zombie sessions as ended", { count: startupCleaned });
 }
 
-// ── License verification ────────────────────────────────────────────────────
+// ── License / Trial verification ────────────────────────────────────────────
 const licenseKey = process.env.COMPANION_LICENSE_KEY;
 if (licenseKey) {
   verifyLicense(licenseKey).then((license) => {
     if (license.valid) {
-      log.info(`License: ${license.tier.toUpperCase()} tier — ${license.features.length} features, max ${license.maxSessions} sessions`);
+      log.info(`License: ${license.tier.toUpperCase()} — max ${license.maxSessions} sessions, expires ${license.expiresAt}`);
     } else {
-      log.warn(`License invalid: ${license.error ?? "unknown"} — running in free mode`);
+      log.warn(`License invalid: ${license.error ?? "unknown"} — falling back to trial`);
+      return checkOrActivateTrial();
     }
   }).catch(() => {
-    log.warn("License check failed — running in free mode");
+    log.warn("License check failed — activating trial");
+    checkOrActivateTrial();
   });
 } else {
-  log.info("No COMPANION_LICENSE_KEY set — running in free mode (1 session, basic features)");
+  // No license key — check or activate 7-day free trial
+  checkOrActivateTrial().then((trial) => {
+    if (trial.tier === "trial") {
+      log.info(`Free trial: ${trial.daysLeft} days left — all Pro features unlocked`);
+    } else {
+      log.info("Trial expired — free mode (1 session). Get a license at https://companion.theio.vn — buy at https://pay.theio.vn");
+    }
+  }).catch(() => {
+    log.info("No license, no trial — free mode (1 session)");
+  });
 }
 
 // ─── WsBridge ────────────────────────────────────────────────────────────────
