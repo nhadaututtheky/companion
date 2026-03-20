@@ -12,8 +12,8 @@ services:
       # SQLite database persistence
       - companion-data:/app/data
 
-      # Claude CLI auth — subscription tokens (read-write for token refresh)
-      - ${USERPROFILE:-${HOME}}/.claude:/home/companion/.claude
+      # Claude CLI auth — maps your local credentials into container
+      - ${USERPROFILE:-${HOME}}/.claude:/root/.claude
 
       # Project directories — mount your code folders
       # Add your project paths here:

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Companion — Product Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Outfit:wght@700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #050505;
+  color: #f0f0f0;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+  width: 1920px;
+  height: 1080px;
+}
+
+/* ── Slide container ── */
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  pointer-events: none;
+}
+
+.slide.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── Hero slide ── */
+.hero-slide {
+  flex-direction: column;
+  gap: 24px;
+  background:
+    radial-gradient(ellipse 600px 500px at 30% 30%, rgba(66, 133, 244, 0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 400px at 70% 60%, rgba(234, 67, 53, 0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 400px at 50% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 70%),
+    #050505;
+}
+
+.hero-logo {
+  font-family: 'Outfit', sans-serif;
+  font-size: 72px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  animation: fadeUp 1s ease 0.3s both;
+}
+
+.hero-tagline {
+  font-size: 28px;
+  font-weight: 400;
+  color: #aaa;
+  animation: fadeUp 1s ease 0.6s both;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 48px;
+  margin-top: 32px;
+  animation: fadeUp 1s ease 0.9s both;
+}
+
+.hero-stat {
+  text-align: center;
+}
+
+.hero-stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.hero-stat-label {
+  font-size: 14px;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* ── Screenshot slides ── */
+.screenshot-slide {
+  flex-direction: column;
+  gap: 32px;
+  padding: 40px;
+}
+
+.slide-label {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.slide-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 18px;
+  color: #fff;
+}
+
+.slide-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.slide-desc {
+  font-size: 16px;
+  color: #888;
+  margin-top: -20px;
+}
+
+.slide-img {
+  max-width: 1400px;
+  max-height: 750px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+  animation: scaleIn 0.6s ease both;
+}
+
+/* ── CTA slide ── */
+.cta-slide {
+  flex-direction: column;
+  gap: 20px;
+  background:
+    radial-gradient(ellipse 500px 400px at 50% 50%, rgba(242, 101, 34, 0.08) 0%, transparent 70%),
+    #050505;
+}
+
+.cta-url {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 36px;
+  font-weight: 700;
+  color: #F26522;
+  padding: 16px 40px;
+  border: 2px solid rgba(242, 101, 34, 0.3);
+  border-radius: 16px;
+  background: rgba(242, 101, 34, 0.05);
+}
+
+/* ── Progress bar ── */
+.progress {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #4285F4, #EA4335, #FBBC04, #34A853);
+  transition: width 0.3s ease;
+  z-index: 100;
+}
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ── Color accents ── */
+.c-blue { color: #4285F4; }
+.c-red { color: #EA4335; }
+.c-yellow { color: #FBBC04; }
+.c-green { color: #34A853; }
+.c-orange { color: #F26522; }
+.bg-blue { background: #4285F4; }
+.bg-red { background: #EA4335; }
+.bg-yellow { background: #FBBC04; }
+.bg-green { background: #34A853; }
+.bg-orange { background: #F26522; }
+.bg-purple { background: #8B5CF6; }
+</style>
+</head>
+<body>
+
+<!-- Slide 0: Hero -->
+<div class="slide hero-slide active" data-duration="4000">
+  <div class="hero-logo">
+    <span class="c-blue">C</span><span class="c-red">o</span><span class="c-yellow">m</span><span class="c-blue">p</span><span class="c-green">a</span><span class="c-red">n</span><span class="c-yellow">i</span><span class="c-blue">o</span><span class="c-green">n</span>
+  </div>
+  <div class="hero-tagline">Your Claude Code Command Center</div>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="hero-stat-value">6+</div><div class="hero-stat-label">Concurrent Sessions</div></div>
+    <div class="hero-stat"><div class="hero-stat-value">Real-time</div><div class="hero-stat-label">WebSocket Streaming</div></div>
+    <div class="hero-stat"><div class="hero-stat-value">1-click</div><div class="hero-stat-label">Docker Deploy</div></div>
+  </div>
+</div>
+
+<!-- Slide 1: Dashboard -->
+<div class="slide screenshot-slide" data-duration="3500">
+  <div class="slide-label">
+    <div class="slide-number bg-blue">1</div>
+    <div class="slide-title">Clean Dashboard</div>
+  </div>
+  <div class="slide-desc">Session sidebar, stats bar, command palette — all in one view</div>
+  <img class="slide-img" src="screenshots/01-dashboard-empty.png">
+</div>
+
+<!-- Slide 2: New Session -->
+<div class="slide screenshot-slide" data-duration="3500">
+  <div class="slide-label">
+    <div class="slide-number bg-orange">2</div>
+    <div class="slide-title">Create New Session</div>
+  </div>
+  <div class="slide-desc">3-step wizard: Project → Configure → Launch</div>
+  <img class="slide-img" src="screenshots/02-new-session-modal.png">
+</div>
+
+<!-- Slide 3: Browse Projects -->
+<div class="slide screenshot-slide" data-duration="3500">
+  <div class="slide-label">
+    <div class="slide-number bg-green">3</div>
+    <div class="slide-title">Browse Your Projects</div>
+  </div>
+  <div class="slide-desc">Pick any mounted directory — your code stays on your machine</div>
+  <img class="slide-img" src="screenshots/04-browse-projects.png">
+</div>
+
+<!-- Slide 4: Configure -->
+<div class="slide screenshot-slide" data-duration="3500">
+  <div class="slide-label">
+    <div class="slide-number bg-red">4</div>
+    <div class="slide-title">Configure & Launch</div>
+  </div>
+  <div class="slide-desc">Choose model, permission mode, initial prompt — then start</div>
+  <img class="slide-img" src="screenshots/05-configure-session.png">
+</div>
+
+<!-- Slide 5: Session Running -->
+<div class="slide screenshot-slide" data-duration="3500">
+  <div class="slide-label">
+    <div class="slide-number bg-blue">5</div>
+    <div class="slide-title">Chat with Claude</div>
+  </div>
+  <div class="slide-desc">Real-time message stream, tool calls, and responses</div>
+  <img class="slide-img" src="screenshots/08-session-chat.png">
+</div>
+
+<!-- Slide 6: Multi-Session Grid (LIVE) -->
+<div class="slide screenshot-slide" data-duration="4000">
+  <div class="slide-label">
+    <div class="slide-number bg-purple">6</div>
+    <div class="slide-title">Multi-Session Grid</div>
+  </div>
+  <div class="slide-desc">Run 6+ sessions simultaneously — Claude responding in real-time</div>
+  <img class="slide-img" src="screenshots/15-two-sessions-live.png">
+</div>
+
+<!-- Slide 7: License TRIAL -->
+<div class="slide screenshot-slide" data-duration="3000">
+  <div class="slide-label">
+    <div class="slide-number bg-yellow">7</div>
+    <div class="slide-title">7-Day Free Trial</div>
+  </div>
+  <div class="slide-desc">All Pro features unlocked — no credit card needed</div>
+  <img class="slide-img" src="screenshots/11-settings-license.png">
+</div>
+
+<!-- Slide 8: License Activate -->
+<div class="slide screenshot-slide" data-duration="3000">
+  <div class="slide-label">
+    <div class="slide-number bg-orange">8</div>
+    <div class="slide-title">Activate Pro License</div>
+  </div>
+  <div class="slide-desc">Paste key → click Activate → Pro unlocks instantly</div>
+  <img class="slide-img" src="screenshots/12-license-input.png">
+</div>
+
+<!-- Slide 9: License Activated -->
+<div class="slide screenshot-slide" data-duration="3500">
+  <div class="slide-label">
+    <div class="slide-number bg-green">9</div>
+    <div class="slide-title">Pro Activated!</div>
+  </div>
+  <div class="slide-desc">6 sessions, Telegram bot, Magic Ring, Shared Context — all unlocked</div>
+  <img class="slide-img" src="screenshots/13-license-activated.png">
+</div>
+
+<!-- Slide 10: Landing Page -->
+<div class="slide screenshot-slide" data-duration="3500">
+  <div class="slide-label">
+    <div class="slide-number bg-blue">10</div>
+    <div class="slide-title">Landing Page</div>
+  </div>
+  <div class="slide-desc">companion.theio.vn — install, pricing, payment</div>
+  <img class="slide-img" src="screenshots/14-landing-hero.png">
+</div>
+
+<!-- Slide 11: CTA -->
+<div class="slide cta-slide" data-duration="4000">
+  <div class="hero-logo" style="font-size:56px">
+    <span class="c-blue">C</span><span class="c-red">o</span><span class="c-yellow">m</span><span class="c-blue">p</span><span class="c-green">a</span><span class="c-red">n</span><span class="c-yellow">i</span><span class="c-blue">o</span><span class="c-green">n</span>
+  </div>
+  <div style="font-size:24px;color:#888;margin-bottom:16px">Start coding with Claude — the smart way</div>
+  <div class="cta-url">companion.theio.vn</div>
+  <div style="font-size:16px;color:#555;margin-top:16px">7-day free trial · No credit card · Docker deploy</div>
+</div>
+
+<!-- Progress bar -->
+<div class="progress" id="progress"></div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const progress = document.getElementById('progress');
+let current = 0;
+let timer = null;
+
+function showSlide(index) {
+  slides.forEach((s, i) => s.classList.toggle('active', i === index));
+  const totalDuration = Array.from(slides).reduce((sum, s) => sum + parseInt(s.dataset.duration || 3000), 0);
+  const elapsed = Array.from(slides).slice(0, index + 1).reduce((sum, s) => sum + parseInt(s.dataset.duration || 3000), 0);
+  progress.style.width = (elapsed / totalDuration * 100) + '%';
+}
+
+function next() {
+  current++;
+  if (current >= slides.length) {
+    current = 0; // loop
+  }
+  showSlide(current);
+  scheduleNext();
+}
+
+function scheduleNext() {
+  const duration = parseInt(slides[current].dataset.duration || 3000);
+  timer = setTimeout(next, duration);
+}
+
+// Start
+showSlide(0);
+scheduleNext();
+
+// Click to advance
+document.addEventListener('click', () => {
+  clearTimeout(timer);
+  next();
+});
+
+// Arrow keys
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') {
+    clearTimeout(timer);
+    next();
+  } else if (e.key === 'ArrowLeft') {
+    clearTimeout(timer);
+    current = Math.max(0, current - 2);
+    next();
+  }
+});
+</script>
+</body>
+</html>
