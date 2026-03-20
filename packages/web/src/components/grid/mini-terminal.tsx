@@ -244,14 +244,18 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
     toast.success("Session closed");
   }, [sessionId]);
 
+  const sessionColor = getSessionColor(sessionId);
+  const hasSharedContext = !!channelInfo;
+
   return (
     <div
       className="flex flex-col overflow-hidden rounded-xl"
       style={{
         background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
-        borderTop: `3px solid ${getSessionColor(sessionId)}`,
-        boxShadow: "var(--shadow-sm)",
+        border: hasSharedContext
+          ? `2px dashed ${sessionColor}`
+          : "1px solid var(--color-border)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 0 0 1px rgba(0,0,0,0.02)",
         height: "100%",
         minHeight: 0,
       }}
