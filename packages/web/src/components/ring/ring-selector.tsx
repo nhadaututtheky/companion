@@ -65,9 +65,9 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
   const bubbleGap = 8;
   const dockWidth = activeSessions.length * (bubbleSize + bubbleGap) - bubbleGap;
 
-  // Card position
-  const cardLeft = anchorX - dockWidth - bubbleSize;
-  const cardBottom = typeof window !== "undefined" ? window.innerHeight - anchorY + bubbleSize + 16 : 200;
+  // Card position: always above Ring, aligned to Ring's left edge
+  const cardLeft = Math.max(8, anchorX - 260);
+  const cardTop = Math.max(8, anchorY - 220);
 
   return (
     <>
@@ -173,8 +173,8 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
       <div
         style={{
           position: "fixed",
-          left: Math.max(8, cardLeft),
-          bottom: Math.max(8, cardBottom),
+          left: cardLeft,
+          top: cardTop,
           width: 280,
           zIndex: 42,
           borderRadius: 16,

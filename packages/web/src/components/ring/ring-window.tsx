@@ -63,11 +63,11 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   const bubbleGap = 6;
   const dockWidth = linkedSessionIds.length * (bubbleSize + bubbleGap) - bubbleGap;
 
-  // Card position: above the dock + ring area
+  // Card position: above Ring, aligned to Ring's left edge
   const cardWidth = 300;
   const cardHeight = 300;
-  const cardLeft = anchorX - dockWidth - bubbleSize;
-  const cardBottom = typeof window !== "undefined" ? window.innerHeight - anchorY + bubbleSize + 16 : 200;
+  const cardLeft = Math.max(8, anchorX - cardWidth);
+  const cardTop = Math.max(8, anchorY - cardHeight - 20);
 
   async function handleSend() {
     if (!input.trim() || sending) return;
@@ -230,8 +230,8 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
       <div
         style={{
           position: "fixed",
-          left: Math.max(8, cardLeft),
-          bottom: Math.max(8, cardBottom),
+          left: cardLeft,
+          top: cardTop,
           width: cardWidth,
           height: cardHeight,
           zIndex: 42,
