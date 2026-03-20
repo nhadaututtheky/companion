@@ -220,9 +220,12 @@
           <div class="step-number">1</div>
           <h3>Install</h3>
           <div class="code-block">
+            <code class="code-label">macOS / Linux:</code>
             <code>curl -fsSL companion.theio.vn/install | sh</code>
+            <code class="code-label" style="margin-top:8px">Windows (PowerShell):</code>
+            <code>irm companion.theio.vn/install.ps1 | iex</code>
           </div>
-          <p>Downloads <code>docker-compose.yml</code> and <code>.env</code> template. No source code needed.</p>
+          <p>Downloads <code>docker-compose.yml</code> and <code>.env</code>. No source code needed.</p>
         </div>
 
         <div class="step-connector" aria-hidden="true">
@@ -355,7 +358,8 @@
       </div>
 
       <div class="install-tabs">
-        <button class="tab-btn active" data-tab="docker">Install (Free)</button>
+        <button class="tab-btn active" data-tab="docker">macOS / Linux</button>
+        <button class="tab-btn" data-tab="windows">Windows</button>
         <button class="tab-btn" data-tab="license">Activate Pro</button>
       </div>
 
@@ -380,24 +384,42 @@ docker compose up -d
           <p class="install-note">Requires Docker Desktop + your own <a href="https://claude.ai" target="_blank" rel="noopener">Claude subscription</a>. Image pulled from <code>ghcr.io</code>.</p>
         </div>
 
-        <div class="install-panel" id="tab-license">
+        <div class="install-panel" id="tab-windows">
           <div class="code-block code-block-lg">
             <div class="code-header">
-              <span class="code-lang">bash</span>
+              <span class="code-lang">powershell</span>
               <button class="copy-btn" aria-label="Copy to clipboard">Copy</button>
             </div>
-            <pre><code><span class="code-comment"># After purchasing, add license key to .env</span>
-<span class="code-keyword">echo</span> "COMPANION_LICENSE=cmp_pro_xxxxxxxxxxxx" >> .env
+            <pre><code><span class="code-comment"># 1. One-line install (PowerShell)</span>
+irm https://companion.theio.vn/install.ps1 | iex
+<span class="code-keyword">cd</span> companion
 
-<span class="code-comment"># Restart to activate Pro</span>
-docker compose restart
+<span class="code-comment"># 2. Launch — 7-day free trial starts automatically</span>
+docker compose up -d
 
-<span class="code-comment"># Verified on startup via pay.theio.vn</span>
-<span class="code-comment"># ✓ 6+ concurrent sessions</span>
-<span class="code-comment"># ✓ Telegram bot + Stream Bridge</span>
-<span class="code-comment"># ✓ Magic Ring + Shared context</span></code></pre>
+<span class="code-comment"># ✓ Open http://localhost:3580</span>
+<span class="code-comment"># ✓ All features unlocked for 7 days</span>
+<span class="code-comment"># ✓ Uses your own Claude Code subscription</span></code></pre>
           </div>
-          <p class="install-note">License key emailed after payment. Verified once at startup — everything else runs 100% on your machine.</p>
+          <p class="install-note">Requires <a href="https://www.docker.com/products/docker-desktop/" target="_blank" rel="noopener">Docker Desktop for Windows</a> + your own <a href="https://claude.ai" target="_blank" rel="noopener">Claude subscription</a>.</p>
+        </div>
+
+        <div class="install-panel" id="tab-license">
+          <div class="activate-steps">
+            <div class="activate-step">
+              <span class="activate-num">1</span>
+              <span>Open <strong>Settings</strong> in Companion web UI</span>
+            </div>
+            <div class="activate-step">
+              <span class="activate-num">2</span>
+              <span>Paste your license key in the <strong>License</strong> section</span>
+            </div>
+            <div class="activate-step">
+              <span class="activate-num">3</span>
+              <span>Click <strong>Activate</strong> — Pro unlocks instantly</span>
+            </div>
+          </div>
+          <p class="install-note">License key emailed after payment. No restart needed — activate from the web UI.</p>
         </div>
       </div>
     </div>
