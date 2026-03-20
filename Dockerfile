@@ -59,5 +59,11 @@ EXPOSE 3579 3580
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD curl -f http://localhost:3579/api/health || exit 1
 
-# Fix volume permissions at runtime then drop to non-root user
-CMD ["sh", "-c", "chown -R companion:companion /app/data && exec su -s /bin/sh companion -c 'bun run --hot packages/server/src/index.ts & cd packages/web && bunx next start --port 3580 & wait'"]
+# Auto-restore .claude.json from backup if missing + fix permissions + start
+CMD ["sh", "-c", "\
+  if [ ! -f /root/.claude.json ] && ls /root/.claude/backups/.claude.json.backup.* 1>/dev/null 2>&1; then \
+    cp \"$(ls -t /root/.claude/backups/.claude.json.backup.* | head -1)\" /root/.claude.json && \
+    echo '[startup] Restored .claude.json from backup'; \
+  fi && \
+  chown -R companion:companion /app/data && \
+  exec su -s /bin/sh companion -c 'bun run --hot packages/server/src/index.ts & cd packages/web && bunx next start --port 3580 & wait'"]
