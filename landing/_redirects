@@ -1,0 +1,5 @@
+/install https://pay.theio.vn/companion/install 302
+/install.sh https://pay.theio.vn/companion/install 302
+/docker-compose https://pay.theio.vn/companion/docker-compose 302
+/docker-compose.yml https://pay.theio.vn/companion/docker-compose 302
+/env-template https://pay.theio.vn/companion/env-template 302
