@@ -17,6 +17,7 @@ import {
   storeMessage,
   updateCliSessionId,
   cleanupZombieSessions,
+  clearCliSessionId,
   type ActiveSession,
 } from "./session-store.js";
 import type {
@@ -171,6 +172,11 @@ export class WsBridge {
       parentId: opts.parentId,
       channelId: opts.channelId,
     });
+
+    // If resuming, clear cliSessionId from old session so it's no longer listed as resumable
+    if (opts.resume && opts.cliSessionId) {
+      clearCliSessionId(opts.cliSessionId);
+    }
 
     // Create plan mode watcher
     const planWatcher = createPlanModeWatcher(

@@ -425,6 +425,23 @@ export function listResumableSessions(): ResumableSession[] {
   }
 }
 
+/**
+ * Clear cliSessionId from all sessions that have this CLI session ID.
+ * Called when a session is resumed — prevents the old record from showing up as resumable again.
+ */
+export function clearCliSessionId(cliSessionId: string): void {
+  const db = getDb();
+  try {
+    db.update(sessions)
+      .set({ cliSessionId: null })
+      .where(eq(sessions.cliSessionId, cliSessionId))
+      .run();
+    log.info("Cleared cliSessionId from old session (resume consumed)", { cliSessionId });
+  } catch (err) {
+    log.warn("Failed to clear old cliSessionId", { error: String(err) });
+  }
+}
+
 // ─── Message storage ────────────────────────────────────────────────────────
 
 export function storeMessage(msg: {
