@@ -165,6 +165,8 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
   const [permissionMode, setPermissionMode] = useState<PermissionMode>("default");
   const [initialPrompt, setInitialPrompt] = useState("");
   const [resume, setResume] = useState(false);
+  const [idleTimeout, setIdleTimeout] = useState<number>(3_600_000); // 1h default
+  const [autoApprove, setAutoApprove] = useState(false);
 
   // Launch step
   const [launching, setLaunching] = useState(false);
@@ -307,6 +309,8 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
         model,
         permissionMode,
         prompt: initialPrompt.trim() || undefined,
+        idleTimeoutMs: idleTimeout,
+        keepAlive: idleTimeout === 0,
       });
 
       const sessionId = res.data.sessionId;
@@ -838,6 +842,35 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                     fontFamily: "var(--font-body)",
                   }}
                 />
+              </div>
+
+              {/* Idle Timeout */}
+              <div className="flex flex-col gap-1.5">
+                <p className="text-xs font-semibold tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+                  IDLE TIMEOUT
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: "Never", value: 0 },
+                    { label: "30m", value: 1_800_000 },
+                    { label: "1h", value: 3_600_000 },
+                    { label: "4h", value: 14_400_000 },
+                    { label: "12h", value: 43_200_000 },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setIdleTimeout(opt.value)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+                      style={{
+                        background: idleTimeout === opt.value ? "var(--color-google-blue)" : "var(--color-bg-elevated)",
+                        color: idleTimeout === opt.value ? "#fff" : "var(--color-text-secondary)",
+                        border: `1px solid ${idleTimeout === opt.value ? "var(--color-google-blue)" : "var(--color-border)"}`,
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Resume toggle */}

@@ -47,6 +47,8 @@ export const api = {
       permissionMode?: string;
       prompt?: string;
       resume?: boolean;
+      idleTimeoutMs?: number;
+      keepAlive?: boolean;
     }) => request<{ data: { sessionId: string } }>("/api/sessions", {
       method: "POST",
       body: JSON.stringify(body),

@@ -61,7 +61,9 @@ function formatCost(usd: number) {
 }
 
 function formatTime(ts: number) {
+  if (!ts || ts <= 0) return "just now";
   const diff = Date.now() - ts;
+  if (diff < 0 || diff > 365 * 86_400_000) return "just now";
   if (diff < 60_000) return "just now";
   if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
   if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;

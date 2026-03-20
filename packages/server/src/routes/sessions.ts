@@ -36,6 +36,8 @@ const createSessionSchema = z.object({
   resume: z.boolean().optional(),
   cliSessionId: z.string().uuid().optional(),
   source: z.string().optional(),
+  idleTimeoutMs: z.number().int().min(0).max(86_400_000).optional(),
+  keepAlive: z.boolean().optional(),
 });
 
 const sendMessageSchema = z.object({

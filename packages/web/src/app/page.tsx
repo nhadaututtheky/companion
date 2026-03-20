@@ -350,11 +350,11 @@ export default function DashboardPage() {
           useSessionStore.getState().setSession(s.id, {
             id: s.id,
             projectSlug: s.projectSlug,
-            projectName: s.projectSlug,
+            projectName: s.projectSlug || "session",
             model: s.model,
             status: s.status,
             state: s.state as unknown as import("@companion/shared").SessionState,
-            createdAt: new Date(s.createdAt).getTime(),
+            createdAt: new Date(s.createdAt).getTime() || Date.now(),
           });
           useSessionStore.getState().addToGrid(s.id);
         }
