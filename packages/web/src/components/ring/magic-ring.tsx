@@ -227,7 +227,7 @@ export function MagicRing() {
           height: RING_SIZE,
           borderRadius: "50%",
           border: "none",
-          zIndex: 40,
+          zIndex: 50,
           cursor: dragging ? "grabbing" : "pointer",
           padding: 0,
           display: "flex",
