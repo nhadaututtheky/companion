@@ -95,17 +95,18 @@ function saveLicenseCache(license: LicenseInfo): void {
  * Verify license key against the cloud API.
  * Returns cached result if still valid.
  */
-export async function verifyLicense(key: string): Promise<LicenseInfo> {
-  // Check in-memory cache first
-  if (cachedLicense?.valid && Date.now() - cachedLicense.cachedAt < CACHE_TTL_MS) {
-    return cachedLicense;
-  }
+export async function verifyLicense(key: string, options?: { skipCache?: boolean }): Promise<LicenseInfo> {
+  // Check cache (skip when explicitly activating a new key)
+  if (!options?.skipCache) {
+    if (cachedLicense?.valid && Date.now() - cachedLicense.cachedAt < CACHE_TTL_MS) {
+      return cachedLicense;
+    }
 
-  // Check persistent cache
-  const persisted = loadCachedLicense();
-  if (persisted?.valid) {
-    cachedLicense = persisted;
-    return persisted;
+    const persisted = loadCachedLicense();
+    if (persisted?.valid) {
+      cachedLicense = persisted;
+      return persisted;
+    }
   }
 
   try {

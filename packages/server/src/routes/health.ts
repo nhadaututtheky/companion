@@ -71,7 +71,7 @@ licenseActivateRoute.post("/activate", zValidator("json", activateSchema), async
 
   log.info("License activation attempt", { keyPrefix: key.slice(0, 12) + "..." });
 
-  const license = await verifyLicense(key);
+  const license = await verifyLicense(key, { skipCache: true });
 
   if (!license.valid) {
     log.warn("License activation failed", { error: license.error });
