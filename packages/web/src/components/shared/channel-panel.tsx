@@ -262,7 +262,7 @@ function CreateChannelForm({
       await api.channels.linkSession(channel.id, sessionId);
       toast.success("Shared context channel created");
       onCreated(channel.id);
-    } catch (err) {
+    } catch {
       toast.error("Failed to create channel");
     } finally {
       setCreating(false);

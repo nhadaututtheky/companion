@@ -2,13 +2,9 @@
  * Config commands: /autoapprove, /debate
  */
 
-import type { Context } from "grammy";
 import { InlineKeyboard } from "grammy";
 import { escapeHTML } from "../formatter.js";
-import { createLogger } from "../../logger.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
-
-const log = createLogger("cmd:config");
 
 export function registerConfigCommands(bridge: TelegramBridge): void {
   const bot = bridge.bot;

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, type ReactNode } from "react";
+import { useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Copy, Check } from "@phosphor-icons/react";

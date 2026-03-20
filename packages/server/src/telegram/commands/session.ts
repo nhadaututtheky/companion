@@ -2,10 +2,9 @@
  * Session commands: /start, /new, /stop, /resume, /projects
  */
 
-import type { Context } from "grammy";
 import { InlineKeyboard } from "grammy";
 import { listProjects, getProject } from "../../services/project-profiles.js";
-import { escapeHTML, formatCost } from "../formatter.js";
+import { escapeHTML } from "../formatter.js";
 import { createLogger } from "../../logger.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
 import { findDeadSessionForChat } from "../../services/session-store.js";

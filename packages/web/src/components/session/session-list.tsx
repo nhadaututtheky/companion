@@ -2,12 +2,8 @@
 import { useState } from "react";
 import {
   Plus,
-  Circle,
-  ClockCountdown,
-  CheckCircle,
   FolderOpen,
 } from "@phosphor-icons/react";
-import { useSessionStore } from "@/lib/stores/session-store";
 
 interface SessionItem {
   id: string;

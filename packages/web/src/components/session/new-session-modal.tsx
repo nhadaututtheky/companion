@@ -166,7 +166,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
   const [initialPrompt, setInitialPrompt] = useState("");
   const [resume, setResume] = useState(false);
   const [idleTimeout, setIdleTimeout] = useState<number>(3_600_000); // 1h default
-  const [autoApprove, setAutoApprove] = useState(false);
+  const [_autoApprove, _setAutoApprove] = useState(false);
 
   // Launch step
   const [launching, setLaunching] = useState(false);
@@ -347,6 +347,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
     model,
     permissionMode,
     initialPrompt,
+    idleTimeout,
     onClose,
   ]);
 

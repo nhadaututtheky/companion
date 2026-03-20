@@ -3,13 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import {
   User,
   Robot,
-  Gear,
   Wrench,
   Brain,
   CaretDown,
   CaretRight,
-  Copy,
-  Check,
   CurrencyDollar,
 } from "@phosphor-icons/react";
 import { MarkdownMessage } from "../chat/markdown-message";

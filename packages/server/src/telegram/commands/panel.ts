@@ -17,12 +17,9 @@
 
 import { InlineKeyboard } from "grammy";
 import { escapeHTML } from "../formatter.js";
-import { createLogger } from "../../logger.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
 import { getProject } from "../../services/project-profiles.js";
 import { findDeadSessionForChat } from "../../services/session-store.js";
-
-const log = createLogger("cmd:panel");
 
 // ─── Model options ───────────────────────────────────────────────────────────
 

@@ -3,7 +3,6 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useWebSocket } from "./use-websocket";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useActivityStore } from "@/lib/stores/activity-store";
-import { api } from "@/lib/api-client";
 import type { BrowserIncomingMessage, ContentBlock, SessionState } from "@companion/shared";
 
 interface Message {
@@ -409,7 +408,7 @@ export function useSession(sessionId: string): UseSessionReturn {
         }
       }
     },
-    [sessionId, setSession, addLog, getSessionName],
+    [sessionId, setSession, addLog, getSessionName, flushStreamBuffer],
   );
 
   const { send } = useWebSocket({

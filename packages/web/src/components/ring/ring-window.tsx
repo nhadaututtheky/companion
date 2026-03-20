@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useEffect, useState, type KeyboardEvent } from "react";
-import { ArrowsIn, PaperPlaneTilt, X } from "@phosphor-icons/react";
+import { ArrowsIn, PaperPlaneTilt } from "@phosphor-icons/react";
 import { useRingStore, type SharedMessage } from "@/lib/stores/ring-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { api } from "@/lib/api-client";

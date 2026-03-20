@@ -33,7 +33,6 @@ import type {
   SessionState,
   SessionStatus,
   PermissionRequest,
-  AutoApproveConfig,
 } from "@companion/shared";
 import { SESSION_IDLE_TIMEOUT_MS, HEALTH_CHECK_INTERVAL_MS } from "@companion/shared";
 import type { LaunchResult } from "./cli-launcher.js";

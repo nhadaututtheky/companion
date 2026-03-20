@@ -8,7 +8,7 @@ import { WsBridge } from "./services/ws-bridge.js";
 import { BotRegistry } from "./telegram/bot-registry.js";
 import { createLogger } from "./logger.js";
 import { bulkEndSessions } from "./services/session-store.js";
-import { verifyLicense, checkOrActivateTrial, getLicense } from "./services/license.js";
+import { verifyLicense, checkOrActivateTrial } from "./services/license.js";
 import { seedDefaultTemplates } from "./services/templates.js";
 import { DEFAULT_PORT, APP_VERSION } from "@companion/shared";
 import { timingSafeEqual } from "node:crypto";

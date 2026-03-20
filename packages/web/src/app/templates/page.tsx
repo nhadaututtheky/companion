@@ -285,7 +285,7 @@ export default function TemplatesPage() {
     try {
       const res = await api.templates.list();
       setTemplates(res.data);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load templates");
     } finally {
       setLoading(false);

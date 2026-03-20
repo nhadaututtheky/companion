@@ -2,11 +2,7 @@
  * Control commands: /allow, /deny, /exitplan, /cancel, /compact
  */
 
-import type { Context } from "grammy";
-import { createLogger } from "../../logger.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
-
-const log = createLogger("cmd:control");
 
 export function registerControlCommands(bridge: TelegramBridge): void {
   const bot = bridge.bot;

@@ -3,17 +3,14 @@
  * Manages chat-to-session mappings, routes messages, handles streaming.
  */
 
-import { type Bot, type Context, InlineKeyboard } from "grammy";
+import { type Bot, type Context } from "grammy";
 import { eq, and, isNull } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { telegramSessionMappings } from "../db/schema.js";
 import { createBot, registerCommands, type BotConfig } from "./bot-factory.js";
 import { StreamHandler } from "./stream-handler.js";
 import {
-  toTelegramHTML,
   escapeHTML,
-  splitMessage,
-  wrapExpandable,
   formatPermission,
 } from "./formatter.js";
 import { registerSessionCommands } from "./commands/session.js";
@@ -30,7 +27,6 @@ import { randomUUID } from "crypto";
 import type { WsBridge } from "../services/ws-bridge.js";
 import type {
   BrowserIncomingMessage,
-  CLIAssistantMessage,
   CLIResultMessage,
   PermissionRequest,
 } from "@companion/shared";

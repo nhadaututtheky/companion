@@ -2,9 +2,8 @@
  * Info commands: /status, /cost, /files, /help, /model, /todo, /history, /usage
  */
 
-import type { Context } from "grammy";
 import { InlineKeyboard } from "grammy";
-import { eq, and, gte, sql } from "drizzle-orm";
+import { gte, sql } from "drizzle-orm";
 import {
   escapeHTML,
   formatCost,
@@ -12,13 +11,10 @@ import {
   formatDuration,
   formatSessionStatus,
 } from "../formatter.js";
-import { createLogger } from "../../logger.js";
 import { getDb } from "../../db/client.js";
 import { sessions, dailyCosts } from "../../db/schema.js";
 import { listSessions } from "../../services/session-store.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
-
-const log = createLogger("cmd:info");
 
 export function registerInfoCommands(bridge: TelegramBridge): void {
   const bot = bridge.bot;

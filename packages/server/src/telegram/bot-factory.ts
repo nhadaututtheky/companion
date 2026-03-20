@@ -2,7 +2,7 @@
  * BotFactory — Creates configured grammY bot instances with plugins.
  */
 
-import { Bot, type Context } from "grammy";
+import { Bot } from "grammy";
 import { autoRetry } from "@grammyjs/auto-retry";
 import { apiThrottler } from "@grammyjs/transformer-throttler";
 import { createLogger } from "../logger.js";

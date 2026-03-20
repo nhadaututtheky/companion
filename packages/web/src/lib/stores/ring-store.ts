@@ -31,7 +31,7 @@ interface RingStore {
 
 const DEFAULT_POSITION = { x: -1, y: -1 }; // -1 means "not yet initialized — use default"
 
-export const useRingStore = create<RingStore>((set, get) => ({
+export const useRingStore = create<RingStore>((set) => ({
   linkedSessionIds: [],
   topic: "",
   isExpanded: false,

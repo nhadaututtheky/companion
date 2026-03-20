@@ -4,7 +4,7 @@ import { zValidator } from "@hono/zod-validator";
 import { getSqlite } from "../db/client.js";
 import { APP_VERSION } from "@companion/shared";
 import { countActiveSessions } from "../services/session-store.js";
-import { getLicense, getMaxSessions, verifyLicense } from "../services/license.js";
+import { getLicense, verifyLicense } from "../services/license.js";
 import { createLogger } from "../logger.js";
 import type { HealthResponse } from "@companion/shared";
 

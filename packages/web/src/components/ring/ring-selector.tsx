@@ -81,7 +81,8 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
     }
   }
 
-  // Close on outside click
+  // Close on outside click — handleCancel only calls setSelecting(false) which is stable
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -91,6 +92,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   return (
     <div

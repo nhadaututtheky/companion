@@ -1,6 +1,7 @@
 {
   "name": "companion",
   "private": true,
+  "type": "module",
   "workspaces": ["packages/*"],
   "scripts": {
     "dev:server": "bun run --hot packages/server/src/index.ts",

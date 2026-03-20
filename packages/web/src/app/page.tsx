@@ -258,6 +258,8 @@ function ResumeBanner({ sessions, onResume, onDismiss }: ResumeBannerProps) {
 
 // ── Root page ──────────────────────────────────────────────────────────────
 
+const ACTIVE_STATUSES = ["starting", "running", "waiting", "idle", "busy"];
+
 export default function DashboardPage() {
   const newSessionOpen = useUiStore((s) => s.newSessionModalOpen);
   const setNewSessionOpen = useUiStore((s) => s.setNewSessionModalOpen);
@@ -295,8 +297,6 @@ export default function DashboardPage() {
   );
 
   // Ordered active sessions for grid (up to 6)
-  const ACTIVE_STATUSES = ["starting", "running", "waiting", "idle", "busy"];
-
   const gridSessions = useMemo(() => {
     const active = Object.values(sessions).filter((s) =>
       ACTIVE_STATUSES.includes(s.status),

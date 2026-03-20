@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Circle, ClockCountdown, CheckCircle, ArrowClockwise, CurrencyDollar, FolderOpen,
+  ArrowClockwise, CurrencyDollar, FolderOpen,
 } from "@phosphor-icons/react";
 import { Header } from "@/components/layout/header";
 import { api } from "@/lib/api-client";

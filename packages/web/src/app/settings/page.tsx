@@ -736,6 +736,7 @@ function TelegramTab() {
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function TelegramPreviewTab() {
   return (
     <SettingSection
@@ -747,6 +748,7 @@ function TelegramPreviewTab() {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function TelegramBotsTab() {
   const [configs, setConfigs] = useState<BotConfig[]>([]);
   const [running, setRunning] = useState<RunningBot[]>([]);
@@ -878,6 +880,7 @@ function TelegramBotsTab() {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function TelegramStreamingTab() {
   const [configs, setConfigs] = useState<BotConfig[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,7 +1,6 @@
 "use client";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useRingStore } from "@/lib/stores/ring-store";
-import { useSessionStore } from "@/lib/stores/session-store";
 import { RingSelector } from "./ring-selector";
 import { RingWindow } from "./ring-window";
 
@@ -143,6 +142,8 @@ export function MagicRing() {
   const [dragging, setDragging] = useState(false);
   const [pos, setPos] = useState({ x: -1, y: -1 });
 
+  /* eslint-disable react-hooks/exhaustive-deps */
+  // Intentionally runs once on mount to initialize position from store
   useEffect(() => {
     if (position.x === -1) {
       const defaultX = window.innerWidth - 80;
@@ -153,6 +154,7 @@ export function MagicRing() {
       setPos(position);
     }
   }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -168,6 +170,7 @@ export function MagicRing() {
     [pos],
   );
 
+  // dragging state is intentionally in deps so the callback re-creates when drag starts/ends
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLButtonElement>) => {
       if (!dragging) return;
@@ -199,6 +202,7 @@ export function MagicRing() {
       setPosition(pos);
     }
     isDraggingRef.current = false;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- dragging is included to re-evaluate after drag ends
   }, [dragging, hasLinked, isExpanded, isSelecting, pos, setExpanded, setSelecting, setPosition]);
 
   const ringCenterX = pos.x + RING_SIZE / 2;

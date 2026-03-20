@@ -37,7 +37,7 @@ function settingKey(botId: string, field: string): string {
   return `telegram.${botId}.streaming.${field}`;
 }
 
-export function TelegramStreaming({ botId, botLabel, bots }: TelegramStreamingProps) {
+export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStreamingProps) {
   const [collapsed, setCollapsed] = useState(true);
   const [streamEnabled, setStreamEnabled] = useState(false);
   const [targetChatId, setTargetChatId] = useState("");
