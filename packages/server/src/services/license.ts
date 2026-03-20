@@ -109,7 +109,8 @@ export async function verifyLicense(key: string): Promise<LicenseInfo> {
   }
 
   try {
-    const res = await fetch(`${VERIFY_URL}?key=${encodeURIComponent(key)}`, {
+    const mid = getMachineId();
+    const res = await fetch(`${VERIFY_URL}?key=${encodeURIComponent(key)}&mid=${encodeURIComponent(mid)}`, {
       headers: { "User-Agent": "Companion/0.2.0" },
       signal: AbortSignal.timeout(10000),
     });
