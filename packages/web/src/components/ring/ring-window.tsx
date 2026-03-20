@@ -173,7 +173,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
         );
       })}
 
-      {/* Content area — header + chat + input — positioned inside the fan */}
+      {/* Content area — header + chat + input — directly on fan surface */}
       <div
         style={{
           position: "absolute",
@@ -183,9 +183,6 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
           height: 200,
           display: "flex",
           flexDirection: "column",
-          borderRadius: 12,
-          background: "var(--color-bg-elevated, rgba(255,255,255,0.7))",
-          border: "1px solid var(--color-border, rgba(0,0,0,0.05))",
           overflow: "hidden",
           opacity: open ? 1 : 0,
           transition: reducedMotion ? "none" : "opacity 0.3s ease 0.2s",

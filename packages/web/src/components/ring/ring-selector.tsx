@@ -149,7 +149,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
         );
       })}
 
-      {/* Form: topic + action buttons — inside the fan */}
+      {/* Form: topic + action buttons — directly on fan surface */}
       <div
         style={{
           position: "absolute",
@@ -160,9 +160,6 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
           flexDirection: "column",
           gap: 5,
           padding: 8,
-          borderRadius: 10,
-          background: "var(--color-bg-elevated, rgba(255,255,255,0.6))",
-          border: "1px solid var(--color-border, rgba(0,0,0,0.04))",
           opacity: open ? 1 : 0,
           transition: reducedMotion ? "none" : "opacity 0.3s ease 0.15s",
         }}
