@@ -177,22 +177,20 @@ channelRoutes.delete("/:id/sessions/:sessionId", (c) => {
 });
 
 // POST /channels/debate — start a debate (API)
-channelRoutes.post("/debate", async (c) => {
-  const body = await c.req.json().catch(() => ({})) as {
-    topic?: string;
-    format?: string;
-    projectSlug?: string;
-    maxRounds?: number;
-  };
+const debateSchema = z.object({
+  topic: z.string().min(1).max(500),
+  format: z.enum(["pro_con", "red_team", "review", "brainstorm"]).default("pro_con"),
+  projectSlug: z.string().optional(),
+  maxRounds: z.number().int().min(1).max(20).optional(),
+});
 
-  if (!body.topic) {
-    return c.json({ success: false, error: "topic is required" } satisfies ApiResponse, 400);
-  }
+channelRoutes.post("/debate", zValidator("json", debateSchema), async (c) => {
+  const body = c.req.valid("json");
 
   try {
     const state = await startDebate({
       topic: body.topic,
-      format: (body.format as "pro_con" | "red_team" | "review" | "brainstorm") ?? "pro_con",
+      format: body.format,
       projectSlug: body.projectSlug,
       maxRounds: body.maxRounds,
     });

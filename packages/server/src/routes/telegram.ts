@@ -193,7 +193,7 @@ export function telegramRoutes(registry: BotRegistry) {
       label: row.label,
       role: row.role as "claude" | "anti" | "general",
       allowedChatIds: row.allowedChatIds ?? [],
-      allowedUserIds: (row as Record<string, unknown>).allowedUserIds as number[] ?? [],
+      allowedUserIds: row.allowedUserIds ?? [],
     });
 
     return c.json({

@@ -54,6 +54,8 @@ export interface DebateState {
   maxRounds: number;
   maxCostUsd: number;
   totalCostUsd: number;
+  /** Consecutive rounds with no new points (for stale detection) */
+  staleRoundCount: number;
   status: "active" | "concluding" | "concluded";
 }
 
@@ -72,18 +74,6 @@ const activeDebates = new Map<string, DebateState>();
 
 export function getActiveDebate(channelId: string): DebateState | undefined {
   return activeDebates.get(channelId);
-}
-
-export function getActiveDebateByProject(projectSlug: string): DebateState | undefined {
-  for (const debate of activeDebates.values()) {
-    if (debate.status === "active") {
-      // Check DB for projectSlug match
-      const db = getDb();
-      const ch = db.select().from(channels).where(eq(channels.id, debate.channelId)).get();
-      if (ch?.projectSlug === projectSlug) return debate;
-    }
-  }
-  return undefined;
 }
 
 export function listActiveDebates(): DebateState[] {
@@ -278,6 +268,7 @@ export async function startDebate(
     maxRounds: config.maxRounds ?? DEFAULT_MAX_ROUNDS,
     maxCostUsd: config.maxCostUsd ?? DEFAULT_MAX_COST_USD,
     totalCostUsd: 0,
+    staleRoundCount: 0,
     status: "active",
   };
 
@@ -363,10 +354,21 @@ async function runDebateLoop(
       // Convergence check (skip round 1 — need at least 2 rounds)
       if (state.currentRound >= 2) {
         const convergenceResult = await checkConvergence(state.channelId, state.currentRound);
-        if (convergenceResult.converged) {
+
+        // Accumulate stale rounds across calls
+        if (convergenceResult.staleRounds > 0) {
+          state.staleRoundCount++;
+        } else {
+          state.staleRoundCount = 0;
+        }
+
+        const shouldConclude = convergenceResult.score >= 70 || state.staleRoundCount >= 2;
+
+        if (shouldConclude) {
           log.info("Debate converged", {
             channelId: state.channelId,
             score: convergenceResult.score,
+            staleRounds: state.staleRoundCount,
             round: state.currentRound,
           });
           await concludeDebate(state.channelId, onMessage);

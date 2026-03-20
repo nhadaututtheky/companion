@@ -70,13 +70,11 @@ Respond with JSON only:
         reason: string;
       };
 
-      const staleRounds = parsed.newPointsInLatestRound ? 0 : 1;
-      const converged = parsed.convergenceScore >= 70 || staleRounds >= 2;
-
+      // Report raw data — debate-engine decides convergence with accumulated state
       return {
-        converged,
+        converged: false, // let caller decide based on accumulated staleRoundCount
         score: parsed.convergenceScore,
-        staleRounds,
+        staleRounds: parsed.newPointsInLatestRound ? 0 : 1,
         reason: parsed.reason,
       };
     } catch {

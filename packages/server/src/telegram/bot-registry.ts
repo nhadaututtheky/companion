@@ -125,7 +125,7 @@ export class BotRegistry {
           label: row.label,
           role: row.role as "claude" | "anti" | "general",
           allowedChatIds: row.allowedChatIds ?? [],
-          allowedUserIds: (row as Record<string, unknown>).allowedUserIds as number[] ?? [],
+          allowedUserIds: row.allowedUserIds ?? [],
         });
       }
     } catch (err) {
