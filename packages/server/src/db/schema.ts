@@ -145,6 +145,22 @@ export const channelMessages = sqliteTable("channel_messages", {
   timestamp: integer("timestamp", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
 });
 
+// ─── Session Templates ──────────────────────────────────────────────────────
+
+export const sessionTemplates = sqliteTable("session_templates", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  projectSlug: text("project_slug").references(() => projects.slug),
+  prompt: text("prompt").notNull(),
+  model: text("model"),
+  permissionMode: text("permission_mode"),
+  icon: text("icon").notNull().default("⚡"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+});
+
 // ─── Session Summaries ───────────────────────────────────────────────────────
 
 export const sessionSummaries = sqliteTable("session_summaries", {

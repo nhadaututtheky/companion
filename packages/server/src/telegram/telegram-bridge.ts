@@ -22,6 +22,7 @@ import { registerInfoCommands } from "./commands/info.js";
 import { registerConfigCommands } from "./commands/config.js";
 import { registerPanelCommands } from "./commands/panel.js";
 import { registerUtilityCommands } from "./commands/utility.js";
+import { registerTemplateCommands } from "./commands/template.js";
 import { createLogger } from "../logger.js";
 import { storeMessage } from "../services/session-store.js";
 import { getProject, listProjects } from "../services/project-profiles.js";
@@ -148,6 +149,7 @@ export class TelegramBridge {
     registerConfigCommands(this);
     registerPanelCommands(this);
     registerUtilityCommands(this);
+    registerTemplateCommands(this);
 
     // Handle text messages (not commands)
     this.bot.on("message:text", async (ctx) => {
@@ -284,7 +286,13 @@ export class TelegramBridge {
   async startSessionForChat(
     ctx: Context,
     projectSlug: string,
-    opts?: { resume?: boolean; cliSessionId?: string },
+    opts?: {
+      resume?: boolean;
+      cliSessionId?: string;
+      initialPrompt?: string;
+      model?: string;
+      permissionMode?: string;
+    },
   ): Promise<void> {
     const chatId = ctx.chat!.id;
     const topicId = ctx.message?.message_thread_id ?? (ctx.callbackQuery?.message as { message_thread_id?: number })?.message_thread_id;
@@ -303,12 +311,15 @@ export class TelegramBridge {
       this.killSession(existing.sessionId);
     }
 
+    const effectiveModel = opts?.model ?? project.defaultModel;
+    const effectivePermission = opts?.permissionMode ?? project.permissionMode;
+
     try {
       const sessionId = await this.wsBridge.startSession({
         projectSlug: project.slug,
         cwd: project.dir,
-        model: project.defaultModel,
-        permissionMode: project.permissionMode,
+        model: effectiveModel,
+        permissionMode: effectivePermission,
         source: "telegram",
         resume: opts?.resume,
         cliSessionId: opts?.cliSessionId,
@@ -317,16 +328,29 @@ export class TelegramBridge {
       const mapping: ChatMapping = {
         sessionId,
         projectSlug: project.slug,
-        model: project.defaultModel,
+        model: effectiveModel,
       };
 
       this.setMapping(chatId, topicId, mapping);
       this.subscribeToSession(sessionId, chatId, topicId);
 
       // Send settings panel (includes status + inline keyboard)
-      const panelMsg = await this.sendSettingsPanel(chatId, topicId, sessionId, project.name, project.defaultModel);
+      const panelMsg = await this.sendSettingsPanel(chatId, topicId, sessionId, project.name, effectiveModel);
       if (panelMsg) {
         this.setSessionPanelMessageId(sessionId, panelMsg.message_id);
+      }
+
+      // Send initial prompt from template once session is ready
+      if (opts?.initialPrompt) {
+        const prompt = opts.initialPrompt;
+        this.waitForSessionReady(sessionId, 15_000).then((ready) => {
+          if (ready) {
+            this.wsBridge.sendUserMessage(sessionId, prompt, "telegram");
+          } else {
+            log.warn("Session not ready in time for initial prompt", { sessionId });
+            this.bot.api.sendMessage(chatId, "⚠️ Session took too long to start. Send your prompt manually.").catch(() => {});
+          }
+        });
       }
 
       log.info("Session started from Telegram", {
@@ -335,6 +359,7 @@ export class TelegramBridge {
         sessionId,
         project: project.slug,
         resume: opts?.resume ?? false,
+        hasTemplate: !!opts?.initialPrompt,
       });
     } catch (err) {
       log.error("Failed to start session", { error: String(err) });
@@ -490,6 +515,27 @@ export class TelegramBridge {
     });
 
     this.subscriptions.set(sessionId, unsub);
+  }
+
+  /**
+   * Wait for a session to reach "idle" status (CLI initialized).
+   * Polls every 500ms up to maxWaitMs. Returns true if ready.
+   */
+  private waitForSessionReady(sessionId: string, maxWaitMs: number): Promise<boolean> {
+    return new Promise((resolve) => {
+      const start = Date.now();
+      const check = () => {
+        const session = this.wsBridge.getSession(sessionId);
+        if (!session) { resolve(false); return; }
+        if (session.state.status === "idle" || session.state.status === "busy") {
+          resolve(true);
+          return;
+        }
+        if (Date.now() - start > maxWaitMs) { resolve(false); return; }
+        setTimeout(check, 500);
+      };
+      check();
+    });
   }
 
   /**
