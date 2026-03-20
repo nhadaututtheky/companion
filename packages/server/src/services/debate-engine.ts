@@ -17,12 +17,11 @@ import { checkConvergence } from "./convergence-detector.js";
 import { getDb } from "../db/client.js";
 import { channels } from "../db/schema.js";
 import { eq } from "drizzle-orm";
+import { callAI, type ModelTier } from "./ai-client.js";
 import { createLogger } from "../logger.js";
 
 const log = createLogger("debate-engine");
 
-const SONNET_MODEL = "claude-sonnet-4-6-20250514";
-const HAIKU_MODEL = "claude-haiku-4-5-20251001";
 const DEFAULT_MAX_ROUNDS = 5;
 const DEFAULT_MAX_COST_USD = 0.50;
 
@@ -36,8 +35,6 @@ export interface DebateConfig {
   projectSlug?: string;
   maxRounds?: number;
   maxCostUsd?: number;
-  /** Model for debate agents (default: sonnet) */
-  agentModel?: string;
 }
 
 export interface DebateAgent {
@@ -236,50 +233,20 @@ Rules:
   }
 }
 
-// ── Anthropic API helper ──────────────────────────────────────────────────
+// ── AI helper ─────────────────────────────────────────────────────────────
 
-interface AnthropicResponse {
-  content: Array<{ type: string; text: string }>;
-  usage: { input_tokens: number; output_tokens: number };
-}
-
-async function callAnthropic(
+async function callDebateAI(
   systemPrompt: string,
   messages: Array<{ role: "user" | "assistant"; content: string }>,
-  model?: string,
+  tier: ModelTier = "strong",
 ): Promise<{ text: string; costUsd: number }> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not set");
-
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: model ?? SONNET_MODEL,
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages,
-    }),
+  const res = await callAI({
+    systemPrompt,
+    messages,
+    tier,
+    maxTokens: 1024,
   });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Anthropic API ${res.status}: ${text}`);
-  }
-
-  const data = (await res.json()) as AnthropicResponse;
-  const text = data.content?.[0]?.text ?? "";
-
-  // Rough cost estimate (Sonnet pricing)
-  const inputCost = (data.usage.input_tokens / 1_000_000) * 3;
-  const outputCost = (data.usage.output_tokens / 1_000_000) * 15;
-  const costUsd = inputCost + outputCost;
-
-  return { text, costUsd };
+  return { text: res.text, costUsd: res.costUsd };
 }
 
 // ── Core Engine ────────────────────────────────────────────────────────────
@@ -324,7 +291,7 @@ export async function startDebate(
   });
 
   // Run first round (non-blocking)
-  void runDebateLoop(state, config.agentModel, onMessage);
+  void runDebateLoop(state, onMessage);
 
   return state;
 }
@@ -334,7 +301,6 @@ export async function startDebate(
  */
 async function runDebateLoop(
   state: DebateState,
-  agentModel?: string,
   onMessage?: (channelId: string, agent: DebateAgent, content: string, round: number) => void,
 ): Promise<void> {
   try {
@@ -358,10 +324,10 @@ async function runDebateLoop(
         // Build conversation from channel history
         const conversationMessages = buildConversation(history, agent, state.currentRound);
 
-        const { text, costUsd } = await callAnthropic(
+        const { text, costUsd } = await callDebateAI(
           agent.systemPrompt,
           conversationMessages,
-          agentModel,
+          "strong",
         );
 
         state.totalCostUsd += costUsd;
@@ -545,7 +511,7 @@ async function generateVerdict(
 
   const agentLabels = state.agents.map((a) => `${a.emoji} ${a.label} (${a.role})`).join(", ");
 
-  const { text } = await callAnthropic(
+  const { text } = await callDebateAI(
     `You are the JUDGE in a structured debate. Agents: ${agentLabels}. Topic: "${state.topic}".
 
 Analyze the full debate transcript and produce a JSON verdict:
@@ -560,7 +526,7 @@ Analyze the full debate transcript and produce a JSON verdict:
 
 Respond ONLY with valid JSON.`,
     [{ role: "user", content: transcript }],
-    HAIKU_MODEL, // Judge uses Haiku (cheaper)
+    "fast", // Judge uses fast/cheap model
   );
 
   try {

@@ -4,11 +4,10 @@
  */
 
 import { getChannelMessages } from "./channel-manager.js";
+import { callAI, isAIConfigured } from "./ai-client.js";
 import { createLogger } from "../logger.js";
 
 const log = createLogger("convergence");
-
-const HAIKU_MODEL = "claude-haiku-4-5-20251001";
 
 export interface ConvergenceResult {
   converged: boolean;
@@ -19,15 +18,14 @@ export interface ConvergenceResult {
 
 /**
  * Check if a debate has converged.
- * Uses Haiku to extract key points and compare overlap.
+ * Uses fast AI model to extract key points and compare overlap.
  */
 export async function checkConvergence(
   channelId: string,
   currentRound: number,
 ): Promise<ConvergenceResult> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return { converged: false, score: 0, staleRounds: 0, reason: "No API key" };
+  if (!isAIConfigured()) {
+    return { converged: false, score: 0, staleRounds: 0, reason: "No AI provider" };
   }
 
   try {
@@ -46,19 +44,11 @@ export async function checkConvergence(
       .map((m) => `[${m.role.toUpperCase()} R${m.round}]: ${m.content}`)
       .join("\n\n");
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: HAIKU_MODEL,
-        max_tokens: 300,
-        messages: [{
-          role: "user",
-          content: `Analyze this debate excerpt. Are the participants converging (agreeing) or going in circles (repeating same points)?
+    const aiResponse = await callAI({
+      systemPrompt: "You analyze debates for convergence. Respond with JSON only.",
+      messages: [{
+        role: "user",
+        content: `Analyze this debate excerpt. Are the participants converging (agreeing) or going in circles (repeating same points)?
 
 ${transcript}
 
@@ -68,29 +58,19 @@ Respond with JSON only:
   "newPointsInLatestRound": true/false,
   "reason": "brief explanation"
 }`,
-        }],
-      }),
+      }],
+      tier: "fast",
+      maxTokens: 300,
     });
 
-    if (!res.ok) {
-      log.error("Convergence check API error", { status: res.status });
-      return { converged: false, score: 0, staleRounds: 0, reason: "API error" };
-    }
-
-    const data = await res.json() as { content: Array<{ text: string }> };
-    const text = data.content?.[0]?.text ?? "";
-
     try {
-      const parsed = JSON.parse(text) as {
+      const parsed = JSON.parse(aiResponse.text) as {
         convergenceScore: number;
         newPointsInLatestRound: boolean;
         reason: string;
       };
 
-      // Track stale rounds (no new points)
       const staleRounds = parsed.newPointsInLatestRound ? 0 : 1;
-
-      // Check previous stale detection (rough: if score > 60 and no new points, likely stale)
       const converged = parsed.convergenceScore >= 70 || staleRounds >= 2;
 
       return {

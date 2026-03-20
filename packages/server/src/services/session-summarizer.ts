@@ -7,12 +7,12 @@ import { eq } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { sessionSummaries } from "../db/schema.js";
 import { getSessionRecord, getSessionMessages } from "./session-store.js";
+import { callAI, isAIConfigured } from "./ai-client.js";
 import { createLogger } from "../logger.js";
 import { randomUUID } from "crypto";
 
 const log = createLogger("summarizer");
 
-const HAIKU_MODEL = "claude-haiku-4-5-20251001";
 const MIN_TURNS_FOR_SUMMARY = 3;
 const MAX_MESSAGES_FOR_CONTEXT = 50;
 
@@ -70,41 +70,23 @@ export async function summarizeSession(sessionId: string): Promise<void> {
     const projectInfo = record.projectSlug ? `Project: ${record.projectSlug}` : "Quick session";
     const contextHeader = `${projectInfo} | Model: ${record.model} | Turns: ${record.numTurns} | Cost: $${record.totalCostUsd.toFixed(4)}`;
 
-    // Call Anthropic API
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      log.debug("Skip summary: ANTHROPIC_API_KEY not set");
+    // Call AI provider
+    if (!isAIConfigured()) {
+      log.debug("Skip summary: no AI provider configured");
       return;
     }
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: HAIKU_MODEL,
-        max_tokens: 500,
-        messages: [{
-          role: "user",
-          content: `${SUMMARY_PROMPT}\n\n--- Session Context ---\n${contextHeader}\n\n--- Conversation ---\n${conversationText}`,
-        }],
-      }),
+    const aiResponse = await callAI({
+      systemPrompt: SUMMARY_PROMPT,
+      messages: [{
+        role: "user",
+        content: `--- Session Context ---\n${contextHeader}\n\n--- Conversation ---\n${conversationText}`,
+      }],
+      tier: "fast",
+      maxTokens: 500,
     });
 
-    if (!response.ok) {
-      const errText = await response.text().catch(() => "");
-      log.error("Haiku API error", { sessionId, status: response.status, error: errText });
-      return;
-    }
-
-    const data = await response.json() as {
-      content: Array<{ type: string; text: string }>;
-    };
-
-    const text = data.content?.[0]?.text ?? "";
+    const text = aiResponse.text;
     let parsed: SummaryResult;
 
     try {
