@@ -3,9 +3,9 @@
  * Replaces old file-based JSON store with proper DB operations.
  */
 
-import { eq, desc, and, count, notInArray, isNotNull } from "drizzle-orm";
+import { eq, desc, and, count, notInArray, isNotNull, sql } from "drizzle-orm";
 import { getDb } from "../db/client.js";
-import { sessions, sessionMessages, telegramSessionMappings } from "../db/schema.js";
+import { sessions, sessionMessages, telegramSessionMappings, dailyCosts } from "../db/schema.js";
 import { createLogger } from "../logger.js";
 import type {
   SessionState,
@@ -176,6 +176,62 @@ export function endSessionRecord(id: string, status: SessionStatus = "ended"): v
     })
     .where(eq(sessions.id, id))
     .run();
+
+  // Aggregate costs into daily_costs table
+  aggregateSessionCost(id);
+}
+
+/** Upsert daily_costs row for a completed session */
+function aggregateSessionCost(sessionId: string): void {
+  const db = getDb();
+
+  try {
+    const session = db.select().from(sessions).where(eq(sessions.id, sessionId)).get();
+    if (!session || session.totalCostUsd <= 0) return;
+
+    const date = (session.startedAt ?? new Date()).toISOString().slice(0, 10);
+    const projectSlug = session.projectSlug ?? null;
+    const totalTokens = (session.totalInputTokens ?? 0) + (session.totalOutputTokens ?? 0);
+
+    // Upsert: try to update existing row, insert if not found
+    const existing = db
+      .select()
+      .from(dailyCosts)
+      .where(
+        and(
+          eq(dailyCosts.date, date),
+          projectSlug
+            ? eq(dailyCosts.projectSlug, projectSlug)
+            : sql`${dailyCosts.projectSlug} IS NULL`,
+        ),
+      )
+      .get();
+
+    if (existing) {
+      db.update(dailyCosts)
+        .set({
+          totalCostUsd: (existing.totalCostUsd ?? 0) + session.totalCostUsd,
+          totalSessions: (existing.totalSessions ?? 0) + 1,
+          totalTokens: (existing.totalTokens ?? 0) + totalTokens,
+        })
+        .where(eq(dailyCosts.id, existing.id))
+        .run();
+    } else {
+      db.insert(dailyCosts)
+        .values({
+          date,
+          projectSlug,
+          totalCostUsd: session.totalCostUsd,
+          totalSessions: 1,
+          totalTokens,
+        })
+        .run();
+    }
+
+    log.info("Daily cost aggregated", { sessionId, date, cost: session.totalCostUsd });
+  } catch (err) {
+    log.error("Failed to aggregate daily cost", { sessionId, error: String(err) });
+  }
 }
 
 export function getSessionRecord(id: string) {
