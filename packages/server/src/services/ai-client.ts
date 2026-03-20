@@ -1,21 +1,19 @@
 /**
  * AI Client — Multi-provider abstraction for internal AI calls.
  *
+ * Config priority:
+ * 1. DB Settings (ai.baseUrl, ai.apiKey, ai.model, etc.) — editable from Web UI
+ * 2. Environment variables (AI_BASE_URL, AI_API_KEY, AI_MODEL, etc.)
+ * 3. ANTHROPIC_API_KEY fallback
+ *
  * Supports:
+ * - OpenAI-compatible (DashScope Qwen, Groq, Together, Ollama, OpenRouter)
  * - Anthropic (claude-haiku, claude-sonnet)
- * - OpenAI-compatible (Codex, Qwen, OpenRouter, Groq, Together, Ollama)
- *
- * Config via environment variables:
- *   AI_PROVIDER=openai-compatible  (default if AI_BASE_URL is set)
- *   AI_BASE_URL=https://api.example.com/v1
- *   AI_API_KEY=sk-...
- *   AI_MODEL=qwen-coder-plus       (default model for all internal calls)
- *   AI_MODEL_FAST=qwen-coder-plus  (for cheap calls: summaries, convergence)
- *   AI_MODEL_STRONG=codex-5.4      (for expensive calls: debate agents)
- *
- * Fallback: ANTHROPIC_API_KEY → uses Anthropic API directly
  */
 
+import { eq, like } from "drizzle-orm";
+import { getDb } from "../db/client.js";
+import { settings } from "../db/schema.js";
 import { createLogger } from "../logger.js";
 
 const log = createLogger("ai-client");
@@ -31,24 +29,55 @@ interface AIConfig {
   strongModel: string;
 }
 
-function getConfig(): AIConfig {
-  // Priority 1: OpenAI-compatible (explicit or inferred from AI_BASE_URL)
-  const baseUrl = process.env.AI_BASE_URL;
-  const aiKey = process.env.AI_API_KEY;
-  const explicitProvider = process.env.AI_PROVIDER as Provider | undefined;
+/** Read a setting from DB, returns undefined if not found */
+function getSetting(key: string): string | undefined {
+  try {
+    const db = getDb();
+    const row = db.select().from(settings).where(eq(settings.key, key)).get();
+    return row?.value || undefined;
+  } catch {
+    return undefined;
+  }
+}
 
-  if (baseUrl || explicitProvider === "openai-compatible") {
+function getConfig(): AIConfig {
+  // Priority 1: DB Settings (from Web UI)
+  const dbBaseUrl = getSetting("ai.baseUrl");
+  const dbApiKey = getSetting("ai.apiKey");
+  const dbProvider = getSetting("ai.provider") as Provider | undefined;
+  const dbModel = getSetting("ai.model");
+  const dbModelFast = getSetting("ai.modelFast");
+  const dbModelStrong = getSetting("ai.modelStrong");
+
+  // Priority 2: Environment variables
+  const envBaseUrl = process.env.AI_BASE_URL;
+  const envApiKey = process.env.AI_API_KEY;
+  const envProvider = process.env.AI_PROVIDER as Provider | undefined;
+  const envModel = process.env.AI_MODEL;
+  const envModelFast = process.env.AI_MODEL_FAST;
+  const envModelStrong = process.env.AI_MODEL_STRONG;
+
+  // Merge: DB > env
+  const baseUrl = dbBaseUrl ?? envBaseUrl;
+  const apiKey = dbApiKey ?? envApiKey;
+  const provider = dbProvider ?? envProvider;
+  const model = dbModel ?? envModel ?? "qwen3-coder-plus";
+  const modelFast = dbModelFast ?? envModelFast ?? model;
+  const modelStrong = dbModelStrong ?? envModelStrong ?? model;
+
+  // OpenAI-compatible if baseUrl is set or explicitly selected
+  if (baseUrl || provider === "openai-compatible") {
     return {
       provider: "openai-compatible",
-      baseUrl: baseUrl ?? "http://localhost:11434/v1", // Ollama default
-      apiKey: aiKey ?? "",
-      defaultModel: process.env.AI_MODEL ?? "qwen-coder-plus",
-      fastModel: process.env.AI_MODEL_FAST ?? process.env.AI_MODEL ?? "qwen-coder-plus",
-      strongModel: process.env.AI_MODEL_STRONG ?? process.env.AI_MODEL ?? "qwen-coder-plus",
+      baseUrl: baseUrl ?? "http://localhost:11434/v1",
+      apiKey: apiKey ?? "",
+      defaultModel: model,
+      fastModel: modelFast,
+      strongModel: modelStrong,
     };
   }
 
-  // Priority 2: Anthropic
+  // Anthropic fallback
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   if (anthropicKey) {
     return {
@@ -61,9 +90,8 @@ function getConfig(): AIConfig {
     };
   }
 
-  // No provider configured
   throw new Error(
-    "No AI provider configured. Set AI_BASE_URL + AI_API_KEY (for OpenAI-compatible) or ANTHROPIC_API_KEY (for Anthropic).",
+    "No AI provider configured. Set up in Settings → AI Provider, or set AI_BASE_URL + AI_API_KEY env vars.",
   );
 }
 
@@ -87,7 +115,13 @@ export type ModelTier = "fast" | "strong" | "default";
  * Check if any AI provider is configured.
  */
 export function isAIConfigured(): boolean {
-  return !!(process.env.AI_BASE_URL || process.env.AI_API_KEY || process.env.ANTHROPIC_API_KEY);
+  return !!(
+    getSetting("ai.baseUrl") ||
+    getSetting("ai.apiKey") ||
+    process.env.AI_BASE_URL ||
+    process.env.AI_API_KEY ||
+    process.env.ANTHROPIC_API_KEY
+  );
 }
 
 /**
