@@ -15,7 +15,7 @@ const startTime = Date.now();
 export const healthRoutes = new Hono();
 
 healthRoutes.get("/health", (c) => {
-  let dbStatus: "connected" | "error" = "error";
+  let dbStatus: "connected" | "error" = "error"; // eslint-disable-line no-useless-assignment
   let tableCount = 0;
 
   try {

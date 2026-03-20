@@ -177,15 +177,15 @@ export class StreamHandler {
   private async sendInitialMessage(stream: ActiveStream, html: string): Promise<number | null> {
     try {
       // Try sendMessageDraft first (Bot API 9.5+)
-      const result = await (this.api as unknown as Record<string, Function>)
+      const result = await (this.api as unknown as Record<string, (...args: unknown[]) => Promise<Record<string, unknown>>>)
         .sendMessageDraft?.(stream.chatId, html, {
           parse_mode: "HTML",
           message_thread_id: stream.topicId,
         });
 
       if (result?.message_id) {
-        stream.draftId = result.draft_id ?? null;
-        return result.message_id;
+        stream.draftId = (result.draft_id as string) ?? null;
+        return result.message_id as number;
       }
     } catch {
       // sendMessageDraft not available, fallback
@@ -228,7 +228,7 @@ export class StreamHandler {
     // Try updating draft if available
     if (stream.draftId) {
       try {
-        await (this.api as unknown as Record<string, Function>)
+        await (this.api as unknown as Record<string, (...args: unknown[]) => Promise<Record<string, unknown>>>)
           .editMessageDraft?.(stream.chatId, stream.messageId, html, {
             parse_mode: "HTML",
             draft_id: stream.draftId,

@@ -5,6 +5,8 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
+import { resolve as pathResolve, normalize } from "node:path";
+import { existsSync, statSync } from "node:fs";
 import { WsBridge } from "../services/ws-bridge.js";
 import {
   getSessionRecord,
@@ -120,8 +122,6 @@ export function sessionRoutes(bridge: WsBridge) {
     const body = c.req.valid("json");
 
     // Validate projectDir exists and is within allowed roots (prevents path traversal)
-    const { resolve: pathResolve, normalize } = require("node:path");
-    const { existsSync, statSync } = require("node:fs");
     const resolved = pathResolve(normalize(body.projectDir));
 
     if (!existsSync(resolved) || !statSync(resolved).isDirectory()) {

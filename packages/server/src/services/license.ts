@@ -7,6 +7,7 @@ import { createLogger } from "../logger.js";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
+import { hostname as getHostname } from "node:os";
 
 const log = createLogger("license");
 
@@ -54,7 +55,7 @@ let cachedLicense: LicenseInfo | null = null;
 
 /** Generate a stable machine ID based on hostname + platform */
 function getMachineId(): string {
-  const hostname = require("node:os").hostname();
+  const hostname = getHostname();
   const platform = process.platform;
   const raw = `companion:${hostname}:${platform}`;
   return createHash("sha256").update(raw).digest("hex").slice(0, 16);
