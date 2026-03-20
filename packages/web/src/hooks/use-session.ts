@@ -12,6 +12,10 @@ interface Message {
   content: string;
   timestamp: number;
   isStreaming?: boolean;
+  thinkingBlocks?: Array<{ text: string }>;
+  toolUseBlocks?: Array<{ id: string; name: string; input: Record<string, unknown> }>;
+  toolResultBlocks?: Array<{ toolUseId: string; content: string; isError?: boolean }>;
+  costUsd?: number;
 }
 
 interface PermissionRequest {
@@ -100,44 +104,68 @@ export function useSession(sessionId: string): UseSessionReturn {
             .map((b) => b.text)
             .join("");
 
-          // Log tool_use blocks
-          for (const block of content) {
-            if (block.type === "tool_use") {
-              const inputSummary = Object.entries(block.input ?? {})
-                .slice(0, 2)
-                .map(([k, v]) => `${k}=${JSON.stringify(v).slice(0, 60)}`)
-                .join(", ");
-              addLog({
-                sessionId,
-                sessionName: getSessionName(),
-                timestamp: Date.now(),
-                type: "tool_use",
-                content: `${block.name}(${inputSummary})`,
-                meta: { toolName: block.name, input: block.input },
-              });
-            }
+          // Extract thinking, tool_use, tool_result blocks for inline rendering
+          const thinkingBlocks = content
+            .filter((b): b is Extract<ContentBlock, { type: "thinking" }> => b.type === "thinking")
+            .map((b) => ({ text: b.thinking }));
+
+          const toolUseBlocks = content
+            .filter((b): b is Extract<ContentBlock, { type: "tool_use" }> => b.type === "tool_use")
+            .map((b) => ({ id: b.id, name: b.name, input: b.input ?? {} }));
+
+          const toolResultBlocks = content
+            .filter((b): b is Extract<ContentBlock, { type: "tool_result" }> => b.type === "tool_result")
+            .map((b) => ({
+              toolUseId: b.tool_use_id,
+              content: typeof b.content === "string" ? b.content : JSON.stringify(b.content),
+              isError: b.is_error,
+            }));
+
+          // Log tool_use blocks to activity terminal
+          for (const block of toolUseBlocks) {
+            const inputSummary = Object.entries(block.input)
+              .slice(0, 2)
+              .map(([k, v]) => `${k}=${JSON.stringify(v).slice(0, 60)}`)
+              .join(", ");
+            addLog({
+              sessionId,
+              sessionName: getSessionName(),
+              timestamp: Date.now(),
+              type: "tool_use",
+              content: `${block.name}(${inputSummary})`,
+              meta: { toolName: block.name, input: block.input },
+            });
           }
 
-          if (text) {
+          // Get cost from usage
+          const usage = msg.message?.usage;
+          const costUsd = usage
+            ? (usage.input_tokens * 0.000003 + usage.output_tokens * 0.000015) // approximate
+            : undefined;
+
+          const messageData = {
+            id: `${Date.now()}-ast`,
+            role: "assistant" as const,
+            content: text,
+            timestamp: Date.now(),
+            isStreaming: false,
+            thinkingBlocks: thinkingBlocks.length > 0 ? thinkingBlocks : undefined,
+            toolUseBlocks: toolUseBlocks.length > 0 ? toolUseBlocks : undefined,
+            toolResultBlocks: toolResultBlocks.length > 0 ? toolResultBlocks : undefined,
+            costUsd,
+          };
+
+          if (text || toolUseBlocks.length > 0 || thinkingBlocks.length > 0) {
             setMessages((prev) => {
               const last = prev[prev.length - 1];
               // Always replace last assistant message (handles partial + final)
               if (last?.role === "assistant") {
                 return [
                   ...prev.slice(0, -1),
-                  { ...last, content: text, isStreaming: false },
+                  { ...last, ...messageData },
                 ];
               }
-              return [
-                ...prev,
-                {
-                  id: `${Date.now()}-ast`,
-                  role: "assistant" as const,
-                  content: text,
-                  timestamp: Date.now(),
-                  isStreaming: false,
-                },
-              ];
+              return [...prev, messageData];
             });
           }
           break;
