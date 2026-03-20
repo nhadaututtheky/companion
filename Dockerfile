@@ -51,15 +51,13 @@ COPY --from=web-builder /app/packages/web/node_modules packages/web/node_modules
 # Create non-root user for security (groupadd/useradd for Debian-slim)
 RUN groupadd --system companion && useradd --system --gid companion --home /app companion
 
-# Create data directory with correct ownership (only writable dirs, not all of /app)
-RUN mkdir -p data && chown -R companion:companion data
+# Create data directory
+RUN mkdir -p data
 
 EXPOSE 3579 3580
-
-# Run as non-root user
-USER companion
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD curl -f http://localhost:3579/api/health || exit 1
 
-CMD ["sh", "-c", "bun run --hot packages/server/src/index.ts & cd packages/web && bunx next start --port 3580 & wait"]
+# Fix volume permissions at runtime then drop to non-root user
+CMD ["sh", "-c", "chown -R companion:companion /app/data && exec su -s /bin/sh companion -c 'bun run --hot packages/server/src/index.ts & cd packages/web && bunx next start --port 3580 & wait'"]
