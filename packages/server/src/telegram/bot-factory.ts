@@ -90,6 +90,7 @@ export async function registerCommands(bot: Bot): Promise<void> {
       { command: "deny", description: "Deny pending permission" },
       { command: "autoapprove", description: "Toggle auto-approve" },
       { command: "debate", description: "Start a debate session" },
+      { command: "verdict", description: "Force conclude active debate" },
       { command: "compact", description: "Compact context window" },
       { command: "todo", description: "Show Claude's task list" },
       { command: "files", description: "Show modified files" },

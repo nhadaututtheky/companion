@@ -50,6 +50,10 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   const [animating, setAnimating] = useState(true);
   const chatRef = useRef<HTMLDivElement>(null);
 
+  // Respect prefers-reduced-motion
+  const reducedMotion = typeof window !== "undefined"
+    && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   // Fan direction based on orb position
   const dir = getFanDirection(
     anchorX,
@@ -61,11 +65,15 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   const blades = getBladeAngles(linkedSessionIds.length, dir);
   const contentPos = getContentCenter(dir, FAN_RADIUS * 0.45);
 
-  // Animation: staggered fan open
+  // Animation: staggered fan open (skip if reduced motion)
   useEffect(() => {
+    if (reducedMotion) {
+      setAnimating(false);
+      return;
+    }
     const timer = setTimeout(() => setAnimating(false), 600);
     return () => clearTimeout(timer);
-  }, []);
+  }, [reducedMotion]);
 
   // Auto-scroll chat
   useEffect(() => {
@@ -161,24 +169,26 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
 
             // Staggered animation delay
             const delay = i * 0.08;
-            const bladeStyle = animating
-              ? {
-                  opacity: 0,
-                  transform: `rotate(${-20}deg)`,
-                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
-                }
-              : {
-                  opacity: 1,
-                  transform: "rotate(0deg)",
-                  transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
-                };
+            const bladeStyle = reducedMotion
+              ? { opacity: 1, transform: "rotate(0deg)" }
+              : animating
+                ? {
+                    opacity: 0,
+                    transform: `rotate(${-20}deg)`,
+                    transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
+                  }
+                : {
+                    opacity: 1,
+                    transform: "rotate(0deg)",
+                    transition: `all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
+                  };
 
             return (
               <g key={sid || i} style={bladeStyle}>
                 {/* Blade shape */}
                 <path
                   d={bladePath(blade.startAngle, blade.endAngle)}
-                  fill="rgba(245, 243, 239, 0.92)"
+                  fill="var(--color-bg-card, rgba(245, 243, 239, 0.92))"
                   stroke={color}
                   strokeWidth={1.5}
                   style={{ pointerEvents: "auto", cursor: "pointer" }}
@@ -237,13 +247,13 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
           display: "flex",
           flexDirection: "column",
           borderRadius: 16,
-          background: "rgba(255,255,255,0.95)",
+          background: "var(--color-bg-card, rgba(255,255,255,0.95))",
           backdropFilter: "blur(16px)",
-          border: "1px solid rgba(0,0,0,0.08)",
+          border: "1px solid var(--color-border, rgba(0,0,0,0.08))",
           boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
           opacity: animating ? 0 : 1,
           transform: animating ? "scale(0.8)" : "scale(1)",
-          transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s",
+          transition: reducedMotion ? "none" : "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s",
           overflow: "hidden",
         }}
       >

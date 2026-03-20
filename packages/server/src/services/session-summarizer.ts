@@ -5,7 +5,7 @@
 
 import { eq } from "drizzle-orm";
 import { getDb } from "../db/client.js";
-import { sessionSummaries } from "../db/schema.js";
+import { sessionSummaries, settings } from "../db/schema.js";
 import { getSessionRecord, getSessionMessages } from "./session-store.js";
 import { callAI, isAIConfigured } from "./ai-client.js";
 import { createLogger } from "../logger.js";
@@ -14,6 +14,16 @@ import { randomUUID } from "crypto";
 const log = createLogger("summarizer");
 
 const MIN_TURNS_FOR_SUMMARY = 3;
+
+/** Check if auto-summary is enabled (default: true if AI is configured) */
+function isAutoSummaryEnabled(): boolean {
+  try {
+    const db = getDb();
+    const row = db.select().from(settings).where(eq(settings.key, "ai.autoSummary")).get();
+    if (row) return row.value !== "false";
+  } catch { /* fall through */ }
+  return true; // default on
+}
 const MAX_MESSAGES_FOR_CONTEXT = 50;
 
 const SUMMARY_PROMPT = `You are summarizing a Claude Code session. Analyze the conversation and produce a JSON response with:
@@ -35,6 +45,12 @@ interface SummaryResult {
  */
 export async function summarizeSession(sessionId: string): Promise<void> {
   try {
+    // Check on/off toggle
+    if (!isAutoSummaryEnabled()) {
+      log.debug("Skip summary: auto-summary disabled", { sessionId });
+      return;
+    }
+
     const record = getSessionRecord(sessionId);
     if (!record) {
       log.debug("Skip summary: session not found", { sessionId });
@@ -183,4 +199,29 @@ export function getSessionSummary(sessionId: string): {
     filesModified: (row.filesModified ?? []) as string[],
     createdAt: row.createdAt,
   };
+}
+
+/**
+ * Build context injection text from previous session summaries.
+ * Returns empty string if disabled or no summaries exist.
+ */
+export function buildSummaryInjection(projectSlug: string | undefined): string {
+  if (!projectSlug) return "";
+
+  // Check on/off toggle
+  try {
+    const db = getDb();
+    const row = db.select().from(settings).where(eq(settings.key, "ai.autoInjectSummaries")).get();
+    if (row?.value === "false") return "";
+  } catch { /* fall through — default on */ }
+
+  const summaries = getProjectSummaries(projectSlug, 3);
+  if (summaries.length === 0) return "";
+
+  const lines = summaries.map((s, i) => {
+    const files = s.filesModified.length > 0 ? ` | Files: ${s.filesModified.join(", ")}` : "";
+    return `[Session ${i + 1}] ${s.summary}${files}`;
+  });
+
+  return `\n\n--- Previous Session Context ---\n${lines.join("\n\n")}`;
 }

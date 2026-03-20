@@ -42,6 +42,9 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
   const [topic, setTopicLocal] = useState("");
   const [animating, setAnimating] = useState(true);
 
+  const reducedMotion = typeof window !== "undefined"
+    && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   const activeSessions = sessions.filter((s) => ACTIVE_STATUSES.has(s.status));
 
   // Fan direction
@@ -56,9 +59,10 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
   const contentPos = getContentCenter(dir, MINI_RADIUS * 0.4);
 
   useEffect(() => {
+    if (reducedMotion) { setAnimating(false); return; }
     const timer = setTimeout(() => setAnimating(false), 400);
     return () => clearTimeout(timer);
-  }, []);
+  }, [reducedMotion]);
 
   function toggleSession(id: string) {
     setSelected((prev) => {
@@ -121,15 +125,18 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
             return (
               <g
                 key={sid}
-                style={{
-                  opacity: animating ? 0 : 1,
-                  transform: animating ? "rotate(-15deg)" : "rotate(0deg)",
-                  transition: `all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
-                }}
+                style={reducedMotion
+                  ? { opacity: 1, transform: "rotate(0deg)" }
+                  : {
+                    opacity: animating ? 0 : 1,
+                    transform: animating ? "rotate(-15deg)" : "rotate(0deg)",
+                    transition: `all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
+                  }
+                }
               >
                 <path
                   d={bladePath(blade.startAngle, blade.endAngle, 30, MINI_RADIUS)}
-                  fill={isSelected ? `${color}20` : "rgba(245, 243, 239, 0.9)"}
+                  fill={isSelected ? `${color}20` : "var(--color-bg-card, rgba(245, 243, 239, 0.9))"}
                   stroke={isSelected ? color : "rgba(0,0,0,0.1)"}
                   strokeWidth={isSelected ? 2 : 1}
                   style={{ pointerEvents: "auto", cursor: "pointer" }}
@@ -188,9 +195,9 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
           width: 240,
           zIndex: 42,
           borderRadius: 14,
-          background: "rgba(255,255,255,0.95)",
+          background: "var(--color-bg-card, rgba(255,255,255,0.95))",
           backdropFilter: "blur(12px)",
-          border: "1px solid rgba(0,0,0,0.08)",
+          border: "1px solid var(--color-border, rgba(0,0,0,0.08))",
           boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
           padding: 12,
           display: "flex",
@@ -198,7 +205,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
           gap: 8,
           opacity: animating ? 0 : 1,
           transform: animating ? "scale(0.85)" : "scale(1)",
-          transition: "all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s",
+          transition: reducedMotion ? "none" : "all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

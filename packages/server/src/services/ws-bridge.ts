@@ -6,7 +6,7 @@
 import { randomUUID } from "crypto";
 import { createLogger } from "../logger.js";
 import { launchCLI, createPlanModeWatcher } from "./cli-launcher.js";
-import { summarizeSession } from "./session-summarizer.js";
+import { summarizeSession, buildSummaryInjection } from "./session-summarizer.js";
 import {
   createActiveSession,
   getActiveSession,
@@ -224,9 +224,15 @@ export class WsBridge {
 
     // Send initial prompt via stdin NDJSON (interactive mode, not --prompt flag)
     if (opts.prompt && !opts.resume) {
+      // Inject previous session summaries if available
+      const summaryContext = buildSummaryInjection(opts.projectSlug);
+      const fullPrompt = summaryContext
+        ? `${opts.prompt}${summaryContext}`
+        : opts.prompt;
+
       const ndjson = JSON.stringify({
         type: "user",
-        message: { role: "user", content: opts.prompt },
+        message: { role: "user", content: fullPrompt },
       });
       // Small delay to let CLI initialize before sending
       setTimeout(() => {

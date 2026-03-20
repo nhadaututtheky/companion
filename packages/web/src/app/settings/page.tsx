@@ -285,6 +285,8 @@ function AIProviderTab() {
   const [modelFast, setModelFast] = useState("");
   const [modelStrong, setModelStrong] = useState("");
   const [showKey, setShowKey] = useState(false);
+  const [autoSummary, setAutoSummary] = useState(true);
+  const [autoInject, setAutoInject] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedPreset, setSelectedPreset] = useState("");
@@ -298,6 +300,8 @@ function AIProviderTab() {
         setModel(res.data["ai.model"] ?? "");
         setModelFast(res.data["ai.modelFast"] ?? "");
         setModelStrong(res.data["ai.modelStrong"] ?? "");
+        setAutoSummary(res.data["ai.autoSummary"] !== "false");
+        setAutoInject(res.data["ai.autoInjectSummaries"] !== "false");
 
         // Detect preset
         const url = res.data["ai.baseUrl"] ?? "";
@@ -335,6 +339,8 @@ function AIProviderTab() {
         ["ai.modelFast", modelFast || model],
         ["ai.modelStrong", modelStrong || model],
         ["ai.provider", "openai-compatible"],
+        ["ai.autoSummary", String(autoSummary)],
+        ["ai.autoInjectSummaries", String(autoInject)],
       ];
 
       for (const [key, value] of entries) {
@@ -461,6 +467,65 @@ function AIProviderTab() {
             onChange={setModelStrong}
             placeholder={model || "Same as default"}
           />
+        </div>
+      </SettingSection>
+
+      {/* Auto features on/off */}
+      <SettingSection title="Auto Features" description="Toggle automatic AI-powered features. Requires a configured provider above.">
+        <div className="flex flex-col gap-3">
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <p className="text-xs font-medium" style={{ color: "var(--color-text-primary)" }}>Auto-Summary</p>
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Generate session summary when session ends</p>
+            </div>
+            <button
+              onClick={() => setAutoSummary(!autoSummary)}
+              className="w-10 h-5 rounded-full transition-colors cursor-pointer"
+              role="switch"
+              aria-checked={autoSummary}
+              style={{
+                background: autoSummary ? "var(--color-accent)" : "var(--color-bg-elevated)",
+                border: `1px solid ${autoSummary ? "var(--color-accent)" : "var(--color-border)"}`,
+                position: "relative",
+              }}
+            >
+              <span
+                className="block w-3.5 h-3.5 rounded-full transition-transform"
+                style={{
+                  background: "#fff",
+                  transform: autoSummary ? "translateX(20px)" : "translateX(2px)",
+                  marginTop: 1.5,
+                }}
+              />
+            </button>
+          </label>
+
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <p className="text-xs font-medium" style={{ color: "var(--color-text-primary)" }}>Inject Previous Summaries</p>
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Prepend last 3 session summaries to new sessions in same project</p>
+            </div>
+            <button
+              onClick={() => setAutoInject(!autoInject)}
+              className="w-10 h-5 rounded-full transition-colors cursor-pointer"
+              role="switch"
+              aria-checked={autoInject}
+              style={{
+                background: autoInject ? "var(--color-accent)" : "var(--color-bg-elevated)",
+                border: `1px solid ${autoInject ? "var(--color-accent)" : "var(--color-border)"}`,
+                position: "relative",
+              }}
+            >
+              <span
+                className="block w-3.5 h-3.5 rounded-full transition-transform"
+                style={{
+                  background: "#fff",
+                  transform: autoInject ? "translateX(20px)" : "translateX(2px)",
+                  marginTop: 1.5,
+                }}
+              />
+            </button>
+          </label>
         </div>
       </SettingSection>
 
