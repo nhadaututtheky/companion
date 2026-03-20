@@ -63,11 +63,11 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   const bubbleGap = 6;
   const dockWidth = linkedSessionIds.length * (bubbleSize + bubbleGap) - bubbleGap;
 
-  // Card position: above Ring, aligned to Ring's left edge
+  // Card: right edge near Ring, above bubbles
   const cardWidth = 300;
   const cardHeight = 300;
-  const cardLeft = Math.max(8, anchorX - cardWidth);
-  const cardTop = Math.max(8, anchorY - cardHeight - 20);
+  const cardLeft = Math.max(8, anchorX - cardWidth + 26);
+  const cardTop = Math.max(8, anchorY - bubbleSize / 2 - cardHeight - 8);
 
   async function handleSend() {
     if (!input.trim() || sending) return;
@@ -113,10 +113,10 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
       <svg
         style={{
           position: "fixed",
-          left: anchorX - dockWidth - bubbleSize - 10,
-          top: anchorY - 4,
-          width: dockWidth + bubbleSize + 20,
-          height: 8,
+          left: anchorX - 26 - 12 - dockWidth - 4,
+          top: anchorY - 2,
+          width: dockWidth + 16,
+          height: 4,
           zIndex: 42,
           opacity: open ? 0.6 : 0,
           transition: reducedMotion ? "none" : "opacity 0.3s ease 0.1s",
@@ -146,9 +146,10 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
         const scale = isHovered ? 1.35 : dist === 1 ? 1.15 : 1;
         const size = bubbleSize * scale;
 
-        // Position: right-to-left from ring
-        const baseX = anchorX - (linkedSessionIds.length - i) * (bubbleSize + bubbleGap) - 8;
-        const baseY = anchorY + 26 / 2 - size / 2;
+        // Position: left of Ring with gap. anchorX = ring center, ring radius ~26px
+        const ringEdgeLeft = anchorX - 26 - 12;
+        const baseX = ringEdgeLeft - (linkedSessionIds.length - i) * (bubbleSize + bubbleGap);
+        const baseY = anchorY - size / 2;
 
         return (
           <div

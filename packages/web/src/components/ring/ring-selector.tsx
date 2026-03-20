@@ -65,9 +65,9 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
   const bubbleGap = 8;
   const dockWidth = activeSessions.length * (bubbleSize + bubbleGap) - bubbleGap;
 
-  // Card position: always above Ring, aligned to Ring's left edge
-  const cardLeft = Math.max(8, anchorX - 260);
-  const cardTop = Math.max(8, anchorY - 220);
+  // Card: right edge aligns near Ring, sits above bubbles
+  const cardLeft = Math.max(8, anchorX - 254);
+  const cardTop = Math.max(8, anchorY - bubbleSize / 2 - 200);
 
   return (
     <>
@@ -77,15 +77,15 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
         style={{ position: "fixed", inset: 0, zIndex: 41, background: "rgba(0,0,0,0.03)" }}
       />
 
-      {/* Chrome bridge */}
+      {/* Chrome bridge connecting bubbles to ring */}
       {activeSessions.length > 0 && (
         <svg
           style={{
             position: "fixed",
-            left: anchorX - dockWidth - bubbleSize - 10,
-            top: anchorY - 4,
-            width: dockWidth + bubbleSize + 20,
-            height: 8,
+            left: anchorX - 26 - 12 - dockWidth - 4,
+            top: anchorY - 2,
+            width: dockWidth + 16,
+            height: 4,
             zIndex: 42,
             opacity: open ? 0.5 : 0,
             transition: reducedMotion ? "none" : "opacity 0.3s ease 0.15s",
@@ -114,8 +114,10 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
         const size = bubbleSize * scale;
         const delay = i * 0.05;
 
-        const baseX = anchorX - (activeSessions.length - i) * (bubbleSize + bubbleGap) - 8;
-        const baseY = anchorY + 26 / 2 - size / 2;
+        // Position bubbles to the LEFT of Ring with gap. anchorX = ring center, ring radius ~26px
+        const ringEdgeLeft = anchorX - 26 - 12; // ring left edge - gap
+        const baseX = ringEdgeLeft - (activeSessions.length - i) * (bubbleSize + bubbleGap) + i * 0; // rightmost bubble closest to ring
+        const baseY = anchorY - size / 2; // vertically centered with ring
 
         return (
           <button
