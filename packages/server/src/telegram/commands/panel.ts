@@ -234,6 +234,134 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     ).catch(() => {});
   });
 
+  // ── /pin — Re-send and pin settings panel ─────────────────────────────
+
+  bot.command("pin", async (ctx) => {
+    const chatId = ctx.chat.id;
+    const topicId = ctx.message?.message_thread_id;
+    const mapping = bridge.getMapping(chatId, topicId);
+
+    if (!mapping) {
+      await ctx.reply("No active session.");
+      return;
+    }
+
+    const session = bridge.wsBridge.getSession(mapping.sessionId);
+    if (!session) {
+      await ctx.reply("Session ended.");
+      return;
+    }
+
+    const project = getProject(mapping.projectSlug);
+    const panelMsg = await bridge.sendSettingsPanel(
+      chatId,
+      topicId,
+      mapping.sessionId,
+      project?.name ?? mapping.projectSlug,
+      session.state.model,
+    );
+
+    if (panelMsg) {
+      bridge.setSessionPanelMessageId(mapping.sessionId, panelMsg.message_id);
+      // Try to pin the message (may fail if bot lacks pin permissions)
+      try {
+        await ctx.api.pinChatMessage(chatId, panelMsg.message_id, { disable_notification: true });
+      } catch {
+        // Silently ignore — bot may not have pin permissions
+      }
+    }
+  });
+
+  // ── Quick action buttons callback ─────────────────────────────────────
+
+  bot.callbackQuery(/^quick:tpl:(.+)$/, async (ctx) => {
+    const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
+    if (!chatId) return;
+
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+    const mapping = bridge.getMapping(chatId, topicId);
+    if (!mapping) {
+      await ctx.answerCallbackQuery("No active session.");
+      return;
+    }
+
+    await ctx.answerCallbackQuery("Opening templates...");
+    await ctx.deleteMessage().catch(() => {});
+
+    // Import listTemplates dynamically to avoid circular deps
+    const { listTemplates } = await import("../../services/templates.js");
+    const templates = listTemplates(mapping.projectSlug);
+
+    if (templates.length === 0) {
+      await ctx.api.sendMessage(chatId, "No templates. Use /template save to create one.", {
+        message_thread_id: topicId,
+      });
+      return;
+    }
+
+    type Btn = { text: string; callback_data: string };
+    const rows: Btn[][] = [];
+    for (let i = 0; i < templates.length; i += 2) {
+      const row: Btn[] = [
+        { text: `${templates[i]!.icon} ${templates[i]!.name}`, callback_data: `tpl:use:${templates[i]!.slug}` },
+      ];
+      if (i + 1 < templates.length) {
+        row.push({
+          text: `${templates[i + 1]!.icon} ${templates[i + 1]!.name}`,
+          callback_data: `tpl:use:${templates[i + 1]!.slug}`,
+        });
+      }
+      rows.push(row);
+    }
+
+    await ctx.api.sendMessage(chatId, "<b>📋 Templates</b>\nTap to send prompt:", {
+      parse_mode: "HTML",
+      reply_markup: { inline_keyboard: rows },
+      message_thread_id: topicId,
+    });
+  });
+
+  bot.callbackQuery(/^quick:aa30:(.+)$/, async (ctx) => {
+    const sessionId = ctx.match[1]!;
+    await ctx.answerCallbackQuery("Auto-approve 30s enabled");
+
+    const session = bridge.wsBridge.getSession(sessionId);
+    if (session) {
+      session.autoApproveConfig = { enabled: true, timeoutSeconds: 30, allowBash: false };
+    }
+
+    await ctx.deleteMessage().catch(() => {});
+  });
+
+  bot.callbackQuery(/^quick:pin:(.+)$/, async (ctx) => {
+    const sessionId = ctx.match[1]!;
+    const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
+    if (!chatId) return;
+
+    await ctx.answerCallbackQuery("Panel pinned");
+    await ctx.deleteMessage().catch(() => {});
+
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+    const mapping = bridge.getMapping(chatId, topicId);
+    const project = mapping ? getProject(mapping.projectSlug) : undefined;
+    const session = bridge.wsBridge.getSession(sessionId);
+
+    const panelMsg = await bridge.sendSettingsPanel(
+      chatId,
+      topicId,
+      sessionId,
+      project?.name ?? (mapping?.projectSlug ?? ""),
+      session?.state.model ?? (mapping?.model ?? ""),
+    );
+
+    if (panelMsg) {
+      bridge.setSessionPanelMessageId(sessionId, panelMsg.message_id);
+      try {
+        await ctx.api.pinChatMessage(chatId, panelMsg.message_id, { disable_notification: true });
+      } catch { /* no pin permission */ }
+    }
+  });
+
   // ── Resume / Start Fresh flow ───────────────────────────────────────────
 
   bot.callbackQuery(/^resume:([^:]+):(-?\d+)$/, async (ctx) => {

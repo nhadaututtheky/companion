@@ -1,6 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import { MagnifyingGlass, Moon, Sun, Gear, Terminal } from "@phosphor-icons/react";
+import { MagnifyingGlass, Moon, Sun, Gear, Terminal, ListBullets } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { CompanionLogo } from "./companion-logo";
@@ -146,6 +146,14 @@ export function Header() {
         >
           {theme === "dark" ? <Sun size={16} weight="bold" /> : <Moon size={16} weight="bold" />}
         </button>
+        <a
+          href="/templates"
+          className="p-2 rounded-lg transition-colors"
+          style={{ color: "var(--color-text-secondary)" }}
+          aria-label="Templates"
+        >
+          <ListBullets size={16} weight="bold" />
+        </a>
         <a
           href="/settings"
           className="p-2 rounded-lg transition-colors"

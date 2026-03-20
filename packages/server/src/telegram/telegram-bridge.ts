@@ -340,6 +340,11 @@ export class TelegramBridge {
         this.setSessionPanelMessageId(sessionId, panelMsg.message_id);
       }
 
+      // Send quick action buttons (disappear after use or template prompt)
+      if (!opts?.initialPrompt) {
+        this.sendQuickActions(chatId, topicId, sessionId).catch(() => {});
+      }
+
       // Send initial prompt from template once session is ready
       if (opts?.initialPrompt) {
         const prompt = opts.initialPrompt;
@@ -515,6 +520,26 @@ export class TelegramBridge {
     });
 
     this.subscriptions.set(sessionId, unsub);
+  }
+
+  /** Send quick action buttons after session start */
+  private async sendQuickActions(chatId: number, topicId: number | undefined, sessionId: string): Promise<void> {
+    const keyboard = {
+      inline_keyboard: [[
+        { text: "📋 Templates", callback_data: `quick:tpl:${sessionId}` },
+        { text: "📌 Pin Panel", callback_data: `quick:pin:${sessionId}` },
+        { text: "⚡ AA 30s", callback_data: `quick:aa30:${sessionId}` },
+      ]],
+    };
+
+    try {
+      await this.bot.api.sendMessage(chatId, "Quick actions:", {
+        reply_markup: keyboard as unknown as import("grammy").InlineKeyboard,
+        message_thread_id: topicId,
+      });
+    } catch (err) {
+      log.error("Failed to send quick actions", { error: String(err) });
+    }
   }
 
   /**

@@ -102,6 +102,7 @@ export async function registerCommands(bot: Bot): Promise<void> {
       { command: "skill", description: "List or invoke a skill" },
       { command: "note", description: "Save a note for this session" },
       { command: "notes", description: "Show all notes for this session" },
+      { command: "pin", description: "Pin settings panel to chat" },
       { command: "templates", description: "Browse session templates" },
       { command: "template", description: "Save or delete a template" },
       { command: "stream", description: "Attach to an existing session" },

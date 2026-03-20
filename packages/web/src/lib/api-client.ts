@@ -320,4 +320,48 @@ export const api = {
         data: { roots: { label: string; path: string }[] };
       }>("/api/fs/roots"),
   },
+
+  // Templates
+  templates: {
+    list: (project?: string) =>
+      request<{
+        success: boolean;
+        data: Array<{
+          id: string;
+          name: string;
+          slug: string;
+          projectSlug: string | null;
+          prompt: string;
+          model: string | null;
+          permissionMode: string | null;
+          icon: string;
+          sortOrder: number;
+        }>;
+      }>(`/api/templates${project ? `?project=${encodeURIComponent(project)}` : ""}`),
+
+    create: (body: {
+      name: string;
+      prompt: string;
+      slug?: string;
+      projectSlug?: string | null;
+      icon?: string;
+      model?: string | null;
+      sortOrder?: number;
+    }) =>
+      request<{ success: boolean; data: { id: string } }>("/api/templates", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+
+    update: (id: string, body: Record<string, unknown>) =>
+      request<{ success: boolean }>(`/api/templates/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(body),
+      }),
+
+    delete: (id: string) =>
+      request<{ success: boolean }>(`/api/templates/${id}`, {
+        method: "DELETE",
+      }),
+  },
 };
