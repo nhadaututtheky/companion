@@ -15,6 +15,7 @@ import {
   updateChannelStatus,
   deleteChannel,
 } from "../services/channel-manager.js";
+import { startDebate, concludeDebate, getActiveDebate } from "../services/debate-engine.js";
 import { createLogger } from "../logger.js";
 import type { ApiResponse } from "@companion/shared";
 
@@ -173,6 +174,54 @@ channelRoutes.delete("/:id/sessions/:sessionId", (c) => {
     log.error("Failed to unlink session", { sessionId, error: String(err) });
     return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
   }
+});
+
+// POST /channels/debate — start a debate (API)
+channelRoutes.post("/debate", async (c) => {
+  const body = await c.req.json().catch(() => ({})) as {
+    topic?: string;
+    format?: string;
+    projectSlug?: string;
+    maxRounds?: number;
+  };
+
+  if (!body.topic) {
+    return c.json({ success: false, error: "topic is required" } satisfies ApiResponse, 400);
+  }
+
+  try {
+    const state = await startDebate({
+      topic: body.topic,
+      format: (body.format as "pro_con" | "red_team" | "review" | "brainstorm") ?? "pro_con",
+      projectSlug: body.projectSlug,
+      maxRounds: body.maxRounds,
+    });
+
+    return c.json({
+      success: true,
+      data: {
+        channelId: state.channelId,
+        topic: state.topic,
+        format: state.format,
+        agents: state.agents.map((a) => ({ id: a.id, label: a.label, role: a.role })),
+      },
+    } satisfies ApiResponse, 201);
+  } catch (err) {
+    return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
+  }
+});
+
+// POST /channels/:id/conclude — force conclude a debate
+channelRoutes.post("/:id/conclude", async (c) => {
+  const id = c.req.param("id");
+  const debate = getActiveDebate(id);
+
+  if (!debate) {
+    return c.json({ success: false, error: "No active debate found" } satisfies ApiResponse, 404);
+  }
+
+  const verdict = await concludeDebate(id);
+  return c.json({ success: true, data: { verdict } } satisfies ApiResponse);
 });
 
 // DELETE /channels/:id — delete channel

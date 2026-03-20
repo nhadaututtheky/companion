@@ -5,6 +5,14 @@
 import { InlineKeyboard } from "grammy";
 import { escapeHTML } from "../formatter.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
+import {
+  startDebate,
+  concludeDebate,
+  getActiveDebate,
+  injectHumanMessage,
+  type DebateFormat,
+  type DebateAgent,
+} from "../../services/debate-engine.js";
 
 export function registerConfigCommands(bridge: TelegramBridge): void {
   const bot = bridge.bot;
@@ -62,30 +70,140 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
     });
   });
 
-  // ── /debate [topic] — Start debate (prepare for Phase 5) ──────────────
+  // ── /debate [format] [topic] — Start a structured debate ──────────────
 
   bot.command("debate", async (ctx) => {
-    const topic = ctx.match?.trim();
+    const raw = ctx.match?.trim() ?? "";
+    const chatId = ctx.chat.id;
+    const topicId = ctx.message?.message_thread_id;
 
-    if (!topic) {
+    if (!raw) {
       await ctx.reply(
-        "Usage: <code>/debate Should we use microservices or monolith?</code>",
+        [
+          `🎭 <b>Debate Mode</b>`,
+          ``,
+          `Usage:`,
+          `<code>/debate Should we use Redis or SQLite?</code>`,
+          `<code>/debate review Our auth middleware design</code>`,
+          `<code>/debate redteam Payment API security</code>`,
+          `<code>/debate brainstorm New feature ideas</code>`,
+          ``,
+          `Formats: <b>pro_con</b> (default), <b>review</b>, <b>redteam</b>, <b>brainstorm</b>`,
+        ].join("\n"),
         { parse_mode: "HTML" },
       );
       return;
     }
 
-    // Placeholder for Phase 5 — show what will happen
+    // Parse format + topic
+    const formatMap: Record<string, DebateFormat> = {
+      review: "review",
+      redteam: "red_team",
+      "red-team": "red_team",
+      brainstorm: "brainstorm",
+    };
+
+    let format: DebateFormat = "pro_con";
+    let topic = raw;
+
+    const firstWord = raw.split(" ")[0]?.toLowerCase() ?? "";
+    if (formatMap[firstWord]) {
+      format = formatMap[firstWord]!;
+      topic = raw.slice(firstWord.length).trim();
+    }
+
+    if (!topic) {
+      await ctx.reply("Please provide a topic after the format.");
+      return;
+    }
+
+    // Check if there's already an active debate in this chat
+    // (we track by channel, not chat — allow multiple)
+
     await ctx.reply(
       [
-        `🎭 <b>Debate Mode</b>`,
-        `Topic: <i>${escapeHTML(topic)}</i>`,
+        `🎭 <b>Starting Debate</b>`,
         ``,
-        `<i>Debate Mode will be available in Phase 5.</i>`,
-        `<i>It will spawn multiple Claude instances to debate this topic.</i>`,
+        `📋 Topic: <i>${escapeHTML(topic)}</i>`,
+        `🎯 Format: <b>${format.replace("_", " ")}</b>`,
+        `🔄 Max 5 rounds | 💰 Max $0.50`,
+        ``,
+        `<i>Agents are thinking...</i>`,
       ].join("\n"),
-      { parse_mode: "HTML" },
+      { parse_mode: "HTML", message_thread_id: topicId },
     );
+
+    try {
+      const state = await startDebate(
+        { topic, format },
+        // onMessage callback — route to Telegram
+        async (channelId: string, agent: DebateAgent, content: string, round: number) => {
+          const label = `${agent.emoji} <b>${escapeHTML(agent.label)}</b> <i>(Round ${round})</i>`;
+          const text = `${label}\n\n${escapeHTML(content)}`;
+
+          // Split if too long (Telegram 4096 limit)
+          if (text.length <= 4000) {
+            await bridge.bot.api.sendMessage(chatId, text, {
+              parse_mode: "HTML",
+              message_thread_id: topicId,
+            }).catch(() => {});
+          } else {
+            // Send label first, then content
+            await bridge.bot.api.sendMessage(chatId, label, {
+              parse_mode: "HTML",
+              message_thread_id: topicId,
+            }).catch(() => {});
+            await bridge.bot.api.sendMessage(chatId, escapeHTML(content), {
+              message_thread_id: topicId,
+            }).catch(() => {});
+          }
+        },
+      );
+
+      // Store debate channelId for /verdict command
+      bridge.setActiveDebate(chatId, topicId, state.channelId);
+    } catch (err) {
+      await ctx.reply(`❌ Failed to start debate: ${escapeHTML(String(err))}`, {
+        parse_mode: "HTML",
+        message_thread_id: topicId,
+      });
+    }
+  });
+
+  // ── /verdict — Force conclude active debate ─────────────────────────────
+
+  bot.command("verdict", async (ctx) => {
+    const chatId = ctx.chat.id;
+    const topicId = ctx.message?.message_thread_id;
+
+    const channelId = bridge.getActiveDebateChannel(chatId, topicId);
+    if (!channelId) {
+      await ctx.reply("No active debate in this chat. Start one with /debate.", {
+        message_thread_id: topicId,
+      });
+      return;
+    }
+
+    const debate = getActiveDebate(channelId);
+    if (!debate || debate.status !== "active") {
+      await ctx.reply("Debate is not active (may have already concluded).", {
+        message_thread_id: topicId,
+      });
+      bridge.clearActiveDebate(chatId, topicId);
+      return;
+    }
+
+    await ctx.reply("⚖️ Forcing verdict...", { message_thread_id: topicId });
+
+    await concludeDebate(channelId, async (_cId, agent, content, round) => {
+      const label = `${agent.emoji} <b>${escapeHTML(agent.label)}</b>`;
+      await bridge.bot.api.sendMessage(chatId, `${label}\n\n${escapeHTML(content)}`, {
+        parse_mode: "HTML",
+        message_thread_id: topicId,
+      }).catch(() => {});
+    });
+
+    bridge.clearActiveDebate(chatId, topicId);
   });
 
   // ── Auto-approve callbacks ────────────────────────────────────────────

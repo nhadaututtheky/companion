@@ -10,7 +10,7 @@ Extract Companion from MyTrend into a standalone AI agent orchestration platform
 | 2 | CLI Bridge | ✅ Done | plan-companion-phase2.md | Session management, WS bridge, CLI launcher, REST API |
 | 3 | Telegram System | ✅ Done | plan-companion-phase3.md | grammY, sendMessageDraft, formatter, commands, bot-registry |
 | 4 | Web UI Core | ✅ Done | plan-companion-phase4.md | Next.js 16, warm cream, 3-column, session terminal, projects |
-| 5 | Agent Platform | ⬚ Pending | plan-companion-phase5.md | Companion MCP Server, Shared Channels, Debate Mode |
+| 5 | Agent Platform | 🔄 Active | plan-phase5-agent-platform.md | MCP Server, Auto-Summary, Debate Engine, Debate UI |
 | 6 | AntiGravity | ⬚ Pending | plan-companion-phase6.md | CDP browser automation, VS Code extension bridge |
 | 7 | Polish & Deploy | ⬚ Pending | plan-companion-phase7.md | Docker, CI/CD, docs, migration script |
 

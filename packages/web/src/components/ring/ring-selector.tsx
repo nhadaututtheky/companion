@@ -1,8 +1,15 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { X, LinkSimple } from "@phosphor-icons/react";
 import { useRingStore } from "@/lib/stores/ring-store";
 import { useSessionStore } from "@/lib/stores/session-store";
+import {
+  getFanDirection,
+  getBladeAngles,
+  bladePath,
+  bladeLabelPosition,
+  getContentCenter,
+} from "./fan-layout";
 
 const GOOGLE_COLORS = ["#4285F4", "#EA4335", "#FBBC04", "#34A853"];
 
@@ -19,308 +26,255 @@ interface RingSelectorProps {
   anchorY: number;
 }
 
+const ACTIVE_STATUSES = new Set(["starting", "running", "waiting", "idle", "busy"]);
+const MINI_RADIUS = 180;
+const MAX_SESSIONS = 4;
+
 export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
-  const linkedSessionIds = useRingStore((s) => s.linkedSessionIds);
-  const topic = useRingStore((s) => s.topic);
-  const setTopic = useRingStore((s) => s.setTopic);
+  const sessionsMap = useSessionStore((s) => s.sessions);
+  const sessions = Object.values(sessionsMap);
   const linkSession = useRingStore((s) => s.linkSession);
-  const unlinkSession = useRingStore((s) => s.unlinkSession);
   const setSelecting = useRingStore((s) => s.setSelecting);
-  const sessions = useSessionStore((s) => s.sessions);
-  const closedIds = useSessionStore((s) => s.closedIds);
+  const setExpanded = useRingStore((s) => s.setExpanded);
+  const setTopic = useRingStore((s) => s.setTopic);
 
-  const [selected, setSelected] = useState<Set<string>>(new Set(linkedSessionIds));
-  const ref = useRef<HTMLDivElement>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [topic, setTopicLocal] = useState("");
+  const [animating, setAnimating] = useState(true);
 
-  // Active sessions (not closed)
-  const activeSessions = Object.values(sessions).filter(
-    (s) => !closedIds.has(s.id) && ["starting", "running", "waiting", "idle", "busy"].includes(s.status),
+  const activeSessions = sessions.filter((s) => ACTIVE_STATUSES.has(s.status));
+
+  // Fan direction
+  const dir = getFanDirection(
+    anchorX,
+    anchorY,
+    typeof window !== "undefined" ? window.innerWidth : 1920,
+    typeof window !== "undefined" ? window.innerHeight : 1080,
   );
 
-  const handleToggle = (id: string) => {
+  const blades = getBladeAngles(activeSessions.length, dir);
+  const contentPos = getContentCenter(dir, MINI_RADIUS * 0.4);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setAnimating(false), 400);
+    return () => clearTimeout(timer);
+  }, []);
+
+  function toggleSession(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
-      } else {
+      } else if (next.size < MAX_SESSIONS) {
         next.add(id);
       }
       return next;
     });
-  };
+  }
 
-  const handleLink = () => {
-    // Unlink sessions that were deselected
-    for (const id of linkedSessionIds) {
-      if (!selected.has(id)) unlinkSession(id);
-    }
-    // Link newly selected sessions
+  function handleLink() {
     for (const id of selected) {
-      if (!linkedSessionIds.includes(id)) linkSession(id);
+      linkSession(id);
     }
+    setTopic(topic);
     setSelecting(false);
-  };
-
-  const handleCancel = () => {
-    setSelecting(false);
-  };
-
-  // Position the popup: prefer above/left of the ring, keep on screen
-  const cardWidth = 280;
-  const cardHeight = 300; // approximate
-  const padding = 12;
-
-  let left = anchorX - cardWidth - padding;
-  let top = anchorY - cardHeight / 2;
-
-  if (typeof window !== "undefined") {
-    if (left < 8) left = anchorX + 60 + padding;
-    if (top < 8) top = 8;
-    if (top + cardHeight > window.innerHeight - 8) {
-      top = window.innerHeight - cardHeight - 8;
+    if (selected.size > 0) {
+      setExpanded(true);
     }
   }
 
-  // Close on outside click — handleCancel only calls setSelecting(false) which is stable
-  /* eslint-disable react-hooks/exhaustive-deps */
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        handleCancel();
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-  /* eslint-enable react-hooks/exhaustive-deps */
+  const svgSize = MINI_RADIUS * 2 + 40;
+  const center = svgSize / 2;
+  const svgLeft = anchorX - center;
+  const svgTop = anchorY - center;
+
+  const overlayLeft = anchorX + contentPos.x - 120;
+  const overlayTop = anchorY + contentPos.y - 80;
 
   return (
-    <div
-      ref={ref}
-      role="dialog"
-      aria-label="Link Sessions"
-      style={{
-        position: "fixed",
-        left,
-        top,
-        width: cardWidth,
-        zIndex: 41,
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border-strong)",
-        borderRadius: 12,
-        boxShadow: "0 10px 40px rgba(0,0,0,0.15)",
-        padding: 16,
-        display: "flex",
-        flexDirection: "column",
-        gap: 12,
-      }}
-    >
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <LinkSimple size={14} weight="bold" style={{ color: "#4285F4" }} />
-          <span
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              fontFamily: "var(--font-body)",
-              color: "var(--color-text-primary)",
-            }}
-          >
-            Link Sessions
-          </span>
-        </div>
-        <button
-          onClick={handleCancel}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "var(--color-text-muted)",
-            padding: 2,
-            display: "flex",
-            alignItems: "center",
-          }}
-          aria-label="Cancel"
-        >
-          <X size={14} />
-        </button>
-      </div>
-
-      {/* Topic input */}
-      <input
-        type="text"
-        value={topic}
-        onChange={(e) => setTopic(e.target.value)}
-        placeholder="Shared topic (optional)"
+    <>
+      {/* SVG fan blades for session selection */}
+      <svg
+        width={svgSize}
+        height={svgSize}
         style={{
-          width: "100%",
-          padding: "6px 10px",
-          borderRadius: 6,
-          border: "1px solid var(--color-border)",
-          background: "var(--color-bg-elevated)",
-          color: "var(--color-text-primary)",
-          fontSize: 12,
-          fontFamily: "var(--font-body)",
-          outline: "none",
-          boxSizing: "border-box",
+          position: "fixed",
+          left: svgLeft,
+          top: svgTop,
+          zIndex: 41,
+          pointerEvents: "none",
+          overflow: "visible",
         }}
-        aria-label="Shared topic"
-      />
+        aria-hidden="true"
+      >
+        <g transform={`translate(${center}, ${center})`}>
+          {blades.map((blade, i) => {
+            const session = activeSessions[i];
+            if (!session) return null;
+            const sid = session.id;
+            const color = getSessionColor(sid);
+            const isSelected = selected.has(sid);
+            const labelPos = bladeLabelPosition(blade.midAngle, MINI_RADIUS * 0.65);
 
-      {/* Session list */}
+            const delay = i * 0.06;
+
+            return (
+              <g
+                key={sid}
+                style={{
+                  opacity: animating ? 0 : 1,
+                  transform: animating ? "rotate(-15deg)" : "rotate(0deg)",
+                  transition: `all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
+                }}
+              >
+                <path
+                  d={bladePath(blade.startAngle, blade.endAngle, 30, MINI_RADIUS)}
+                  fill={isSelected ? `${color}20` : "rgba(245, 243, 239, 0.9)"}
+                  stroke={isSelected ? color : "rgba(0,0,0,0.1)"}
+                  strokeWidth={isSelected ? 2 : 1}
+                  style={{ pointerEvents: "auto", cursor: "pointer" }}
+                  onClick={() => toggleSession(sid)}
+                />
+
+                {/* Session label */}
+                <text
+                  x={labelPos.x}
+                  y={labelPos.y - 6}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={10}
+                  fontWeight={isSelected ? 700 : 500}
+                  fill={isSelected ? color : "#666"}
+                  style={{ pointerEvents: "none" }}
+                >
+                  {session.projectName ?? sid.slice(0, 8)}
+                </text>
+                <text
+                  x={labelPos.x}
+                  y={labelPos.y + 8}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={8}
+                  fontFamily="var(--font-mono)"
+                  fill="#999"
+                  style={{ pointerEvents: "none" }}
+                >
+                  {session.model?.split("-").pop() ?? ""}
+                </text>
+
+                {/* Selection checkmark */}
+                {isSelected && (
+                  <circle
+                    cx={labelPos.x + 30}
+                    cy={labelPos.y - 6}
+                    r={5}
+                    fill={color}
+                    stroke="#fff"
+                    strokeWidth={1.5}
+                  />
+                )}
+              </g>
+            );
+          })}
+        </g>
+      </svg>
+
+      {/* Center overlay — topic + action buttons */}
       <div
         style={{
+          position: "fixed",
+          left: Math.max(8, overlayLeft),
+          top: Math.max(8, overlayTop),
+          width: 240,
+          zIndex: 42,
+          borderRadius: 14,
+          background: "rgba(255,255,255,0.95)",
+          backdropFilter: "blur(12px)",
+          border: "1px solid rgba(0,0,0,0.08)",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+          padding: 12,
           display: "flex",
           flexDirection: "column",
-          gap: 4,
-          maxHeight: 160,
-          overflowY: "auto",
+          gap: 8,
+          opacity: animating ? 0 : 1,
+          transform: animating ? "scale(0.85)" : "scale(1)",
+          transition: "all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s",
         }}
       >
-        {activeSessions.length === 0 && (
-          <p
-            style={{
-              fontSize: 12,
-              color: "var(--color-text-muted)",
-              textAlign: "center",
-              padding: "8px 0",
-            }}
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <LinkSimple size={14} weight="bold" style={{ color: "#4285F4" }} />
+          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--color-text-primary, #333)", flex: 1 }}>
+            Link Sessions
+          </span>
+          <button
+            onClick={() => setSelecting(false)}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "#999", display: "flex" }}
+            aria-label="Close"
           >
+            <X size={12} weight="bold" />
+          </button>
+        </div>
+
+        <input
+          type="text"
+          value={topic}
+          onChange={(e) => setTopicLocal(e.target.value)}
+          placeholder="Shared topic (optional)"
+          style={{
+            padding: "5px 8px",
+            fontSize: 11,
+            borderRadius: 8,
+            border: "1px solid rgba(0,0,0,0.08)",
+            outline: "none",
+            background: "rgba(255,255,255,0.8)",
+            color: "var(--color-text-primary, #333)",
+          }}
+        />
+
+        {activeSessions.length === 0 && (
+          <p style={{ fontSize: 11, color: "#999", textAlign: "center", padding: 8 }}>
             No active sessions
           </p>
         )}
-        {activeSessions.map((s) => {
-          const color = getSessionColor(s.id);
-          const isChecked = selected.has(s.id);
-          const isDisabled = !isChecked && selected.size >= 4;
 
-          return (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+          <span style={{ fontSize: 10, color: "#999" }}>
+            {selected.size}/{MAX_SESSIONS} selected
+          </span>
+          <div style={{ display: "flex", gap: 6 }}>
             <button
-              key={s.id}
-              onClick={() => handleToggle(s.id)}
-              disabled={isDisabled}
+              onClick={() => setSelecting(false)}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "6px 8px",
+                padding: "4px 12px",
+                fontSize: 11,
                 borderRadius: 6,
-                border: "1px solid",
-                borderColor: isChecked ? color + "60" : "transparent",
-                background: isChecked ? color + "10" : "transparent",
-                cursor: isDisabled ? "not-allowed" : "pointer",
-                opacity: isDisabled ? 0.4 : 1,
-                textAlign: "left",
-                width: "100%",
+                border: "1px solid rgba(0,0,0,0.1)",
+                background: "transparent",
+                cursor: "pointer",
+                color: "#666",
               }}
-              aria-pressed={isChecked}
-              aria-label={`${isChecked ? "Unlink" : "Link"} session ${s.projectName}`}
             >
-              {/* Checkbox */}
-              <div
-                style={{
-                  width: 14,
-                  height: 14,
-                  borderRadius: 3,
-                  border: `2px solid ${isChecked ? color : "var(--color-border-strong)"}`,
-                  background: isChecked ? color : "transparent",
-                  flexShrink: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {isChecked && (
-                  <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
-                    <path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </div>
-              {/* Color dot */}
-              <div
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: color,
-                  flexShrink: 0,
-                }}
-              />
-              {/* Name */}
-              <span
-                style={{
-                  fontSize: 12,
-                  color: "var(--color-text-primary)",
-                  fontFamily: "var(--font-body)",
-                  flex: 1,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {s.projectName}
-              </span>
-              {/* Model badge */}
-              <span
-                style={{
-                  fontSize: 10,
-                  fontFamily: "var(--font-mono)",
-                  color: "var(--color-text-muted)",
-                  background: "var(--color-bg-elevated)",
-                  padding: "1px 5px",
-                  borderRadius: 4,
-                  flexShrink: 0,
-                }}
-              >
-                {s.model.split("-").slice(0, 2).join("-")}
-              </span>
+              Cancel
             </button>
-          );
-        })}
+            <button
+              onClick={handleLink}
+              disabled={selected.size === 0}
+              style={{
+                padding: "4px 12px",
+                fontSize: 11,
+                fontWeight: 600,
+                borderRadius: 6,
+                border: "none",
+                background: selected.size > 0 ? "#4285F4" : "#ccc",
+                color: "#fff",
+                cursor: selected.size > 0 ? "pointer" : "default",
+              }}
+            >
+              Link
+            </button>
+          </div>
+        </div>
       </div>
-
-      {selected.size >= 4 && (
-        <p style={{ fontSize: 11, color: "#FBBC04", margin: 0 }}>Max 4 sessions per ring</p>
-      )}
-
-      {/* Actions */}
-      <div style={{ display: "flex", gap: 8 }}>
-        <button
-          onClick={handleCancel}
-          style={{
-            flex: 1,
-            padding: "6px 12px",
-            borderRadius: 6,
-            border: "1px solid var(--color-border)",
-            background: "var(--color-bg-elevated)",
-            color: "var(--color-text-secondary)",
-            fontSize: 12,
-            fontFamily: "var(--font-body)",
-            cursor: "pointer",
-          }}
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleLink}
-          disabled={selected.size === 0}
-          style={{
-            flex: 1,
-            padding: "6px 12px",
-            borderRadius: 6,
-            border: "none",
-            background: selected.size === 0 ? "var(--color-bg-elevated)" : "#4285F4",
-            color: selected.size === 0 ? "var(--color-text-muted)" : "#fff",
-            fontSize: 12,
-            fontWeight: 600,
-            fontFamily: "var(--font-body)",
-            cursor: selected.size === 0 ? "not-allowed" : "pointer",
-          }}
-        >
-          Link {selected.size > 0 ? `(${selected.size})` : ""}
-        </button>
-      </div>
-    </div>
+    </>
   );
 }

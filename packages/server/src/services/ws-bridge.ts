@@ -6,6 +6,7 @@
 import { randomUUID } from "crypto";
 import { createLogger } from "../logger.js";
 import { launchCLI, createPlanModeWatcher } from "./cli-launcher.js";
+import { summarizeSession } from "./session-summarizer.js";
 import {
   createActiveSession,
   getActiveSession,
@@ -262,6 +263,9 @@ export class WsBridge {
 
     // Always update DB regardless of in-memory state
     endSessionRecord(sessionId);
+
+    // Auto-summarize (non-blocking)
+    void summarizeSession(sessionId);
   }
 
   getSession(sessionId: string): ActiveSession | undefined {
@@ -740,6 +744,9 @@ export class WsBridge {
     this.updateStatus(session, "ended");
     endSessionRecord(session.id);
     persistSession(session);
+
+    // Auto-summarize (non-blocking)
+    void summarizeSession(session.id);
   }
 
   // ── Browser message routing ─────────────────────────────────────────────

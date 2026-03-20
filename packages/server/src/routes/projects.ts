@@ -11,6 +11,7 @@ import {
   upsertProject,
   deleteProject,
 } from "../services/project-profiles.js";
+import { getProjectSummaries } from "../services/session-summarizer.js";
 import type { ApiResponse } from "@companion/shared";
 
 const projectSchema = z.object({
@@ -64,6 +65,13 @@ projectRoutes.put("/:slug", zValidator("json", projectSchema), (c) => {
   });
 
   return c.json({ success: true, data: { slug } } satisfies ApiResponse);
+});
+
+// Get project summaries (latest 3 session summaries)
+projectRoutes.get("/:slug/summaries", (c) => {
+  const slug = c.req.param("slug");
+  const summaries = getProjectSummaries(slug);
+  return c.json({ success: true, data: summaries } satisfies ApiResponse);
 });
 
 // Delete project

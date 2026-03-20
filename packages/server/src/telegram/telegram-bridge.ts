@@ -13,6 +13,7 @@ import {
   escapeHTML,
   formatPermission,
 } from "./formatter.js";
+import { getSessionSummary } from "../services/session-summarizer.js";
 import { registerSessionCommands } from "./commands/session.js";
 import { registerControlCommands } from "./commands/control.js";
 import { registerInfoCommands } from "./commands/info.js";
@@ -131,6 +132,8 @@ export class TelegramBridge {
   private compactWarningSent = new Set<string>();
   /** sessionId → stream-only subscriber key (chatId:topicId) — for /stream without owning the session */
   private streamSubscriptions = new Map<string, string>();
+  /** Active debate channel per chat (chatKey → channelId) */
+  private activeDebateChannels = new Map<string, string>();
 
   constructor(wsBridge: WsBridge, config: BotConfig) {
     this.wsBridge = wsBridge;
@@ -503,7 +506,20 @@ export class TelegramBridge {
 
     this.sessionConfigs.delete(sessionId);
     this.compactWarningSent.delete(sessionId);
-    this.streamSubscriptions.delete(sessionId);
+
+    // Clean up stream subscriptions (reverse lookup: chatKey → sessionId)
+    for (const [chatKey, sid] of this.streamSubscriptions.entries()) {
+      if (sid === sessionId) {
+        const unsubKey = `stream:${chatKey}:${sessionId}`;
+        const streamUnsub = this.subscriptions.get(unsubKey);
+        if (streamUnsub) {
+          streamUnsub();
+          this.subscriptions.delete(unsubKey);
+        }
+        this.streamSubscriptions.delete(chatKey);
+        break;
+      }
+    }
   }
 
   // ── Subscribe to CLI output ───────────────────────────────────────────
@@ -619,6 +635,31 @@ export class TelegramBridge {
     return this.streamSubscriptions.get(`${chatId}:${topicId ?? 0}`);
   }
 
+  // ── Debate tracking ──────────────────────────────────────────────────
+
+  setActiveDebate(chatId: number, topicId: number | undefined, channelId: string): void {
+    this.activeDebateChannels.set(this.mapKey(chatId, topicId), channelId);
+  }
+
+  getActiveDebateChannel(chatId: number, topicId: number | undefined): string | undefined {
+    return this.activeDebateChannels.get(this.mapKey(chatId, topicId));
+  }
+
+  clearActiveDebate(chatId: number, topicId: number | undefined): void {
+    this.activeDebateChannels.delete(this.mapKey(chatId, topicId));
+  }
+
+  /** Reverse lookup: find the stream subscriber info for a given sessionId */
+  getStreamSubscriberForSession(sessionId: string): { chatId: number; topicId: number } | undefined {
+    for (const [chatKey, sid] of this.streamSubscriptions.entries()) {
+      if (sid === sessionId) {
+        const [chatIdStr, topicIdStr] = chatKey.split(":");
+        return { chatId: Number(chatIdStr), topicId: Number(topicIdStr) };
+      }
+    }
+    return undefined;
+  }
+
   private async handleSessionMessage(
     chatId: number,
     topicId: number | undefined,
@@ -659,6 +700,8 @@ export class TelegramBridge {
         case "status_change":
           if (msg.status === "ended") {
             this.removeMapping(chatId, topicId);
+            // Send summary after a delay (wait for summarizer to finish)
+            void this.sendSessionSummary(chatId, topicId, sessionId);
           }
           break;
 
@@ -833,6 +876,34 @@ export class TelegramBridge {
       `⚠️ <b>Context ${Math.round(contextUsedPercent)}% full</b> — consider running <code>/compact</code> to compress history.`,
       { parse_mode: "HTML", message_thread_id: topicId },
     ).catch(() => {});
+  }
+
+  private async sendSessionSummary(chatId: number, topicId: number | undefined, sessionId: string): Promise<void> {
+    // Wait for summarizer to finish (it runs async after session end)
+    const maxWait = 15_000;
+    const pollInterval = 2_000;
+    const start = Date.now();
+
+    while (Date.now() - start < maxWait) {
+      await new Promise((r) => setTimeout(r, pollInterval));
+      const summary = getSessionSummary(sessionId);
+      if (summary) {
+        const files = summary.filesModified.length > 0
+          ? `\n\n📁 <b>Files:</b> ${summary.filesModified.map((f) => `<code>${escapeHTML(f)}</code>`).join(", ")}`
+          : "";
+        const decisions = summary.keyDecisions.length > 0
+          ? `\n\n🎯 <b>Decisions:</b>\n${summary.keyDecisions.map((d) => `• ${escapeHTML(d)}`).join("\n")}`
+          : "";
+
+        await this.bot.api.sendMessage(
+          chatId,
+          `📝 <b>Session Summary</b>\n\n${escapeHTML(summary.summary)}${decisions}${files}`,
+          { parse_mode: "HTML", message_thread_id: topicId },
+        ).catch(() => {});
+        return;
+      }
+    }
+    // If no summary generated after timeout, skip silently
   }
 
   private async handlePermissionRequest(

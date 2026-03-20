@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   CurrencyDollar,
   ArrowsCounterClockwise,
@@ -7,6 +7,7 @@ import {
   Clock,
   DownloadSimple,
   TelegramLogo,
+  Notebook,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -184,6 +185,9 @@ export function SessionDetails({ session }: SessionDetailsProps) {
         </div>
       )}
 
+      {/* Summary (for ended sessions) */}
+      {session.status === "ended" && <SessionSummaryPanel sessionId={session.id} />}
+
       {/* Actions */}
       <div className="px-4 pb-4 flex flex-col gap-2">
         <StreamToTelegramButton sessionId={session.id} />
@@ -207,61 +211,155 @@ export function SessionDetails({ session }: SessionDetailsProps) {
 
 function StreamToTelegramButton({ sessionId }: { sessionId: string }) {
   const [streaming, setStreaming] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [toggling, setToggling] = useState(false);
+  const [streamConfig, setStreamConfig] = useState<{ chatId: number; topicId?: number } | null>(null);
+
+  // Load stream status + saved config on mount
+  useEffect(() => {
+    async function load() {
+      try {
+        const [statusRes, settingsRes] = await Promise.all([
+          api.sessions.streamTelegramStatus(sessionId),
+          api.settings.list("telegram."),
+        ]);
+
+        setStreaming(statusRes.data.streaming);
+
+        // Find first bot's streaming chatId from saved settings
+        const entries = Object.entries(settingsRes.data);
+        const chatIdEntry = entries.find(([k]) => k.endsWith(".streaming.chatId"));
+        const topicIdEntry = entries.find(([k]) => k.endsWith(".streaming.topicId"));
+
+        if (chatIdEntry?.[1]) {
+          const chatId = parseInt(chatIdEntry[1], 10);
+          const topicId = topicIdEntry?.[1] ? parseInt(topicIdEntry[1], 10) : undefined;
+          if (!isNaN(chatId) && chatId !== 0) {
+            setStreamConfig({ chatId, topicId: topicId && !isNaN(topicId) ? topicId : undefined });
+          }
+        }
+      } catch {
+        // Silent — streaming not available
+      } finally {
+        setLoading(false);
+      }
+    }
+    void load();
+  }, [sessionId]);
 
   const handleToggle = async () => {
-    setLoading(true);
+    setToggling(true);
     try {
       if (streaming) {
-        await api.post(`/api/sessions/${sessionId}/stream/telegram`, { chatId: 0 });
+        await api.sessions.detachTelegramStream(sessionId);
         setStreaming(false);
         toast.success("Telegram stream detached");
       } else {
-        // Get default chat from Telegram bot settings
-        const tgStatus = await api.telegram.status().catch(() => null);
-        if (!tgStatus || tgStatus.data.runningBots === 0) {
-          toast.error("No Telegram bot running. Configure in Settings.");
+        if (!streamConfig) {
+          toast.error("No Telegram chat configured. Go to Settings → Session Streaming.");
           return;
         }
-
-        // Use first allowed chat ID from settings or prompt
-        const chatId = parseInt(localStorage.getItem("telegram_chat_id") || "0", 10);
-        if (!chatId) {
-          const input = prompt("Enter your Telegram Chat ID:");
-          if (!input) return;
-          const parsed = parseInt(input, 10);
-          if (isNaN(parsed)) {
-            toast.error("Invalid Chat ID");
-            return;
-          }
-          localStorage.setItem("telegram_chat_id", String(parsed));
-          await api.post(`/api/sessions/${sessionId}/stream/telegram`, { chatId: parsed });
-        } else {
-          await api.post(`/api/sessions/${sessionId}/stream/telegram`, { chatId });
-        }
+        await api.sessions.streamTelegram(sessionId, streamConfig.chatId, streamConfig.topicId);
         setStreaming(true);
         toast.success("Streaming to Telegram");
       }
     } catch (err) {
       toast.error(String(err));
     } finally {
-      setLoading(false);
+      setToggling(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div
+        className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs"
+        style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)", color: "var(--color-text-muted)" }}
+      >
+        <TelegramLogo size={14} weight="bold" />
+        Loading...
+      </div>
+    );
+  }
+
+  const notConfigured = !streaming && !streamConfig;
 
   return (
     <button
       onClick={handleToggle}
-      disabled={loading}
-      className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+      disabled={toggling || notConfigured}
+      title={notConfigured ? "Configure in Settings → Session Streaming" : undefined}
+      className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       style={{
         background: streaming ? "#0088cc15" : "var(--color-bg-elevated)",
         border: streaming ? "1px solid #0088cc40" : "1px solid var(--color-border)",
-        color: streaming ? "#0088cc" : "var(--color-text-secondary)",
+        color: streaming ? "#0088cc" : notConfigured ? "var(--color-text-muted)" : "var(--color-text-secondary)",
       }}
     >
       <TelegramLogo size={14} weight={streaming ? "fill" : "bold"} />
-      {loading ? "..." : streaming ? "Streaming to Telegram" : "Stream to Telegram"}
+      {toggling
+        ? "..."
+        : streaming
+          ? "Streaming to Telegram"
+          : notConfigured
+            ? "Stream not configured"
+            : "Stream to Telegram"}
     </button>
+  );
+}
+
+function SessionSummaryPanel({ sessionId }: { sessionId: string }) {
+  const [summary, setSummary] = useState<{
+    summary: string;
+    keyDecisions: string[];
+    filesModified: string[];
+  } | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get<{ data: typeof summary }>(`/api/sessions/${sessionId}/summary`)
+      .then((res) => setSummary(res.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [sessionId]);
+
+  if (loading || !summary) return null;
+
+  return (
+    <div className="px-4 pb-3">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-2 w-full text-left cursor-pointer"
+      >
+        <Notebook size={14} weight="bold" style={{ color: "var(--color-accent)" }} />
+        <span className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+          Summary
+        </span>
+        <span className="text-xs ml-auto" style={{ color: "var(--color-text-muted)" }}>
+          {expanded ? "▲" : "▼"}
+        </span>
+      </button>
+      {expanded && (
+        <div
+          className="mt-2 p-3 rounded-lg text-xs leading-relaxed"
+          style={{
+            background: "var(--color-bg-elevated)",
+            border: "1px solid var(--color-border)",
+            color: "var(--color-text-secondary)",
+          }}
+        >
+          <p>{summary.summary}</p>
+          {summary.keyDecisions.length > 0 && (
+            <div className="mt-2">
+              <p className="font-semibold" style={{ color: "var(--color-text-primary)" }}>Decisions</p>
+              <ul className="list-disc pl-4 mt-1">
+                {summary.keyDecisions.map((d, i) => <li key={i}>{d}</li>)}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

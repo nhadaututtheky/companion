@@ -107,6 +107,20 @@ export const api = {
       request<{ success: boolean; data: { sessionId: string } }>(`/api/sessions/${id}/resume`, {
         method: "POST",
       }),
+    streamTelegramStatus: (id: string) =>
+      request<{ success: boolean; data: { streaming: boolean; chatId?: number; topicId?: number } }>(
+        `/api/sessions/${id}/stream/telegram`,
+      ),
+    streamTelegram: (id: string, chatId: number, topicId?: number) =>
+      request<{ success: boolean; data: { sessionId: string; chatId: number; streaming: boolean } }>(
+        `/api/sessions/${id}/stream/telegram`,
+        { method: "POST", body: JSON.stringify({ chatId, topicId: topicId || undefined }) },
+      ),
+    detachTelegramStream: (id: string) =>
+      request<{ success: boolean; data: { sessionId: string; detached: boolean } }>(
+        `/api/sessions/${id}/stream/telegram`,
+        { method: "DELETE" },
+      ),
   },
 
   // Projects

@@ -20,6 +20,7 @@ import {
 import { getProject, upsertProject } from "../services/project-profiles.js";
 import { createLogger } from "../logger.js";
 import { getMaxSessions } from "../services/license.js";
+import { getSessionSummary, getProjectSummaries } from "../services/session-summarizer.js";
 import type { ApiResponse } from "@companion/shared";
 
 const log = createLogger("routes:sessions");
@@ -331,6 +332,26 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
 
   // ── Stream to Telegram ─────────────────────────────────────────────────
 
+  // Get stream status for a session
+  app.get("/:id/stream/telegram", (c) => {
+    const sessionId = c.req.param("id");
+
+    const tgBridge = botRegistry?.getPrimary?.();
+    if (!tgBridge) {
+      return c.json({ success: true, data: { streaming: false } } satisfies ApiResponse);
+    }
+
+    const sub = tgBridge.getStreamSubscriberForSession(sessionId);
+    return c.json({
+      success: true,
+      data: {
+        streaming: !!sub,
+        chatId: sub?.chatId,
+        topicId: sub?.topicId,
+      },
+    } satisfies ApiResponse);
+  });
+
   app.post("/:id/stream/telegram", async (c) => {
     const sessionId = c.req.param("id");
     const body = await c.req.json().catch(() => ({})) as { chatId?: number; topicId?: number };
@@ -357,20 +378,36 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     return c.json({ success: true, data: { sessionId, chatId: body.chatId, streaming: true } } satisfies ApiResponse);
   });
 
-  app.delete("/:id/stream/telegram", async (c) => {
+  // Detach stream — server does reverse lookup, no chatId needed from client
+  app.delete("/:id/stream/telegram", (c) => {
     const sessionId = c.req.param("id");
-    const body = await c.req.json().catch(() => ({})) as { chatId?: number; topicId?: number };
 
     const tgBridge = botRegistry?.getPrimary?.();
     if (!tgBridge) {
       return c.json({ success: false, error: "No Telegram bot running" } satisfies ApiResponse, 503);
     }
 
-    const detached = tgBridge.detachStream(body.chatId ?? 0, body.topicId);
+    const sub = tgBridge.getStreamSubscriberForSession(sessionId);
+    if (!sub) {
+      return c.json({ success: true, data: { sessionId, detached: false } } satisfies ApiResponse);
+    }
+
+    const detached = tgBridge.detachStream(sub.chatId, sub.topicId);
     return c.json({
       success: true,
       data: { sessionId, detached: !!detached },
     } satisfies ApiResponse);
+  });
+
+  // ── Session Summary ────────────────────────────────────────────────────
+
+  app.get("/:id/summary", (c) => {
+    const id = c.req.param("id");
+    const summary = getSessionSummary(id);
+    if (!summary) {
+      return c.json({ success: true, data: null } satisfies ApiResponse);
+    }
+    return c.json({ success: true, data: summary } satisfies ApiResponse);
   });
 
   // ── Export session as markdown ──────────────────────────────────────────

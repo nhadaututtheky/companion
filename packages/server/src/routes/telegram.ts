@@ -63,7 +63,15 @@ export function telegramRoutes(registry: BotRegistry) {
   app.post("/bots", zValidator("json", createBotSchema), async (c) => {
     const body = c.req.valid("json");
     const id = `bot_${Date.now()}`;
-    registry.saveBotConfig({ id, ...body });
+
+    try {
+      registry.saveBotConfig({ id, ...body });
+    } catch (err) {
+      return c.json({
+        success: false,
+        error: `Failed to save bot config: ${String(err)}`,
+      } satisfies ApiResponse, 500);
+    }
 
     // Auto-start if enabled
     if (body.enabled !== false) {

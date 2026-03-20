@@ -11,6 +11,8 @@ export interface SharedMessage {
   role: "user" | "assistant";
 }
 
+export type RingMode = "broadcast" | "debate";
+
 interface RingStore {
   linkedSessionIds: string[];
   topic: string;
@@ -18,6 +20,10 @@ interface RingStore {
   isSelecting: boolean;
   position: { x: number; y: number };
   sharedMessages: SharedMessage[];
+  /** Current mode: broadcast (default) or debate */
+  mode: RingMode;
+  /** Active debate channel ID (if in debate mode) */
+  debateChannelId: string | null;
 
   linkSession: (id: string) => void;
   unlinkSession: (id: string) => void;
@@ -26,6 +32,8 @@ interface RingStore {
   setSelecting: (v: boolean) => void;
   setPosition: (pos: { x: number; y: number }) => void;
   addSharedMessage: (msg: SharedMessage) => void;
+  setMode: (mode: RingMode) => void;
+  setDebateChannelId: (id: string | null) => void;
   reset: () => void;
 }
 
@@ -38,6 +46,8 @@ export const useRingStore = create<RingStore>((set) => ({
   isSelecting: false,
   position: DEFAULT_POSITION,
   sharedMessages: [],
+  mode: "broadcast",
+  debateChannelId: null,
 
   linkSession: (id) =>
     set((s) => {
@@ -61,6 +71,10 @@ export const useRingStore = create<RingStore>((set) => ({
   addSharedMessage: (msg) =>
     set((s) => ({ sharedMessages: [...s.sharedMessages, msg] })),
 
+  setMode: (mode) => set({ mode }),
+
+  setDebateChannelId: (id) => set({ debateChannelId: id }),
+
   reset: () =>
     set({
       linkedSessionIds: [],
@@ -68,5 +82,7 @@ export const useRingStore = create<RingStore>((set) => ({
       isExpanded: false,
       isSelecting: false,
       sharedMessages: [],
+      mode: "broadcast",
+      debateChannelId: null,
     }),
 }));
