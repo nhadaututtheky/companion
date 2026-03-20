@@ -40,36 +40,52 @@ ALWAYS call these tools first to understand context:
 
 ## Tech Stack
 
-- TBD — will split from MyTrend
+- **Server**: Bun + Hono + Drizzle ORM + SQLite
+- **Web**: Next.js 16 + React 19 + TailwindCSS 4 + Zustand
+- **Shared**: TypeScript strict mode, Zod validation
+- **Telegram**: Grammy bot framework
+- **Infrastructure**: Docker, GitHub Actions CI/CD, Cloudflare Pages (landing)
+- **License**: pay.theio.vn (Cloudflare Worker + KV) + Polar.sh (international)
+- **Landing**: companion.theio.vn (Cloudflare Pages)
 
 ## Danger Zones
 
-No danger zones defined yet.
+- `packages/server/src/services/cli-launcher.ts` — spawns Claude Code CLI processes, security-critical
+- `packages/server/src/services/ws-bridge.ts` — WebSocket message routing, session lifecycle
+- `packages/server/src/services/license.ts` — license verification + trial logic
 
 ## Deploy
 
 ```bash
-TBD
+# Docker (production)
+docker compose up -d --build
+
+# Dev mode
+bun run dev:server &
+bun run dev:web
+
+# Landing page
+wrangler pages deploy landing --project-name companion-landing
 ```
 
 ## Current Health
 
-- Health Score: 0/100
-- Files: 0 | Lines: 0
+- Health Score: 6.5/10 (WARNING — see AUDIT-REPORT.md)
+- Files: 85 TS/TSX | Lines: ~7,800
 - Tests: NO — add tests!
-- CI/CD: NO
-- Linting: NO
+- CI/CD: Docker image auto-build on push (GitHub Actions)
+- Linting: NO — add ESLint/Prettier
 
 ## Known Issues
 
-- Low health score: 0/100
-- No tests directory found
-- No CI/CD configuration
-- No commits in last 7 days
+- No test suite
+- No linter configured
+- Resume session loop (fixed 2026-03-20)
+- Docker non-root user reverted (volume permission issues)
 
 ## Notes
 
-Not started yet — empty repo, will be extracted from MyTrend
+Commercial product — landing at companion.theio.vn, payments via pay.theio.vn (SePay + Polar.sh). License keys managed in XLabs admin with auto-sync to KV.
 
 ## Agent Rules
 
