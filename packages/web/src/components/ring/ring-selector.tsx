@@ -3,11 +3,11 @@ import { useState, useEffect } from "react";
 import { X, LinkSimple } from "@phosphor-icons/react";
 import { useRingStore } from "@/lib/stores/ring-store";
 import { useSessionStore } from "@/lib/stores/session-store";
-import { getFanDirection, getBaseAngle } from "./fan-layout";
+import { getFanDirection } from "./fan-layout";
 
 const GOOGLE_COLORS = ["#4285F4", "#EA4335", "#FBBC04", "#34A853"];
-const SELECTOR_SIZE = 340;
-const FAN_SPREAD_DEG = 150;
+const FAN_RADIUS = 300;
+const FAN_SPREAD_DEG = 140;
 const MAX_SESSIONS = 4;
 const ACTIVE_STATUSES = new Set(["starting", "running", "waiting", "idle", "busy"]);
 
@@ -19,18 +19,43 @@ function getSessionColor(id: string): string {
   return GOOGLE_COLORS[Math.abs(hash) % GOOGLE_COLORS.length]!;
 }
 
-function fanClipPath(baseAngle: number): string {
+/**
+ * Compute pivot position and clip-path so the fan radiates FROM the ring orb.
+ * The div is sized FAN_RADIUS and positioned so the pivot corner touches the orb.
+ */
+function computeFanLayout(dir: string, anchorX: number, anchorY: number) {
+  // Base angle: direction the fan opens toward (center of the fan arc)
+  const baseAngle = dir === "up-left" ? -135 : dir === "up-right" ? -45 : dir === "down-left" ? 135 : 45;
+
+  // Pivot = which corner of the div touches the ring orb
+  // For "up-left": pivot is bottom-right corner → fan opens up-left
+  const pivotX = (dir === "up-left" || dir === "down-left") ? "100%" : "0%";
+  const pivotY = (dir === "up-left" || dir === "up-right") ? "100%" : "0%";
+  const px = parseFloat(pivotX) / 100; // 0 or 1
+  const py = parseFloat(pivotY) / 100;
+
+  // Position the div so the pivot corner sits at the anchor (ring center)
+  const left = anchorX - FAN_RADIUS * px;
+  const top = anchorY - FAN_RADIUS * py;
+
+  // Clip-path: sector from the pivot corner
   const halfSpread = FAN_SPREAD_DEG / 2;
   const startAngle = baseAngle - halfSpread;
   const endAngle = baseAngle + halfSpread;
-  const points: string[] = ["50% 50%"];
-  const steps = 28;
+  const points: string[] = [`${px * 100}% ${py * 100}%`]; // pivot point
+  const steps = 32;
   for (let i = 0; i <= steps; i++) {
     const angle = startAngle + (endAngle - startAngle) * (i / steps);
     const rad = (angle * Math.PI) / 180;
-    points.push(`${(50 + 50 * Math.cos(rad)).toFixed(1)}% ${(50 + 50 * Math.sin(rad)).toFixed(1)}%`);
+    const x = px * 100 + (100 * Math.cos(rad));
+    const y = py * 100 + (100 * Math.sin(rad));
+    points.push(`${x.toFixed(1)}% ${y.toFixed(1)}%`);
   }
-  return `polygon(${points.join(", ")})`;
+
+  return {
+    left, top, pivotX, pivotY, baseAngle, px, py,
+    clipPath: `polygon(${points.join(", ")})`,
+  };
 }
 
 interface RingSelectorProps {
@@ -60,8 +85,8 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
     typeof window !== "undefined" ? window.innerWidth : 1920,
     typeof window !== "undefined" ? window.innerHeight : 1080,
   );
-  const baseAngle = getBaseAngle(dir);
-  const clipPath = fanClipPath(baseAngle);
+
+  const fan = computeFanLayout(dir, anchorX, anchorY);
 
   useEffect(() => {
     if (reducedMotion) { setOpen(true); return; }
@@ -84,44 +109,42 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
     if (selected.size > 0) setExpanded(true);
   }
 
-  const fanLeft = anchorX - SELECTOR_SIZE / 2;
-  const fanTop = anchorY - SELECTOR_SIZE / 2;
-
-  // Card position: offset from pivot
-  const rad = (baseAngle * Math.PI) / 180;
-  const cardX = anchorX + Math.cos(rad) * (SELECTOR_SIZE * 0.22) - 115;
-  const cardY = anchorY + Math.sin(rad) * (SELECTOR_SIZE * 0.22) - 75;
+  // Card position: offset from anchor away from pivot
+  const cardRad = (fan.baseAngle * Math.PI) / 180;
+  const cardDist = FAN_RADIUS * 0.45;
+  const cardX = anchorX + Math.cos(cardRad) * cardDist - 115;
+  const cardY = anchorY + Math.sin(cardRad) * cardDist - 75;
 
   return (
     <>
-      {/* Fan-shaped background */}
+      {/* Fan-shaped background — pivot at ring orb */}
       <div
         style={{
           position: "fixed",
-          left: fanLeft,
-          top: fanTop,
-          width: SELECTOR_SIZE,
-          height: SELECTOR_SIZE,
+          left: fan.left,
+          top: fan.top,
+          width: FAN_RADIUS,
+          height: FAN_RADIUS,
           zIndex: 41,
-          clipPath,
+          clipPath: fan.clipPath,
           background: "var(--color-bg-card, rgba(245, 243, 239, 0.95))",
           backdropFilter: "blur(12px)",
           boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
           transform: open ? "scale(1)" : "scale(0)",
-          transformOrigin: "50% 50%",
+          transformOrigin: `${fan.pivotX} ${fan.pivotY}`,
           opacity: open ? 1 : 0,
           transition: reducedMotion ? "none" : "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
           pointerEvents: open ? "auto" : "none",
         }}
       >
-        {/* Session options arranged along the arc */}
+        {/* Session buttons along the arc */}
         {activeSessions.map((session, i) => {
           const total = activeSessions.length;
-          const angle = baseAngle - FAN_SPREAD_DEG / 2 + ((i + 0.5) / total) * FAN_SPREAD_DEG;
+          const angle = fan.baseAngle - FAN_SPREAD_DEG / 2 + ((i + 0.5) / total) * FAN_SPREAD_DEG;
           const aRad = (angle * Math.PI) / 180;
-          const labelR = SELECTOR_SIZE * 0.38;
-          const lx = SELECTOR_SIZE / 2 + labelR * Math.cos(aRad);
-          const ly = SELECTOR_SIZE / 2 + labelR * Math.sin(aRad);
+          const labelR = FAN_RADIUS * 0.55;
+          const lx = fan.px * FAN_RADIUS + labelR * Math.cos(aRad);
+          const ly = fan.py * FAN_RADIUS + labelR * Math.sin(aRad);
           const color = getSessionColor(session.id);
           const isSelected = selected.has(session.id);
 
@@ -148,15 +171,12 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
               <div style={{ fontSize: 9, fontWeight: isSelected ? 700 : 500, color: isSelected ? color : "var(--color-text-secondary, #666)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {session.projectName ?? session.id.slice(0, 6)}
               </div>
-              <div style={{ fontSize: 7, fontFamily: "var(--font-mono)", color: "var(--color-text-muted, #999)" }}>
-                {session.model?.split("-").pop() ?? ""}
-              </div>
             </button>
           );
         })}
       </div>
 
-      {/* Compact card: topic + buttons */}
+      {/* Card: topic + action buttons — positioned inside fan area */}
       <div
         style={{
           position: "fixed",
@@ -174,6 +194,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
           gap: 6,
           opacity: open ? 1 : 0,
           transform: open ? "scale(1)" : "scale(0.85)",
+          transformOrigin: `${fan.pivotX} ${fan.pivotY}`,
           transition: reducedMotion ? "none" : "all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s",
           pointerEvents: open ? "auto" : "none",
         }}
