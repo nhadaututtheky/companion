@@ -1,11 +1,15 @@
 "use client";
+import { useState } from "react";
 import {
   CurrencyDollar,
   ArrowsCounterClockwise,
   Robot,
   Clock,
   DownloadSimple,
+  TelegramLogo,
 } from "@phosphor-icons/react";
+import { api } from "@/lib/api-client";
+import { toast } from "sonner";
 import { ContextMeter } from "./context-meter";
 
 interface SessionDetailsProps {
@@ -180,8 +184,9 @@ export function SessionDetails({ session }: SessionDetailsProps) {
         </div>
       )}
 
-      {/* Export */}
-      <div className="px-4 pb-4">
+      {/* Actions */}
+      <div className="px-4 pb-4 flex flex-col gap-2">
+        <StreamToTelegramButton sessionId={session.id} />
         <a
           href={`${typeof window !== "undefined" ? localStorage.getItem("api_url") || "" : ""}/api/sessions/${session.id}/export`}
           download
@@ -197,5 +202,66 @@ export function SessionDetails({ session }: SessionDetailsProps) {
         </a>
       </div>
     </div>
+  );
+}
+
+function StreamToTelegramButton({ sessionId }: { sessionId: string }) {
+  const [streaming, setStreaming] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleToggle = async () => {
+    setLoading(true);
+    try {
+      if (streaming) {
+        await api.post(`/api/sessions/${sessionId}/stream/telegram`, { chatId: 0 });
+        setStreaming(false);
+        toast.success("Telegram stream detached");
+      } else {
+        // Get default chat from Telegram bot settings
+        const tgStatus = await api.telegram.status().catch(() => null);
+        if (!tgStatus || tgStatus.data.runningBots === 0) {
+          toast.error("No Telegram bot running. Configure in Settings.");
+          return;
+        }
+
+        // Use first allowed chat ID from settings or prompt
+        const chatId = parseInt(localStorage.getItem("telegram_chat_id") || "0", 10);
+        if (!chatId) {
+          const input = prompt("Enter your Telegram Chat ID:");
+          if (!input) return;
+          const parsed = parseInt(input, 10);
+          if (isNaN(parsed)) {
+            toast.error("Invalid Chat ID");
+            return;
+          }
+          localStorage.setItem("telegram_chat_id", String(parsed));
+          await api.post(`/api/sessions/${sessionId}/stream/telegram`, { chatId: parsed });
+        } else {
+          await api.post(`/api/sessions/${sessionId}/stream/telegram`, { chatId });
+        }
+        setStreaming(true);
+        toast.success("Streaming to Telegram");
+      }
+    } catch (err) {
+      toast.error(String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleToggle}
+      disabled={loading}
+      className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+      style={{
+        background: streaming ? "#0088cc15" : "var(--color-bg-elevated)",
+        border: streaming ? "1px solid #0088cc40" : "1px solid var(--color-border)",
+        color: streaming ? "#0088cc" : "var(--color-text-secondary)",
+      }}
+    >
+      <TelegramLogo size={14} weight={streaming ? "fill" : "bold"} />
+      {loading ? "..." : streaming ? "Streaming to Telegram" : "Stream to Telegram"}
+    </button>
   );
 }

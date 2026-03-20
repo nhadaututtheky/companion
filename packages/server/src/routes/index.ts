@@ -33,7 +33,7 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   // Protected routes
   const protectedApi = new Hono();
   protectedApi.use("*", apiKeyAuth());
-  protectedApi.route("/sessions", sessionRoutes(bridge));
+  protectedApi.route("/sessions", sessionRoutes(bridge, botRegistry));
   protectedApi.route("/projects", projectRoutes);
   protectedApi.route("/telegram", telegramRoutes(botRegistry));
   protectedApi.route("/fs", filesystemRoutes);

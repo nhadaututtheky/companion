@@ -8,6 +8,7 @@ import { zValidator } from "@hono/zod-validator";
 import { resolve as pathResolve, normalize } from "node:path";
 import { existsSync, statSync } from "node:fs";
 import { WsBridge } from "../services/ws-bridge.js";
+import type { BotRegistry } from "../telegram/bot-registry.js";
 import {
   getSessionRecord,
   listSessions,
@@ -61,7 +62,7 @@ const paginationSchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
-export function sessionRoutes(bridge: WsBridge) {
+export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
   const app = new Hono();
 
   app.get("/", (c) => {
@@ -326,6 +327,50 @@ export function sessionRoutes(bridge: WsBridge) {
       log.error("Failed to resume session", { id, error: String(err) });
       return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
     }
+  });
+
+  // ── Stream to Telegram ─────────────────────────────────────────────────
+
+  app.post("/:id/stream/telegram", async (c) => {
+    const sessionId = c.req.param("id");
+    const body = await c.req.json().catch(() => ({})) as { chatId?: number; topicId?: number };
+
+    if (!body.chatId) {
+      return c.json({ success: false, error: "chatId is required" } satisfies ApiResponse, 400);
+    }
+
+    const tgBridge = botRegistry?.getPrimary?.();
+    if (!tgBridge) {
+      return c.json({ success: false, error: "No Telegram bot running" } satisfies ApiResponse, 503);
+    }
+
+    const session = bridge.getSession(sessionId);
+    if (!session) {
+      return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
+    }
+
+    const ok = tgBridge.attachStreamToSession(sessionId, body.chatId, body.topicId);
+    if (!ok) {
+      return c.json({ success: false, error: "Failed to attach stream" } satisfies ApiResponse, 500);
+    }
+
+    return c.json({ success: true, data: { sessionId, chatId: body.chatId, streaming: true } } satisfies ApiResponse);
+  });
+
+  app.delete("/:id/stream/telegram", async (c) => {
+    const sessionId = c.req.param("id");
+    const body = await c.req.json().catch(() => ({})) as { chatId?: number; topicId?: number };
+
+    const tgBridge = botRegistry?.getPrimary?.();
+    if (!tgBridge) {
+      return c.json({ success: false, error: "No Telegram bot running" } satisfies ApiResponse, 503);
+    }
+
+    const detached = tgBridge.detachStream(body.chatId ?? 0, body.topicId);
+    return c.json({
+      success: true,
+      data: { sessionId, detached: !!detached },
+    } satisfies ApiResponse);
   });
 
   // ── Export session as markdown ──────────────────────────────────────────
