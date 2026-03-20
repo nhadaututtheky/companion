@@ -44,6 +44,7 @@ export default function SessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "active" | "ended">("all");
+  const [search, setSearch] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -60,8 +61,16 @@ export default function SessionsPage() {
   useEffect(() => { load(); }, []);
 
   const filtered = sessions.filter((s) => {
-    if (filter === "active") return ["running", "waiting", "idle"].includes(s.status);
-    if (filter === "ended") return ["ended", "error"].includes(s.status);
+    if (filter === "active" && !["running", "waiting", "idle", "busy", "starting"].includes(s.status)) return false;
+    if (filter === "ended" && !["ended", "error"].includes(s.status)) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return (
+        s.projectSlug?.toLowerCase().includes(q) ||
+        s.model.toLowerCase().includes(q) ||
+        s.id.toLowerCase().includes(q)
+      );
+    }
     return true;
   });
 
@@ -84,7 +93,21 @@ export default function SessionsPage() {
           </button>
         </div>
 
-        {/* Filter */}
+        {/* Search + Filter */}
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Search sessions..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg text-sm mb-3"
+            style={{
+              background: "var(--color-bg-card)",
+              border: "1px solid var(--color-border)",
+              color: "var(--color-text-primary)",
+            }}
+          />
+        </div>
         <div className="flex gap-2 mb-4">
           {(["all", "active", "ended"] as const).map((f) => (
             <button

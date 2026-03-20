@@ -328,5 +328,55 @@ export function sessionRoutes(bridge: WsBridge) {
     }
   });
 
+  // ── Export session as markdown ──────────────────────────────────────────
+
+  app.get("/:id/export", (c) => {
+    const id = c.req.param("id");
+    const session = getSessionRecord(id);
+
+    if (!session) {
+      return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
+    }
+
+    const messages = getSessionMessages(id, { limit: 10000 });
+    const date = session.startedAt
+      ? new Date(session.startedAt).toISOString().slice(0, 19).replace("T", " ")
+      : "unknown";
+
+    const lines: string[] = [
+      `# Session Export`,
+      ``,
+      `- **Project**: ${session.projectSlug ?? "quick"}`,
+      `- **Model**: ${session.model}`,
+      `- **Status**: ${session.status}`,
+      `- **Started**: ${date}`,
+      `- **Turns**: ${session.numTurns}`,
+      `- **Cost**: $${session.totalCostUsd.toFixed(4)}`,
+      `- **Tokens**: ${session.totalInputTokens + session.totalOutputTokens}`,
+      ``,
+      `---`,
+      ``,
+    ];
+
+    for (const msg of messages.items) {
+      const role = msg.role === "user" ? "**User**" : msg.role === "assistant" ? "**Assistant**" : `**${msg.role}**`;
+      const time = new Date(msg.timestamp).toLocaleTimeString("en-US", { hour12: false });
+      lines.push(`### ${role} (${time})`);
+      lines.push(``);
+      lines.push(msg.content);
+      lines.push(``);
+    }
+
+    const markdown = lines.join("\n");
+    const filename = `session-${session.projectSlug ?? "quick"}-${id.slice(0, 8)}.md`;
+
+    return new Response(markdown, {
+      headers: {
+        "Content-Type": "text/markdown; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+      },
+    });
+  });
+
   return app;
 }

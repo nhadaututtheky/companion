@@ -2,9 +2,9 @@
 import {
   CurrencyDollar,
   ArrowsCounterClockwise,
-  File,
   Robot,
   Clock,
+  DownloadSimple,
 } from "@phosphor-icons/react";
 import { ContextMeter } from "./context-meter";
 
@@ -179,6 +179,23 @@ export function SessionDetails({ session }: SessionDetailsProps) {
           </div>
         </div>
       )}
+
+      {/* Export */}
+      <div className="px-4 pb-4">
+        <a
+          href={`${typeof window !== "undefined" ? localStorage.getItem("api_url") || "" : ""}/api/sessions/${session.id}/export`}
+          download
+          className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+          style={{
+            background: "var(--color-bg-elevated)",
+            border: "1px solid var(--color-border)",
+            color: "var(--color-text-secondary)",
+          }}
+        >
+          <DownloadSimple size={14} weight="bold" />
+          Export as Markdown
+        </a>
+      </div>
     </div>
   );
 }
