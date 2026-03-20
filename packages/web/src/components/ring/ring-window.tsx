@@ -5,11 +5,8 @@ import { useRingStore, type SharedMessage } from "@/lib/stores/ring-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
-import { getFanDirection } from "./fan-layout";
 
 const GOOGLE_COLORS = ["#4285F4", "#EA4335", "#FBBC04", "#34A853"];
-const FAN_RADIUS = 400;
-const FAN_SPREAD_DEG = 150;
 
 function getSessionColor(id: string): string {
   let hash = 0;
@@ -21,27 +18,6 @@ function getSessionColor(id: string): string {
 
 function formatTime(ts: number): string {
   return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
-function computeFanLayout(dir: string, anchorX: number, anchorY: number) {
-  const baseAngle = dir === "up-left" ? -135 : dir === "up-right" ? -45 : dir === "down-left" ? 135 : 45;
-  const px = (dir === "up-left" || dir === "down-left") ? 1 : 0;
-  const py = (dir === "up-left" || dir === "up-right") ? 1 : 0;
-
-  const left = anchorX - FAN_RADIUS * px;
-  const top = anchorY - FAN_RADIUS * py;
-
-  const halfSpread = FAN_SPREAD_DEG / 2;
-  const startAngle = baseAngle - halfSpread;
-  const endAngle = baseAngle + halfSpread;
-  const points: string[] = [`${px * 100}% ${py * 100}%`];
-  for (let i = 0; i <= 32; i++) {
-    const angle = startAngle + (endAngle - startAngle) * (i / 32);
-    const rad = (angle * Math.PI) / 180;
-    points.push(`${(px * 100 + 100 * Math.cos(rad)).toFixed(1)}% ${(py * 100 + 100 * Math.sin(rad)).toFixed(1)}%`);
-  }
-
-  return { left, top, pivotX: `${px * 100}%`, pivotY: `${py * 100}%`, baseAngle, px, py, clipPath: `polygon(${points.join(", ")})` };
 }
 
 interface RingWindowProps {
@@ -66,13 +42,6 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   const reducedMotion = typeof window !== "undefined"
     && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const dir = getFanDirection(
-    anchorX, anchorY,
-    typeof window !== "undefined" ? window.innerWidth : 1920,
-    typeof window !== "undefined" ? window.innerHeight : 1080,
-  );
-  const fan = computeFanLayout(dir, anchorX, anchorY);
-
   useEffect(() => {
     if (reducedMotion) { setOpen(true); return; }
     requestAnimationFrame(() => setOpen(true));
@@ -82,21 +51,14 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
   }, [sharedMessages]);
 
-  // Content area position: inside the fan, offset from pivot
-  const cardRad = (fan.baseAngle * Math.PI) / 180;
-  const contentX = fan.px * FAN_RADIUS + Math.cos(cardRad) * FAN_RADIUS * 0.38 - 120;
-  const contentY = fan.py * FAN_RADIUS + Math.sin(cardRad) * FAN_RADIUS * 0.38 - 100;
+  // Arc layout: linked session bubbles above ring
+  const arcRadius = 80;
+  const totalArc = Math.min(linkedSessionIds.length * 45, 160);
+  const startAngle = -90 - totalArc / 2;
 
-  // Session labels position: further out on the arc
-  function sessionLabelPos(index: number, total: number) {
-    const angle = fan.baseAngle - FAN_SPREAD_DEG / 2 + ((index + 0.5) / total) * FAN_SPREAD_DEG;
-    const aRad = (angle * Math.PI) / 180;
-    const r = FAN_RADIUS * 0.78;
-    return {
-      x: fan.px * FAN_RADIUS + r * Math.cos(aRad),
-      y: fan.py * FAN_RADIUS + r * Math.sin(aRad),
-    };
-  }
+  // Card position: above the arc bubbles
+  const cardBottom = typeof window !== "undefined" ? window.innerHeight - anchorY + 30 + arcRadius : 200;
+  const cardRight = typeof window !== "undefined" ? window.innerWidth - anchorX - 150 : 50;
 
   async function handleSend() {
     if (!input.trim() || sending) return;
@@ -131,92 +93,120 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   }
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        left: fan.left,
-        top: fan.top,
-        width: FAN_RADIUS,
-        height: FAN_RADIUS,
-        zIndex: 42,
-        clipPath: fan.clipPath,
-        background: "var(--color-bg-card, rgba(245, 243, 239, 0.96))",
-        backdropFilter: "blur(20px)",
-        boxShadow: "0 12px 48px rgba(0,0,0,0.18)",
-        transform: open ? "scale(1)" : "scale(0)",
-        transformOrigin: `${fan.pivotX} ${fan.pivotY}`,
-        opacity: open ? 1 : 0,
-        transition: reducedMotion ? "none" : "all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
-        pointerEvents: open ? "auto" : "none",
-        overflow: "hidden",
-      }}
-    >
-      {/* Session labels on the outer arc */}
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={() => setExpanded(false)}
+        style={{
+          position: "fixed", inset: 0, zIndex: 41,
+          background: "rgba(0,0,0,0.03)",
+          opacity: open ? 1 : 0,
+          transition: reducedMotion ? "none" : "opacity 0.2s ease",
+        }}
+      />
+
+      {/* Arc session bubbles */}
       {linkedSessionIds.map((sid, i) => {
-        const pos = sessionLabelPos(i, linkedSessionIds.length);
-        const session = sessions.find((s) => s.id === sid);
+        const total = linkedSessionIds.length;
+        const angle = total === 1 ? -90 : startAngle + (i / Math.max(total - 1, 1)) * totalArc;
+        const rad = (angle * Math.PI) / 180;
+        const bx = anchorX + arcRadius * Math.cos(rad) - 18;
+        const by = anchorY + arcRadius * Math.sin(rad) - 18;
         const color = getSessionColor(sid);
+        const session = sessions.find((s) => s.id === sid);
+        const delay = i * 0.05;
+
         return (
           <div
             key={sid}
             style={{
-              position: "absolute", left: pos.x - 28, top: pos.y - 10, width: 56,
-              textAlign: "center", opacity: open ? 1 : 0,
-              transition: reducedMotion ? "none" : `opacity 0.3s ease ${0.3 + i * 0.1}s`,
+              position: "fixed", left: bx, top: by,
+              width: 36, height: 36, zIndex: 43,
+              borderRadius: "50%",
+              border: `2px solid ${color}`,
+              background: "var(--color-bg-card, #fff)",
+              boxShadow: `0 2px 8px rgba(0,0,0,0.1), 0 0 0 2px ${color}20`,
+              display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center", gap: 0,
+              transform: open ? "scale(1)" : "scale(0)",
+              opacity: open ? 1 : 0,
+              transition: reducedMotion ? "none" : `all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
             }}
+            title={session?.projectName ?? sid}
           >
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: color, margin: "0 auto 2px" }} />
-            <div style={{ fontSize: 8, fontWeight: 600, color: "var(--color-text-secondary, #555)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {session?.projectName ?? sid.slice(0, 6)}
-            </div>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
+            <span style={{ fontSize: 6, fontWeight: 600, color: "var(--color-text-secondary, #555)", maxWidth: 28, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {(session?.projectName ?? sid).slice(0, 4)}
+            </span>
           </div>
         );
       })}
 
-      {/* Content area — header + chat + input — directly on fan surface */}
+      {/* Chat card — speech bubble above the arc */}
       <div
         style={{
-          position: "absolute",
-          left: contentX,
-          top: contentY,
-          width: 240,
-          height: 200,
+          position: "fixed",
+          right: Math.max(8, cardRight),
+          bottom: Math.max(8, cardBottom),
+          width: 300,
+          height: 320,
+          zIndex: 42,
+          borderRadius: 16,
+          background: "var(--color-bg-card, #fff)",
+          border: "1px solid var(--color-border, rgba(0,0,0,0.08))",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
+          transform: open ? "translateY(0) scale(1)" : "translateY(20px) scale(0.9)",
           opacity: open ? 1 : 0,
-          transition: reducedMotion ? "none" : "opacity 0.3s ease 0.2s",
+          transition: reducedMotion ? "none" : "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s",
         }}
       >
+        {/* Tail pointer */}
+        <div style={{
+          position: "absolute", bottom: -8, right: 28,
+          width: 16, height: 16,
+          background: "var(--color-bg-card, #fff)",
+          border: "1px solid var(--color-border, rgba(0,0,0,0.08))",
+          borderTop: "none", borderLeft: "none",
+          transform: "rotate(45deg)",
+          boxShadow: "4px 4px 8px rgba(0,0,0,0.04)",
+        }} />
+
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 8px", borderBottom: "1px solid var(--color-border, rgba(0,0,0,0.05))", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderBottom: "1px solid var(--color-border, rgba(0,0,0,0.06))", flexShrink: 0 }}>
           {linkedSessionIds.map((sid) => (
-            <div key={sid} style={{ width: 6, height: 6, borderRadius: "50%", background: getSessionColor(sid) }} />
+            <div key={sid} style={{ width: 8, height: 8, borderRadius: "50%", background: getSessionColor(sid) }} />
           ))}
-          <span style={{ flex: 1, fontSize: 9, fontWeight: 600, color: "var(--color-text-secondary, #555)" }}>
+          <span style={{ flex: 1, fontSize: 11, fontWeight: 600, color: "var(--color-text-secondary, #555)" }}>
             {mode === "debate" ? "⚖️ Debate" : "Shared Context"}
           </span>
-          <button onClick={() => setExpanded(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: 1, color: "var(--color-text-muted, #999)", display: "flex" }} aria-label="Close">
-            <X size={11} weight="bold" />
+          <button onClick={() => setExpanded(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "var(--color-text-muted, #999)", display: "flex" }} aria-label="Close">
+            <X size={13} weight="bold" />
           </button>
         </div>
 
-        {/* Chat */}
-        <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: "3px 6px", display: "flex", flexDirection: "column", gap: 2 }}>
+        {/* Chat area */}
+        <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: "6px 10px", display: "flex", flexDirection: "column", gap: 4 }}>
           {sharedMessages.length === 0 && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 3 }}>
-              <span style={{ fontSize: 18, opacity: 0.2 }}>✦</span>
-              <span style={{ fontSize: 9, color: "var(--color-text-muted, #999)", textAlign: "center" }}>Broadcast to linked sessions</span>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 6 }}>
+              <span style={{ fontSize: 22, opacity: 0.2 }}>✦</span>
+              <span style={{ fontSize: 11, color: "var(--color-text-muted, #999)", textAlign: "center" }}>
+                Type to broadcast to all linked sessions
+              </span>
             </div>
           )}
           {sharedMessages.map((msg) => (
-            <div key={msg.id} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
-              <span style={{ fontSize: 7, color: "var(--color-text-muted, #999)" }}>{msg.sessionName} · {formatTime(msg.timestamp)}</span>
+            <div key={msg.id} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start", gap: 1 }}>
+              <span style={{ fontSize: 9, color: "var(--color-text-muted, #999)" }}>
+                {msg.sessionName} · {formatTime(msg.timestamp)}
+              </span>
               <div style={{
-                fontSize: 10, lineHeight: 1.3, padding: "2px 6px", borderRadius: 6, maxWidth: "85%",
-                background: msg.role === "user" ? "#4285F4" : "var(--color-bg-card, #f0f0f0)",
+                fontSize: 12, lineHeight: 1.4, padding: "4px 8px", borderRadius: 8, maxWidth: "85%",
+                background: msg.role === "user" ? "#4285F4" : "var(--color-bg-elevated, #f0f0f0)",
                 color: msg.role === "user" ? "#fff" : "var(--color-text-primary, #333)",
-                borderLeft: msg.role === "assistant" ? `2px solid ${msg.sessionColor}` : undefined,
+                borderLeft: msg.role === "assistant" ? `3px solid ${msg.sessionColor}` : undefined,
               }}>
                 {msg.content}
               </div>
@@ -225,21 +215,21 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
         </div>
 
         {/* Input */}
-        <div style={{ display: "flex", gap: 3, padding: "3px 5px", borderTop: "1px solid var(--color-border, rgba(0,0,0,0.05))", flexShrink: 0 }}>
+        <div style={{ display: "flex", gap: 6, padding: "6px 8px", borderTop: "1px solid var(--color-border, rgba(0,0,0,0.06))", flexShrink: 0 }}>
           <textarea
             value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
-            placeholder="Message…" rows={1}
-            style={{ flex: 1, resize: "none", border: "1px solid var(--color-border, rgba(0,0,0,0.06))", borderRadius: 6, padding: "3px 6px", fontSize: 10, outline: "none", background: "var(--color-bg-base, rgba(255,255,255,0.6))", color: "var(--color-text-primary, #333)", minHeight: 16, maxHeight: 40 }}
+            placeholder="Broadcast message…" rows={1}
+            style={{ flex: 1, resize: "none", border: "1px solid var(--color-border, rgba(0,0,0,0.08))", borderRadius: 8, padding: "5px 8px", fontSize: 12, outline: "none", background: "var(--color-bg-elevated, #f8f8f8)", color: "var(--color-text-primary, #333)", minHeight: 20, maxHeight: 60 }}
           />
           <button
             onClick={() => void handleSend()} disabled={sending || !input.trim()}
-            style={{ background: "#4285F4", color: "#fff", border: "none", borderRadius: 6, padding: "0 7px", cursor: input.trim() ? "pointer" : "default", opacity: input.trim() ? 1 : 0.4, display: "flex", alignItems: "center" }}
+            style={{ background: "#4285F4", color: "#fff", border: "none", borderRadius: 8, padding: "0 10px", cursor: input.trim() ? "pointer" : "default", opacity: input.trim() ? 1 : 0.4, display: "flex", alignItems: "center" }}
             aria-label="Send"
           >
-            <PaperPlaneTilt size={11} weight="fill" />
+            <PaperPlaneTilt size={13} weight="fill" />
           </button>
         </div>
       </div>
-    </div>
+    </>
   );
 }

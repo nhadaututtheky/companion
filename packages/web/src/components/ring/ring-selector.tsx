@@ -3,11 +3,8 @@ import { useState, useEffect } from "react";
 import { X, LinkSimple } from "@phosphor-icons/react";
 import { useRingStore } from "@/lib/stores/ring-store";
 import { useSessionStore } from "@/lib/stores/session-store";
-import { getFanDirection } from "./fan-layout";
 
 const GOOGLE_COLORS = ["#4285F4", "#EA4335", "#FBBC04", "#34A853"];
-const FAN_RADIUS = 320;
-const FAN_SPREAD_DEG = 140;
 const MAX_SESSIONS = 4;
 const ACTIVE_STATUSES = new Set(["starting", "running", "waiting", "idle", "busy"]);
 
@@ -17,27 +14,6 @@ function getSessionColor(id: string): string {
     hash = ((hash << 5) - hash + id.charCodeAt(i)) | 0;
   }
   return GOOGLE_COLORS[Math.abs(hash) % GOOGLE_COLORS.length]!;
-}
-
-function computeFanLayout(dir: string, anchorX: number, anchorY: number) {
-  const baseAngle = dir === "up-left" ? -135 : dir === "up-right" ? -45 : dir === "down-left" ? 135 : 45;
-  const px = (dir === "up-left" || dir === "down-left") ? 1 : 0;
-  const py = (dir === "up-left" || dir === "up-right") ? 1 : 0;
-
-  const left = anchorX - FAN_RADIUS * px;
-  const top = anchorY - FAN_RADIUS * py;
-
-  const halfSpread = FAN_SPREAD_DEG / 2;
-  const startAngle = baseAngle - halfSpread;
-  const endAngle = baseAngle + halfSpread;
-  const points: string[] = [`${px * 100}% ${py * 100}%`];
-  for (let i = 0; i <= 28; i++) {
-    const angle = startAngle + (endAngle - startAngle) * (i / 28);
-    const rad = (angle * Math.PI) / 180;
-    points.push(`${(px * 100 + 100 * Math.cos(rad)).toFixed(1)}% ${(py * 100 + 100 * Math.sin(rad)).toFixed(1)}%`);
-  }
-
-  return { left, top, pivotX: `${px * 100}%`, pivotY: `${py * 100}%`, baseAngle, px, py, clipPath: `polygon(${points.join(", ")})` };
 }
 
 interface RingSelectorProps {
@@ -62,13 +38,6 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
 
   const activeSessions = sessions.filter((s) => ACTIVE_STATUSES.has(s.status));
 
-  const dir = getFanDirection(
-    anchorX, anchorY,
-    typeof window !== "undefined" ? window.innerWidth : 1920,
-    typeof window !== "undefined" ? window.innerHeight : 1080,
-  );
-  const fan = computeFanLayout(dir, anchorX, anchorY);
-
   useEffect(() => {
     if (reducedMotion) { setOpen(true); return; }
     requestAnimationFrame(() => setOpen(true));
@@ -90,113 +59,150 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
     if (selected.size > 0) setExpanded(true);
   }
 
-  // Form position inside the fan
-  const formRad = (fan.baseAngle * Math.PI) / 180;
-  const formX = fan.px * FAN_RADIUS + Math.cos(formRad) * FAN_RADIUS * 0.32 - 100;
-  const formY = fan.py * FAN_RADIUS + Math.sin(formRad) * FAN_RADIUS * 0.32 - 65;
+  // Arc layout: sessions arranged in a curve above the ring
+  const arcRadius = 90;
+  const totalArc = Math.min(activeSessions.length * 40, 160); // degrees
+  const startAngle = -90 - totalArc / 2; // centered above
+
+  // Card position: above the arc
+  const cardBottom = typeof window !== "undefined" ? window.innerHeight - anchorY + 30 + arcRadius : 200;
+  const cardRight = typeof window !== "undefined" ? window.innerWidth - anchorX - 130 : 50;
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        left: fan.left,
-        top: fan.top,
-        width: FAN_RADIUS,
-        height: FAN_RADIUS,
-        zIndex: 41,
-        clipPath: fan.clipPath,
-        background: "var(--color-bg-card, rgba(245, 243, 239, 0.96))",
-        backdropFilter: "blur(16px)",
-        boxShadow: "0 8px 40px rgba(0,0,0,0.15)",
-        transform: open ? "scale(1)" : "scale(0)",
-        transformOrigin: `${fan.pivotX} ${fan.pivotY}`,
-        opacity: open ? 1 : 0,
-        transition: reducedMotion ? "none" : "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
-        pointerEvents: open ? "auto" : "none",
-        overflow: "hidden",
-      }}
-    >
-      {/* Session buttons along the arc */}
+    <>
+      {/* Backdrop — click to close */}
+      <div
+        onClick={() => setSelecting(false)}
+        style={{
+          position: "fixed", inset: 0, zIndex: 41,
+          background: "rgba(0,0,0,0.05)",
+          opacity: open ? 1 : 0,
+          transition: reducedMotion ? "none" : "opacity 0.2s ease",
+        }}
+      />
+
+      {/* Arc session bubbles */}
       {activeSessions.map((session, i) => {
         const total = activeSessions.length;
-        const angle = fan.baseAngle - FAN_SPREAD_DEG / 2 + ((i + 0.5) / total) * FAN_SPREAD_DEG;
-        const aRad = (angle * Math.PI) / 180;
-        const r = FAN_RADIUS * 0.65;
-        const lx = fan.px * FAN_RADIUS + r * Math.cos(aRad);
-        const ly = fan.py * FAN_RADIUS + r * Math.sin(aRad);
+        const angle = startAngle + (i / Math.max(total - 1, 1)) * totalArc;
+        const rad = (angle * Math.PI) / 180;
+        const bx = anchorX + arcRadius * Math.cos(rad) - 22;
+        const by = anchorY + arcRadius * Math.sin(rad) - 22;
         const color = getSessionColor(session.id);
         const isSelected = selected.has(session.id);
+        const delay = i * 0.05;
 
         return (
           <button
             key={session.id}
             onClick={() => toggleSession(session.id)}
             style={{
-              position: "absolute", left: lx - 32, top: ly - 14, width: 64,
-              padding: "3px 0", textAlign: "center",
-              background: isSelected ? `${color}15` : "transparent",
-              border: isSelected ? `1.5px solid ${color}` : "1.5px solid transparent",
-              borderRadius: 8, cursor: "pointer",
+              position: "fixed",
+              left: bx,
+              top: by,
+              width: 44,
+              height: 44,
+              zIndex: 43,
+              borderRadius: "50%",
+              border: isSelected ? `2.5px solid ${color}` : "2px solid var(--color-border, rgba(0,0,0,0.1))",
+              background: isSelected ? `${color}15` : "var(--color-bg-card, #fff)",
+              boxShadow: isSelected ? `0 0 12px ${color}40` : "0 2px 8px rgba(0,0,0,0.1)",
+              cursor: "pointer",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 1,
+              padding: 0,
+              transform: open ? "scale(1)" : "scale(0)",
               opacity: open ? 1 : 0,
-              transition: reducedMotion ? "none" : `opacity 0.3s ease ${0.2 + i * 0.08}s`,
+              transition: reducedMotion ? "none" : `all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
             }}
+            title={session.projectName ?? session.id}
           >
-            <div style={{ width: 7, height: 7, borderRadius: "50%", background: color, margin: "0 auto 2px" }} />
-            <div style={{ fontSize: 8, fontWeight: isSelected ? 700 : 500, color: isSelected ? color : "var(--color-text-secondary, #666)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {session.projectName ?? session.id.slice(0, 6)}
-            </div>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
+            <span style={{ fontSize: 7, fontWeight: 600, color: "var(--color-text-secondary, #555)", maxWidth: 36, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {(session.projectName ?? session.id).slice(0, 5)}
+            </span>
           </button>
         );
       })}
 
-      {/* Form: topic + action buttons — directly on fan surface */}
+      {/* Card panel — above the arc, speech-bubble style */}
       <div
         style={{
-          position: "absolute",
-          left: formX,
-          top: formY,
-          width: 200,
+          position: "fixed",
+          right: Math.max(8, cardRight),
+          bottom: Math.max(8, cardBottom),
+          width: 260,
+          zIndex: 42,
+          borderRadius: 16,
+          background: "var(--color-bg-card, #fff)",
+          border: "1px solid var(--color-border, rgba(0,0,0,0.08))",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+          padding: 14,
           display: "flex",
           flexDirection: "column",
-          gap: 5,
-          padding: 8,
+          gap: 8,
+          transform: open ? "translateY(0) scale(1)" : "translateY(20px) scale(0.9)",
           opacity: open ? 1 : 0,
-          transition: reducedMotion ? "none" : "opacity 0.3s ease 0.15s",
+          transition: reducedMotion ? "none" : "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <LinkSimple size={12} weight="bold" style={{ color: "#4285F4" }} />
-          <span style={{ fontSize: 10, fontWeight: 700, color: "var(--color-text-primary, #333)", flex: 1 }}>Link Sessions</span>
-          <button onClick={() => setSelecting(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: 1, color: "#999", display: "flex" }} aria-label="Close">
-            <X size={10} weight="bold" />
+        {/* Tail pointer toward ring */}
+        <div style={{
+          position: "absolute",
+          bottom: -8,
+          right: 24,
+          width: 16,
+          height: 16,
+          background: "var(--color-bg-card, #fff)",
+          border: "1px solid var(--color-border, rgba(0,0,0,0.08))",
+          borderTop: "none",
+          borderLeft: "none",
+          transform: "rotate(45deg)",
+          boxShadow: "4px 4px 8px rgba(0,0,0,0.04)",
+        }} />
+
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <LinkSimple size={14} weight="bold" style={{ color: "#4285F4" }} />
+          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--color-text-primary, #333)", flex: 1 }}>Link Sessions</span>
+          <button onClick={() => setSelecting(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "#999", display: "flex" }} aria-label="Close">
+            <X size={12} weight="bold" />
           </button>
         </div>
 
         <input
           type="text" value={topic} onChange={(e) => setTopicLocal(e.target.value)}
-          placeholder="Topic (optional)"
-          style={{ padding: "3px 6px", fontSize: 9, borderRadius: 6, border: "1px solid var(--color-border, rgba(0,0,0,0.06))", outline: "none", background: "var(--color-bg-base, rgba(255,255,255,0.6))", color: "var(--color-text-primary, #333)" }}
+          placeholder="Shared topic (optional)"
+          style={{ padding: "6px 10px", fontSize: 11, borderRadius: 8, border: "1px solid var(--color-border, rgba(0,0,0,0.08))", outline: "none", background: "var(--color-bg-elevated, #f8f8f8)", color: "var(--color-text-primary, #333)" }}
         />
 
         {activeSessions.length === 0 && (
-          <p style={{ fontSize: 9, color: "#999", textAlign: "center", padding: 4 }}>No active sessions</p>
+          <p style={{ fontSize: 11, color: "#999", textAlign: "center", padding: 8 }}>No active sessions</p>
+        )}
+
+        {activeSessions.length > 0 && (
+          <p style={{ fontSize: 9, color: "var(--color-text-muted, #999)" }}>
+            Click the bubbles below to select sessions
+          </p>
         )}
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 8, color: "#999" }}>{selected.size}/{MAX_SESSIONS}</span>
-          <div style={{ display: "flex", gap: 3 }}>
-            <button onClick={() => setSelecting(false)} style={{ padding: "2px 8px", fontSize: 9, borderRadius: 5, border: "1px solid var(--color-border, rgba(0,0,0,0.08))", background: "transparent", cursor: "pointer", color: "#666" }}>
+          <span style={{ fontSize: 10, color: "#999" }}>{selected.size}/{MAX_SESSIONS} selected</span>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button onClick={() => setSelecting(false)} style={{ padding: "4px 12px", fontSize: 11, borderRadius: 8, border: "1px solid var(--color-border, rgba(0,0,0,0.1))", background: "transparent", cursor: "pointer", color: "#666" }}>
               Cancel
             </button>
             <button
               onClick={handleLink} disabled={selected.size === 0}
-              style={{ padding: "2px 8px", fontSize: 9, fontWeight: 600, borderRadius: 5, border: "none", background: selected.size > 0 ? "#4285F4" : "#ccc", color: "#fff", cursor: selected.size > 0 ? "pointer" : "default" }}
+              style={{ padding: "4px 12px", fontSize: 11, fontWeight: 600, borderRadius: 8, border: "none", background: selected.size > 0 ? "#4285F4" : "#ccc", color: "#fff", cursor: selected.size > 0 ? "pointer" : "default" }}
             >
               Link
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
