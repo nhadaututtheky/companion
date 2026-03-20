@@ -131,44 +131,41 @@ filesystemRoutes.get("/browse", (c) => {
  */
 filesystemRoutes.get("/roots", (c) => {
   const home = homedir();
-  const roots: { label: string; path: string }[] = [
-    { label: "Home", path: home },
-  ];
+  const roots: { label: string; path: string }[] = [];
 
-  // Windows: detect available drive letters
-  if (process.platform === "win32") {
-    for (const letter of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
-      const drive = `${letter}:\\`;
-      try {
-        if (existsSync(drive)) {
-          roots.push({ label: `${letter}:`, path: drive });
-        }
-      } catch {
-        // skip inaccessible drives
-      }
-    }
-  } else {
-    // macOS / Linux: add common project roots
-    const commonPaths = [
-      { label: "Root", path: "/" },
-      { label: "Volumes", path: "/Volumes" },
-      { label: "Users", path: "/Users" },
-      { label: "tmp", path: "/tmp" },
-    ];
-    for (const cp of commonPaths) {
-      if (existsSync(cp.path) && cp.path !== home) {
-        roots.push(cp);
-      }
-    }
-  }
-
-  // Add user-configured roots
+  // If ALLOWED_BROWSE_ROOTS is set, ONLY show those roots (e.g. Docker mounted dirs)
   const configured = process.env.ALLOWED_BROWSE_ROOTS;
   if (configured) {
     for (const r of configured.split(";")) {
       const normalized = resolve(normalize(r));
-      if (existsSync(normalized) && !roots.some((root) => root.path === normalized)) {
+      if (existsSync(normalized)) {
         roots.push({ label: normalized.split(/[\\/]/).pop() ?? normalized, path: normalized });
+      }
+    }
+  }
+
+  // Only add system roots if no configured roots (dev mode / native)
+  if (roots.length === 0) {
+    roots.push({ label: "Home", path: home });
+
+    if (process.platform === "win32") {
+      for (const letter of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+        const drive = `${letter}:\\`;
+        try {
+          if (existsSync(drive)) {
+            roots.push({ label: `${letter}:`, path: drive });
+          }
+        } catch { /* skip */ }
+      }
+    } else {
+      for (const cp of [
+        { label: "Root", path: "/" },
+        { label: "Volumes", path: "/Volumes" },
+        { label: "Users", path: "/Users" },
+      ]) {
+        if (existsSync(cp.path) && cp.path !== home) {
+          roots.push(cp);
+        }
       }
     }
   }
