@@ -32,6 +32,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [topic, setTopicLocal] = useState("");
   const [open, setOpen] = useState(false);
+  const [hoveredBubble, setHoveredBubble] = useState<number>(-1);
 
   const reducedMotion = typeof window !== "undefined"
     && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -59,54 +60,80 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
     if (selected.size > 0) setExpanded(true);
   }
 
-  // Arc layout: sessions arranged in a curve above the ring
-  const arcRadius = 90;
-  const totalArc = Math.min(activeSessions.length * 40, 160); // degrees
-  const startAngle = -90 - totalArc / 2; // centered above
+  // Dock layout
+  const bubbleSize = 44;
+  const bubbleGap = 8;
+  const dockWidth = activeSessions.length * (bubbleSize + bubbleGap) - bubbleGap;
 
-  // Card position: above the arc
-  const cardBottom = typeof window !== "undefined" ? window.innerHeight - anchorY + 30 + arcRadius : 200;
-  const cardRight = typeof window !== "undefined" ? window.innerWidth - anchorX - 130 : 50;
+  // Card position
+  const cardLeft = anchorX - dockWidth - bubbleSize;
+  const cardBottom = typeof window !== "undefined" ? window.innerHeight - anchorY + bubbleSize + 16 : 200;
 
   return (
     <>
-      {/* Backdrop — click to close */}
+      {/* Backdrop */}
       <div
         onClick={() => setSelecting(false)}
-        style={{
-          position: "fixed", inset: 0, zIndex: 41,
-          background: "rgba(0,0,0,0.05)",
-          opacity: open ? 1 : 0,
-          transition: reducedMotion ? "none" : "opacity 0.2s ease",
-        }}
+        style={{ position: "fixed", inset: 0, zIndex: 41, background: "rgba(0,0,0,0.03)" }}
       />
 
-      {/* Arc session bubbles */}
+      {/* Chrome bridge */}
+      {activeSessions.length > 0 && (
+        <svg
+          style={{
+            position: "fixed",
+            left: anchorX - dockWidth - bubbleSize - 10,
+            top: anchorY - 4,
+            width: dockWidth + bubbleSize + 20,
+            height: 8,
+            zIndex: 42,
+            opacity: open ? 0.5 : 0,
+            transition: reducedMotion ? "none" : "opacity 0.3s ease 0.15s",
+          }}
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="chrome-sel" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#EA4335" />
+              <stop offset="33%" stopColor="#FBBC04" />
+              <stop offset="66%" stopColor="#34A853" />
+              <stop offset="100%" stopColor="#4285F4" />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="2" width="100%" height="4" rx="2" fill="url(#chrome-sel)" />
+        </svg>
+      )}
+
+      {/* Dock: session bubbles to the LEFT — macOS magnification */}
       {activeSessions.map((session, i) => {
-        const total = activeSessions.length;
-        const angle = startAngle + (i / Math.max(total - 1, 1)) * totalArc;
-        const rad = (angle * Math.PI) / 180;
-        const bx = anchorX + arcRadius * Math.cos(rad) - 22;
-        const by = anchorY + arcRadius * Math.sin(rad) - 22;
         const color = getSessionColor(session.id);
         const isSelected = selected.has(session.id);
+        const isHovered = hoveredBubble === i;
+        const dist = hoveredBubble === -1 ? 99 : Math.abs(hoveredBubble - i);
+        const scale = isHovered ? 1.35 : dist === 1 ? 1.15 : 1;
+        const size = bubbleSize * scale;
         const delay = i * 0.05;
+
+        const baseX = anchorX - (activeSessions.length - i) * (bubbleSize + bubbleGap) - 8;
+        const baseY = anchorY + 26 / 2 - size / 2;
 
         return (
           <button
             key={session.id}
             onClick={() => toggleSession(session.id)}
+            onMouseEnter={() => setHoveredBubble(i)}
+            onMouseLeave={() => setHoveredBubble(-1)}
             style={{
               position: "fixed",
-              left: bx,
-              top: by,
-              width: 44,
-              height: 44,
+              left: baseX,
+              top: baseY,
+              width: size,
+              height: size,
               zIndex: 43,
               borderRadius: "50%",
-              border: isSelected ? `2.5px solid ${color}` : "2px solid var(--color-border, rgba(0,0,0,0.1))",
-              background: isSelected ? `${color}15` : "var(--color-bg-card, #fff)",
-              boxShadow: isSelected ? `0 0 12px ${color}40` : "0 2px 8px rgba(0,0,0,0.1)",
+              border: isSelected ? `3px solid ${color}` : "2px solid var(--color-border, rgba(0,0,0,0.1))",
+              background: isSelected ? `${color}12` : "var(--color-bg-card, #fff)",
+              boxShadow: isHovered ? `0 4px 16px ${color}40` : isSelected ? `0 0 12px ${color}30` : "0 2px 8px rgba(0,0,0,0.08)",
               cursor: "pointer",
               display: "flex",
               flexDirection: "column",
@@ -116,25 +143,39 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
               padding: 0,
               transform: open ? "scale(1)" : "scale(0)",
               opacity: open ? 1 : 0,
-              transition: reducedMotion ? "none" : `all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
+              transition: reducedMotion ? "none" : `all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
             }}
             title={session.projectName ?? session.id}
           >
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
-            <span style={{ fontSize: 7, fontWeight: 600, color: "var(--color-text-secondary, #555)", maxWidth: 36, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {(session.projectName ?? session.id).slice(0, 5)}
+            <div style={{ width: 9, height: 9, borderRadius: "50%", background: color }} />
+            <span style={{
+              fontSize: isHovered ? 8 : 7, fontWeight: isSelected ? 700 : 500,
+              color: isSelected ? color : "var(--color-text-secondary, #555)",
+              maxWidth: size - 10, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>
+              {(session.projectName ?? session.id).slice(0, 6)}
             </span>
+            {/* Selection checkmark */}
+            {isSelected && (
+              <div style={{
+                position: "absolute", bottom: -2, right: -2,
+                width: 12, height: 12, borderRadius: "50%",
+                background: color, border: "1.5px solid #fff",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 8, color: "#fff", fontWeight: 700,
+              }}>✓</div>
+            )}
           </button>
         );
       })}
 
-      {/* Card panel — above the arc, speech-bubble style */}
+      {/* Card above dock */}
       <div
         style={{
           position: "fixed",
-          right: Math.max(8, cardRight),
+          left: Math.max(8, cardLeft),
           bottom: Math.max(8, cardBottom),
-          width: 260,
+          width: 280,
           zIndex: 42,
           borderRadius: 16,
           background: "var(--color-bg-card, #fff)",
@@ -149,21 +190,6 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
           transition: reducedMotion ? "none" : "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s",
         }}
       >
-        {/* Tail pointer toward ring */}
-        <div style={{
-          position: "absolute",
-          bottom: -8,
-          right: 24,
-          width: 16,
-          height: 16,
-          background: "var(--color-bg-card, #fff)",
-          border: "1px solid var(--color-border, rgba(0,0,0,0.08))",
-          borderTop: "none",
-          borderLeft: "none",
-          transform: "rotate(45deg)",
-          boxShadow: "4px 4px 8px rgba(0,0,0,0.04)",
-        }} />
-
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <LinkSimple size={14} weight="bold" style={{ color: "#4285F4" }} />
           <span style={{ fontSize: 12, fontWeight: 700, color: "var(--color-text-primary, #333)", flex: 1 }}>Link Sessions</span>
@@ -179,28 +205,25 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
         />
 
         {activeSessions.length === 0 && (
-          <p style={{ fontSize: 11, color: "#999", textAlign: "center", padding: 8 }}>No active sessions</p>
+          <p style={{ fontSize: 11, color: "#999", textAlign: "center", padding: 8 }}>No active sessions — start one first</p>
         )}
 
         {activeSessions.length > 0 && (
-          <p style={{ fontSize: 9, color: "var(--color-text-muted, #999)" }}>
-            Click the bubbles below to select sessions
+          <p style={{ fontSize: 10, color: "var(--color-text-muted, #999)" }}>
+            Click bubbles below to select sessions ({selected.size}/{MAX_SESSIONS})
           </p>
         )}
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 10, color: "#999" }}>{selected.size}/{MAX_SESSIONS} selected</span>
-          <div style={{ display: "flex", gap: 6 }}>
-            <button onClick={() => setSelecting(false)} style={{ padding: "4px 12px", fontSize: 11, borderRadius: 8, border: "1px solid var(--color-border, rgba(0,0,0,0.1))", background: "transparent", cursor: "pointer", color: "#666" }}>
-              Cancel
-            </button>
-            <button
-              onClick={handleLink} disabled={selected.size === 0}
-              style={{ padding: "4px 12px", fontSize: 11, fontWeight: 600, borderRadius: 8, border: "none", background: selected.size > 0 ? "#4285F4" : "#ccc", color: "#fff", cursor: selected.size > 0 ? "pointer" : "default" }}
-            >
-              Link
-            </button>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+          <button onClick={() => setSelecting(false)} style={{ padding: "5px 14px", fontSize: 11, borderRadius: 8, border: "1px solid var(--color-border, rgba(0,0,0,0.1))", background: "transparent", cursor: "pointer", color: "#666" }}>
+            Cancel
+          </button>
+          <button
+            onClick={handleLink} disabled={selected.size === 0}
+            style={{ padding: "5px 14px", fontSize: 11, fontWeight: 600, borderRadius: 8, border: "none", background: selected.size > 0 ? "#4285F4" : "#ccc", color: "#fff", cursor: selected.size > 0 ? "pointer" : "default" }}
+          >
+            Link {selected.size > 0 ? `(${selected.size})` : ""}
+          </button>
         </div>
       </div>
     </>

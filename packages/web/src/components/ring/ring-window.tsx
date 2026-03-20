@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useEffect, useState, type KeyboardEvent } from "react";
-import { PaperPlaneTilt, X } from "@phosphor-icons/react";
+import { PaperPlaneTilt, X, XCircle } from "@phosphor-icons/react";
 import { useRingStore, type SharedMessage } from "@/lib/stores/ring-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { api } from "@/lib/api-client";
@@ -29,6 +29,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   const linkedSessionIds = useRingStore((s) => s.linkedSessionIds);
   const sharedMessages = useRingStore((s) => s.sharedMessages);
   const addSharedMessage = useRingStore((s) => s.addSharedMessage);
+  const unlinkSession = useRingStore((s) => s.unlinkSession);
   const setExpanded = useRingStore((s) => s.setExpanded);
   const mode = useRingStore((s) => s.mode);
   const sessionsMap = useSessionStore((s) => s.sessions);
@@ -37,6 +38,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [open, setOpen] = useState(false);
+  const [hoveredBubble, setHoveredBubble] = useState<number>(-1);
   const chatRef = useRef<HTMLDivElement>(null);
 
   const reducedMotion = typeof window !== "undefined"
@@ -51,14 +53,21 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
   }, [sharedMessages]);
 
-  // Arc layout: linked session bubbles above ring
-  const arcRadius = 80;
-  const totalArc = Math.min(linkedSessionIds.length * 45, 160);
-  const startAngle = -90 - totalArc / 2;
+  // Auto-close if all sessions unlinked
+  useEffect(() => {
+    if (linkedSessionIds.length === 0) setExpanded(false);
+  }, [linkedSessionIds.length, setExpanded]);
 
-  // Card position: above the arc bubbles
-  const cardBottom = typeof window !== "undefined" ? window.innerHeight - anchorY + 30 + arcRadius : 200;
-  const cardRight = typeof window !== "undefined" ? window.innerWidth - anchorX - 150 : 50;
+  // Dock layout: bubbles in a row to the LEFT of the ring
+  const bubbleSize = 40;
+  const bubbleGap = 6;
+  const dockWidth = linkedSessionIds.length * (bubbleSize + bubbleGap) - bubbleGap;
+
+  // Card position: above the dock + ring area
+  const cardWidth = 300;
+  const cardHeight = 300;
+  const cardLeft = anchorX - dockWidth - bubbleSize;
+  const cardBottom = typeof window !== "undefined" ? window.innerHeight - anchorY + bubbleSize + 16 : 200;
 
   async function handleSend() {
     if (!input.trim() || sending) return;
@@ -97,59 +106,134 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
       {/* Backdrop */}
       <div
         onClick={() => setExpanded(false)}
-        style={{
-          position: "fixed", inset: 0, zIndex: 41,
-          background: "rgba(0,0,0,0.03)",
-          opacity: open ? 1 : 0,
-          transition: reducedMotion ? "none" : "opacity 0.2s ease",
-        }}
+        style={{ position: "fixed", inset: 0, zIndex: 41 }}
       />
 
-      {/* Arc session bubbles */}
+      {/* Chrome-style color bridge connecting bubbles to ring */}
+      <svg
+        style={{
+          position: "fixed",
+          left: anchorX - dockWidth - bubbleSize - 10,
+          top: anchorY - 4,
+          width: dockWidth + bubbleSize + 20,
+          height: 8,
+          zIndex: 42,
+          opacity: open ? 0.6 : 0,
+          transition: reducedMotion ? "none" : "opacity 0.3s ease 0.1s",
+        }}
+        aria-hidden="true"
+      >
+        <defs>
+          <linearGradient id="chrome-bridge" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#EA4335" />
+            <stop offset="33%" stopColor="#FBBC04" />
+            <stop offset="66%" stopColor="#34A853" />
+            <stop offset="100%" stopColor="#4285F4" />
+          </linearGradient>
+        </defs>
+        <rect x="0" y="2" width="100%" height="4" rx="2" fill="url(#chrome-bridge)" />
+      </svg>
+
+      {/* Dock: session bubbles to the LEFT of ring — macOS magnification */}
       {linkedSessionIds.map((sid, i) => {
-        const total = linkedSessionIds.length;
-        const angle = total === 1 ? -90 : startAngle + (i / Math.max(total - 1, 1)) * totalArc;
-        const rad = (angle * Math.PI) / 180;
-        const bx = anchorX + arcRadius * Math.cos(rad) - 18;
-        const by = anchorY + arcRadius * Math.sin(rad) - 18;
-        const color = getSessionColor(sid);
         const session = sessions.find((s) => s.id === sid);
+        const color = getSessionColor(sid);
         const delay = i * 0.05;
+
+        // macOS dock magnification
+        const isHovered = hoveredBubble === i;
+        const dist = hoveredBubble === -1 ? 99 : Math.abs(hoveredBubble - i);
+        const scale = isHovered ? 1.35 : dist === 1 ? 1.15 : 1;
+        const size = bubbleSize * scale;
+
+        // Position: right-to-left from ring
+        const baseX = anchorX - (linkedSessionIds.length - i) * (bubbleSize + bubbleGap) - 8;
+        const baseY = anchorY + 26 / 2 - size / 2;
 
         return (
           <div
             key={sid}
+            onMouseEnter={() => setHoveredBubble(i)}
+            onMouseLeave={() => setHoveredBubble(-1)}
             style={{
-              position: "fixed", left: bx, top: by,
-              width: 36, height: 36, zIndex: 43,
-              borderRadius: "50%",
-              border: `2px solid ${color}`,
-              background: "var(--color-bg-card, #fff)",
-              boxShadow: `0 2px 8px rgba(0,0,0,0.1), 0 0 0 2px ${color}20`,
-              display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center", gap: 0,
+              position: "fixed",
+              left: baseX,
+              top: baseY,
+              width: size,
+              height: size,
+              zIndex: 43,
               transform: open ? "scale(1)" : "scale(0)",
               opacity: open ? 1 : 0,
-              transition: reducedMotion ? "none" : `all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
+              transition: reducedMotion ? "none" : `all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
             }}
-            title={session?.projectName ?? sid}
           >
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
-            <span style={{ fontSize: 6, fontWeight: 600, color: "var(--color-text-secondary, #555)", maxWidth: 28, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {(session?.projectName ?? sid).slice(0, 4)}
-            </span>
+            {/* Bubble */}
+            <div
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: "50%",
+                border: `2.5px solid ${color}`,
+                background: "var(--color-bg-card, #fff)",
+                boxShadow: isHovered ? `0 4px 16px ${color}40` : "0 2px 8px rgba(0,0,0,0.1)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+                cursor: "default",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
+              <span style={{
+                fontSize: isHovered ? 8 : 7, fontWeight: 600,
+                color: "var(--color-text-secondary, #555)",
+                maxWidth: size - 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}>
+                {(session?.projectName ?? sid).slice(0, 5)}
+              </span>
+            </div>
+
+            {/* Unlink button — shows on hover */}
+            {isHovered && (
+              <button
+                onClick={() => unlinkSession(sid)}
+                style={{
+                  position: "absolute",
+                  top: -4,
+                  right: -4,
+                  width: 16,
+                  height: 16,
+                  borderRadius: "50%",
+                  border: "none",
+                  background: "#EA4335",
+                  color: "#fff",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 0,
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
+                }}
+                aria-label={`Unlink ${session?.projectName ?? sid}`}
+                title="Unlink session"
+              >
+                <XCircle size={12} weight="fill" />
+              </button>
+            )}
           </div>
         );
       })}
 
-      {/* Chat card — speech bubble above the arc */}
+      {/* Chat card — above dock area */}
       <div
         style={{
           position: "fixed",
-          right: Math.max(8, cardRight),
+          left: Math.max(8, cardLeft),
           bottom: Math.max(8, cardBottom),
-          width: 300,
-          height: 320,
+          width: cardWidth,
+          height: cardHeight,
           zIndex: 42,
           borderRadius: 16,
           background: "var(--color-bg-card, #fff)",
@@ -163,17 +247,6 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
           transition: reducedMotion ? "none" : "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s",
         }}
       >
-        {/* Tail pointer */}
-        <div style={{
-          position: "absolute", bottom: -8, right: 28,
-          width: 16, height: 16,
-          background: "var(--color-bg-card, #fff)",
-          border: "1px solid var(--color-border, rgba(0,0,0,0.08))",
-          borderTop: "none", borderLeft: "none",
-          transform: "rotate(45deg)",
-          boxShadow: "4px 4px 8px rgba(0,0,0,0.04)",
-        }} />
-
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderBottom: "1px solid var(--color-border, rgba(0,0,0,0.06))", flexShrink: 0 }}>
           {linkedSessionIds.map((sid) => (
@@ -187,7 +260,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
           </button>
         </div>
 
-        {/* Chat area */}
+        {/* Chat */}
         <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: "6px 10px", display: "flex", flexDirection: "column", gap: 4 }}>
           {sharedMessages.length === 0 && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 6 }}>
@@ -199,9 +272,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
           )}
           {sharedMessages.map((msg) => (
             <div key={msg.id} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start", gap: 1 }}>
-              <span style={{ fontSize: 9, color: "var(--color-text-muted, #999)" }}>
-                {msg.sessionName} · {formatTime(msg.timestamp)}
-              </span>
+              <span style={{ fontSize: 9, color: "var(--color-text-muted, #999)" }}>{msg.sessionName} · {formatTime(msg.timestamp)}</span>
               <div style={{
                 fontSize: 12, lineHeight: 1.4, padding: "4px 8px", borderRadius: 8, maxWidth: "85%",
                 background: msg.role === "user" ? "#4285F4" : "var(--color-bg-elevated, #f0f0f0)",
