@@ -371,7 +371,25 @@ export function useSession(sessionId: string): UseSessionReturn {
 
         case "cli_disconnected": {
           // CLI process exited but WS may still be open; reflect in UI
-          setSession(sessionId, { status: "ended" });
+          const exitCode = (msg as { exitCode?: number }).exitCode;
+          const exitReason = (msg as { reason?: string }).reason;
+
+          // Early/error exits → show "error" status so user sees what happened
+          if (exitCode !== undefined && exitCode !== 0) {
+            setSession(sessionId, { status: "error" });
+          } else {
+            setSession(sessionId, { status: "ended" });
+          }
+
+          if (exitReason) {
+            addLog({
+              sessionId,
+              sessionName: getSessionName(),
+              timestamp: Date.now(),
+              type: "error",
+              content: `CLI disconnected: ${exitReason}`,
+            });
+          }
           break;
         }
 

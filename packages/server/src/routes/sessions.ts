@@ -184,6 +184,14 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         envVars: project?.envVars,
       });
 
+      // Apply idle timeout / keep-alive settings from the request
+      if (body.idleTimeoutMs !== undefined || body.keepAlive !== undefined) {
+        bridge.setSessionSettings(sessionId, {
+          ...(body.idleTimeoutMs !== undefined ? { idleTimeoutMs: body.idleTimeoutMs } : {}),
+          ...(body.keepAlive !== undefined ? { keepAlive: body.keepAlive } : {}),
+        });
+      }
+
       log.info("Session created via API", { sessionId, model });
       return c.json({ success: true, data: { sessionId } } satisfies ApiResponse, 201);
     } catch (err) {

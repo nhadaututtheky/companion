@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   CurrencyDollar,
   ArrowsCounterClockwise,
@@ -8,10 +8,13 @@ import {
   DownloadSimple,
   TelegramLogo,
   Notebook,
+  FolderSimple,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { ContextMeter } from "./context-meter";
+import { FileTree } from "./file-tree";
+import { FileViewer } from "./file-viewer";
 
 interface SessionDetailsProps {
   session: {
@@ -28,6 +31,7 @@ interface SessionDetailsProps {
       files_modified: string[];
       files_created: string[];
       started_at: number;
+      cwd?: string;
     };
   } | null;
 }
@@ -78,6 +82,12 @@ function formatTokens(n: number) {
 }
 
 export function SessionDetails({ session }: SessionDetailsProps) {
+  const [viewingFile, setViewingFile] = useState<{ path: string; name: string } | null>(null);
+
+  const handleFileSelect = useCallback((path: string, name: string) => {
+    setViewingFile({ path, name });
+  }, []);
+
   if (!session) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 px-4">
@@ -86,6 +96,17 @@ export function SessionDetails({ session }: SessionDetailsProps) {
           Select a session to view details
         </p>
       </div>
+    );
+  }
+
+  // If viewing a file, show the viewer full-panel
+  if (viewingFile) {
+    return (
+      <FileViewer
+        filePath={viewingFile.path}
+        fileName={viewingFile.name}
+        onClose={() => setViewingFile(null)}
+      />
     );
   }
 
@@ -158,7 +179,7 @@ export function SessionDetails({ session }: SessionDetailsProps) {
         />
       </div>
 
-      {/* Modified files */}
+      {/* Modified files — clickable to open in viewer */}
       {(s.files_modified.length > 0 || s.files_created.length > 0) && (
         <div className="px-4 pb-4">
           <p className="text-xs font-semibold mb-2" style={{ color: "var(--color-text-secondary)" }}>
@@ -166,22 +187,45 @@ export function SessionDetails({ session }: SessionDetailsProps) {
           </p>
           <div className="flex flex-col gap-1">
             {s.files_created.map((f) => (
-              <div key={`c-${f}`} className="flex items-center gap-2">
+              <button
+                key={`c-${f}`}
+                className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
+                onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              >
                 <span className="text-xs" style={{ color: "#34A853" }}>+</span>
                 <span className="text-xs font-mono truncate" style={{ color: "var(--color-text-secondary)" }}>
                   {f.split("/").pop()}
                 </span>
-              </div>
+              </button>
             ))}
             {s.files_modified.map((f) => (
-              <div key={`m-${f}`} className="flex items-center gap-2">
+              <button
+                key={`m-${f}`}
+                className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
+                onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              >
                 <span className="text-xs" style={{ color: "#FBBC04" }}>~</span>
                 <span className="text-xs font-mono truncate" style={{ color: "var(--color-text-secondary)" }}>
                   {f.split("/").pop()}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Project file browser */}
+      {s.cwd && (
+        <div className="px-4 pb-4">
+          <p className="text-xs font-semibold mb-2" style={{ color: "var(--color-text-secondary)" }}>
+            <FolderSimple size={12} weight="bold" className="inline mr-1" style={{ verticalAlign: "middle" }} />
+            Project Files
+          </p>
+          <FileTree rootPath={s.cwd} onFileSelect={handleFileSelect} />
         </div>
       )}
 

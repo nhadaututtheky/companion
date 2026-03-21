@@ -333,6 +333,11 @@ export const api = {
       request<{
         data: { roots: { label: string; path: string }[] };
       }>("/api/fs/roots"),
+
+    read: (path: string) =>
+      request<{
+        data: { path: string; name: string; ext: string; content: string; size: number };
+      }>(`/api/fs/read?path=${encodeURIComponent(path)}`),
   },
 
   // Templates

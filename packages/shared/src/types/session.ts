@@ -178,7 +178,7 @@ export type BrowserIncomingMessage =
     }
   | { type: "status_change"; status: SessionStatus }
   | { type: "error"; message: string }
-  | { type: "cli_disconnected" }
+  | { type: "cli_disconnected"; exitCode?: number; reason?: string }
   | { type: "cli_connected" }
   | { type: "user_message"; content: string; timestamp: number }
   | { type: "message_history"; messages: BrowserIncomingMessage[] }

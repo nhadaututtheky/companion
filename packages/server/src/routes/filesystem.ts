@@ -4,9 +4,9 @@
  */
 
 import { Hono } from "hono";
-import { readdirSync, statSync, existsSync } from "fs";
+import { readdirSync, readFileSync, statSync, existsSync } from "fs";
 import { homedir } from "os";
-import { join, resolve, normalize } from "path";
+import { join, resolve, normalize, extname } from "path";
 import type { ApiResponse } from "@companion/shared";
 
 // Directories filtered out of listings (noisy / irrelevant for project selection)
@@ -121,6 +121,113 @@ filesystemRoutes.get("/browse", (c) => {
       path: check.resolved,
       dirs: dirs.sort(),
       files: includeFiles ? files.sort() : [],
+    },
+  } satisfies ApiResponse);
+});
+
+// Max file size for reading (512KB) — prevents loading huge binaries
+const MAX_READ_SIZE = 512 * 1024;
+
+// Extensions we allow reading (text-based files only)
+const READABLE_EXTENSIONS = new Set([
+  ".md", ".txt", ".json", ".yaml", ".yml", ".toml",
+  ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs",
+  ".py", ".rs", ".go", ".java", ".rb", ".sh", ".bash",
+  ".css", ".scss", ".html", ".svg", ".xml",
+  ".env", ".env.example", ".gitignore", ".dockerignore",
+  ".dockerfile", ".prisma", ".graphql", ".sql",
+  ".csv", ".log", ".ini", ".cfg", ".conf",
+]);
+
+/** Validate that a path is an existing, readable file within allowed roots */
+function validateFile(
+  p: string,
+): { ok: true; resolved: string } | { ok: false; error: string; status: 400 | 403 } {
+  if (!p || typeof p !== "string") {
+    return { ok: false, error: "path is required", status: 400 };
+  }
+
+  let resolved: string;
+  try {
+    resolved = resolve(normalize(p));
+  } catch {
+    return { ok: false, error: "Invalid path", status: 400 };
+  }
+
+  if (!existsSync(resolved)) {
+    return { ok: false, error: "File does not exist", status: 400 };
+  }
+
+  try {
+    const stat = statSync(resolved);
+    if (!stat.isFile()) {
+      return { ok: false, error: "Path is not a file", status: 400 };
+    }
+    if (stat.size > MAX_READ_SIZE) {
+      return { ok: false, error: `File too large (${(stat.size / 1024).toFixed(0)}KB > ${MAX_READ_SIZE / 1024}KB limit)`, status: 400 };
+    }
+  } catch {
+    return { ok: false, error: "Cannot stat path", status: 400 };
+  }
+
+  // Check extension
+  const ext = extname(resolved).toLowerCase();
+  // Allow extensionless files like Dockerfile, Makefile
+  const basename = resolved.split(/[\\/]/).pop() ?? "";
+  const knownExtensionless = ["Dockerfile", "Makefile", "Procfile", "Vagrantfile", "Gemfile", "Rakefile"];
+  if (ext && !READABLE_EXTENSIONS.has(ext) && !knownExtensionless.includes(basename)) {
+    return { ok: false, error: `File type '${ext}' not supported for reading`, status: 400 };
+  }
+
+  // Check allowed roots (same security as validateDir)
+  const allowedRoots = process.env.ALLOWED_BROWSE_ROOTS;
+  if (allowedRoots) {
+    const roots = allowedRoots.split(";").map((r) => resolve(normalize(r)));
+    const allowed = roots.some((root) => resolved.startsWith(root));
+    if (!allowed) {
+      return { ok: false, error: "Path outside allowed roots", status: 403 };
+    }
+  }
+
+  return { ok: true, resolved };
+}
+
+/**
+ * GET /api/fs/read?path=<file>
+ * Returns the text content of a file (text-based only, max 512KB).
+ */
+filesystemRoutes.get("/read", (c) => {
+  const rawPath = c.req.query("path") ?? "";
+
+  const check = validateFile(rawPath);
+  if (!check.ok) {
+    return c.json(
+      { success: false, error: check.error } satisfies ApiResponse,
+      check.status,
+    );
+  }
+
+  let content: string;
+  try {
+    content = readFileSync(check.resolved, "utf-8");
+  } catch {
+    return c.json(
+      { success: false, error: "Cannot read file" } satisfies ApiResponse,
+      500,
+    );
+  }
+
+  const basename = check.resolved.split(/[\\/]/).pop() ?? "";
+  const ext = extname(check.resolved).toLowerCase();
+
+  return c.json({
+    success: true,
+    data: {
+      path: check.resolved,
+      name: basename,
+      ext,
+      content,
+      size: Buffer.byteLength(content, "utf-8"),
     },
   } satisfies ApiResponse);
 });

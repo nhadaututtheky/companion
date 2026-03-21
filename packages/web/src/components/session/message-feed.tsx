@@ -8,8 +8,11 @@ import {
   CaretDown,
   CaretRight,
   CurrencyDollar,
+  PaperPlaneTilt,
+  Lightning,
 } from "@phosphor-icons/react";
 import { MarkdownMessage } from "../chat/markdown-message";
+import { useComposerStore } from "@/lib/stores/composer-store";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -102,6 +105,8 @@ function ToolUseSection({
   results?: ToolResultBlock[];
 }) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const addAttachment = useComposerStore((s) => s.addAttachment);
+  const setQuickAction = useComposerStore((s) => s.setQuickAction);
 
   const toggle = (id: string) => {
     setExpandedIds((prev) => {
@@ -168,8 +173,50 @@ function ToolUseSection({
                 {/* Result */}
                 {result && (
                   <div className="px-3 py-2" style={{ borderTop: "1px solid var(--color-border)" }}>
-                    <div className="text-xs font-semibold mb-1" style={{ color: result.isError ? "#ef4444" : "var(--color-text-muted)" }}>
-                      {result.isError ? "Error" : "Output"}
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="text-xs font-semibold" style={{ color: result.isError ? "#ef4444" : "var(--color-text-muted)" }}>
+                        {result.isError ? "Error" : "Output"}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {result.isError ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addAttachment({
+                                kind: "error",
+                                label: `${tool.name} error`,
+                                content: result.content,
+                                meta: { toolName: tool.name },
+                              });
+                              setQuickAction("fix");
+                            }}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs cursor-pointer transition-colors hover:brightness-125"
+                            style={{ background: "#ef444415", color: "#ef4444" }}
+                            title="Send error to AI to fix"
+                          >
+                            <Lightning size={10} weight="bold" />
+                            Fix this
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addAttachment({
+                                kind: "tool_output",
+                                label: `${tool.name} output`,
+                                content: result.content,
+                                meta: { toolName: tool.name },
+                              });
+                            }}
+                            className="p-0.5 rounded cursor-pointer transition-colors hover:brightness-125"
+                            style={{ color: "var(--color-text-muted)" }}
+                            title="Send to AI"
+                            aria-label="Send output to AI"
+                          >
+                            <PaperPlaneTilt size={11} weight="bold" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <pre
                       className="text-xs font-mono whitespace-pre-wrap max-h-[300px] overflow-y-auto m-0"

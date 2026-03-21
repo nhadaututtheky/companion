@@ -223,21 +223,40 @@ export function DirectoryBrowser({ onSelect, onCancel }: DirectoryBrowserProps) 
         className="flex items-center gap-2 px-3 py-2 flex-shrink-0 border-b"
         style={{ borderColor: "var(--color-border)" }}
       >
+        {canGoBack && (
+          <button
+            onClick={navigateBack}
+            className="flex items-center justify-center p-1.5 rounded-md transition-colors cursor-pointer"
+            style={{
+              background: "var(--color-bg-elevated)",
+              color: "var(--color-text-secondary)",
+              border: "1px solid var(--color-border)",
+            }}
+            aria-label="Go back"
+          >
+            <ArrowLeft size={14} weight="bold" aria-hidden="true" />
+          </button>
+        )}
+
         <button
-          onClick={canGoBack ? navigateBack : onCancel}
+          onClick={() => {
+            setCurrentPath(null);
+            setEntries([]);
+            setHistory([]);
+          }}
           className="flex items-center justify-center p-1.5 rounded-md transition-colors cursor-pointer"
           style={{
-            background: "var(--color-bg-elevated)",
-            color: "var(--color-text-secondary)",
+            background: currentPath === null
+              ? "var(--color-bg-hover)"
+              : "var(--color-bg-elevated)",
+            color: currentPath === null
+              ? "var(--color-text-primary)"
+              : "var(--color-text-secondary)",
             border: "1px solid var(--color-border)",
           }}
-          aria-label={canGoBack ? "Go up" : "Cancel"}
+          aria-label="Go to drives / root folders"
         >
-          {canGoBack ? (
-            <ArrowLeft size={14} weight="bold" aria-hidden="true" />
-          ) : (
-            <House size={14} weight="bold" aria-hidden="true" />
-          )}
+          <House size={14} weight="bold" aria-hidden="true" />
         </button>
 
         <div className="flex-1 min-w-0">
