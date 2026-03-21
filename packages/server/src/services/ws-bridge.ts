@@ -6,6 +6,7 @@
 import { randomUUID } from "crypto";
 import { createLogger } from "../logger.js";
 import { launchCLI, createPlanModeWatcher } from "./cli-launcher.js";
+import { startSdkSession, type SdkSessionHandle } from "./sdk-engine.js";
 import { summarizeSession, buildSummaryInjection } from "./session-summarizer.js";
 import {
   createActiveSession,
@@ -19,6 +20,7 @@ import {
   updateCliSessionId,
   cleanupZombieSessions,
   clearCliSessionId,
+  pushMessageHistory,
   type ActiveSession,
 } from "./session-store.js";
 import type {
@@ -64,8 +66,17 @@ const DEFAULT_SESSION_SETTINGS: SessionSettings = {
   keepAlive: false,
 };
 
+/** Whether to use the new SDK engine (set USE_SDK_ENGINE=1 to enable) */
+const USE_SDK_ENGINE = process.env.USE_SDK_ENGINE === "1";
+
 export class WsBridge {
   private cliProcesses = new Map<string, LaunchResult>();
+  private sdkHandles = new Map<string, SdkSessionHandle>();
+  /** Permission resolvers: requestId → resolve function (for SDK canUseTool bridge) */
+  private permissionResolvers = new Map<
+    string,
+    (result: { behavior: "allow" | "deny"; message?: string; updatedPermissions?: unknown[] }) => void
+  >();
   private planWatchers = new Map<string, ReturnType<typeof createPlanModeWatcher>>();
   private onStatusChange?: StatusChangeCallback;
   /** Idle timers keyed by session ID — only for non-Telegram sessions */
@@ -100,6 +111,8 @@ export class WsBridge {
           log.warn("Health check: process died silently, cleaning up", { sessionId });
           const session = getActiveSession(sessionId);
           if (session) {
+            // Capture stderr before handling exit
+            session.lastStderrLines = launch.getStderrLines?.() ?? [];
             this.handleCLIExit(session, -1);
           } else {
             this.cliProcesses.delete(sessionId);
@@ -114,7 +127,9 @@ export class WsBridge {
    * Returns count of cleaned sessions.
    */
   cleanupZombieSessions(): number {
-    return cleanupZombieSessions((id) => this.cliProcesses.has(id));
+    return cleanupZombieSessions(
+      (id) => this.cliProcesses.has(id) || this.sdkHandles.has(id),
+    );
   }
 
   // ── Session lifecycle ───────────────────────────────────────────────────
@@ -178,6 +193,196 @@ export class WsBridge {
       clearCliSessionId(opts.cliSessionId);
     }
 
+    // ── SDK Engine path ──────────────────────────────────────────────────
+    if (USE_SDK_ENGINE) {
+      return this.startSessionWithSdk(sessionId, session, opts);
+    }
+
+    // ── Legacy CLI launcher path ────────────────────────────────────────
+    return this.startSessionWithCli(sessionId, session, opts);
+  }
+
+  // ── SDK Engine session startup ──────────────────────────────────────────
+
+  private startSessionWithSdk(
+    sessionId: string,
+    session: ActiveSession,
+    opts: {
+      projectSlug?: string;
+      cwd: string;
+      model: string;
+      permissionMode?: string;
+      prompt?: string;
+      resume?: boolean;
+      cliSessionId?: string;
+      envVars?: Record<string, string>;
+    },
+  ): string {
+    // Build prompt with summary injection
+    let fullPrompt = opts.prompt ?? "";
+    if (fullPrompt && !opts.resume) {
+      const summaryContext = buildSummaryInjection(opts.projectSlug);
+      if (summaryContext) {
+        fullPrompt = `${fullPrompt}${summaryContext}`;
+      }
+    }
+
+    const handle = startSdkSession(
+      {
+        sessionId,
+        cwd: opts.cwd,
+        model: opts.model,
+        permissionMode: opts.permissionMode,
+        prompt: fullPrompt,
+        resume: opts.resume ? opts.cliSessionId : undefined,
+        maxTurns: 200,
+        maxBudgetUsd: 10,
+      },
+      {
+        onSystemInit: (msg) => {
+          this.handleSystemInit(session, {
+            type: "system",
+            subtype: "init",
+            session_id: msg.session_id,
+            cwd: msg.cwd,
+            tools: msg.tools,
+            mcp_servers: (msg.mcp_servers ?? []).map((s: unknown) => {
+              if (typeof s === "string") return { name: s, status: "connected" };
+              return s as { name: string; status: string };
+            }),
+            model: msg.model,
+            permissionMode: msg.permissionMode ?? opts.permissionMode ?? "default",
+            claude_code_version: msg.claude_code_version ?? "",
+            slash_commands: [],
+            uuid: msg.uuid ?? "",
+          });
+        },
+
+        onAssistant: (msg) => {
+          // Map SDK message to our CLIAssistantMessage shape
+          this.handleAssistant(session, {
+            type: "assistant",
+            message: msg.message as CLIAssistantMessage["message"],
+            parent_tool_use_id: msg.parent_tool_use_id,
+            error: msg.error,
+            uuid: msg.uuid ?? "",
+            session_id: msg.session_id,
+          });
+        },
+
+        onResult: (msg) => {
+          this.handleResult(session, msg as unknown as CLIResultMessage);
+        },
+
+        onStreamEvent: (msg) => {
+          this.handleStreamEvent(session, {
+            type: "stream_event",
+            event: msg.event,
+            parent_tool_use_id: msg.parent_tool_use_id,
+            uuid: msg.uuid ?? "",
+            session_id: msg.session_id,
+          });
+        },
+
+        onToolProgress: (msg) => {
+          const typed = msg as {
+            type: "tool_progress";
+            tool_use_id: string;
+            tool_name: string;
+            parent_tool_use_id: string | null;
+            elapsed_time_seconds: number;
+            uuid: string;
+            session_id: string;
+          };
+          this.handleToolProgress(session, {
+            type: "tool_progress",
+            tool_use_id: typed.tool_use_id,
+            tool_name: typed.tool_name,
+            parent_tool_use_id: typed.parent_tool_use_id,
+            elapsed_time_seconds: typed.elapsed_time_seconds,
+            uuid: typed.uuid,
+            session_id: typed.session_id,
+          });
+        },
+
+        onStatusChange: (msg) => {
+          if (msg.status === "compacting") {
+            this.handleSystemStatus(session, {
+              subtype: "status",
+              status: "compacting",
+            });
+          }
+        },
+
+        onError: (error) => {
+          this.broadcastToAll(session, {
+            type: "error",
+            message: error,
+          });
+        },
+
+        onExit: (exitCode, reason) => {
+          this.sdkHandles.delete(sessionId);
+          this.handleCLIExit(session, exitCode);
+        },
+
+        // Permission bridge: SDK blocks until this resolves
+        requestPermission: (requestId, toolName, input, permOpts) => {
+          return new Promise((resolve) => {
+            // Store resolver — will be called when user responds via WebSocket
+            this.permissionResolvers.set(requestId, (response) => {
+              if (response.behavior === "allow") {
+                resolve({
+                  behavior: "allow",
+                  updatedPermissions: response.updatedPermissions as import("@anthropic-ai/claude-agent-sdk").PermissionUpdate[] | undefined,
+                });
+              } else {
+                resolve({ behavior: "deny", message: "Denied by user" });
+              }
+            });
+
+            // Forward to handleControlRequest which broadcasts to browsers
+            this.handleControlRequest(session, {
+              type: "control_request",
+              request_id: requestId,
+              request: {
+                subtype: "can_use_tool",
+                tool_name: toolName,
+                input,
+                permission_suggestions: permOpts.suggestions as PermissionRequest["permission_suggestions"],
+                description: permOpts.description,
+                tool_use_id: permOpts.toolUseId,
+              },
+            });
+          });
+        },
+      },
+    );
+
+    // Mark session as connected (SDK doesn't have a "stdin sender" — messages go through query)
+    session.cliSend = null; // SDK manages its own stdin
+    this.sdkHandles.set(sessionId, handle);
+
+    log.info("Session started (SDK engine)", { sessionId, cwd: opts.cwd, model: opts.model });
+    return sessionId;
+  }
+
+  // ── Legacy CLI launcher session startup ─────────────────────────────────
+
+  private startSessionWithCli(
+    sessionId: string,
+    session: ActiveSession,
+    opts: {
+      projectSlug?: string;
+      cwd: string;
+      model: string;
+      permissionMode?: string;
+      prompt?: string;
+      resume?: boolean;
+      cliSessionId?: string;
+      envVars?: Record<string, string>;
+    },
+  ): string {
     // Create plan mode watcher
     const planWatcher = createPlanModeWatcher(
       (ndjson) => this.sendToCLI(session, ndjson),
@@ -186,7 +391,6 @@ export class WsBridge {
         if (action === "kill") {
           this.killSession(sessionId);
         }
-        // Notify subscribers about stuck plan mode
         this.broadcastToSubscribers(session, {
           type: "error",
           message: `Plan mode stuck — ${action}`,
@@ -209,7 +413,10 @@ export class WsBridge {
         envVars: opts.envVars,
       },
       (ndjsonLine) => this.handleCLIMessage(session, ndjsonLine),
-      (exitCode) => this.handleCLIExit(session, exitCode),
+      (exitCode) => {
+        session.lastStderrLines = launch.getStderrLines();
+        this.handleCLIExit(session, exitCode);
+      },
     );
 
     session.cliSend = launch.send;
@@ -222,9 +429,8 @@ export class WsBridge {
     }
     session.pendingMessages = [];
 
-    // Send initial prompt via stdin NDJSON (interactive mode, not --prompt flag)
+    // Send initial prompt via stdin NDJSON
     if (opts.prompt && !opts.resume) {
-      // Inject previous session summaries if available
       const summaryContext = buildSummaryInjection(opts.projectSlug);
       const fullPrompt = summaryContext
         ? `${opts.prompt}${summaryContext}`
@@ -234,13 +440,12 @@ export class WsBridge {
         type: "user",
         message: { role: "user", content: fullPrompt },
       });
-      // Small delay to let CLI initialize before sending
       setTimeout(() => {
         this.sendToCLI(session, ndjson);
       }, 1000);
     }
 
-    log.info("Session started", { sessionId, cwd: opts.cwd, model: opts.model });
+    log.info("Session started (CLI launcher)", { sessionId, cwd: opts.cwd, model: opts.model });
     return sessionId;
   }
 
@@ -248,10 +453,30 @@ export class WsBridge {
     this.clearIdleTimer(sessionId);
     this.sessionSettings.delete(sessionId);
 
+    // Kill SDK handle if present
+    const sdkHandle = this.sdkHandles.get(sessionId);
+    if (sdkHandle) {
+      sdkHandle.abort();
+      this.sdkHandles.delete(sessionId);
+    }
+
+    // Kill legacy CLI process if present
     const launch = this.cliProcesses.get(sessionId);
     if (launch) {
       launch.kill();
       this.cliProcesses.delete(sessionId);
+    }
+
+    // Clean up any pending permission resolvers for this session
+    const session = getActiveSession(sessionId);
+    if (session) {
+      for (const [reqId] of session.pendingPermissions) {
+        const resolver = this.permissionResolvers.get(reqId);
+        if (resolver) {
+          resolver({ behavior: "deny", message: "Session killed" });
+          this.permissionResolvers.delete(reqId);
+        }
+      }
     }
 
     const watcher = this.planWatchers.get(sessionId);
@@ -260,7 +485,6 @@ export class WsBridge {
       this.planWatchers.delete(sessionId);
     }
 
-    const session = getActiveSession(sessionId);
     if (session) {
       this.updateStatus(session, "ended");
       persistSession(session);
@@ -362,10 +586,17 @@ export class WsBridge {
       } satisfies BrowserIncomingMessage));
     }
 
-    // Notify CLI status
-    ws.send(JSON.stringify({
-      type: session.cliSend ? "cli_connected" : "cli_disconnected",
-    }));
+    // Notify CLI status — only send cli_disconnected if session isn't already ended/error
+    // (avoids re-triggering "ended" in client on WebSocket reconnect)
+    const sdkRunning = this.sdkHandles.get(sessionId)?.isRunning();
+    if (session.cliSend || sdkRunning) {
+      ws.send(JSON.stringify({ type: "cli_connected" }));
+    } else if (session.state.status !== "ended" && session.state.status !== "error") {
+      ws.send(JSON.stringify({
+        type: "cli_disconnected",
+        reason: "CLI process not connected",
+      }));
+    }
   }
 
   removeBrowser(sessionId: string, ws: SocketLike): void {
@@ -551,7 +782,7 @@ export class WsBridge {
       timestamp: Date.now(),
     };
 
-    session.messageHistory.push(browserMsg);
+    pushMessageHistory(session, browserMsg);
     this.broadcastToAll(session, browserMsg);
     this.updateStatus(session, "busy");
 
@@ -622,7 +853,7 @@ export class WsBridge {
       data: msg,
     };
 
-    session.messageHistory.push(browserMsg);
+    pushMessageHistory(session, browserMsg);
     this.broadcastToAll(session, browserMsg);
 
     // Broadcast updated session state so clients can re-compute context meter
@@ -734,11 +965,26 @@ export class WsBridge {
   }
 
   private handleCLIExit(session: ActiveSession, exitCode: number): void {
-    log.info("CLI process exited", { sessionId: session.id, exitCode });
+    const wasStarting = session.state.status === "starting";
+    const hadTurns = session.state.num_turns > 0;
+    const uptimeMs = Date.now() - session.state.started_at;
+    const isEarlyExit = uptimeMs < 10_000 && !hadTurns;
+
+    log.info("CLI process exited", { sessionId: session.id, exitCode, wasStarting, uptimeMs, hadTurns });
 
     session.cliSend = null;
     this.cliProcesses.delete(session.id);
+    this.sdkHandles.delete(session.id);
     this.clearIdleTimer(session.id);
+
+    // Reject any outstanding SDK permission resolvers for this session
+    for (const [reqId] of session.pendingPermissions) {
+      const resolver = this.permissionResolvers.get(reqId);
+      if (resolver) {
+        resolver({ behavior: "deny", message: "Session ended" });
+        this.permissionResolvers.delete(reqId);
+      }
+    }
 
     const watcher = this.planWatchers.get(session.id);
     if (watcher) {
@@ -746,13 +992,49 @@ export class WsBridge {
       this.planWatchers.delete(session.id);
     }
 
-    this.broadcastToAll(session, { type: "cli_disconnected" });
-    this.updateStatus(session, "ended");
-    endSessionRecord(session.id);
+    // Build a human-readable reason for the exit
+    let reason: string | undefined;
+    if (isEarlyExit && exitCode !== 0) {
+      reason = `CLI crashed on startup (exit code ${exitCode}). Check that Claude Code is installed and authenticated.`;
+    } else if (isEarlyExit && exitCode === 0) {
+      reason = "CLI exited immediately — this may indicate a --print mode issue. Session can be retried.";
+    } else if (exitCode !== 0) {
+      reason = `CLI exited unexpectedly (exit code ${exitCode})`;
+    }
+
+    // Send stderr snippet if captured
+    const stderrSnippet = session.lastStderrLines?.join("\n");
+    if (stderrSnippet && reason) {
+      reason = `${reason}\n${stderrSnippet}`;
+    } else if (stderrSnippet) {
+      reason = stderrSnippet;
+    }
+
+    this.broadcastToAll(session, {
+      type: "cli_disconnected",
+      exitCode,
+      reason,
+    } as BrowserIncomingMessage);
+
+    // Use "error" status for early/unexpected exits so the UI can show diagnostics
+    const finalStatus = isEarlyExit ? "error" : "ended";
+    this.updateStatus(session, finalStatus);
+    endSessionRecord(session.id, finalStatus);
     persistSession(session);
 
-    // Auto-summarize (non-blocking)
-    void summarizeSession(session.id);
+    // Auto-summarize only for sessions that actually ran
+    if (hadTurns) {
+      void summarizeSession(session.id);
+    }
+
+    // Schedule removal from in-memory map after 5 minutes (allows browser reconnect/replay)
+    setTimeout(() => {
+      const s = getActiveSession(session.id);
+      if (s && (s.state.status === "ended" || s.state.status === "error")) {
+        removeActiveSession(session.id);
+        log.debug("Removed ended session from memory", { sessionId: session.id });
+      }
+    }, 5 * 60 * 1000);
   }
 
   // ── Browser message routing ─────────────────────────────────────────────
@@ -798,7 +1080,7 @@ export class WsBridge {
       content,
       timestamp: Date.now(),
     };
-    session.messageHistory.push(historyMsg);
+    pushMessageHistory(session, historyMsg);
 
     // Broadcast to browsers
     this.broadcastToAll(session, historyMsg);
@@ -812,7 +1094,43 @@ export class WsBridge {
       source: (source as "telegram" | "web" | "api" | "agent" | "system") ?? "api",
     });
 
-    // Send to CLI via NDJSON stdin
+    // SDK engine path: start a new query with resume to continue the conversation
+    const existingSdkHandle = this.sdkHandles.get(session.id);
+    if (existingSdkHandle || USE_SDK_ENGINE) {
+      // If SDK is still running from previous turn, abort and wait for cleanup
+      if (existingSdkHandle?.isRunning()) {
+        existingSdkHandle.abort();
+      }
+      // Always clear stale handle before starting new one (prevents duplicate loops)
+      this.sdkHandles.delete(session.id);
+
+      // Resume the conversation with the new user message
+      if (session.cliSessionId) {
+        this.startSessionWithSdk(session.id, session, {
+          cwd: session.state.cwd || ".",
+          model: session.state.model || "claude-sonnet-4-6",
+          permissionMode: session.state.permissionMode,
+          prompt: content,
+          resume: true,
+          cliSessionId: session.cliSessionId,
+        });
+      } else {
+        log.warn("No cliSessionId for SDK resume — starting fresh session", {
+          sessionId: session.id,
+        });
+        this.startSessionWithSdk(session.id, session, {
+          cwd: session.state.cwd || ".",
+          model: session.state.model || "claude-sonnet-4-6",
+          permissionMode: session.state.permissionMode,
+          prompt: content,
+        });
+      }
+
+      this.updateStatus(session, "busy");
+      return;
+    }
+
+    // CLI engine path: send NDJSON to stdin
     const ndjson = JSON.stringify({
       type: "user",
       message: { role: "user", content },
@@ -838,37 +1156,56 @@ export class WsBridge {
 
     session.pendingPermissions.delete(msg.request_id);
 
-    let ndjson: string;
-    if (msg.behavior === "allow") {
-      ndjson = JSON.stringify({
-        type: "control_response",
-        response: {
-          subtype: "success",
-          request_id: msg.request_id,
-          response: {
-            behavior: "allow",
-            updatedInput: {},
-            ...(msg.updated_permissions
-              ? { updatedPermissions: msg.updated_permissions }
-              : {}),
-          },
-        },
+    // SDK engine path: resolve the permission Promise
+    const resolver = this.permissionResolvers.get(msg.request_id);
+    if (resolver) {
+      resolver({
+        behavior: msg.behavior,
+        ...(msg.updated_permissions
+          ? { updatedPermissions: msg.updated_permissions }
+          : {}),
       });
-    } else {
-      ndjson = JSON.stringify({
-        type: "control_response",
-        response: {
-          subtype: "success",
-          request_id: msg.request_id,
+      this.permissionResolvers.delete(msg.request_id);
+    } else if (session.cliSend) {
+      // CLI engine path: send NDJSON response to stdin (only if CLI is connected)
+      let ndjson: string;
+      if (msg.behavior === "allow") {
+        ndjson = JSON.stringify({
+          type: "control_response",
           response: {
-            behavior: "deny",
-            message: "Denied by user",
+            subtype: "success",
+            request_id: msg.request_id,
+            response: {
+              behavior: "allow",
+              updatedInput: {},
+              ...(msg.updated_permissions
+                ? { updatedPermissions: msg.updated_permissions }
+                : {}),
+            },
           },
-        },
+        });
+      } else {
+        ndjson = JSON.stringify({
+          type: "control_response",
+          response: {
+            subtype: "success",
+            request_id: msg.request_id,
+            response: {
+              behavior: "deny",
+              message: "Denied by user",
+            },
+          },
+        });
+      }
+
+      this.sendToCLI(session, ndjson);
+    } else {
+      // Stale response — no resolver and no CLI stdin; discard silently
+      log.debug("Permission response has no target (stale?)", {
+        sessionId: session.id,
+        requestId: msg.request_id,
       });
     }
-
-    this.sendToCLI(session, ndjson);
 
     // Notify browsers the permission was handled
     this.broadcastToAll(session, {
@@ -878,6 +1215,21 @@ export class WsBridge {
   }
 
   private handleInterrupt(session: ActiveSession): void {
+    // SDK engine path: use query.interrupt()
+    const sdkHandle = this.sdkHandles.get(session.id);
+    if (sdkHandle) {
+      try {
+        sdkHandle.query.interrupt();
+      } catch (err) {
+        log.warn("Failed to interrupt SDK session", {
+          sessionId: session.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+      return;
+    }
+
+    // CLI engine path: send NDJSON interrupt
     const ndjson = JSON.stringify({
       type: "control_request",
       request: { subtype: "interrupt" },

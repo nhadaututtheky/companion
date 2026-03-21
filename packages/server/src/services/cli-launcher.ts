@@ -33,6 +33,8 @@ export interface LaunchResult {
   exited: Promise<number>;
   /** Check if the process is still alive (exitCode === null) */
   isAlive: () => boolean;
+  /** Get last N lines from stderr (for error diagnostics) */
+  getStderrLines: () => string[];
 }
 
 /**
@@ -44,11 +46,17 @@ function resolveClaudeBinary(): string {
 
   if (platform === "win32") {
     // Try direct path to Claude Code's Node.js entrypoint
-    // Newer versions use cli.js, older used cli.mjs
     const appData = process.env.APPDATA;
     if (appData) {
-      for (const filename of ["cli.js", "cli.mjs"]) {
-        const path = `${appData}/npm/node_modules/@anthropic-ai/claude-code/${filename}`;
+      // Check multiple possible locations and filenames
+      const candidates = [
+        `${appData}/npm/node_modules/@anthropic-ai/claude-code/cli.js`,
+        `${appData}/npm/node_modules/@anthropic-ai/claude-code/cli.mjs`,
+        `${appData}/npm/node_modules/@anthropic-ai/claude-code/dist/cli.js`,
+        `${appData}/npm/node_modules/@anthropic-ai/claude-code/dist/cli.mjs`,
+      ];
+
+      for (const path of candidates) {
         try {
           if (Bun.file(path).size) {
             log.info("Resolved Claude binary", { path });
@@ -58,9 +66,24 @@ function resolveClaudeBinary(): string {
           // file doesn't exist
         }
       }
+
+      log.warn("Could not find Claude CLI entrypoint in APPDATA, trying global npm");
+    }
+
+    // Try finding the .cmd shim path
+    const npmGlobal = process.env.npm_config_prefix ?? `${appData}/npm`;
+    const cmdPath = `${npmGlobal}/claude.cmd`;
+    try {
+      if (Bun.file(cmdPath).size) {
+        log.info("Resolved Claude .cmd shim", { path: cmdPath });
+        return cmdPath;
+      }
+    } catch {
+      // not found
     }
 
     // Fallback: use claude command (shell will find .cmd shim)
+    log.warn("Falling back to 'claude' in PATH — may fail with Bun.spawn on Windows");
     return "claude";
   }
 
@@ -69,26 +92,31 @@ function resolveClaudeBinary(): string {
 
 /**
  * Build clean environment for the CLI process.
- * Strip out any Companion-specific env vars that could interfere.
+ * Inherits the full parent env (so Docker/WSL PATH, locale, etc. all work)
+ * and only strips Companion-internal vars that could confuse the child.
  */
 function buildCleanEnv(extra?: Record<string, string>): Record<string, string> {
+  // Start from full parent env — avoids the whitelist trap where
+  // Docker/WSL users lose PATH entries and sessions die on start.
   const env: Record<string, string> = {};
 
-  // Copy essential env vars
-  const passthrough = [
-    "PATH", "HOME", "USERPROFILE", "APPDATA", "LOCALAPPDATA",
-    "SystemRoot", "SYSTEMROOT", "COMSPEC", "TEMP", "TMP",
-    "ANTHROPIC_API_KEY", "CLAUDE_API_KEY",
-    "NODE_ENV", "BUN_ENV",
-  ];
-
-  for (const key of passthrough) {
-    if (process.env[key]) {
-      env[key] = process.env[key]!;
+  for (const [key, value] of Object.entries(process.env)) {
+    if (value !== undefined) {
+      env[key] = value;
     }
   }
 
-  // Merge project-specific env vars
+  // Strip Companion-internal vars that would confuse the CLI child
+  const stripPrefixes = ["COMPANION_", "CLAUDE_CODE_"];
+  const stripExact = new Set(["CLAUDECODE", "PORT", "HOST"]);
+
+  for (const key of Object.keys(env)) {
+    if (stripExact.has(key) || stripPrefixes.some((p) => key.startsWith(p))) {
+      delete env[key];
+    }
+  }
+
+  // Merge project-specific env vars (overrides)
   if (extra) {
     Object.assign(env, extra);
   }
@@ -147,13 +175,7 @@ export function launchCLI(
     spawnCmd = [binary, ...args];
   }
 
-  // Strip CLAUDECODE env to prevent nested session rejection
-  delete env.CLAUDECODE;
-  for (const key of Object.keys(env)) {
-    if (key.startsWith("CLAUDE_CODE_")) {
-      delete env[key];
-    }
-  }
+  // Note: CLAUDECODE and CLAUDE_CODE_* are already stripped by buildCleanEnv()
 
   log.info("Spawning CLI", { cmd: spawnCmd[0], args: spawnCmd.slice(1, 5).join(" ") + "..." });
 
@@ -167,6 +189,10 @@ export function launchCLI(
 
   const pid = proc.pid;
   log.info("CLI process started", { pid, sessionId: opts.sessionId });
+
+  // Circular buffer for last N stderr lines (for error diagnostics)
+  const stderrLines: string[] = [];
+  const MAX_STDERR_LINES = 20;
 
   // Read stdout as NDJSON lines
   const readStream = async (stream: ReadableStream<Uint8Array> | null, label: string) => {
@@ -192,6 +218,10 @@ export function launchCLI(
             onMessage(trimmed);
           } else {
             log.debug("CLI stderr", { line: trimmed.slice(0, 200) });
+            stderrLines.push(trimmed.slice(0, 300));
+            if (stderrLines.length > MAX_STDERR_LINES) {
+              stderrLines.shift();
+            }
           }
         }
       }
@@ -200,6 +230,11 @@ export function launchCLI(
       if (buffer.trim()) {
         if (label === "stdout") {
           onMessage(buffer.trim());
+        } else {
+          stderrLines.push(buffer.trim().slice(0, 300));
+          if (stderrLines.length > MAX_STDERR_LINES) {
+            stderrLines.shift();
+          }
         }
       }
     } catch (err) {
@@ -259,7 +294,9 @@ export function launchCLI(
     }
   };
 
-  return { pid, send, kill, exited, isAlive };
+  const getStderrLines = () => [...stderrLines];
+
+  return { pid, send, kill, exited, isAlive, getStderrLines };
 }
 
 // ─── Plan Mode Stuck Fix ────────────────────────────────────────────────────

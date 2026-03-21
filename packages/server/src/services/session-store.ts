@@ -50,10 +50,28 @@ export interface ActiveSession {
   cliSessionId: string | null;
   /** VS Code extension send function */
   extensionSend: ((data: string) => void) | null;
+  /** Last N stderr lines from CLI process (for error diagnostics) */
+  lastStderrLines?: string[];
 }
+
+/** Max number of messages to keep in memory per session (FIFO eviction) */
+const MESSAGE_HISTORY_CAP = 500;
 
 /** Map of session ID → active in-memory session */
 const activeSessions = new Map<string, ActiveSession>();
+
+/**
+ * Append a message to session history with FIFO cap.
+ * Evicts oldest entries when cap is reached.
+ */
+export function pushMessageHistory(session: ActiveSession, msg: unknown): void {
+  session.messageHistory.push(msg);
+  if (session.messageHistory.length > MESSAGE_HISTORY_CAP) {
+    // Drop oldest entries to stay within cap
+    const overflow = session.messageHistory.length - MESSAGE_HISTORY_CAP;
+    session.messageHistory.splice(0, overflow);
+  }
+}
 
 // ─── Active session management ──────────────────────────────────────────────
 
