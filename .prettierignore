@@ -1,8 +1,9 @@
 node_modules
-.next
 dist
+build
+.next
+bun.lock
 *.sql
-pnpm-lock.yaml
-bun.lockb
-.rune/metrics
+landing
+.rune
 drizzle

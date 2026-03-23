@@ -4,18 +4,21 @@ import tseslint from "typescript-eslint";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 import nextPlugin from "@next/eslint-plugin-next";
+import eslintConfigPrettier from "eslint-config-prettier";
 
 export default tseslint.config(
   // Global ignores
   {
     ignores: [
       "**/node_modules/**",
-      "**/.next/**",
       "**/dist/**",
-      ".rune/metrics/**",
-      "**/*.js.map",
+      "**/build/**",
+      "**/.next/**",
       "**/drizzle/**",
+      ".rune/metrics/**",
       "landing/**",
+      "**/*.js",
+      "**/*.mjs",
     ],
   },
 
@@ -28,7 +31,7 @@ export default tseslint.config(
     files: ["**/*.ts", "**/*.tsx"],
   })),
 
-  // Server package — Node/Bun globals
+  // Server package — Bun globals
   {
     files: ["packages/server/**/*.ts"],
     languageOptions: {
@@ -61,22 +64,7 @@ export default tseslint.config(
     },
   },
 
-  // Common rules for all TS/TSX files
-  {
-    files: ["**/*.ts", "**/*.tsx"],
-    rules: {
-      "no-console": "warn",
-      "prefer-const": "error",
-      "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
-      ],
-      "no-control-regex": "off",
-    },
-  },
-
-  // React + Next.js rules only for web package
+  // React + Next.js rules for web package
   {
     files: ["packages/web/**/*.ts", "packages/web/**/*.tsx"],
     plugins: {
@@ -133,23 +121,19 @@ export default tseslint.config(
       "react/react-in-jsx-scope": "off",
       "react/prop-types": "off",
       "react/display-name": "warn",
+
+      // React Hooks — core rules as errors, compiler rules as warnings
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
+      // React 19 compiler rules — warn only (common patterns in existing code)
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/error-boundaries": "warn",
+      "react-hooks/purity": "warn",
 
       // Next.js core web vitals
       "@next/next/no-html-link-for-pages": "error",
       "@next/next/no-img-element": "warn",
       "@next/next/no-sync-scripts": "error",
-    },
-  },
-
-  // Landing page + agents (plain JS/HTML) — ignore
-  {
-    files: ["landing/**", ".agents/**"],
-    rules: {
-      "no-undef": "off",
-      "no-unused-vars": "off",
-      "@typescript-eslint/no-require-imports": "off",
     },
   },
 
@@ -171,4 +155,34 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "off",
     },
   },
+
+  // Custom rules for all TS/TSX files
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    rules: {
+      // Practical strictness
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+        },
+      ],
+      "@typescript-eslint/no-explicit-any": "warn",
+      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "@typescript-eslint/consistent-type-imports": [
+        "warn",
+        {
+          prefer: "type-imports",
+          disallowTypeAnnotations: false,
+        },
+      ],
+      "prefer-const": "error",
+      "no-control-regex": "off",
+      "no-empty": ["error", { allowEmptyCatch: true }],
+    },
+  },
+
+  // Prettier — must be last to disable conflicting formatting rules
+  eslintConfigPrettier,
 );

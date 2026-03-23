@@ -7,7 +7,7 @@ import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import { resolve as pathResolve, normalize } from "node:path";
 import { existsSync, statSync } from "node:fs";
-import { WsBridge } from "../services/ws-bridge.js";
+import type { WsBridge } from "../services/ws-bridge.js";
 import type { BotRegistry } from "../telegram/bot-registry.js";
 import {
   getSessionRecord,

@@ -536,7 +536,7 @@ export function MessageFeed({ messages, sessionId = "", onScrollToRef }: Message
   // Register scrollToMessage with parent on mount
   useEffect(() => {
     onScrollToRef?.(scrollToMessage);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [onScrollToRef]);
 
   if (messages.length === 0) {
