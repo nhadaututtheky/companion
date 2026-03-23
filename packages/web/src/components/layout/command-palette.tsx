@@ -10,6 +10,7 @@ import {
   Moon,
   Gear,
   ArrowRight,
+  ArrowsLeftRight,
 } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useUiStore } from "@/lib/stores/ui-store";
@@ -55,10 +56,16 @@ export function CommandPalette() {
   };
 
   const setNewSessionModalOpen = useUiStore((s) => s.setNewSessionModalOpen);
+  const setCompareModalOpen = useUiStore((s) => s.setCompareModalOpen);
 
   const handleNewSession = () => {
     setOpen(false);
     setNewSessionModalOpen(true);
+  };
+
+  const handleCompareSessions = () => {
+    setOpen(false);
+    setCompareModalOpen(true);
   };
 
   const handleStopSession = async () => {
@@ -246,6 +253,15 @@ export function CommandPalette() {
               >
                 <StopCircle size={14} aria-hidden="true" />
                 <span>Stop Current Session</span>
+              </Command.Item>
+
+              <Command.Item
+                value="compare sessions side by side diff"
+                onSelect={handleCompareSessions}
+                style={commandItemStyle(false)}
+              >
+                <ArrowsLeftRight size={14} aria-hidden="true" />
+                <span>Compare Sessions</span>
               </Command.Item>
 
               <Command.Item

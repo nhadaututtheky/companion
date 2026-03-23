@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import {
-  CurrencyDollar,
   ArrowsCounterClockwise,
   Robot,
   Clock,
@@ -10,6 +9,7 @@ import {
   Notebook,
   FolderSimple,
 } from "@phosphor-icons/react";
+import { CostBreakdown } from "./cost-breakdown";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { ContextMeter } from "./context-meter";
@@ -27,6 +27,7 @@ interface SessionDetailsProps {
       num_turns: number;
       total_input_tokens: number;
       total_output_tokens: number;
+      cache_creation_tokens?: number;
       cache_read_tokens: number;
       files_modified: string[];
       files_created: string[];
@@ -153,11 +154,16 @@ export function SessionDetails({ session }: SessionDetailsProps) {
 
       {/* Stats */}
       <div className="flex flex-col gap-2 px-4 pb-4">
-        <StatCard
-          icon={<CurrencyDollar size={16} weight="bold" />}
-          label="Total Cost"
-          value={`$${s.total_cost_usd.toFixed(4)}`}
-          color="#34A853"
+        {/* Cost breakdown (expandable) */}
+        <CostBreakdown
+          session={{
+            totalCostUsd: s.total_cost_usd,
+            totalInputTokens: s.total_input_tokens,
+            totalOutputTokens: s.total_output_tokens,
+            cacheCreationTokens: s.cache_creation_tokens,
+            cacheReadTokens: s.cache_read_tokens,
+          }}
+          compact={false}
         />
         <StatCard
           icon={<ArrowsCounterClockwise size={16} weight="bold" />}

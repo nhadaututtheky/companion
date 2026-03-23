@@ -1,6 +1,7 @@
 "use client";
 import { ArrowsOut, X, LinkSimple } from "@phosphor-icons/react";
 import { SessionSettingsButton } from "./session-settings";
+import { CostBreakdown } from "@/components/session/cost-breakdown";
 
 interface SessionHeaderProps {
   sessionId: string;
@@ -15,6 +16,11 @@ interface SessionHeaderProps {
   contextPercent?: number;
   totalTokens?: number;
   maxTokens?: number;
+  totalCostUsd?: number;
+  totalInputTokens?: number;
+  totalOutputTokens?: number;
+  cacheCreationTokens?: number;
+  cacheReadTokens?: number;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -40,6 +46,11 @@ export function SessionHeader({
   contextPercent,
   totalTokens,
   maxTokens,
+  totalCostUsd,
+  totalInputTokens,
+  totalOutputTokens,
+  cacheCreationTokens,
+  cacheReadTokens,
 }: SessionHeaderProps) {
   const dotColor = STATUS_COLORS[status] ?? STATUS_COLORS.idle;
   const modelShort = model.includes("opus") ? "Opus" : model.includes("haiku") ? "Haiku" : "Sonnet";
@@ -96,6 +107,20 @@ export function SessionHeader({
       >
         {modelShort}
       </span>
+
+      {/* Compact cost display */}
+      {totalCostUsd !== undefined && (
+        <CostBreakdown
+          session={{
+            totalCostUsd,
+            totalInputTokens,
+            totalOutputTokens,
+            cacheCreationTokens,
+            cacheReadTokens,
+          }}
+          compact
+        />
+      )}
 
       {/* Channel badge */}
       {channelId && (

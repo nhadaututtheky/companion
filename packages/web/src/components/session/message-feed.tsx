@@ -11,9 +11,12 @@ import {
   PaperPlaneTilt,
   Lightning,
   GitDiff,
+  PushPin,
 } from "@phosphor-icons/react";
 import { MarkdownMessage } from "../chat/markdown-message";
 import { useComposerStore } from "@/lib/stores/composer-store";
+import { usePinnedMessagesStore } from "@/lib/stores/pinned-messages-store";
+import { InlineDiff } from "./inline-diff";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,6 +51,8 @@ export interface Message {
 interface MessageFeedProps {
   messages: Message[];
   isStreaming?: boolean;
+  sessionId?: string;
+  onScrollToRef?: (scrollFn: (index: number) => void) => void;
 }
 
 // ── Thinking Block (collapsible) ─────────────────────────────────────────────
@@ -57,7 +62,6 @@ function ThinkingSection({ blocks }: { blocks: ThinkingBlock[] }) {
   const text = blocks.map((b) => b.text).join("\n");
   if (!text.trim()) return null;
 
-  // Summary: first non-empty line, truncated
   const firstLine = text.split("\n").find((l) => l.trim())?.trim() ?? "";
   const summary = firstLine.length > 100 ? firstLine.slice(0, 100) + "..." : firstLine;
 
@@ -241,145 +245,47 @@ function ToolUseSection({
   );
 }
 
-// ── Unified Diff Viewer ─────────────────────────────────────────────────────
-
-/** Compute a simple unified diff between old and new strings */
-function computeDiff(oldStr: string, newStr: string): Array<{ type: "ctx" | "del" | "add"; line: string; oldNum?: number; newNum?: number }> {
-  const oldLines = oldStr.split("\n");
-  const newLines = newStr.split("\n");
-  const result: Array<{ type: "ctx" | "del" | "add"; line: string; oldNum?: number; newNum?: number }> = [];
-
-  // Simple LCS-based diff
-  const m = oldLines.length;
-  const n = newLines.length;
-  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
-
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      dp[i]![j] = oldLines[i - 1] === newLines[j - 1]
-        ? (dp[i - 1]?.[j - 1] ?? 0) + 1
-        : Math.max(dp[i - 1]?.[j] ?? 0, dp[i]?.[j - 1] ?? 0);
-    }
-  }
-
-  // Backtrack to build diff
-  const diff: Array<{ type: "ctx" | "del" | "add"; line: string }> = [];
-  let i = m, j = n;
-  while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
-      diff.unshift({ type: "ctx", line: oldLines[i - 1]! });
-      i--; j--;
-    } else if (j > 0 && (i === 0 || (dp[i]?.[j - 1] ?? 0) >= (dp[i - 1]?.[j] ?? 0))) {
-      diff.unshift({ type: "add", line: newLines[j - 1]! });
-      j--;
-    } else {
-      diff.unshift({ type: "del", line: oldLines[i - 1]! });
-      i--;
-    }
-  }
-
-  // Add line numbers
-  let oldNum = 1, newNum = 1;
-  for (const entry of diff) {
-    if (entry.type === "ctx") {
-      result.push({ ...entry, oldNum, newNum });
-      oldNum++; newNum++;
-    } else if (entry.type === "del") {
-      result.push({ ...entry, oldNum });
-      oldNum++;
-    } else {
-      result.push({ ...entry, newNum });
-      newNum++;
-    }
-  }
-
-  return result;
-}
-
-function UnifiedDiffView({ oldStr, newStr, filePath }: { oldStr: string; newStr: string; filePath: string }) {
-  const diff = computeDiff(oldStr, newStr);
-  const additions = diff.filter((d) => d.type === "add").length;
-  const deletions = diff.filter((d) => d.type === "del").length;
-
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center gap-2">
-        <GitDiff size={12} weight="bold" style={{ color: "#4285F4" }} />
-        <code className="text-xs font-mono" style={{ color: "#4285F4" }}>{filePath}</code>
-        {additions > 0 && <span className="text-xs font-mono font-semibold" style={{ color: "#34A853" }}>+{additions}</span>}
-        {deletions > 0 && <span className="text-xs font-mono font-semibold" style={{ color: "#ef4444" }}>-{deletions}</span>}
-      </div>
-      <div
-        className="rounded-md overflow-hidden max-h-[400px] overflow-y-auto"
-        style={{ border: "1px solid var(--color-border)" }}
-      >
-        {diff.map((entry, idx) => {
-          const bg = entry.type === "add" ? "#34A85312" : entry.type === "del" ? "#ef444412" : "transparent";
-          const borderLeft = entry.type === "add" ? "3px solid #34A853" : entry.type === "del" ? "3px solid #ef4444" : "3px solid transparent";
-          const prefix = entry.type === "add" ? "+" : entry.type === "del" ? "-" : " ";
-          const lineColor = entry.type === "add" ? "#34A853" : entry.type === "del" ? "#ef4444" : "var(--color-text-muted)";
-
-          return (
-            <div
-              key={idx}
-              className="flex font-mono text-xs leading-5"
-              style={{ background: bg, borderLeft }}
-            >
-              <span
-                className="select-none text-right px-1.5 flex-shrink-0"
-                style={{ width: 36, color: "var(--color-text-muted)", opacity: 0.5 }}
-              >
-                {entry.type !== "add" ? entry.oldNum : ""}
-              </span>
-              <span
-                className="select-none text-right px-1.5 flex-shrink-0"
-                style={{ width: 36, color: "var(--color-text-muted)", opacity: 0.5 }}
-              >
-                {entry.type !== "del" ? entry.newNum : ""}
-              </span>
-              <span className="select-none flex-shrink-0 px-1" style={{ color: lineColor, fontWeight: 600 }}>
-                {prefix}
-              </span>
-              <span className="whitespace-pre-wrap break-all pr-2" style={{ color: "var(--color-text-secondary)" }}>
-                {entry.line}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+// ── Tool Input Renderer ──────────────────────────────────────────────────────
 
 /** Render tool input — special cases for common tools */
 function ToolInput({ input }: { input: Record<string, unknown> }) {
-  // Edit tool — unified diff view
+  // Edit tool — inline diff view
   if (input.file_path && input.old_string !== undefined && input.new_string !== undefined) {
     return (
-      <UnifiedDiffView
+      <InlineDiff
         filePath={String(input.file_path)}
-        oldStr={String(input.old_string)}
-        newStr={String(input.new_string)}
+        oldContent={String(input.old_string)}
+        newContent={String(input.new_string)}
       />
     );
   }
 
-  // Write tool — show file path + content preview
+  // Write tool — show as "new file" diff (all additions)
+  if ((input.file_path || input.path) && input.content !== undefined) {
+    const path = String(input.file_path ?? input.path);
+    return (
+      <InlineDiff
+        filePath={path}
+        oldContent=""
+        newContent={String(input.content)}
+      />
+    );
+  }
+
+  // Write/file tool with path but no content
   if (input.file_path || input.path) {
-    const path = (input.file_path ?? input.path) as string;
+    const path = String(input.file_path ?? input.path);
     return (
       <div className="space-y-1">
-        <code className="text-xs font-mono block" style={{ color: "#4285F4" }}>
-          {path}
-        </code>
+        <div className="flex items-center gap-2">
+          <GitDiff size={12} weight="bold" style={{ color: "#4285F4" }} />
+          <code className="text-xs font-mono block" style={{ color: "#4285F4" }}>
+            {path}
+          </code>
+        </div>
         {input.command != null && (
           <pre className="text-xs font-mono whitespace-pre-wrap m-0" style={{ color: "var(--color-text-secondary)" }}>
             {String(input.command).slice(0, 2000)}
-          </pre>
-        )}
-        {input.content != null && (
-          <pre className="text-xs font-mono whitespace-pre-wrap m-0 max-h-[200px] overflow-y-auto" style={{ color: "var(--color-text-secondary)" }}>
-            {String(input.content).slice(0, 2000)}
           </pre>
         )}
       </div>
@@ -422,16 +328,63 @@ function CostBadge({ costUsd }: { costUsd: number }) {
   );
 }
 
+// ── Pin Button ────────────────────────────────────────────────────────────────
+
+function PinButton({
+  sessionId,
+  messageIndex,
+  visible,
+}: {
+  sessionId: string;
+  messageIndex: number;
+  visible: boolean;
+}) {
+  const isPinned = usePinnedMessagesStore((s) => s.isPinned(sessionId, messageIndex));
+  const togglePin = usePinnedMessagesStore((s) => s.togglePin);
+
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        togglePin(sessionId, messageIndex);
+      }}
+      className="p-1 rounded cursor-pointer transition-all"
+      style={{
+        color: isPinned ? "#FBBC04" : "var(--color-text-muted)",
+        background: isPinned ? "#FBBC0420" : "transparent",
+        opacity: isPinned || visible ? 1 : 0,
+        pointerEvents: isPinned || visible ? "auto" : "none",
+      }}
+      aria-label={isPinned ? "Unpin message" : "Pin message"}
+      title={isPinned ? "Unpin message" : "Pin message"}
+    >
+      <PushPin size={13} weight={isPinned ? "fill" : "bold"} />
+    </button>
+  );
+}
+
 // ── Message Bubble ───────────────────────────────────────────────────────────
 
-function MessageBubble({ msg }: { msg: Message }) {
+function MessageBubble({
+  msg,
+  index,
+  sessionId,
+  msgRef,
+}: {
+  msg: Message;
+  index: number;
+  sessionId: string;
+  msgRef: (el: HTMLDivElement | null) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
   const isUser = msg.role === "user";
   const isTool = msg.role === "tool";
   const isSystem = msg.role === "system";
+  const isPinned = usePinnedMessagesStore((s) => s.isPinned(sessionId, index));
 
   if (isSystem) {
     return (
-      <div className="flex justify-center py-2">
+      <div className="flex justify-center py-2" ref={msgRef}>
         <span
           className="text-xs px-3 py-1 rounded-full"
           style={{
@@ -448,6 +401,7 @@ function MessageBubble({ msg }: { msg: Message }) {
   if (isTool) {
     return (
       <div
+        ref={msgRef}
         className="flex gap-2 mx-4 my-1.5 p-3 rounded-xl"
         style={{
           background: "var(--color-bg-elevated)",
@@ -467,7 +421,15 @@ function MessageBubble({ msg }: { msg: Message }) {
 
   return (
     <div
+      ref={msgRef}
       className={`flex gap-3 px-4 py-2 ${isUser ? "flex-row-reverse" : "flex-row"}`}
+      style={
+        isPinned
+          ? { borderLeft: "3px solid #FBBC04", paddingLeft: 13 }
+          : undefined
+      }
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       {/* Avatar */}
       <div
@@ -529,8 +491,8 @@ function MessageBubble({ msg }: { msg: Message }) {
           <ToolUseSection tools={msg.toolUseBlocks} results={msg.toolResultBlocks} />
         )}
 
-        {/* Timestamp + cost */}
-        <div className="flex items-center">
+        {/* Timestamp + cost + pin */}
+        <div className="flex items-center gap-1">
           <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
             {new Date(msg.timestamp).toLocaleTimeString([], {
               hour: "2-digit",
@@ -538,6 +500,8 @@ function MessageBubble({ msg }: { msg: Message }) {
             })}
           </span>
           {msg.costUsd !== undefined && msg.costUsd > 0 && <CostBadge costUsd={msg.costUsd} />}
+          {/* Pin button — shows on hover or when already pinned */}
+          <PinButton sessionId={sessionId} messageIndex={index} visible={hovered} />
         </div>
       </div>
     </div>
@@ -546,12 +510,34 @@ function MessageBubble({ msg }: { msg: Message }) {
 
 // ── Message Feed ─────────────────────────────────────────────────────────────
 
-export function MessageFeed({ messages }: MessageFeedProps) {
+export function MessageFeed({ messages, sessionId = "", onScrollToRef }: MessageFeedProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const msgRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+
+  const setMsgRef = (index: number) => (el: HTMLDivElement | null) => {
+    if (el) {
+      msgRefs.current.set(index, el);
+    } else {
+      msgRefs.current.delete(index);
+    }
+  };
+
+  const scrollToMessage = (index: number) => {
+    const el = msgRefs.current.get(index);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Register scrollToMessage with parent on mount
+  useEffect(() => {
+    onScrollToRef?.(scrollToMessage);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onScrollToRef]);
 
   if (messages.length === 0) {
     return (
@@ -566,8 +552,14 @@ export function MessageFeed({ messages }: MessageFeedProps) {
 
   return (
     <div className="flex flex-col flex-1 overflow-y-auto py-4">
-      {messages.map((msg) => (
-        <MessageBubble key={msg.id} msg={msg} />
+      {messages.map((msg, index) => (
+        <MessageBubble
+          key={msg.id}
+          msg={msg}
+          index={index}
+          sessionId={sessionId}
+          msgRef={setMsgRef(index)}
+        />
       ))}
       <div ref={bottomRef} />
     </div>

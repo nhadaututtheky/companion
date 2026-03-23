@@ -304,7 +304,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             <div className="flex flex-col flex-1 min-w-0">
               {/* Message feed */}
               <div className="flex-1 min-h-0 overflow-y-auto">
-                <MessageFeed messages={messages} />
+                <MessageFeed messages={messages} sessionId={sessionId} />
               </div>
 
               {/* Permissions */}

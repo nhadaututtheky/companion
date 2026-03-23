@@ -274,6 +274,11 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
         contextPercent={contextData?.contextPercent}
         totalTokens={contextData?.totalTokens}
         maxTokens={contextData?.maxTokens}
+        totalCostUsd={session?.state?.total_cost_usd}
+        totalInputTokens={session?.state?.total_input_tokens}
+        totalOutputTokens={session?.state?.total_output_tokens}
+        cacheCreationTokens={session?.state?.cache_creation_tokens}
+        cacheReadTokens={session?.state?.cache_read_tokens}
       />
 
       {/* WS Status banner */}

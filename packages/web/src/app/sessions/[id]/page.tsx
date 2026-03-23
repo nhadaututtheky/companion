@@ -1,12 +1,14 @@
 "use client";
-import { use } from "react";
-import { ArrowLeft } from "@phosphor-icons/react";
+import { use, useRef, useState } from "react";
+import { ArrowLeft, PushPin } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
-import { MessageFeed } from "@/components/session/message-feed";
+import { MessageFeed, type Message } from "@/components/session/message-feed";
 import { MessageComposer } from "@/components/session/message-composer";
 import { PermissionGate } from "@/components/session/permission-gate";
 import { SessionDetails } from "@/components/session/session-details";
+import { PinnedMessagesDrawer } from "@/components/session/pinned-messages-drawer";
+import { usePinnedMessagesStore } from "@/lib/stores/pinned-messages-store";
 import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { api } from "@/lib/api-client";
@@ -73,6 +75,10 @@ export default function SessionPage({ params }: PageProps) {
   const router = useRouter();
   const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission } = useSession(id);
   const session = useSessionStore((s) => s.sessions[id]);
+  const [pinnedDrawerOpen, setPinnedDrawerOpen] = useState(false);
+  const scrollToMessageRef = useRef<((index: number) => void) | null>(null);
+  const getPins = usePinnedMessagesStore((s) => s.getPins);
+  const pinCount = getPins(id).length;
 
   const handleStop = async () => {
     try {
@@ -81,6 +87,14 @@ export default function SessionPage({ params }: PageProps) {
     } catch {
       toast.error("Failed to stop session");
     }
+  };
+
+  const handleJumpTo = (index: number) => {
+    scrollToMessageRef.current?.(index);
+  };
+
+  const handleScrollToRef = (fn: (index: number) => void) => {
+    scrollToMessageRef.current = fn;
   };
 
   return (
@@ -126,12 +140,37 @@ export default function SessionPage({ params }: PageProps) {
                 {wsStatus}
               </span>
             )}
+
+            {/* Pinned messages toggle */}
+            <button
+              onClick={() => setPinnedDrawerOpen(true)}
+              className="relative p-1.5 rounded-lg transition-colors cursor-pointer"
+              style={{ color: pinCount > 0 ? "#FBBC04" : "var(--color-text-muted)" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              aria-label={`Pinned messages${pinCount > 0 ? ` (${pinCount})` : ""}`}
+              title="Pinned messages"
+            >
+              <PushPin size={16} weight={pinCount > 0 ? "fill" : "bold"} />
+              {pinCount > 0 && (
+                <span
+                  className="absolute -top-0.5 -right-0.5 text-xs font-mono font-bold px-1 rounded-full leading-tight"
+                  style={{ background: "#FBBC04", color: "#000", fontSize: 9, minWidth: 14, textAlign: "center" }}
+                >
+                  {pinCount}
+                </span>
+              )}
+            </button>
           </div>
 
           <ContextStatusBar session={session} />
 
           {/* Messages */}
-          <MessageFeed messages={messages} />
+          <MessageFeed
+            messages={messages}
+            sessionId={id}
+            onScrollToRef={handleScrollToRef}
+          />
           <PermissionGate permissions={pendingPermissions} onRespond={respondPermission} />
           <MessageComposer
             onSend={sendMessage}
@@ -153,6 +192,16 @@ export default function SessionPage({ params }: PageProps) {
           <SessionDetails session={session as any} />
         </aside>
       </div>
+
+      {/* Pinned messages drawer */}
+      {pinnedDrawerOpen && (
+        <PinnedMessagesDrawer
+          sessionId={id}
+          messages={messages}
+          onJumpTo={handleJumpTo}
+          onClose={() => setPinnedDrawerOpen(false)}
+        />
+      )}
     </div>
   );
 }
