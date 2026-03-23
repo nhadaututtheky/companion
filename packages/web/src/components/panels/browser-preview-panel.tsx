@@ -39,28 +39,30 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
     (newUrl: string) => {
       // Ensure URL has protocol
       let normalized = newUrl.trim();
-      if (
-        normalized &&
-        !normalized.startsWith("http://") &&
-        !normalized.startsWith("https://")
-      ) {
+      if (!normalized) return;
+
+      // Block dangerous URI schemes
+      if (/^(javascript|data|vbscript):/i.test(normalized)) {
+        toast.error("Only http:// and https:// URLs are allowed");
+        return;
+      }
+
+      if (!normalized.startsWith("http://") && !normalized.startsWith("https://")) {
         normalized = "http://" + normalized;
       }
-      if (!normalized) return;
 
       setUrl(normalized);
       setInputUrl(normalized);
       setLoading(true);
 
-      // Add to history
+      // Add to history — derive index from prev array length to avoid stale closure
       setHistory((prev) => {
-        const newHistory = prev.slice(0, historyIndex + 1);
-        newHistory.push(normalized);
+        const newHistory = [...prev, normalized];
         return newHistory;
       });
       setHistoryIndex((prev) => prev + 1);
     },
-    [historyIndex]
+    []
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -100,7 +102,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-Key": localStorage.getItem("api_key") ?? "",
+          "X-API-Key": typeof window !== "undefined" ? (localStorage.getItem("api_key") ?? "") : "",
         },
         body: JSON.stringify({ url }),
       });
@@ -185,9 +187,6 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
               placeholder="http://localhost:3000"
               className="flex-1 text-xs outline-none bg-transparent font-mono"
               style={{ color: "var(--color-text-primary)" }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit(e as unknown as React.FormEvent);
-              }}
             />
             {loading && (
               <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
@@ -260,7 +259,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
       {/* Iframe container */}
       <div
         className="flex-1 flex items-start justify-center overflow-auto"
-        style={{ background: "#1a1a2e" }}
+        style={{ background: "var(--color-bg-elevated, #1a1a2e)" }}
       >
         <div
           style={{
@@ -291,7 +290,8 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
                 borderRadius: viewport !== "desktop" ? 8 : 0,
               }}
               onLoad={() => setLoading(false)}
-              sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
+              onError={() => setLoading(false)}
+              sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads"
               title="Browser Preview"
             />
           ) : (

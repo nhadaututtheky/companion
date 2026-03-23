@@ -19,6 +19,8 @@ import {
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { useComposerStore } from "@/lib/stores/composer-store";
+import { useFileTabsStore } from "@/lib/stores/file-tabs-store";
+import { FileTabBar } from "./file-tab-bar";
 import { MarkdownMessage } from "../chat/markdown-message";
 
 // ── File icon by extension ──────────────────────────────────────────────────
@@ -223,7 +225,7 @@ function TreeNode({
 
   const handleClick = useCallback(() => {
     if (entry.isDir) {
-      if (!expanded && !children) {
+      if (!expanded && !children && !loading) {
         setLoading(true);
         api.fs
           .browse(entry.path, true)
@@ -249,12 +251,14 @@ function TreeNode({
     } else {
       onSelect(entry.path, false);
     }
-  }, [entry, expanded, children, onSelect]);
+  }, [entry, expanded, children, loading, onSelect]);
 
   return (
     <div>
       <button
         onClick={handleClick}
+        aria-expanded={entry.isDir ? expanded : undefined}
+        aria-label={entry.isDir ? `${entry.name} folder` : entry.name}
         className="flex items-center gap-1 w-full text-left py-0.5 px-1 rounded text-xs transition-colors cursor-pointer"
         style={{
           paddingLeft: depth * 14 + 4,
@@ -318,8 +322,6 @@ interface FileExplorerPanelProps {
 export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelProps) {
   const [roots, setRoots] = useState<Array<{ label: string; path: string }>>([]);
   const [currentRoot, setCurrentRoot] = useState(initialPath ?? "");
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [fileContent, setFileContent] = useState<string | null>(null);
   const [fileLoading, setFileLoading] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const [entries, setEntries] = useState<TreeEntry[]>([]);
@@ -327,6 +329,16 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
   const [copied, setCopied] = useState(false);
 
   const addAttachment = useComposerStore((s) => s.addAttachment);
+
+  // File tabs store selectors (never destructure from store)
+  const tabs = useFileTabsStore((s) => s.tabs);
+  const activeTabId = useFileTabsStore((s) => s.activeTabId);
+  const openFile = useFileTabsStore((s) => s.openFile);
+  const closeTab = useFileTabsStore((s) => s.closeTab);
+  const switchTab = useFileTabsStore((s) => s.switchTab);
+  const setTabContent = useFileTabsStore((s) => s.setTabContent);
+
+  const activeTab = tabs.find((t) => t.id === activeTabId) ?? null;
 
   // Load roots on mount
   useEffect(() => {
@@ -365,53 +377,62 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
       .catch(() => setEntries([]));
   }, [currentRoot]);
 
-  // Load file content when selection changes
+  // Load file content when active tab changes or has no cached content
   useEffect(() => {
-    if (!selectedFile) {
-      setFileContent(null);
-      return;
-    }
+    if (!activeTab || activeTab.content !== null) return;
     setFileLoading(true);
     setFileError(null);
     api.fs
-      .read(selectedFile)
-      .then((res) => setFileContent(res.data.content))
-      .catch((err: unknown) => setFileError(String(err)))
+      .read(activeTab.path)
+      .then((res) => {
+        if (res.data.size && res.data.size > 500_000) {
+          setFileError(`File too large (${Math.round(res.data.size / 1024)} KB)`);
+          return;
+        }
+        setTabContent(activeTab.id, res.data.content);
+      })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Failed to read file";
+        setFileError(msg.slice(0, 200));
+      })
       .finally(() => setFileLoading(false));
-  }, [selectedFile]);
+  }, [activeTab?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSelect = useCallback((path: string, isDir: boolean) => {
-    if (!isDir) setSelectedFile(path);
-  }, []);
+  // Reset error when active tab changes
+  useEffect(() => {
+    setFileError(null);
+  }, [activeTabId]);
+
+  const handleSelect = useCallback(
+    (path: string, isDir: boolean) => {
+      if (!isDir) openFile(path);
+    },
+    [openFile],
+  );
 
   const handleCopy = useCallback(() => {
-    if (!fileContent) return;
-    navigator.clipboard.writeText(fileContent).then(() => {
+    if (!activeTab?.content) return;
+    navigator.clipboard.writeText(activeTab.content).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
-  }, [fileContent]);
+  }, [activeTab]);
 
   const handleSendToAI = useCallback(() => {
-    if (!fileContent || !selectedFile) return;
-    const name = selectedFile.split(/[/\\]/).pop() ?? "";
-    const ext = name.split(".").pop()?.toLowerCase() ?? "";
+    if (!activeTab?.content || !activeTab.path) return;
     addAttachment({
       kind: "file",
-      label: name,
-      content: fileContent,
-      meta: { filePath: selectedFile, language: ext },
+      label: activeTab.name,
+      content: activeTab.content,
+      meta: { filePath: activeTab.path, language: activeTab.ext },
     });
-  }, [fileContent, selectedFile, addAttachment]);
+  }, [activeTab, addAttachment]);
 
   const filteredEntries = useMemo(() => {
     if (!filter) return entries;
     const lower = filter.toLowerCase();
     return entries.filter((e) => e.name.toLowerCase().includes(lower));
   }, [entries, filter]);
-
-  const selectedName = selectedFile?.split(/[/\\]/).pop() ?? "";
-  const selectedExt = selectedName.split(".").pop()?.toLowerCase() ?? "";
 
   // Breadcrumb segments from currentRoot
   const breadcrumbs = useMemo(() => {
@@ -443,7 +464,6 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
           value={currentRoot}
           onChange={(e) => {
             setCurrentRoot(e.target.value);
-            setSelectedFile(null);
           }}
           className="text-xs px-2 py-1 rounded cursor-pointer"
           style={{
@@ -469,7 +489,6 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
               <button
                 onClick={() => {
                   setCurrentRoot(bc.path);
-                  setSelectedFile(null);
                 }}
                 className="truncate cursor-pointer hover:underline"
                 style={{
@@ -540,7 +559,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
               key={entry.path}
               entry={entry}
               depth={0}
-              selectedPath={selectedFile}
+              selectedPath={activeTabId}
               onSelect={handleSelect}
             />
           ))}
@@ -554,9 +573,17 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
           )}
         </div>
 
-        {/* File viewer */}
+        {/* File viewer column */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          {selectedFile ? (
+          {/* Tab bar */}
+          <FileTabBar
+            tabs={tabs}
+            activeTabId={activeTabId}
+            onSwitch={switchTab}
+            onClose={closeTab}
+          />
+
+          {activeTab ? (
             <>
               {/* File header */}
               <div
@@ -567,18 +594,18 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
                 }}
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  {fileIcon(selectedExt)}
+                  {fileIcon(activeTab.ext)}
                   <span
                     className="text-xs font-mono font-semibold truncate"
                     style={{ color: "var(--color-text-primary)" }}
                   >
-                    {selectedName}
+                    {activeTab.name}
                   </span>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={handleSendToAI}
-                    disabled={!fileContent}
+                    disabled={!activeTab.content}
                     className="p-1 rounded cursor-pointer disabled:opacity-40"
                     style={{ color: "#34A853" }}
                     aria-label="Send file to AI composer"
@@ -588,7 +615,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
                   </button>
                   <button
                     onClick={handleCopy}
-                    disabled={!fileContent}
+                    disabled={!activeTab.content}
                     className="p-1 rounded cursor-pointer disabled:opacity-40"
                     style={{ color: copied ? "#34A853" : "var(--color-text-muted)" }}
                     aria-label="Copy file content"
@@ -615,8 +642,8 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
                     {fileError}
                   </div>
                 )}
-                {fileContent !== null && !fileLoading && (
-                  <CodeViewer content={fileContent} ext={selectedExt} />
+                {activeTab.content !== null && !fileLoading && (
+                  <CodeViewer content={activeTab.content} ext={activeTab.ext} />
                 )}
               </div>
 
@@ -632,7 +659,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
                   className="font-mono"
                   style={{ color: "var(--color-text-muted)", fontSize: 10 }}
                 >
-                  {selectedFile}
+                  {activeTab.path}
                 </span>
               </div>
             </>
