@@ -11,6 +11,8 @@ import { NewSessionModal } from "@/components/session/new-session-modal";
 import { CompanionLogo } from "@/components/layout/companion-logo";
 import { ActivityTerminal } from "@/components/activity/activity-terminal";
 import { MagicRing } from "@/components/ring/magic-ring";
+import { FileExplorerPanel } from "@/components/panels/file-explorer-panel";
+import { BrowserPreviewPanel } from "@/components/panels/browser-preview-panel";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { api } from "@/lib/api-client";
@@ -265,6 +267,10 @@ export default function DashboardPage() {
   const setNewSessionOpen = useUiStore((s) => s.setNewSessionModalOpen);
   const activityTerminalOpen = useUiStore((s) => s.activityTerminalOpen);
   const setActivityTerminalOpen = useUiStore((s) => s.setActivityTerminalOpen);
+  const rightPanelMode = useUiStore((s) => s.rightPanelMode);
+  const rightPanelPath = useUiStore((s) => s.rightPanelPath);
+  const browserPreviewUrl = useUiStore((s) => s.browserPreviewUrl);
+  const setRightPanelMode = useUiStore((s) => s.setRightPanelMode);
   const [resumableSessions, setResumableSessions] = useState<ResumableSession[]>([]);
   const [resumeBannerDismissed, setResumeBannerDismissed] = useState(false);
 
@@ -554,6 +560,31 @@ export default function DashboardPage() {
               />
             )}
           </main>
+
+          {/* Right panel — File Explorer or Browser Preview */}
+          {rightPanelMode !== "none" && (
+            <aside
+              className="flex flex-col flex-shrink-0 overflow-hidden"
+              style={{
+                width: rightPanelMode === "browser" ? 600 : 500,
+                borderLeft: "1px solid var(--color-border)",
+                transition: "width 200ms ease",
+              }}
+            >
+              {rightPanelMode === "files" && (
+                <FileExplorerPanel
+                  initialPath={rightPanelPath ?? undefined}
+                  onClose={() => setRightPanelMode("none")}
+                />
+              )}
+              {rightPanelMode === "browser" && (
+                <BrowserPreviewPanel
+                  initialUrl={browserPreviewUrl ?? undefined}
+                  onClose={() => setRightPanelMode("none")}
+                />
+              )}
+            </aside>
+          )}
         </div>
 
         {/* Activity Terminal — collapsible bottom panel */}

@@ -5,11 +5,17 @@ interface UiStore {
   commandPaletteOpen: boolean;
   newSessionModalOpen: boolean;
   activityTerminalOpen: boolean;
+  rightPanelMode: "none" | "files" | "browser";
+  rightPanelPath: string | null;
+  browserPreviewUrl: string | null;
   setTheme: (t: "light" | "dark") => void;
   toggleTheme: () => void;
   setCommandPaletteOpen: (open: boolean) => void;
   setNewSessionModalOpen: (open: boolean) => void;
   setActivityTerminalOpen: (open: boolean) => void;
+  setRightPanelMode: (mode: "none" | "files" | "browser") => void;
+  setRightPanelPath: (path: string | null) => void;
+  setBrowserPreviewUrl: (url: string | null) => void;
 }
 
 // Read persisted theme on store creation (runs once)
@@ -27,6 +33,9 @@ export const useUiStore = create<UiStore>((set) => ({
   commandPaletteOpen: false,
   newSessionModalOpen: false,
   activityTerminalOpen: false,
+  rightPanelMode: "none",
+  rightPanelPath: null,
+  browserPreviewUrl: null,
 
   setTheme: (theme) => {
     set({ theme });
@@ -51,4 +60,10 @@ export const useUiStore = create<UiStore>((set) => ({
   setNewSessionModalOpen: (open) => set({ newSessionModalOpen: open }),
 
   setActivityTerminalOpen: (open) => set({ activityTerminalOpen: open }),
+
+  setRightPanelMode: (mode) => set({ rightPanelMode: mode }),
+
+  setRightPanelPath: (path) => set({ rightPanelPath: path }),
+
+  setBrowserPreviewUrl: (url) => set({ browserPreviewUrl: url }),
 }));

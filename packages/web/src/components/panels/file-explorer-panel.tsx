@@ -1,0 +1,650 @@
+"use client";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import {
+  FolderOpen,
+  File,
+  FileTs,
+  FileJs,
+  FileCss,
+  FileHtml,
+  FilePy,
+  FileCode,
+  MagnifyingGlass,
+  X,
+  Copy,
+  Check,
+  PaperPlaneTilt,
+  CaretRight,
+  CaretDown,
+} from "@phosphor-icons/react";
+import { api } from "@/lib/api-client";
+import { useComposerStore } from "@/lib/stores/composer-store";
+import { MarkdownMessage } from "../chat/markdown-message";
+
+// ── File icon by extension ──────────────────────────────────────────────────
+
+function fileIcon(ext: string, size = 14) {
+  const iconProps = { size, weight: "regular" as const };
+  switch (ext) {
+    case "ts":
+    case "tsx":
+      return <FileTs {...iconProps} style={{ color: "#3178c6" }} />;
+    case "js":
+    case "jsx":
+      return <FileJs {...iconProps} style={{ color: "#f7df1e" }} />;
+    case "css":
+    case "scss":
+      return <FileCss {...iconProps} style={{ color: "#1572b6" }} />;
+    case "html":
+      return <FileHtml {...iconProps} style={{ color: "#e34f26" }} />;
+    case "py":
+      return <FilePy {...iconProps} style={{ color: "#3776ab" }} />;
+    case "json":
+    case "yaml":
+    case "yml":
+    case "toml":
+      return <FileCode {...iconProps} style={{ color: "#8bc34a" }} />;
+    case "md":
+      return <File {...iconProps} style={{ color: "#4285F4" }} />;
+    default:
+      return <File {...iconProps} style={{ color: "var(--color-text-muted)" }} />;
+  }
+}
+
+// ── Syntax-highlighted code viewer with line numbers ────────────────────────
+
+function CodeViewer({ content, ext }: { content: string; ext: string }) {
+  const lines = content.split("\n");
+  const gutterWidth = String(lines.length).length * 8 + 16;
+
+  if (ext === "md") {
+    return <MarkdownMessage content={content} compact />;
+  }
+
+  return (
+    <div
+      className="flex overflow-auto"
+      style={{ fontFamily: "var(--font-mono)", fontSize: 12, lineHeight: 1.6 }}
+    >
+      {/* Line numbers gutter */}
+      <div
+        className="shrink-0 text-right select-none pr-3 py-2"
+        style={{
+          width: gutterWidth,
+          color: "var(--color-text-muted)",
+          borderRight: "1px solid var(--color-border)",
+          background: "var(--color-bg-elevated)",
+          opacity: 0.6,
+        }}
+      >
+        {lines.map((_, i) => (
+          <div key={i} style={{ fontSize: 11 }}>
+            {i + 1}
+          </div>
+        ))}
+      </div>
+
+      {/* Code content */}
+      <pre
+        className="flex-1 m-0 py-2 pl-3 whitespace-pre overflow-x-auto"
+        style={{ color: "var(--color-text-secondary)" }}
+      >
+        {lines.map((line, i) => (
+          <div key={i}>
+            <SyntaxLine line={line} ext={ext} />
+          </div>
+        ))}
+      </pre>
+    </div>
+  );
+}
+
+// Simple keyword highlighting (no external dependency)
+function SyntaxLine({ line, ext }: { line: string; ext: string }) {
+  if (!line.trim()) return <span>{"\n"}</span>;
+
+  // Comment detection
+  const commentPatterns: Record<string, RegExp> = {
+    ts: /^(\s*)(\/\/.*|\/\*.*\*\/)$/,
+    tsx: /^(\s*)(\/\/.*|\/\*.*\*\/)$/,
+    js: /^(\s*)(\/\/.*|\/\*.*\*\/)$/,
+    jsx: /^(\s*)(\/\/.*|\/\*.*\*\/)$/,
+    py: /^(\s*)(#.*)$/,
+    css: /^(\s*)(\/\*.*\*\/)$/,
+    yaml: /^(\s*)(#.*)$/,
+    yml: /^(\s*)(#.*)$/,
+    toml: /^(\s*)(#.*)$/,
+    sh: /^(\s*)(#.*)$/,
+    bash: /^(\s*)(#.*)$/,
+  };
+
+  const commentRegex = commentPatterns[ext];
+  if (commentRegex) {
+    const match = line.match(commentRegex);
+    if (match) {
+      return (
+        <span>
+          <span>{match[1]}</span>
+          <span style={{ color: "#6a9955" }}>{match[2]}</span>
+        </span>
+      );
+    }
+  }
+
+  // Keywords for JS/TS family
+  const jsKeywords =
+    /\b(const|let|var|function|return|if|else|for|while|import|export|from|class|interface|type|extends|implements|async|await|new|try|catch|throw|switch|case|break|default|true|false|null|undefined|this|typeof|instanceof)\b/g;
+  // Keywords for Python
+  const pyKeywords =
+    /\b(def|class|return|if|elif|else|for|while|import|from|as|try|except|raise|with|yield|async|await|True|False|None|self|lambda|in|not|and|or|is|pass|break|continue)\b/g;
+
+  const keywordRegex = ["ts", "tsx", "js", "jsx"].includes(ext)
+    ? jsKeywords
+    : ext === "py"
+      ? pyKeywords
+      : null;
+
+  // String detection
+  const stringRegex = /(["'`])(?:(?!\1|\\).|\\.)*\1/g;
+
+  if (!keywordRegex) {
+    return <span>{line}</span>;
+  }
+
+  // Build highlighted spans
+  type Span = { start: number; end: number; color: string };
+  const spans: Span[] = [];
+
+  // Find strings first (higher priority)
+  let m: RegExpExecArray | null;
+  while ((m = stringRegex.exec(line)) !== null) {
+    spans.push({ start: m.index, end: m.index + m[0].length, color: "#ce9178" });
+  }
+
+  // Find keywords (skip if inside string)
+  keywordRegex.lastIndex = 0;
+  while ((m = keywordRegex.exec(line)) !== null) {
+    const inString = spans.some((s) => m!.index >= s.start && m!.index < s.end);
+    if (!inString) {
+      spans.push({ start: m.index, end: m.index + m[0].length, color: "#569cd6" });
+    }
+  }
+
+  if (spans.length === 0) return <span>{line}</span>;
+
+  // Sort by position and render
+  spans.sort((a, b) => a.start - b.start);
+  const parts: React.ReactNode[] = [];
+  let pos = 0;
+
+  for (const span of spans) {
+    if (span.start > pos) {
+      parts.push(<span key={`t${pos}`}>{line.slice(pos, span.start)}</span>);
+    }
+    parts.push(
+      <span key={`h${span.start}`} style={{ color: span.color }}>
+        {line.slice(span.start, span.end)}
+      </span>,
+    );
+    pos = span.end;
+  }
+  if (pos < line.length) {
+    parts.push(<span key={`t${pos}`}>{line.slice(pos)}</span>);
+  }
+
+  return <span>{parts}</span>;
+}
+
+// ── Tree node ───────────────────────────────────────────────────────────────
+
+interface TreeEntry {
+  name: string;
+  path: string;
+  isDir: boolean;
+  ext?: string;
+}
+
+function TreeNode({
+  entry,
+  depth,
+  selectedPath,
+  onSelect,
+}: {
+  entry: TreeEntry;
+  depth: number;
+  selectedPath: string | null;
+  onSelect: (path: string, isDir: boolean) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [children, setChildren] = useState<TreeEntry[] | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const isSelected = selectedPath === entry.path;
+
+  const handleClick = useCallback(() => {
+    if (entry.isDir) {
+      if (!expanded && !children) {
+        setLoading(true);
+        api.fs
+          .browse(entry.path, true)
+          .then((res) => {
+            const basePath = res.data.path;
+            const dirs: TreeEntry[] = (res.data.dirs ?? []).map((name: string) => ({
+              name,
+              path: `${basePath}/${name}`,
+              isDir: true,
+            }));
+            const files: TreeEntry[] = (res.data.files ?? []).map((name: string) => ({
+              name,
+              path: `${basePath}/${name}`,
+              isDir: false,
+              ext: name.split(".").pop()?.toLowerCase(),
+            }));
+            setChildren([...dirs, ...files]);
+          })
+          .catch(() => setChildren([]))
+          .finally(() => setLoading(false));
+      }
+      setExpanded((prev) => !prev);
+    } else {
+      onSelect(entry.path, false);
+    }
+  }, [entry, expanded, children, onSelect]);
+
+  return (
+    <div>
+      <button
+        onClick={handleClick}
+        className="flex items-center gap-1 w-full text-left py-0.5 px-1 rounded text-xs transition-colors cursor-pointer"
+        style={{
+          paddingLeft: depth * 14 + 4,
+          background: isSelected ? "var(--color-accent)" + "15" : "transparent",
+          color: isSelected ? "var(--color-accent)" : "var(--color-text-secondary)",
+          border: "none",
+        }}
+      >
+        {entry.isDir ? (
+          expanded ? (
+            <CaretDown size={10} weight="bold" />
+          ) : (
+            <CaretRight size={10} weight="bold" />
+          )
+        ) : (
+          <span style={{ width: 10 }} />
+        )}
+        {entry.isDir ? (
+          <FolderOpen size={13} weight="regular" style={{ color: "#FBBC04", flexShrink: 0 }} />
+        ) : (
+          fileIcon(entry.ext ?? "", 13)
+        )}
+        <span className="truncate">{entry.name}</span>
+        {loading && (
+          <span style={{ color: "var(--color-text-muted)", fontSize: 10 }}>...</span>
+        )}
+      </button>
+
+      {expanded && children && (
+        <div>
+          {children.map((child) => (
+            <TreeNode
+              key={child.path}
+              entry={child}
+              depth={depth + 1}
+              selectedPath={selectedPath}
+              onSelect={onSelect}
+            />
+          ))}
+          {children.length === 0 && (
+            <div
+              className="text-xs pl-8 py-0.5"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              (empty)
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main File Explorer Panel ────────────────────────────────────────────────
+
+interface FileExplorerPanelProps {
+  initialPath?: string;
+  onClose: () => void;
+}
+
+export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelProps) {
+  const [roots, setRoots] = useState<Array<{ label: string; path: string }>>([]);
+  const [currentRoot, setCurrentRoot] = useState(initialPath ?? "");
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [fileContent, setFileContent] = useState<string | null>(null);
+  const [fileLoading, setFileLoading] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [entries, setEntries] = useState<TreeEntry[]>([]);
+  const [filter, setFilter] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const addAttachment = useComposerStore((s) => s.addAttachment);
+
+  // Load roots on mount
+  useEffect(() => {
+    api.fs
+      .roots()
+      .then((res) => {
+        const r = res.data.roots ?? [];
+        setRoots(r);
+        if (!currentRoot && r.length > 0) {
+          setCurrentRoot(r[0]!.path);
+        }
+      })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load root-level entries when currentRoot changes
+  useEffect(() => {
+    if (!currentRoot) return;
+    api.fs
+      .browse(currentRoot, true)
+      .then((res) => {
+        const basePath = res.data.path;
+        const dirs: TreeEntry[] = (res.data.dirs ?? []).map((name: string) => ({
+          name,
+          path: `${basePath}/${name}`,
+          isDir: true,
+        }));
+        const files: TreeEntry[] = (res.data.files ?? []).map((name: string) => ({
+          name,
+          path: `${basePath}/${name}`,
+          isDir: false,
+          ext: name.split(".").pop()?.toLowerCase(),
+        }));
+        setEntries([...dirs, ...files]);
+      })
+      .catch(() => setEntries([]));
+  }, [currentRoot]);
+
+  // Load file content when selection changes
+  useEffect(() => {
+    if (!selectedFile) {
+      setFileContent(null);
+      return;
+    }
+    setFileLoading(true);
+    setFileError(null);
+    api.fs
+      .read(selectedFile)
+      .then((res) => setFileContent(res.data.content))
+      .catch((err: unknown) => setFileError(String(err)))
+      .finally(() => setFileLoading(false));
+  }, [selectedFile]);
+
+  const handleSelect = useCallback((path: string, isDir: boolean) => {
+    if (!isDir) setSelectedFile(path);
+  }, []);
+
+  const handleCopy = useCallback(() => {
+    if (!fileContent) return;
+    navigator.clipboard.writeText(fileContent).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [fileContent]);
+
+  const handleSendToAI = useCallback(() => {
+    if (!fileContent || !selectedFile) return;
+    const name = selectedFile.split(/[/\\]/).pop() ?? "";
+    const ext = name.split(".").pop()?.toLowerCase() ?? "";
+    addAttachment({
+      kind: "file",
+      label: name,
+      content: fileContent,
+      meta: { filePath: selectedFile, language: ext },
+    });
+  }, [fileContent, selectedFile, addAttachment]);
+
+  const filteredEntries = useMemo(() => {
+    if (!filter) return entries;
+    const lower = filter.toLowerCase();
+    return entries.filter((e) => e.name.toLowerCase().includes(lower));
+  }, [entries, filter]);
+
+  const selectedName = selectedFile?.split(/[/\\]/).pop() ?? "";
+  const selectedExt = selectedName.split(".").pop()?.toLowerCase() ?? "";
+
+  // Breadcrumb segments from currentRoot
+  const breadcrumbs = useMemo(() => {
+    if (!currentRoot) return [];
+    const parts = currentRoot.replace(/\\/g, "/").split("/").filter(Boolean);
+    const crumbs: Array<{ label: string; path: string }> = [];
+    let acc = "";
+    for (const part of parts) {
+      acc += (acc ? "/" : "") + part;
+      // Windows drive fix: "C:" → "C:/"
+      const resolvedPath = acc.length === 2 && acc[1] === ":" ? acc + "/" : acc;
+      crumbs.push({ label: part, path: resolvedPath });
+    }
+    return crumbs;
+  }, [currentRoot]);
+
+  return (
+    <div className="flex flex-col h-full" style={{ background: "var(--color-bg-base)" }}>
+      {/* Top bar */}
+      <div
+        className="flex items-center gap-2 px-3 py-2 shrink-0"
+        style={{
+          background: "var(--color-bg-card)",
+          borderBottom: "1px solid var(--color-border)",
+        }}
+      >
+        {/* Root selector */}
+        <select
+          value={currentRoot}
+          onChange={(e) => {
+            setCurrentRoot(e.target.value);
+            setSelectedFile(null);
+          }}
+          className="text-xs px-2 py-1 rounded cursor-pointer"
+          style={{
+            background: "var(--color-bg-elevated)",
+            border: "1px solid var(--color-border)",
+            color: "var(--color-text-primary)",
+            maxWidth: 120,
+          }}
+          aria-label="Root directory"
+        >
+          {roots.map((r) => (
+            <option key={r.path} value={r.path}>
+              {r.label}
+            </option>
+          ))}
+        </select>
+
+        {/* Breadcrumbs */}
+        <div className="flex items-center gap-0.5 flex-1 min-w-0 overflow-hidden text-xs">
+          {breadcrumbs.slice(-3).map((bc, i) => (
+            <span key={bc.path} className="flex items-center gap-0.5">
+              {i > 0 && <span style={{ color: "var(--color-text-muted)" }}>/</span>}
+              <button
+                onClick={() => {
+                  setCurrentRoot(bc.path);
+                  setSelectedFile(null);
+                }}
+                className="truncate cursor-pointer hover:underline"
+                style={{
+                  color: "var(--color-text-secondary)",
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                }}
+              >
+                {bc.label}
+              </button>
+            </span>
+          ))}
+        </div>
+
+        {/* Search / filter */}
+        <div className="relative">
+          <MagnifyingGlass
+            size={12}
+            style={{
+              position: "absolute",
+              left: 6,
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "var(--color-text-muted)",
+            }}
+            aria-hidden="true"
+          />
+          <input
+            type="text"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Filter..."
+            className="text-xs pl-6 pr-2 py-1 rounded outline-none"
+            style={{
+              width: 120,
+              background: "var(--color-bg-elevated)",
+              border: "1px solid var(--color-border)",
+              color: "var(--color-text-primary)",
+            }}
+            aria-label="Filter files"
+          />
+        </div>
+
+        <button
+          onClick={onClose}
+          className="p-1 rounded cursor-pointer"
+          style={{ color: "var(--color-text-muted)" }}
+          aria-label="Close file explorer"
+        >
+          <X size={14} weight="bold" />
+        </button>
+      </div>
+
+      {/* Main area: tree + viewer */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Tree sidebar */}
+        <div
+          className="shrink-0 overflow-y-auto py-1"
+          style={{
+            width: 250,
+            borderRight: "1px solid var(--color-border)",
+            background: "var(--color-bg-sidebar, var(--color-bg-card))",
+          }}
+        >
+          {filteredEntries.map((entry) => (
+            <TreeNode
+              key={entry.path}
+              entry={entry}
+              depth={0}
+              selectedPath={selectedFile}
+              onSelect={handleSelect}
+            />
+          ))}
+          {filteredEntries.length === 0 && (
+            <div
+              className="text-xs text-center py-8"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              {filter ? "No matches" : "Empty directory"}
+            </div>
+          )}
+        </div>
+
+        {/* File viewer */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {selectedFile ? (
+            <>
+              {/* File header */}
+              <div
+                className="flex items-center justify-between px-3 py-1.5 shrink-0"
+                style={{
+                  background: "var(--color-bg-elevated)",
+                  borderBottom: "1px solid var(--color-border)",
+                }}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  {fileIcon(selectedExt)}
+                  <span
+                    className="text-xs font-mono font-semibold truncate"
+                    style={{ color: "var(--color-text-primary)" }}
+                  >
+                    {selectedName}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={handleSendToAI}
+                    disabled={!fileContent}
+                    className="p-1 rounded cursor-pointer disabled:opacity-40"
+                    style={{ color: "#34A853" }}
+                    aria-label="Send file to AI composer"
+                    title="Send to AI"
+                  >
+                    <PaperPlaneTilt size={13} weight="bold" />
+                  </button>
+                  <button
+                    onClick={handleCopy}
+                    disabled={!fileContent}
+                    className="p-1 rounded cursor-pointer disabled:opacity-40"
+                    style={{ color: copied ? "#34A853" : "var(--color-text-muted)" }}
+                    aria-label="Copy file content"
+                  >
+                    {copied ? <Check size={13} weight="bold" /> : <Copy size={13} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-auto">
+                {fileLoading && (
+                  <div className="flex items-center justify-center h-full">
+                    <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                      Loading...
+                    </span>
+                  </div>
+                )}
+                {fileError && (
+                  <div
+                    className="text-xs p-3 m-3 rounded-lg"
+                    style={{ background: "#EA433510", color: "#EA4335" }}
+                  >
+                    {fileError}
+                  </div>
+                )}
+                {fileContent !== null && !fileLoading && (
+                  <CodeViewer content={fileContent} ext={selectedExt} />
+                )}
+              </div>
+
+              {/* Footer: full path */}
+              <div
+                className="px-3 py-1 shrink-0"
+                style={{
+                  borderTop: "1px solid var(--color-border)",
+                  background: "var(--color-bg-elevated)",
+                }}
+              >
+                <span
+                  className="font-mono"
+                  style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                >
+                  {selectedFile}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                Select a file to view
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

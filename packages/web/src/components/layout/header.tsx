@@ -1,6 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import { MagnifyingGlass, Moon, Sun, Gear, Terminal, ListBullets } from "@phosphor-icons/react";
+import { MagnifyingGlass, Moon, Sun, Gear, Terminal, ListBullets, FolderOpen, Globe } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { CompanionLogo } from "./companion-logo";
@@ -76,6 +76,8 @@ export function Header() {
   const setCommandPaletteOpen = useUiStore((s) => s.setCommandPaletteOpen);
   const activityTerminalOpen = useUiStore((s) => s.activityTerminalOpen);
   const setActivityTerminalOpen = useUiStore((s) => s.setActivityTerminalOpen);
+  const rightPanelMode = useUiStore((s) => s.rightPanelMode);
+  const setRightPanelMode = useUiStore((s) => s.setRightPanelMode);
 
   return (
     <header
@@ -126,6 +128,30 @@ export function Header() {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-1">
+        <button
+          onClick={() => setRightPanelMode(rightPanelMode === "files" ? "none" : "files")}
+          className="p-1.5 rounded-lg transition-colors cursor-pointer"
+          style={{
+            color: rightPanelMode === "files" ? "var(--color-accent)" : "var(--color-text-muted)",
+            background: rightPanelMode === "files" ? "var(--color-accent)" + "15" : "transparent",
+          }}
+          aria-label="File Explorer"
+          title="File Explorer"
+        >
+          <FolderOpen size={16} weight={rightPanelMode === "files" ? "fill" : "regular"} />
+        </button>
+        <button
+          onClick={() => setRightPanelMode(rightPanelMode === "browser" ? "none" : "browser")}
+          className="p-1.5 rounded-lg transition-colors cursor-pointer"
+          style={{
+            color: rightPanelMode === "browser" ? "var(--color-accent)" : "var(--color-text-muted)",
+            background: rightPanelMode === "browser" ? "var(--color-accent)" + "15" : "transparent",
+          }}
+          aria-label="Browser Preview"
+          title="Browser Preview"
+        >
+          <Globe size={16} weight={rightPanelMode === "browser" ? "fill" : "regular"} />
+        </button>
         <button
           onClick={() => setActivityTerminalOpen(!activityTerminalOpen)}
           className="p-2 rounded-lg transition-colors cursor-pointer"
