@@ -7,8 +7,8 @@ Add 10 high-impact UX features to the Companion web dashboard: full-text file se
 | # | Name | Status | Plan File | Summary |
 |---|------|--------|-----------|---------|
 | 1 | Power Tools | ✅ Done | plan-ux-features-phase1.md | Full-text search, interactive terminal, multi-tab file viewer |
-| 2 | Feed & Analytics | Pending | plan-ux-features-phase2.md | Inline diffs, pinned messages, session comparison, cost breakdown |
-| 3 | Polish & Shortcuts | Pending | plan-ux-features-phase3.md | Drag-drop attachments, template variables, command palette enhancement |
+| 2 | Feed & Analytics | ✅ Done | plan-ux-features-phase2.md | Inline diffs, pinned messages, session comparison, cost breakdown |
+| 3 | Polish & Shortcuts | ✅ Done | plan-ux-features-phase3.md | Drag-drop attachments, template variables, command palette enhancement |
 
 ## Key Decisions
 - Full-text search uses ripgrep on server (spawns `rg` process) with streaming results via REST
