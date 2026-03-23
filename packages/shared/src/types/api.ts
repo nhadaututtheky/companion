@@ -13,11 +13,11 @@ export interface ApiResponse<T = unknown> {
 
 export interface HealthResponse {
   status: "ok" | "error";
-  version: string;
+  version?: string;
   uptime: number;
   db: {
     status: "connected" | "error";
-    tables: number;
+    tables?: number;
   };
   sessions: {
     active: number;

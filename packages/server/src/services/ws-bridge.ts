@@ -321,7 +321,7 @@ export class WsBridge {
           });
         },
 
-        onExit: (exitCode, reason) => {
+        onExit: (exitCode, _reason) => {
           this.sdkHandles.delete(sessionId);
           this.handleCLIExit(session, exitCode);
         },

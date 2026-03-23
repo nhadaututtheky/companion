@@ -24,6 +24,7 @@ import { TelegramBotCard } from "@/components/settings/telegram-bot-card";
 import { TelegramStreaming } from "@/components/settings/telegram-streaming";
 import { TelegramStatus } from "@/components/settings/telegram-status";
 import { TelegramPreview } from "@/components/settings/telegram-preview";
+import { TelegramAntiSettings } from "@/components/settings/telegram-anti-settings";
 
 // ── Shared primitives ─────────────────────────────────────────────────────────
 
@@ -834,6 +835,18 @@ function TelegramTab() {
                   );
                 })()}
               </div>
+            </SettingSection>
+          )}
+
+          {/* Anti IDE Settings — show when an anti-role bot exists */}
+          {configs.some((c) => c.role === "anti") && (
+            <SettingSection
+              title="Anti IDE (CDP)"
+              description="Configure connection to Antigravity/Cursor IDE for remote control."
+            >
+              <TelegramAntiSettings
+                botId={configs.find((c) => c.role === "anti")!.id}
+              />
             </SettingSection>
           )}
 

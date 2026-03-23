@@ -17,7 +17,7 @@ import { checkConvergence } from "./convergence-detector.js";
 import { getDb } from "../db/client.js";
 import { channels } from "../db/schema.js";
 import { eq } from "drizzle-orm";
-import { callAI, type ModelTier } from "./ai-client.js";
+import { callAI, callAIWithModel, getOpenRouterConfig, type ModelTier } from "./ai-client.js";
 import { createLogger } from "../logger.js";
 
 const log = createLogger("debate-engine");
@@ -29,12 +29,24 @@ const DEFAULT_MAX_COST_USD = 0.50;
 
 export type DebateFormat = "pro_con" | "red_team" | "review" | "brainstorm";
 
+/** Per-agent model override for multi-model debates (API-facing, no secrets) */
+export interface AgentModelConfig {
+  /** Agent slot ID (e.g. "advocate", "challenger", "builder", "attacker") */
+  agentId: string;
+  /** Full model ID — OpenRouter format with "/" (e.g. "openai/gpt-4o") or plain model name */
+  model: string;
+  /** Display label for UI (e.g. "GPT-4o", "Claude Sonnet") */
+  label?: string;
+}
+
 export interface DebateConfig {
   topic: string;
   format: DebateFormat;
   projectSlug?: string;
   maxRounds?: number;
   maxCostUsd?: number;
+  /** Per-agent model assignments for multi-model debates */
+  agentModels?: AgentModelConfig[];
 }
 
 export interface DebateAgent {
@@ -43,6 +55,16 @@ export interface DebateAgent {
   label: string;
   emoji: string;
   systemPrompt: string;
+  /** Explicit model for this agent (multi-model debate) */
+  model?: string;
+  /** Display label for the model (e.g. "GPT-4o") */
+  modelLabel?: string;
+  /** Provider override for this agent's model */
+  providerOverride?: {
+    provider: "anthropic" | "openai-compatible";
+    baseUrl: string;
+    apiKey: string;
+  };
 }
 
 export interface DebateState {
@@ -229,7 +251,21 @@ async function callDebateAI(
   systemPrompt: string,
   messages: Array<{ role: "user" | "assistant"; content: string }>,
   tier: ModelTier = "strong",
+  agent?: DebateAgent,
 ): Promise<{ text: string; costUsd: number }> {
+  // If agent has an explicit model, use callAIWithModel
+  if (agent?.model) {
+    const res = await callAIWithModel({
+      systemPrompt,
+      messages,
+      model: agent.model,
+      maxTokens: 1024,
+      providerOverride: agent.providerOverride,
+    });
+    return { text: res.text, costUsd: res.costUsd };
+  }
+
+  // Default: tier-based routing
   const res = await callAI({
     systemPrompt,
     messages,
@@ -250,6 +286,34 @@ export async function startDebate(
   onMessage?: (channelId: string, agent: DebateAgent, content: string, round: number) => void,
 ): Promise<DebateState> {
   const agents = getAgentsForFormat(config.format, config.topic);
+
+  // Apply per-agent model overrides (immutable)
+  if (config.agentModels && config.agentModels.length > 0) {
+    // Resolve OpenRouter config once for all agents that need it
+    const openRouterCfg = getOpenRouterConfig();
+
+    for (let i = 0; i < agents.length; i++) {
+      const modelCfg = config.agentModels.find((m) => m.agentId === agents[i]!.id);
+      if (!modelCfg) continue;
+
+      // Determine provider: models with "/" prefix are OpenRouter format
+      const needsOpenRouter = modelCfg.model.includes("/");
+      if (needsOpenRouter && !openRouterCfg) {
+        log.warn("Agent model requires OpenRouter but no config found, using default", {
+          agentId: modelCfg.agentId,
+          model: modelCfg.model,
+        });
+        continue;
+      }
+
+      agents[i] = {
+        ...agents[i]!,
+        model: modelCfg.model,
+        modelLabel: modelCfg.label,
+        providerOverride: needsOpenRouter ? openRouterCfg : undefined,
+      };
+    }
+  }
 
   // Create channel in DB
   const channel = createChannel({
@@ -278,7 +342,7 @@ export async function startDebate(
     channelId: channel.id,
     topic: config.topic,
     format: config.format,
-    agents: agents.map((a) => a.label),
+    agents: agents.map((a) => `${a.label}${a.model ? ` [${a.modelLabel ?? a.model}]` : ""}`),
   });
 
   // Run first round (non-blocking)
@@ -308,22 +372,27 @@ async function runDebateLoop(
       // Get channel history for context
       const history = getChannelMessages(state.channelId, 100);
 
-      // Each agent takes a turn
-      for (const agent of state.agents) {
+      // All agents respond in parallel for faster debates
+      if (state.status !== "active") break;
+
+      const agentResults = await Promise.all(
+        state.agents.map(async (agent) => {
+          const conversationMessages = buildConversation(history, agent, state.currentRound);
+          const { text, costUsd } = await callDebateAI(
+            agent.systemPrompt,
+            conversationMessages,
+            "strong",
+            agent,
+          );
+          return { agent, text, costUsd };
+        }),
+      );
+
+      for (const { agent, text, costUsd } of agentResults) {
         if (state.status !== "active") break;
-
-        // Build conversation from channel history
-        const conversationMessages = buildConversation(history, agent, state.currentRound);
-
-        const { text, costUsd } = await callDebateAI(
-          agent.systemPrompt,
-          conversationMessages,
-          "strong",
-        );
 
         state.totalCostUsd += costUsd;
 
-        // Store in channel
         postMessage({
           channelId: state.channelId,
           agentId: agent.id,
@@ -332,10 +401,8 @@ async function runDebateLoop(
           round: state.currentRound,
         });
 
-        // Notify callback (for Telegram routing)
         onMessage?.(state.channelId, agent, text, state.currentRound);
 
-        // Cost guard
         if (state.totalCostUsd >= state.maxCostUsd) {
           log.info("Debate cost limit reached", {
             channelId: state.channelId,
@@ -385,6 +452,7 @@ async function runDebateLoop(
     log.error("Debate loop error", { channelId: state.channelId, error: String(err) });
     state.status = "concluded";
     updateChannelStatus(state.channelId, "concluded");
+    activeDebates.delete(state.channelId);
   }
 }
 

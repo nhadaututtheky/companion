@@ -117,7 +117,7 @@ function SkeletonRow() {
 
 // ── Main component ──────────────────────────────────────────────────────────
 
-export function DirectoryBrowser({ onSelect, onCancel }: DirectoryBrowserProps) {
+export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBrowserProps) {
   const [currentPath, setCurrentPath] = useState<string | null>(null);
   const [roots, setRoots] = useState<BrowseRoot[]>([]);
   const [entries, setEntries] = useState<DirEntry[]>([]);

@@ -9,7 +9,6 @@ import {
   startDebate,
   concludeDebate,
   getActiveDebate,
-  injectHumanMessage,
   type DebateFormat,
   type DebateAgent,
 } from "../../services/debate-engine.js";
@@ -195,7 +194,7 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
 
     await ctx.reply("⚖️ Forcing verdict...", { message_thread_id: topicId });
 
-    await concludeDebate(channelId, async (_cId, agent, content, round) => {
+    await concludeDebate(channelId, async (_cId, agent, content, _round) => {
       const label = `${agent.emoji} <b>${escapeHTML(agent.label)}</b>`;
       await bridge.bot.api.sendMessage(chatId, `${label}\n\n${escapeHTML(content)}`, {
         parse_mode: "HTML",

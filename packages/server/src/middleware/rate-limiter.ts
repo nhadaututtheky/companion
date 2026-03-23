@@ -50,9 +50,12 @@ function getConfig(path: string): RateLimitConfig {
 
 export function rateLimiter() {
   return async (c: Context, next: Next) => {
-    const ip = c.req.header("x-real-ip") ?? "unknown";
+    // Use socket IP from Bun server (passed via env), fall back to x-real-ip only if from trusted proxy
+    const envIp = (c.env as Record<string, unknown>)?.ip as { address?: string } | undefined;
+    const socketIp = envIp?.address;
+    const ip = socketIp ?? c.req.header("x-real-ip") ?? "unknown";
 
-    if (isLocalhost(ip)) {
+    if (socketIp && isLocalhost(socketIp)) {
       return next();
     }
 

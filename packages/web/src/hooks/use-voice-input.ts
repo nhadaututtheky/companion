@@ -117,7 +117,7 @@ export function useVoiceInput(
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       // "aborted" is expected when we call stop()
       if (event.error !== "aborted") {
-        console.warn("Speech recognition error:", event.error);
+        // Speech recognition error (non-abort) — no action needed
       }
       setListening(false);
       setInterim("");

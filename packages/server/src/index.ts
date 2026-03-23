@@ -18,7 +18,8 @@ const log = createLogger("server");
 /** Timing-safe string comparison for auth — prevents oracle attacks */
 function safeCompare(a: string, b: string): boolean {
   if (a.length !== b.length) {
-    timingSafeEqual(Buffer.from(a), Buffer.from(a));
+    const padded = Buffer.alloc(b.length);
+    timingSafeEqual(Buffer.from(a.padEnd(b.length, "\0")), padded);
     return false;
   }
   return timingSafeEqual(Buffer.from(a), Buffer.from(b));
@@ -106,11 +107,22 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "http://localhost:3580,ht
   .filter(Boolean);
 
 app.use("*", cors({
-  origin: (origin) => allowedOrigins.includes(origin) ? origin : allowedOrigins[0]!,
+  origin: (origin) => allowedOrigins.includes(origin) ? origin : null,
   allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowHeaders: ["Content-Type", "Authorization", "X-API-Key"],
   credentials: true,
 }));
+
+// Security headers — X-Content-Type-Options, X-Frame-Options, Referrer-Policy, etc.
+app.use("*", async (c, next) => {
+  await next();
+  c.res.headers.set("X-Content-Type-Options", "nosniff");
+  c.res.headers.set("X-Frame-Options", "DENY");
+  c.res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  c.res.headers.set("X-XSS-Protection", "0");
+  c.res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+});
+
 app.use("/api/*", rateLimiter());
 
 // Mount routes
@@ -145,8 +157,7 @@ const server = Bun.serve<SocketData>({
       if (configuredKey) {
         const wsKey =
           req.headers.get("Sec-WebSocket-Protocol") ??
-          req.headers.get("Authorization")?.replace("Bearer ", "") ??
-          url.searchParams.get("api_key"); // fallback for legacy clients
+          req.headers.get("Authorization")?.replace("Bearer ", "");
         if (!wsKey || !safeCompare(wsKey, configuredKey)) {
           return new Response("Unauthorized", { status: 401 });
         }
@@ -171,7 +182,12 @@ const server = Bun.serve<SocketData>({
     },
     message(ws, message) {
       const { sessionId } = ws.data;
-      bridge.handleBrowserMessage(sessionId, String(message));
+      const msg = String(message);
+      if (msg.length > 100_000) {
+        ws.close(1009, "Message too large");
+        return;
+      }
+      bridge.handleBrowserMessage(sessionId, msg);
     },
     close(ws) {
       const { sessionId } = ws.data;

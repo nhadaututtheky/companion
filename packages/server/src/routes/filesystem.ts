@@ -58,7 +58,9 @@ function validateDir(p: string): { ok: true; resolved: string } | { ok: false; e
   const allowedRoots = process.env.ALLOWED_BROWSE_ROOTS;
   if (allowedRoots) {
     const roots = allowedRoots.split(";").map((r) => resolve(normalize(r)));
-    const allowed = roots.some((root) => resolved.startsWith(root));
+    const allowed = roots.some((root) =>
+      resolved === root || resolved.startsWith(root + "/") || resolved.startsWith(root + "\\"),
+    );
     if (!allowed) {
       return { ok: false, error: "Path outside allowed roots", status: 403 };
     }
@@ -183,7 +185,9 @@ function validateFile(
   const allowedRoots = process.env.ALLOWED_BROWSE_ROOTS;
   if (allowedRoots) {
     const roots = allowedRoots.split(";").map((r) => resolve(normalize(r)));
-    const allowed = roots.some((root) => resolved.startsWith(root));
+    const allowed = roots.some((root) =>
+      resolved === root || resolved.startsWith(root + "/") || resolved.startsWith(root + "\\"),
+    );
     if (!allowed) {
       return { ok: false, error: "Path outside allowed roots", status: 403 };
     }
@@ -240,45 +244,70 @@ filesystemRoutes.get("/roots", (c) => {
   const home = homedir();
   const roots: { label: string; path: string }[] = [];
 
-  // If ALLOWED_BROWSE_ROOTS is set, ONLY show those roots (e.g. Docker mounted dirs)
+  // If ALLOWED_BROWSE_ROOTS is explicitly set, use those only (security restriction)
   const configured = process.env.ALLOWED_BROWSE_ROOTS;
   if (configured) {
     for (const r of configured.split(";")) {
       const normalized = resolve(normalize(r));
       if (existsSync(normalized)) {
-        roots.push({ label: normalized.split(/[\\/]/).pop() ?? normalized, path: normalized });
+        roots.push({ label: driveLabel(normalized), path: normalized });
       }
     }
+    return c.json({ success: true, data: { roots } } satisfies ApiResponse);
   }
 
-  // Only add system roots if no configured roots (dev mode / native)
-  if (roots.length === 0) {
-    roots.push({ label: "Home", path: home });
+  // Auto-detect mode — no ALLOWED_BROWSE_ROOTS set
+  roots.push({ label: "Home", path: home });
 
-    if (process.platform === "win32") {
-      for (const letter of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
-        const drive = `${letter}:\\`;
-        try {
-          if (existsSync(drive)) {
-            roots.push({ label: `${letter}:`, path: drive });
+  if (process.platform === "win32") {
+    // Native Windows: scan drive letters
+    for (const letter of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+      const drive = `${letter}:\\`;
+      try {
+        if (existsSync(drive)) {
+          roots.push({ label: `${letter}:`, path: drive });
+        }
+      } catch { /* skip */ }
+    }
+  } else {
+    // Linux/macOS — auto-detect Docker-mounted Windows drives at /mnt/<letter>
+    try {
+      const mntPath = "/mnt";
+      if (existsSync(mntPath)) {
+        const entries = readdirSync(mntPath, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory() && /^[a-z]$/i.test(entry.name)) {
+            const drivePath = `${mntPath}/${entry.name}`;
+            // Verify it's actually a mounted drive (has contents, not empty stub)
+            try {
+              const contents = readdirSync(drivePath);
+              if (contents.length > 0) {
+                roots.push({ label: `${entry.name.toUpperCase()}:`, path: drivePath });
+              }
+            } catch { /* not readable — skip */ }
           }
-        } catch { /* skip */ }
-      }
-    } else {
-      for (const cp of [
-        { label: "Root", path: "/" },
-        { label: "Volumes", path: "/Volumes" },
-        { label: "Users", path: "/Users" },
-      ]) {
-        if (existsSync(cp.path) && cp.path !== home) {
-          roots.push(cp);
         }
       }
+    } catch { /* /mnt doesn't exist or not readable */ }
+
+    // Also add standard Linux/macOS roots
+    for (const cp of [
+      { label: "Root", path: "/" },
+      { label: "Volumes", path: "/Volumes" },
+      { label: "Users", path: "/Users" },
+    ]) {
+      if (existsSync(cp.path) && cp.path !== home) {
+        roots.push(cp);
+      }
     }
   }
 
-  return c.json({
-    success: true,
-    data: { roots },
-  } satisfies ApiResponse);
+  return c.json({ success: true, data: { roots } } satisfies ApiResponse);
 });
+
+/** Smart label for a root path: /mnt/c → "C:", /projects/foo → "foo" */
+function driveLabel(normalized: string): string {
+  const mntMatch = normalized.match(/^\/mnt\/([a-z])$/i);
+  if (mntMatch) return `${mntMatch[1]!.toUpperCase()}:`;
+  return normalized.split(/[\\/]/).pop() ?? normalized;
+}

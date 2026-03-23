@@ -18,6 +18,20 @@ const upsertSchema = z.object({
   value: z.string(),
 });
 
+// Keys containing these patterns are masked in GET responses to prevent secret leakage
+const SENSITIVE_KEY_PATTERNS = ["apikey", "token", "secret", "password", "bottoken"];
+
+function isSensitiveKey(key: string): boolean {
+  const lower = key.toLowerCase().replace(/[._-]/g, "");
+  return SENSITIVE_KEY_PATTERNS.some((p) => lower.includes(p));
+}
+
+function maskValue(key: string, value: string): string {
+  if (!isSensitiveKey(key)) return value;
+  if (value.length <= 8) return "***";
+  return value.slice(0, 4) + "***" + value.slice(-4);
+}
+
 export const settingsRoutes = new Hono();
 
 // List settings — optional ?prefix= filter
@@ -31,7 +45,7 @@ settingsRoutes.get("/", (c) => {
 
   const data: Record<string, string> = {};
   for (const row of rows) {
-    data[row.key] = row.value;
+    data[row.key] = maskValue(row.key, row.value);
   }
 
   return c.json({ success: true, data } satisfies ApiResponse);
@@ -47,7 +61,7 @@ settingsRoutes.get("/:key", (c) => {
     return c.json({ success: false, error: "Setting not found" } satisfies ApiResponse, 404);
   }
 
-  return c.json({ success: true, data: { key: row.key, value: row.value } } satisfies ApiResponse);
+  return c.json({ success: true, data: { key: row.key, value: maskValue(row.key, row.value) } } satisfies ApiResponse);
 });
 
 // Upsert setting

@@ -21,6 +21,7 @@ import { registerConfigCommands } from "./commands/config.js";
 import { registerPanelCommands } from "./commands/panel.js";
 import { registerUtilityCommands } from "./commands/utility.js";
 import { registerTemplateCommands } from "./commands/template.js";
+import { registerAntiCommands } from "./commands/anti.js";
 import { createLogger } from "../logger.js";
 import { storeMessage } from "../services/session-store.js";
 import { getProject, listProjects } from "../services/project-profiles.js";
@@ -149,6 +150,7 @@ export class TelegramBridge {
     registerPanelCommands(this);
     registerUtilityCommands(this);
     registerTemplateCommands(this);
+    registerAntiCommands(this);
 
     // Handle text messages (not commands)
     this.bot.on("message:text", async (ctx) => {
@@ -522,6 +524,73 @@ export class TelegramBridge {
     }
   }
 
+  // ── Anti mode state ──────────────────────────────────────────────────
+
+  private antiModeKeys = new Set<string>();
+
+  /** Check if anti mode is active for this chat+topic */
+  isAntiMode(chatId: number, topicId: number): boolean {
+    return this.antiModeKeys.has(`${chatId}:${topicId}`);
+  }
+
+  /** Toggle anti mode for this chat+topic */
+  toggleAntiMode(chatId: number, topicId: number): boolean {
+    const key = `${chatId}:${topicId}`;
+    if (this.antiModeKeys.has(key)) {
+      this.antiModeKeys.delete(key);
+      return false;
+    }
+    this.antiModeKeys.add(key);
+    return true;
+  }
+
+  // ── Convenience messaging (used by watchers + anti commands) ────────
+
+  /** Send HTML message to a chat (with optional topic). Returns message ID. */
+  async sendToChat(chatId: number, text: string, topicId?: number): Promise<number> {
+    const sent = await this.bot.api.sendMessage(chatId, text, {
+      parse_mode: "HTML",
+      ...(topicId ? { message_thread_id: topicId } : {}),
+    });
+    return sent.message_id;
+  }
+
+  /** Send message with inline keyboard. Returns message ID. */
+  async sendToChatWithKeyboard(
+    chatId: number,
+    text: string,
+    keyboard: { inline_keyboard: Array<Array<{ text: string; callback_data: string; style?: string }>> },
+    topicId?: number,
+  ): Promise<number> {
+    const sent = await this.bot.api.sendMessage(chatId, text, {
+      parse_mode: "HTML",
+      reply_markup: keyboard as unknown as import("grammy").InlineKeyboard,
+      ...(topicId ? { message_thread_id: topicId } : {}),
+    });
+    return sent.message_id;
+  }
+
+  /** Edit an existing message. */
+  async editMessage(chatId: number, messageId: number, text: string): Promise<void> {
+    await this.bot.api.editMessageText(chatId, messageId, text, {
+      parse_mode: "HTML",
+    });
+  }
+
+  /** Pin a message in chat. */
+  async pinMessage(chatId: number, messageId: number): Promise<void> {
+    try {
+      await this.bot.api.pinChatMessage(chatId, messageId);
+    } catch (err) {
+      log.warn("Failed to pin message", { chatId, messageId, error: String(err) });
+    }
+  }
+
+  /** Get the grammY Bot API for direct access. */
+  getAPI() {
+    return this.bot.api;
+  }
+
   // ── Subscribe to CLI output ───────────────────────────────────────────
 
   subscribeToSession(sessionId: string, chatId: number, topicId?: number): void {
@@ -725,6 +794,26 @@ export class TelegramBridge {
     const text = ctx.message?.text ?? "";
 
     if (!text.trim()) return;
+
+    // Anti mode: route messages to IDE via CDP (anti-role bots always, or when anti mode is toggled)
+    if (this.config.role === "anti" || this.isAntiMode(chatId, topicId ?? 0)) {
+      const antiCdp = await import("../services/anti-cdp.js");
+      const { startChatWatcher, isChatWatcherRunning } = await import("../services/anti-chat-watcher.js");
+
+      // Auto-start chat watcher so IDE responses come back to Telegram
+      if (!isChatWatcherRunning()) {
+        startChatWatcher(this, chatId, topicId ?? 0);
+      }
+
+      const result = await antiCdp.sendChatMessage(text);
+      if (result.success) {
+        // React with 👀 then ✅ on success
+        try { await ctx.react("👍"); } catch { /* ignore */ }
+      } else {
+        await this.sendToChat(chatId, `⚠️ ${result.detail}`, topicId);
+      }
+      return;
+    }
 
     const mapping = this.getMapping(chatId, topicId);
 

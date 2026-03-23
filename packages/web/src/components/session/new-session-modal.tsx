@@ -262,7 +262,8 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
   const handleSelectProject = useCallback((p: ProjectItem) => {
     setSelectedDir(p.dir);
     setProjectName(p.name);
-    setModel(p.defaultModel || "claude-sonnet-4-6");
+    const validModels = MODEL_OPTIONS.map((m) => m.value);
+    setModel(validModels.includes(p.defaultModel) ? p.defaultModel : "claude-sonnet-4-6");
     setPermissionMode((p.permissionMode as PermissionMode) || "default");
     setStep(2);
   }, []);

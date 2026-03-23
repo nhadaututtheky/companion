@@ -15,10 +15,13 @@ services:
       # Claude CLI auth — maps your local credentials into container
       - ${USERPROFILE:-${HOME}}/.claude:/root/.claude
 
-      # Project directories — mount your code folders
-      # Add your project paths here:
-      - D:/Project:/projects/all:ro
-      # - /Users/you/code:/projects/code:ro
+      # Host filesystem — mount drives to /mnt/<letter> (auto-detected by browser)
+      # Windows: add your drives here (rw so Claude CLI can write code)
+      - C:/:/mnt/c
+      - D:/:/mnt/d
+      # - E:/:/mnt/e    # uncomment if E: drive exists
+      # macOS/Linux: mount home or root
+      # - /:/mnt/host
 
     environment:
       - NODE_ENV=production
@@ -35,7 +38,8 @@ services:
       # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
 
       # Project browser — which dirs users can browse
-      - ALLOWED_BROWSE_ROOTS=/projects/all
+      # Optional: restrict browsing to specific dirs (omit to auto-detect /mnt drives)
+      # - ALLOWED_BROWSE_ROOTS=/mnt/d/Project
 
       # Optional: Telegram bot
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}

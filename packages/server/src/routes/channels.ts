@@ -177,11 +177,22 @@ channelRoutes.delete("/:id/sessions/:sessionId", (c) => {
 });
 
 // POST /channels/debate — start a debate (API)
+const agentModelSchema = z.object({
+  agentId: z.string().min(1),
+  model: z.string().min(1),
+  label: z.string().optional(),
+});
+
 const debateSchema = z.object({
   topic: z.string().min(1).max(500),
   format: z.enum(["pro_con", "red_team", "review", "brainstorm"]).default("pro_con"),
   projectSlug: z.string().optional(),
   maxRounds: z.number().int().min(1).max(20).optional(),
+  agentModels: z.array(agentModelSchema).max(2)
+    .refine((arr) => !arr || new Set(arr.map((a) => a.agentId)).size === arr.length, {
+      message: "Duplicate agentId in agentModels",
+    })
+    .optional(),
 });
 
 channelRoutes.post("/debate", zValidator("json", debateSchema), async (c) => {
@@ -193,6 +204,7 @@ channelRoutes.post("/debate", zValidator("json", debateSchema), async (c) => {
       format: body.format,
       projectSlug: body.projectSlug,
       maxRounds: body.maxRounds,
+      agentModels: body.agentModels,
     });
 
     return c.json({
@@ -201,7 +213,10 @@ channelRoutes.post("/debate", zValidator("json", debateSchema), async (c) => {
         channelId: state.channelId,
         topic: state.topic,
         format: state.format,
-        agents: state.agents.map((a) => ({ id: a.id, label: a.label, role: a.role })),
+        agents: state.agents.map((a) => ({
+          id: a.id, label: a.label, role: a.role,
+          model: a.model, modelLabel: a.modelLabel,
+        })),
       },
     } satisfies ApiResponse, 201);
   } catch (err) {

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { CommandPaletteProvider } from "@/components/layout/command-palette-provider";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 export const metadata: Metadata = {
   title: "Companion",
@@ -27,8 +28,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <CommandPaletteProvider />
-        {children}
+        <ErrorBoundary>
+          <CommandPaletteProvider />
+          {children}
+        </ErrorBoundary>
         <Toaster
           position="bottom-right"
           toastOptions={{

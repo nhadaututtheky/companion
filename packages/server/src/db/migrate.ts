@@ -46,7 +46,17 @@ export function runMigrations() {
     sqlite.run("BEGIN");
     try {
       for (const stmt of statements) {
-        sqlite.run(stmt);
+        try {
+          sqlite.run(stmt);
+        } catch (stmtErr) {
+          // SQLite has no ALTER TABLE ADD COLUMN IF NOT EXISTS —
+          // skip "duplicate column" errors from partially-applied migrations
+          if (String(stmtErr).includes("duplicate column name")) {
+            log.warn("Skipping duplicate column (already exists)", { file, stmt: stmt.slice(0, 80) });
+            continue;
+          }
+          throw stmtErr;
+        }
       }
       sqlite.run(
         "INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)",

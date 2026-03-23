@@ -54,7 +54,7 @@ export function registerTools(server: McpServer): void {
       projectDir: z.string().describe("Absolute path to the project directory"),
       projectSlug: z.string().optional().describe("Project slug (optional, auto-detected from dir)"),
       model: z.string().optional().describe("Model to use (default: claude-sonnet-4-6)"),
-      permissionMode: z.string().optional().describe("Permission mode: default, plan, auto-accept"),
+      permissionMode: z.enum(["default", "acceptEdits", "bypassPermissions", "plan"]).optional().describe("Permission mode"),
       prompt: z.string().optional().describe("Initial prompt to send after session starts"),
     },
     async ({ projectDir, projectSlug, model, permissionMode, prompt }) => {
@@ -172,7 +172,7 @@ export function registerTools(server: McpServer): void {
       round: z.number().optional().describe("Debate round number"),
     },
     async ({ channelId, agentId, role, content, round }) => {
-      const res = await apiCall<{ data: unknown }>(`/channels/${channelId}/messages`, {
+      await apiCall<{ data: unknown }>(`/channels/${channelId}/messages`, {
         method: "POST",
         body: { agentId, role, content, round },
       });

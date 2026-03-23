@@ -41,6 +41,17 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   protectedApi.route("/settings", settingsRoutes);
   protectedApi.route("/templates", templateRoutes());
 
+  // Anti IDE CDP status
+  protectedApi.get("/anti/status", async (c) => {
+    try {
+      const antiCdp = await import("../services/anti-cdp.js");
+      const available = await antiCdp.isAntiAvailable();
+      return c.json({ available });
+    } catch {
+      return c.json({ available: false });
+    }
+  });
+
   // License activation (protected — only authenticated users can activate)
   protectedApi.route("/license", licenseActivateRoute);
 

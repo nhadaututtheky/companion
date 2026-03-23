@@ -12,8 +12,9 @@ const log = createLogger("auth");
 /** Constant-time string comparison to prevent timing oracle attacks. */
 function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) {
-    // Still run comparison to avoid length-based oracle
-    timingSafeEqual(Buffer.from(a), Buffer.from(a));
+    // Constant-time dummy comparison to avoid length-based oracle
+    const padded = Buffer.alloc(b.length);
+    timingSafeEqual(Buffer.from(a.padEnd(b.length, "\0")), padded);
     return false;
   }
   return timingSafeEqual(Buffer.from(a), Buffer.from(b));

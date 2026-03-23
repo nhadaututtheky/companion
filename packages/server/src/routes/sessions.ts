@@ -20,7 +20,7 @@ import {
 import { getProject, upsertProject } from "../services/project-profiles.js";
 import { createLogger } from "../logger.js";
 import { getMaxSessions } from "../services/license.js";
-import { getSessionSummary, getProjectSummaries } from "../services/session-summarizer.js";
+import { getSessionSummary } from "../services/session-summarizer.js";
 import type { ApiResponse } from "@companion/shared";
 
 const log = createLogger("routes:sessions");
@@ -133,7 +133,9 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     const allowedRoots = process.env.ALLOWED_BROWSE_ROOTS;
     if (allowedRoots) {
       const roots = allowedRoots.split(";").map((r: string) => pathResolve(normalize(r)));
-      const isAllowed = roots.some((root: string) => resolved.startsWith(root));
+      const isAllowed = roots.some((root: string) =>
+        resolved === root || resolved.startsWith(root + "/") || resolved.startsWith(root + "\\"),
+      );
       if (!isAllowed) {
         log.warn("Session creation blocked — projectDir outside allowed roots", { projectDir: resolved, allowedRoots });
         return c.json({ success: false, error: "projectDir is outside allowed directories" } satisfies ApiResponse, 403);

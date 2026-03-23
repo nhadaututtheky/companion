@@ -11,10 +11,8 @@
  * - Anthropic (claude-haiku, claude-sonnet)
  */
 
-import { eq, like } from "drizzle-orm";
-import { getDb } from "../db/client.js";
-import { settings } from "../db/schema.js";
 import { createLogger } from "../logger.js";
+import { getSetting } from "./settings-helpers.js";
 
 const log = createLogger("ai-client");
 
@@ -29,15 +27,29 @@ interface AIConfig {
   strongModel: string;
 }
 
-/** Read a setting from DB, returns undefined if not found */
-function getSetting(key: string): string | undefined {
-  try {
-    const db = getDb();
-    const row = db.select().from(settings).where(eq(settings.key, key)).get();
-    return row?.value || undefined;
-  } catch {
+/**
+ * Resolve OpenRouter provider config from DB settings.
+ * Returns undefined if OpenRouter is not configured.
+ */
+export function getOpenRouterConfig(): { provider: Provider; baseUrl: string; apiKey: string } | undefined {
+  const baseUrl = getSetting("ai.openrouterBaseUrl") ?? process.env.OPENROUTER_BASE_URL;
+  const apiKey = getSetting("ai.openrouterApiKey") ?? process.env.OPENROUTER_API_KEY;
+
+  // Fallback: if the main AI config points to OpenRouter, use that
+  if (!baseUrl && !apiKey) {
+    const mainBaseUrl = getSetting("ai.baseUrl") ?? process.env.AI_BASE_URL ?? "";
+    const mainApiKey = getSetting("ai.apiKey") ?? process.env.AI_API_KEY ?? "";
+    if (mainBaseUrl.includes("openrouter.ai")) {
+      return { provider: "openai-compatible", baseUrl: mainBaseUrl, apiKey: mainApiKey };
+    }
     return undefined;
   }
+
+  return {
+    provider: "openai-compatible",
+    baseUrl: baseUrl ?? "https://openrouter.ai/api/v1",
+    apiKey: apiKey ?? "",
+  };
 }
 
 function getConfig(): AIConfig {
@@ -198,6 +210,46 @@ async function callAnthropic(
 }
 
 // ── OpenAI-compatible ──────────────────────────────────────────────────────
+
+/**
+ * Call AI with an explicit model + optional provider override.
+ * Used by debate engine for per-agent model selection.
+ * If providerOverride is given, uses that config instead of the global one.
+ */
+export async function callAIWithModel(opts: {
+  systemPrompt: string;
+  messages: ChatMessage[];
+  model: string;
+  maxTokens?: number;
+  providerOverride?: {
+    provider: Provider;
+    baseUrl: string;
+    apiKey: string;
+  };
+}): Promise<AIResponse> {
+  const override = opts.providerOverride;
+  if (override) {
+    const config: AIConfig = {
+      provider: override.provider,
+      baseUrl: override.baseUrl,
+      apiKey: override.apiKey,
+      defaultModel: opts.model,
+      fastModel: opts.model,
+      strongModel: opts.model,
+    };
+    if (config.provider === "anthropic") {
+      return callAnthropic(config, opts.model, opts);
+    }
+    return callOpenAICompatible(config, opts.model, opts);
+  }
+
+  // No override — use global config with explicit model
+  const config = getConfig();
+  if (config.provider === "anthropic") {
+    return callAnthropic(config, opts.model, opts);
+  }
+  return callOpenAICompatible(config, opts.model, opts);
+}
 
 async function callOpenAICompatible(
   config: AIConfig,

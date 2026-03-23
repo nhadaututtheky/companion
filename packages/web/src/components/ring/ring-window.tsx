@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useEffect, useState, type KeyboardEvent } from "react";
 import { PaperPlaneTilt, X, XCircle, Scales } from "@phosphor-icons/react";
-import { useRingStore, type SharedMessage } from "@/lib/stores/ring-store";
+import { useRingStore, MODEL_PRESETS } from "@/lib/stores/ring-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -38,6 +38,9 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   const setMode = useRingStore((s) => s.setMode);
   const setDebateChannelId = useRingStore((s) => s.setDebateChannelId);
   const debateChannelId = useRingStore((s) => s.debateChannelId);
+  const debateAgentModels = useRingStore((s) => s.debateAgentModels);
+  const setDebateAgentModel = useRingStore((s) => s.setDebateAgentModel);
+  const clearDebateAgentModels = useRingStore((s) => s.clearDebateAgentModels);
 
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -87,7 +90,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
     });
 
     try {
-      for (const sid of linkedSessionIds) {
+      await Promise.all(linkedSessionIds.map(async (sid) => {
         await api.sessions.message(sid, content);
         const session = sessions.find((s) => s.id === sid);
         addSharedMessage({
@@ -97,7 +100,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
           content: "Sent — response in terminal.",
           timestamp: Date.now(), role: "assistant",
         });
-      }
+      }));
       toast.success(`Broadcasting to ${linkedSessionIds.length} session(s)…`);
     } catch (err) { toast.error(String(err)); }
     finally { setSending(false); }
@@ -111,14 +114,28 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
     if (!debateTopic.trim() || startingDebate) return;
     setStartingDebate(true);
     try {
+      // Build agent model config (skip "default" entries)
+      const agentModels = debateAgentModels.length > 0
+        ? debateAgentModels.map((m) => ({
+            agentId: m.agentId,
+            model: m.model,
+            label: m.label,
+          }))
+        : undefined;
+
       const res = await api.post<{ data: { channelId: string } }>("/api/channels/debate", {
         topic: debateTopic.trim(),
         format: "pro_con",
+        agentModels,
       });
       setDebateChannelId(res.data.channelId);
       setMode("debate");
       setDebateTopic("");
-      toast.success("Debate started — agents are thinking…");
+      clearDebateAgentModels();
+      const modelInfo = agentModels
+        ? ` (${agentModels.map((m) => m.label).join(" vs ")})`
+        : "";
+      toast.success(`Debate started${modelInfo} — agents are thinking…`);
     } catch (err) {
       toast.error(String(err));
     } finally {
@@ -311,11 +328,13 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
         <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: "6px 10px", display: "flex", flexDirection: "column", gap: 4 }}>
           {/* Debate mode: topic input + start */}
           {mode === "debate" && !debateChannelId && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 8 }}>
-              <Scales size={28} weight="duotone" style={{ color: "#EA4335", opacity: 0.5 }} />
-              <span style={{ fontSize: 11, color: "var(--color-text-muted, #999)", textAlign: "center" }}>
-                Start a debate between AI agents
-              </span>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "center", height: "100%", gap: 6, padding: "0 2px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
+                <Scales size={20} weight="duotone" style={{ color: "#EA4335", opacity: 0.5 }} />
+                <span style={{ fontSize: 11, color: "var(--color-text-muted, #999)" }}>
+                  Multi-model debate
+                </span>
+              </div>
               <input
                 type="text"
                 value={debateTopic}
@@ -323,18 +342,54 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                 onKeyDown={(e) => { if (e.key === "Enter") void handleStartDebate(); }}
                 placeholder="Debate topic…"
                 style={{
-                  width: "100%", padding: "6px 10px", fontSize: 11, borderRadius: 8,
+                  width: "100%", padding: "5px 8px", fontSize: 11, borderRadius: 8,
                   border: "1px solid var(--color-border, rgba(0,0,0,0.08))", outline: "none",
                   background: "var(--color-bg-elevated, #f8f8f8)", color: "var(--color-text-primary, #333)",
                 }}
               />
+              {/* Agent model selectors */}
+              <div style={{ display: "flex", gap: 4 }}>
+                {[
+                  { agentId: "advocate", label: "Advocate", color: "#4285F4" },
+                  { agentId: "challenger", label: "Challenger", color: "#EA4335" },
+                ].map(({ agentId, label, color }) => {
+                  const selected = debateAgentModels.find((m) => m.agentId === agentId);
+                  return (
+                    <div key={agentId} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+                      <span style={{ fontSize: 9, fontWeight: 600, color, textTransform: "uppercase" }}>
+                        {label}
+                      </span>
+                      <select
+                        value={selected?.model ?? "default"}
+                        onChange={(e) => {
+                          const preset = MODEL_PRESETS.find((p) => p.id === e.target.value);
+                          setDebateAgentModel(agentId, e.target.value, preset?.label ?? e.target.value);
+                        }}
+                        style={{
+                          fontSize: 10, padding: "3px 4px", borderRadius: 6,
+                          border: `1px solid ${selected ? color + "60" : "var(--color-border, rgba(0,0,0,0.08))"}`,
+                          background: selected ? color + "08" : "var(--color-bg-elevated, #f8f8f8)",
+                          color: "var(--color-text-primary, #333)",
+                          outline: "none", cursor: "pointer", width: "100%",
+                        }}
+                      >
+                        {MODEL_PRESETS.map((preset) => (
+                          <option key={preset.id} value={preset.id}>
+                            {preset.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                })}
+              </div>
               <button
                 onClick={() => void handleStartDebate()}
                 disabled={!debateTopic.trim() || startingDebate}
                 style={{
-                  padding: "6px 16px", fontSize: 11, fontWeight: 600, borderRadius: 8, border: "none",
+                  padding: "5px 16px", fontSize: 11, fontWeight: 600, borderRadius: 8, border: "none",
                   background: debateTopic.trim() ? "#EA4335" : "#ccc", color: "#fff",
-                  cursor: debateTopic.trim() ? "pointer" : "default",
+                  cursor: debateTopic.trim() ? "pointer" : "not-allowed",
                 }}
               >
                 {startingDebate ? "Starting…" : "⚖️ Start Debate"}
