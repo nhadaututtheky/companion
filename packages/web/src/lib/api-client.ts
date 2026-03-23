@@ -31,6 +31,8 @@ export const api = {
   get: <T = Record<string, unknown>>(path: string) => request<T>(path),
   post: <T = Record<string, unknown>>(path: string, body: unknown) =>
     request<T>(path, { method: "POST", body: JSON.stringify(body) }),
+  put: <T = Record<string, unknown>>(path: string, body: unknown) =>
+    request<T>(path, { method: "PUT", body: JSON.stringify(body) }),
 
   health: () => request<{ success: boolean; data: { status: string } }>("/api/health"),
 

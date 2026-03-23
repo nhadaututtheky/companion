@@ -100,10 +100,11 @@ function InputField({
 
 // ── Tab types ────────────────────────────────────────────────────────────────
 
-type Tab = "general" | "telegram" | "ai" | "appearance";
+type Tab = "general" | "domain" | "telegram" | "ai" | "appearance";
 
 const TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
   { id: "general", label: "General", icon: <Gear size={15} weight="bold" /> },
+  { id: "domain", label: "Domain", icon: <Globe size={15} weight="bold" /> },
   { id: "ai", label: "AI Provider", icon: <Robot size={15} weight="bold" /> },
   { id: "telegram", label: "Telegram", icon: <TelegramLogo size={15} weight="fill" /> },
   { id: "appearance", label: "Appearance", icon: <PaintBrush size={15} weight="bold" /> },
@@ -1232,6 +1233,277 @@ function TelegramStreamingTab() {
   );
 }
 
+function DomainTab() {
+  const [mode, setMode] = useState<"off" | "tunnel" | "nginx">("off");
+  const [hostname, setHostname] = useState("");
+  const [tunnelToken, setTunnelToken] = useState("");
+  const [showToken, setShowToken] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [status, setStatus] = useState<{ gateway: string; tunnel: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Load current config
+  useEffect(() => {
+    api.get<{ data: { mode: string; hostname: string; hasTunnelToken: boolean } }>("/api/domain")
+      .then((res) => {
+        if (res.data) {
+          setMode((res.data.mode as "off" | "tunnel" | "nginx") ?? "off");
+          setHostname(res.data.hostname ?? "");
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const checkStatus = useCallback(async () => {
+    try {
+      const res = await api.get<{ data: { gateway: string; tunnel: string } }>("/api/domain/status");
+      if (res.data) setStatus(res.data);
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    if (mode !== "off") checkStatus();
+  }, [mode, checkStatus]);
+
+  const handleSave = useCallback(async () => {
+    if (mode !== "off" && !hostname.trim()) {
+      toast.error("Hostname is required");
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.put("/api/domain", {
+        mode,
+        hostname: hostname.trim(),
+        tunnelToken: tunnelToken.trim() || undefined,
+      });
+      setSaved(true);
+      toast.success("Domain config saved — files generated");
+      setTimeout(() => setSaved(false), 3000);
+      checkStatus();
+    } catch (err) {
+      toast.error(String(err));
+    } finally {
+      setSaving(false);
+    }
+  }, [mode, hostname, tunnelToken, checkStatus]);
+
+  const handleApply = useCallback(async () => {
+    try {
+      const res = await api.post<{ data: { applied: boolean; manual: boolean; command?: string; message?: string } }>("/api/domain/apply", {});
+      if (res.data?.applied) {
+        toast.success("Containers restarted");
+        checkStatus();
+      } else if (res.data?.manual) {
+        toast.info(res.data.message ?? "Run docker compose up -d on host");
+      }
+    } catch {
+      toast.error("Failed to apply");
+    }
+  }, [checkStatus]);
+
+  if (loading) return <div className="text-xs py-8 text-center" style={{ color: "var(--color-text-muted)" }}>Loading...</div>;
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Mode selector */}
+      <SettingSection
+        title="Custom Domain"
+        description="Access Companion via your own domain with automatic SSL."
+      >
+        <div className="flex flex-col gap-4">
+          {/* Mode buttons */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>Mode</label>
+            <div className="flex gap-2">
+              {(["off", "tunnel", "nginx"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                  style={{
+                    background: mode === m ? "var(--color-accent)" : "var(--color-bg-elevated)",
+                    color: mode === m ? "#fff" : "var(--color-text-secondary)",
+                    border: `1px solid ${mode === m ? "var(--color-accent)" : "var(--color-border)"}`,
+                  }}
+                >
+                  {m === "off" ? "Off" : m === "tunnel" ? "Cloudflare Tunnel" : "Nginx + SSL"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {mode !== "off" && (
+            <>
+              {/* Hostname */}
+              <InputField
+                label="Domain"
+                value={hostname}
+                onChange={setHostname}
+                placeholder="app.yourdomain.com"
+              />
+
+              {/* Tunnel token (only for tunnel mode) */}
+              {mode === "tunnel" && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+                    Tunnel Token
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showToken ? "text" : "password"}
+                      value={tunnelToken}
+                      onChange={(e) => setTunnelToken(e.target.value)}
+                      placeholder="eyJhIjoiN..."
+                      className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none font-mono"
+                      style={{
+                        background: "var(--color-bg-elevated)",
+                        border: "1px solid var(--color-border)",
+                        color: "var(--color-text-primary)",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowToken(!showToken)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-pointer"
+                      style={{ color: "var(--color-text-muted)" }}
+                      aria-label={showToken ? "Hide" : "Show"}
+                    >
+                      {showToken ? <EyeSlash size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                    Cloudflare Dashboard → Zero Trust → Tunnels → Create → copy token
+                  </p>
+                </div>
+              )}
+
+              {/* Nginx SSL note */}
+              {mode === "nginx" && (
+                <div
+                  className="px-3 py-2.5 rounded-lg text-xs"
+                  style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-muted)" }}
+                >
+                  Place SSL certificates in <code style={{ color: "var(--color-text-secondary)" }}>nginx/certs/origin.pem</code> and{" "}
+                  <code style={{ color: "var(--color-text-secondary)" }}>nginx/certs/origin.key</code>
+                  <br />
+                  Tip: Use free Cloudflare Origin Certificate (15-year validity)
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </SettingSection>
+
+      {/* Status + Apply */}
+      {mode !== "off" && (
+        <SettingSection title="Status">
+          <div className="flex flex-col gap-3">
+            {status && (
+              <div className="flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{
+                      background: status.gateway === "running" ? "#34A853"
+                        : status.gateway === "offline" ? "#EA4335"
+                        : "#FBBC04",
+                    }}
+                  />
+                  <span style={{ color: "var(--color-text-secondary)" }}>
+                    Gateway: {status.gateway}
+                  </span>
+                </div>
+                {mode === "tunnel" && (
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{
+                        background: status.tunnel === "configured" ? "#34A853" : "#FBBC04",
+                      }}
+                    />
+                    <span style={{ color: "var(--color-text-secondary)" }}>
+                      Tunnel: {status.tunnel}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Command to run */}
+            <div
+              className="flex items-center justify-between px-3 py-2.5 rounded-lg font-mono text-xs"
+              style={{
+                background: "#1a1a2e",
+                color: "#34A853",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              <code>docker compose up -d</code>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText("docker compose up -d");
+                  toast.success("Copied!");
+                }}
+                className="px-2 py-1 rounded text-xs cursor-pointer"
+                style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-secondary)" }}
+              >
+                Copy
+              </button>
+            </div>
+
+            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              After saving, run this command on the host to start the gateway
+              {mode === "tunnel" ? " and tunnel" : ""}.
+            </p>
+          </div>
+        </SettingSection>
+      )}
+
+      {/* Save button */}
+      <div className="flex gap-3">
+        <button
+          onClick={handleSave}
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer"
+          style={{
+            background: saved ? "#34A853" : "var(--color-accent)",
+            color: "#fff",
+            border: "none",
+          }}
+        >
+          {saved ? (
+            <>
+              <Check size={16} weight="bold" />
+              Saved — files generated
+            </>
+          ) : (
+            <>
+              <FloppyDisk size={16} weight="bold" />
+              {saving ? "Saving..." : "Save & Generate"}
+            </>
+          )}
+        </button>
+
+        {mode !== "off" && saved && (
+          <button
+            onClick={handleApply}
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer"
+            style={{
+              background: "var(--color-bg-elevated)",
+              color: "var(--color-text-primary)",
+              border: "1px solid var(--color-border)",
+            }}
+          >
+            <ArrowsClockwise size={16} weight="bold" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>("general");
 
@@ -1302,6 +1574,7 @@ export default function SettingsPage() {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto py-8 px-5">
           {activeTab === "general" && <GeneralTab />}
+          {activeTab === "domain" && <DomainTab />}
           {activeTab === "ai" && <AIProviderTab />}
           {activeTab === "telegram" && <TelegramTab />}
           {activeTab === "appearance" && <AppearanceTab />}
