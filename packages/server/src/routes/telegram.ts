@@ -66,10 +66,10 @@ export function telegramRoutes(registry: BotRegistry) {
 
     try {
       registry.saveBotConfig({ id, ...body });
-    } catch (err) {
+    } catch {
       return c.json({
         success: false,
-        error: `Failed to save bot config: ${String(err)}`,
+        error: "Failed to save bot config",
       } satisfies ApiResponse, 500);
     }
 
@@ -84,11 +84,11 @@ export function telegramRoutes(registry: BotRegistry) {
           allowedChatIds: body.allowedChatIds ?? [],
           allowedUserIds: body.allowedUserIds ?? [],
         });
-      } catch (err) {
+      } catch {
         // Bot saved but failed to start — return success with error detail
         return c.json({
           success: true,
-          data: { id, startError: `Failed to start: ${String(err)}` },
+          data: { id, startError: "Failed to start bot" },
         } satisfies ApiResponse);
       }
     }
@@ -127,8 +127,8 @@ export function telegramRoutes(registry: BotRegistry) {
           firstName: json.result?.first_name,
         },
       } satisfies ApiResponse);
-    } catch (err) {
-      return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
+    } catch {
+      return c.json({ success: false, error: "Failed to test bot token" } satisfies ApiResponse, 500);
     }
   });
 

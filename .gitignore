@@ -16,3 +16,5 @@ data/.trial
 .idea/
 *.tsbuildinfo
 bun.lock
+.claude/settings.json
+.claude/settings.local.json

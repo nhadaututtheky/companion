@@ -84,7 +84,7 @@ channelRoutes.post("/", zValidator("json", createChannelSchema), (c) => {
     return c.json({ success: true, data: channel } satisfies ApiResponse, 201);
   } catch (err) {
     log.error("Failed to create channel", { error: String(err) });
-    return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
+    return c.json({ success: false, error: "Failed to create channel" } satisfies ApiResponse, 500);
   }
 });
 
@@ -125,7 +125,7 @@ channelRoutes.post(
       return c.json({ success: true, data: message } satisfies ApiResponse, 201);
     } catch (err) {
       log.error("Failed to post message", { channelId: id, error: String(err) });
-      return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
+      return c.json({ success: false, error: "Failed to post message" } satisfies ApiResponse, 500);
     }
   },
 );
@@ -145,7 +145,7 @@ channelRoutes.patch("/:id", zValidator("json", patchChannelSchema), (c) => {
     return c.json({ success: true } satisfies ApiResponse);
   } catch (err) {
     log.error("Failed to update channel status", { id, error: String(err) });
-    return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
+    return c.json({ success: false, error: "Failed to update channel status" } satisfies ApiResponse, 500);
   }
 });
 
@@ -159,7 +159,7 @@ channelRoutes.post("/:id/link", zValidator("json", linkSessionSchema), (c) => {
     return c.json({ success: true } satisfies ApiResponse);
   } catch (err) {
     log.error("Failed to link session", { channelId: id, sessionId, error: String(err) });
-    return c.json({ success: false, error: String(err) } satisfies ApiResponse, 400);
+    return c.json({ success: false, error: "Failed to link session" } satisfies ApiResponse, 400);
   }
 });
 
@@ -172,7 +172,7 @@ channelRoutes.delete("/:id/sessions/:sessionId", (c) => {
     return c.json({ success: true } satisfies ApiResponse);
   } catch (err) {
     log.error("Failed to unlink session", { sessionId, error: String(err) });
-    return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
+    return c.json({ success: false, error: "Failed to unlink session" } satisfies ApiResponse, 500);
   }
 });
 
@@ -219,8 +219,8 @@ channelRoutes.post("/debate", zValidator("json", debateSchema), async (c) => {
         })),
       },
     } satisfies ApiResponse, 201);
-  } catch (err) {
-    return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
+  } catch {
+    return c.json({ success: false, error: "Failed to start debate" } satisfies ApiResponse, 500);
   }
 });
 

@@ -198,7 +198,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       return c.json({ success: true, data: { sessionId } } satisfies ApiResponse, 201);
     } catch (err) {
       log.error("Failed to create session", { error: String(err) });
-      return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
+      return c.json({ success: false, error: "Failed to create session" } satisfies ApiResponse, 500);
     }
   });
 
@@ -336,7 +336,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       return c.json({ success: true, data: { sessionId } } satisfies ApiResponse, 201);
     } catch (err) {
       log.error("Failed to resume session", { id, error: String(err) });
-      return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
+      return c.json({ success: false, error: "Failed to resume session" } satisfies ApiResponse, 500);
     }
   });
 
