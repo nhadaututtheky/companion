@@ -1,6 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import { MagnifyingGlass, Moon, Sun, Gear, Terminal, ListBullets, FolderOpen, Globe } from "@phosphor-icons/react";
+import { MagnifyingGlass, Moon, Sun, Gear, Terminal, ListBullets, FolderOpen, Globe, TerminalWindow } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { CompanionLogo } from "./companion-logo";
@@ -129,6 +129,18 @@ export function Header() {
       {/* Right: Actions */}
       <div className="flex items-center gap-1">
         <button
+          onClick={() => setRightPanelMode(rightPanelMode === "search" ? "none" : "search")}
+          className="p-1.5 rounded-lg transition-colors cursor-pointer"
+          style={{
+            color: rightPanelMode === "search" ? "var(--color-accent)" : "var(--color-text-muted)",
+            background: rightPanelMode === "search" ? "var(--color-accent)" + "15" : "transparent",
+          }}
+          aria-label="Search in files"
+          title="Search in Files (Ctrl+Shift+F)"
+        >
+          <MagnifyingGlass size={16} weight={rightPanelMode === "search" ? "fill" : "regular"} />
+        </button>
+        <button
           onClick={() => setRightPanelMode(rightPanelMode === "files" ? "none" : "files")}
           className="p-1.5 rounded-lg transition-colors cursor-pointer"
           style={{
@@ -151,6 +163,18 @@ export function Header() {
           title="Browser Preview"
         >
           <Globe size={16} weight={rightPanelMode === "browser" ? "fill" : "regular"} />
+        </button>
+        <button
+          onClick={() => setRightPanelMode(rightPanelMode === "terminal" ? "none" : "terminal")}
+          className="p-1.5 rounded-lg transition-colors cursor-pointer"
+          style={{
+            color: rightPanelMode === "terminal" ? "var(--color-accent)" : "var(--color-text-muted)",
+            background: rightPanelMode === "terminal" ? "var(--color-accent)" + "15" : "transparent",
+          }}
+          aria-label="Terminal"
+          title="Terminal"
+        >
+          <TerminalWindow size={16} weight={rightPanelMode === "terminal" ? "fill" : "regular"} />
         </button>
         <button
           onClick={() => setActivityTerminalOpen(!activityTerminalOpen)}

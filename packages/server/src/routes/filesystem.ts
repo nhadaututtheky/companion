@@ -7,6 +7,7 @@ import { Hono } from "hono";
 import { readdirSync, readFileSync, statSync, existsSync } from "fs";
 import { homedir } from "os";
 import { join, resolve, normalize, extname } from "path";
+import { execFile } from "child_process";
 import type { ApiResponse } from "@companion/shared";
 
 // Directories filtered out of listings (noisy / irrelevant for project selection)
@@ -303,6 +304,131 @@ filesystemRoutes.get("/roots", (c) => {
   }
 
   return c.json({ success: true, data: { roots } } satisfies ApiResponse);
+});
+
+// Max search results returned
+const MAX_SEARCH_RESULTS = 200;
+
+// Ripgrep search timeout (ms)
+const SEARCH_TIMEOUT_MS = 10_000;
+
+interface RgMatchData {
+  path: { text: string };
+  line_number: number;
+  lines: { text: string };
+  submatches: Array<{ start: number; end: number }>;
+}
+
+interface RgMessage {
+  type: string;
+  data: RgMatchData;
+}
+
+interface SearchMatch {
+  file: string;
+  line: number;
+  col: number;
+  text: string;
+}
+
+interface RgResult {
+  matches: SearchMatch[];
+  truncated: boolean;
+  rgNotFound: boolean;
+}
+
+/** Wraps execFile(rg) in a promise, resolves with parsed matches */
+function runRipgrep(args: string[]): Promise<RgResult> {
+  return new Promise((resolve) => {
+    execFile(
+      "rg",
+      args,
+      { timeout: SEARCH_TIMEOUT_MS, maxBuffer: 10 * 1024 * 1024 },
+      (err, stdout) => {
+        if (err && (err as NodeJS.ErrnoException).code === "ENOENT") {
+          resolve({ matches: [], truncated: false, rgNotFound: true });
+          return;
+        }
+
+        const matches: SearchMatch[] = [];
+        let truncated = false;
+
+        if (stdout) {
+          const lines = stdout.split("\n").filter((l) => l.trim().length > 0);
+          for (const raw of lines) {
+            if (matches.length >= MAX_SEARCH_RESULTS) {
+              truncated = true;
+              break;
+            }
+            try {
+              const msg = JSON.parse(raw) as RgMessage;
+              if (msg.type !== "match") continue;
+
+              const d = msg.data;
+              const col = d.submatches[0]?.start ?? 0;
+              matches.push({
+                file: d.path.text,
+                line: d.line_number,
+                col,
+                text: d.lines.text.replace(/\n$/, ""),
+              });
+            } catch {
+              // skip malformed JSON lines
+            }
+          }
+        }
+
+        resolve({ matches, truncated, rgNotFound: false });
+      },
+    );
+  });
+}
+
+/**
+ * GET /api/fs/search?q=<query>&path=<dir>&glob=<pattern>
+ * Full-text search using ripgrep (rg). Returns matched lines with highlight ranges.
+ */
+filesystemRoutes.get("/search", async (c) => {
+  const query = c.req.query("q") ?? "";
+  const rawPath = c.req.query("path") ?? "";
+  const glob = c.req.query("glob") ?? "";
+
+  if (!query.trim()) {
+    return c.json({ success: false, error: "q (search query) is required" } satisfies ApiResponse, 400);
+  }
+
+  const check = validateDir(rawPath);
+  if (!check.ok) {
+    return c.json({ success: false, error: check.error } satisfies ApiResponse, check.status);
+  }
+
+  const args = [
+    "--json",
+    "--max-count=5",
+    "--max-filesize=1M",
+    "--no-heading",
+    query,
+    check.resolved,
+  ];
+
+  if (glob) {
+    args.unshift(`--glob=${glob}`);
+  }
+
+  const result = await runRipgrep(args);
+
+  if (result.rgNotFound) {
+    return c.json({ success: false, error: "ripgrep not installed" } satisfies ApiResponse, 500);
+  }
+
+  return c.json({
+    success: true,
+    data: {
+      matches: result.matches,
+      total: result.matches.length,
+      truncated: result.truncated,
+    },
+  } satisfies ApiResponse);
 });
 
 /** Smart label for a root path: /mnt/c → "C:", /projects/foo → "foo" */

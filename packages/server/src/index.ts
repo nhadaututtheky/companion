@@ -12,6 +12,7 @@ import { verifyLicense, checkOrActivateTrial } from "./services/license.js";
 import { seedDefaultTemplates } from "./services/templates.js";
 import { DEFAULT_PORT, APP_VERSION } from "@companion/shared";
 import { timingSafeEqual } from "node:crypto";
+import { terminalManager } from "./services/terminal-manager.js";
 
 const log = createLogger("server");
 
@@ -137,6 +138,8 @@ app.get("/", (c) => c.redirect("/api/health"));
 
 interface SocketData {
   sessionId: string;
+  type: "session" | "terminal";
+  terminalId?: string;
 }
 
 // ─── Bun.serve with WebSocket upgrade ────────────────────────────────────────
@@ -146,7 +149,32 @@ const server = Bun.serve<SocketData>({
   fetch(req, server) {
     const url = new URL(req.url);
 
-    // WebSocket upgrade: /ws/:sessionId
+    // Terminal WebSocket: /ws/terminal/:id — must be checked before the generic /ws/ path
+    if (url.pathname.startsWith("/ws/terminal/")) {
+      const terminalId = url.pathname.split("/ws/terminal/")[1];
+      if (!terminalId) {
+        return new Response("Missing terminal ID", { status: 400 });
+      }
+
+      const configuredKey = process.env.API_KEY;
+      if (configuredKey) {
+        const wsKey =
+          req.headers.get("Sec-WebSocket-Protocol") ??
+          req.headers.get("Authorization")?.replace("Bearer ", "");
+        if (!wsKey || !safeCompare(wsKey, configuredKey)) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+      }
+
+      const upgraded = server.upgrade(req, {
+        data: { sessionId: "", type: "terminal" as const, terminalId },
+      });
+
+      if (upgraded) return undefined;
+      return new Response("WebSocket upgrade failed", { status: 500 });
+    }
+
+    // Session WebSocket: /ws/:sessionId
     if (url.pathname.startsWith("/ws/")) {
       const sessionId = url.pathname.split("/ws/")[1];
       if (!sessionId) {
@@ -165,7 +193,7 @@ const server = Bun.serve<SocketData>({
       }
 
       const upgraded = server.upgrade(req, {
-        data: { sessionId },
+        data: { sessionId, type: "session" as const },
       });
 
       if (upgraded) return undefined;
@@ -177,11 +205,36 @@ const server = Bun.serve<SocketData>({
   },
   websocket: {
     open(ws) {
+      if (ws.data.type === "terminal" && ws.data.terminalId) {
+        const subscribed = terminalManager.subscribe(ws.data.terminalId, ws);
+        if (!subscribed) {
+          ws.close(1008, "Terminal not found");
+        }
+        return;
+      }
       const { sessionId } = ws.data;
       log.debug("WebSocket connected", { sessionId });
       bridge.addBrowser(sessionId, ws);
     },
     message(ws, message) {
+      if (ws.data.type === "terminal" && ws.data.terminalId) {
+        const msg = String(message);
+        try {
+          const parsed = JSON.parse(msg) as Record<string, unknown>;
+          if (parsed.type === "input" && typeof parsed.data === "string") {
+            terminalManager.write(ws.data.terminalId, parsed.data);
+          } else if (
+            parsed.type === "resize" &&
+            typeof parsed.cols === "number" &&
+            typeof parsed.rows === "number"
+          ) {
+            terminalManager.resize(ws.data.terminalId, parsed.cols, parsed.rows);
+          }
+        } catch {
+          // Malformed JSON — ignore
+        }
+        return;
+      }
       const { sessionId } = ws.data;
       const msg = String(message);
       if (msg.length > 100_000) {
@@ -191,6 +244,10 @@ const server = Bun.serve<SocketData>({
       bridge.handleBrowserMessage(sessionId, msg);
     },
     close(ws) {
+      if (ws.data.type === "terminal" && ws.data.terminalId) {
+        terminalManager.unsubscribe(ws.data.terminalId, ws);
+        return;
+      }
       const { sessionId } = ws.data;
       log.debug("WebSocket disconnected", { sessionId });
       bridge.removeBrowser(sessionId, ws);
@@ -218,6 +275,9 @@ function shutdown() {
   for (const session of bridge.getActiveSessions()) {
     bridge.killSession(session.id);
   }
+
+  // Kill all active terminal processes
+  terminalManager.killAll();
 
   server.stop();
   closeDb();

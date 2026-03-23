@@ -6,6 +6,7 @@ import { CommandPalette } from "./command-palette";
 
 /**
  * Mounts the CommandPalette and registers the global Ctrl+K / Cmd+K shortcut.
+ * Also registers Ctrl+Shift+F for the file search panel.
  * Rendered once in the root layout so it is available on every page.
  */
 export function CommandPaletteProvider() {
@@ -19,6 +20,15 @@ export function CommandPaletteProvider() {
       if (modifier && e.key === "k") {
         e.preventDefault();
         setOpen(true);
+      }
+
+      // Ctrl+Shift+F / Cmd+Shift+F — toggle file search panel
+      if (modifier && e.shiftKey && e.key === "F") {
+        e.preventDefault();
+        const uiStore = useUiStore.getState();
+        uiStore.setRightPanelMode(
+          uiStore.rightPanelMode === "search" ? "none" : "search",
+        );
       }
     };
 

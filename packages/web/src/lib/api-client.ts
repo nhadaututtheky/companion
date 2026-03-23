@@ -340,6 +340,30 @@ export const api = {
       request<{
         data: { path: string; name: string; ext: string; content: string; size: number };
       }>(`/api/fs/read?path=${encodeURIComponent(path)}`),
+
+    search: (query: string, path: string, glob?: string) =>
+      request<{
+        data: {
+          matches: Array<{ file: string; line: number; col: number; text: string }>;
+          total: number;
+          truncated: boolean;
+        };
+      }>(
+        `/api/fs/search?q=${encodeURIComponent(query)}&path=${encodeURIComponent(path)}${glob ? `&glob=${encodeURIComponent(glob)}` : ""}`,
+      ),
+  },
+
+  // Terminal
+  terminal: {
+    spawn: (cwd: string) =>
+      request<{ data: { terminalId: string } }>("/api/terminal", {
+        method: "POST",
+        body: JSON.stringify({ cwd }),
+      }),
+    list: () =>
+      request<{ data: { terminals: Array<{ id: string; cwd: string; createdAt: number }> } }>("/api/terminal"),
+    kill: (id: string) =>
+      request<{ success: boolean }>(`/api/terminal/${id}`, { method: "DELETE" }),
   },
 
   // Templates

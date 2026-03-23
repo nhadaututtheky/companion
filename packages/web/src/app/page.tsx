@@ -13,6 +13,8 @@ import { ActivityTerminal } from "@/components/activity/activity-terminal";
 import { MagicRing } from "@/components/ring/magic-ring";
 import { FileExplorerPanel } from "@/components/panels/file-explorer-panel";
 import { BrowserPreviewPanel } from "@/components/panels/browser-preview-panel";
+import { SearchPanel } from "@/components/panels/search-panel";
+import { TerminalPanel } from "@/components/panels/terminal-panel";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { api } from "@/lib/api-client";
@@ -271,6 +273,7 @@ export default function DashboardPage() {
   const rightPanelPath = useUiStore((s) => s.rightPanelPath);
   const browserPreviewUrl = useUiStore((s) => s.browserPreviewUrl);
   const setRightPanelMode = useUiStore((s) => s.setRightPanelMode);
+  const setRightPanelPath = useUiStore((s) => s.setRightPanelPath);
   const [resumableSessions, setResumableSessions] = useState<ResumableSession[]>([]);
   const [resumeBannerDismissed, setResumeBannerDismissed] = useState(false);
 
@@ -561,12 +564,12 @@ export default function DashboardPage() {
             )}
           </main>
 
-          {/* Right panel — File Explorer or Browser Preview */}
+          {/* Right panel — File Explorer, Browser Preview, or Search */}
           {rightPanelMode !== "none" && (
             <aside
               className="flex flex-col flex-shrink-0 overflow-hidden"
               style={{
-                width: rightPanelMode === "browser" ? 600 : 500,
+                width: rightPanelMode === "browser" ? 600 : rightPanelMode === "terminal" ? 600 : 500,
                 borderLeft: "1px solid var(--color-border)",
                 transition: "width 200ms ease",
               }}
@@ -580,6 +583,21 @@ export default function DashboardPage() {
               {rightPanelMode === "browser" && (
                 <BrowserPreviewPanel
                   initialUrl={browserPreviewUrl ?? undefined}
+                  onClose={() => setRightPanelMode("none")}
+                />
+              )}
+              {rightPanelMode === "search" && (
+                <SearchPanel
+                  searchRoot={rightPanelPath ?? ""}
+                  onOpenFile={(path) => {
+                    setRightPanelMode("files");
+                    setRightPanelPath(path);
+                  }}
+                  onClose={() => setRightPanelMode("none")}
+                />
+              )}
+              {rightPanelMode === "terminal" && (
+                <TerminalPanel
                   onClose={() => setRightPanelMode("none")}
                 />
               )}
