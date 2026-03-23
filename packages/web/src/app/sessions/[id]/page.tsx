@@ -16,6 +16,58 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+function ContextStatusBar({ session }: { session: { state?: Partial<import("@companion/shared").SessionState> } | undefined }) {
+  if (!session?.state) return null;
+
+  const { total_input_tokens = 0, total_output_tokens = 0, cache_read_tokens = 0, model = "" } = session.state;
+  const totalTokens = total_input_tokens + total_output_tokens + cache_read_tokens;
+  if (totalTokens === 0) return null;
+
+  const maxTokens = model.includes("haiku") ? 200_000 : 1_000_000;
+  const pct = Math.min(100, (totalTokens / maxTokens) * 100);
+  const remaining = maxTokens - totalTokens;
+
+  const color = pct < 60 ? "#34A853" : pct < 85 ? "#FBBC04" : "#EA4335";
+
+  const formatK = (n: number) => {
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1000) return `${(n / 1000).toFixed(0)}K`;
+    return String(n);
+  };
+
+  return (
+    <div
+      className="flex items-center gap-3 px-4 py-1.5"
+      style={{
+        background: "var(--color-bg-card)",
+        borderBottom: "1px solid var(--color-border)",
+      }}
+    >
+      {/* Progress bar */}
+      <div
+        className="flex-1 rounded-full overflow-hidden"
+        style={{ height: 3, background: "var(--color-bg-elevated)", maxWidth: 120 }}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, background: color }}
+        />
+      </div>
+
+      {/* Text info */}
+      <span className="text-xs font-mono" style={{ color }}>
+        {pct.toFixed(0)}%
+      </span>
+      <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
+        {formatK(totalTokens)} / {formatK(maxTokens)}
+      </span>
+      <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        · {formatK(remaining)} remaining
+      </span>
+    </div>
+  );
+}
+
 export default function SessionPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
@@ -75,6 +127,8 @@ export default function SessionPage({ params }: PageProps) {
               </span>
             )}
           </div>
+
+          <ContextStatusBar session={session} />
 
           {/* Messages */}
           <MessageFeed messages={messages} />

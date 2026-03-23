@@ -168,6 +168,57 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     await ctx.reply("Select a project to resume or start:", { reply_markup: keyboard });
   });
 
+  // ── /fork — Fork current session (keep old alive) ──────────────────────
+
+  bot.command("fork", async (ctx) => {
+    const chatId = ctx.chat.id;
+    const topicId = ctx.message?.message_thread_id;
+    const mapping = bridge.getMapping(chatId, topicId);
+
+    if (!mapping) {
+      await ctx.reply("No active session to fork.");
+      return;
+    }
+
+    const project = getProject(mapping.projectSlug);
+    if (!project) {
+      await ctx.reply("Project not found.");
+      return;
+    }
+
+    const oldSessionId = mapping.sessionId;
+
+    try {
+      const newSessionId = await bridge.wsBridge.startSession({
+        projectSlug: project.slug,
+        cwd: project.dir,
+        model: mapping.model,
+        permissionMode: project.permissionMode,
+        source: "telegram",
+      });
+
+      // Update mapping to new session (old session keeps running)
+      bridge.setMapping(chatId, topicId, {
+        sessionId: newSessionId,
+        projectSlug: project.slug,
+        model: mapping.model,
+      });
+      bridge.subscribeToSession(newSessionId, chatId, topicId);
+
+      log.info("Session forked", { chatId, oldSessionId, newSessionId, projectSlug: project.slug });
+
+      await ctx.reply(
+        `🔀 <b>Session forked</b>\n` +
+        `Old: <code>${escapeHTML(oldSessionId.slice(0, 8))}</code> (still running)\n` +
+        `New: <code>${escapeHTML(newSessionId.slice(0, 8))}</code>\n\n` +
+        `Use <code>/stream ${escapeHTML(oldSessionId.slice(0, 8))}</code> to watch the old session.`,
+        { parse_mode: "HTML" },
+      );
+    } catch {
+      await ctx.reply("Failed to fork session.");
+    }
+  });
+
   // ── Callback queries for session commands ───────────────────────────────
 
   bot.callbackQuery(/^project:(.+)$/, async (ctx) => {

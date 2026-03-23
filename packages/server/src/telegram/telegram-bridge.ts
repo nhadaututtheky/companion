@@ -35,6 +35,15 @@ import type {
 
 const log = createLogger("telegram-bridge");
 
+// ─── Vietnamese detection ────────────────────────────────────────────────────
+
+const VI_REGEX = /[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ]/gi;
+
+function isVietnamese(text: string): boolean {
+  const matches = text.match(VI_REGEX);
+  return (matches?.length ?? 0) >= 3;
+}
+
 // ─── File path detection (Phase 14) ─────────────────────────────────────────
 
 /**
@@ -135,6 +144,8 @@ export class TelegramBridge {
   private streamSubscriptions = new Map<string, string>();
   /** Active debate channel per chat (chatKey → channelId) */
   private activeDebateChannels = new Map<string, string>();
+  /** Active auto-approve countdowns: messageId → timer */
+  private autoApproveTimers = new Map<number, ReturnType<typeof setInterval>>();
 
   constructor(wsBridge: WsBridge, config: BotConfig) {
     this.wsBridge = wsBridge;
@@ -191,6 +202,12 @@ export class TelegramBridge {
       if (cfg.idleTimer) clearTimeout(cfg.idleTimer);
     }
     this.sessionConfigs.clear();
+
+    // Clear auto-approve countdown timers
+    for (const timer of this.autoApproveTimers.values()) {
+      clearInterval(timer);
+    }
+    this.autoApproveTimers.clear();
 
     await this.bot.stop();
     log.info("Bot stopped", { botId: this.config.botId });
@@ -845,18 +862,37 @@ export class TelegramBridge {
       return;
     }
 
+    // Auto-translate Vietnamese → English to save tokens
+    let messageToSend = text;
+    if (isVietnamese(text) && text.length > 10) {
+      try {
+        const { translateViToEn } = await import("../services/ai-client.js");
+        const translated = await translateViToEn(text);
+        if (translated) {
+          messageToSend = translated;
+          // Echo the translated text so the user sees what was sent
+          await this.bot.api.sendMessage(chatId, `🔄 <i>${escapeHTML(translated)}</i>`, {
+            parse_mode: "HTML",
+            message_thread_id: topicId,
+          }).catch(() => {});
+        }
+      } catch {
+        // Translation failed — send original text
+      }
+    }
+
     // Store message
     storeMessage({
       id: randomUUID(),
       sessionId: mapping.sessionId,
       role: "user",
-      content: text,
+      content: messageToSend,
       source: "telegram",
       sourceId: String(ctx.message?.message_id),
     });
 
     // Send to CLI
-    this.wsBridge.sendUserMessage(mapping.sessionId, text, "telegram");
+    this.wsBridge.sendUserMessage(mapping.sessionId, messageToSend, "telegram");
 
     // User is active — clear idle timer
     const cfg = this.getSessionConfig(mapping.sessionId);
@@ -1041,9 +1077,19 @@ export class TelegramBridge {
 
     const { perms, sessionId } = batch;
 
+    // Check auto-approve config
+    const session = this.wsBridge.getSession(sessionId);
+    const aa = session?.autoApproveConfig;
+    const autoApproveSeconds = aa?.enabled ? (aa.timeoutSeconds ?? 0) : 0;
+
     // Format permission message
     const lines = perms.map((p) => formatPermission(p.toolName, p.description));
-    const text = lines.join("\n\n");
+    const baseText = lines.join("\n\n");
+
+    // Add countdown suffix if auto-approve is on
+    const countdownSuffix = autoApproveSeconds > 0
+      ? `\n\n⏱️ Auto-approve in <b>${autoApproveSeconds}s</b>`
+      : "";
 
     // Build keyboard with styled allow/deny buttons (Telegram Bot API style field)
     type PermBtn = { text: string; callback_data: string; style?: string };
@@ -1063,13 +1109,90 @@ export class TelegramBridge {
       }
     }
 
-    await this.bot.api.sendMessage(chatId, text, {
+    const sentMsg = await this.bot.api.sendMessage(chatId, baseText + countdownSuffix, {
       parse_mode: "HTML",
       reply_markup: { inline_keyboard: permRows } as unknown as import("grammy").InlineKeyboard,
       message_thread_id: topicId,
     }).catch((err) => {
       log.error("Failed to send permission batch", { error: String(err) });
+      return undefined;
     });
+
+    // Start auto-approve countdown if enabled
+    if (sentMsg && autoApproveSeconds > 0) {
+      this.startAutoApproveCountdown(
+        chatId, topicId, sentMsg.message_id,
+        sessionId, perms, baseText, permRows, autoApproveSeconds,
+      );
+    }
+  }
+
+  private startAutoApproveCountdown(
+    chatId: number,
+    topicId: number | undefined,
+    messageId: number,
+    sessionId: string,
+    perms: Array<{ requestId: string; toolName: string; description?: string }>,
+    baseText: string,
+    permRows: Array<Array<{ text: string; callback_data: string; style?: string }>>,
+    totalSeconds: number,
+  ): void {
+    let remaining = totalSeconds;
+
+    const interval = setInterval(async () => {
+      remaining -= 3;
+
+      if (remaining <= 0) {
+        // Time's up — auto-approve all
+        clearInterval(interval);
+        this.autoApproveTimers.delete(messageId);
+
+        for (const p of perms) {
+          this.wsBridge.handleBrowserMessage(sessionId, JSON.stringify({
+            type: "permission_response",
+            request_id: p.requestId,
+            behavior: "allow",
+          }));
+        }
+
+        // Edit message to show approved (no keyboard)
+        await this.bot.api.editMessageText(
+          chatId, messageId,
+          baseText + "\n\n✅ <b>Auto-approved</b>",
+          { parse_mode: "HTML" },
+        ).catch(() => {});
+        return;
+      }
+
+      // Update countdown text, keep existing keyboard
+      await this.bot.api.editMessageText(
+        chatId, messageId,
+        baseText + `\n\n⏱️ Auto-approve in <b>${remaining}s</b>`,
+        {
+          parse_mode: "HTML",
+          reply_markup: { inline_keyboard: permRows } as unknown as import("grammy").InlineKeyboard,
+        },
+      ).catch(() => {});
+    }, 3000);
+
+    this.autoApproveTimers.set(messageId, interval);
+  }
+
+  /** Cancel auto-approve countdown for a specific message (on manual allow/deny) */
+  cancelAutoApproveCountdown(messageId: number): void {
+    const timer = this.autoApproveTimers.get(messageId);
+    if (timer) {
+      clearInterval(timer);
+      this.autoApproveTimers.delete(messageId);
+    }
+  }
+
+  /** Cancel all active auto-approve countdowns (on /allow or /deny commands) */
+  cancelAllAutoApproveCountdowns(): void {
+    for (const timer of this.autoApproveTimers.values()) {
+      clearInterval(timer);
+    }
+    this.autoApproveTimers.clear();
   }
 
   // ── Persistence ───────────────────────────────────────────────────────

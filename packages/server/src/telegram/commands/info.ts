@@ -298,6 +298,74 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
     await ctx.reply(lines.join("\n"), { parse_mode: "HTML" });
   });
 
+  // ── /context — Context window usage meter ────────────────────────────
+
+  bot.command("context", async (ctx) => {
+    const mapping = bridge.getMapping(ctx.chat.id, ctx.message?.message_thread_id);
+    if (!mapping) {
+      await ctx.reply("No active session. Use /start to begin.");
+      return;
+    }
+
+    const session = bridge.wsBridge.getSession(mapping.sessionId);
+    if (!session) {
+      await ctx.reply("Session ended. Use /new to start a new one.");
+      return;
+    }
+
+    const s = session.state;
+    const model = s.model ?? mapping.model ?? "";
+
+    // Determine context window size by model family
+    const maxTokens = model.includes("haiku") ? 200_000 : 1_000_000;
+
+    // Total tokens used = input + output; cache reads count against input window
+    const totalUsed = (s.total_input_tokens ?? 0) + (s.total_output_tokens ?? 0);
+    const pct = Math.min(Math.round((totalUsed / maxTokens) * 100), 100);
+
+    // Build visual progress bar (16 blocks)
+    const BAR_LEN = 16;
+    const filled = Math.round((pct / 100) * BAR_LEN);
+    const empty = BAR_LEN - filled;
+    const bar = "█".repeat(filled) + "░".repeat(empty);
+
+    // Warning level prefix
+    let warningPrefix = "";
+    if (pct >= 85) {
+      warningPrefix = "🔴 ";
+    } else if (pct >= 60) {
+      warningPrefix = "⚠️ ";
+    }
+
+    const remaining = Math.max(maxTokens - totalUsed, 0);
+    const maxLabel = maxTokens >= 1_000_000
+      ? `${(maxTokens / 1_000_000).toFixed(0)}M`
+      : `${(maxTokens / 1_000).toFixed(0)}K`;
+
+    // Compact model display
+    const modelShort = model.includes("opus")
+      ? "claude-opus-4-6"
+      : model.includes("haiku")
+      ? "claude-haiku-4-5"
+      : "claude-sonnet-4-6";
+
+    const lines = [
+      `📊 <b>Context Usage</b>`,
+      ``,
+      `${warningPrefix}<code>${bar}</code> ${pct}%`,
+      `${formatTokens(totalUsed)} / ${maxLabel} tokens · ${formatTokens(remaining)} remaining`,
+      ``,
+      `Model: <code>${escapeHTML(modelShort)}</code>`,
+      `Turns: ${s.num_turns ?? 0} · Cost: ${formatCost(s.total_cost_usd ?? 0)}`,
+    ];
+
+    if (pct >= 60) {
+      lines.push(``, `💡 Tip: use <code>/compact</code> to free up context space.`);
+    }
+
+    await ctx.reply(lines.join("\n"), { parse_mode: "HTML" });
+  });
+
   // ── /help [command] — Categorized help ────────────────────────────────
 
   bot.command("help", async (ctx) => {
@@ -323,6 +391,7 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
       "/new [project] — New session",
       "/stop — Stop session",
       "/resume — Resume session",
+      "/fork — Fork session (keep old)",
       "/projects — List projects",
       "",
       "🎛️ <b>Control</b>",
@@ -349,6 +418,7 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
       "📊 <b>Info</b>",
       "/status — Session status",
       "/cost — Cost breakdown",
+      "/context — Context window usage",
       "/files — Modified files",
       "/model — Change model",
       "/history — Recent sessions",
@@ -415,6 +485,8 @@ const COMMAND_HELP: Record<string, string> = {
   model: "<code>/model</code> — Show model picker\n<code>/model claude-sonnet-4-6</code> — Set model directly",
   history: "<code>/history [n]</code>\nShow last N sessions (default 5, max 20).\nIncludes project, model, cost, duration, and turn count.",
   usage: "<code>/usage [today|week|month]</code>\nShow cost and usage summary.\nBreaks down by project with session count and token totals.",
+  context: "Show a visual context window usage meter.\nDisplays tokens used vs. max capacity for the current session with a progress bar.\n⚠️ shown at 60%, 🔴 at 85%. Includes tip to /compact when high.",
+  fork: "Fork current session — start a new session for the same project while keeping the old one running.\nOld session remains accessible via /stream.",
   stream: "<code>/stream</code> — List active sessions to stream\n<code>/stream sessionId</code> — Attach to specific session\nReceive live events from a session without controlling it.",
   detach: "Detach from a streamed session. The session continues running.",
   autoapprove: "<code>/autoapprove [on|off|seconds]</code>\nToggle auto-approve for permission requests.\nWhen on, permissions are automatically allowed after the timeout.",

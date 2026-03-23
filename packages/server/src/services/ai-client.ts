@@ -251,6 +251,26 @@ export async function callAIWithModel(opts: {
   return callOpenAICompatible(config, opts.model, opts);
 }
 
+// ── Translation helpers ────────────────────────────────────────────────────
+
+/**
+ * Quick Vi→En translation using the configured fast AI model.
+ * Returns translated text or null if translation fails / AI not configured.
+ */
+export async function translateViToEn(text: string): Promise<string | null> {
+  try {
+    const response = await callAI({
+      systemPrompt: "You are a translator. Translate Vietnamese text to English. Output ONLY the English translation, nothing else.",
+      messages: [{ role: "user", content: text }],
+      tier: "fast",
+      maxTokens: 1024,
+    });
+    return response.text.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 async function callOpenAICompatible(
   config: AIConfig,
   model: string,

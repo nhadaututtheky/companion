@@ -29,6 +29,8 @@ export function registerControlCommands(bridge: TelegramBridge): void {
       return;
     }
 
+    bridge.cancelAllAutoApproveCountdowns();
+
     for (const requestId of pending) {
       bridge.wsBridge.handleBrowserMessage(mapping.sessionId, JSON.stringify({
         type: "permission_response",
@@ -60,6 +62,8 @@ export function registerControlCommands(bridge: TelegramBridge): void {
       await ctx.reply("No pending permissions.");
       return;
     }
+
+    bridge.cancelAllAutoApproveCountdowns();
 
     for (const requestId of pending) {
       bridge.wsBridge.handleBrowserMessage(mapping.sessionId, JSON.stringify({
@@ -127,6 +131,12 @@ export function registerControlCommands(bridge: TelegramBridge): void {
     const behavior = ctx.match[1] as "allow" | "deny";
     const sessionId = ctx.match[2]!;
     const requestId = ctx.match[3]!;
+
+    // Cancel auto-approve countdown for this message if active
+    const msgId = ctx.callbackQuery.message?.message_id;
+    if (msgId !== undefined) {
+      bridge.cancelAutoApproveCountdown(msgId);
+    }
 
     bridge.wsBridge.handleBrowserMessage(sessionId, JSON.stringify({
       type: "permission_response",

@@ -109,6 +109,8 @@ export async function registerCommands(bot: Bot): Promise<void> {
       { command: "stream", description: "Attach to an existing session" },
       { command: "detach", description: "Detach from streamed session" },
       { command: "resume", description: "Resume last interrupted session" },
+      { command: "fork", description: "Fork session (keep old running)" },
+      { command: "context", description: "Show context window usage" },
     ]);
     log.info("Commands registered");
   } catch (err) {
