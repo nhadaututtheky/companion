@@ -6,6 +6,7 @@ import { useComposerStore, buildMessageWithContext, QUICK_ACTION_PROMPTS } from 
 import type { QuickAction } from "@/lib/stores/composer-store";
 import { AttachmentChip } from "./attachment-chip";
 import { QuickActions } from "./quick-actions";
+import { api } from "@/lib/api-client";
 
 interface MessageComposerProps {
   onSend: (text: string) => void;
@@ -23,10 +24,12 @@ export function MessageComposer({
   placeholder = "Message Claude...",
 }: MessageComposerProps) {
   const [text, setText] = useState("");
+  const [isDragOver, setIsDragOver] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Composer store — use individual selectors to avoid infinite loops
   const attachments = useComposerStore((s) => s.attachments);
+  const addAttachment = useComposerStore((s) => s.addAttachment);
   const removeAttachment = useComposerStore((s) => s.removeAttachment);
   const clearAttachments = useComposerStore((s) => s.clearAttachments);
 
@@ -94,15 +97,77 @@ export function MessageComposer({
     <div
       className="px-4 py-3"
       style={{ borderTop: "1px solid var(--color-border)" }}
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes("application/x-companion-file")) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+          setIsDragOver(true);
+        }
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+          setIsDragOver(false);
+        }
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        const data = e.dataTransfer.getData("application/x-companion-file");
+        if (!data) return;
+        try {
+          const file = JSON.parse(data) as { path: string; name: string; ext: string };
+          const currentAttachments = useComposerStore.getState().attachments;
+          const isDuplicate = currentAttachments.some(
+            (a) => a.meta?.filePath === file.path
+          );
+          if (isDuplicate) return;
+          api.fs.read(file.path).then((res) => {
+            addAttachment({
+              kind: "file",
+              label: file.name,
+              content: res.data.content,
+              meta: { filePath: file.path, language: file.ext },
+            });
+          }).catch(() => {
+            addAttachment({
+              kind: "file",
+              label: file.name,
+              content: `[File: ${file.path}]`,
+              meta: { filePath: file.path, language: file.ext },
+            });
+          });
+        } catch { /* ignore malformed data */ }
+      }}
     >
       <div
         className="flex flex-col rounded-2xl px-4 py-2.5"
         style={{
+          position: "relative",
           background: "var(--color-bg-card)",
-          border: "1px solid var(--color-border)",
+          border: isDragOver ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
           boxShadow: "var(--shadow-sm)",
         }}
       >
+        {isDragOver && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(66, 133, 244, 0.08)",
+              border: "2px dashed var(--color-accent)",
+              borderRadius: 12,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 10,
+              pointerEvents: "none",
+            }}
+          >
+            <span style={{ color: "var(--color-accent)", fontWeight: 600, fontSize: 13 }}>
+              Drop file to attach
+            </span>
+          </div>
+        )}
         {/* Attachment chips + quick actions */}
         {attachments.length > 0 && (
           <div className="mb-2 space-y-2">

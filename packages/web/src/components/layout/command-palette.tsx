@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useMemo } from "react";
+import { useEffect, useCallback, useMemo, useState } from "react";
 import { Command } from "cmdk";
 import {
   Terminal,
@@ -11,17 +11,57 @@ import {
   Gear,
   ArrowRight,
   ArrowsLeftRight,
+  FolderOpen,
+  MagnifyingGlass,
+  TerminalWindow,
+  Globe,
+  Folder,
+  ListBullets,
+  House,
+  ClockCounterClockwise,
 } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { api } from "@/lib/api-client";
 
+// ── Recent actions helpers ────────────────────────────────────────────────────
+
+const RECENT_ACTIONS_KEY = "companion_recent_actions";
+
+function getRecentActions(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_ACTIONS_KEY) ?? "[]") as string[];
+  } catch {
+    return [];
+  }
+}
+
+function addRecentAction(label: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const existing = getRecentActions();
+    const updated = [label, ...existing.filter((a) => a !== label)].slice(0, 5);
+    localStorage.setItem(RECENT_ACTIONS_KEY, JSON.stringify(updated));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export function CommandPalette() {
   const open = useUiStore((s) => s.commandPaletteOpen);
   const setOpen = useUiStore((s) => s.setCommandPaletteOpen);
   const toggleTheme = useUiStore((s) => s.toggleTheme);
   const theme = useUiStore((s) => s.theme);
+  const setNewSessionModalOpen = useUiStore((s) => s.setNewSessionModalOpen);
+  const setCompareModalOpen = useUiStore((s) => s.setCompareModalOpen);
+  const rightPanelMode = useUiStore((s) => s.rightPanelMode);
+  const setRightPanelMode = useUiStore((s) => s.setRightPanelMode);
+  const activityTerminalOpen = useUiStore((s) => s.activityTerminalOpen);
+  const setActivityTerminalOpen = useUiStore((s) => s.setActivityTerminalOpen);
 
   const sessionsMap = useSessionStore((s) => s.sessions);
   const sessions = useMemo(() => Object.values(sessionsMap), [sessionsMap]);
@@ -29,6 +69,14 @@ export function CommandPalette() {
   const activeSessionId = useSessionStore((s) => s.activeSessionId);
 
   const router = useRouter();
+
+  // Track recent actions — refresh when palette opens
+  const [recentActions, setRecentActions] = useState<string[]>([]);
+  useEffect(() => {
+    if (open) {
+      setRecentActions(getRecentActions());
+    }
+  }, [open]);
 
   // Close on Escape
   const handleKeyDown = useCallback(
@@ -49,46 +97,108 @@ export function CommandPalette() {
     };
   }, [open, handleKeyDown]);
 
-  const handleSwitchSession = (id: string) => {
+  // ── Action helpers ──────────────────────────────────────────────────────────
+
+  const close = useCallback(
+    (label?: string) => {
+      if (label) addRecentAction(label);
+      setOpen(false);
+    },
+    [setOpen],
+  );
+
+  const handleSwitchSession = (id: string, name: string) => {
     setActiveSession(id);
-    setOpen(false);
+    close(`Switch to: ${name}`);
     router.push(`/sessions/${id}`);
   };
 
-  const setNewSessionModalOpen = useUiStore((s) => s.setNewSessionModalOpen);
-  const setCompareModalOpen = useUiStore((s) => s.setCompareModalOpen);
-
   const handleNewSession = () => {
-    setOpen(false);
+    close("New Session");
     setNewSessionModalOpen(true);
   };
 
   const handleCompareSessions = () => {
-    setOpen(false);
+    close("Compare Sessions");
     setCompareModalOpen(true);
   };
 
-  const handleStopSession = async () => {
-    if (!activeSessionId) return;
-    setOpen(false);
-    try {
-      await api.sessions.stop(activeSessionId);
-    } catch {
-      // ignore
-    }
+  const handleStopAllSessions = async () => {
+    close("Stop All Sessions");
+    const running = sessions.filter((s) =>
+      ["running", "waiting", "idle"].includes(s.status),
+    );
+    await Promise.allSettled(running.map((s) => api.sessions.stop(s.id)));
   };
 
   const handleToggleTheme = () => {
+    const label = `Toggle Theme (${theme === "light" ? "→ Dark" : "→ Light"})`;
+    close(label);
     toggleTheme();
-    setOpen(false);
   };
 
   const handleGoSettings = () => {
-    setOpen(false);
+    close("Go to Settings");
     router.push("/settings");
   };
 
+  const handleGoDashboard = () => {
+    close("Go to Dashboard");
+    router.push("/");
+  };
+
+  const handleGoProjects = () => {
+    close("Go to Projects");
+    router.push("/projects");
+  };
+
+  const handleGoTemplates = () => {
+    close("Go to Templates");
+    router.push("/templates");
+  };
+
+  const handleTogglePanel = (
+    mode: "files" | "search" | "terminal" | "browser",
+    label: string,
+  ) => {
+    close(label);
+    setRightPanelMode(rightPanelMode === mode ? "none" : mode);
+  };
+
+  const handleToggleActivity = () => {
+    close("Toggle Activity Terminal");
+    setActivityTerminalOpen(!activityTerminalOpen);
+  };
+
+  const handleRecentAction = (label: string) => {
+    // Re-run the matching action by dispatching synthetic click to item
+    // For simplicity: just close and add it back as most-recent
+    close(label);
+  };
+
+  // ── All registered actions for lookup ──────────────────────────────────────
+  const ACTION_HANDLERS: Record<string, () => void> = {
+    "New Session": handleNewSession,
+    "Compare Sessions": handleCompareSessions,
+    "Stop All Sessions": handleStopAllSessions,
+    "Toggle Theme (→ Dark)": handleToggleTheme,
+    "Toggle Theme (→ Light)": handleToggleTheme,
+    "Go to Settings": handleGoSettings,
+    "Go to Dashboard": handleGoDashboard,
+    "Go to Projects": handleGoProjects,
+    "Go to Templates": handleGoTemplates,
+    "Toggle File Explorer": () => handleTogglePanel("files", "Toggle File Explorer"),
+    "Toggle Search": () => handleTogglePanel("search", "Toggle Search"),
+    "Toggle Terminal": () => handleTogglePanel("terminal", "Toggle Terminal"),
+    "Toggle Browser Preview": () => handleTogglePanel("browser", "Toggle Browser Preview"),
+    "Toggle Activity Terminal": handleToggleActivity,
+  };
+
   if (!open) return null;
+
+  const activeSessions = sessions.filter((s) =>
+    ["running", "waiting", "idle"].includes(s.status),
+  );
 
   return (
     <div
@@ -121,10 +231,8 @@ export function CommandPalette() {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <Command
-          label="Command palette"
-          style={{ fontFamily: "var(--font-body)" }}
-        >
+        <Command label="Command palette" style={{ fontFamily: "var(--font-body)" }}>
+          {/* Search input row */}
           <div
             style={{
               display: "flex",
@@ -134,11 +242,7 @@ export function CommandPalette() {
               gap: "10px",
             }}
           >
-            <Terminal
-              size={16}
-              color="var(--color-text-muted)"
-              aria-hidden="true"
-            />
+            <Terminal size={16} color="var(--color-text-muted)" aria-hidden="true" />
             <Command.Input
               placeholder="Type a command..."
               style={{
@@ -168,7 +272,7 @@ export function CommandPalette() {
 
           <Command.List
             style={{
-              maxHeight: "360px",
+              maxHeight: "400px",
               overflowY: "auto",
               padding: "8px",
             }}
@@ -184,107 +288,241 @@ export function CommandPalette() {
               No results found.
             </Command.Empty>
 
-            {/* Sessions group */}
-            {sessions.length > 0 && (
-              <Command.Group
-                heading="Switch Session"
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  color: "var(--color-text-muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  padding: "4px 8px 4px",
-                }}
-              >
-                {sessions.map((s) => (
+            {/* Recent actions — only when not searching */}
+            {recentActions.length > 0 && (
+              <Command.Group heading="Recent" style={groupHeadingStyle}>
+                {recentActions.map((label) => (
                   <Command.Item
-                    key={s.id}
-                    value={`session-${s.id}-${s.projectName ?? s.id}`}
-                    onSelect={() => handleSwitchSession(s.id)}
-                    style={commandItemStyle(s.id === activeSessionId)}
+                    key={label}
+                    value={`recent-${label}`}
+                    onSelect={() => {
+                      const handler = ACTION_HANDLERS[label];
+                      if (handler) {
+                        handler();
+                      } else {
+                        handleRecentAction(label);
+                      }
+                    }}
+                    style={commandItemStyle(false)}
                   >
-                    <Terminal size={14} aria-hidden="true" />
-                    <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {s.projectName || s.id.slice(0, 8)}
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        fontSize: "11px",
-                        color: "var(--color-text-muted)",
-                      }}
-                    >
-                      {s.status}
-                    </span>
-                    <ArrowRight size={12} aria-hidden="true" style={{ color: "var(--color-text-muted)" }} />
+                    <div style={itemInnerStyle}>
+                      <ClockCounterClockwise size={14} aria-hidden="true" />
+                      <span style={labelStyle}>{label}</span>
+                    </div>
                   </Command.Item>
                 ))}
               </Command.Group>
             )}
 
-            {/* Actions group */}
-            <Command.Group
-              heading="Actions"
-              style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                color: "var(--color-text-muted)",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                padding: "4px 8px 4px",
-              }}
-            >
+            {/* Sessions group */}
+            <Command.Group heading="Sessions" style={groupHeadingStyle}>
               <Command.Item
-                value="new session start"
+                value="new session start create"
                 onSelect={handleNewSession}
                 style={commandItemStyle(false)}
               >
-                <Plus size={14} aria-hidden="true" />
-                <span>New Session</span>
+                <div style={itemInnerStyle}>
+                  <Plus size={14} aria-hidden="true" />
+                  <span style={labelStyle}>New Session</span>
+                </div>
                 <ShortcutBadge keys={["N"]} />
               </Command.Item>
 
+              {activeSessions.length > 0 && (
+                <Command.Item
+                  value="stop all sessions kill end terminate"
+                  onSelect={handleStopAllSessions}
+                  style={commandItemStyle(false)}
+                >
+                  <div style={itemInnerStyle}>
+                    <StopCircle size={14} aria-hidden="true" />
+                    <span style={labelStyle}>Stop All Sessions</span>
+                  </div>
+                  <span style={metaStyle}>{activeSessions.length} active</span>
+                </Command.Item>
+              )}
+
+              {sessions.map((s) => {
+                const name = s.projectName || s.id.slice(0, 8);
+                return (
+                  <Command.Item
+                    key={s.id}
+                    value={`switch session ${name} ${s.id} ${s.status}`}
+                    onSelect={() => handleSwitchSession(s.id, name)}
+                    style={commandItemStyle(s.id === activeSessionId)}
+                  >
+                    <div style={itemInnerStyle}>
+                      <ArrowRight size={14} aria-hidden="true" />
+                      <span style={labelStyle}>Switch to: {name}</span>
+                    </div>
+                    <span style={metaStyle}>{s.model.split("-").slice(-1)[0]}</span>
+                    <span
+                      style={{
+                        ...metaStyle,
+                        color: statusColor(s.status),
+                        fontWeight: 600,
+                      }}
+                    >
+                      {s.status}
+                    </span>
+                  </Command.Item>
+                );
+              })}
+            </Command.Group>
+
+            {/* Panels group */}
+            <Command.Group heading="Panels" style={groupHeadingStyle}>
               <Command.Item
-                value="stop session kill end"
-                onSelect={handleStopSession}
-                disabled={!activeSessionId}
-                style={commandItemStyle(false, !activeSessionId)}
+                value="toggle file explorer files sidebar"
+                onSelect={() => handleTogglePanel("files", "Toggle File Explorer")}
+                style={commandItemStyle(rightPanelMode === "files")}
               >
-                <StopCircle size={14} aria-hidden="true" />
-                <span>Stop Current Session</span>
+                <div style={itemInnerStyle}>
+                  <FolderOpen size={14} aria-hidden="true" />
+                  <span style={labelStyle}>Toggle File Explorer</span>
+                </div>
+                <ActiveBadge active={rightPanelMode === "files"} />
               </Command.Item>
 
+              <Command.Item
+                value="toggle search find in files"
+                onSelect={() => handleTogglePanel("search", "Toggle Search")}
+                style={commandItemStyle(rightPanelMode === "search")}
+              >
+                <div style={itemInnerStyle}>
+                  <MagnifyingGlass size={14} aria-hidden="true" />
+                  <span style={labelStyle}>Toggle Search</span>
+                </div>
+                <ShortcutBadge keys={["Ctrl", "Shift", "F"]} />
+                <ActiveBadge active={rightPanelMode === "search"} />
+              </Command.Item>
+
+              <Command.Item
+                value="toggle terminal panel shell"
+                onSelect={() => handleTogglePanel("terminal", "Toggle Terminal")}
+                style={commandItemStyle(rightPanelMode === "terminal")}
+              >
+                <div style={itemInnerStyle}>
+                  <TerminalWindow size={14} aria-hidden="true" />
+                  <span style={labelStyle}>Toggle Terminal</span>
+                </div>
+                <ActiveBadge active={rightPanelMode === "terminal"} />
+              </Command.Item>
+
+              <Command.Item
+                value="toggle browser preview web"
+                onSelect={() => handleTogglePanel("browser", "Toggle Browser Preview")}
+                style={commandItemStyle(rightPanelMode === "browser")}
+              >
+                <div style={itemInnerStyle}>
+                  <Globe size={14} aria-hidden="true" />
+                  <span style={labelStyle}>Toggle Browser Preview</span>
+                </div>
+                <ActiveBadge active={rightPanelMode === "browser"} />
+              </Command.Item>
+
+              <Command.Item
+                value="toggle activity terminal log output"
+                onSelect={handleToggleActivity}
+                style={commandItemStyle(activityTerminalOpen)}
+              >
+                <div style={itemInnerStyle}>
+                  <Terminal size={14} aria-hidden="true" />
+                  <span style={labelStyle}>Toggle Activity</span>
+                </div>
+                <ShortcutBadge keys={["Ctrl", "`"]} />
+                <ActiveBadge active={activityTerminalOpen} />
+              </Command.Item>
+            </Command.Group>
+
+            {/* Navigation group */}
+            <Command.Group heading="Navigation" style={groupHeadingStyle}>
+              <Command.Item
+                value="go to dashboard home"
+                onSelect={handleGoDashboard}
+                style={commandItemStyle(false)}
+              >
+                <div style={itemInnerStyle}>
+                  <House size={14} aria-hidden="true" />
+                  <span style={labelStyle}>Go to Dashboard</span>
+                </div>
+              </Command.Item>
+
+              <Command.Item
+                value="go to settings preferences"
+                onSelect={handleGoSettings}
+                style={commandItemStyle(false)}
+              >
+                <div style={itemInnerStyle}>
+                  <Gear size={14} aria-hidden="true" />
+                  <span style={labelStyle}>Go to Settings</span>
+                </div>
+                <ShortcutBadge keys={[","]} />
+              </Command.Item>
+
+              <Command.Item
+                value="go to projects list"
+                onSelect={handleGoProjects}
+                style={commandItemStyle(false)}
+              >
+                <div style={itemInnerStyle}>
+                  <Folder size={14} aria-hidden="true" />
+                  <span style={labelStyle}>Go to Projects</span>
+                </div>
+              </Command.Item>
+
+              <Command.Item
+                value="go to templates starters"
+                onSelect={handleGoTemplates}
+                style={commandItemStyle(false)}
+              >
+                <div style={itemInnerStyle}>
+                  <ListBullets size={14} aria-hidden="true" />
+                  <span style={labelStyle}>Go to Templates</span>
+                </div>
+              </Command.Item>
+            </Command.Group>
+
+            {/* Actions group */}
+            <Command.Group heading="Actions" style={groupHeadingStyle}>
               <Command.Item
                 value="compare sessions side by side diff"
                 onSelect={handleCompareSessions}
                 style={commandItemStyle(false)}
               >
-                <ArrowsLeftRight size={14} aria-hidden="true" />
-                <span>Compare Sessions</span>
+                <div style={itemInnerStyle}>
+                  <ArrowsLeftRight size={14} aria-hidden="true" />
+                  <span style={labelStyle}>Compare Sessions</span>
+                </div>
               </Command.Item>
 
               <Command.Item
-                value="toggle theme dark light mode"
+                value="toggle theme dark light mode appearance"
                 onSelect={handleToggleTheme}
                 style={commandItemStyle(false)}
               >
-                {theme === "light" ? (
-                  <Moon size={14} aria-hidden="true" />
-                ) : (
-                  <Sun size={14} aria-hidden="true" />
-                )}
-                <span>Toggle Theme ({theme === "light" ? "Light" : "Dark"})</span>
+                <div style={itemInnerStyle}>
+                  {theme === "light" ? (
+                    <Moon size={14} aria-hidden="true" />
+                  ) : (
+                    <Sun size={14} aria-hidden="true" />
+                  )}
+                  <span style={labelStyle}>
+                    Toggle Theme — currently {theme === "light" ? "Light" : "Dark"}
+                  </span>
+                </div>
               </Command.Item>
 
               <Command.Item
-                value="settings preferences"
-                onSelect={handleGoSettings}
+                value="search in files find text"
+                onSelect={() => handleTogglePanel("search", "Toggle Search")}
                 style={commandItemStyle(false)}
               >
-                <Gear size={14} aria-hidden="true" />
-                <span>Go to Settings</span>
-                <ShortcutBadge keys={[","]} />
+                <div style={itemInnerStyle}>
+                  <MagnifyingGlass size={14} aria-hidden="true" />
+                  <span style={labelStyle}>Search in Files</span>
+                </div>
+                <ShortcutBadge keys={["Ctrl", "Shift", "F"]} />
               </Command.Item>
             </Command.Group>
           </Command.List>
@@ -294,7 +532,37 @@ export function CommandPalette() {
   );
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Style helpers ─────────────────────────────────────────────────────────────
+
+const groupHeadingStyle: React.CSSProperties = {
+  fontSize: "11px",
+  fontWeight: 600,
+  color: "var(--color-text-muted)",
+  textTransform: "uppercase",
+  letterSpacing: "0.06em",
+  padding: "4px 8px 4px",
+};
+
+const itemInnerStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  flex: 1,
+  minWidth: 0,
+};
+
+const labelStyle: React.CSSProperties = {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
+const metaStyle: React.CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: "11px",
+  color: "var(--color-text-muted)",
+  flexShrink: 0,
+};
 
 function commandItemStyle(
   active: boolean,
@@ -303,7 +571,7 @@ function commandItemStyle(
   return {
     display: "flex",
     alignItems: "center",
-    gap: "10px",
+    gap: "8px",
     padding: "8px 10px",
     borderRadius: "var(--radius-md)",
     cursor: disabled ? "not-allowed" : "pointer",
@@ -320,17 +588,30 @@ function commandItemStyle(
   };
 }
 
+function statusColor(status: string): string {
+  switch (status) {
+    case "running":
+      return "var(--color-success, #10b981)";
+    case "waiting":
+      return "var(--color-warning, #f59e0b)";
+    case "idle":
+      return "var(--color-text-muted)";
+    default:
+      return "var(--color-text-muted)";
+  }
+}
+
 function ShortcutBadge({ keys }: { keys: string[] }) {
   return (
-    <span style={{ marginLeft: "auto", display: "flex", gap: "4px" }}>
+    <span style={{ display: "flex", gap: "3px", flexShrink: 0 }}>
       {keys.map((k) => (
         <kbd
           key={k}
           style={{
             fontFamily: "var(--font-mono)",
-            fontSize: "11px",
+            fontSize: "10px",
             color: "var(--color-text-muted)",
-            background: "var(--color-bg-elevated)",
+            background: "var(--color-bg-base)",
             border: "1px solid var(--color-border)",
             borderRadius: "4px",
             padding: "1px 5px",
@@ -339,6 +620,25 @@ function ShortcutBadge({ keys }: { keys: string[] }) {
           {k}
         </kbd>
       ))}
+    </span>
+  );
+}
+
+function ActiveBadge({ active }: { active: boolean }) {
+  if (!active) return null;
+  return (
+    <span
+      style={{
+        fontSize: "10px",
+        fontWeight: 600,
+        color: "var(--color-accent)",
+        background: "color-mix(in srgb, var(--color-accent) 12%, transparent)",
+        borderRadius: "var(--radius-sm)",
+        padding: "1px 6px",
+        flexShrink: 0,
+      }}
+    >
+      ON
     </span>
   );
 }

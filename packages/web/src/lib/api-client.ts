@@ -48,6 +48,8 @@ export const api = {
       model?: string;
       permissionMode?: string;
       prompt?: string;
+      templateId?: string;
+      templateVars?: Record<string, string>;
       resume?: boolean;
       idleTimeoutMs?: number;
       keepAlive?: boolean;
@@ -381,6 +383,12 @@ export const api = {
           permissionMode: string | null;
           icon: string;
           sortOrder: number;
+          variables: Array<{
+            key: string;
+            label: string;
+            defaultValue?: string;
+            required?: boolean;
+          }> | null;
         }>;
       }>(`/api/templates${project ? `?project=${encodeURIComponent(project)}` : ""}`),
 
@@ -392,6 +400,7 @@ export const api = {
       icon?: string;
       model?: string | null;
       sortOrder?: number;
+      variables?: Array<{ key: string; label: string; defaultValue?: string; required?: boolean }> | null;
     }) =>
       request<{ success: boolean; data: { id: string } }>("/api/templates", {
         method: "POST",

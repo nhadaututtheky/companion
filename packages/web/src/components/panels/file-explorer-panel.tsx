@@ -266,6 +266,15 @@ function TreeNode({
           color: isSelected ? "var(--color-accent)" : "var(--color-text-secondary)",
           border: "none",
         }}
+        draggable={!entry.isDir}
+        onDragStart={(e) => {
+          e.dataTransfer.setData("application/x-companion-file", JSON.stringify({
+            path: entry.path,
+            name: entry.name,
+            ext: entry.ext ?? "",
+          }));
+          e.dataTransfer.effectAllowed = "copy";
+        }}
       >
         {entry.isDir ? (
           expanded ? (

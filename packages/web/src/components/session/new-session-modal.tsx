@@ -24,6 +24,10 @@ import { useAnimatePresence } from "@/lib/animation";
 import { DirectoryBrowser } from "./directory-browser";
 import { api } from "@/lib/api-client";
 import { useSessionStore } from "@/lib/stores/session-store";
+import {
+  TemplateVariablesForm,
+  type TemplateVariable,
+} from "./template-variables-form";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -50,6 +54,17 @@ interface ProjectItem {
   dir: string;
   defaultModel: string;
   permissionMode: string;
+}
+
+interface TemplateItem {
+  id: string;
+  name: string;
+  slug: string;
+  prompt: string;
+  icon: string;
+  model: string | null;
+  permissionMode: string | null;
+  variables: TemplateVariable[] | null;
 }
 
 interface ResumableSession {
@@ -168,6 +183,11 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
   const [idleTimeout, setIdleTimeout] = useState<number>(3_600_000); // 1h default
   const [_autoApprove, _setAutoApprove] = useState(false);
 
+  // Template selection
+  const [templates, setTemplates] = useState<TemplateItem[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [templateVars, setTemplateVars] = useState<Record<string, string>>({});
+
   // Launch step
   const [launching, setLaunching] = useState(false);
 
@@ -180,14 +200,16 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
   );
   const atLimit = sessionCount >= 6;
 
-  // Fetch projects and resumable sessions in parallel
+  // Fetch projects, resumable sessions, and templates in parallel
   useEffect(() => {
     Promise.all([
       api.projects.list().catch(() => ({ data: [] })),
       api.sessions.listResumable().catch(() => ({ data: [] })),
-    ]).then(([projectsRes, resumableRes]) => {
+      api.templates.list().catch(() => ({ data: [] })),
+    ]).then(([projectsRes, resumableRes, templatesRes]) => {
       setProjects((projectsRes.data ?? []) as ProjectItem[]);
       setResumableSessions((resumableRes.data ?? []) as ResumableSession[]);
+      setTemplates((templatesRes.data ?? []) as TemplateItem[]);
       setProjectsLoading(false);
     });
   }, []);
@@ -291,6 +313,40 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
     setStep(2);
   }, [githubUrl]);
 
+  const selectedTemplate = templates.find((t) => t.id === selectedTemplateId) ?? null;
+  const templateVariables = selectedTemplate?.variables ?? [];
+
+  const handleSelectTemplate = useCallback(
+    (tpl: TemplateItem) => {
+      if (selectedTemplateId === tpl.id) {
+        // Deselect
+        setSelectedTemplateId(null);
+        setTemplateVars({});
+        setInitialPrompt("");
+        return;
+      }
+      setSelectedTemplateId(tpl.id);
+      setTemplateVars({});
+      // Pre-fill prompt with template prompt; user can still edit it
+      setInitialPrompt(tpl.prompt);
+      if (tpl.model) {
+        const validModels = MODEL_OPTIONS.map((m) => m.value);
+        if (validModels.includes(tpl.model)) setModel(tpl.model);
+      }
+      if (tpl.permissionMode) {
+        setPermissionMode((tpl.permissionMode as PermissionMode) || "default");
+      }
+    },
+    [selectedTemplateId],
+  );
+
+  // Check if all required template variables are filled
+  const templateVarsValid =
+    templateVariables.length === 0 ||
+    templateVariables.every(
+      (v) => !v.required || (templateVars[v.key] ?? "").trim() !== "",
+    );
+
   const handleLaunch = useCallback(async () => {
     if (atLimit) return;
     setLaunching(true);
@@ -310,6 +366,11 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
         model,
         permissionMode,
         prompt: initialPrompt.trim() || undefined,
+        templateId: selectedTemplateId ?? undefined,
+        templateVars:
+          selectedTemplateId && Object.keys(templateVars).length > 0
+            ? templateVars
+            : undefined,
         idleTimeoutMs: idleTimeout,
         keepAlive: idleTimeout === 0,
       });
@@ -349,6 +410,8 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
     permissionMode,
     initialPrompt,
     idleTimeout,
+    selectedTemplateId,
+    templateVars,
     onClose,
   ]);
 
@@ -813,6 +876,70 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                 </div>
               </div>
 
+              {/* Template picker */}
+              {templates.length > 0 && (
+                <div>
+                  <p
+                    className="text-xs font-semibold mb-2"
+                    style={{ color: "var(--color-text-secondary)" }}
+                  >
+                    TEMPLATE
+                    <span
+                      className="ml-1 font-normal"
+                      style={{ color: "var(--color-text-muted)" }}
+                    >
+                      (optional)
+                    </span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {templates.map((tpl) => {
+                      const isSelected = selectedTemplateId === tpl.id;
+                      return (
+                        <button
+                          key={tpl.id}
+                          type="button"
+                          onClick={() => handleSelectTemplate(tpl)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+                          style={{
+                            background: isSelected
+                              ? "#4285F415"
+                              : "var(--color-bg-elevated)",
+                            border: isSelected
+                              ? "1px solid #4285F440"
+                              : "1px solid var(--color-border)",
+                            color: isSelected
+                              ? "#4285F4"
+                              : "var(--color-text-secondary)",
+                          }}
+                          aria-pressed={isSelected}
+                        >
+                          <span aria-hidden="true">{tpl.icon}</span>
+                          {tpl.name}
+                          {tpl.variables && tpl.variables.length > 0 && (
+                            <span
+                              className="ml-0.5 font-mono"
+                              style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                              aria-hidden="true"
+                            >
+                              {"{…}"}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Template variables form */}
+              {selectedTemplate && templateVariables.length > 0 && (
+                <TemplateVariablesForm
+                  variables={templateVariables}
+                  values={templateVars}
+                  onChange={setTemplateVars}
+                />
+              )}
+
               {/* Initial prompt */}
               <div>
                 <label
@@ -926,7 +1053,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                 </button>
                 <button
                   onClick={() => setStep(3)}
-                  disabled={!selectedDir}
+                  disabled={!selectedDir || !templateVarsValid}
                   className="px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ background: "#4285F4", color: "#fff" }}
                 >
@@ -1054,7 +1181,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
 
                 <button
                   onClick={handleLaunch}
-                  disabled={launching || atLimit}
+                  disabled={launching || atLimit || !templateVarsValid}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                   style={{ background: "#4285F4", color: "#fff" }}
                   aria-label="Start session"

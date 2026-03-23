@@ -18,6 +18,7 @@ import {
   listResumableSessions,
 } from "../services/session-store.js";
 import { getProject, upsertProject } from "../services/project-profiles.js";
+import { getTemplate, resolveTemplateVariables } from "../services/templates.js";
 import { createLogger } from "../logger.js";
 import { getMaxSessions } from "../services/license.js";
 import { getSessionSummary } from "../services/session-summarizer.js";
@@ -37,6 +38,8 @@ const createSessionSchema = z.object({
   model: z.enum(ALLOWED_MODELS).optional(),
   permissionMode: z.enum(["default", "acceptEdits", "bypassPermissions", "plan"]).optional(),
   prompt: z.string().max(10000).optional(),
+  templateId: z.string().optional(),
+  templateVars: z.record(z.string()).optional(),
   resume: z.boolean().optional(),
   cliSessionId: z.string().uuid().optional(),
   source: z.string().optional(),
@@ -161,6 +164,18 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     const model = body.model ?? project?.defaultModel ?? "claude-sonnet-4-6";
     const permissionMode = body.permissionMode ?? project?.permissionMode ?? "default";
 
+    // Resolve template variables if a templateId and templateVars are provided
+    let resolvedPrompt = body.prompt;
+    if (body.templateId) {
+      const template = getTemplate(body.templateId);
+      if (template) {
+        const basePrompt = body.prompt ?? template.prompt;
+        resolvedPrompt = body.templateVars
+          ? resolveTemplateVariables(basePrompt, body.templateVars)
+          : basePrompt;
+      }
+    }
+
     const activeCount = countActiveSessions();
     if (activeCount >= getMaxSessions()) {
       log.warn("Session limit reached", { activeCount, limit: getMaxSessions() });
@@ -179,7 +194,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         cwd: body.projectDir,
         model,
         permissionMode,
-        prompt: body.prompt,
+        prompt: resolvedPrompt,
         resume: body.resume,
         cliSessionId: body.cliSessionId,
         source: body.source,

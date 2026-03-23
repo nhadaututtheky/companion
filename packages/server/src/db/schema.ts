@@ -157,6 +157,7 @@ export const sessionTemplates = sqliteTable("session_templates", {
   permissionMode: text("permission_mode"),
   icon: text("icon").notNull().default("⚡"),
   sortOrder: integer("sort_order").notNull().default(0),
+  variables: text("variables"), // JSON string: Array<{ key: string, label: string, defaultValue?: string, required?: boolean }>
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
 });

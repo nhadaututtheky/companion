@@ -13,6 +13,13 @@ import {
 } from "../services/templates.js";
 import type { ApiResponse } from "@companion/shared";
 
+const templateVariableSchema = z.object({
+  key: z.string().min(1).max(100),
+  label: z.string().min(1).max(200),
+  defaultValue: z.string().optional(),
+  required: z.boolean().optional(),
+});
+
 const createSchema = z.object({
   name: z.string().min(1).max(100),
   slug: z.string().min(1).max(20).regex(/^[a-z0-9-]+$/).optional(),
@@ -22,6 +29,7 @@ const createSchema = z.object({
   permissionMode: z.string().nullish(),
   icon: z.string().max(10).optional(),
   sortOrder: z.number().int().min(0).optional(),
+  variables: z.array(templateVariableSchema).nullish(),
 });
 
 const updateSchema = createSchema.partial();
