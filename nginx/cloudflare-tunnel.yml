@@ -1,0 +1,31 @@
+# Cloudflare Tunnel config for Companion
+# This file is used when running cloudflared as a standalone service.
+#
+# For Docker (recommended): just set CLOUDFLARE_TUNNEL_TOKEN in .env
+# and uncomment the cloudflared service in docker-compose.yml.
+#
+# For standalone: cloudflared tunnel --config ./nginx/cloudflare-tunnel.yml run
+#
+# Setup steps:
+#   1. cloudflared tunnel login
+#   2. cloudflared tunnel create companion
+#   3. cloudflared tunnel route dns companion app.yourdomain.com
+#   4. cloudflared tunnel route dns companion api.yourdomain.com  (optional, separate subdomain)
+#   5. Copy tunnel credentials to ~/.cloudflared/
+
+tunnel: companion
+credentials-file: ~/.cloudflared/<tunnel-id>.json
+
+ingress:
+  # Web UI (Next.js)
+  - hostname: app.yourdomain.com
+    service: http://localhost:3580
+    originRequest:
+      noTLSVerify: true
+
+  # API + WebSocket (if using same domain, route /api and /ws)
+  # Note: When using single domain, the nginx config approach is better.
+  # With Cloudflare Tunnel, easiest is single hostname pointing to nginx.
+
+  # Catch-all (required)
+  - service: http_status:404

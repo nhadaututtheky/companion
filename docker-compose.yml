@@ -52,5 +52,58 @@ services:
       timeout: 5s
       retries: 3
 
+  # ═══════════════════════════════════════════════════════════════════════════
+  # CUSTOM DOMAIN — pick ONE option, uncomment the service block
+  # ═══════════════════════════════════════════════════════════════════════════
+  #
+  # ── Option A: Cloudflare Tunnel (recommended) ───────────────────────────
+  # Zero port expose, auto SSL, works behind NAT/firewall.
+  #
+  # Setup (5 min):
+  #   1. Cloudflare Dashboard → Zero Trust → Networks → Tunnels → Create
+  #   2. Name: "companion", copy the token (eyJ...)
+  #   3. Add public hostname:
+  #      - Domain: app.yourdomain.com
+  #      - Service: http://companion-gateway:80
+  #   4. Set CLOUDFLARE_TUNNEL_TOKEN in .env
+  #   5. Uncomment both gateway + cloudflared below
+  #   6. docker compose up -d
+  #
+  # gateway:
+  #   image: nginx:alpine
+  #   container_name: companion-gateway
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ./nginx/conf.d/gateway.conf:/etc/nginx/conf.d/default.conf:ro
+  #   depends_on:
+  #     - companion
+  #
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   container_name: cloudflared
+  #   restart: unless-stopped
+  #   command: tunnel run
+  #   environment:
+  #     - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+  #   depends_on:
+  #     - gateway
+
+  # ── Option B: Nginx + SSL (self-hosted, public IP) ─────────────────────
+  # Use if you have a public server with ports 80/443 open.
+  # Edit nginx/conf.d/companion.conf — replace domain, add SSL certs.
+  #
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: companion-nginx
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx/conf.d:/etc/nginx/conf.d:ro
+  #     - ./nginx/certs:/etc/nginx/certs:ro
+  #   depends_on:
+  #     - companion
+
 volumes:
   companion-data:
