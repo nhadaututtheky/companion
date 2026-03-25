@@ -1,13 +1,13 @@
 /**
- * Session commands: /start, /new, /stop, /resume, /projects
+ * Session commands: /start, /new, /stop, /resume, /projects, /sessions
  */
 
 import { InlineKeyboard } from "grammy";
 import { listProjects, getProject } from "../../services/project-profiles.js";
+import { getAllActiveSessions } from "../../services/session-store.js";
 import { escapeHTML } from "../formatter.js";
 import { createLogger } from "../../logger.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
-import { findDeadSessionForChat } from "../../services/session-store.js";
 
 const log = createLogger("cmd:session");
 
@@ -65,6 +65,31 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     );
 
     await ctx.reply(lines.join("\n\n"), { parse_mode: "HTML" });
+  });
+
+  // ── /sessions — List all active sessions with #shortIds ────────────────
+
+  bot.command("sessions", async (ctx) => {
+    const sessions = getAllActiveSessions();
+
+    if (sessions.length === 0) {
+      await ctx.reply("No active sessions.");
+      return;
+    }
+
+    const lines = sessions.map((s) => {
+      const shortId = s.state.short_id;
+      const tag = shortId ? `<code>#${escapeHTML(shortId)}</code>` : "—";
+      const cwd = s.state.cwd ?? "";
+      const project = cwd.split(/[\\/]/).pop() || "quick";
+      const model = s.state.model?.replace("claude-", "").replace(/-\d+$/, "") ?? "?";
+      return `${tag}  📂 ${escapeHTML(project)}  · ${model}`;
+    });
+
+    await ctx.reply(
+      [`🗂 <b>Active Sessions</b> (${sessions.length})`, "", ...lines].join("\n"),
+      { parse_mode: "HTML" },
+    );
   });
 
   // ── /new [project] — New session ────────────────────────────────────────
@@ -139,7 +164,7 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
 
     if (projects.length === 1) {
       const slug = projects[0]!.slug;
-      const dead = findDeadSessionForChat({ chatId, projectSlug: slug });
+      const dead = bridge.getDeadSessionByProject(chatId, slug);
       if (dead) {
         const project = getProject(slug);
         const keyboard = {
@@ -160,7 +185,7 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
 
     const keyboard = new InlineKeyboard();
     for (const p of projects) {
-      const dead = findDeadSessionForChat({ chatId, projectSlug: p.slug });
+      const dead = bridge.getDeadSessionByProject(chatId, p.slug);
       const label = dead ? `↩ ${p.name}` : `📂 ${p.name} (new)`;
       keyboard.text(label, dead ? `resume:${p.slug}:${chatId}` : `new:${p.slug}`).row();
     }
@@ -228,8 +253,33 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
     if (!chatId) return;
 
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+
+    // Check if there's already an active session for this chat
+    const existingMapping = bridge.getMapping(chatId, topicId);
+    if (existingMapping) {
+      const activeSession = bridge.wsBridge.getSession(existingMapping.sessionId);
+      if (activeSession) {
+        // Session is alive — ask user what to do
+        const keyboard = {
+          inline_keyboard: [[
+            { text: "Keep Current", callback_data: `keep:${existingMapping.sessionId}` },
+            { text: "Restart", callback_data: `restart:${slug}:${chatId}` },
+          ]],
+        };
+        const project = getProject(existingMapping.projectSlug);
+        await ctx.editMessageText(
+          `<b>${escapeHTML(project?.name ?? existingMapping.projectSlug)}</b> is already running.\nKeep current session or restart?`,
+          { parse_mode: "HTML", reply_markup: keyboard as unknown as import("grammy").InlineKeyboard },
+        ).catch(() => {});
+        return;
+      }
+      // Session mapping exists but CLI died — clean up stale mapping
+      bridge.removeMapping(chatId, topicId);
+    }
+
     // Check for a dead/interrupted session for this project
-    const dead = findDeadSessionForChat({ chatId, projectSlug: slug });
+    const dead = bridge.getDeadSessionByProject(chatId, slug);
     if (dead) {
       const project = getProject(slug);
       const keyboard = {
@@ -270,6 +320,30 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
   bot.callbackQuery("stop:cancel", async (ctx) => {
     await ctx.answerCallbackQuery("Cancelled");
     await ctx.editMessageText("Stop cancelled.");
+  });
+
+  // Keep current session (dismiss the prompt)
+  bot.callbackQuery(/^keep:(.+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery("Keeping current session");
+    await ctx.editMessageText("Session is active. Send a message to continue.").catch(() => {});
+  });
+
+  // Restart: kill existing session + start fresh
+  bot.callbackQuery(/^restart:(.+):(\d+)$/, async (ctx) => {
+    const slug = ctx.match[1]!;
+    const chatId = Number(ctx.match[2]);
+    await ctx.answerCallbackQuery("Restarting...");
+    await ctx.editMessageText("Restarting session...").catch(() => {});
+
+    // Kill existing session for this chat
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+    const mapping = bridge.getMapping(chatId, topicId);
+    if (mapping) {
+      bridge.killSession(mapping.sessionId);
+      bridge.removeMapping(chatId, topicId);
+    }
+
+    await bridge.startSessionForChat(ctx, slug);
   });
 
   // ── Quick Session (no project) ──────────────────────────────────────────

@@ -12,6 +12,8 @@ import {
   type DebateFormat,
   type DebateAgent,
 } from "../../services/debate-engine.js";
+import { resolveShortId } from "../../services/short-id.js";
+import { getActiveSession } from "../../services/session-store.js";
 
 export function registerConfigCommands(bridge: TelegramBridge): void {
   const bot = bridge.bot;
@@ -87,6 +89,9 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
           `<code>/debate redteam Payment API security</code>`,
           `<code>/debate brainstorm New feature ideas</code>`,
           ``,
+          `<b>#mention sessions</b> to pull them into the debate:`,
+          `<code>/debate #fox #bear Should we refactor auth?</code>`,
+          ``,
           `Formats: <b>pro_con</b> (default), <b>review</b>, <b>redteam</b>, <b>brainstorm</b>`,
         ].join("\n"),
         { parse_mode: "HTML" },
@@ -103,40 +108,72 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
     };
 
     let format: DebateFormat = "pro_con";
-    let topic = raw;
+    let remaining = raw;
 
-    const firstWord = raw.split(" ")[0]?.toLowerCase() ?? "";
+    const firstWord = remaining.split(" ")[0]?.toLowerCase() ?? "";
     if (formatMap[firstWord]) {
       format = formatMap[firstWord]!;
-      topic = raw.slice(firstWord.length).trim();
+      remaining = remaining.slice(firstWord.length).trim();
     }
+
+    // Extract #mentions from the remaining text (Telegram uses @ for usernames, so we use #)
+    const mentionedShortIds: string[] = [];
+    const mentionRegex = /#([a-z][a-z0-9-]*)/gi;
+    let match: RegExpExecArray | null;
+    while ((match = mentionRegex.exec(remaining)) !== null) {
+      mentionedShortIds.push(match[1]!.toLowerCase());
+    }
+
+    // Remove #mentions from topic text
+    const topic = remaining.replace(/#[a-z][a-z0-9-]*/gi, "").replace(/\s+/g, " ").trim();
 
     if (!topic) {
       await ctx.reply("Please provide a topic after the format.");
       return;
     }
 
-    // Check if there's already an active debate in this chat
-    // (we track by channel, not chat — allow multiple)
+    // Resolve mentioned sessions
+    const mentionedSessions: Array<{ shortId: string; sessionId: string }> = [];
+    for (const shortId of mentionedShortIds) {
+      const sessionId = resolveShortId(shortId);
+      if (sessionId && getActiveSession(sessionId)) {
+        mentionedSessions.push({ shortId, sessionId });
+      }
+    }
+
+    // Try to create a forum topic for the debate (if group supports it)
+    let debateTopicId = topicId;
+    try {
+      if (chatId < 0) { // Only in groups
+        const forumTopic = await bridge.bot.api.createForumTopic(chatId, `⚖️ ${topic.slice(0, 100)}`);
+        debateTopicId = forumTopic.message_thread_id;
+      }
+    } catch {
+      // Forum topics not enabled — use current thread or main chat
+    }
+
+    const sessionInfo = mentionedSessions.length > 0
+      ? `\n👥 Sessions: ${mentionedSessions.map((s) => `<code>#${escapeHTML(s.shortId)}</code>`).join(", ")}`
+      : "";
 
     await ctx.reply(
       [
         `🎭 <b>Starting Debate</b>`,
         ``,
         `📋 Topic: <i>${escapeHTML(topic)}</i>`,
-        `🎯 Format: <b>${format.replace("_", " ")}</b>`,
+        `🎯 Format: <b>${format.replace("_", " ")}</b>${sessionInfo}`,
         `🔄 Max 5 rounds | 💰 Max $0.50`,
         ``,
         `<i>Agents are thinking...</i>`,
       ].join("\n"),
-      { parse_mode: "HTML", message_thread_id: topicId },
+      { parse_mode: "HTML", message_thread_id: debateTopicId },
     );
 
     try {
       const state = await startDebate(
         { topic, format },
-        // onMessage callback — route to Telegram
-        async (channelId: string, agent: DebateAgent, content: string, round: number) => {
+        // onMessage callback — route to Telegram (in debate forum topic)
+        async (_channelId: string, agent: DebateAgent, content: string, round: number) => {
           const label = `${agent.emoji} <b>${escapeHTML(agent.label)}</b> <i>(Round ${round})</i>`;
           const text = `${label}\n\n${escapeHTML(content)}`;
 
@@ -144,27 +181,41 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
           if (text.length <= 4000) {
             await bridge.bot.api.sendMessage(chatId, text, {
               parse_mode: "HTML",
-              message_thread_id: topicId,
+              message_thread_id: debateTopicId,
             }).catch(() => {});
           } else {
-            // Send label first, then content
             await bridge.bot.api.sendMessage(chatId, label, {
               parse_mode: "HTML",
-              message_thread_id: topicId,
+              message_thread_id: debateTopicId,
             }).catch(() => {});
             await bridge.bot.api.sendMessage(chatId, escapeHTML(content), {
-              message_thread_id: topicId,
+              message_thread_id: debateTopicId,
             }).catch(() => {});
           }
         },
       );
 
       // Store debate channelId for /verdict command
-      bridge.setActiveDebate(chatId, topicId, state.channelId);
+      bridge.setActiveDebate(chatId, debateTopicId, state.channelId);
+
+      // Route debate to mentioned real sessions (inject topic as question)
+      for (const { shortId, sessionId } of mentionedSessions) {
+        const prompt = [
+          `[Debate: ${topic}]`,
+          ``,
+          `You are @${shortId}, participating in a ${format.replace("_", " ")} debate.`,
+          `Topic: "${topic}"`,
+          ``,
+          `Share your perspective based on your current project context.`,
+          `Keep your response concise (200-400 words).`,
+        ].join("\n");
+
+        bridge.wsBridge.sendUserMessage(sessionId, prompt, "debate");
+      }
     } catch (err) {
       await ctx.reply(`❌ Failed to start debate: ${escapeHTML(String(err))}`, {
         parse_mode: "HTML",
-        message_thread_id: topicId,
+        message_thread_id: debateTopicId,
       });
     }
   });

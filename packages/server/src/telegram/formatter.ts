@@ -47,14 +47,15 @@ export function toTelegramHTML(markdown: string): string {
   result = formatTables(result);
 
   // Bold: **text** or __text__
-  result = result.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
-  result = result.replace(/__(.+?)__/g, "<b>$1</b>");
+  // Use function replacements to avoid $-interpolation in captured text
+  result = result.replace(/\*\*(.+?)\*\*/g, (_, t) => `<b>${t}</b>`);
+  result = result.replace(/__(.+?)__/g, (_, t) => `<b>${t}</b>`);
 
   // Italic: *text* or _text_ (but not inside bold markers)
-  result = result.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "<i>$1</i>");
+  result = result.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, (_, t) => `<i>${t}</i>`);
 
   // Links: [text](url)
-  result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => `<a href="${url}">${text}</a>`);
 
   // Restore code blocks and inline code
   result = result.replace(/\x00CB(\d+)\x00/g, (_, idx) => codeBlocks[parseInt(idx)] ?? "");
@@ -258,6 +259,75 @@ export function formatSessionStatus(opts: {
   }
 
   return lines.join("\n");
+}
+
+// ─── Tool Progress Formatting ────────────────────────────────────────────
+
+const TOOL_EMOJI: Record<string, string> = {
+  Bash: "💻",
+  Read: "📖",
+  Edit: "✏️",
+  Write: "📝",
+  Glob: "🔍",
+  Grep: "🔍",
+  Agent: "🤖",
+  TodoWrite: "📋",
+  TodoRead: "📋",
+  WebSearch: "🌐",
+  WebFetch: "🌐",
+};
+
+function truncate(s: string, max: number): string {
+  return s.length > max ? s.slice(0, max) + "…" : s;
+}
+
+function shortenPath(path: string): string {
+  const parts = path.replace(/\\/g, "/").split("/");
+  if (parts.length <= 3) return path;
+  return "…/" + parts.slice(-2).join("/");
+}
+
+/**
+ * Format a single tool action for the tool feed.
+ */
+export function formatToolAction(name: string, input: Record<string, unknown>): string {
+  const emoji = TOOL_EMOJI[name] ?? "🔧";
+
+  switch (name) {
+    case "Bash":
+      return `${emoji} Running <code>${escapeHTML(truncate(String(input.command ?? ""), 60))}</code>`;
+    case "Read":
+      return `${emoji} Reading <code>${escapeHTML(shortenPath(String(input.file_path ?? "")))}</code>`;
+    case "Edit":
+      return `${emoji} Editing <code>${escapeHTML(shortenPath(String(input.file_path ?? "")))}</code>`;
+    case "Write":
+      return `${emoji} Writing <code>${escapeHTML(shortenPath(String(input.file_path ?? "")))}</code>`;
+    case "Glob":
+      return `${emoji} Searching <code>${escapeHTML(String(input.pattern ?? ""))}</code>`;
+    case "Grep":
+      return `${emoji} Searching for <code>${escapeHTML(truncate(String(input.pattern ?? ""), 40))}</code>`;
+    case "Agent":
+      return `${emoji} Spawning agent`;
+    case "WebSearch":
+      return `${emoji} Searching web: <code>${escapeHTML(truncate(String(input.query ?? ""), 50))}</code>`;
+    case "WebFetch":
+      return `${emoji} Fetching <code>${escapeHTML(truncate(String(input.url ?? ""), 50))}</code>`;
+    default:
+      return `${emoji} ${escapeHTML(name)}`;
+  }
+}
+
+/**
+ * Format tool_use blocks from an assistant message into a tool feed string.
+ */
+export function formatToolFeed(content: Array<{ type: string; name?: string; input?: unknown }>): string | null {
+  const actions: string[] = [];
+  for (const block of content) {
+    if (block.type === "tool_use" && block.name) {
+      actions.push(formatToolAction(block.name, (block.input ?? {}) as Record<string, unknown>));
+    }
+  }
+  return actions.length > 0 ? actions.join("\n") : null;
 }
 
 /**

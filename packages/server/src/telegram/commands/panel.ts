@@ -19,7 +19,7 @@ import { InlineKeyboard } from "grammy";
 import { escapeHTML } from "../formatter.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
 import { getProject } from "../../services/project-profiles.js";
-import { findDeadSessionForChat } from "../../services/session-store.js";
+// Dead session lookup now via bridge.getDeadSessionByProject()
 
 // ─── Model options ───────────────────────────────────────────────────────────
 
@@ -114,10 +114,17 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
       session.autoApproveConfig = { enabled: false, timeoutSeconds: 0, allowBash: false };
       label = "Auto-approve off";
     } else if (preset === "safe") {
-      // Safe mode = bypassPermissions
-      session.state = { ...session.state, permissionMode: "bypassPermissions" };
-      session.autoApproveConfig = { enabled: true, timeoutSeconds: 15, allowBash: false };
-      label = "Safe mode (bypassPermissions)";
+      // Safe mode = auto-approve everything including bash, approve all pending
+      session.autoApproveConfig = { enabled: true, timeoutSeconds: 0, allowBash: true };
+      // Approve all pending permissions immediately
+      for (const [reqId] of session.pendingPermissions) {
+        bridge.wsBridge.handleBrowserMessage(sessionId, JSON.stringify({
+          type: "permission_response",
+          request_id: reqId,
+          behavior: "allow",
+        }));
+      }
+      label = "Full auto-approve ON";
     } else {
       const seconds = parseInt(preset, 10);
       session.autoApproveConfig = { enabled: true, timeoutSeconds: seconds, allowBash: false };
@@ -335,27 +342,19 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
     if (!chatId) return;
 
-    await ctx.answerCallbackQuery("Panel pinned");
     await ctx.deleteMessage().catch(() => {});
 
-    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
-    const mapping = bridge.getMapping(chatId, topicId);
-    const project = mapping ? getProject(mapping.projectSlug) : undefined;
-    const session = bridge.wsBridge.getSession(sessionId);
-
-    const panelMsg = await bridge.sendSettingsPanel(
-      chatId,
-      topicId,
-      sessionId,
-      project?.name ?? (mapping?.projectSlug ?? ""),
-      session?.state.model ?? (mapping?.model ?? ""),
-    );
-
-    if (panelMsg) {
-      bridge.setSessionPanelMessageId(sessionId, panelMsg.message_id);
+    // Pin the existing panel message instead of creating a new one
+    const cfg = bridge.getSessionConfig(sessionId);
+    if (cfg.panelMessageId) {
       try {
-        await ctx.api.pinChatMessage(chatId, panelMsg.message_id, { disable_notification: true });
-      } catch { /* no pin permission */ }
+        await ctx.api.pinChatMessage(chatId, cfg.panelMessageId, { disable_notification: true });
+        await ctx.answerCallbackQuery("Panel pinned");
+      } catch {
+        await ctx.answerCallbackQuery("Cannot pin — missing permission");
+      }
+    } else {
+      await ctx.answerCallbackQuery("No panel to pin");
     }
   });
 
@@ -368,7 +367,7 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     await ctx.answerCallbackQuery("Resuming session...");
 
     // Find dead session for this chat+project
-    const dead = findDeadSessionForChat({ chatId, projectSlug });
+    const dead = bridge.getDeadSessionByProject(chatId, projectSlug);
     if (!dead) {
       await ctx.editMessageText("No resumable session found. Starting fresh...").catch(() => {});
       await bridge.startSessionForChat(ctx, projectSlug);
@@ -379,17 +378,25 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
       parse_mode: "HTML",
     }).catch(() => {});
 
+    // Resume into the ORIGINAL topicId where the session died
     await bridge.startSessionForChat(ctx, projectSlug, {
       resume: true,
       cliSessionId: dead.cliSessionId,
     });
+
+    // Clear dead session entry
+    bridge.clearDeadSessionByProject(chatId, projectSlug);
   });
 
   bot.callbackQuery(/^fresh:([^:]+):(-?\d+)$/, async (ctx) => {
     const projectSlug = ctx.match[1]!;
+    const chatId = parseInt(ctx.match[2]!, 10);
 
     await ctx.answerCallbackQuery("Starting fresh session...");
     await ctx.editMessageText("Starting new session...").catch(() => {});
+
+    // Clear dead session if any
+    bridge.clearDeadSessionByProject(chatId, projectSlug);
 
     await bridge.startSessionForChat(ctx, projectSlug);
   });

@@ -12,6 +12,7 @@ import { StreamHandler } from "./stream-handler.js";
 import {
   escapeHTML,
   formatPermission,
+  formatToolFeed,
 } from "./formatter.js";
 import { getSessionSummary } from "../services/session-summarizer.js";
 import { registerSessionCommands } from "./commands/session.js";
@@ -93,6 +94,17 @@ interface SessionConfig {
   idleTimer?: ReturnType<typeof setTimeout>;
 }
 
+/** Dead session info for resume detection */
+export interface DeadSessionInfo {
+  chatId: number;
+  topicId: number;
+  sessionId: string;
+  cliSessionId: string;
+  projectSlug: string;
+  model: string;
+  diedAt: number;
+}
+
 /** Permission batch to avoid spamming */
 interface PermBatch {
   perms: Array<{ requestId: string; toolName: string; description?: string }>;
@@ -142,6 +154,16 @@ export class TelegramBridge {
   private compactWarningSent = new Set<string>();
   /** sessionId → stream-only subscriber key (chatId:topicId) — for /stream without owning the session */
   private streamSubscriptions = new Map<string, string>();
+  /** Dead sessions available for resume (keyed by "chatId:topicId") */
+  private deadSessions = new Map<string, DeadSessionInfo>();
+  /** chatId:topicId → user message ID locked at first response chunk (for reaction update) */
+  private lastUserMsgId = new Map<string, number>();
+  /** chatId:topicId → locked origin message ID (set on first stream chunk, prevents race condition) */
+  private responseOriginMsg = new Map<string, number>();
+  /** chatId:topicId → tool feed message ID (the "Thinking..." / "Running..." message) */
+  private toolFeedMsgId = new Map<string, number>();
+  /** chatId:topicId → accumulated tool feed lines */
+  private toolFeedLines = new Map<string, string[]>();
   /** Active debate channel per chat (chatKey → channelId) */
   private activeDebateChannels = new Map<string, string>();
   /** Active auto-approve countdowns: messageId → timer */
@@ -278,6 +300,49 @@ export class TelegramBridge {
         })
         .catch(() => {});
     }, cfg.idleTimeoutMs);
+  }
+
+  // ── Dead session management (for resume) ─────────────────────────────
+
+  /** Get dead session by exact chatId:topicId key */
+  getDeadSession(chatId: number, topicId: number): DeadSessionInfo | undefined {
+    const k = this.mapKey(chatId, topicId);
+    const dead = this.deadSessions.get(k);
+    if (!dead) return undefined;
+    // Expire after 24h
+    if (Date.now() - dead.diedAt > 24 * 60 * 60 * 1000) {
+      this.deadSessions.delete(k);
+      return undefined;
+    }
+    return dead;
+  }
+
+  /** Get dead session by project slug (searches all dead sessions for this chatId) */
+  getDeadSessionByProject(chatId: number, projectSlug: string): DeadSessionInfo | undefined {
+    for (const [k, dead] of this.deadSessions) {
+      if (dead.chatId === chatId && dead.projectSlug === projectSlug) {
+        if (Date.now() - dead.diedAt > 24 * 60 * 60 * 1000) {
+          this.deadSessions.delete(k);
+          continue;
+        }
+        return dead;
+      }
+    }
+    return undefined;
+  }
+
+  /** Remove a dead session entry */
+  clearDeadSession(chatId: number, topicId: number): void {
+    this.deadSessions.delete(this.mapKey(chatId, topicId));
+  }
+
+  /** Clear dead session by project slug */
+  clearDeadSessionByProject(chatId: number, projectSlug: string): void {
+    for (const [k, dead] of this.deadSessions) {
+      if (dead.chatId === chatId && dead.projectSlug === projectSlug) {
+        this.deadSessions.delete(k);
+      }
+    }
   }
 
   // ── Mapping management ────────────────────────────────────────────────
@@ -425,8 +490,12 @@ export class TelegramBridge {
       }
     }
 
+    // Short ID for @mention / #mention
+    const shortId = session?.state.short_id;
+    const shortIdStr = shortId ? ` · <code>#${escapeHTML(shortId)}</code>` : "";
+
     const text = [
-      `<b>${escapeHTML(projectName)}</b> · <code>${escapeHTML(model)}</code> · ${statusEmoji(status)} ${status}`,
+      `<b>${escapeHTML(projectName)}</b> · <code>${escapeHTML(model)}</code> · ${statusEmoji(status)} ${status}${shortIdStr}`,
       `$${cost.toFixed(4)} · ${turns} turns · Updated ${updatedAt}${contextStr}`,
       `Auto-Approve: <b>${aaLabel}</b> · Timeout: <b>${idleLabel}</b>`,
     ].join("\n");
@@ -443,7 +512,7 @@ export class TelegramBridge {
     const aa15 = aa?.enabled && aa.timeoutSeconds === 15;
     const aa30 = aa?.enabled && aa.timeoutSeconds === 30;
     const aa60 = aa?.enabled && aa.timeoutSeconds === 60;
-    const aaSafe = permMode === "bypassPermissions";
+    const aaSafe = aa?.enabled && aa.timeoutSeconds === 0 && aa.allowBash;
 
     const iNever = idleMs <= 0;
     const i30m = idleMs === 1_800_000;
@@ -502,7 +571,11 @@ export class TelegramBridge {
         return { message_id: sent.message_id };
       }
     } catch (err) {
-      log.error("Failed to send settings panel", { sessionId, error: String(err) });
+      const errStr = String(err);
+      // Silently ignore "message is not modified" — panel content unchanged
+      if (!errStr.includes("message is not modified")) {
+        log.error("Failed to send settings panel", { sessionId, error: errStr });
+      }
       return undefined;
     }
   }
@@ -791,6 +864,13 @@ export class TelegramBridge {
           }
           break;
 
+        case "tool_progress":
+          // Refresh typing indicator while tools run
+          this.bot.api.sendChatAction(chatId, "typing", {
+            message_thread_id: topicId,
+          }).catch(() => {});
+          break;
+
         case "error":
           await this.bot.api.sendMessage(chatId, `⚠️ ${escapeHTML(msg.message)}`, {
             parse_mode: "HTML",
@@ -801,6 +881,46 @@ export class TelegramBridge {
     } catch (err) {
       log.error("Error handling session message", { chatId, error: String(err) });
     }
+  }
+
+  // ── Tool feed (progress indicators) ──────────────────────────────────
+
+  /** Create or update the tool feed message ("Thinking...", "Running...") */
+  private async upsertToolFeed(chatId: number, topicId: number | undefined, newLine: string): Promise<void> {
+    const k = this.mapKey(chatId, topicId);
+
+    // Create initial feed message if none exists
+    let msgId = this.toolFeedMsgId.get(k);
+    if (!msgId) {
+      try {
+        const sent = await this.bot.api.sendMessage(chatId, "🤔 <i>Thinking…</i>", {
+          parse_mode: "HTML",
+          message_thread_id: topicId,
+        });
+        msgId = sent.message_id;
+        this.toolFeedMsgId.set(k, msgId);
+        this.toolFeedLines.set(k, ["🤔 <i>Thinking…</i>"]);
+      } catch {
+        return;
+      }
+    }
+
+    // Accumulate lines (keep last 15 to stay under Telegram 4096 char limit)
+    const lines = this.toolFeedLines.get(k) ?? [];
+    const trimmed = [...lines, newLine].slice(-15);
+    this.toolFeedLines.set(k, trimmed);
+
+    // Edit the feed message
+    this.bot.api.editMessageText(chatId, msgId, trimmed.join("\n"), {
+      parse_mode: "HTML",
+    }).catch(() => {});
+  }
+
+  /** Clean up tool feed state after result */
+  private cleanupToolFeed(chatId: number, topicId: number | undefined): void {
+    const k = this.mapKey(chatId, topicId);
+    this.toolFeedMsgId.delete(k);
+    this.toolFeedLines.delete(k);
   }
 
   // ── Message handlers ──────────────────────────────────────────────────
@@ -881,6 +1001,14 @@ export class TelegramBridge {
       }
     }
 
+    // Acknowledge receipt with 👀 reaction + track for result reaction
+    const userMsgId = ctx.message?.message_id;
+    const k = this.mapKey(chatId, topicId);
+    if (userMsgId) {
+      this.bot.api.setMessageReaction(chatId, userMsgId, [{ type: "emoji", emoji: "👀" }]).catch(() => {});
+      this.lastUserMsgId.set(k, userMsgId);
+    }
+
     // Store message
     storeMessage({
       id: randomUUID(),
@@ -888,21 +1016,20 @@ export class TelegramBridge {
       role: "user",
       content: messageToSend,
       source: "telegram",
-      sourceId: String(ctx.message?.message_id),
+      sourceId: String(userMsgId),
     });
 
     // Send to CLI
     this.wsBridge.sendUserMessage(mapping.sessionId, messageToSend, "telegram");
 
     // User is active — clear idle timer
-    const cfg = this.getSessionConfig(mapping.sessionId);
-    if (cfg.idleTimer) {
-      clearTimeout(cfg.idleTimer);
-      cfg.idleTimer = undefined;
+    const sessionCfg = this.getSessionConfig(mapping.sessionId);
+    if (sessionCfg.idleTimer) {
+      clearTimeout(sessionCfg.idleTimer);
+      sessionCfg.idleTimer = undefined;
     }
 
-    // Start streaming response
-    await this.streamHandler.startStream(chatId, topicId);
+    // Stream will lazy-start on first appendText (no startStream needed)
   }
 
   private async handleAssistantMessage(
@@ -910,23 +1037,31 @@ export class TelegramBridge {
     topicId: number | undefined,
     msg: BrowserIncomingMessage & { type: "assistant" },
   ): Promise<void> {
-    // Extract text from content blocks
+    const content = msg.message?.content ?? [];
+    if (!Array.isArray(content) || content.length === 0) return;
+
+    // ── Tool progress: show tool_use blocks in the feed message ──
+    const toolFeed = formatToolFeed(content as Array<{ type: string; name?: string; input?: unknown }>);
+    if (toolFeed) {
+      await this.upsertToolFeed(chatId, topicId, toolFeed);
+    }
+
+    // NOTE: Do NOT call streamHandler.appendText here.
+    // stream_event deltas feed the stream incrementally.
+    // assistant message contains the SAME full text — handled by stream handler.
+
+    // ── File path detection: show "View File" buttons ──
     const textParts: string[] = [];
-    for (const block of msg.message?.content ?? []) {
+    for (const block of content) {
       if (block.type === "text" && block.text) {
         textParts.push(block.text);
       }
     }
-
     if (textParts.length === 0) return;
 
     const text = textParts.join("\n");
-    await this.streamHandler.appendText(chatId, text, topicId);
-
-    // Phase 14: detect file path references and add inline "View File" buttons
     const filePaths = extractFilePaths(text);
     if (filePaths.length > 0) {
-      // Find the sessionId for this chat
       const mapping = this.getMapping(chatId, topicId);
       if (mapping) {
         const sessionId = mapping.sessionId;
@@ -954,11 +1089,19 @@ export class TelegramBridge {
     topicId: number | undefined,
     msg: BrowserIncomingMessage & { type: "stream_event" },
   ): Promise<void> {
-    // Extract text from stream event
+    // Only accept delta (incremental) text to avoid duplication
     const event = msg.event as { type?: string; text?: string; delta?: { text?: string } };
-    const text = event?.delta?.text ?? event?.text;
+    const text = event?.delta?.text;
 
     if (text) {
+      const k = this.mapKey(chatId, topicId);
+
+      // Lock origin message ID on first chunk (prevents race with multi-message)
+      const replyTo = this.lastUserMsgId.get(k);
+      if (replyTo && !this.responseOriginMsg.has(k)) {
+        this.responseOriginMsg.set(k, replyTo);
+      }
+
       await this.streamHandler.appendText(chatId, text, topicId);
     }
   }
@@ -969,8 +1112,22 @@ export class TelegramBridge {
     sessionId: string,
     result: CLIResultMessage,
   ): Promise<void> {
-    // Complete the stream
+    // Complete the stream (sends final message)
     await this.streamHandler.completeStream(chatId, topicId);
+
+    // Clean up tool feed
+    this.cleanupToolFeed(chatId, topicId);
+
+    // React on original user message: 👍 success / 👎 error
+    const k = this.mapKey(chatId, topicId);
+    const originMsgId = this.responseOriginMsg.get(k) ?? this.lastUserMsgId.get(k);
+    if (originMsgId) {
+      const emoji = result.is_error ? "👎" : "👍";
+      this.bot.api.setMessageReaction(chatId, originMsgId, [{ type: "emoji", emoji }]).catch(() => {});
+    }
+    // Clean up turn-scoped state
+    this.responseOriginMsg.delete(k);
+    this.lastUserMsgId.delete(k);
 
     // Reset idle timer — session is now idle, start countdown
     this.resetIdleTimer(sessionId, chatId, topicId);
@@ -1203,22 +1360,39 @@ export class TelegramBridge {
       const rows = db.select().from(telegramSessionMappings).all();
 
       let loaded = 0;
+      let dead = 0;
       let stale = 0;
 
       for (const row of rows) {
-        // Only load mappings for sessions that are still active in memory
+        const topicId = row.topicId ?? 0;
         const activeSession = this.wsBridge.getSession(row.sessionId);
+
         if (activeSession) {
-          const key = this.mapKey(row.chatId, row.topicId ?? undefined);
+          // Session is alive — restore mapping + subscribe
+          const key = this.mapKey(row.chatId, topicId || undefined);
           this.mappings.set(key, {
             sessionId: row.sessionId,
             projectSlug: row.projectSlug,
             model: row.model,
-            topicId: row.topicId ?? undefined,
+            topicId: topicId || undefined,
           });
+          this.subscribeToSession(row.sessionId, row.chatId, topicId || undefined);
           loaded++;
+        } else if (row.cliSessionId) {
+          // CLI died but has cliSessionId — can be resumed
+          const key = this.mapKey(row.chatId, topicId || undefined);
+          this.deadSessions.set(key, {
+            chatId: row.chatId,
+            topicId,
+            sessionId: row.sessionId,
+            cliSessionId: row.cliSessionId,
+            projectSlug: row.projectSlug,
+            model: row.model,
+            diedAt: Date.now(),
+          });
+          dead++;
         } else {
-          // Remove stale mapping from DB
+          // No cliSessionId — truly stale, clean up
           db.delete(telegramSessionMappings)
             .where(eq(telegramSessionMappings.id, row.id))
             .run();
@@ -1226,7 +1400,7 @@ export class TelegramBridge {
         }
       }
 
-      log.info("Loaded Telegram mappings", { loaded, stale, total: rows.length });
+      log.info("Loaded Telegram mappings", { loaded, dead, stale, total: rows.length });
     } catch (err) {
       log.error("Failed to load mappings", { error: String(err) });
     }

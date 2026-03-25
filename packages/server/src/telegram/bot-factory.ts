@@ -42,14 +42,17 @@ export function createBot(config: BotConfig): Bot {
     const userId = ctx.from?.id;
     if (!chatId) return;
 
-    // Check chat ID whitelist
-    if (config.allowedChatIds.length > 0 && !config.allowedChatIds.includes(chatId)) {
+    // Admin users can DM the bot directly (bypass chat ID check)
+    const isAdmin = userId && config.allowedUserIds.includes(userId);
+
+    // Check chat ID whitelist (admins bypass this for DMs)
+    if (config.allowedChatIds.length > 0 && !config.allowedChatIds.includes(chatId) && !isAdmin) {
       log.warn("Unauthorized chat", { chatId, userId, botId: config.botId });
       return;
     }
 
     // Check user ID whitelist (admin restriction)
-    if (config.allowedUserIds.length > 0 && userId && !config.allowedUserIds.includes(userId)) {
+    if (config.allowedUserIds.length > 0 && userId && !isAdmin) {
       log.warn("Unauthorized user", { chatId, userId, botId: config.botId });
       return;
     }
@@ -85,6 +88,7 @@ export async function registerCommands(bot: Bot): Promise<void> {
       { command: "model", description: "Change AI model" },
       { command: "help", description: "Show all commands" },
       { command: "projects", description: "List all projects" },
+      { command: "sessions", description: "List active sessions & #shortIds" },
       { command: "exitplan", description: "Force exit plan mode" },
       { command: "allow", description: "Allow pending permission" },
       { command: "deny", description: "Deny pending permission" },
