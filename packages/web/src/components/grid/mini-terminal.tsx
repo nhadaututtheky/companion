@@ -234,7 +234,7 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
 
   const handleClose = useCallback(async () => {
     // Immediately update local state so grid removes it
-    useSessionStore.getState().setSession(sessionId, { status: "ended" });
+    useSessionStore.getState().setSession(sessionId, { status: "ended", shortId: undefined });
     useSessionStore.getState().removeFromGrid(sessionId);
     try {
       await api.sessions.stop(sessionId);
@@ -263,6 +263,7 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
       {/* Header */}
       <SessionHeader
         sessionId={sessionId}
+        shortId={session?.shortId ?? session?.state?.short_id}
         projectName={session?.projectName ?? sessionId}
         model={session?.model ?? ""}
         status={session?.status ?? "idle"}

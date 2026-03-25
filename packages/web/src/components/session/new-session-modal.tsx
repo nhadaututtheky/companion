@@ -376,6 +376,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
       });
 
       const sessionId = res.data.sessionId;
+      const projectCreated = res.data.projectCreated === true;
 
       // Add to store and grid
       const slug = projectName
@@ -394,6 +395,9 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
       useSessionStore.getState().setActiveSession(sessionId);
 
       toast.success(`Session started: ${projectName || selectedDir}`);
+      if (projectCreated) {
+        toast.info(`Project "${projectName}" saved — now available in Telegram /start`, { duration: 5000 });
+      }
       onClose();
     } catch (err) {
       toast.error(

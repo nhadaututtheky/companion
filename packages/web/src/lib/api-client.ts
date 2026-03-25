@@ -53,7 +53,7 @@ export const api = {
       resume?: boolean;
       idleTimeoutMs?: number;
       keepAlive?: boolean;
-    }) => request<{ data: { sessionId: string } }>("/api/sessions", {
+    }) => request<{ data: { sessionId: string; projectCreated?: boolean } }>("/api/sessions", {
       method: "POST",
       body: JSON.stringify(body),
     }),
@@ -102,11 +102,14 @@ export const api = {
           id: string;
           projectSlug: string | null;
           model: string;
+          source: string;
           cwd: string;
           cliSessionId: string;
           endedAt: number;
         }>;
       }>("/api/sessions/resumable"),
+    dismissResumable: (id: string) =>
+      request<{ success: boolean }>(`/api/sessions/resumable/${id}`, { method: "DELETE" }),
     resume: (id: string) =>
       request<{ success: boolean; data: { sessionId: string } }>(`/api/sessions/${id}/resume`, {
         method: "POST",

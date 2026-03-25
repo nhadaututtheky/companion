@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useCallback, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { ArrowCounterClockwise, X } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, X, TelegramLogo, Globe, Trash } from "@phosphor-icons/react";
 import { Header } from "@/components/layout/header";
 import { SessionList } from "@/components/session/session-list";
 // StatsGrid moved to Header
@@ -79,6 +79,7 @@ function SessionManagementBar() {
         useSessionStore.getState().setSession(id, {
           ...useSessionStore.getState().sessions[id]!,
           status: "ended",
+          shortId: undefined,
         });
       }
     } catch {
@@ -134,6 +135,7 @@ interface ResumableSession {
   id: string;
   projectSlug: string | null;
   model: string;
+  source: string;
   cwd: string;
   cliSessionId: string;
   endedAt: number;
@@ -142,10 +144,11 @@ interface ResumableSession {
 interface ResumeBannerProps {
   sessions: ResumableSession[];
   onResume: (id: string) => void;
+  onDismissOne: (id: string) => void;
   onDismiss: () => void;
 }
 
-function ResumeBanner({ sessions, onResume, onDismiss }: ResumeBannerProps) {
+function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBannerProps) {
   const [expanded, setExpanded] = useState(false);
   const [resumingId, setResumingId] = useState<string | null>(null);
 
@@ -169,6 +172,11 @@ function ResumeBanner({ sessions, onResume, onDismiss }: ResumeBannerProps) {
 
   const modelShort = (model: string) =>
     model.includes("opus") ? "Opus" : model.includes("haiku") ? "Haiku" : "Sonnet";
+
+  const SourceIcon = ({ source }: { source: string }) => {
+    if (source === "telegram") return <TelegramLogo size={12} weight="fill" style={{ color: "#29B6F6" }} aria-label="From Telegram" />;
+    return <Globe size={12} style={{ color: "var(--color-text-muted)" }} aria-label="From Web" />;
+  };
 
   return (
     <div
@@ -218,6 +226,7 @@ function ResumeBanner({ sessions, onResume, onDismiss }: ResumeBannerProps) {
               className="flex items-center gap-3 px-4 py-2"
               style={{ borderBottom: "1px solid #4285F415" }}
             >
+              <SourceIcon source={s.source} />
               <div className="flex flex-col flex-1 min-w-0">
                 <span
                   className="text-xs font-semibold truncate"
@@ -238,6 +247,14 @@ function ResumeBanner({ sessions, onResume, onDismiss }: ResumeBannerProps) {
                   })}
                 </span>
               </div>
+              <button
+                onClick={() => onDismissOne(s.id)}
+                className="p-1.5 rounded cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
+                style={{ color: "var(--color-text-muted)" }}
+                aria-label={`Dismiss session ${projectLabel(s)}`}
+              >
+                <Trash size={12} weight="bold" aria-hidden="true" />
+              </button>
               <button
                 onClick={() => handleResume(s.id)}
                 disabled={resumingId === s.id}
@@ -299,6 +316,7 @@ export default function DashboardPage() {
     () =>
       Object.values(sessions).map((s) => ({
         id: s.id,
+        shortId: s.shortId ?? s.state?.short_id,
         projectName: s.projectName,
         model: s.model,
         status: s.status,
@@ -346,6 +364,7 @@ export default function DashboardPage() {
         const data = res.data as {
           sessions: Array<{
             id: string;
+            shortId?: string;
             projectSlug: string;
             status: string;
             model: string;
@@ -362,6 +381,7 @@ export default function DashboardPage() {
 
           useSessionStore.getState().setSession(s.id, {
             id: s.id,
+            shortId: s.shortId,
             projectSlug: s.projectSlug,
             projectName: s.projectSlug || "session",
             model: s.model,
@@ -566,6 +586,14 @@ export default function DashboardPage() {
               <ResumeBanner
                 sessions={resumableSessions}
                 onResume={handleResume}
+                onDismissOne={async (id) => {
+                  try {
+                    await api.sessions.dismissResumable(id);
+                    setResumableSessions((prev) => prev.filter((s) => s.id !== id));
+                  } catch {
+                    // ignore
+                  }
+                }}
                 onDismiss={() => setResumeBannerDismissed(true)}
               />
             )}

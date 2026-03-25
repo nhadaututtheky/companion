@@ -16,6 +16,7 @@ import {
   countActiveSessions,
   endSessionRecord,
   listResumableSessions,
+  dismissResumableSession,
 } from "../services/session-store.js";
 import { getProject, upsertProject } from "../services/project-profiles.js";
 import { getTemplate, resolveTemplateVariables } from "../services/templates.js";
@@ -123,6 +124,16 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     return c.json({ success: true, data: resumable } satisfies ApiResponse);
   });
 
+  // Dismiss a resumable session (clear cliSessionId so it won't show up again)
+  app.delete("/resumable/:id", (c) => {
+    const id = c.req.param("id");
+    const dismissed = dismissResumableSession(id);
+    if (!dismissed) {
+      return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
+    }
+    return c.json({ success: true } satisfies ApiResponse);
+  });
+
   app.post("/", zValidator("json", createSessionSchema), async (c) => {
     const body = c.req.valid("json");
 
@@ -146,6 +157,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     }
 
     let project = body.projectSlug ? getProject(body.projectSlug) : null;
+    let projectCreated = false;
 
     // Auto-create project if slug provided but doesn't exist
     if (body.projectSlug && !project) {
@@ -158,6 +170,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         permissionMode: body.permissionMode ?? "default",
       });
       project = getProject(body.projectSlug);
+      projectCreated = true;
       log.info("Auto-created project", { slug: body.projectSlug, dir: body.projectDir });
     }
 
@@ -209,8 +222,8 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         });
       }
 
-      log.info("Session created via API", { sessionId, model });
-      return c.json({ success: true, data: { sessionId } } satisfies ApiResponse, 201);
+      log.info("Session created via API", { sessionId, model, projectCreated });
+      return c.json({ success: true, data: { sessionId, projectCreated } } satisfies ApiResponse, 201);
     } catch (err) {
       log.error("Failed to create session", { error: String(err) });
       return c.json({ success: false, error: "Failed to create session" } satisfies ApiResponse, 500);

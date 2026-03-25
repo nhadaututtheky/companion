@@ -39,3 +39,17 @@
 {"id":"s-20260319-163546","date":"2026-03-19","duration_min":103,"tool_calls":146,"tool_distribution":{"unknown":146},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
 {"id":"s-20260319-163715","date":"2026-03-19","duration_min":104,"tool_calls":148,"tool_distribution":{"unknown":148},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
 {"id":"s-20260319-163807","date":"2026-03-19","duration_min":105,"tool_calls":148,"tool_distribution":{"unknown":148},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
+{"id":"s-20260321-055222","date":"2026-03-21","duration_min":56,"tool_calls":36,"tool_distribution":{"unknown":36},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
+{"id":"s-20260323-200832","date":"2026-03-23","duration_min":26,"tool_calls":4,"tool_distribution":{"unknown":4},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
+{"id":"s-20260323-201018","date":"2026-03-23","duration_min":28,"tool_calls":5,"tool_distribution":{"unknown":5},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
+{"id":"s-20260323-201400","date":"2026-03-23","duration_min":32,"tool_calls":6,"tool_distribution":{"unknown":6},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
+{"id":"s-20260323-201614","date":"2026-03-23","duration_min":34,"tool_calls":6,"tool_distribution":{"unknown":6},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
+{"id":"s-20260323-201940","date":"2026-03-23","duration_min":38,"tool_calls":6,"tool_distribution":{"unknown":6},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
+{"id":"s-20260323-202500","date":"2026-03-23","duration_min":43,"tool_calls":11,"tool_distribution":{"unknown":11},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
+{"id":"s-20260323-202824","date":"2026-03-23","duration_min":46,"tool_calls":22,"tool_distribution":{"unknown":22},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
+{"id":"s-20260323-203034","date":"2026-03-23","duration_min":48,"tool_calls":22,"tool_distribution":{"unknown":22},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
+{"id":"s-20260323-203343","date":"2026-03-23","duration_min":0,"tool_calls":1,"tool_distribution":{"unknown":1},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
+{"id":"s-20260323-203546","date":"2026-03-23","duration_min":2,"tool_calls":8,"tool_distribution":{"unknown":8},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
+{"id":"s-20260323-203841","date":"2026-03-23","duration_min":5,"tool_calls":10,"tool_distribution":{"unknown":10},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
+{"id":"s-20260324-032647","date":"2026-03-24","duration_min":413,"tool_calls":33,"tool_distribution":{"unknown":33},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}
+{"id":"s-20260324-083146","date":"2026-03-24","duration_min":0,"tool_calls":1,"tool_distribution":{"unknown":1},"skill_invocations":0,"skills_used":[],"primary_skill":"none"}

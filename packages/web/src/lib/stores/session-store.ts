@@ -3,6 +3,7 @@ import type { SessionState } from "@companion/shared";
 
 interface Session {
   id: string;
+  shortId?: string;
   projectSlug: string;
   projectName: string;
   model: string;

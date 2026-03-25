@@ -7,6 +7,7 @@ import {
 
 interface SessionItem {
   id: string;
+  shortId?: string;
   projectName: string;
   model: string;
   status: string;
@@ -90,7 +91,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
         </span>
         <button
           onClick={onNew}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+          className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer"
           style={{ background: "#34A853", color: "#fff" }}
           aria-label="New session"
         >
@@ -138,6 +139,15 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
           >
             <div className="flex items-center gap-2">
               <StatusDot status={s.status} />
+              {s.shortId && (
+                <span
+                  className="text-xs font-mono px-1.5 py-0.5 rounded shrink-0"
+                  style={{ background: "var(--color-bg-elevated)", color: "#34A853" }}
+                  title={`@${s.shortId} — use in chat to mention this session`}
+                >
+                  @{s.shortId}
+                </span>
+              )}
               <span className="text-sm font-medium truncate flex-1" style={{ color: "var(--color-text-primary)" }}>
                 {s.projectName}
               </span>

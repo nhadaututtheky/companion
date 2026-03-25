@@ -5,6 +5,7 @@ import { CostBreakdown } from "@/components/session/cost-breakdown";
 
 interface SessionHeaderProps {
   sessionId: string;
+  shortId?: string;
   projectName: string;
   model: string;
   status: string;
@@ -35,6 +36,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function SessionHeader({
   sessionId,
+  shortId,
   projectName,
   model,
   status,
@@ -88,6 +90,15 @@ export function SessionHeader({
           flexShrink: 0,
         }}
       />
+      {shortId && (
+        <span
+          className="text-xs font-mono px-1 py-0.5 rounded flex-shrink-0"
+          style={{ background: "var(--color-bg-elevated)", color: "#34A853" }}
+          title={`@${shortId} — mention this session in other chats`}
+        >
+          @{shortId}
+        </span>
+      )}
       <span
         className="text-sm font-semibold truncate flex-1"
         style={{ color: "var(--color-text-primary)" }}

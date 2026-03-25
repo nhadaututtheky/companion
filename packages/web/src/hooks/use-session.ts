@@ -376,9 +376,9 @@ export function useSession(sessionId: string): UseSessionReturn {
 
           // Early/error exits → show "error" status so user sees what happened
           if (exitCode !== undefined && exitCode !== 0) {
-            setSession(sessionId, { status: "error" });
+            setSession(sessionId, { status: "error", shortId: undefined });
           } else {
-            setSession(sessionId, { status: "ended" });
+            setSession(sessionId, { status: "ended", shortId: undefined });
           }
 
           if (exitReason) {
