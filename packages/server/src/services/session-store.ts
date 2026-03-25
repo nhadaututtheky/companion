@@ -7,6 +7,7 @@ import { eq, desc, and, count, notInArray, isNotNull, sql } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { sessions, sessionMessages, telegramSessionMappings, dailyCosts } from "../db/schema.js";
 import { createLogger } from "../logger.js";
+import { generateShortId } from "./short-id.js";
 import type {
   SessionState,
   SessionStatus,
@@ -166,22 +167,39 @@ export function createSessionRecord(opts: {
   source?: string;
   parentId?: string;
   channelId?: string;
-}): void {
+}): string {
   const db = getDb();
+  const MAX_RETRIES = 5;
 
-  db.insert(sessions)
-    .values({
-      id: opts.id,
-      projectSlug: opts.projectSlug,
-      model: opts.model,
-      cwd: opts.cwd,
-      permissionMode: opts.permissionMode ?? "default",
-      source: opts.source ?? "api",
-      parentId: opts.parentId,
-      channelId: opts.channelId,
-      startedAt: new Date(),
-    })
-    .run();
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const shortId = generateShortId();
+    try {
+      db.insert(sessions)
+        .values({
+          id: opts.id,
+          shortId,
+          projectSlug: opts.projectSlug,
+          model: opts.model,
+          cwd: opts.cwd,
+          permissionMode: opts.permissionMode ?? "default",
+          source: opts.source ?? "api",
+          parentId: opts.parentId,
+          channelId: opts.channelId,
+          startedAt: new Date(),
+        })
+        .run();
+      return shortId;
+    } catch (err) {
+      const isUniqueViolation = String(err).includes("UNIQUE constraint failed");
+      if (!isUniqueViolation || attempt === MAX_RETRIES - 1) {
+        throw err;
+      }
+      log.warn("ShortId collision, retrying", { shortId, attempt });
+    }
+  }
+
+  // Safety net — all retries exhausted without throwing (shouldn't happen, but TypeScript needs it)
+  throw new Error("Failed to generate unique shortId after max retries");
 }
 
 export function endSessionRecord(id: string, status: SessionStatus = "ended"): void {
@@ -190,6 +208,7 @@ export function endSessionRecord(id: string, status: SessionStatus = "ended"): v
   db.update(sessions)
     .set({
       status,
+      shortId: null, // Free the shortId for reuse by new sessions
       endedAt: new Date(),
     })
     .where(eq(sessions.id, id))
@@ -356,6 +375,7 @@ export function listSessions(opts?: {
   return {
     items: rows.map((row) => ({
       id: row.id,
+      shortId: row.shortId ?? undefined,
       projectSlug: row.projectSlug ?? undefined,
       model: row.model,
       status: row.status as SessionStatus,
@@ -393,7 +413,7 @@ export function bulkEndSessions(): number {
     if (zombies.length === 0) return 0;
 
     db.update(sessions)
-      .set({ status: "ended", endedAt: new Date() })
+      .set({ status: "ended", endedAt: new Date(), shortId: null })
       .where(notInArray(sessions.status, terminalStatuses))
       .run();
 
@@ -431,7 +451,7 @@ export function cleanupZombieSessions(
 
     for (const id of zombieIds) {
       db.update(sessions)
-        .set({ status: "ended", endedAt: new Date() })
+        .set({ status: "ended", endedAt: new Date(), shortId: null })
         .where(eq(sessions.id, id))
         .run();
     }
@@ -449,6 +469,7 @@ export interface ResumableSession {
   id: string;
   projectSlug: string | null;
   model: string;
+  source: string;
   cwd: string;
   cliSessionId: string;
   endedAt: number;
@@ -468,6 +489,7 @@ export function listResumableSessions(): ResumableSession[] {
         id: sessions.id,
         projectSlug: sessions.projectSlug,
         model: sessions.model,
+        source: sessions.source,
         cwd: sessions.cwd,
         cliSessionId: sessions.cliSessionId,
         endedAt: sessions.endedAt,
@@ -489,6 +511,7 @@ export function listResumableSessions(): ResumableSession[] {
         id: r.id,
         projectSlug: r.projectSlug,
         model: r.model,
+        source: r.source,
         cwd: r.cwd,
         cliSessionId: r.cliSessionId as string,
         endedAt: r.endedAt?.getTime() ?? 0,
@@ -496,6 +519,24 @@ export function listResumableSessions(): ResumableSession[] {
   } catch (err) {
     log.error("Failed to list resumable sessions", { error: String(err) });
     return [];
+  }
+}
+
+/**
+ * Dismiss a resumable session by clearing its cliSessionId (by session ID).
+ * Called when user clicks "Dismiss" on the resume banner.
+ */
+export function dismissResumableSession(sessionId: string): boolean {
+  const db = getDb();
+  try {
+    db.update(sessions)
+      .set({ cliSessionId: null })
+      .where(eq(sessions.id, sessionId))
+      .run();
+    return true;
+  } catch (err) {
+    log.warn("Failed to dismiss resumable session", { sessionId, error: String(err) });
+    return false;
   }
 }
 

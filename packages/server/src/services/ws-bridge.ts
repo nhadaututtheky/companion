@@ -8,6 +8,7 @@ import { createLogger } from "../logger.js";
 import { launchCLI, createPlanModeWatcher } from "./cli-launcher.js";
 import { startSdkSession, type SdkSessionHandle } from "./sdk-engine.js";
 import { summarizeSession, buildSummaryInjection } from "./session-summarizer.js";
+import { handleMentions } from "./mention-router.js";
 import {
   createActiveSession,
   getActiveSession,
@@ -176,8 +177,8 @@ export class WsBridge {
     // Create in-memory session
     const session = createActiveSession(sessionId, initialState);
 
-    // Persist to DB
-    createSessionRecord({
+    // Persist to DB (returns generated shortId)
+    const shortId = createSessionRecord({
       id: sessionId,
       projectSlug: opts.projectSlug,
       model: opts.model,
@@ -187,6 +188,9 @@ export class WsBridge {
       parentId: opts.parentId,
       channelId: opts.channelId,
     });
+
+    // Attach shortId to session state for clients
+    initialState.short_id = shortId;
 
     // If resuming, clear cliSessionId from old session so it's no longer listed as resumable
     if (opts.resume && opts.cliSessionId) {
@@ -1093,6 +1097,16 @@ export class WsBridge {
       content,
       source: (source as "telegram" | "web" | "api" | "agent" | "system") ?? "api",
     });
+
+    // Route @mentions to target sessions — skip if source is "mention" or "debate" to prevent loops
+    if (session.state.short_id && source !== "mention" && source !== "debate") {
+      handleMentions(
+        content,
+        session.id,
+        session.state.short_id,
+        (targetId, msg) => this.sendUserMessage(targetId, msg, "mention"),
+      );
+    }
 
     // SDK engine path: start a new query with resume to continue the conversation
     const existingSdkHandle = this.sdkHandles.get(session.id);

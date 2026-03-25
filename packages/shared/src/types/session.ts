@@ -198,6 +198,8 @@ export type SessionStatus =
 
 export interface SessionState {
   session_id: string;
+  /** Short memorable ID for @mentions (e.g. "fox", "bear") */
+  short_id?: string;
   model: string;
   cwd: string;
   tools: string[];
@@ -285,6 +287,8 @@ export interface CreateSessionRequest {
 
 export interface SessionListItem {
   id: string;
+  /** Short memorable ID for @mentions (e.g. "fox", "bear") */
+  shortId?: string;
   projectSlug?: string;
   model: string;
   status: SessionStatus;

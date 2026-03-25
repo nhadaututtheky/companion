@@ -17,6 +17,8 @@ export const projects = sqliteTable("projects", {
 
 export const sessions = sqliteTable("sessions", {
   id: text("id").primaryKey(),
+  /** Short memorable ID for @mentions (e.g. "fox", "bear") */
+  shortId: text("short_id"),
   projectSlug: text("project_slug").references(() => projects.slug),
   model: text("model").notNull(),
   status: text("status").notNull().default("starting"),
