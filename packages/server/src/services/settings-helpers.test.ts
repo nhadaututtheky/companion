@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
-import { Database } from "bun:sqlite";
+import type { Database } from "bun:sqlite";
 import { createTestDb } from "../test-utils.js";
 
 let currentDb: ReturnType<typeof createTestDb>["db"] | null = null;

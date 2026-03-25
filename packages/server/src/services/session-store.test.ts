@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
-import { Database } from "bun:sqlite";
+import type { Database } from "bun:sqlite";
 import { createTestDb } from "../test-utils.js";
 
 // ── Module mock — must be before importing the service ────────────────────────

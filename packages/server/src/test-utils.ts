@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS projects (
 
 CREATE TABLE IF NOT EXISTS sessions (
   id TEXT PRIMARY KEY NOT NULL,
+  short_id TEXT,
   project_slug TEXT REFERENCES projects(slug),
   model TEXT NOT NULL,
   status TEXT DEFAULT 'starting' NOT NULL,
@@ -136,11 +137,14 @@ CREATE TABLE IF NOT EXISTS session_templates (
   permission_mode TEXT,
   icon TEXT NOT NULL DEFAULT '⚡',
   sort_order INTEGER NOT NULL DEFAULT 0,
+  variables TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS session_templates_slug_unique ON session_templates (slug);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_short_id ON sessions(short_id) WHERE short_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS session_summaries (
   id TEXT PRIMARY KEY NOT NULL,

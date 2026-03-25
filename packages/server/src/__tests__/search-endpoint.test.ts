@@ -20,6 +20,7 @@ const HEADERS = { "X-API-Key": API_KEY };
 // ── Connectivity check ────────────────────────────────────────────────────────
 
 let serverReachable = false;
+let ripgrepAvailable = false;
 
 beforeAll(async () => {
   try {
@@ -31,11 +32,30 @@ beforeAll(async () => {
   } catch {
     serverReachable = false;
   }
+
+  // Check ripgrep availability via a test search
+  if (serverReachable) {
+    try {
+      const testPath = encodeURIComponent(resolve(process.cwd(), "src"));
+      const res = await fetch(`${BASE}/api/fs/search?q=test&path=${testPath}`, {
+        headers: HEADERS,
+        signal: AbortSignal.timeout(3000),
+      });
+      const body = (await res.json()) as { success: boolean; error?: string };
+      ripgrepAvailable = body.success || !body.error?.includes("ripgrep");
+    } catch {
+      ripgrepAvailable = false;
+    }
+  }
 });
 
 function skipIfOffline() {
   if (!serverReachable) {
     console.warn("  [skip] Server not reachable — skipping integration test");
+    return true;
+  }
+  if (!ripgrepAvailable) {
+    console.warn("  [skip] ripgrep not installed — skipping search test");
     return true;
   }
   return false;
@@ -74,7 +94,7 @@ describe("GET /api/fs/search — parameter validation", () => {
     if (skipIfOffline()) return;
     // Use package.json from server package — guaranteed to exist, guaranteed to be a file
     const filePath = encodeURIComponent(
-      resolve(process.cwd(), "packages/server/package.json"),
+      resolve(process.cwd(), "package.json"),
     );
     const res = await fetch(`${BASE}/api/fs/search?q=test&path=${filePath}`, {
       headers: HEADERS,
@@ -88,7 +108,7 @@ describe("GET /api/fs/search — successful searches", () => {
     if (skipIfOffline()) return;
     // "Hono" is referenced throughout the server source — guaranteed hits
     const srcPath = encodeURIComponent(
-      resolve(process.cwd(), "packages/server/src"),
+      resolve(process.cwd(), "src"),
     );
     const res = await fetch(`${BASE}/api/fs/search?q=Hono&path=${srcPath}`, {
       headers: HEADERS,
@@ -105,7 +125,7 @@ describe("GET /api/fs/search — successful searches", () => {
   it("match objects contain file, line, text, and col fields", async () => {
     if (skipIfOffline()) return;
     const srcPath = encodeURIComponent(
-      resolve(process.cwd(), "packages/server/src"),
+      resolve(process.cwd(), "src"),
     );
     const res = await fetch(`${BASE}/api/fs/search?q=Hono&path=${srcPath}`, {
       headers: HEADERS,
@@ -123,7 +143,7 @@ describe("GET /api/fs/search — successful searches", () => {
   it("returns empty matches array when query has no results", async () => {
     if (skipIfOffline()) return;
     const srcPath = encodeURIComponent(
-      resolve(process.cwd(), "packages/server/src"),
+      resolve(process.cwd(), "src"),
     );
     const res = await fetch(
       `${BASE}/api/fs/search?q=xyzNonExistentToken999abc&path=${srcPath}`,
@@ -143,7 +163,7 @@ describe("GET /api/fs/search — glob filter", () => {
   it("only returns files matching the glob pattern", async () => {
     if (skipIfOffline()) return;
     const srcPath = encodeURIComponent(
-      resolve(process.cwd(), "packages/server/src"),
+      resolve(process.cwd(), "src"),
     );
     const res = await fetch(
       `${BASE}/api/fs/search?q=import&path=${srcPath}&glob=*.ts`,
@@ -161,7 +181,7 @@ describe("GET /api/fs/search — glob filter", () => {
   it("returns empty matches when glob excludes all files containing the query", async () => {
     if (skipIfOffline()) return;
     const srcPath = encodeURIComponent(
-      resolve(process.cwd(), "packages/server/src"),
+      resolve(process.cwd(), "src"),
     );
     // Search for "import" in *.xyz files — there are none
     const res = await fetch(
@@ -180,7 +200,7 @@ describe("GET /api/fs/search — response shape", () => {
   it("includes total and truncated fields in data", async () => {
     if (skipIfOffline()) return;
     const srcPath = encodeURIComponent(
-      resolve(process.cwd(), "packages/server/src"),
+      resolve(process.cwd(), "src"),
     );
     const res = await fetch(`${BASE}/api/fs/search?q=import&path=${srcPath}`, {
       headers: HEADERS,
