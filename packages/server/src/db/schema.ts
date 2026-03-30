@@ -19,6 +19,8 @@ export const sessions = sqliteTable("sessions", {
   id: text("id").primaryKey(),
   /** Short memorable ID for @mentions (e.g. "fox", "bear") */
   shortId: text("short_id"),
+  /** User-defined session name (persists after session end) */
+  name: text("name"),
   projectSlug: text("project_slug").references(() => projects.slug),
   model: text("model").notNull(),
   status: text("status").notNull().default("starting"),
@@ -33,6 +35,16 @@ export const sessions = sqliteTable("sessions", {
   parentId: text("parent_id"),
   /** Shared channel ID for debate/collab */
   channelId: text("channel_id"),
+
+  // Session management config
+  /** Cost warning threshold in USD (null = no budget) */
+  costBudgetUsd: real("cost_budget_usd"),
+  /** Budget warning state: 0=none, 1=warned at 80%, 2=warned at 100% */
+  costWarned: integer("cost_warned").notNull().default(0),
+  /** Compact mode: manual | smart | aggressive */
+  compactMode: text("compact_mode").notNull().default("manual"),
+  /** Context % threshold to trigger compact (default 75) */
+  compactThreshold: integer("compact_threshold").notNull().default(75),
 
   // Accumulated metrics
   totalCostUsd: real("total_cost_usd").notNull().default(0),

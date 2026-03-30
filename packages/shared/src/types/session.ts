@@ -196,10 +196,14 @@ export type SessionStatus =
   | "ended"
   | "error";
 
+export type CompactMode = "manual" | "smart" | "aggressive";
+
 export interface SessionState {
   session_id: string;
   /** Short memorable ID for @mentions (e.g. "fox", "bear") */
   short_id?: string;
+  /** User-defined session name (persists after session end) */
+  name?: string;
   model: string;
   cwd: string;
   tools: string[];
@@ -221,6 +225,16 @@ export interface SessionState {
   status: SessionStatus;
   /** Whether Claude is in plan mode (for stuck detection) */
   is_in_plan_mode: boolean;
+
+  // Session management config
+  /** Cost warning threshold in USD (null/undefined = no budget) */
+  cost_budget_usd?: number;
+  /** Budget warning state: 0=none, 1=warned at 80%, 2=warned at 100% */
+  cost_warned: number;
+  /** Compact mode: manual | smart | aggressive */
+  compact_mode: CompactMode;
+  /** Context % threshold to trigger compact (default 75) */
+  compact_threshold: number;
 }
 
 // ─── Permission Types ────────────────────────────────────────────────────────
@@ -289,6 +303,8 @@ export interface SessionListItem {
   id: string;
   /** Short memorable ID for @mentions (e.g. "fox", "bear") */
   shortId?: string;
+  /** User-defined session name */
+  name?: string;
   projectSlug?: string;
   model: string;
   status: SessionStatus;

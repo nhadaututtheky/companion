@@ -333,6 +333,9 @@ describe("ActiveSession in-memory management", () => {
       started_at: Date.now(),
       status: "starting" as const,
       is_in_plan_mode: false,
+      cost_warned: 0,
+      compact_mode: "manual" as const,
+      compact_threshold: 75,
     };
 
     const session = createActiveSession("mem-1", state);
@@ -367,6 +370,9 @@ describe("ActiveSession in-memory management", () => {
       started_at: Date.now(),
       status: "starting" as const,
       is_in_plan_mode: false,
+      cost_warned: 0,
+      compact_mode: "manual" as const,
+      compact_threshold: 75,
     };
 
     createActiveSession("mem-2", state);
@@ -399,6 +405,9 @@ describe("ActiveSession in-memory management", () => {
       started_at: Date.now(),
       status: "idle" as const,
       is_in_plan_mode: false,
+      cost_warned: 0,
+      compact_mode: "manual" as const,
+      compact_threshold: 75,
     };
 
     createActiveSession("count-a", { ...baseState, session_id: "count-a" });

@@ -167,6 +167,10 @@ export function createSessionRecord(opts: {
   source?: string;
   parentId?: string;
   channelId?: string;
+  name?: string;
+  costBudgetUsd?: number;
+  compactMode?: string;
+  compactThreshold?: number;
 }): string {
   const db = getDb();
   const MAX_RETRIES = 5;
@@ -178,6 +182,7 @@ export function createSessionRecord(opts: {
         .values({
           id: opts.id,
           shortId,
+          name: opts.name,
           projectSlug: opts.projectSlug,
           model: opts.model,
           cwd: opts.cwd,
@@ -185,6 +190,9 @@ export function createSessionRecord(opts: {
           source: opts.source ?? "api",
           parentId: opts.parentId,
           channelId: opts.channelId,
+          costBudgetUsd: opts.costBudgetUsd,
+          compactMode: opts.compactMode ?? "manual",
+          compactThreshold: opts.compactThreshold ?? 75,
           startedAt: new Date(),
         })
         .run();
@@ -376,6 +384,7 @@ export function listSessions(opts?: {
     items: rows.map((row) => ({
       id: row.id,
       shortId: row.shortId ?? undefined,
+      name: row.name ?? undefined,
       projectSlug: row.projectSlug ?? undefined,
       model: row.model,
       status: row.status as SessionStatus,
@@ -467,6 +476,7 @@ export function cleanupZombieSessions(
 
 export interface ResumableSession {
   id: string;
+  name?: string;
   projectSlug: string | null;
   model: string;
   source: string;
@@ -480,13 +490,30 @@ export interface ResumableSession {
  * ordered by endedAt DESC, limit 10.
  * These can be resumed after a server restart.
  */
-export function listResumableSessions(): ResumableSession[] {
+export function listResumableSessions(opts?: {
+  projectSlug?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}): ResumableSession[] {
   const db = getDb();
+  const limit = opts?.limit ?? 50;
+  const offset = opts?.offset ?? 0;
 
   try {
-    const rows = db
+    const conditions = [
+      eq(sessions.status, "ended"),
+      isNotNull(sessions.cliSessionId),
+    ];
+
+    if (opts?.projectSlug) {
+      conditions.push(eq(sessions.projectSlug, opts.projectSlug));
+    }
+
+    let query = db
       .select({
         id: sessions.id,
+        name: sessions.name,
         projectSlug: sessions.projectSlug,
         model: sessions.model,
         source: sessions.source,
@@ -495,20 +522,30 @@ export function listResumableSessions(): ResumableSession[] {
         endedAt: sessions.endedAt,
       })
       .from(sessions)
-      .where(
-        and(
-          eq(sessions.status, "ended"),
-          isNotNull(sessions.cliSessionId),
-        ),
-      )
+      .where(and(...conditions))
       .orderBy(desc(sessions.endedAt))
-      .limit(10)
-      .all();
+      .limit(limit)
+      .offset(offset);
 
-    return rows
+    const rows = query.all();
+
+    // Client-side search filter (name or project slug)
+    const filtered = opts?.search
+      ? rows.filter((r) => {
+          const q = opts.search!.toLowerCase();
+          return (
+            r.name?.toLowerCase().includes(q) ||
+            r.projectSlug?.toLowerCase().includes(q) ||
+            r.cwd?.toLowerCase().includes(q)
+          );
+        })
+      : rows;
+
+    return filtered
       .filter((r) => r.cliSessionId !== null)
       .map((r) => ({
         id: r.id,
+        name: r.name ?? undefined,
         projectSlug: r.projectSlug,
         model: r.model,
         source: r.source,
@@ -554,6 +591,75 @@ export function clearCliSessionId(cliSessionId: string): void {
     log.info("Cleared cliSessionId from old session (resume consumed)", { cliSessionId });
   } catch (err) {
     log.warn("Failed to clear old cliSessionId", { error: String(err) });
+  }
+}
+
+// ─── Session rename & config ─────────────────────────────────────────────────
+
+export function renameSession(sessionId: string, name: string | null): boolean {
+  const db = getDb();
+  try {
+    db.update(sessions)
+      .set({ name })
+      .where(eq(sessions.id, sessionId))
+      .run();
+
+    // Also update in-memory state if session is active
+    const active = activeSessions.get(sessionId);
+    if (active) {
+      active.state = { ...active.state, name: name ?? undefined };
+    }
+
+    return true;
+  } catch (err) {
+    log.warn("Failed to rename session", { sessionId, error: String(err) });
+    return false;
+  }
+}
+
+export function updateSessionConfig(
+  sessionId: string,
+  config: {
+    costBudgetUsd?: number | null;
+    compactMode?: string;
+    compactThreshold?: number;
+  },
+): boolean {
+  const db = getDb();
+  try {
+    const updates: Record<string, unknown> = {};
+    if (config.costBudgetUsd !== undefined) updates.costBudgetUsd = config.costBudgetUsd;
+    if (config.compactMode !== undefined) updates.compactMode = config.compactMode;
+    if (config.compactThreshold !== undefined) updates.compactThreshold = config.compactThreshold;
+
+    if (Object.keys(updates).length === 0) return true;
+
+    db.update(sessions)
+      .set(updates)
+      .where(eq(sessions.id, sessionId))
+      .run();
+
+    // Sync to in-memory state
+    const active = activeSessions.get(sessionId);
+    if (active) {
+      if (config.costBudgetUsd !== undefined) {
+        active.state = { ...active.state, cost_budget_usd: config.costBudgetUsd ?? undefined };
+      }
+      if (config.compactMode !== undefined) {
+        active.state = {
+          ...active.state,
+          compact_mode: config.compactMode as SessionState["compact_mode"],
+        };
+      }
+      if (config.compactThreshold !== undefined) {
+        active.state = { ...active.state, compact_threshold: config.compactThreshold };
+      }
+    }
+
+    return true;
+  } catch (err) {
+    log.warn("Failed to update session config", { sessionId, error: String(err) });
+    return false;
   }
 }
 

@@ -148,6 +148,10 @@ export class WsBridge {
     parentId?: string;
     channelId?: string;
     envVars?: Record<string, string>;
+    name?: string;
+    costBudgetUsd?: number;
+    compactMode?: string;
+    compactThreshold?: number;
   }): Promise<string> {
     const sessionId = randomUUID();
 
@@ -173,6 +177,11 @@ export class WsBridge {
       started_at: Date.now(),
       status: "starting",
       is_in_plan_mode: false,
+      name: opts.name,
+      cost_budget_usd: opts.costBudgetUsd,
+      cost_warned: 0,
+      compact_mode: (opts.compactMode as SessionState["compact_mode"]) ?? "manual",
+      compact_threshold: opts.compactThreshold ?? 75,
     };
 
     // Create in-memory session
@@ -188,6 +197,10 @@ export class WsBridge {
       source: opts.source ?? "api",
       parentId: opts.parentId,
       channelId: opts.channelId,
+      name: opts.name,
+      costBudgetUsd: opts.costBudgetUsd,
+      compactMode: opts.compactMode,
+      compactThreshold: opts.compactThreshold,
     });
 
     // Attach shortId to session state for clients
