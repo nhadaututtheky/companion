@@ -1,0 +1,3 @@
+[test]
+# Exclude Playwright e2e tests from bun test — only run unit tests in src/
+root = "./src"

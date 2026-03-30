@@ -176,6 +176,15 @@ export const sessionTemplates = sqliteTable("session_templates", {
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
 });
 
+// ─── Session Notes ──────────────────────────────────────────────────────────
+
+export const sessionNotes = sqliteTable("session_notes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  sessionId: text("session_id").notNull().references(() => sessions.id),
+  content: text("content").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+});
+
 // ─── Session Summaries ───────────────────────────────────────────────────────
 
 export const sessionSummaries = sqliteTable("session_summaries", {

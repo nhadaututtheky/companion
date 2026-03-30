@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   User,
   Robot,
@@ -508,36 +509,57 @@ function MessageBubble({
   );
 }
 
+// ── Virtualization threshold ─────────────────────────────────────────────────
+
+const VIRTUALIZE_THRESHOLD = 50;
+
 // ── Message Feed ─────────────────────────────────────────────────────────────
 
 export function MessageFeed({ messages, sessionId = "", onScrollToRef }: MessageFeedProps) {
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const msgRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const parentRef = useRef<HTMLDivElement>(null);
+  const prevCountRef = useRef(0);
 
-  const setMsgRef = (index: number) => (el: HTMLDivElement | null) => {
-    if (el) {
-      msgRefs.current.set(index, el);
-    } else {
-      msgRefs.current.delete(index);
-    }
-  };
+  const virtualizer = useVirtualizer({
+    count: messages.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 80,
+    overscan: 10,
+  });
 
-  const scrollToMessage = (index: number) => {
-    const el = msgRefs.current.get(index);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  };
+  const shouldVirtualize = messages.length >= VIRTUALIZE_THRESHOLD;
 
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (messages.length > prevCountRef.current && messages.length > 0) {
+      if (shouldVirtualize) {
+        virtualizer.scrollToIndex(messages.length - 1, { align: "end", behavior: "smooth" });
+      } else {
+        // For small lists, simple scroll
+        requestAnimationFrame(() => {
+          const el = parentRef.current;
+          if (el) el.scrollTop = el.scrollHeight;
+        });
+      }
+    }
+    prevCountRef.current = messages.length;
+  }, [messages.length, shouldVirtualize, virtualizer]);
 
-  // Register scrollToMessage with parent on mount
+  // scrollToMessage for pinned message navigation
+  const scrollToMessage = useCallback(
+    (index: number) => {
+      if (shouldVirtualize) {
+        virtualizer.scrollToIndex(index, { align: "center", behavior: "smooth" });
+      } else {
+        const el = parentRef.current?.querySelector(`[data-msg-index="${index}"]`);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    },
+    [shouldVirtualize, virtualizer],
+  );
+
   useEffect(() => {
     onScrollToRef?.(scrollToMessage);
-   
-  }, [onScrollToRef]);
+  }, [onScrollToRef, scrollToMessage]);
 
   if (messages.length === 0) {
     return (
@@ -550,18 +572,65 @@ export function MessageFeed({ messages, sessionId = "", onScrollToRef }: Message
     );
   }
 
+  // Small list — render directly (no virtualization overhead)
+  if (!shouldVirtualize) {
+    return (
+      <div ref={parentRef} className="flex flex-col flex-1 overflow-y-auto py-4">
+        {messages.map((msg, index) => (
+          <div key={msg.id} data-msg-index={index}>
+            <MessageBubble
+              msg={msg}
+              index={index}
+              sessionId={sessionId}
+              msgRef={() => {}}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Large list — virtualized rendering
+  const items = virtualizer.getVirtualItems();
+
   return (
-    <div className="flex flex-col flex-1 overflow-y-auto py-4">
-      {messages.map((msg, index) => (
-        <MessageBubble
-          key={msg.id}
-          msg={msg}
-          index={index}
-          sessionId={sessionId}
-          msgRef={setMsgRef(index)}
-        />
-      ))}
-      <div ref={bottomRef} />
+    <div ref={parentRef} className="flex-1 overflow-y-auto">
+      <div
+        style={{
+          height: virtualizer.getTotalSize(),
+          width: "100%",
+          position: "relative",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            transform: `translateY(${items[0]?.start ?? 0}px)`,
+          }}
+        >
+          {items.map((virtualRow) => {
+            const msg = messages[virtualRow.index];
+            return (
+              <div
+                key={virtualRow.key}
+                data-index={virtualRow.index}
+                data-msg-index={virtualRow.index}
+                ref={virtualizer.measureElement}
+              >
+                <MessageBubble
+                  msg={msg}
+                  index={virtualRow.index}
+                  sessionId={sessionId}
+                  msgRef={() => {}}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

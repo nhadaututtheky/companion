@@ -5,8 +5,11 @@
 import * as fs from "fs";
 import * as path from "path";
 import { InputFile } from "grammy";
+import { eq, desc } from "drizzle-orm";
 import { createLogger } from "../../logger.js";
 import { escapeHTML } from "../formatter.js";
+import { getDb } from "../../db/client.js";
+import { sessionNotes as notesTable } from "../../db/schema.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
 
 const log = createLogger("cmd:utility");
@@ -16,9 +19,6 @@ const MAX_FILE_BYTES = 50 * 1024;
 
 /** Telegram message character limit */
 const TG_MAX_CHARS = 4096;
-
-/** Per-session notes (in-memory) */
-const sessionNotes = new Map<string, string[]>();
 
 // ── Path helpers ─────────────────────────────────────────────────────────────
 
@@ -279,7 +279,7 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
     await ctx.reply(`Running skill <code>${escapeHTML(arg)}</code>...`, { parse_mode: "HTML" });
   });
 
-  // ── /note <text> — save a note ────────────────────────────────────────────
+  // ── /note <text> — save a note (persisted to DB) ────────────────────────
 
   bot.command("note", async (ctx) => {
     const text = ctx.match?.trim();
@@ -294,11 +294,16 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
       return;
     }
 
-    const notes = sessionNotes.get(mapping.sessionId) ?? [];
-    notes.push(text);
-    sessionNotes.set(mapping.sessionId, notes);
-
-    await ctx.reply(`📝 Note saved: ${escapeHTML(text)}`, { parse_mode: "HTML" });
+    try {
+      const db = getDb();
+      db.insert(notesTable)
+        .values({ sessionId: mapping.sessionId, content: text })
+        .run();
+      await ctx.reply(`📝 Note saved: ${escapeHTML(text)}`, { parse_mode: "HTML" });
+    } catch (err) {
+      log.warn("Failed to save note", { error: String(err) });
+      await ctx.reply("Failed to save note.");
+    }
   });
 
   // ── /notes — show all notes for current session ───────────────────────────
@@ -310,16 +315,27 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
       return;
     }
 
-    const notes = sessionNotes.get(mapping.sessionId);
-    if (!notes || notes.length === 0) {
-      await ctx.reply("No notes for this session.");
-      return;
-    }
+    try {
+      const db = getDb();
+      const notes = db.select()
+        .from(notesTable)
+        .where(eq(notesTable.sessionId, mapping.sessionId))
+        .orderBy(desc(notesTable.createdAt))
+        .all();
 
-    const lines = notes.map((n, i) => `${i + 1}. ${escapeHTML(n)}`);
-    await ctx.reply(`<b>Session notes (${notes.length}):</b>\n\n${lines.join("\n")}`, {
-      parse_mode: "HTML",
-    });
+      if (notes.length === 0) {
+        await ctx.reply("No notes for this session.");
+        return;
+      }
+
+      const lines = notes.map((n, i) => `${i + 1}. ${escapeHTML(n.content)}`);
+      await ctx.reply(`<b>Session notes (${notes.length}):</b>\n\n${lines.join("\n")}`, {
+        parse_mode: "HTML",
+      });
+    } catch (err) {
+      log.warn("Failed to load notes", { error: String(err) });
+      await ctx.reply("Failed to load notes.");
+    }
   });
 
   // ── /stream [sessionId] — attach to an existing session ─────────────────
