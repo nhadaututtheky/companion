@@ -53,8 +53,8 @@ COPY --from=web-builder /app/packages/web/node_modules packages/web/node_modules
 RUN groupadd --system companion && \
     useradd --system --gid companion --home /home/companion --create-home companion
 
-# Create data directory
-RUN mkdir -p data
+# Create data directory owned by companion user
+RUN mkdir -p data && chown companion:companion data
 
 EXPOSE 3579 3580
 

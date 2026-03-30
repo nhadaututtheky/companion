@@ -45,9 +45,16 @@ fi
 
 # ── Fix permissions ─────────────────────────────────────────────────────────
 
-chown -R companion:companion /app/data 2>/dev/null || true
-chown -R companion:companion "$CLAUDE_HOME/.claude" 2>/dev/null || true
-chown companion:companion "$CLAUDE_HOME/.claude.json" 2>/dev/null || true
+if ! chown -R companion:companion /app/data 2>/dev/null; then
+  echo "[startup] ⚠ Could not chown /app/data — database writes may fail"
+fi
+if ! chown -R companion:companion "$CLAUDE_HOME/.claude" 2>/dev/null; then
+  echo "[startup] ⚠ Could not chown $CLAUDE_HOME/.claude — Claude CLI auth may fail"
+fi
+if [ -f "$CLAUDE_HOME/.claude.json" ]; then
+  chown companion:companion "$CLAUDE_HOME/.claude.json" 2>/dev/null || \
+    echo "[startup] ⚠ Could not chown $CLAUDE_HOME/.claude.json"
+fi
 
 # ── Start services ──────────────────────────────────────────────────────────
 # Run server and web in parallel. If either exits, the container stops.

@@ -13,15 +13,18 @@ services:
       - companion-data:/app/data
 
       # Claude CLI auth — maps your local credentials into container
-      - ${USERPROFILE:-${HOME}}/.claude:/root/.claude
+      - ${USERPROFILE:-${HOME}}/.claude:/home/companion/.claude
 
-      # Host filesystem — mount drives to /mnt/<letter> (auto-detected by browser)
-      # Windows: add your drives here (rw so Claude CLI can write code)
-      - C:/:/mnt/c
-      - D:/:/mnt/d
-      # - E:/:/mnt/e    # uncomment if E: drive exists
-      # macOS/Linux: mount home or root
-      # - /:/mnt/host
+      # Host filesystem — mount project dirs so Claude CLI can read/write code
+      # Uncomment and adjust for your platform:
+      #
+      # Windows:
+      #   - C:/:/mnt/c
+      #   - D:/:/mnt/d
+      #
+      # macOS/Linux:
+      #   - ${HOME}:/mnt/home
+      #   - /:/mnt/host    # full filesystem (use with caution)
 
     environment:
       - NODE_ENV=production
