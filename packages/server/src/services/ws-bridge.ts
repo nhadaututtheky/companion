@@ -8,6 +8,7 @@ import { createLogger } from "../logger.js";
 import { launchCLI, createPlanModeWatcher } from "./cli-launcher.js";
 import { startSdkSession, type SdkSessionHandle } from "./sdk-engine.js";
 import { summarizeSession, buildSummaryInjection } from "./session-summarizer.js";
+import { buildSessionContext } from "./session-context.js";
 import { handleMentions } from "./mention-router.js";
 import {
   createActiveSession,
@@ -219,16 +220,24 @@ export class WsBridge {
       prompt?: string;
       resume?: boolean;
       cliSessionId?: string;
+      source?: string;
       envVars?: Record<string, string>;
     },
   ): string {
-    // Build prompt with summary injection
+    // Build prompt with summary + session context injection
     let fullPrompt = opts.prompt ?? "";
     if (fullPrompt && !opts.resume) {
       const summaryContext = buildSummaryInjection(opts.projectSlug);
-      if (summaryContext) {
-        fullPrompt = `${fullPrompt}${summaryContext}`;
-      }
+      const sessionContext = buildSessionContext({
+        sessionId,
+        shortId: session.state.short_id ?? sessionId.slice(0, 8),
+        projectSlug: opts.projectSlug,
+        model: opts.model,
+        permissionMode: opts.permissionMode ?? "default",
+        cwd: opts.cwd,
+        source: opts.source ?? "sdk",
+      });
+      fullPrompt = `${fullPrompt}${summaryContext ?? ""}${sessionContext}`;
     }
 
     const handle = startSdkSession(
@@ -384,6 +393,7 @@ export class WsBridge {
       prompt?: string;
       resume?: boolean;
       cliSessionId?: string;
+      source?: string;
       envVars?: Record<string, string>;
     },
   ): string {
@@ -436,9 +446,16 @@ export class WsBridge {
     // Send initial prompt via stdin NDJSON
     if (opts.prompt && !opts.resume) {
       const summaryContext = buildSummaryInjection(opts.projectSlug);
-      const fullPrompt = summaryContext
-        ? `${opts.prompt}${summaryContext}`
-        : opts.prompt;
+      const sessionContext = buildSessionContext({
+        sessionId,
+        shortId: session.state.short_id ?? sessionId.slice(0, 8),
+        projectSlug: opts.projectSlug,
+        model: opts.model,
+        permissionMode: opts.permissionMode ?? "default",
+        cwd: opts.cwd,
+        source: opts.source ?? "cli",
+      });
+      const fullPrompt = `${opts.prompt}${summaryContext ?? ""}${sessionContext}`;
 
       const ndjson = JSON.stringify({
         type: "user",
@@ -816,13 +833,28 @@ export class WsBridge {
     return 1_000_000;
   }
 
-  /** Broadcast context_update event with current token usage */
+  /** Broadcast context_update event with current token usage.
+   *
+   * CLI sends cumulative totals (total_input_tokens grows each turn).
+   * Context window ≈ last turn's input tokens + last turn's output tokens.
+   * We estimate by computing the delta between previous and current cumulative values.
+   */
+  private prevTokens = new Map<string, { input: number; output: number }>();
+
   private broadcastContextUpdate(session: ActiveSession): void {
     const state = session.state;
-    const totalTokens =
-      state.total_input_tokens +
-      state.total_output_tokens +
-      state.cache_read_tokens;
+    const prev = this.prevTokens.get(session.id) ?? { input: 0, output: 0 };
+
+    // Per-turn values = delta from previous cumulative totals
+    const lastTurnInput = state.total_input_tokens - prev.input;
+    const lastTurnOutput = state.total_output_tokens - prev.output;
+    this.prevTokens.set(session.id, {
+      input: state.total_input_tokens,
+      output: state.total_output_tokens,
+    });
+
+    // Context ≈ last turn input + last output (output joins next turn's context)
+    const totalTokens = lastTurnInput + lastTurnOutput;
     const maxTokens = WsBridge.getMaxContextTokens(state.model);
     const contextUsedPercent = Math.min(100, (totalTokens / maxTokens) * 100);
 
@@ -980,6 +1012,7 @@ export class WsBridge {
     this.cliProcesses.delete(session.id);
     this.sdkHandles.delete(session.id);
     this.clearIdleTimer(session.id);
+    this.prevTokens.delete(session.id);
 
     // Reject any outstanding SDK permission resolvers for this session
     for (const [reqId] of session.pendingPermissions) {

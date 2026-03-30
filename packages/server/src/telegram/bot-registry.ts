@@ -10,6 +10,8 @@ import { TelegramBridge } from "./telegram-bridge.js";
 import { createLogger } from "../logger.js";
 import type { WsBridge } from "../services/ws-bridge.js";
 import type { BotConfig } from "./bot-factory.js";
+import { escapeHTML } from "./formatter.js";
+
 
 const log = createLogger("bot-registry");
 
@@ -17,6 +19,8 @@ interface BotEntry {
   config: BotConfig;
   bridge: TelegramBridge;
   running: boolean;
+  /** Telegram chat/group ID to receive notifications */
+  notificationGroupId?: number;
 }
 
 export class BotRegistry {
@@ -46,6 +50,18 @@ export class BotRegistry {
 
       await bridge.start();
       entry.running = true;
+
+      // Load notificationGroupId from DB
+      try {
+        const db = getDb();
+        const row = db.select({ notificationGroupId: telegramBots.notificationGroupId })
+          .from(telegramBots)
+          .where(eq(telegramBots.id, config.botId))
+          .get();
+        if (row?.notificationGroupId) {
+          entry.notificationGroupId = row.notificationGroupId;
+        }
+      } catch { /* ignore — env-only bots won't have DB rows */ }
 
       log.info("Bot started", { botId: config.botId, label: config.label, role: config.role });
       return true;
@@ -165,6 +181,131 @@ export class BotRegistry {
 
   // ── DB operations for bot management ──────────────────────────────────
 
+  // ── Notifications ─────────────────────────────────────────────────
+
+  /**
+   * Send a notification to all bots with a configured notificationGroupId.
+   * Called on session lifecycle events (complete, error, idle timeout).
+   */
+  async sendNotification(event: {
+    type: "session_complete" | "session_error" | "session_idle_timeout";
+    sessionId: string;
+    shortId?: string;
+    projectSlug?: string;
+    model?: string;
+    costUsd?: number;
+    turns?: number;
+    reason?: string;
+    durationMs?: number;
+  }): Promise<void> {
+    const targets: Array<{ botToken: string; chatId: number; label: string }> = [];
+
+    // Collect from running bots
+    for (const [, entry] of this.bots) {
+      if (entry.running && entry.notificationGroupId) {
+        targets.push({
+          botToken: entry.config.token,
+          chatId: entry.notificationGroupId,
+          label: entry.config.label,
+        });
+      }
+    }
+
+    if (targets.length === 0) return;
+
+    const text = this.formatNotification(event);
+
+    for (const target of targets) {
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${target.botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: target.chatId,
+            text,
+            parse_mode: "HTML",
+            disable_notification: event.type === "session_complete",
+          }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          log.error("Telegram notification rejected", {
+            chatId: target.chatId,
+            status: res.status,
+            body,
+          });
+        }
+      } catch (err) {
+        log.error("Failed to send notification", {
+          botLabel: target.label,
+          chatId: target.chatId,
+          error: String(err),
+        });
+      }
+    }
+  }
+
+  private formatNotification(event: {
+    type: "session_complete" | "session_error" | "session_idle_timeout";
+    sessionId: string;
+    shortId?: string;
+    projectSlug?: string;
+    model?: string;
+    costUsd?: number;
+    turns?: number;
+    reason?: string;
+    durationMs?: number;
+  }): string {
+    const name = escapeHTML(event.shortId ?? event.sessionId.slice(0, 8));
+    const project = event.projectSlug ? ` [${escapeHTML(event.projectSlug)}]` : "";
+    const model = escapeHTML(event.model ?? "–");
+    const cost = event.costUsd != null ? `$${event.costUsd.toFixed(4)}` : "–";
+    const turns = event.turns ?? 0;
+    const duration = event.durationMs
+      ? `${Math.round(event.durationMs / 1000)}s`
+      : "–";
+
+    switch (event.type) {
+      case "session_complete":
+        return [
+          `<b>Session Complete</b>${project}`,
+          `<code>${name}</code> | ${model} | ${turns} turns`,
+          `Cost: ${cost} | Duration: ${duration}`,
+        ].join("\n");
+
+      case "session_error":
+        return [
+          `<b>Session Error</b>${project}`,
+          `<code>${name}</code> | ${model}`,
+          event.reason ? `Reason: ${escapeHTML(event.reason.slice(0, 200))}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n");
+
+      case "session_idle_timeout":
+        return [
+          `<b>Session Idle Timeout</b>${project}`,
+          `<code>${name}</code> stopped after inactivity`,
+          `${turns} turns | Cost: ${cost}`,
+        ].join("\n");
+
+      default:
+        return `Session event: ${escapeHTML(String(event.type))} — ${name}`;
+    }
+  }
+
+  /**
+   * Update the notificationGroupId for a running bot (in-memory).
+   */
+  setNotificationGroupId(botId: string, groupId: number | null): void {
+    const entry = this.bots.get(botId);
+    if (entry) {
+      entry.notificationGroupId = groupId ?? undefined;
+    }
+  }
+
+  // ── DB operations for bot management ──────────────────────────────
+
   saveBotConfig(config: {
     id: string;
     label: string;
@@ -173,6 +314,7 @@ export class BotRegistry {
     allowedChatIds: number[];
     allowedUserIds: number[];
     enabled: boolean;
+    notificationGroupId?: number | null;
   }): void {
     const db = getDb();
 
@@ -187,6 +329,7 @@ export class BotRegistry {
           allowedChatIds: config.allowedChatIds,
           allowedUserIds: config.allowedUserIds,
           enabled: config.enabled,
+          notificationGroupId: config.notificationGroupId ?? null,
         })
         .where(eq(telegramBots.id, config.id))
         .run();
@@ -200,10 +343,14 @@ export class BotRegistry {
           allowedChatIds: config.allowedChatIds,
           allowedUserIds: config.allowedUserIds,
           enabled: config.enabled,
+          notificationGroupId: config.notificationGroupId ?? null,
           createdAt: new Date(),
         })
         .run();
     }
+
+    // Update in-memory if bot is running
+    this.setNotificationGroupId(config.id, config.notificationGroupId ?? null);
   }
 
   deleteBotConfig(botId: string): void {
@@ -218,6 +365,7 @@ export class BotRegistry {
     enabled: boolean;
     allowedChatIds: number[];
     allowedUserIds: number[];
+    notificationGroupId: number | null;
   }> {
     const db = getDb();
     return db.select({
@@ -227,6 +375,7 @@ export class BotRegistry {
       enabled: telegramBots.enabled,
       allowedChatIds: telegramBots.allowedChatIds,
       allowedUserIds: telegramBots.allowedUserIds,
+      notificationGroupId: telegramBots.notificationGroupId,
     }).from(telegramBots).all();
   }
 }

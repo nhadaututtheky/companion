@@ -3,6 +3,8 @@ import { cors } from "hono/cors";
 import { createRoutes } from "./routes/index.js";
 import { rateLimiter } from "./middleware/rate-limiter.js";
 import { getDb, closeDb } from "./db/client.js";
+import { eq } from "drizzle-orm";
+import { sessions as sessionsTable } from "./db/schema.js";
 import { runMigrations } from "./db/migrate.js";
 import { WsBridge } from "./services/ws-bridge.js";
 import { BotRegistry } from "./telegram/bot-registry.js";
@@ -82,15 +84,58 @@ if (licenseKey) {
 
 // ─── WsBridge ────────────────────────────────────────────────────────────────
 
+// Declared before WsBridge so the onStatusChange closure can reference it safely.
+// eslint-disable-next-line prefer-const
+let botRegistry: BotRegistry;
+
 const bridge = new WsBridge({
   onStatusChange: (sessionId, status) => {
     log.debug("Session status changed", { sessionId, status });
+
+    // Send Telegram notifications on terminal states
+    if (status === "ended" || status === "error") {
+      if (!botRegistry) return; // guard: registry not yet initialized
+
+      const session = bridge.getSession(sessionId);
+      if (!session) return;
+
+      const s = session.state;
+      const durationMs = Date.now() - s.started_at;
+
+      // Look up projectSlug from DB (not on SessionState)
+      let projectSlug: string | undefined;
+      try {
+        const row = getDb()
+          .select({ projectSlug: sessionsTable.projectSlug })
+          .from(sessionsTable)
+          .where(eq(sessionsTable.id, sessionId))
+          .get();
+        projectSlug = row?.projectSlug ?? undefined;
+      } catch { /* ignore */ }
+
+      const eventType =
+        status === "error"
+          ? "session_error" as const
+          : "session_complete" as const;
+
+      void botRegistry.sendNotification({
+        type: eventType,
+        sessionId,
+        shortId: s.short_id,
+        projectSlug,
+        model: s.model,
+        costUsd: s.total_cost_usd,
+        turns: s.num_turns,
+        durationMs,
+        reason: status === "error" ? session.lastStderrLines?.join("\n")?.slice(0, 200) : undefined,
+      });
+    }
   },
 });
 
 // ─── Telegram Bot Registry ───────────────────────────────────────────────────
 
-const botRegistry = new BotRegistry(bridge);
+botRegistry = new BotRegistry(bridge);
 
 // Auto-start bots (non-blocking)
 botRegistry.autoStart().catch((err) => {

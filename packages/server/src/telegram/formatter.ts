@@ -24,8 +24,17 @@ export function toTelegramHTML(markdown: string): string {
   if (!markdown) return "";
 
   // Extract and placeholder code blocks first (to avoid processing their content)
+  // Also handle unclosed code fences (Claude sometimes streams incomplete markdown)
   const codeBlocks: string[] = [];
   let result = markdown.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    const idx = codeBlocks.length;
+    const langAttr = lang ? ` class="language-${escapeHTML(lang)}"` : "";
+    codeBlocks.push(`<pre><code${langAttr}>${escapeHTML(code.trimEnd())}</code></pre>`);
+    return `\x00CB${idx}\x00`;
+  });
+
+  // Handle unclosed code fences — treat remaining ``` as start of unfinished block
+  result = result.replace(/```(\w*)\n?([\s\S]*)$/, (_, lang, code) => {
     const idx = codeBlocks.length;
     const langAttr = lang ? ` class="language-${escapeHTML(lang)}"` : "";
     codeBlocks.push(`<pre><code${langAttr}>${escapeHTML(code.trimEnd())}</code></pre>`);
@@ -46,13 +55,25 @@ export function toTelegramHTML(markdown: string): string {
   // Detect and format tables
   result = formatTables(result);
 
+  // Headings: # text → bold (Telegram has no heading tag)
+  // Must run before bold conversion to avoid double-wrapping
+  result = result.replace(/^#{1,6}\s+(.+)$/gm, (_, t) => `<b>${t}</b>`);
+
+  // Horizontal rules: --- or *** or ___ → unicode separator
+  result = result.replace(/^[-*_]{3,}$/gm, "─────────────────");
+
   // Bold: **text** or __text__
   // Use function replacements to avoid $-interpolation in captured text
   result = result.replace(/\*\*(.+?)\*\*/g, (_, t) => `<b>${t}</b>`);
   result = result.replace(/__(.+?)__/g, (_, t) => `<b>${t}</b>`);
 
-  // Italic: *text* or _text_ (but not inside bold markers)
+  // Italic: *text* (but not **bold**)
   result = result.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, (_, t) => `<i>${t}</i>`);
+  // Italic: _text_ (only at word boundaries — avoids matching snake_case_vars)
+  result = result.replace(/(?<!\w)_(?!_)(.+?)(?<!_)_(?!\w)/g, (_, t) => `<i>${t}</i>`);
+
+  // Strikethrough: ~~text~~
+  result = result.replace(/~~(.+?)~~/g, (_, t) => `<s>${t}</s>`);
 
   // Links: [text](url)
   result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => `<a href="${url}">${text}</a>`);
@@ -187,7 +208,7 @@ export function splitMessage(text: string, maxLen = TELEGRAM_MAX_LENGTH - 100): 
       break;
     }
 
-    // Try to split at code block boundary
+    // Try to split at code block boundary (after </pre>)
     let splitIdx = remaining.lastIndexOf("</pre>", maxLen);
     if (splitIdx > 0 && splitIdx > maxLen * 0.5) {
       splitIdx += 6; // include </pre>
@@ -210,7 +231,56 @@ export function splitMessage(text: string, maxLen = TELEGRAM_MAX_LENGTH - 100): 
     remaining = remaining.slice(splitIdx);
   }
 
-  return chunks;
+  // Repair HTML tag balance in each chunk
+  return chunks.map(repairHtmlTags);
+}
+
+/**
+ * Repair unclosed/orphaned HTML tags in a chunk.
+ * Tracks open tags and closes them at end; prepends re-opened tags from previous chunk.
+ * For tags with attributes (like <a href="...">), stores the full opening tag for re-insertion.
+ */
+function repairHtmlTags(chunk: string): string {
+  // Match open tags (with optional attributes) and close tags for Telegram-supported elements
+  const tagRe = /<(b|i|u|s|code|pre|a|blockquote|tg-spoiler|tg-emoji)(?:\s[^>]*)?>|<\/(b|i|u|s|code|pre|a|blockquote|tg-spoiler|tg-emoji)>/gi;
+  // Stack stores { tagName, fullOpenTag } so we can re-emit the full opening tag
+  const stack: Array<{ tagName: string; fullOpen: string }> = [];
+
+  let match: RegExpExecArray | null;
+  while ((match = tagRe.exec(chunk)) !== null) {
+    const openTag = match[1]?.toLowerCase();
+    const closeTag = match[2]?.toLowerCase();
+    if (openTag) {
+      stack.push({ tagName: openTag, fullOpen: match[0] });
+    } else if (closeTag) {
+      const idx = stack.findLastIndex((s) => s.tagName === closeTag);
+      if (idx !== -1) {
+        stack.splice(idx, 1);
+      } else {
+        // Orphaned close tag — just strip it (we don't have the original open tag with attrs)
+        chunk = chunk.slice(0, match.index) + chunk.slice(match.index + match[0].length);
+        tagRe.lastIndex = match.index; // re-scan from same position
+      }
+    }
+  }
+
+  // Close any remaining open tags (in reverse order)
+  for (let i = stack.length - 1; i >= 0; i--) {
+    chunk += `</${stack[i]!.tagName}>`;
+  }
+
+  return chunk;
+}
+
+/**
+ * Strip HTML tags for plain-text fallback.
+ */
+export function stripHtmlTags(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
 }
 
 // ─── Formatting Helpers ─────────────────────────────────────────────────────

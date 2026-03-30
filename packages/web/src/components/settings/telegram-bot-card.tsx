@@ -15,6 +15,7 @@ import {
   WarningCircle,
   FloppyDisk,
   X,
+  Bell,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ interface BotConfig {
   enabled: boolean;
   allowedChatIds: number[];
   allowedUserIds: number[];
+  notificationGroupId?: number | null;
 }
 
 interface RunningBot {
@@ -64,6 +66,9 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
   const [showToken, setShowToken] = useState(false);
   const [chatIds, setChatIds] = useState(config.allowedChatIds.join(", "));
   const [userIds, setUserIds] = useState((config.allowedUserIds ?? []).join(", "));
+  const [notificationGroupId, setNotificationGroupId] = useState(
+    config.notificationGroupId ? String(config.notificationGroupId) : "",
+  );
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -86,6 +91,10 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
         .map((s) => parseInt(s.trim(), 10))
         .filter((n) => !isNaN(n));
 
+      const parsedNotificationGroupId = notificationGroupId.trim()
+        ? parseInt(notificationGroupId.trim(), 10)
+        : null;
+
       await api.telegram.saveBot(config.id, {
         id: config.id,
         label,
@@ -94,6 +103,9 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
         allowedChatIds: parsedChatIds,
         allowedUserIds: parsedUserIds,
         enabled: config.enabled,
+        notificationGroupId: parsedNotificationGroupId && !isNaN(parsedNotificationGroupId)
+          ? parsedNotificationGroupId
+          : null,
       });
 
       toast.success("Bot updated");
@@ -243,7 +255,10 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
 
           {/* Edit */}
           <button
-            onClick={() => setEditing(!editing)}
+            onClick={() => {
+              setEditing(!editing);
+              setConfirmDelete(false);
+            }}
             className="p-1.5 rounded-lg transition-colors cursor-pointer"
             style={{
               background: editing ? "var(--color-accent)" : "var(--color-bg-elevated)",
@@ -410,6 +425,37 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
             </span>
           </div>
 
+          {/* Notification Group ID */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+              <Bell size={12} weight="fill" className="inline mr-1" aria-hidden="true" />
+              Notification Group ID{" "}
+              <span style={{ color: "var(--color-text-muted)" }}>
+                (receive alerts when sessions complete or error)
+              </span>
+            </label>
+            <input
+              type="text"
+              value={notificationGroupId}
+              onChange={(e) => setNotificationGroupId(e.target.value)}
+              placeholder="-100123456789"
+              className="px-3 py-2 rounded-lg text-sm outline-none font-mono"
+              style={{
+                background: "var(--color-bg-elevated)",
+                border: "1px solid var(--color-border)",
+                color: "var(--color-text-primary)",
+              }}
+            />
+            {notificationGroupId.trim() && isNaN(parseInt(notificationGroupId.trim(), 10)) && (
+              <span className="text-xs" style={{ color: "var(--color-danger)" }}>
+                Must be a numeric chat/group ID (e.g. -100123456789)
+              </span>
+            )}
+            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              Bot will send notifications to this chat/group when sessions end, error, or time out
+            </span>
+          </div>
+
           {/* Save / Cancel */}
           <div className="flex gap-2">
             <button
@@ -434,6 +480,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
                 setBotToken("");
                 setChatIds(config.allowedChatIds.join(", "));
                 setUserIds((config.allowedUserIds ?? []).join(", "));
+                setNotificationGroupId(config.notificationGroupId ? String(config.notificationGroupId) : "");
               }}
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
               style={{
@@ -465,6 +512,14 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
               {id}
             </span>
           ))}
+        </div>
+      )}
+
+      {/* Notification badge (when not editing) */}
+      {!editing && config.notificationGroupId && (
+        <div className="flex items-center gap-1.5 text-xs" style={{ color: "var(--color-text-muted)" }}>
+          <Bell size={12} weight="fill" aria-hidden="true" />
+          Notifications → <span className="font-mono">{config.notificationGroupId}</span>
         </div>
       )}
 

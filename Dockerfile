@@ -20,12 +20,13 @@ FROM oven/bun:1.3-slim AS runtime
 
 WORKDIR /app
 
-# Install Node.js + Claude CLI
+# Install Node.js + Claude CLI + tini (proper PID 1 for signal forwarding)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nodejs \
     npm \
     curl \
     git \
+    tini \
     && npm install -g @anthropic-ai/claude-code \
     && rm -rf /var/lib/apt/lists/*
 
@@ -48,8 +49,9 @@ COPY packages/web/postcss.config.mjs packages/web/
 COPY --from=web-builder /app/packages/web/.next packages/web/.next
 COPY --from=web-builder /app/packages/web/node_modules packages/web/node_modules
 
-# Create non-root user for security (groupadd/useradd for Debian-slim)
-RUN groupadd --system companion && useradd --system --gid companion --home /app companion
+# Create non-root user for security with a proper home directory
+RUN groupadd --system companion && \
+    useradd --system --gid companion --home /home/companion --create-home companion
 
 # Create data directory
 RUN mkdir -p data
@@ -59,11 +61,10 @@ EXPOSE 3579 3580
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD curl -f http://localhost:3579/api/health || exit 1
 
-# Auto-restore .claude.json from backup if missing + fix permissions + start
-CMD ["sh", "-c", "\
-  if [ ! -f /root/.claude.json ] && ls /root/.claude/backups/.claude.json.backup.* 1>/dev/null 2>&1; then \
-    cp \"$(ls -t /root/.claude/backups/.claude.json.backup.* | head -1)\" /root/.claude.json && \
-    echo '[startup] Restored .claude.json from backup'; \
-  fi && \
-  chown -R companion:companion /app/data && \
-  exec su -s /bin/sh companion -c 'bun run --hot packages/server/src/index.ts & cd packages/web && bunx next start --port 3580 & wait'"]
+# Copy entrypoint script
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
+# Use tini as PID 1 for proper signal forwarding and zombie reaping
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["/app/docker-entrypoint.sh"]

@@ -84,6 +84,9 @@ interface ChatMapping {
   topicId?: number;
 }
 
+/** Max time a session can stay "busy" without any tool_progress/result event (10 min) */
+const BUSY_WATCHDOG_MS = 10 * 60 * 1000;
+
 /** Per-session panel + idle config stored in memory */
 interface SessionConfig {
   /** Telegram message_id of the settings panel message (for editing) */
@@ -92,6 +95,8 @@ interface SessionConfig {
   idleTimeoutMs: number;
   /** Idle timeout timer handle */
   idleTimer?: ReturnType<typeof setTimeout>;
+  /** Busy watchdog timer — kills session if stuck busy with no activity */
+  busyWatchdog?: ReturnType<typeof setTimeout>;
 }
 
 /** Dead session info for resume detection */
@@ -219,9 +224,10 @@ export class TelegramBridge {
     }
     this.permBatches.clear();
 
-    // Clear idle timers
+    // Clear idle + busy timers
     for (const cfg of this.sessionConfigs.values()) {
       if (cfg.idleTimer) clearTimeout(cfg.idleTimer);
+      if (cfg.busyWatchdog) clearTimeout(cfg.busyWatchdog);
     }
     this.sessionConfigs.clear();
 
@@ -281,6 +287,12 @@ export class TelegramBridge {
       cfg.idleTimer = undefined;
     }
 
+    // Clear busy watchdog — session is no longer busy
+    if (cfg.busyWatchdog) {
+      clearTimeout(cfg.busyWatchdog);
+      cfg.busyWatchdog = undefined;
+    }
+
     if (cfg.idleTimeoutMs <= 0) return;
 
     cfg.idleTimer = setTimeout(async () => {
@@ -300,6 +312,47 @@ export class TelegramBridge {
         })
         .catch(() => {});
     }, cfg.idleTimeoutMs);
+  }
+
+  /**
+   * Reset the busy watchdog. Called on any sign of life from CLI (tool_progress, assistant, stream).
+   * If no activity for BUSY_WATCHDOG_MS while session is busy, notify user and kill session.
+   */
+  private resetBusyWatchdog(sessionId: string, chatId: number, topicId?: number): void {
+    const cfg = this.getSessionConfig(sessionId);
+
+    if (cfg.busyWatchdog) {
+      clearTimeout(cfg.busyWatchdog);
+      cfg.busyWatchdog = undefined;
+    }
+
+    cfg.busyWatchdog = setTimeout(async () => {
+      cfg.busyWatchdog = undefined;
+      const session = this.wsBridge.getSession(sessionId);
+      if (!session) return;
+      // Only kill if still busy (not already idle/ended)
+      if (session.state.status !== "busy") return;
+
+      log.warn("Session stuck busy with no activity, force-stopping", {
+        sessionId,
+        watchdogMs: BUSY_WATCHDOG_MS,
+      });
+
+      // Flush any pending stream before killing
+      await this.streamHandler.completeStream(chatId, topicId);
+      this.cleanupToolFeed(chatId, topicId);
+
+      this.killSession(sessionId);
+      this.removeMapping(chatId, topicId);
+
+      await this.bot.api
+        .sendMessage(
+          chatId,
+          `⚠️ <b>Session unresponsive</b> for 10 min — force stopped. Use /start to begin a new session.`,
+          { parse_mode: "HTML", message_thread_id: topicId },
+        )
+        .catch(() => {});
+    }, BUSY_WATCHDOG_MS);
   }
 
   // ── Dead session management (for resume) ─────────────────────────────
@@ -581,11 +634,15 @@ export class TelegramBridge {
   }
 
   killSession(sessionId: string): void {
-    // Clear idle timer
+    // Clear idle + busy timers
     const cfg = this.sessionConfigs.get(sessionId);
     if (cfg?.idleTimer) {
       clearTimeout(cfg.idleTimer);
       cfg.idleTimer = undefined;
+    }
+    if (cfg?.busyWatchdog) {
+      clearTimeout(cfg.busyWatchdog);
+      cfg.busyWatchdog = undefined;
     }
 
     this.wsBridge.killSession(sessionId);
@@ -826,6 +883,11 @@ export class TelegramBridge {
     msg: BrowserIncomingMessage,
   ): Promise<void> {
     try {
+      // Reset busy watchdog on any sign of CLI activity
+      if (msg.type === "assistant" || msg.type === "tool_progress" || msg.type === "stream_event") {
+        this.resetBusyWatchdog(sessionId, chatId, topicId);
+      }
+
       switch (msg.type) {
         case "assistant":
           await this.handleAssistantMessage(chatId, topicId, msg);
@@ -856,8 +918,28 @@ export class TelegramBridge {
           await this.handleContextUpdate(chatId, topicId, sessionId, msg.contextUsedPercent);
           break;
 
+        case "cli_disconnected": {
+          // CLI process died — flush any pending stream text so it's not lost
+          await this.streamHandler.completeStream(chatId, topicId);
+          this.cleanupToolFeed(chatId, topicId);
+
+          // Notify user about the disconnect
+          const exitCode = (msg as unknown as { exitCode?: number }).exitCode;
+          const reason = (msg as unknown as { reason?: string }).reason;
+          const reasonText = reason ? `\n<code>${escapeHTML(reason.slice(0, 300))}</code>` : "";
+          await this.bot.api.sendMessage(
+            chatId,
+            `⚠️ <b>Session disconnected</b> (exit ${exitCode ?? "?"})${reasonText}`,
+            { parse_mode: "HTML", message_thread_id: topicId },
+          ).catch(() => {});
+          break;
+        }
+
         case "status_change":
           if (msg.status === "ended") {
+            // Flush any pending stream text before cleanup
+            await this.streamHandler.completeStream(chatId, topicId);
+            this.cleanupToolFeed(chatId, topicId);
             this.removeMapping(chatId, topicId);
             // Send summary after a delay (wait for summarizer to finish)
             void this.sendSessionSummary(chatId, topicId, sessionId);

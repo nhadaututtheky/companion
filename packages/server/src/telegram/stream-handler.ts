@@ -10,7 +10,7 @@
  */
 
 import type { Api } from "grammy";
-import { toTelegramHTML, splitMessage } from "./formatter.js";
+import { toTelegramHTML, splitMessage, stripHtmlTags } from "./formatter.js";
 import { createLogger } from "../logger.js";
 
 const log = createLogger("stream-handler");
@@ -99,7 +99,15 @@ export class StreamHandler {
           });
           lastMsgId = sent.message_id;
         } catch (err) {
-          log.error("Failed to send message chunk", { error: String(err) });
+          log.warn("HTML chunk parse failed, falling back to plain text", { error: String(err) });
+          try {
+            const sent = await this.api.sendMessage(chatId, stripHtmlTags(chunks[i]!), {
+              message_thread_id: topicId,
+            });
+            lastMsgId = sent.message_id;
+          } catch (fallbackErr) {
+            log.error("Failed to send fallback chunk", { error: String(fallbackErr) });
+          }
         }
       }
       return lastMsgId;
@@ -112,8 +120,17 @@ export class StreamHandler {
       });
       return sent.message_id;
     } catch (err) {
-      log.error("Failed to send final message", { error: String(err) });
-      return null;
+      log.warn("HTML parse failed, falling back to plain text", { error: String(err) });
+      // Fallback: send raw markdown without parse_mode
+      try {
+        const sent = await this.api.sendMessage(chatId, p.rawText, {
+          message_thread_id: topicId,
+        });
+        return sent.message_id;
+      } catch (fallbackErr) {
+        log.error("Failed to send fallback message", { error: String(fallbackErr) });
+        return null;
+      }
     }
   }
 

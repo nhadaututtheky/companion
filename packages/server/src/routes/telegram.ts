@@ -17,6 +17,7 @@ const botConfigSchema = z.object({
   allowedChatIds: z.array(z.number()).default([]),
   allowedUserIds: z.array(z.number()).default([]),
   enabled: z.boolean().default(true),
+  notificationGroupId: z.number().nullable().optional(),
 });
 
 const createBotSchema = z.object({
@@ -26,6 +27,7 @@ const createBotSchema = z.object({
   allowedChatIds: z.array(z.number()).default([]),
   allowedUserIds: z.array(z.number()).default([]),
   enabled: z.boolean().default(true),
+  notificationGroupId: z.number().nullable().optional(),
 });
 
 export function telegramRoutes(registry: BotRegistry) {
@@ -65,7 +67,7 @@ export function telegramRoutes(registry: BotRegistry) {
     const id = `bot_${Date.now()}`;
 
     try {
-      registry.saveBotConfig({ id, ...body });
+      registry.saveBotConfig({ id, ...body, notificationGroupId: body.notificationGroupId ?? null });
     } catch {
       return c.json({
         success: false,
@@ -152,7 +154,7 @@ export function telegramRoutes(registry: BotRegistry) {
       botToken = row.botToken;
     }
 
-    registry.saveBotConfig({ ...body, botToken });
+    registry.saveBotConfig({ ...body, botToken, notificationGroupId: body.notificationGroupId ?? null });
 
     return c.json({ success: true, data: { id: body.id } } satisfies ApiResponse);
   });

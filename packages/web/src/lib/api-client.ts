@@ -176,6 +176,7 @@ export const api = {
       allowedChatIds?: number[];
       allowedUserIds?: number[];
       enabled?: boolean;
+      notificationGroupId?: number | null;
     }) =>
       request<{ data: { id: string } }>("/api/telegram/bots", {
         method: "POST",
@@ -192,6 +193,7 @@ export const api = {
         allowedChatIds?: number[];
         allowedUserIds?: number[];
         enabled?: boolean;
+        notificationGroupId?: number | null;
       },
     ) =>
       request<{ data: { id: string } }>(`/api/telegram/bots/${id}`, {
