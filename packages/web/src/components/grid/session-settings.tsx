@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Gear, Timer, Lightning, X, TelegramLogo } from "@phosphor-icons/react";
+import { Gear, Timer, Lightning, X, TelegramLogo, ArrowsClockwise, CurrencyDollar } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -8,6 +8,14 @@ import { api } from "@/lib/api-client";
 interface SessionSettings {
   idleTimeoutMs: number;
   keepAlive: boolean;
+}
+
+type CompactMode = "manual" | "smart" | "aggressive";
+
+interface SessionConfig {
+  compactMode: CompactMode;
+  compactThreshold: number;
+  costBudgetUsd: number | null;
 }
 
 interface TimeoutOption {
@@ -42,6 +50,12 @@ function SessionSettingsPopover({
     idleTimeoutMs: DEFAULT_TIMEOUT_MS,
     keepAlive: false,
   });
+  const [config, setConfig] = useState<SessionConfig>({
+    compactMode: "manual",
+    compactThreshold: 75,
+    costBudgetUsd: null,
+  });
+  const [budgetInput, setBudgetInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -53,10 +67,23 @@ function SessionSettingsPopover({
       .then((res) => {
         setSettings(res.data);
       })
-      .catch(() => {
-        // Use defaults if not available
+      .catch(() => {});
+
+    // Load config via session state (compact mode, budget are part of session state)
+    api.sessions
+      .get(sessionId)
+      .then((res) => {
+        const s = res.data as Record<string, unknown>;
+        setConfig({
+          compactMode: (s.compact_mode as CompactMode) ?? "manual",
+          compactThreshold: (s.compact_threshold as number) ?? 75,
+          costBudgetUsd: (s.cost_budget_usd as number) ?? null,
+        });
+        setBudgetInput(s.cost_budget_usd ? String(s.cost_budget_usd) : "");
       })
-      .finally(() => setLoading(false));
+      .catch(() => {});
+
+    setLoading(false);
   }, [sessionId]);
 
   // Click-outside to close
@@ -112,6 +139,29 @@ function SessionSettingsPopover({
     applySettings({ keepAlive: !settings.keepAlive });
   }, [applySettings, settings.keepAlive]);
 
+  const handleCompactModeChange = useCallback(
+    async (mode: CompactMode) => {
+      setConfig((c) => ({ ...c, compactMode: mode }));
+      try {
+        await api.sessions.updateConfig(sessionId, { compactMode: mode });
+      } catch {
+        setConfig((c) => ({ ...c, compactMode: config.compactMode }));
+      }
+    },
+    [sessionId, config.compactMode],
+  );
+
+  const handleBudgetSubmit = useCallback(async () => {
+    const value = budgetInput.trim() ? parseFloat(budgetInput) : null;
+    if (budgetInput.trim() && (isNaN(value!) || value! <= 0)) return;
+    setConfig((c) => ({ ...c, costBudgetUsd: value }));
+    try {
+      await api.sessions.updateConfig(sessionId, { costBudgetUsd: value });
+    } catch {
+      setConfig((c) => ({ ...c, costBudgetUsd: config.costBudgetUsd }));
+    }
+  }, [sessionId, budgetInput, config.costBudgetUsd]);
+
   return (
     <div
       ref={popoverRef}
@@ -122,7 +172,7 @@ function SessionSettingsPopover({
         top: "calc(100% + 4px)",
         right: 0,
         zIndex: 50,
-        width: 240,
+        width: 260,
         borderRadius: 10,
         background: "var(--color-bg-card)",
         border: "1px solid var(--color-border)",
@@ -219,7 +269,10 @@ function SessionSettingsPopover({
           </div>
 
           {/* Keep Alive */}
-          <div className="px-3 py-2.5">
+          <div
+            className="px-3 py-2.5"
+            style={{ borderBottom: "1px solid var(--color-border)" }}
+          >
             <button
               onClick={handleKeepAliveToggle}
               className="w-full flex items-center gap-2 text-left cursor-pointer"
@@ -248,6 +301,78 @@ function SessionSettingsPopover({
                 </span>
               </div>
             </button>
+          </div>
+
+          {/* Compact Mode */}
+          <div
+            className="px-3 py-2.5"
+            style={{ borderBottom: "1px solid var(--color-border)" }}
+          >
+            <div className="flex items-center gap-1.5 mb-2">
+              <ArrowsClockwise size={12} style={{ color: "var(--color-text-muted)" }} aria-hidden="true" />
+              <span className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+                Auto-Compact
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {(["manual", "smart", "aggressive"] as CompactMode[]).map((mode) => {
+                const active = config.compactMode === mode;
+                const labels: Record<CompactMode, string> = { manual: "Manual", smart: "Smart", aggressive: "Aggressive" };
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => handleCompactModeChange(mode)}
+                    className="px-2 py-0.5 rounded text-xs font-medium cursor-pointer transition-colors"
+                    style={{
+                      background: active ? "#4285F4" : "var(--color-bg-elevated)",
+                      color: active ? "#fff" : "var(--color-text-secondary)",
+                      border: active ? "none" : "1px solid var(--color-border)",
+                    }}
+                    aria-pressed={active}
+                  >
+                    {labels[mode]}
+                  </button>
+                );
+              })}
+            </div>
+            <span className="text-xs mt-1 block" style={{ color: "var(--color-text-muted)" }}>
+              {config.compactMode === "manual" && "Warn only, you run /compact"}
+              {config.compactMode === "smart" && `Handoff at idle when >${config.compactThreshold}%`}
+              {config.compactMode === "aggressive" && `Compact immediately at ${config.compactThreshold}%`}
+            </span>
+          </div>
+
+          {/* Cost Budget */}
+          <div className="px-3 py-2.5">
+            <div className="flex items-center gap-1.5 mb-2">
+              <CurrencyDollar size={12} style={{ color: "var(--color-text-muted)" }} aria-hidden="true" />
+              <span className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+                Cost Budget
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>$</span>
+              <input
+                type="number"
+                min="0"
+                step="0.5"
+                value={budgetInput}
+                onChange={(e) => setBudgetInput(e.target.value)}
+                onBlur={handleBudgetSubmit}
+                onKeyDown={(e) => { if (e.key === "Enter") handleBudgetSubmit(); }}
+                placeholder="No limit"
+                className="flex-1 text-xs px-2 py-1 rounded bg-transparent outline-none"
+                style={{
+                  border: "1px solid var(--color-border)",
+                  color: "var(--color-text-primary)",
+                  fontFamily: "var(--font-mono)",
+                }}
+                aria-label="Cost budget in USD"
+              />
+            </div>
+            <span className="text-xs mt-1 block" style={{ color: "var(--color-text-muted)" }}>
+              {config.costBudgetUsd ? `Warn at $${(config.costBudgetUsd * 0.8).toFixed(2)} and $${config.costBudgetUsd.toFixed(2)}` : "No budget set — no warnings"}
+            </span>
           </div>
         </div>
       )}
