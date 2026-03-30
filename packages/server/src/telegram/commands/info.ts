@@ -14,6 +14,7 @@ import {
 import { getDb } from "../../db/client.js";
 import { sessions, dailyCosts } from "../../db/schema.js";
 import { listSessions, renameSession } from "../../services/session-store.js";
+import { getMaxContextTokens } from "@companion/shared";
 import type { TelegramBridge } from "../telegram-bridge.js";
 
 export function registerInfoCommands(bridge: TelegramBridge): void {
@@ -317,7 +318,7 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
     const model = s.model ?? mapping.model ?? "";
 
     // Determine context window size by model family
-    const maxTokens = model.includes("haiku") ? 200_000 : 1_000_000;
+    const maxTokens = getMaxContextTokens(model);
 
     const inputTokens = s.total_input_tokens ?? 0;
     const outputTokens = s.total_output_tokens ?? 0;

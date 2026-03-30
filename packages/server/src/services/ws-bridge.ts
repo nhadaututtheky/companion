@@ -40,7 +40,7 @@ import type {
   SessionStatus,
   PermissionRequest,
 } from "@companion/shared";
-import { SESSION_IDLE_TIMEOUT_MS, HEALTH_CHECK_INTERVAL_MS } from "@companion/shared";
+import { SESSION_IDLE_TIMEOUT_MS, HEALTH_CHECK_INTERVAL_MS, getMaxContextTokens } from "@companion/shared";
 import type { LaunchResult } from "./cli-launcher.js";
 
 const log = createLogger("ws-bridge");
@@ -749,6 +749,14 @@ export class WsBridge {
   ): void {
     if (msg.status === "compacting") {
       this.updateStatus(session, "compacting");
+    } else if (msg.status === null && session.compactPending) {
+      // Compact finished — reset the guard flag
+      session.compactPending = false;
+      this.broadcastToAll(session, {
+        type: "compact_handoff",
+        stage: "done",
+        message: "Context compaction complete.",
+      } as BrowserIncomingMessage);
     }
   }
 
@@ -840,11 +848,9 @@ export class WsBridge {
     }
   }
 
-  /** Max context tokens by model name */
+  /** Max context tokens by model name — delegates to shared constant */
   private static getMaxContextTokens(model: string): number {
-    if (model.includes("haiku")) return 200_000;
-    // opus + sonnet both have 1M context
-    return 1_000_000;
+    return getMaxContextTokens(model);
   }
 
   /** Broadcast context_update event with current token usage.
@@ -977,10 +983,13 @@ export class WsBridge {
     const { compact_mode, compact_threshold } = session.state;
     if (compact_mode === "manual") return;
 
-    // Calculate context usage
+    // Use per-turn context estimate (same formula as broadcastContextUpdate)
+    const prev = this.prevTokens.get(session.id) ?? { input: 0, output: 0 };
+    const lastTurnInput = session.state.total_input_tokens - prev.input;
+    const lastTurnOutput = session.state.total_output_tokens - prev.output;
+    const contextTokens = lastTurnInput + lastTurnOutput;
     const maxTokens = WsBridge.getMaxContextTokens(session.state.model);
-    const totalUsed = session.state.total_input_tokens + session.state.total_output_tokens;
-    const contextPct = (totalUsed / maxTokens) * 100;
+    const contextPct = (contextTokens / maxTokens) * 100;
 
     if (contextPct < compact_threshold) {
       session.compactPending = false;
@@ -991,7 +1000,8 @@ export class WsBridge {
     if (session.compactPending || session.state.status === "compacting") return;
 
     if (compact_mode === "aggressive") {
-      // Compact immediately without handoff
+      // Guard against double-compact
+      session.compactPending = true;
       log.info("Aggressive compact triggered", { session: session.id, contextPct: Math.round(contextPct) });
       this.sendCompactCommand(session);
       return;
@@ -1042,21 +1052,34 @@ export class WsBridge {
     this.schedulePostHandoffCompact(session);
   }
 
+  /** Compact handoff timers keyed by session ID — cleared on session removal */
+  private compactTimers = new Map<string, { interval: ReturnType<typeof setInterval>; timeout: ReturnType<typeof setTimeout> }>();
+
   /** After handoff summary is received, trigger the actual /compact. */
   private schedulePostHandoffCompact(session: ActiveSession): void {
+    // Clear any existing timers for this session
+    this.clearCompactTimers(session.id);
+
+    // Track whether we've seen a busy→idle transition (not the initial idle)
+    let seenBusy = false;
+
     // Wait for Claude to respond (poll status transitions)
     const checkInterval = setInterval(() => {
       // Session ended or compact cancelled
       if (!session.compactPending || session.state.status === "ended" || session.state.status === "error") {
-        clearInterval(checkInterval);
+        this.clearCompactTimers(session.id);
         session.compactPending = false;
         return;
       }
 
-      // Session went idle again = Claude finished the handoff summary
-      if (session.state.status === "idle") {
-        clearInterval(checkInterval);
-        session.compactPending = false;
+      // Track busy state — handoff prompt should make Claude go busy
+      if (session.state.status === "busy") {
+        seenBusy = true;
+      }
+
+      // Session went idle again AFTER being busy = Claude finished the handoff summary
+      if (seenBusy && session.state.status === "idle") {
+        this.clearCompactTimers(session.id);
 
         this.broadcastToAll(session, {
           type: "compact_handoff",
@@ -1070,13 +1093,25 @@ export class WsBridge {
     }, 2000);
 
     // Safety timeout: cancel after 60s if Claude never responds
-    setTimeout(() => {
-      clearInterval(checkInterval);
+    const safetyTimeout = setTimeout(() => {
+      this.clearCompactTimers(session.id);
       if (session.compactPending) {
         log.warn("Smart compact handoff timed out", { session: session.id });
         session.compactPending = false;
       }
     }, 60_000);
+
+    this.compactTimers.set(session.id, { interval: checkInterval, timeout: safetyTimeout });
+  }
+
+  /** Clear compact handoff timers for a session */
+  private clearCompactTimers(sessionId: string): void {
+    const timers = this.compactTimers.get(sessionId);
+    if (timers) {
+      clearInterval(timers.interval);
+      clearTimeout(timers.timeout);
+      this.compactTimers.delete(sessionId);
+    }
   }
 
   /** Send /compact slash command to CLI. */
@@ -1184,6 +1219,7 @@ export class WsBridge {
     this.cliProcesses.delete(session.id);
     this.sdkHandles.delete(session.id);
     this.clearIdleTimer(session.id);
+    this.clearCompactTimers(session.id);
     this.prevTokens.delete(session.id);
 
     // Reject any outstanding SDK permission resolvers for this session

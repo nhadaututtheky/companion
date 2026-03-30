@@ -62,28 +62,26 @@ function SessionSettingsPopover({
 
   // Load current settings
   useEffect(() => {
-    api.sessions
-      .getSettings(sessionId)
-      .then((res) => {
-        setSettings(res.data);
-      })
-      .catch(() => {});
-
-    // Load config via session state (compact mode, budget are part of session state)
-    api.sessions
-      .get(sessionId)
-      .then((res) => {
-        const s = res.data as Record<string, unknown>;
+    setLoading(true);
+    Promise.all([
+      api.sessions.getSettings(sessionId).catch(() => null),
+      api.sessions.get(sessionId).catch(() => null),
+    ]).then(([settingsRes, sessionRes]) => {
+      if (settingsRes?.data) {
+        setSettings(settingsRes.data);
+      }
+      if (sessionRes?.data) {
+        const s = sessionRes.data as Record<string, unknown>;
         setConfig({
           compactMode: (s.compact_mode as CompactMode) ?? "manual",
           compactThreshold: (s.compact_threshold as number) ?? 75,
           costBudgetUsd: (s.cost_budget_usd as number) ?? null,
         });
         setBudgetInput(s.cost_budget_usd ? String(s.cost_budget_usd) : "");
-      })
-      .catch(() => {});
-
-    setLoading(false);
+      }
+    }).finally(() => {
+      setLoading(false);
+    });
   }, [sessionId]);
 
   // Click-outside to close
@@ -113,19 +111,19 @@ function SessionSettingsPopover({
 
   const applySettings = useCallback(
     async (patch: Partial<SessionSettings>) => {
-      const next = { ...settings, ...patch };
-      setSettings(next);
       setSaving(true);
-      try {
-        await api.sessions.updateSettings(sessionId, patch);
-      } catch {
-        // Revert on error
-        setSettings(settings);
-      } finally {
-        setSaving(false);
-      }
+      setSettings((prev) => {
+        const next = { ...prev, ...patch };
+        api.sessions.updateSettings(sessionId, patch).catch(() => {
+          // Revert on error
+          setSettings(prev);
+        }).finally(() => {
+          setSaving(false);
+        });
+        return next;
+      });
     },
-    [sessionId, settings],
+    [sessionId],
   );
 
   const handleTimeoutChange = useCallback(
@@ -141,14 +139,14 @@ function SessionSettingsPopover({
 
   const handleCompactModeChange = useCallback(
     async (mode: CompactMode) => {
-      setConfig((c) => ({ ...c, compactMode: mode }));
-      try {
-        await api.sessions.updateConfig(sessionId, { compactMode: mode });
-      } catch {
-        setConfig((c) => ({ ...c, compactMode: config.compactMode }));
-      }
+      setConfig((prev) => {
+        api.sessions.updateConfig(sessionId, { compactMode: mode }).catch(() => {
+          setConfig((c) => ({ ...c, compactMode: prev.compactMode }));
+        });
+        return { ...prev, compactMode: mode };
+      });
     },
-    [sessionId, config.compactMode],
+    [sessionId],
   );
 
   const handleBudgetSubmit = useCallback(async () => {

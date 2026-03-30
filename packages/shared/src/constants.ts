@@ -27,3 +27,10 @@ export const SESSION_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
 /** Process liveness check interval (60 seconds) */
 export const HEALTH_CHECK_INTERVAL_MS = 60 * 1000;
+
+/** Max context window tokens by model family */
+export function getMaxContextTokens(model: string): number {
+  if (model.includes("haiku")) return 200_000;
+  // opus + sonnet both have 1M context
+  return 1_000_000;
+}

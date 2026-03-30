@@ -29,6 +29,7 @@ interface SessionDetailsProps {
       total_output_tokens: number;
       cache_creation_tokens?: number;
       cache_read_tokens: number;
+      files_read: string[];
       files_modified: string[];
       files_created: string[];
       started_at: number;
@@ -186,7 +187,7 @@ export function SessionDetails({ session }: SessionDetailsProps) {
       </div>
 
       {/* Modified files — clickable to open in viewer */}
-      {(s.files_modified.length > 0 || s.files_created.length > 0) && (
+      {(s.files_read.length > 0 || s.files_modified.length > 0 || s.files_created.length > 0) && (
         <div className="px-4 pb-4">
           <p className="text-xs font-semibold mb-2" style={{ color: "var(--color-text-secondary)" }}>
             Files
@@ -216,6 +217,22 @@ export function SessionDetails({ session }: SessionDetailsProps) {
               >
                 <span className="text-xs" style={{ color: "#FBBC04" }}>~</span>
                 <span className="text-xs font-mono truncate" style={{ color: "var(--color-text-secondary)" }}>
+                  {f.split("/").pop()}
+                </span>
+              </button>
+            ))}
+            {s.files_read
+              .filter((f) => !s.files_modified.includes(f) && !s.files_created.includes(f))
+              .map((f) => (
+              <button
+                key={`r-${f}`}
+                className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
+                onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              >
+                <span className="text-xs" style={{ color: "#4285F4" }}>○</span>
+                <span className="text-xs font-mono truncate" style={{ color: "var(--color-text-muted)" }}>
                   {f.split("/").pop()}
                 </span>
               </button>

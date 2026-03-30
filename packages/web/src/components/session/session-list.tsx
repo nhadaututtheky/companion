@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
   Plus,
   FolderOpen,
+  MagnifyingGlass,
 } from "@phosphor-icons/react";
 
 interface SessionItem {
@@ -69,10 +70,20 @@ function formatTime(ts: number) {
 
 export function SessionList({ sessions, activeSessionId, onSelect, onNew }: SessionListProps) {
   const [filter, setFilter] = useState<"all" | "active" | "ended">("active");
+  const [search, setSearch] = useState("");
 
   const active = sessions.filter((s) => ["starting", "running", "waiting", "idle", "busy"].includes(s.status));
   const ended = sessions.filter((s) => ["ended", "error"].includes(s.status));
-  const displayed = filter === "all" ? sessions : filter === "active" ? active : ended;
+  const filtered = filter === "all" ? sessions : filter === "active" ? active : ended;
+  const q = search.trim().toLowerCase();
+  const displayed = q
+    ? filtered.filter((s) =>
+        s.projectName.toLowerCase().includes(q) ||
+        s.model.toLowerCase().includes(q) ||
+        s.id.toLowerCase().includes(q) ||
+        s.shortId?.toLowerCase().includes(q)
+      )
+    : filtered;
 
   return (
     <div className="flex flex-col h-full">
@@ -97,6 +108,25 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
         >
           <Plus size={12} weight="bold" /> New
         </button>
+      </div>
+
+      {/* Search */}
+      <div className="px-3 pb-1.5">
+        <div
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg"
+          style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
+        >
+          <MagnifyingGlass size={12} style={{ color: "var(--color-text-muted)", flexShrink: 0 }} aria-hidden="true" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search sessions..."
+            className="flex-1 text-xs bg-transparent outline-none"
+            style={{ color: "var(--color-text-primary)" }}
+            aria-label="Search sessions"
+          />
+        </div>
       </div>
 
       {/* Filter tabs */}

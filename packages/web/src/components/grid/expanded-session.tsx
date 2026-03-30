@@ -395,9 +395,11 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                               total_input_tokens: session.state?.total_input_tokens ?? 0,
                               total_output_tokens: session.state?.total_output_tokens ?? 0,
                               cache_read_tokens: session.state?.cache_read_tokens ?? 0,
+                              files_read: session.state?.files_read ?? [],
                               files_modified: session.state?.files_modified ?? [],
                               files_created: session.state?.files_created ?? [],
                               started_at: session.state?.started_at ?? 0,
+                              cwd: session.state?.cwd,
                             },
                           }
                         : null

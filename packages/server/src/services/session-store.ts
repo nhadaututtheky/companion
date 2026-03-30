@@ -629,7 +629,7 @@ export function updateSessionConfig(
 ): boolean {
   const db = getDb();
   try {
-    const updates: Record<string, unknown> = {};
+    const updates: Partial<typeof sessions.$inferInsert> = {};
     if (config.costBudgetUsd !== undefined) updates.costBudgetUsd = config.costBudgetUsd;
     if (config.compactMode !== undefined) updates.compactMode = config.compactMode;
     if (config.compactThreshold !== undefined) updates.compactThreshold = config.compactThreshold;
