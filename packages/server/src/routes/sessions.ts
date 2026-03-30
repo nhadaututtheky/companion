@@ -17,6 +17,8 @@ import {
   endSessionRecord,
   listResumableSessions,
   dismissResumableSession,
+  renameSession,
+  updateSessionConfig,
 } from "../services/session-store.js";
 import { getProject, upsertProject } from "../services/project-profiles.js";
 import { getTemplate, resolveTemplateVariables } from "../services/templates.js";
@@ -311,6 +313,44 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       const settings = bridge.getSessionSettings(sessionId);
       log.info("Session settings updated via API", { sessionId, settings });
       return c.json({ success: true, data: settings } satisfies ApiResponse);
+    },
+  );
+
+  // Rename session
+  const renameSchema = z.object({ name: z.string().max(100).nullable() });
+  app.patch(
+    "/:id/rename",
+    zValidator("json", renameSchema),
+    (c) => {
+      const sessionId = c.req.param("id");
+      const { name } = c.req.valid("json");
+      const ok = renameSession(sessionId, name);
+      if (!ok) {
+        return c.json({ success: false, error: "Failed to rename session" } satisfies ApiResponse, 500);
+      }
+      log.info("Session renamed", { sessionId, name });
+      return c.json({ success: true, data: { name } } satisfies ApiResponse);
+    },
+  );
+
+  // Update session config (compact mode, budget, etc.)
+  const configSchema = z.object({
+    costBudgetUsd: z.number().positive().nullable().optional(),
+    compactMode: z.enum(["manual", "smart", "aggressive"]).optional(),
+    compactThreshold: z.number().int().min(50).max(95).optional(),
+  });
+  app.patch(
+    "/:id/config",
+    zValidator("json", configSchema),
+    (c) => {
+      const sessionId = c.req.param("id");
+      const body = c.req.valid("json");
+      const ok = updateSessionConfig(sessionId, body);
+      if (!ok) {
+        return c.json({ success: false, error: "Failed to update config" } satisfies ApiResponse, 500);
+      }
+      log.info("Session config updated", { sessionId, ...body });
+      return c.json({ success: true, data: body } satisfies ApiResponse);
     },
   );
 

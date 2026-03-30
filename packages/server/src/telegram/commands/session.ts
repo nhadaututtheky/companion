@@ -83,7 +83,8 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
       const cwd = s.state.cwd ?? "";
       const project = cwd.split(/[\\/]/).pop() || "quick";
       const model = s.state.model?.replace("claude-", "").replace(/-\d+$/, "") ?? "?";
-      return `${tag}  📂 ${escapeHTML(project)}  · ${model}`;
+      const label = s.state.name ? `<b>${escapeHTML(s.state.name)}</b>` : `📂 ${escapeHTML(project)}`;
+      return `${tag}  ${label}  · ${model}`;
     });
 
     await ctx.reply(

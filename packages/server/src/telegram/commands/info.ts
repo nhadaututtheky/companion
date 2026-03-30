@@ -13,7 +13,7 @@ import {
 } from "../formatter.js";
 import { getDb } from "../../db/client.js";
 import { sessions, dailyCosts } from "../../db/schema.js";
-import { listSessions } from "../../services/session-store.js";
+import { listSessions, renameSession } from "../../services/session-store.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
 
 export function registerInfoCommands(bridge: TelegramBridge): void {
@@ -367,6 +367,29 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
     }
 
     await ctx.reply(lines.join("\n"), { parse_mode: "HTML" });
+  });
+
+  // ── /rename <name> — Rename current session ────────────────────────────
+
+  bot.command("rename", async (ctx) => {
+    const mapping = bridge.getMapping(ctx.chat.id, ctx.message?.message_thread_id);
+    if (!mapping) {
+      await ctx.reply("No active session. Use /start to begin.");
+      return;
+    }
+
+    const name = ctx.match?.trim() || null;
+    const ok = renameSession(mapping.sessionId, name);
+    if (!ok) {
+      await ctx.reply("Failed to rename session.");
+      return;
+    }
+
+    if (name) {
+      await ctx.reply(`✏️ Session renamed to <b>${escapeHTML(name)}</b>`, { parse_mode: "HTML" });
+    } else {
+      await ctx.reply("✏️ Session name cleared.");
+    }
   });
 
   // ── /help [command] — Categorized help ────────────────────────────────

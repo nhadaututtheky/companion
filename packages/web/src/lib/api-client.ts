@@ -128,6 +128,16 @@ export const api = {
         `/api/sessions/${id}/stream/telegram`,
         { method: "DELETE" },
       ),
+    rename: (id: string, name: string | null) =>
+      request<{ success: boolean; data: { name: string | null } }>(
+        `/api/sessions/${id}/rename`,
+        { method: "PATCH", body: JSON.stringify({ name }) },
+      ),
+    updateConfig: (id: string, config: { costBudgetUsd?: number | null; compactMode?: string; compactThreshold?: number }) =>
+      request<{ success: boolean }>(
+        `/api/sessions/${id}/config`,
+        { method: "PATCH", body: JSON.stringify(config) },
+      ),
   },
 
   // Projects

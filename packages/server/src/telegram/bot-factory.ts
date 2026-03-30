@@ -115,6 +115,7 @@ export async function registerCommands(bot: Bot): Promise<void> {
       { command: "resume", description: "Resume last interrupted session" },
       { command: "fork", description: "Fork session (keep old running)" },
       { command: "context", description: "Show context window usage" },
+      { command: "rename", description: "Rename current session" },
     ]);
     log.info("Commands registered");
   } catch (err) {

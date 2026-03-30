@@ -1,16 +1,20 @@
 "use client";
+import { useState, useRef, useCallback } from "react";
 import { ArrowsOut, X, LinkSimple } from "@phosphor-icons/react";
 import { SessionSettingsButton } from "./session-settings";
 import { CostBreakdown } from "@/components/session/cost-breakdown";
+import { api } from "@/lib/api-client";
 
 interface SessionHeaderProps {
   sessionId: string;
   shortId?: string;
+  name?: string;
   projectName: string;
   model: string;
   status: string;
   onExpand: () => void;
   onClose: () => void;
+  onRename?: (name: string | null) => void;
   channelId?: string | null;
   channelTopic?: string | null;
   channelStatus?: string | null;
@@ -37,11 +41,13 @@ const STATUS_COLORS: Record<string, string> = {
 export function SessionHeader({
   sessionId,
   shortId,
+  name,
   projectName,
   model,
   status,
   onExpand,
   onClose,
+  onRename,
   channelId,
   channelTopic,
   channelStatus,
@@ -54,6 +60,30 @@ export function SessionHeader({
   cacheCreationTokens,
   cacheReadTokens,
 }: SessionHeaderProps) {
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const displayName = name || projectName;
+
+  const startEditing = useCallback(() => {
+    setEditValue(name || "");
+    setEditing(true);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }, [name]);
+
+  const commitRename = useCallback(async () => {
+    setEditing(false);
+    const trimmed = editValue.trim();
+    const newName = trimmed || null;
+    try {
+      await api.sessions.rename(sessionId, newName);
+      onRename?.(newName);
+    } catch {
+      // silently fail — UI will revert on next state sync
+    }
+  }, [editValue, sessionId, onRename]);
+
   const dotColor = STATUS_COLORS[status] ?? STATUS_COLORS.idle;
   const modelShort = model.includes("opus") ? "Opus" : model.includes("haiku") ? "Haiku" : "Sonnet";
   const channelColor = channelStatus === "active" ? "#4285F4" : "#9AA0A6";
@@ -99,13 +129,36 @@ export function SessionHeader({
           @{shortId}
         </span>
       )}
-      <span
-        className="text-sm font-semibold truncate flex-1"
-        style={{ color: "var(--color-text-primary)" }}
-        title={projectName}
-      >
-        {projectName}
-      </span>
+      {editing ? (
+        <input
+          ref={inputRef}
+          className="text-sm font-semibold flex-1 bg-transparent outline-none border-b"
+          style={{
+            color: "var(--color-text-primary)",
+            borderColor: "var(--color-border)",
+            minWidth: 0,
+          }}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={commitRename}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commitRename();
+            if (e.key === "Escape") setEditing(false);
+          }}
+          maxLength={100}
+          placeholder={projectName}
+          aria-label="Session name"
+        />
+      ) : (
+        <span
+          className="text-sm font-semibold truncate flex-1 cursor-pointer"
+          style={{ color: "var(--color-text-primary)" }}
+          title={`${displayName} — double-click to rename`}
+          onDoubleClick={startEditing}
+        >
+          {displayName}
+        </span>
+      )}
 
       {/* Center: model badge */}
       <span
