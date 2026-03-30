@@ -928,6 +928,9 @@ export class WsBridge {
     // Broadcast context usage after updating token counts
     this.broadcastContextUpdate(session);
 
+    // Check smart compact (must be after context broadcast, before idle timer)
+    this.checkSmartCompact(session);
+
     // Start idle timer after session completes a result (goes idle)
     this.startIdleTimer(session);
   }
@@ -962,6 +965,126 @@ export class WsBridge {
       } as BrowserIncomingMessage);
       updateSessionCostWarned(session.id, 1);
     }
+  }
+
+  /**
+   * Smart compact: check if context exceeds threshold and trigger handoff at idle.
+   * - manual: do nothing (user must /compact themselves)
+   * - smart: set compactPending flag, trigger handoff when idle
+   * - aggressive: compact immediately when threshold crossed
+   */
+  private checkSmartCompact(session: ActiveSession): void {
+    const { compact_mode, compact_threshold } = session.state;
+    if (compact_mode === "manual") return;
+
+    // Calculate context usage
+    const maxTokens = WsBridge.getMaxContextTokens(session.state.model);
+    const totalUsed = session.state.total_input_tokens + session.state.total_output_tokens;
+    const contextPct = (totalUsed / maxTokens) * 100;
+
+    if (contextPct < compact_threshold) {
+      session.compactPending = false;
+      return;
+    }
+
+    // Already pending or already compacting
+    if (session.compactPending || session.state.status === "compacting") return;
+
+    if (compact_mode === "aggressive") {
+      // Compact immediately without handoff
+      log.info("Aggressive compact triggered", { session: session.id, contextPct: Math.round(contextPct) });
+      this.sendCompactCommand(session);
+      return;
+    }
+
+    // Smart mode: session just went idle in handleResult → trigger handoff now
+    if (session.state.status === "idle") {
+      session.compactPending = true;
+      log.info("Smart compact handoff triggered at idle", { session: session.id, contextPct: Math.round(contextPct) });
+      this.triggerSmartCompactHandoff(session);
+    }
+  }
+
+  /**
+   * Smart compact handoff flow:
+   * 1. Ask Claude to summarize current progress
+   * 2. Wait for response (it will come through handleResult)
+   * 3. Save snapshot to session state
+   * 4. Send /compact
+   * 5. After compact, inject handoff context
+   */
+  private triggerSmartCompactHandoff(session: ActiveSession): void {
+    // Notify subscribers
+    this.broadcastToAll(session, {
+      type: "compact_handoff",
+      stage: "summarizing",
+      message: "Smart compact: asking Claude to summarize before compacting...",
+    } as BrowserIncomingMessage);
+
+    // Send handoff request to Claude
+    const handoffPrompt = [
+      "Before context compaction, briefly summarize in 3-5 sentences:",
+      "1. What you just completed",
+      "2. What tasks remain (if any)",
+      "3. Your planned next step",
+      "Keep it concise — this will be injected after compaction to restore context.",
+    ].join("\n");
+
+    this.sendToCLI(session, JSON.stringify({
+      type: "user",
+      content: `[SYSTEM: Context at ${session.state.compact_threshold}% — auto-compact handoff]\n\n${handoffPrompt}`,
+    }));
+
+    // The response will come through normal handleResult flow.
+    // We detect completion by watching for the next idle transition
+    // after compactPending=true. At that point, send /compact.
+    // For now, we mark a delayed compact trigger.
+    this.schedulePostHandoffCompact(session);
+  }
+
+  /** After handoff summary is received, trigger the actual /compact. */
+  private schedulePostHandoffCompact(session: ActiveSession): void {
+    // Wait for Claude to respond (poll status transitions)
+    const checkInterval = setInterval(() => {
+      // Session ended or compact cancelled
+      if (!session.compactPending || session.state.status === "ended" || session.state.status === "error") {
+        clearInterval(checkInterval);
+        session.compactPending = false;
+        return;
+      }
+
+      // Session went idle again = Claude finished the handoff summary
+      if (session.state.status === "idle") {
+        clearInterval(checkInterval);
+        session.compactPending = false;
+
+        this.broadcastToAll(session, {
+          type: "compact_handoff",
+          stage: "compacting",
+          message: "Handoff summary received. Running /compact...",
+        } as BrowserIncomingMessage);
+
+        log.info("Post-handoff compact executing", { session: session.id });
+        this.sendCompactCommand(session);
+      }
+    }, 2000);
+
+    // Safety timeout: cancel after 60s if Claude never responds
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      if (session.compactPending) {
+        log.warn("Smart compact handoff timed out", { session: session.id });
+        session.compactPending = false;
+      }
+    }, 60_000);
+  }
+
+  /** Send /compact slash command to CLI. */
+  private sendCompactCommand(session: ActiveSession): void {
+    this.sendToCLI(session, JSON.stringify({
+      type: "user",
+      content: "/compact",
+    }));
   }
 
   private handleStreamEvent(

@@ -183,7 +183,8 @@ export type BrowserIncomingMessage =
   | { type: "user_message"; content: string; timestamp: number }
   | { type: "message_history"; messages: BrowserIncomingMessage[] }
   | { type: "context_update"; contextUsedPercent: number; totalTokens: number; maxTokens: number }
-  | { type: "cost_warning"; level: "warning" | "critical"; costUsd: number; budgetUsd: number; message: string };
+  | { type: "cost_warning"; level: "warning" | "critical"; costUsd: number; budgetUsd: number; message: string }
+  | { type: "compact_handoff"; stage: "summarizing" | "compacting" | "done"; message: string };
 
 // ─── Session State ───────────────────────────────────────────────────────────
 

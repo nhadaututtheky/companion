@@ -53,6 +53,8 @@ export interface ActiveSession {
   extensionSend: ((data: string) => void) | null;
   /** Last N stderr lines from CLI process (for error diagnostics) */
   lastStderrLines?: string[];
+  /** Smart compact: waiting for idle to trigger handoff */
+  compactPending?: boolean;
 }
 
 /** Max number of messages to keep in memory per session (FIFO eviction) */
