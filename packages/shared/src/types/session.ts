@@ -182,7 +182,8 @@ export type BrowserIncomingMessage =
   | { type: "cli_connected" }
   | { type: "user_message"; content: string; timestamp: number }
   | { type: "message_history"; messages: BrowserIncomingMessage[] }
-  | { type: "context_update"; contextUsedPercent: number; totalTokens: number; maxTokens: number };
+  | { type: "context_update"; contextUsedPercent: number; totalTokens: number; maxTokens: number }
+  | { type: "cost_warning"; level: "warning" | "critical"; costUsd: number; budgetUsd: number; message: string };
 
 // ─── Session State ───────────────────────────────────────────────────────────
 

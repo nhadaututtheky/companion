@@ -23,6 +23,7 @@ import {
   cleanupZombieSessions,
   clearCliSessionId,
   pushMessageHistory,
+  updateSessionCostWarned,
   type ActiveSession,
 } from "./session-store.js";
 import type {
@@ -921,11 +922,46 @@ export class WsBridge {
     this.updateStatus(session, "idle");
     persistSession(session);
 
+    // Check cost budget warnings
+    this.checkCostBudget(session);
+
     // Broadcast context usage after updating token counts
     this.broadcastContextUpdate(session);
 
     // Start idle timer after session completes a result (goes idle)
     this.startIdleTimer(session);
+  }
+
+  /** Check cost budget and broadcast warnings at 80% and 100% thresholds. */
+  private checkCostBudget(session: ActiveSession): void {
+    const { cost_budget_usd, cost_warned, total_cost_usd } = session.state;
+    if (!cost_budget_usd || cost_budget_usd <= 0) return;
+
+    const pct = total_cost_usd / cost_budget_usd;
+
+    if (pct >= 1.0 && cost_warned < 2) {
+      // 100% — budget reached
+      session.state = { ...session.state, cost_warned: 2 };
+      this.broadcastToAll(session, {
+        type: "cost_warning",
+        level: "critical",
+        costUsd: total_cost_usd,
+        budgetUsd: cost_budget_usd,
+        message: `Cost budget reached: $${total_cost_usd.toFixed(2)} / $${cost_budget_usd.toFixed(2)}`,
+      } as BrowserIncomingMessage);
+      updateSessionCostWarned(session.id, 2);
+    } else if (pct >= 0.8 && cost_warned < 1) {
+      // 80% — first warning
+      session.state = { ...session.state, cost_warned: 1 };
+      this.broadcastToAll(session, {
+        type: "cost_warning",
+        level: "warning",
+        costUsd: total_cost_usd,
+        budgetUsd: cost_budget_usd,
+        message: `Approaching cost budget: $${total_cost_usd.toFixed(2)} / $${cost_budget_usd.toFixed(2)} (${Math.round(pct * 100)}%)`,
+      } as BrowserIncomingMessage);
+      updateSessionCostWarned(session.id, 1);
+    }
   }
 
   private handleStreamEvent(

@@ -918,6 +918,16 @@ export class TelegramBridge {
           await this.handleContextUpdate(chatId, topicId, sessionId, msg.contextUsedPercent);
           break;
 
+        case "cost_warning": {
+          const icon = msg.level === "critical" ? "🔴" : "⚠️";
+          await this.bot.api.sendMessage(
+            chatId,
+            `${icon} <b>Cost Budget ${msg.level === "critical" ? "Reached" : "Warning"}</b>\n${escapeHTML(msg.message)}\n\nUse <code>/stop</code> to end session or continue working.`,
+            { parse_mode: "HTML", message_thread_id: topicId },
+          ).catch(() => {});
+          break;
+        }
+
         case "cli_disconnected": {
           // CLI process died — flush any pending stream text so it's not lost
           await this.streamHandler.completeStream(chatId, topicId);

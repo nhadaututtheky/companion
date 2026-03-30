@@ -663,6 +663,18 @@ export function updateSessionConfig(
   }
 }
 
+export function updateSessionCostWarned(sessionId: string, level: number): void {
+  const db = getDb();
+  try {
+    db.update(sessions)
+      .set({ costWarned: level })
+      .where(eq(sessions.id, sessionId))
+      .run();
+  } catch (err) {
+    log.warn("Failed to update cost warned level", { sessionId, error: String(err) });
+  }
+}
+
 // ─── Message storage ────────────────────────────────────────────────────────
 
 export function storeMessage(msg: {
