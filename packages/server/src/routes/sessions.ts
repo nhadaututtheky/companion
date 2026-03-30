@@ -122,7 +122,11 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
 
   // Resumable sessions — must be before /:id to avoid route conflict
   app.get("/resumable", (c) => {
-    const resumable = listResumableSessions();
+    const search = c.req.query("q") ?? undefined;
+    const projectSlug = c.req.query("project") ?? undefined;
+    const limit = c.req.query("limit") ? parseInt(c.req.query("limit")!, 10) : undefined;
+    const offset = c.req.query("offset") ? parseInt(c.req.query("offset")!, 10) : undefined;
+    const resumable = listResumableSessions({ search, projectSlug, limit, offset });
     return c.json({ success: true, data: resumable } satisfies ApiResponse);
   });
 

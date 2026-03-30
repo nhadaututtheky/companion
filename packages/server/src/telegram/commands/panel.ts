@@ -19,7 +19,7 @@ import { InlineKeyboard } from "grammy";
 import { escapeHTML } from "../formatter.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
 import { getProject } from "../../services/project-profiles.js";
-// Dead session lookup now via bridge.getDeadSessionByProject()
+import { getSessionRecord } from "../../services/session-store.js";
 
 // ─── Model options ───────────────────────────────────────────────────────────
 
@@ -386,6 +386,29 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
 
     // Clear dead session entry
     bridge.clearDeadSessionByProject(chatId, projectSlug);
+  });
+
+  // ── Resume by session ID (from /resume search results) ─────────────────
+
+  bot.callbackQuery(/^resume_id:(.+)$/, async (ctx) => {
+    const sessionId = ctx.match[1]!;
+    await ctx.answerCallbackQuery("Resuming session...");
+
+    const record = getSessionRecord(sessionId);
+    if (!record || !record.cliSessionId) {
+      await ctx.editMessageText("Session no longer resumable.").catch(() => {});
+      return;
+    }
+
+    await ctx.editMessageText(
+      `Resuming session <code>${escapeHTML(record.cliSessionId.slice(0, 8))}</code>...`,
+      { parse_mode: "HTML" },
+    ).catch(() => {});
+
+    await bridge.startSessionForChat(ctx, record.projectSlug ?? "quick", {
+      resume: true,
+      cliSessionId: record.cliSessionId,
+    });
   });
 
   bot.callbackQuery(/^fresh:([^:]+):(-?\d+)$/, async (ctx) => {

@@ -4,7 +4,7 @@
 
 import { InlineKeyboard } from "grammy";
 import { listProjects, getProject } from "../../services/project-profiles.js";
-import { getAllActiveSessions } from "../../services/session-store.js";
+import { getAllActiveSessions, listResumableSessions } from "../../services/session-store.js";
 import { escapeHTML } from "../formatter.js";
 import { createLogger } from "../../logger.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
@@ -148,6 +148,7 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
   bot.command("resume", async (ctx) => {
     const chatId = ctx.chat.id;
     const topicId = ctx.message?.message_thread_id;
+    const searchQuery = ctx.match?.trim() || undefined;
 
     // If there's already an active session, just inform the user
     const mapping = bridge.getMapping(chatId, topicId);
@@ -156,10 +157,54 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
       return;
     }
 
-    // Show project list to choose which session to resume
+    // If search query provided, search all resumable sessions
+    if (searchQuery) {
+      const results = listResumableSessions({ search: searchQuery, limit: 10 });
+      if (results.length === 0) {
+        await ctx.reply(`No resumable sessions matching "<b>${escapeHTML(searchQuery)}</b>".`, { parse_mode: "HTML" });
+        return;
+      }
+
+      const keyboard = new InlineKeyboard();
+      for (const s of results) {
+        const label = s.name || s.projectSlug || "quick";
+        const model = s.model?.replace("claude-", "").replace(/-\d+$/, "") ?? "";
+        const ago = Math.round((Date.now() - s.endedAt) / 60000);
+        const agoText = ago < 60 ? `${ago}m ago` : `${Math.round(ago / 60)}h ago`;
+        keyboard.text(`↩ ${label} · ${model} · ${agoText}`, `resume_id:${s.id}`).row();
+      }
+
+      await ctx.reply(
+        `🔍 Found <b>${results.length}</b> resumable session(s) matching "<b>${escapeHTML(searchQuery)}</b>":`,
+        { parse_mode: "HTML", reply_markup: keyboard },
+      );
+      return;
+    }
+
+    // No search — show all resumable sessions (up to 10)
+    const resumable = listResumableSessions({ limit: 10 });
+    if (resumable.length > 0) {
+      const keyboard = new InlineKeyboard();
+      for (const s of resumable) {
+        const label = s.name || s.projectSlug || "quick";
+        const model = s.model?.replace("claude-", "").replace(/-\d+$/, "") ?? "";
+        const ago = Math.round((Date.now() - s.endedAt) / 60000);
+        const agoText = ago < 60 ? `${ago}m ago` : `${Math.round(ago / 60)}h ago`;
+        keyboard.text(`↩ ${label} · ${model} · ${agoText}`, `resume_id:${s.id}`).row();
+      }
+      keyboard.text("🆕 Start Fresh", "quick:session").row();
+
+      await ctx.reply(
+        `↩ <b>Resumable Sessions</b> (${resumable.length})`,
+        { parse_mode: "HTML", reply_markup: keyboard },
+      );
+      return;
+    }
+
+    // Fallback to project-based resume (original flow)
     const projects = listProjects();
     if (projects.length === 0) {
-      await ctx.reply("No projects configured.");
+      await ctx.reply("No resumable sessions or projects found. Use /new to start.");
       return;
     }
 

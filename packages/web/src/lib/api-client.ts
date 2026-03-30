@@ -95,11 +95,17 @@ export const api = {
       request<{ success: boolean; data: { idleTimeoutMs: number; keepAlive: boolean } }>(
         `/api/sessions/${id}/settings`,
       ),
-    listResumable: () =>
-      request<{
+    listResumable: (opts?: { q?: string; project?: string; limit?: number }) => {
+      const params = new URLSearchParams();
+      if (opts?.q) params.set("q", opts.q);
+      if (opts?.project) params.set("project", opts.project);
+      if (opts?.limit) params.set("limit", String(opts.limit));
+      const qs = params.toString();
+      return request<{
         success: boolean;
         data: Array<{
           id: string;
+          name?: string;
           projectSlug: string | null;
           model: string;
           source: string;
@@ -107,7 +113,8 @@ export const api = {
           cliSessionId: string;
           endedAt: number;
         }>;
-      }>("/api/sessions/resumable"),
+      }>(`/api/sessions/resumable${qs ? `?${qs}` : ""}`);
+    },
     dismissResumable: (id: string) =>
       request<{ success: boolean }>(`/api/sessions/resumable/${id}`, { method: "DELETE" }),
     resume: (id: string) =>
