@@ -319,23 +319,24 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
     // Determine context window size by model family
     const maxTokens = model.includes("haiku") ? 200_000 : 1_000_000;
 
-    // Total tokens used = input + output; cache reads count against input window
-    const totalUsed = (s.total_input_tokens ?? 0) + (s.total_output_tokens ?? 0);
-    const pct = Math.min(Math.round((totalUsed / maxTokens) * 100), 100);
+    const inputTokens = s.total_input_tokens ?? 0;
+    const outputTokens = s.total_output_tokens ?? 0;
+    const totalUsed = inputTokens + outputTokens;
+    const totalPct = Math.min(Math.round((totalUsed / maxTokens) * 100), 100);
+    const inputPct = Math.min(Math.round((inputTokens / maxTokens) * 100), 100);
+    const outputPct = Math.min(Math.round((outputTokens / maxTokens) * 100), 100);
 
-    // Build visual progress bar (16 blocks)
-    const BAR_LEN = 16;
-    const filled = Math.round((pct / 100) * BAR_LEN);
-    const empty = BAR_LEN - filled;
-    const bar = "█".repeat(filled) + "░".repeat(empty);
+    // Build dual progress bars (20 blocks each for better resolution)
+    const BAR_LEN = 20;
+    const makeBar = (pct: number): string => {
+      const filled = Math.round((pct / 100) * BAR_LEN);
+      return "█".repeat(filled) + "░".repeat(BAR_LEN - filled);
+    };
 
-    // Warning level prefix
-    let warningPrefix = "";
-    if (pct >= 85) {
-      warningPrefix = "🔴 ";
-    } else if (pct >= 60) {
-      warningPrefix = "⚠️ ";
-    }
+    // Warning level
+    let statusIcon = "📊";
+    if (totalPct >= 85) statusIcon = "🔴";
+    else if (totalPct >= 60) statusIcon = "🟡";
 
     const remaining = Math.max(maxTokens - totalUsed, 0);
     const maxLabel = maxTokens >= 1_000_000
@@ -344,23 +345,25 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
 
     // Compact model display
     const modelShort = model.includes("opus")
-      ? "claude-opus-4-6"
+      ? "opus-4-6"
       : model.includes("haiku")
-      ? "claude-haiku-4-5"
-      : "claude-sonnet-4-6";
+        ? "haiku-4-5"
+        : "sonnet-4-6";
 
     const lines = [
-      `📊 <b>Context Usage</b>`,
+      `${statusIcon} <b>Context Window</b>  ·  <code>${modelShort}</code>`,
       ``,
-      `${warningPrefix}<code>${bar}</code> ${pct}%`,
-      `${formatTokens(totalUsed)} / ${maxLabel} tokens · ${formatTokens(remaining)} remaining`,
+      `📥 Input   <code>${makeBar(inputPct)}</code>  ${inputPct}%`,
+      `   ${formatTokens(inputTokens)}`,
+      `📤 Output  <code>${makeBar(outputPct)}</code>  ${outputPct}%`,
+      `   ${formatTokens(outputTokens)}`,
       ``,
-      `Model: <code>${escapeHTML(modelShort)}</code>`,
-      `Turns: ${s.num_turns ?? 0} · Cost: ${formatCost(s.total_cost_usd ?? 0)}`,
+      `Total: ${formatTokens(totalUsed)} / ${maxLabel}  ·  ${formatTokens(remaining)} left`,
+      `Turns: ${s.num_turns ?? 0}  ·  Cost: ${formatCost(s.total_cost_usd ?? 0)}`,
     ];
 
-    if (pct >= 60) {
-      lines.push(``, `💡 Tip: use <code>/compact</code> to free up context space.`);
+    if (totalPct >= 60) {
+      lines.push(``, `💡 <code>/compact</code> to free up context space`);
     }
 
     await ctx.reply(lines.join("\n"), { parse_mode: "HTML" });
