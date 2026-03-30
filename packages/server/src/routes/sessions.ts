@@ -327,6 +327,10 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     zValidator("json", renameSchema),
     (c) => {
       const sessionId = c.req.param("id");
+      const record = getSessionRecord(sessionId);
+      if (!record) {
+        return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
+      }
       const { name } = c.req.valid("json");
       const ok = renameSession(sessionId, name);
       if (!ok) {
@@ -339,7 +343,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
 
   // Update session config (compact mode, budget, etc.)
   const configSchema = z.object({
-    costBudgetUsd: z.number().positive().nullable().optional(),
+    costBudgetUsd: z.number().min(0.01).nullable().optional(),
     compactMode: z.enum(["manual", "smart", "aggressive"]).optional(),
     compactThreshold: z.number().int().min(50).max(95).optional(),
   });
@@ -348,6 +352,10 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     zValidator("json", configSchema),
     (c) => {
       const sessionId = c.req.param("id");
+      const record = getSessionRecord(sessionId);
+      if (!record) {
+        return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
+      }
       const body = c.req.valid("json");
       const ok = updateSessionConfig(sessionId, body);
       if (!ok) {

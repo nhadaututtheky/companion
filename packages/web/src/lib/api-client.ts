@@ -128,7 +128,7 @@ export const api = {
     streamTelegram: (id: string, chatId: number, topicId?: number) =>
       request<{ success: boolean; data: { sessionId: string; chatId: number; streaming: boolean } }>(
         `/api/sessions/${id}/stream/telegram`,
-        { method: "POST", body: JSON.stringify({ chatId, topicId: topicId || undefined }) },
+        { method: "POST", body: JSON.stringify({ chatId, topicId: topicId ?? undefined }) },
       ),
     detachTelegramStream: (id: string) =>
       request<{ success: boolean; data: { sessionId: string; detached: boolean } }>(
