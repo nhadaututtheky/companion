@@ -296,6 +296,138 @@ export async function search(
   }
 }
 
+// ─── Crawl ──────────────────────────────────────────────────────────────────
+
+export interface CrawlOptions {
+  maxDepth?: number;
+  maxPages?: number;
+  useSitemap?: boolean;
+}
+
+export interface CrawlJob {
+  id: string;
+  status: "running" | "completed" | "failed";
+  pages?: ScrapeResult[];
+  totalPages?: number;
+  error?: string;
+}
+
+/**
+ * Start an async crawl job via webclaw.
+ * Returns the job ID for polling status.
+ */
+export async function startCrawl(url: string, opts?: CrawlOptions): Promise<string | null> {
+  try {
+    assertSafeUrl(url);
+  } catch {
+    return null;
+  }
+
+  if (!(await isAvailable())) return null;
+
+  try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (WEBCLAW_API_KEY) {
+      headers["Authorization"] = `Bearer ${WEBCLAW_API_KEY}`;
+    }
+
+    const res = await fetch(`${WEBCLAW_URL}/v1/crawl`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        url,
+        max_depth: opts?.maxDepth ?? 2,
+        max_pages: opts?.maxPages ?? 50,
+        use_sitemap: opts?.useSitemap ?? false,
+      }),
+      signal: AbortSignal.timeout(SCRAPE_TIMEOUT_MS),
+    });
+
+    if (!res.ok) return null;
+
+    const data = await res.json() as { id: string };
+    return data.id ?? null;
+  } catch (err) {
+    log.warn("webclaw crawl start error", { url, error: String(err) });
+    return null;
+  }
+}
+
+/**
+ * Poll crawl job status.
+ */
+export async function getCrawlStatus(jobId: string): Promise<CrawlJob | null> {
+  if (!(await isAvailable())) return null;
+
+  try {
+    const headers: Record<string, string> = {};
+    if (WEBCLAW_API_KEY) {
+      headers["Authorization"] = `Bearer ${WEBCLAW_API_KEY}`;
+    }
+
+    const res = await fetch(`${WEBCLAW_URL}/v1/crawl/${encodeURIComponent(jobId)}`, {
+      headers,
+      signal: AbortSignal.timeout(SCRAPE_TIMEOUT_MS),
+    });
+
+    if (!res.ok) return null;
+
+    return await res.json() as CrawlJob;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Research (search + scrape + summarize) ─────────────────────────────────
+
+/**
+ * Perform web research: search → scrape top results → return combined content.
+ * Requires WEBCLAW_API_KEY for search. Falls back to scraping provided URL if no search available.
+ */
+export async function research(
+  query: string,
+  maxTokens = 3000,
+): Promise<{ content: string; sources: { title: string; url: string }[] } | null> {
+  // Search for relevant URLs
+  const searchResults = await search(query, 5);
+
+  if (searchResults.length === 0) {
+    log.debug("Research: no search results", { query });
+    return null;
+  }
+
+  // Scrape top results
+  const urls = searchResults.map((r) => r.url);
+  const scrapeResults = await batchScrape(urls, { formats: ["llm"], concurrency: 3 });
+
+  const validResults = scrapeResults.filter(
+    (r) => !r.error && (r.llm ?? r.markdown ?? r.text),
+  );
+
+  if (validResults.length === 0) return null;
+
+  // Combine content with source attribution
+  const maxCharsPerSource = Math.floor((maxTokens * 4) / validResults.length);
+  const sections: string[] = [];
+  const sources: { title: string; url: string }[] = [];
+
+  for (let i = 0; i < validResults.length; i++) {
+    const result = validResults[i]!;
+    const content = result.llm ?? result.markdown ?? result.text ?? "";
+    const title = result.metadata?.title ?? `Source ${i + 1}`;
+    const truncated = content.length > maxCharsPerSource
+      ? content.slice(0, maxCharsPerSource) + "..."
+      : content;
+
+    sections.push(`### ${title}\nSource: ${result.url}\n\n${truncated}`);
+    sources.push({ title, url: result.url });
+  }
+
+  const combinedContent = sections.join("\n\n---\n\n");
+
+  return { content: combinedContent, sources };
+}
+
 // ─── Convenience ────────────────────────────────────────────────────────────
 
 /**

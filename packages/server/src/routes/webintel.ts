@@ -5,6 +5,7 @@
 import { Hono } from "hono";
 import * as webIntel from "../services/web-intel.js";
 import { assertSafeUrl } from "../services/web-intel.js";
+import * as webIntelJobs from "../services/web-intel-jobs.js";
 import type { ApiResponse } from "@companion/shared";
 
 export const webintelRoutes = new Hono();
@@ -111,6 +112,94 @@ webintelRoutes.post("/search", async (c) => {
   }
 
   return c.json({ success: true, data: results } satisfies ApiResponse);
+});
+
+/** POST /webintel/research — web research (search + scrape + synthesize) */
+webintelRoutes.post("/research", async (c) => {
+  const body = await c.req.json<{ query?: string; maxTokens?: number }>();
+
+  if (!body.query || typeof body.query !== "string") {
+    return c.json({ success: false, error: "query is required" } satisfies ApiResponse, 400);
+  }
+
+  const maxTokens = Math.min(body.maxTokens ?? 3000, 8000);
+  const result = await webIntel.research(body.query, maxTokens);
+
+  if (!result) {
+    return c.json({
+      success: false,
+      error: "Research failed — WEBCLAW_API_KEY may be required for search",
+    } satisfies ApiResponse, 502);
+  }
+
+  return c.json({ success: true, data: result } satisfies ApiResponse);
+});
+
+/** POST /webintel/crawl — start async crawl job */
+webintelRoutes.post("/crawl", async (c) => {
+  const body = await c.req.json<{
+    url?: string;
+    maxDepth?: number;
+    maxPages?: number;
+    sessionId?: string;
+  }>();
+
+  if (!body.url || typeof body.url !== "string") {
+    return c.json({ success: false, error: "url is required" } satisfies ApiResponse, 400);
+  }
+
+  try {
+    assertSafeUrl(body.url);
+  } catch (err) {
+    return c.json({ success: false, error: String((err as Error).message) } satisfies ApiResponse, 400);
+  }
+
+  const jobId = await webIntel.startCrawl(body.url, {
+    maxDepth: body.maxDepth ?? 2,
+    maxPages: Math.min(body.maxPages ?? 50, 200),
+  });
+
+  if (!jobId) {
+    return c.json({
+      success: false,
+      error: "Crawl failed to start — webclaw may be unavailable",
+    } satisfies ApiResponse, 502);
+  }
+
+  webIntelJobs.registerJob({
+    id: jobId,
+    type: "crawl",
+    sessionId: body.sessionId ?? "api",
+    url: body.url,
+  });
+
+  return c.json({ success: true, data: { jobId } } satisfies ApiResponse);
+});
+
+/** GET /webintel/jobs — list all active jobs */
+webintelRoutes.get("/jobs", (c) => {
+  const jobs = webIntelJobs.getAllJobs();
+  return c.json({ success: true, data: jobs } satisfies ApiResponse);
+});
+
+/** GET /webintel/jobs/:id — get job status */
+webintelRoutes.get("/jobs/:id", async (c) => {
+  const jobId = c.req.param("id");
+  const job = webIntelJobs.getJob(jobId);
+
+  if (!job) {
+    return c.json({ success: false, error: "Job not found" } satisfies ApiResponse, 404);
+  }
+
+  // Poll webclaw for latest status if still running
+  if (job.status === "running" && job.type === "crawl") {
+    const updated = await webIntelJobs.pollCrawlJob(jobId);
+    if (updated) {
+      return c.json({ success: true, data: updated } satisfies ApiResponse);
+    }
+  }
+
+  return c.json({ success: true, data: job } satisfies ApiResponse);
 });
 
 /** DELETE /webintel/cache — clear cache */

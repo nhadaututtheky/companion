@@ -10,8 +10,9 @@ import { startSdkSession, type SdkSessionHandle } from "./sdk-engine.js";
 import { summarizeSession, buildSummaryInjection } from "./session-summarizer.js";
 import { buildSessionContext } from "./session-context.js";
 import { handleMentions } from "./mention-router.js";
-import { scrapeForContext, isAvailable as isWebIntelAvailable } from "./web-intel.js";
+import { scrapeForContext, isAvailable as isWebIntelAvailable, research as webResearch, startCrawl } from "./web-intel.js";
 import { detectLibraryMentions, resolveDocsUrl } from "./web-intel-detector.js";
+import { registerJob, pollCrawlJob } from "./web-intel-jobs.js";
 import {
   createActiveSession,
   getActiveSession,
@@ -1489,6 +1490,24 @@ export class WsBridge {
       return;
     }
 
+    // ── WebIntel: /research command — multi-page web research ──
+    const researchMatch = content.match(/^\/research\s+(.+)/i);
+    if (researchMatch) {
+      const query = researchMatch[1]!.trim();
+      this.handleResearchCommand(session, query, source);
+      return;
+    }
+
+    // ── WebIntel: /crawl command — site crawl ──
+    const crawlMatch = content.match(/^\/crawl\s+(https?:\/\/\S+)(?:\s+--depth\s+(\d+))?(?:\s+--max\s+(\d+))?/i);
+    if (crawlMatch) {
+      const url = crawlMatch[1]!;
+      const depth = crawlMatch[2] ? parseInt(crawlMatch[2], 10) : 2;
+      const maxPages = crawlMatch[3] ? parseInt(crawlMatch[3], 10) : 50;
+      this.handleCrawlCommand(session, url, depth, maxPages, source);
+      return;
+    }
+
     // Delegate to shared internal handler
     this.handleUserMessageInternal(session, content, source);
   }
@@ -1548,6 +1567,130 @@ export class WsBridge {
   /**
    * Internal message handler — called after /docs processing to avoid re-detection loop.
    */
+  /**
+   * Handle /research <query> — search + scrape + synthesize.
+   */
+  private handleResearchCommand(
+    session: ActiveSession,
+    query: string,
+    source?: string,
+  ): void {
+    webResearch(query, 3000).then((result) => {
+      if (!getActiveSession(session.id)) return;
+
+      let enrichedContent: string;
+
+      if (result) {
+        const sourceList = result.sources
+          .map((s, i) => `${i + 1}. [${s.title}](${s.url})`)
+          .join("\n");
+
+        enrichedContent = `Here is research on: ${query}\n\n<web-research query="${query}" sources="${result.sources.length}">\n${result.content}\n\nSources:\n${sourceList}\n</web-research>`;
+
+        log.info("Research completed", {
+          sessionId: session.id,
+          query,
+          sources: result.sources.length,
+        });
+      } else {
+        enrichedContent = `[Research failed — WEBCLAW_API_KEY may be required for search] ${query}`;
+      }
+
+      this.handleUserMessageInternal(session, enrichedContent, source);
+    }).catch((err) => {
+      log.warn("Research error", { sessionId: session.id, query, error: String(err) });
+      if (getActiveSession(session.id)) {
+        this.handleUserMessageInternal(session, `[Research failed] ${query}`, source);
+      }
+    });
+  }
+
+  /**
+   * Handle /crawl <url> — start async crawl job.
+   */
+  private handleCrawlCommand(
+    session: ActiveSession,
+    url: string,
+    depth: number,
+    maxPages: number,
+    source?: string,
+  ): void {
+    startCrawl(url, { maxDepth: depth, maxPages }).then((jobId) => {
+      if (!getActiveSession(session.id)) return;
+
+      if (!jobId) {
+        this.handleUserMessageInternal(
+          session,
+          `[Crawl failed to start — webclaw may be unavailable] ${url}`,
+          source,
+        );
+        return;
+      }
+
+      // Register job for tracking
+      const registered = registerJob({
+        id: jobId,
+        type: "crawl",
+        sessionId: session.id,
+        url,
+      });
+
+      if (!registered) {
+        this.handleUserMessageInternal(
+          session,
+          `[Crawl job limit reached — wait for current crawl to finish] ${url}`,
+          source,
+        );
+        return;
+      }
+
+      // Notify user that crawl started
+      this.broadcastToAll(session, {
+        type: "system_message",
+        content: `🌐 Crawl started: ${url} (depth: ${depth}, max: ${maxPages} pages). Job ID: ${jobId}`,
+        timestamp: Date.now(),
+      } as BrowserIncomingMessage);
+
+      // Poll until complete (every 3s, max 5 min handled by job timeout)
+      const pollInterval = setInterval(async () => {
+        const job = await pollCrawlJob(jobId);
+        if (!job || job.status !== "running") {
+          clearInterval(pollInterval);
+
+          if (!getActiveSession(session.id)) return;
+
+          if (job?.status === "completed" && job.result) {
+            const pages = job.result as Array<{ url: string; llm?: string; markdown?: string }>;
+            const summary = pages
+              .slice(0, 10) // max 10 pages in context
+              .map((p) => {
+                const content = (p.llm ?? p.markdown ?? "").slice(0, 2000);
+                return `## ${p.url}\n${content}`;
+              })
+              .join("\n\n---\n\n");
+
+            this.handleUserMessageInternal(
+              session,
+              `Crawl completed for ${url}\n\n<web-crawl url="${url}" pages="${pages.length}" depth="${depth}">\n${summary}\n</web-crawl>`,
+              source,
+            );
+          } else {
+            this.handleUserMessageInternal(
+              session,
+              `[Crawl failed: ${job?.error ?? "unknown error"}] ${url}`,
+              source,
+            );
+          }
+        }
+      }, 3000);
+    }).catch((err) => {
+      log.warn("Crawl start error", { sessionId: session.id, url, error: String(err) });
+      if (getActiveSession(session.id)) {
+        this.handleUserMessageInternal(session, `[Crawl failed] ${url}`, source);
+      }
+    });
+  }
+
   private handleUserMessageInternal(
     session: ActiveSession,
     content: string,
