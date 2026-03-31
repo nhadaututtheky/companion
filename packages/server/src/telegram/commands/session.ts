@@ -8,6 +8,7 @@ import { getAllActiveSessions, listResumableSessions } from "../../services/sess
 import { escapeHTML } from "../formatter.js";
 import { createLogger } from "../../logger.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
+import { DEFAULT_MODEL } from "@companion/shared";
 
 const log = createLogger("cmd:session");
 
@@ -20,18 +21,79 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     const projects = listProjects();
 
     if (projects.length === 0) {
+      // First-time user: no projects configured yet — show detailed setup guide
       await ctx.reply(
-        "👋 <b>Welcome to Companion!</b>\n\nNo projects configured yet. Add a project via the web UI or API.\n\nOr start a quick session:",
-        { parse_mode: "HTML", reply_markup: {
-          inline_keyboard: [[
-            { text: "⚡ Quick Session", callback_data: "quick:session", style: "primary" as const },
-          ]],
-        }},
+        [
+          "👋 <b>Welcome to Companion!</b>",
+          "",
+          "Looks like this is your first time. Let's get you set up.",
+          "",
+          "📋 <b>Setup checklist:</b>",
+          "",
+          "1️⃣ <b>Install Claude CLI</b>",
+          "   <code>npm install -g @anthropic-ai/claude-code</code>",
+          "",
+          "2️⃣ <b>Configure a project directory</b>",
+          "   Open the web UI and go to <b>Settings → Projects</b>",
+          "   Map a local folder (e.g. <code>/workspace</code>) to a project slug.",
+          "",
+          "   Using Docker? Mount your directory:",
+          "   <code>volumes:\n  - /path/to/code:/workspace</code>",
+          "",
+          "3️⃣ <b>Start a session</b>",
+          "   Use /new once projects are configured.",
+          "",
+          "⚡ <b>Or start a quick session right now</b> (no project needed).",
+          "",
+          "<b>Key commands:</b>",
+          "/new — Start a new session",
+          "/stop — Stop current session",
+          "/allow · /deny — Handle permissions",
+          "/status — Session info",
+          "/model — Switch AI model",
+          "/help — Full command list",
+        ].join("\n"),
+        {
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [[
+              { text: "⚡ Quick Session", callback_data: "quick:session" },
+            ]],
+          },
+        },
       );
       return;
     }
 
-    // Build 2-column grid of projects
+    // Check if any sessions have ever been created
+    const hasSessions = getAllActiveSessions().length > 0;
+
+    if (!hasSessions) {
+      // Projects exist but no sessions yet — "ready to go" message
+      const keyboard = new InlineKeyboard();
+      for (let i = 0; i < projects.length; i += 2) {
+        keyboard.text(`📂 ${projects[i]!.name}`, `project:${projects[i]!.slug}`);
+        if (i + 1 < projects.length) {
+          keyboard.text(`📂 ${projects[i + 1]!.name}`, `project:${projects[i + 1]!.slug}`);
+        }
+        keyboard.row();
+      }
+      keyboard.text("⚡ Quick Session (no project)", "quick:session").row();
+
+      await ctx.reply(
+        [
+          "🚀 <b>Ready to go!</b>",
+          "",
+          `${projects.length} project(s) configured. Use /new to start your first Claude session.`,
+          "",
+          "Select a project below, or launch a quick session:",
+        ].join("\n"),
+        { parse_mode: "HTML", reply_markup: keyboard },
+      );
+      return;
+    }
+
+    // Regular flow: projects + sessions exist — show project picker
     type Btn = { text: string; callback_data: string };
     const rows: Btn[][] = [];
     for (let i = 0; i < projects.length; i += 2) {
@@ -45,7 +107,14 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     rows.push([{ text: "⚡ Quick Session (no project)", callback_data: "quick:session" }]);
 
     await ctx.reply(
-      "No active session. Select a project to connect:",
+      [
+        "👋 <b>Companion</b> — Select a project to start:",
+        "",
+        "<b>Quick commands:</b>",
+        "/new — Start a session  ·  /stop — Stop",
+        "/allow · /deny — Permissions  ·  /status — Info",
+        "/model — Switch model  ·  /help — All commands",
+      ].join("\n"),
       { parse_mode: "HTML", reply_markup: { inline_keyboard: rows } },
     );
   });
@@ -410,7 +479,7 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     try {
       const sessionId = await bridge.wsBridge.startSession({
         cwd: homeDir,
-        model: "claude-sonnet-4-6",
+        model: DEFAULT_MODEL,
         permissionMode: "default",
         source: "telegram",
       });
@@ -418,11 +487,11 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
       bridge.setMapping(chatId, topicId, {
         sessionId,
         projectSlug: "quick",
-        model: "claude-sonnet-4-6",
+        model: DEFAULT_MODEL,
       });
       bridge.subscribeToSession(sessionId, chatId, topicId);
 
-      const panelMsg = await bridge.sendSettingsPanel(chatId, topicId, sessionId, "Quick Session", "claude-sonnet-4-6");
+      const panelMsg = await bridge.sendSettingsPanel(chatId, topicId, sessionId, "Quick Session", DEFAULT_MODEL);
       if (panelMsg) {
         bridge.setSessionPanelMessageId(sessionId, panelMsg.message_id);
       }

@@ -14,7 +14,10 @@
     "format:check": "prettier --check \"packages/**/*.{ts,tsx,json,css}\"",
     "db:generate": "bun run --filter '@companion/server' db:generate",
     "db:migrate": "bun run --filter '@companion/server' db:migrate",
-    "db:studio": "bun run --filter '@companion/server' db:studio"
+    "db:studio": "bun run --filter '@companion/server' db:studio",
+    "build:desktop": "bash scripts/build-desktop.sh",
+    "build:desktop:debug": "bash scripts/build-desktop.sh --debug",
+    "dev:desktop": "cd src-tauri && cargo tauri dev"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

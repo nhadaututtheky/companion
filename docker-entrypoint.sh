@@ -57,25 +57,9 @@ if [ -f "$CLAUDE_HOME/.claude.json" ]; then
 fi
 
 # ── Start services ──────────────────────────────────────────────────────────
-# Run server and web in parallel. If either exits, the container stops.
+# The web UI is served as a static export from the Hono server.
+# Only the Bun server process is needed.
 
-echo "[startup] Starting Companion server + web..."
+echo "[startup] Starting Companion server..."
 
-su -s /bin/bash companion -c "HOME=$CLAUDE_HOME bun run --hot packages/server/src/index.ts" &
-SERVER_PID=$!
-
-su -s /bin/bash companion -c "HOME=$CLAUDE_HOME cd packages/web && bunx next start --port 3580" &
-WEB_PID=$!
-
-# Wait for either process to exit — then stop the other.
-# Using bash wait -n (requires bash 4.3+, available in Debian Bookworm).
-wait -n "$SERVER_PID" "$WEB_PID"
-EXIT_CODE=$?
-
-echo "[startup] A process exited (code=$EXIT_CODE), stopping container..."
-
-# Kill remaining process
-kill "$SERVER_PID" "$WEB_PID" 2>/dev/null || true
-wait 2>/dev/null || true
-
-exit "$EXIT_CODE"
+exec su -s /bin/bash companion -c "HOME=$CLAUDE_HOME bun run --hot packages/server/src/index.ts"

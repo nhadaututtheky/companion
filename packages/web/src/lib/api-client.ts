@@ -145,6 +145,27 @@ export const api = {
         `/api/sessions/${id}/config`,
         { method: "PATCH", body: JSON.stringify(config) },
       ),
+    messages: (id: string, opts?: { limit?: number; before?: number }) => {
+      const params = new URLSearchParams();
+      if (opts?.limit) params.set("limit", String(opts.limit));
+      if (opts?.before) params.set("before", String(opts.before));
+      const qs = params.toString();
+      return request<{
+        success: boolean;
+        data: {
+          messages: Array<{ id: string; role: string; content: string; timestamp: number; source: string }>;
+          hasMore: boolean;
+        };
+        meta: { total: number; limit: number };
+      }>(`/api/sessions/${id}/messages${qs ? `?${qs}` : ""}`);
+    },
+    exportUrl: (id: string, format: "md" | "json" = "md") =>
+      `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/sessions/${id}/export?format=${format}`,
+    updateTags: (id: string, tags: string[]) =>
+      request<{ success: boolean; data: { tags: string[] } }>(
+        `/api/sessions/${id}/tags`,
+        { method: "PATCH", body: JSON.stringify({ tags }) },
+      ),
   },
 
   // Projects
@@ -388,6 +409,23 @@ export const api = {
       request<{ data: { terminals: Array<{ id: string; cwd: string; createdAt: number }> } }>("/api/terminal"),
     kill: (id: string) =>
       request<{ success: boolean }>(`/api/terminal/${id}`, { method: "DELETE" }),
+  },
+
+  // Stats
+  stats: {
+    get: () =>
+      request<{
+        success: boolean;
+        data: {
+          today: { sessions: number; tokens: number; cost: number };
+          week: { sessions: number; tokens: number; cost: number };
+          streak: number;
+          totalSessions: number;
+          modelBreakdown: Array<{ model: string; count: number; tokens: number }>;
+          dailyActivity: Array<{ date: string; sessions: number; tokens: number }>;
+          topProjects: Array<{ name: string; sessions: number }>;
+        };
+      }>("/api/stats"),
   },
 
   // Templates

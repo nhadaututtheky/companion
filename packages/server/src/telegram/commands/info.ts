@@ -143,10 +143,10 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
 
     // Show model selection keyboard
     const keyboard = new InlineKeyboard()
-      .text("⚡ Haiku 4.5", `model:${mapping.sessionId}:haiku`)
-      .text("🎯 Sonnet 4.6", `model:${mapping.sessionId}:sonnet`)
+      .text("⚡ Haiku 4.5", `model:${mapping.sessionId}:claude-haiku-4-5`)
+      .text("🎯 Sonnet 4.6", `model:${mapping.sessionId}:claude-sonnet-4-6`)
       .row()
-      .text("🧠 Opus 4.6", `model:${mapping.sessionId}:opus`);
+      .text("🧠 Opus 4.6", `model:${mapping.sessionId}:claude-opus-4-6`);
 
     await ctx.reply("Select model:", { reply_markup: keyboard });
   });
@@ -411,54 +411,54 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
     }
 
     const helpText = [
-      "<b>📖 Companion Commands</b>",
+      "<b>📖 Companion — All Commands</b>",
       "",
-      "📱 <b>Session</b>",
-      "/start — Show projects",
+      "🗂 <b>Session</b>",
       "/new [project] — New session",
       "/stop — Stop session",
-      "/resume — Resume session",
-      "/fork — Fork session (keep old)",
-      "/projects — List projects",
+      "/resume — Resume interrupted session",
+      "/status — Session status",
+      "/rename — Rename session",
+      "/templates — Browse session templates",
+      "/fork — Fork session (keep old running)",
+      "/projects — List all projects",
       "",
-      "🎛️ <b>Control</b>",
-      "/allow — Allow permission",
-      "/deny — Deny permission",
-      "/cancel — Interrupt Claude",
-      "/exitplan — Exit plan mode",
-      "/compact — Compact context",
+      "🎛 <b>Control</b>",
+      "/allow — Allow pending permission",
+      "/deny — Deny pending permission",
+      "/model — Change AI model",
+      "/budget — Set cost budget",
+      "/compact — Compact context window",
+      "/settings — Bot settings",
       "",
-      "📋 <b>Templates</b>",
-      "/templates — Browse templates",
-      "/template save — Create template",
-      "/template delete — Remove template",
-      "",
-      "🔧 <b>Utility</b>",
-      "/btw — Inject context (no reply)",
-      "/file — Read file content",
+      "🔧 <b>Tools</b>",
+      "/file — Read a file and show content",
+      "/cat — Alias for /file",
       "/send — Send file as document",
-      "/skill — List/invoke skills",
-      "/note — Save session note",
-      "/notes — Show session notes",
-      "/todo — Show Claude's task list",
+      "/btw — Inject context (no reply)",
+      "/skill — List or invoke a skill",
+      "/stream — Attach to an active session",
+      "/detach — Detach from streamed session",
       "",
       "📊 <b>Info</b>",
-      "/status — Session status",
       "/cost — Cost breakdown",
       "/context — Context window usage",
       "/files — Modified files",
-      "/model — Change model",
-      "/history — Recent sessions",
-      "/usage — Cost summary",
+      "/todo — Claude's task list",
+      "/history — Recent session history",
+      "/usage [today|week|month] — Cost summary",
       "",
-      "🔗 <b>Stream</b>",
-      "/stream — Attach to session",
-      "/detach — Detach from stream",
+      "⚙️ <b>Advanced</b>",
+      "/planmode — Toggle plan mode",
+      "/exitplan — Force exit plan mode",
+      "/verdict — Conclude active debate",
+      "/mention — @mention routing",
+      "/notes — Session notes",
+      "/note — Save a note",
+      "/panel — Settings panel",
+      "/autoapprove — Auto-approve toggle",
       "",
-      "⚙️ <b>Config</b>",
-      "/autoapprove — Auto-approve settings",
-      "",
-      "<i>Use /help &lt;command&gt; for details.</i>",
+      "<i>Use /help &lt;command&gt; for details on any command.</i>",
       "<i>Or just type a message to chat with Claude!</i>",
     ].join("\n");
 

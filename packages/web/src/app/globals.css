@@ -226,22 +226,64 @@ p {
   outline-offset: 2px;
 }
 
-/* ── Mobile Responsive ───────────────────────────────────────────────────── */
+/* ── Expanded Session: full-screen on mobile ─────────────────────────────── */
 @media (max-width: 767px) {
-  /* Hide sidebar on mobile */
-  .companion-sidebar {
-    display: none !important;
+  /* The outer centering wrapper: remove padding so card fills screen */
+  .glass-enter.glass-enter-active {
+    padding: 0 !important;
+    align-items: stretch !important;
   }
-  /* Hide corner SVG */
-  .companion-corner-arc {
-    display: none !important;
+  /* The card: full screen, no radius */
+  .expanded-session-card {
+    border-radius: 0 !important;
+    max-height: 100vh !important;
+    height: 100dvh !important;
   }
-  /* Full width header stats */
-  .header-stats {
-    display: none !important;
+}
+
+/* ── Mobile Sidebar Overlay ──────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .mobile-sidebar-overlay {
+    position: fixed !important;
+    top: 52px !important; /* below header */
+    left: 0 !important;
+    height: calc(100dvh - 52px) !important;
+    z-index: 41 !important;
   }
+}
+
+/* ── Mobile Responsive ───────────────────────────────────────────────────── */
+
+/* Session grid: mobile = 1 column, md = 2 columns max, lg+ = count-based */
+.session-grid-inner {
+  /* Desktop: use JS-computed columns via CSS custom property */
+  grid-template-columns: var(--grid-cols-desktop, 1fr);
+  grid-template-rows: var(--grid-rows-desktop, 1fr);
+}
+
+@media (max-width: 1023px) {
+  /* Tablet: cap at 2 columns regardless of session count */
+  .session-grid-inner {
+    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-rows: auto !important;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Mobile: single column, auto rows so cards stack naturally */
   .session-grid-inner {
     grid-template-columns: 1fr !important;
+    grid-template-rows: auto !important;
+  }
+}
+
+/* ── Safe-area padding for mobile browsers (notch / home indicator) ─────── */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  @media (max-width: 767px) {
+    /* Chat composer in expanded session gets extra bottom padding */
+    .message-composer-wrapper {
+      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    }
   }
 }
 

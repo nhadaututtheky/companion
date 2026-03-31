@@ -1,6 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import { MagnifyingGlass, Moon, Sun, Gear, Terminal, ListBullets, FolderOpen, Globe, TerminalWindow } from "@phosphor-icons/react";
+import { MagnifyingGlass, Moon, Sun, Gear, Terminal, ListBullets, FolderOpen, Globe, TerminalWindow, List, ChartBar } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { CompanionLogo } from "./companion-logo";
@@ -70,7 +70,11 @@ function HeaderStats() {
   );
 }
 
-export function Header() {
+interface HeaderProps {
+  onMenuToggle?: () => void;
+}
+
+export function Header({ onMenuToggle }: HeaderProps) {
   const theme = useUiStore((s) => s.theme);
   const toggleTheme = useUiStore((s) => s.toggleTheme);
   const setCommandPaletteOpen = useUiStore((s) => s.setCommandPaletteOpen);
@@ -90,11 +94,23 @@ export function Header() {
         zIndex: 10,
       }}
     >
+      {/* Hamburger — mobile only */}
+      <button
+        className="md:hidden p-2 rounded-lg cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center -ml-1"
+        style={{ color: "var(--color-text-secondary)" }}
+        onClick={onMenuToggle}
+        aria-label="Open sidebar menu"
+      >
+        <List size={20} weight="bold" />
+      </button>
+
       {/* Left: Logo + Stats */}
       <a href="/" aria-label="Home">
         <CompanionLogo size="sm" />
       </a>
-      <HeaderStats />
+      <div className="hidden sm:block">
+        <HeaderStats />
+      </div>
 
       {/* Center: push search to middle */}
       <div className="flex-1" />
@@ -102,19 +118,19 @@ export function Header() {
       {/* Center: Search trigger */}
       <button
         onClick={() => setCommandPaletteOpen(true)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors cursor-pointer"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors cursor-pointer min-h-[44px]"
         style={{
           background: "var(--color-bg-elevated)",
           color: "var(--color-text-muted)",
           border: "1px solid var(--color-border)",
-          minWidth: 200,
+          minWidth: 44,
         }}
         aria-label="Open command palette"
       >
         <MagnifyingGlass size={14} weight="bold" />
-        <span>Search...</span>
+        <span className="hidden sm:inline">Search...</span>
         <span
-          className="ml-auto text-xs"
+          className="ml-auto text-xs hidden sm:inline"
           style={{
             background: "var(--color-bg-base)",
             border: "1px solid var(--color-border)",
@@ -130,9 +146,10 @@ export function Header() {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-1">
+        {/* Panel toggles — desktop only */}
         <button
           onClick={() => setRightPanelMode(rightPanelMode === "search" ? "none" : "search")}
-          className="p-1.5 rounded-lg transition-colors cursor-pointer"
+          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
           style={{
             color: rightPanelMode === "search" ? "var(--color-accent)" : "var(--color-text-muted)",
             background: rightPanelMode === "search" ? "var(--color-accent)" + "15" : "transparent",
@@ -144,7 +161,7 @@ export function Header() {
         </button>
         <button
           onClick={() => setRightPanelMode(rightPanelMode === "files" ? "none" : "files")}
-          className="p-1.5 rounded-lg transition-colors cursor-pointer"
+          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
           style={{
             color: rightPanelMode === "files" ? "var(--color-accent)" : "var(--color-text-muted)",
             background: rightPanelMode === "files" ? "var(--color-accent)" + "15" : "transparent",
@@ -156,7 +173,7 @@ export function Header() {
         </button>
         <button
           onClick={() => setRightPanelMode(rightPanelMode === "browser" ? "none" : "browser")}
-          className="p-1.5 rounded-lg transition-colors cursor-pointer"
+          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
           style={{
             color: rightPanelMode === "browser" ? "var(--color-accent)" : "var(--color-text-muted)",
             background: rightPanelMode === "browser" ? "var(--color-accent)" + "15" : "transparent",
@@ -168,7 +185,7 @@ export function Header() {
         </button>
         <button
           onClick={() => setRightPanelMode(rightPanelMode === "terminal" ? "none" : "terminal")}
-          className="p-1.5 rounded-lg transition-colors cursor-pointer"
+          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
           style={{
             color: rightPanelMode === "terminal" ? "var(--color-accent)" : "var(--color-text-muted)",
             background: rightPanelMode === "terminal" ? "var(--color-accent)" + "15" : "transparent",
@@ -179,8 +196,20 @@ export function Header() {
           <TerminalWindow size={16} weight={rightPanelMode === "terminal" ? "fill" : "regular"} />
         </button>
         <button
+          onClick={() => setRightPanelMode(rightPanelMode === "stats" ? "none" : "stats")}
+          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
+          style={{
+            color: rightPanelMode === "stats" ? "#4285f4" : "var(--color-text-muted)",
+            background: rightPanelMode === "stats" ? "#4285f415" : "transparent",
+          }}
+          aria-label="Activity stats"
+          title="Activity Stats"
+        >
+          <ChartBar size={16} weight={rightPanelMode === "stats" ? "fill" : "regular"} />
+        </button>
+        <button
           onClick={() => setActivityTerminalOpen(!activityTerminalOpen)}
-          className="p-2 rounded-lg transition-colors cursor-pointer"
+          className="hidden md:flex p-2 rounded-lg transition-colors cursor-pointer"
           style={{
             color: activityTerminalOpen ? "#4285F4" : "var(--color-text-secondary)",
             background: activityTerminalOpen ? "rgba(66,133,244,0.12)" : undefined,
@@ -190,17 +219,19 @@ export function Header() {
         >
           <Terminal size={16} weight={activityTerminalOpen ? "fill" : "bold"} />
         </button>
+        {/* Theme toggle — always visible */}
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg transition-colors cursor-pointer"
+          className="p-2 rounded-lg transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
           style={{ color: "var(--color-text-secondary)" }}
           aria-label="Toggle theme"
         >
           {theme === "dark" ? <Sun size={16} weight="bold" /> : <Moon size={16} weight="bold" />}
         </button>
+        {/* Nav links — desktop only */}
         <a
           href="/projects"
-          className="p-2 rounded-lg transition-colors"
+          className="hidden md:flex p-2 rounded-lg transition-colors"
           style={{ color: "var(--color-text-secondary)" }}
           aria-label="Projects"
         >
@@ -208,7 +239,7 @@ export function Header() {
         </a>
         <a
           href="/templates"
-          className="p-2 rounded-lg transition-colors"
+          className="hidden md:flex p-2 rounded-lg transition-colors"
           style={{ color: "var(--color-text-secondary)" }}
           aria-label="Templates"
         >
@@ -216,7 +247,7 @@ export function Header() {
         </a>
         <a
           href="/settings"
-          className="p-2 rounded-lg transition-colors"
+          className="p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           style={{ color: "var(--color-text-secondary)" }}
           aria-label="Settings"
         >

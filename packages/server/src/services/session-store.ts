@@ -3,7 +3,7 @@
  * Replaces old file-based JSON store with proper DB operations.
  */
 
-import { eq, desc, and, count, notInArray, isNotNull, sql } from "drizzle-orm";
+import { eq, desc, and, count, notInArray, isNotNull, sql, lt } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { sessions, sessionMessages, telegramSessionMappings, dailyCosts } from "../db/schema.js";
 import { createLogger } from "../logger.js";
@@ -55,6 +55,8 @@ export interface ActiveSession {
   lastStderrLines?: string[];
   /** Smart compact: waiting for idle to trigger handoff */
   compactPending?: boolean;
+  /** Identity prompt for re-injection after compaction */
+  identityPrompt?: string;
 }
 
 /** Max number of messages to keep in memory per session (FIFO eviction) */
@@ -395,6 +397,7 @@ export function listSessions(opts?: {
       num_turns: row.numTurns,
       startedAt: row.startedAt?.getTime() ?? 0,
       endedAt: row.endedAt?.getTime(),
+      tags: (row.tags as string[] | null) ?? [],
     })),
     total: total ?? 0,
   };
@@ -665,6 +668,20 @@ export function updateSessionConfig(
   }
 }
 
+export function updateSessionTags(sessionId: string, tags: string[]): boolean {
+  const db = getDb();
+  try {
+    db.update(sessions)
+      .set({ tags })
+      .where(eq(sessions.id, sessionId))
+      .run();
+    return true;
+  } catch (err) {
+    log.warn("Failed to update session tags", { sessionId, error: String(err) });
+    return false;
+  }
+}
+
 export function updateSessionCostWarned(sessionId: string, level: number): void {
   const db = getDb();
   try {
@@ -710,25 +727,42 @@ export function storeMessage(msg: {
 
 export function getSessionMessages(
   sessionId: string,
-  opts?: { limit?: number; offset?: number },
+  opts?: { limit?: number; offset?: number; before?: number },
 ): { items: StoredMessage[]; total: number } {
   const db = getDb();
+
+  const baseWhere = eq(sessionMessages.sessionId, sessionId);
+  const whereClause = opts?.before
+    ? and(baseWhere, lt(sessionMessages.timestamp, new Date(opts.before)))
+    : baseWhere;
 
   const totalRow = db
     .select({ total: count() })
     .from(sessionMessages)
-    .where(eq(sessionMessages.sessionId, sessionId))
+    .where(baseWhere)
     .get();
   const total = totalRow?.total ?? 0;
 
-  const rows = db
-    .select()
-    .from(sessionMessages)
-    .where(eq(sessionMessages.sessionId, sessionId))
-    .orderBy(sessionMessages.timestamp)
-    .limit(opts?.limit ?? 200)
-    .offset(opts?.offset ?? 0)
-    .all();
+  const limit = opts?.limit ?? 200;
+
+  // When using cursor-based pagination (before), fetch newest-first then reverse
+  const rows = opts?.before
+    ? db
+        .select()
+        .from(sessionMessages)
+        .where(whereClause)
+        .orderBy(desc(sessionMessages.timestamp))
+        .limit(limit)
+        .all()
+        .reverse()
+    : db
+        .select()
+        .from(sessionMessages)
+        .where(whereClause)
+        .orderBy(sessionMessages.timestamp)
+        .limit(limit)
+        .offset(opts?.offset ?? 0)
+        .all();
 
   return {
     items: rows.map((row) => ({

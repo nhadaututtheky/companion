@@ -184,6 +184,8 @@ export type BrowserIncomingMessage =
   | { type: "message_history"; messages: BrowserIncomingMessage[] }
   | { type: "context_update"; contextUsedPercent: number; totalTokens: number; maxTokens: number }
   | { type: "cost_warning"; level: "warning" | "critical"; costUsd: number; budgetUsd: number; message: string }
+  | { type: "budget_exceeded"; budget: number; spent: number }
+  | { type: "budget_warning"; budget: number; spent: number; percentage: number }
   | { type: "compact_handoff"; stage: "summarizing" | "compacting" | "done"; message: string };
 
 // ─── Session State ───────────────────────────────────────────────────────────
@@ -315,4 +317,6 @@ export interface SessionListItem {
   num_turns: number;
   startedAt: number;
   endedAt?: number;
+  /** Session tags for filtering/organization */
+  tags?: string[];
 }

@@ -24,6 +24,7 @@ import {
   clearCliSessionId,
   pushMessageHistory,
   updateSessionCostWarned,
+  getSessionRecord,
   type ActiveSession,
 } from "./session-store.js";
 import type {
@@ -62,12 +63,25 @@ export interface SessionSettings {
   idleTimeoutMs: number;
   /** When true, the idle timer is suppressed (keep-alive). */
   keepAlive: boolean;
+  /** When true, automatically re-inject identity context after compaction. */
+  autoReinjectOnCompact: boolean;
 }
 
 const DEFAULT_SESSION_SETTINGS: SessionSettings = {
   idleTimeoutMs: SESSION_IDLE_TIMEOUT_MS,
   keepAlive: false,
+  autoReinjectOnCompact: true,
 };
+
+// ─── EarlyResults buffer ─────────────────────────────────────────────────────
+
+interface EarlyResultEntry {
+  msg: BrowserIncomingMessage;
+  expiresAt: number;
+}
+
+/** TTL for buffered early results (5 seconds) */
+const EARLY_RESULT_TTL_MS = 5_000;
 
 /** Whether to use the new SDK engine (set USE_SDK_ENGINE=1 to enable) */
 const USE_SDK_ENGINE = process.env.USE_SDK_ENGINE === "1";
@@ -153,6 +167,10 @@ export class WsBridge {
     costBudgetUsd?: number;
     compactMode?: string;
     compactThreshold?: number;
+    /** Optional identity/personality prompt re-injected after context compaction. */
+    identityPrompt?: string;
+    /** When false, disables auto re-injection on compact for this session (default: true). */
+    autoReinjectOnCompact?: boolean;
   }): Promise<string> {
     const sessionId = randomUUID();
 
@@ -187,6 +205,19 @@ export class WsBridge {
 
     // Create in-memory session
     const session = createActiveSession(sessionId, initialState);
+
+    // Store identity prompt on session if provided
+    if (opts.identityPrompt) {
+      session.identityPrompt = opts.identityPrompt;
+    }
+
+    // Apply per-session auto-reinject setting (defaults to true)
+    if (opts.autoReinjectOnCompact === false) {
+      this.sessionSettings.set(sessionId, {
+        ...DEFAULT_SESSION_SETTINGS,
+        autoReinjectOnCompact: false,
+      });
+    }
 
     // Persist to DB (returns generated shortId)
     const shortId = createSessionRecord({
@@ -487,6 +518,7 @@ export class WsBridge {
   killSession(sessionId: string): void {
     this.clearIdleTimer(sessionId);
     this.sessionSettings.delete(sessionId);
+    this.earlyResults.delete(sessionId);
 
     // Kill SDK handle if present
     const sdkHandle = this.sdkHandles.get(sessionId);
@@ -591,6 +623,21 @@ export class WsBridge {
     session.subscribers.set(subscriberId, callback);
     log.info("Subscriber added", { sessionId, subscriberId });
 
+    // Replay any buffered early result that arrived before this subscriber registered
+    const early = this.earlyResults.get(sessionId);
+    if (early && Date.now() < early.expiresAt) {
+      log.info("Replaying early result to late subscriber", { sessionId, subscriberId });
+      try {
+        callback(early.msg);
+      } catch (err) {
+        log.error("Early result replay error", { subscriber: subscriberId, err: String(err) });
+      }
+      this.earlyResults.delete(sessionId);
+    } else if (early) {
+      // Entry expired — clean it up
+      this.earlyResults.delete(sessionId);
+    }
+
     return () => {
       session.subscribers.delete(subscriberId);
       log.info("Subscriber removed", { sessionId, subscriberId });
@@ -619,6 +666,20 @@ export class WsBridge {
         type: "message_history",
         messages: session.messageHistory as BrowserIncomingMessage[],
       } satisfies BrowserIncomingMessage));
+    }
+
+    // Replay any buffered early result to this browser (race window fix)
+    const earlyResult = this.earlyResults.get(sessionId);
+    if (earlyResult && Date.now() < earlyResult.expiresAt) {
+      log.debug("Replaying early result to late browser", { sessionId });
+      try {
+        ws.send(JSON.stringify(earlyResult.msg));
+      } catch {
+        // ignore send errors on this newly connected socket
+      }
+      this.earlyResults.delete(sessionId);
+    } else if (earlyResult) {
+      this.earlyResults.delete(sessionId);
     }
 
     // Notify CLI status — only send cli_disconnected if session isn't already ended/error
@@ -757,7 +818,52 @@ export class WsBridge {
         stage: "done",
         message: "Context compaction complete.",
       } as BrowserIncomingMessage);
+
+      // Auto re-inject identity context after compaction
+      this.maybeReinjectIdentity(session);
     }
+  }
+
+  /**
+   * After context compaction completes, re-inject a minimal system context
+   * message so Claude retains project/identity awareness in the new context window.
+   * Only fires if autoReinjectOnCompact is enabled (default: true).
+   */
+  private maybeReinjectIdentity(session: ActiveSession): void {
+    const settings = this.sessionSettings.get(session.id) ?? DEFAULT_SESSION_SETTINGS;
+    if (!settings.autoReinjectOnCompact) return;
+
+    // Check budget before re-injecting
+    const record = getSessionRecord(session.id);
+    if (record?.costBudgetUsd && session.state.total_cost_usd >= record.costBudgetUsd) {
+      log.info("Skipping identity re-injection — budget exceeded", { sessionId: session.id });
+      return;
+    }
+
+    const projectName = session.state.name ?? session.state.session_id.slice(0, 8);
+    const cwd = session.state.cwd;
+    const identityPart = session.identityPrompt
+      ? ` ${session.identityPrompt}`
+      : "";
+
+    const reinjectMsg = [
+      `[System context re-injection after compaction]`,
+      `You are working on project: ${projectName}.`,
+      `Working directory: ${cwd}.`,
+      identityPart,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+
+    log.info("Re-injecting identity after compact", { sessionId: session.id });
+
+    // Use the internal CLI send path directly to avoid budget gate and history noise
+    const ndjson = JSON.stringify({
+      type: "user",
+      message: { role: "user", content: reinjectMsg },
+    });
+    this.sendToCLI(session, ndjson);
   }
 
   private handleAssistant(
@@ -910,6 +1016,23 @@ export class WsBridge {
     };
 
     pushMessageHistory(session, browserMsg);
+
+    // Buffer result for subscribers that may not yet be registered (race window fix).
+    // If no subscribers or browser sockets are connected, stash with TTL so late
+    // arrivals can replay it when they subscribe.
+    const hasActiveReceivers =
+      session.browserSockets.size > 0 || session.subscribers.size > 0;
+    if (!hasActiveReceivers) {
+      this.earlyResults.set(session.id, {
+        msg: browserMsg,
+        expiresAt: Date.now() + EARLY_RESULT_TTL_MS,
+      });
+      log.debug("Buffered early result (no receivers yet)", { sessionId: session.id });
+    } else {
+      // Clear any stale early result once we know receivers are present
+      this.earlyResults.delete(session.id);
+    }
+
     this.broadcastToAll(session, browserMsg);
 
     // Broadcast updated session state so clients can re-compute context meter
@@ -951,6 +1074,7 @@ export class WsBridge {
     if (pct >= 1.0 && cost_warned < 2) {
       // 100% — budget reached
       session.state = { ...session.state, cost_warned: 2 };
+      // Existing cost_warning for Telegram bridge
       this.broadcastToAll(session, {
         type: "cost_warning",
         level: "critical",
@@ -958,16 +1082,30 @@ export class WsBridge {
         budgetUsd: cost_budget_usd,
         message: `Cost budget reached: $${total_cost_usd.toFixed(2)} / $${cost_budget_usd.toFixed(2)}`,
       } as BrowserIncomingMessage);
+      // Structured budget_exceeded event for web client
+      this.broadcastToAll(session, {
+        type: "budget_exceeded",
+        budget: cost_budget_usd,
+        spent: total_cost_usd,
+      } as BrowserIncomingMessage);
       updateSessionCostWarned(session.id, 2);
     } else if (pct >= 0.8 && cost_warned < 1) {
       // 80% — first warning
       session.state = { ...session.state, cost_warned: 1 };
+      // Existing cost_warning for Telegram bridge
       this.broadcastToAll(session, {
         type: "cost_warning",
         level: "warning",
         costUsd: total_cost_usd,
         budgetUsd: cost_budget_usd,
         message: `Approaching cost budget: $${total_cost_usd.toFixed(2)} / $${cost_budget_usd.toFixed(2)} (${Math.round(pct * 100)}%)`,
+      } as BrowserIncomingMessage);
+      // Structured budget_warning event for web client
+      this.broadcastToAll(session, {
+        type: "budget_warning",
+        budget: cost_budget_usd,
+        spent: total_cost_usd,
+        percentage: 80,
       } as BrowserIncomingMessage);
       updateSessionCostWarned(session.id, 1);
     }
@@ -1054,6 +1192,13 @@ export class WsBridge {
 
   /** Compact handoff timers keyed by session ID — cleared on session removal */
   private compactTimers = new Map<string, { interval: ReturnType<typeof setInterval>; timeout: ReturnType<typeof setTimeout> }>();
+
+  /**
+   * EarlyResults buffer — stores result messages that arrived before a subscriber
+   * was ready to handle them. Entries are keyed by sessionId and expire after
+   * EARLY_RESULT_TTL_MS to prevent stale state accumulation.
+   */
+  private earlyResults = new Map<string, EarlyResultEntry>();
 
   /** After handoff summary is received, trigger the actual /compact. */
   private schedulePostHandoffCompact(session: ActiveSession): void {
@@ -1221,6 +1366,7 @@ export class WsBridge {
     this.clearIdleTimer(session.id);
     this.clearCompactTimers(session.id);
     this.prevTokens.delete(session.id);
+    this.earlyResults.delete(session.id);
 
     // Reject any outstanding SDK permission resolvers for this session
     for (const [reqId] of session.pendingPermissions) {
@@ -1316,6 +1462,22 @@ export class WsBridge {
     content: string,
     source?: string,
   ): void {
+    // ── Budget gate: block message if budget is exceeded ─────────────────
+    const { cost_budget_usd, total_cost_usd } = session.state;
+    if (cost_budget_usd && cost_budget_usd > 0 && total_cost_usd >= cost_budget_usd) {
+      this.broadcastToAll(session, {
+        type: "budget_exceeded",
+        budget: cost_budget_usd,
+        spent: total_cost_usd,
+      } as BrowserIncomingMessage);
+      log.warn("Message blocked — budget exceeded", {
+        sessionId: session.id,
+        budget: cost_budget_usd,
+        spent: total_cost_usd,
+      });
+      return;
+    }
+
     // Reset idle timer whenever user sends a message
     this.clearIdleTimer(session.id);
 

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowsIn, X, Circle, Info, ChatTeardropDots } from "@phosphor-icons/react";
+import { ArrowsIn, X, Circle, Info, ChatTeardropDots, DownloadSimple } from "@phosphor-icons/react";
 import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useAnimatePresence } from "@/lib/animation";
@@ -153,6 +153,30 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
     }
   }, [sessionId]);
 
+  const handleExport = useCallback(() => {
+    const apiKey = typeof window !== "undefined" ? localStorage.getItem("api_key") ?? "" : "";
+    const base = process.env.NEXT_PUBLIC_API_URL ?? "";
+    const url = `${base}/api/sessions/${sessionId}/export?format=md`;
+    // Use anchor click to trigger browser download
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `session-${sessionId.slice(0, 8)}.md`;
+    if (apiKey) anchor.href = url + `&key=${encodeURIComponent(apiKey)}`;
+    // Fetch with auth header since we can't set headers on <a> tag
+    fetch(url, { headers: { "X-API-Key": apiKey } })
+      .then((res) => res.blob())
+      .then((blob) => {
+        const objectUrl = URL.createObjectURL(blob);
+        anchor.href = objectUrl;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(objectUrl);
+        toast.success("Session exported");
+      })
+      .catch(() => toast.error("Export failed"));
+  }, [sessionId]);
+
   const cost = session?.state?.total_cost_usd ?? 0;
 
   return (
@@ -184,6 +208,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          // Desktop: padded container. Mobile: full screen (handled by inner div)
           padding: "5vh 5vw",
           pointerEvents: "none",
         }}
@@ -207,11 +232,11 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             boxShadow:
               "0 8px 32px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.08)",
           }}
-          className="dark:bg-glass-dark"
+          className="dark:bg-glass-dark expanded-session-card"
         >
           {/* ── Header ── */}
           <div
-            className="flex items-center gap-3 px-5 py-3 flex-shrink-0"
+            className="flex items-center gap-2 px-4 py-3 flex-shrink-0"
             style={{ borderBottom: "1px solid var(--color-border)" }}
           >
             {/* Project name */}
@@ -225,10 +250,10 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
               {session?.projectName ?? sessionId}
             </h2>
 
-            {/* Model badge */}
+            {/* Model badge — hidden on mobile */}
             {session?.model && (
               <span
-                className="px-2.5 py-1 rounded-full text-xs font-mono font-medium flex-shrink-0"
+                className="hidden sm:inline px-2.5 py-1 rounded-full text-xs font-mono font-medium flex-shrink-0"
                 style={{
                   background: "var(--color-bg-elevated)",
                   color: "var(--color-text-secondary)",
@@ -242,9 +267,9 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             {/* Status */}
             <StatusBadge status={session?.status ?? "idle"} />
 
-            {/* Cost */}
+            {/* Cost — hidden on mobile */}
             <span
-              className="text-xs font-mono font-semibold flex-shrink-0"
+              className="hidden sm:inline text-xs font-mono font-semibold flex-shrink-0"
               style={{ color: "var(--color-text-secondary)" }}
             >
               ${cost.toFixed(4)}
@@ -259,14 +284,28 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                   color: wsStatus === "connecting" ? "#FBBC04" : "#EA4335",
                 }}
               >
-                {wsStatus === "connecting" ? "Connecting…" : "Disconnected"}
+                {wsStatus === "connecting" ? "…" : "!"}
               </span>
             )}
 
-            {/* Collapse button */}
+            {/* Export button — desktop only */}
+            <button
+              onClick={handleExport}
+              className="hidden sm:flex flex-shrink-0 p-2 rounded-lg transition-colors cursor-pointer min-h-[44px] min-w-[44px] items-center justify-center"
+              style={{
+                background: "var(--color-bg-elevated)",
+                color: "var(--color-text-secondary)",
+              }}
+              aria-label="Export session as markdown"
+              title="Export session as markdown"
+            >
+              <DownloadSimple size={16} weight="bold" />
+            </button>
+
+            {/* Collapse button — desktop only (same as close on mobile) */}
             <button
               onClick={onClose}
-              className="flex-shrink-0 p-2 rounded-lg transition-colors cursor-pointer"
+              className="hidden sm:flex flex-shrink-0 p-2 rounded-lg transition-colors cursor-pointer min-h-[44px] min-w-[44px] items-center justify-center"
               style={{
                 background: "var(--color-bg-elevated)",
                 color: "var(--color-text-secondary)",
@@ -279,7 +318,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             {/* Close button */}
             <button
               onClick={onClose}
-              className="flex-shrink-0 p-2 rounded-lg transition-colors cursor-pointer"
+              className="flex-shrink-0 p-2 rounded-lg transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
               style={{
                 background: "var(--color-bg-elevated)",
                 color: "var(--color-text-secondary)",
@@ -326,9 +365,9 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
               </div>
             </div>
 
-            {/* Right sidebar */}
+            {/* Right sidebar — hidden on mobile */}
             <aside
-              className="flex-shrink-0 flex flex-col min-h-0"
+              className="hidden sm:flex flex-shrink-0 flex-col min-h-0"
               style={{
                 width: 280,
                 borderLeft: "1px solid var(--color-border)",

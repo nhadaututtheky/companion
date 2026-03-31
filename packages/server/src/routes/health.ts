@@ -41,6 +41,34 @@ healthRoutes.get("/health", (c) => {
   return c.json(response, dbStatus === "connected" ? 200 : 503);
 });
 
+// Setup status endpoint — public, used by onboarding wizard before auth
+healthRoutes.get("/setup-status", (c) => {
+  const hasApiKey = !!process.env.API_KEY;
+
+  let hasProjects = false;
+  let hasSessions = false;
+  try {
+    const sqlite = getSqlite();
+    const projectCount = sqlite
+      .prepare("SELECT count(*) as count FROM projects")
+      .get() as { count: number } | undefined;
+    hasProjects = (projectCount?.count ?? 0) > 0;
+
+    const sessionCount = sqlite
+      .prepare("SELECT count(*) as count FROM sessions")
+      .get() as { count: number } | undefined;
+    hasSessions = (sessionCount?.count ?? 0) > 0;
+  } catch {
+    // DB may not be ready yet — treat as false
+  }
+
+  return c.json({
+    hasApiKey,
+    hasProjects,
+    hasSessions,
+  });
+});
+
 // License status endpoint — for web UI to show trial banner etc.
 healthRoutes.get("/license", (c) => {
   const license = getLicense();

@@ -10,6 +10,7 @@ import { createLogger } from "../../logger.js";
 import { escapeHTML } from "../formatter.js";
 import { getDb } from "../../db/client.js";
 import { sessionNotes as notesTable } from "../../db/schema.js";
+import { getSessionMessages, getSessionRecord } from "../../services/session-store.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
 
 const log = createLogger("cmd:utility");
@@ -458,9 +459,14 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
 
   // ── viewfile callback query ───────────────────────────────────────────────
 
-  bot.callbackQuery(/^viewfile:([^:]+):(.+)$/, async (ctx) => {
-    const sessionId = ctx.match[1]!;
-    const userPath = ctx.match[2]!;
+  bot.callbackQuery(/^vf:(vf\d+)$/, async (ctx) => {
+    const cacheKey = ctx.match[1]!;
+    const cached = bridge.viewFileCache.get(cacheKey);
+    if (!cached) {
+      await ctx.answerCallbackQuery("File reference expired.");
+      return;
+    }
+    const { sessionId, filePath: userPath } = cached;
 
     await ctx.answerCallbackQuery("Loading file...");
 
@@ -513,6 +519,75 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
         },
       );
     }
+  });
+
+  // ── /export — export current session as markdown document ──────────────
+
+  bot.command("export", async (ctx) => {
+    const mapping = bridge.getMapping(ctx.chat.id, ctx.message?.message_thread_id);
+    if (!mapping) {
+      await ctx.reply("No active session.");
+      return;
+    }
+
+    const { sessionId } = mapping;
+    const session = getSessionRecord(sessionId);
+    if (!session) {
+      await ctx.reply("Session record not found.");
+      return;
+    }
+
+    const { items: msgs } = getSessionMessages(sessionId, { limit: 10000 });
+    if (msgs.length === 0) {
+      await ctx.reply("No messages in this session yet.");
+      return;
+    }
+
+    const date = session.startedAt
+      ? new Date(session.startedAt).toISOString().slice(0, 19).replace("T", " ")
+      : "unknown";
+
+    const lines: string[] = [
+      `# Session Export`,
+      ``,
+      `- **Project**: ${session.projectSlug ?? "quick"}`,
+      `- **Model**: ${session.model}`,
+      `- **Status**: ${session.status}`,
+      `- **Started**: ${date}`,
+      `- **Turns**: ${session.numTurns}`,
+      `- **Cost**: $${session.totalCostUsd.toFixed(4)}`,
+      `- **Tokens**: ${session.totalInputTokens + session.totalOutputTokens}`,
+      ``,
+      `---`,
+      ``,
+    ];
+
+    for (const msg of msgs) {
+      const role =
+        msg.role === "user"
+          ? "## User"
+          : msg.role === "assistant"
+            ? "## Assistant"
+            : `## ${msg.role}`;
+      const time = new Date(msg.timestamp).toLocaleTimeString("en-US", { hour12: false });
+      lines.push(`${role} _(${time})_`);
+      lines.push(``);
+      lines.push(msg.content);
+      lines.push(``);
+      lines.push(`---`);
+      lines.push(``);
+    }
+
+    const markdown = lines.join("\n");
+    const filename = `session-${session.projectSlug ?? "quick"}-${sessionId.slice(0, 8)}.md`;
+    const buffer = Buffer.from(markdown, "utf-8");
+    const inputFile = new InputFile(buffer, filename);
+
+    await ctx.replyWithDocument(inputFile, {
+      caption: `<b>Session export</b> — ${session.projectSlug ?? "quick"} · ${msgs.length} messages`,
+      parse_mode: "HTML",
+      message_thread_id: ctx.message?.message_thread_id,
+    });
   });
 
   log.info("Utility commands registered");

@@ -13,6 +13,7 @@ import {
   escapeHTML,
   formatPermission,
   formatToolFeed,
+  isPermissionDangerous,
 } from "./formatter.js";
 import { getSessionSummary } from "../services/session-summarizer.js";
 import { registerSessionCommands } from "./commands/session.js";
@@ -112,7 +113,7 @@ export interface DeadSessionInfo {
 
 /** Permission batch to avoid spamming */
 interface PermBatch {
-  perms: Array<{ requestId: string; toolName: string; description?: string }>;
+  perms: Array<{ requestId: string; toolName: string; input: Record<string, unknown>; description?: string }>;
   timer: ReturnType<typeof setTimeout>;
   sessionId: string;
 }
@@ -171,8 +172,13 @@ export class TelegramBridge {
   private toolFeedLines = new Map<string, string[]>();
   /** Active debate channel per chat (chatKey → channelId) */
   private activeDebateChannels = new Map<string, string>();
+  /** viewfile callback cache: short key → { sessionId, filePath } (avoids 64-byte callback_data limit) */
+  viewFileCache = new Map<string, { sessionId: string; filePath: string }>();
+  private viewFileCounter = 0;
   /** Active auto-approve countdowns: messageId → timer */
   private autoApproveTimers = new Map<number, ReturnType<typeof setInterval>>();
+  /** Reverse index: sessionId → Set of messageIds with active countdowns */
+  private sessionAutoApproveMessages = new Map<string, Set<number>>();
 
   constructor(wsBridge: WsBridge, config: BotConfig) {
     this.wsBridge = wsBridge;
@@ -194,6 +200,21 @@ export class TelegramBridge {
     this.bot.on("message:text", async (ctx) => {
       if (ctx.message.text.startsWith("/")) return; // Skip unregistered commands
       await this.handleTextMessage(ctx);
+    });
+
+    // Handle photo messages
+    this.bot.on("message:photo", async (ctx) => {
+      await this.handlePhotoMessage(ctx);
+    });
+
+    // Handle document messages
+    this.bot.on("message:document", async (ctx) => {
+      await this.handleDocumentMessage(ctx);
+    });
+
+    // Handle voice messages (placeholder)
+    this.bot.on("message:voice", async (ctx) => {
+      await ctx.reply("🎤 Voice messages are not yet supported. Please type your message instead.");
     });
 
     // Load persisted mappings
@@ -236,6 +257,7 @@ export class TelegramBridge {
       clearInterval(timer);
     }
     this.autoApproveTimers.clear();
+    this.sessionAutoApproveMessages.clear();
 
     await this.bot.stop();
     log.info("Bot stopped", { botId: this.config.botId });
@@ -531,7 +553,7 @@ export class TelegramBridge {
     const idleLabel = idleMs <= 0 ? "Never" : idleMs === 1_800_000 ? "30m" : idleMs === 3_600_000 ? "1h" : idleMs === 14_400_000 ? "4h" : idleMs === 43_200_000 ? "12h" : `${Math.round(idleMs / 60_000)}m`;
     const permMode = session?.state.permissionMode ?? "default";
 
-    // Context meter
+    // Context meter — uses cumulative tokens as rough estimate (actual window may be smaller after compaction)
     const state = session?.state;
     let contextStr = "";
     if (state) {
@@ -539,7 +561,7 @@ export class TelegramBridge {
       if (totalTokens > 0) {
         const maxTokens = state.model.includes("haiku") ? 200_000 : 1_000_000;
         const pct = Math.min(100, Math.round((totalTokens / maxTokens) * 100));
-        contextStr = ` · Context: ${pct}%`;
+        contextStr = ` · Tokens: ~${pct}%`;
       }
     }
 
@@ -655,6 +677,19 @@ export class TelegramBridge {
 
     this.sessionConfigs.delete(sessionId);
     this.compactWarningSent.delete(sessionId);
+
+    // Clear auto-approve countdown timers belonging to this session
+    const approvalMsgIds = this.sessionAutoApproveMessages.get(sessionId);
+    if (approvalMsgIds) {
+      for (const msgId of approvalMsgIds) {
+        const timer = this.autoApproveTimers.get(msgId);
+        if (timer) {
+          clearInterval(timer);
+          this.autoApproveTimers.delete(msgId);
+        }
+      }
+      this.sessionAutoApproveMessages.delete(sessionId);
+    }
 
     // Clean up stream subscriptions (reverse lookup: chatKey → sessionId)
     for (const [chatKey, sid] of this.streamSubscriptions.entries()) {
@@ -1051,13 +1086,14 @@ export class TelegramBridge {
       const projects = listProjects();
       if (projects.length === 1) {
         await this.startSessionForChat(ctx, projects[0]!.slug);
-        // Retry sending the message after session starts
-        setTimeout(() => {
-          const newMapping = this.getMapping(chatId, topicId);
-          if (newMapping) {
+        // Wait for the CLI to be ready before sending the queued message
+        const newMapping = this.getMapping(chatId, topicId);
+        if (newMapping) {
+          const ready = await this.waitForSessionReady(newMapping.sessionId, 30_000);
+          if (ready) {
             this.wsBridge.sendUserMessage(newMapping.sessionId, text, "telegram");
           }
-        }, 2000);
+        }
         return;
       }
 
@@ -1124,6 +1160,140 @@ export class TelegramBridge {
     // Stream will lazy-start on first appendText (no startStream needed)
   }
 
+  private async handlePhotoMessage(ctx: Context): Promise<void> {
+    const chatId = ctx.chat!.id;
+    const topicId = ctx.message?.message_thread_id;
+
+    const mapping = this.getMapping(chatId, topicId);
+    if (!mapping) {
+      await ctx.reply("No active session. Use /new to start one.");
+      return;
+    }
+
+    const activeSession = this.wsBridge.getSession(mapping.sessionId);
+    if (!activeSession) {
+      this.removeMapping(chatId, topicId);
+      await ctx.reply("⚠️ Session expired. Use /start to begin a new session.");
+      return;
+    }
+
+    const photos = ctx.message?.photo;
+    if (!photos || photos.length === 0) return;
+
+    // Take highest resolution (last element)
+    const photo = photos[photos.length - 1]!;
+    const caption = ctx.message?.caption ?? "";
+
+    await ctx.reply("📸 Image received, forwarding to Claude...");
+
+    try {
+      const file = await ctx.api.getFile(photo.file_id);
+      if (!file.file_path) throw new Error("No file_path returned");
+
+      const token = this.config.token;
+      const url = `https://api.telegram.org/file/bot${token}/${file.file_path}`;
+
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const base64 = buffer.toString("base64");
+      const ext = file.file_path.split(".").pop() ?? "jpg";
+      const mimeType = ext === "png" ? "image/png" : "image/jpeg";
+
+      const captionPart = caption ? `User caption: "${caption}"\n\n` : "";
+      const message = `${captionPart}[Image attached — base64 encoded, mime: ${mimeType}, size: ${buffer.length} bytes]\ndata:${mimeType};base64,${base64}`;
+
+      this.wsBridge.sendUserMessage(mapping.sessionId, message, "telegram");
+    } catch (err) {
+      log.error("Failed to download/forward photo", { error: String(err) });
+      await ctx.reply("❌ Failed to download image. Please try again.");
+    }
+  }
+
+  private async handleDocumentMessage(ctx: Context): Promise<void> {
+    const chatId = ctx.chat!.id;
+    const topicId = ctx.message?.message_thread_id;
+
+    const mapping = this.getMapping(chatId, topicId);
+    if (!mapping) {
+      await ctx.reply("No active session. Use /new to start one.");
+      return;
+    }
+
+    const activeSession = this.wsBridge.getSession(mapping.sessionId);
+    if (!activeSession) {
+      this.removeMapping(chatId, topicId);
+      await ctx.reply("⚠️ Session expired. Use /start to begin a new session.");
+      return;
+    }
+
+    const doc = ctx.message?.document;
+    if (!doc) return;
+
+    const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+    if (doc.file_size && doc.file_size > MAX_SIZE) {
+      await ctx.reply("❌ File too large. Maximum allowed size is 10 MB.");
+      return;
+    }
+
+    const mime = doc.mime_type ?? "";
+    const isAllowed =
+      mime.startsWith("text/") ||
+      mime.startsWith("image/") ||
+      mime === "application/json" ||
+      mime === "application/xml" ||
+      mime === "application/pdf";
+
+    if (!isAllowed) {
+      await ctx.reply(
+        `❌ Unsupported file type (${mime || "unknown"}). Supported: text files, images, JSON, XML, PDF.`,
+      );
+      return;
+    }
+
+    const filename = doc.file_name ?? "file";
+    await ctx.reply(`📄 File received: ${filename}`);
+
+    try {
+      const file = await ctx.api.getFile(doc.file_id);
+      if (!file.file_path) throw new Error("No file_path returned");
+
+      const token = this.config.token;
+      const url = `https://api.telegram.org/file/bot${token}/${file.file_path}`;
+
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+
+      // Save to temp dir
+      const { tmpdir } = await import("os");
+      const { join, basename, resolve: resolvePath, sep } = await import("path");
+      const { writeFile, mkdir } = await import("fs/promises");
+
+      const tempDir = join(tmpdir(), "companion-uploads");
+      await mkdir(tempDir, { recursive: true });
+      // Sanitize filename to prevent path traversal — keep only the basename
+      const safeFilename = basename(filename).replace(/[/\\]/g, "_") || "file";
+      const savePath = join(tempDir, `${Date.now()}-${safeFilename}`);
+      // Verify the resolved path stays inside tempDir
+      const resolvedSave = resolvePath(savePath);
+      const resolvedTemp = resolvePath(tempDir);
+      if (!resolvedSave.startsWith(resolvedTemp + sep) && resolvedSave !== resolvedTemp) {
+        throw new Error("Invalid file path");
+      }
+      await writeFile(savePath, buffer);
+
+      const sizeKb = Math.round(buffer.length / 1024);
+      const message = `User uploaded file: ${filename} (${sizeKb} KB, ${mime}). File saved at: ${savePath}`;
+      this.wsBridge.sendUserMessage(mapping.sessionId, message, "telegram");
+    } catch (err) {
+      log.error("Failed to download/forward document", { error: String(err) });
+      await ctx.reply("❌ Failed to download file. Please try again.");
+    }
+  }
+
   private async handleAssistantMessage(
     chatId: number,
     topicId: number | undefined,
@@ -1160,9 +1330,16 @@ export class TelegramBridge {
         const session = this.wsBridge.getSession(sessionId);
         const cwd = session?.state.cwd;
         if (cwd) {
-          const rows = filePaths.slice(0, 5).map((fp) => [
-            { text: `📂 ${fp}`, callback_data: `viewfile:${sessionId}:${fp}` },
-          ]);
+          const rows = filePaths.slice(0, 5).map((fp) => {
+            const key = `vf${++this.viewFileCounter}`;
+            this.viewFileCache.set(key, { sessionId, filePath: fp });
+            if (this.viewFileCache.size > 1000) {
+              // Evict oldest 200 entries to keep memory bounded
+              const evict = [...this.viewFileCache.keys()].slice(0, 200);
+              evict.forEach((k) => this.viewFileCache.delete(k));
+            }
+            return [{ text: `📂 ${fp}`, callback_data: `vf:${key}` }];
+          });
 
           await this.bot.api
             .sendMessage(chatId, "📂 <b>Referenced files:</b>", {
@@ -1294,6 +1471,7 @@ export class TelegramBridge {
       existing.perms.push({
         requestId: request.request_id,
         toolName: request.tool_name,
+        input: request.input,
         description: request.description,
       });
       return;
@@ -1304,6 +1482,7 @@ export class TelegramBridge {
       perms: [{
         requestId: request.request_id,
         toolName: request.tool_name,
+        input: request.input,
         description: request.description,
       }],
       sessionId,
@@ -1331,8 +1510,12 @@ export class TelegramBridge {
     const aa = session?.autoApproveConfig;
     const autoApproveSeconds = aa?.enabled ? (aa.timeoutSeconds ?? 0) : 0;
 
-    // Format permission message
-    const lines = perms.map((p) => formatPermission(p.toolName, p.description));
+    // Format permission message — annotate each perm with danger flag
+    const permsWithFlags = perms.map((p) => ({
+      ...p,
+      dangerous: isPermissionDangerous(p.toolName, p.input),
+    }));
+    const lines = permsWithFlags.map((p) => formatPermission(p.toolName, p.input, p.description));
     const baseText = lines.join("\n\n");
 
     // Add countdown suffix if auto-approve is on
@@ -1350,10 +1533,21 @@ export class TelegramBridge {
         { text: "❌ Deny", callback_data: `perm:deny:${sessionId}:${perms[0]!.requestId}`, style: "danger" },
       ]);
     } else {
-      for (const p of perms) {
+      for (const p of permsWithFlags) {
+        const icon = p.dangerous ? "⚠️" : "✅";
         permRows.push([
-          { text: `✅ ${p.toolName}`, callback_data: `perm:allow:${sessionId}:${p.requestId}`, style: "success" },
+          { text: `${icon} ${p.toolName}`, callback_data: `perm:allow:${sessionId}:${p.requestId}`, style: "success" },
           { text: "❌", callback_data: `perm:deny:${sessionId}:${p.requestId}`, style: "danger" },
+        ]);
+      }
+      // If any dangerous perms exist, add bulk-action row for safe-only approval
+      const hasDangerous = permsWithFlags.some((p) => p.dangerous);
+      if (hasDangerous) {
+        // Build compact callback — only sessionId needed; safe IDs resolved server-side
+        // Keep callback_data under 64 bytes: "perm:allowsafe:<sessionId(36)>"
+        permRows.push([
+          { text: "✅ Allow All Safe", callback_data: `perm:allowsafe:${sessionId}`, style: "success" },
+          { text: "⚠️ Review Dangerous", callback_data: `perm:reviewdanger:${sessionId}`, style: "warning" },
         ]);
       }
     }
@@ -1381,12 +1575,18 @@ export class TelegramBridge {
     topicId: number | undefined,
     messageId: number,
     sessionId: string,
-    perms: Array<{ requestId: string; toolName: string; description?: string }>,
+    perms: Array<{ requestId: string; toolName: string; input: Record<string, unknown>; description?: string }>,
     baseText: string,
     permRows: Array<Array<{ text: string; callback_data: string; style?: string }>>,
     totalSeconds: number,
   ): void {
     let remaining = totalSeconds;
+
+    // Track this countdown under the session for cleanup on killSession
+    if (!this.sessionAutoApproveMessages.has(sessionId)) {
+      this.sessionAutoApproveMessages.set(sessionId, new Set());
+    }
+    this.sessionAutoApproveMessages.get(sessionId)!.add(messageId);
 
     const interval = setInterval(async () => {
       remaining -= 3;
@@ -1395,6 +1595,7 @@ export class TelegramBridge {
         // Time's up — auto-approve all
         clearInterval(interval);
         this.autoApproveTimers.delete(messageId);
+        this.sessionAutoApproveMessages.get(sessionId)?.delete(messageId);
 
         for (const p of perms) {
           this.wsBridge.handleBrowserMessage(sessionId, JSON.stringify({

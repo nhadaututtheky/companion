@@ -61,6 +61,9 @@ export const sessions = sqliteTable("sessions", {
   filesModified: text("files_modified", { mode: "json" }).$type<string[]>().default([]),
   filesCreated: text("files_created", { mode: "json" }).$type<string[]>().default([]),
 
+  /** Session tags for filtering/organization (JSON array of strings) */
+  tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
+
   startedAt: integer("started_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
   endedAt: integer("ended_at", { mode: "timestamp_ms" }),
 });

@@ -400,12 +400,96 @@ export function formatToolFeed(content: Array<{ type: string; name?: string; inp
   return actions.length > 0 ? actions.join("\n") : null;
 }
 
+// ─── Permission Danger Detection ────────────────────────────────────────────
+
+const DANGEROUS_BASH_PATTERNS = [
+  /\brm\b/,
+  /\bgit\s+push\b/,
+  /\bgit\s+reset\b/,
+  /\bdocker\b/,
+  /\bkill\b/,
+  /\bchmod\b/,
+  /\bchown\b/,
+  /\bsudo\b/,
+];
+
+const DANGEROUS_FILE_PATTERNS = [
+  /\.env(\b|$)/i,
+  /credentials/i,
+  /secret/i,
+  /password/i,
+  /token/i,
+];
+
+/**
+ * Returns true if a Bash command is considered dangerous.
+ */
+export function isBashDangerous(command: string): boolean {
+  return DANGEROUS_BASH_PATTERNS.some((re) => re.test(command));
+}
+
+/**
+ * Returns true if a file path is considered sensitive/dangerous.
+ */
+export function isFileDangerous(filePath: string): boolean {
+  const basename = filePath.replace(/\\/g, "/").split("/").pop() ?? filePath;
+  return DANGEROUS_FILE_PATTERNS.some((re) => re.test(basename));
+}
+
+/**
+ * Determine if a permission (by tool name + input) is dangerous.
+ */
+export function isPermissionDangerous(toolName: string, input: Record<string, unknown>): boolean {
+  switch (toolName) {
+    case "Bash": {
+      const cmd = String(input.command ?? "");
+      return isBashDangerous(cmd);
+    }
+    case "Write":
+    case "Edit": {
+      const fp = String(input.file_path ?? "");
+      return isFileDangerous(fp);
+    }
+    default:
+      return false;
+  }
+}
+
 /**
  * Format a permission request for Telegram display.
+ * Shows tool-specific detail (command preview or file path) and flags dangerous ops.
  */
-export function formatPermission(toolName: string, description?: string): string {
-  const desc = description ? `\n${escapeHTML(description)}` : "";
-  return `🔐 <b>Permission: ${escapeHTML(toolName)}</b>${desc}`;
+export function formatPermission(
+  toolName: string,
+  input: Record<string, unknown>,
+  description?: string,
+): string {
+  const dangerous = isPermissionDangerous(toolName, input);
+  const prefix = dangerous ? "⚠️" : "🔐";
+
+  // Build detail line based on tool type
+  let detail = "";
+  switch (toolName) {
+    case "Bash": {
+      const cmd = truncate(String(input.command ?? ""), 100);
+      detail = `<code>${escapeHTML(cmd)}</code>`;
+      break;
+    }
+    case "Write":
+    case "Edit":
+    case "Read": {
+      const fp = String(input.file_path ?? "");
+      detail = `<code>${escapeHTML(fp)}</code>`;
+      break;
+    }
+    default:
+      if (description) {
+        detail = escapeHTML(description);
+      }
+  }
+
+  const detailSuffix = detail ? `\n${detail}` : (description ? `\n${escapeHTML(description)}` : "");
+  return `${prefix} <b>${escapeHTML(toolName)}</b>${detailSuffix}`;
 }
 
 /**

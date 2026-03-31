@@ -1,13 +1,10 @@
-version: "3.8"
-
 services:
   companion:
     build: .
     container_name: companion
     restart: unless-stopped
     ports:
-      - "3579:3579"  # Server API + WebSocket
-      - "3580:3580"  # Web UI
+      - "3579:3579"  # Server API + WebSocket + Web UI (static)
     volumes:
       # SQLite database persistence
       - companion-data:/app/data

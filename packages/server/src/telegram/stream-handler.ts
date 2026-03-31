@@ -90,10 +90,12 @@ export class StreamHandler {
     if (html.length > 4000) {
       const chunks = splitMessage(html, 3900);
       let lastMsgId = 0;
-      for (let i = 0; i < chunks.length; i++) {
+      const total = chunks.length;
+      for (let i = 0; i < total; i++) {
         try {
           if (i > 0) await new Promise((r) => setTimeout(r, 500));
-          const sent = await this.api.sendMessage(chatId, chunks[i]!, {
+          const partLabel = total > 1 ? `\n\n<i>📄 Part ${i + 1}/${total}</i>` : "";
+          const sent = await this.api.sendMessage(chatId, chunks[i]! + partLabel, {
             parse_mode: "HTML",
             message_thread_id: topicId,
           });

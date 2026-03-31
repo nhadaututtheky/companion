@@ -1,12 +1,19 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { CommandPaletteProvider } from "@/components/layout/command-palette-provider";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { AuthGuard } from "@/components/auth/auth-guard";
 
 export const metadata: Metadata = {
   title: "Companion",
   description: "Autonomous Agent Platform",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 // Script to restore theme before React hydrates — prevents flash
@@ -29,8 +36,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ErrorBoundary>
-          <CommandPaletteProvider />
-          {children}
+          <AuthGuard>
+            <CommandPaletteProvider />
+            {children}
+          </AuthGuard>
         </ErrorBoundary>
         <Toaster
           position="bottom-right"

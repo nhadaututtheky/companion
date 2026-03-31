@@ -79,43 +79,19 @@ export function createBot(config: BotConfig): Bot {
  */
 export async function registerCommands(bot: Bot): Promise<void> {
   try {
+    // Only register essential commands in the Telegram menu (~10).
+    // All other commands remain functional — use /help to see the full list.
     await bot.api.setMyCommands([
       { command: "start", description: "Show projects & start session" },
       { command: "new", description: "New session with project" },
       { command: "stop", description: "Stop current session" },
-      { command: "status", description: "Show session status" },
-      { command: "cost", description: "Show session cost" },
-      { command: "model", description: "Change AI model" },
-      { command: "help", description: "Show all commands" },
-      { command: "projects", description: "List all projects" },
-      { command: "sessions", description: "List active sessions & #shortIds" },
-      { command: "exitplan", description: "Force exit plan mode" },
+      { command: "resume", description: "Resume last interrupted session" },
       { command: "allow", description: "Allow pending permission" },
       { command: "deny", description: "Deny pending permission" },
-      { command: "autoapprove", description: "Toggle auto-approve" },
-      { command: "debate", description: "Start a debate session" },
-      { command: "verdict", description: "Force conclude active debate" },
-      { command: "compact", description: "Compact context window" },
-      { command: "todo", description: "Show Claude's task list" },
-      { command: "files", description: "Show modified files" },
-      { command: "history", description: "Recent session history" },
-      { command: "usage", description: "Cost & usage summary" },
-      { command: "btw", description: "Inject context to Claude (no reply)" },
-      { command: "file", description: "Read a file and show content" },
-      { command: "cat", description: "Alias for /file" },
-      { command: "send", description: "Send a file as document attachment" },
-      { command: "skill", description: "List or invoke a skill" },
-      { command: "note", description: "Save a note for this session" },
-      { command: "notes", description: "Show all notes for this session" },
-      { command: "pin", description: "Pin settings panel to chat" },
+      { command: "status", description: "Show session status" },
+      { command: "model", description: "Change AI model" },
       { command: "templates", description: "Browse session templates" },
-      { command: "template", description: "Save or delete a template" },
-      { command: "stream", description: "Attach to an existing session" },
-      { command: "detach", description: "Detach from streamed session" },
-      { command: "resume", description: "Resume last interrupted session" },
-      { command: "fork", description: "Fork session (keep old running)" },
-      { command: "context", description: "Show context window usage" },
-      { command: "rename", description: "Rename current session" },
+      { command: "help", description: "Show all commands" },
     ]);
     log.info("Commands registered");
   } catch (err) {

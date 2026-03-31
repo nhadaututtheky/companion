@@ -95,7 +95,7 @@ export function MessageComposer({
 
   return (
     <div
-      className="px-4 py-3"
+      className="message-composer-wrapper px-4 py-3"
       style={{ borderTop: "1px solid var(--color-border)" }}
       onDragOver={(e) => {
         if (e.dataTransfer.types.includes("application/x-companion-file")) {

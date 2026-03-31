@@ -10,6 +10,8 @@ interface Session {
   status: string;
   state: SessionState;
   createdAt: number;
+  /** Session tags for filtering/organization */
+  tags?: string[];
 }
 
 interface SessionStore {

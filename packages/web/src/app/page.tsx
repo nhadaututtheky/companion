@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useCallback, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { ArrowCounterClockwise, X, TelegramLogo, Globe, Trash } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, X, TelegramLogo, Globe, Trash, List } from "@phosphor-icons/react";
 import { Header } from "@/components/layout/header";
 import { SessionList } from "@/components/session/session-list";
 // StatsGrid moved to Header
@@ -15,11 +15,15 @@ import { FileExplorerPanel } from "@/components/panels/file-explorer-panel";
 import { BrowserPreviewPanel } from "@/components/panels/browser-preview-panel";
 import { SearchPanel } from "@/components/panels/search-panel";
 import { TerminalPanel } from "@/components/panels/terminal-panel";
+import { StatsPanel } from "@/components/panels/stats-panel";
 import { SessionCompareModal } from "@/components/session/session-compare-modal";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useUiStore } from "@/lib/stores/ui-store";
+import { useNotificationPermission } from "@/hooks/use-notifications";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
+import { ApiKeyIndicator } from "@/components/auth/api-key-indicator";
+import { OnboardingWizard } from "@/components/onboarding-wizard";
 
 // ── Empty center state ─────────────────────────────────────────────────────
 
@@ -297,6 +301,10 @@ export default function DashboardPage() {
   const setCompareModalOpen = useUiStore((s) => s.setCompareModalOpen);
   const [resumableSessions, setResumableSessions] = useState<ResumableSession[]>([]);
   const [resumeBannerDismissed, setResumeBannerDismissed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  // Request browser notification permission on first load
+  useNotificationPermission();
 
   const { sessions, activeSessionId, setActiveSession, gridOrder, addToGrid, expandedSessionId, setExpandedSession, closedIds } =
     useSessionStore(
@@ -323,6 +331,7 @@ export default function DashboardPage() {
         totalCostUsd: s.state?.total_cost_usd ?? 0,
         numTurns: s.state?.num_turns ?? 0,
         createdAt: s.createdAt,
+        tags: s.tags ?? [],
       })),
     [sessions],
   );
@@ -388,6 +397,7 @@ export default function DashboardPage() {
             status: s.status,
             state: s.state as unknown as import("@companion/shared").SessionState,
             createdAt: new Date(s.createdAt).getTime() || Date.now(),
+            tags: (s as { tags?: string[] }).tags ?? [],
           });
           useSessionStore.getState().addToGrid(s.id);
         }
@@ -459,11 +469,11 @@ export default function DashboardPage() {
     setNewSessionOpen(true);
   }, [setNewSessionOpen]);
 
-  // Ctrl+N / Cmd+N shortcut
+  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Ctrl+N / Cmd+N — new session
       if ((e.ctrlKey || e.metaKey) && e.key === "n") {
-        // Only open if no other modal is blocking
         if (!expandedSessionId) {
           e.preventDefault();
           setNewSessionOpen(true);
@@ -474,10 +484,44 @@ export default function DashboardPage() {
         e.preventDefault();
         setActivityTerminalOpen(!activityTerminalOpen);
       }
+      // Ctrl+S or Escape — close expanded session / right panel
+      if ((e.ctrlKey && e.key === "s") || e.key === "Escape") {
+        if (expandedSessionId) {
+          e.preventDefault();
+          setExpandedSession(null);
+        } else if (rightPanelMode !== "none") {
+          e.preventDefault();
+          setRightPanelMode("none");
+        }
+      }
+      // Ctrl+K — open search panel
+      if (e.ctrlKey && e.key === "k") {
+        e.preventDefault();
+        setRightPanelMode("search");
+      }
+      // Ctrl+1 through Ctrl+6 — switch to session by grid position
+      if (e.ctrlKey && e.key >= "1" && e.key <= "6") {
+        const index = parseInt(e.key, 10) - 1;
+        const targetId = gridOrder[index];
+        if (targetId) {
+          e.preventDefault();
+          setActiveSession(targetId);
+        }
+      }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [expandedSessionId, setNewSessionOpen, activityTerminalOpen, setActivityTerminalOpen]);
+  }, [
+    expandedSessionId,
+    setNewSessionOpen,
+    activityTerminalOpen,
+    setActivityTerminalOpen,
+    setExpandedSession,
+    rightPanelMode,
+    setRightPanelMode,
+    gridOrder,
+    setActiveSession,
+  ]);
 
   const handleCloseNewSession = useCallback(() => {
     setNewSessionOpen(false);
@@ -518,32 +562,77 @@ export default function DashboardPage() {
         />
       )}
 
-      <Header />
+      <Header onMenuToggle={() => setMobileSidebarOpen(true)} />
 
       <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
         <div style={{ flex: 1, overflow: "hidden", display: "flex" }}>
-          {/* Left sidebar */}
+
+          {/* Mobile sidebar overlay backdrop */}
+          {mobileSidebarOpen && (
+            <div
+              className="md:hidden"
+              onClick={() => setMobileSidebarOpen(false)}
+              aria-hidden="true"
+              style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 40,
+                background: "rgba(0,0,0,0.4)",
+              }}
+            />
+          )}
+
+          {/* Left sidebar — relative on desktop, fixed overlay on mobile */}
           <aside
-            className="companion-sidebar flex flex-col flex-shrink-0 overflow-hidden"
+            className={[
+              "companion-sidebar flex flex-col flex-shrink-0 overflow-hidden",
+              // Mobile: fixed overlay; desktop: static in flex flow
+              "fixed md:static",
+              mobileSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+              "transition-transform duration-200 ease-in-out",
+              // Mobile z-index handled via CSS class
+              "mobile-sidebar-overlay",
+            ].join(" ")}
             style={{
               width: 260,
               background: "var(--color-bg-sidebar)",
               boxShadow: "1px 0 4px rgba(0,0,0,0.03)",
             }}
+            aria-label="Session sidebar"
           >
+            {/* Mobile close button */}
+            <div className="md:hidden flex items-center justify-between px-4 py-2" style={{ borderBottom: "1px solid var(--color-border)" }}>
+              <span className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>Sessions</span>
+              <button
+                onClick={() => setMobileSidebarOpen(false)}
+                className="p-2 rounded-lg cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+                style={{ color: "var(--color-text-muted)" }}
+                aria-label="Close sidebar"
+              >
+                <X size={16} weight="bold" />
+              </button>
+            </div>
+
             <SessionManagementBar />
             <div className="flex-1 overflow-hidden">
               <SessionList
                 sessions={sessionList}
                 activeSessionId={activeSessionId}
-                onSelect={handleSelectSession}
-                onNew={handleNewSession}
+                onSelect={(id) => {
+                  handleSelectSession(id);
+                  setMobileSidebarOpen(false);
+                }}
+                onNew={() => {
+                  handleNewSession();
+                  setMobileSidebarOpen(false);
+                }}
               />
             </div>
+            <ApiKeyIndicator />
           </aside>
 
-          {/* Corner arc SVG — concave curve where sidebar meets content */}
-          <div className="companion-corner-arc" style={{ position: "relative", width: 0, height: 0, flexShrink: 0 }}>
+          {/* Corner arc SVG — concave curve where sidebar meets content (desktop only) */}
+          <div className="hidden md:block companion-corner-arc" style={{ position: "relative", width: 0, height: 0, flexShrink: 0 }}>
             <svg
               width="16"
               height="16"
@@ -607,12 +696,12 @@ export default function DashboardPage() {
             )}
           </main>
 
-          {/* Right panel — File Explorer, Browser Preview, or Search */}
+          {/* Right panel — File Explorer, Browser Preview, or Search (desktop only, hidden on mobile to save space) */}
           {rightPanelMode !== "none" && (
             <aside
-              className="flex flex-col flex-shrink-0 overflow-hidden"
+              className="hidden md:flex flex-col flex-shrink-0 overflow-hidden"
               style={{
-                width: rightPanelMode === "browser" ? 600 : rightPanelMode === "terminal" ? 600 : 500,
+                width: rightPanelMode === "browser" ? 600 : rightPanelMode === "terminal" ? 600 : rightPanelMode === "stats" ? 360 : 500,
                 borderLeft: "1px solid var(--color-border)",
                 transition: "width 200ms ease",
               }}
@@ -644,6 +733,11 @@ export default function DashboardPage() {
                   onClose={() => setRightPanelMode("none")}
                 />
               )}
+              {rightPanelMode === "stats" && (
+                <StatsPanel
+                  onClose={() => setRightPanelMode("none")}
+                />
+              )}
             </aside>
           )}
         </div>
@@ -657,6 +751,9 @@ export default function DashboardPage() {
 
       {/* Magic Ring — floating shared context hub */}
       <MagicRing />
+
+      {/* First-run onboarding wizard */}
+      <OnboardingWizard onOpenNewSession={handleNewSession} />
     </div>
   );
 }

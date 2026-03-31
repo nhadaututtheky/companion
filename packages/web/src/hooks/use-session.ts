@@ -3,6 +3,8 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useWebSocket } from "./use-websocket";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useActivityStore } from "@/lib/stores/activity-store";
+import { notify } from "./use-notifications";
+import { api } from "@/lib/api-client";
 import type { BrowserIncomingMessage, ContentBlock, SessionState } from "@companion/shared";
 
 interface Message {
@@ -37,6 +39,10 @@ export function useSession(sessionId: string): UseSessionReturn {
   const [wsStatus, setWsStatus] = useState<"connecting" | "connected" | "disconnected">("disconnected");
   const setSession = useSessionStore((s) => s.setSession);
   const addLog = useActivityStore((s) => s.addLog);
+  // Track whether WS message_history replay populated messages
+  const historyReceivedRef = useRef(false);
+  // Ref for REST fallback timer so it can be cleared across effect re-runs
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // ── Stream buffering: accumulate tokens, flush every 50ms ──
   const streamBufferRef = useRef("");
@@ -77,6 +83,41 @@ export function useSession(sessionId: string): UseSessionReturn {
       }
     };
   }, []);
+
+  // REST fallback: when WS connects but message_history replay is empty, load from DB
+  useEffect(() => {
+    if (wsStatus !== "connected") return;
+
+    // Clear any existing timer in case wsStatus flipped quickly
+    clearTimeout(fallbackTimerRef.current);
+
+    // Give message_history event a short window to arrive (it comes right after connect)
+    fallbackTimerRef.current = setTimeout(async () => {
+      if (historyReceivedRef.current) return;
+      // No history received via WS — fall back to REST
+      try {
+        const res = await api.sessions.messages(sessionId, { limit: 50 });
+        const dbMessages = res.data?.messages ?? [];
+        if (dbMessages.length === 0) return;
+        const loaded: Message[] = dbMessages
+          .filter((m) => m.role === "user" || m.role === "assistant")
+          .map((m) => ({
+            id: m.id,
+            role: m.role as "user" | "assistant",
+            content: m.content,
+            timestamp: m.timestamp,
+          }))
+          .filter((m) => m.content.length > 0);
+        if (loaded.length > 0) {
+          setMessages((prev) => (prev.length === 0 ? loaded : prev));
+        }
+      } catch {
+        // Best-effort — silently ignore if REST fails
+      }
+    }, 800);
+
+    return () => clearTimeout(fallbackTimerRef.current);
+  }, [wsStatus, sessionId]);
 
   // Helper: resolve session display name
   const getSessionName = useCallback(() => {
@@ -136,10 +177,17 @@ export function useSession(sessionId: string): UseSessionReturn {
             });
           }
 
-          // Get cost from usage
+          // Get cost from usage using model-specific rates
+          const MODEL_RATES: Record<string, { input: number; output: number }> = {
+            "claude-haiku-4-5": { input: 0.80 / 1_000_000, output: 4.00 / 1_000_000 },
+            "claude-sonnet-4-6": { input: 3.00 / 1_000_000, output: 15.00 / 1_000_000 },
+            "claude-opus-4-6": { input: 15.00 / 1_000_000, output: 75.00 / 1_000_000 },
+          };
+          const sessionModel = useSessionStore.getState().sessions[sessionId]?.model ?? "";
+          const rates = MODEL_RATES[sessionModel] ?? MODEL_RATES["claude-sonnet-4-6"]!;
           const usage = msg.message?.usage;
           const costUsd = usage
-            ? (usage.input_tokens * 0.000003 + usage.output_tokens * 0.000015) // approximate
+            ? (usage.input_tokens * rates.input + usage.output_tokens * rates.output)
             : undefined;
 
           const messageData = {
@@ -227,6 +275,12 @@ export function useSession(sessionId: string): UseSessionReturn {
             const summary = result.is_error
               ? `Error — ${result.errors?.join("; ") ?? "unknown"}`
               : `Done — ${costStr}, ${tokensStr}, ${result.num_turns} turn(s)`;
+            // Browser notification for session result
+            if (result.is_error) {
+              notify(`Session error: ${getSessionName()}`, result.errors?.join("; ") ?? "Unknown error");
+            } else {
+              notify(`Session complete: ${getSessionName()}`, `${costStr} · ${tokensStr} · ${result.num_turns} turn(s)`);
+            }
             addLog({
               sessionId,
               sessionName: getSessionName(),
@@ -263,6 +317,11 @@ export function useSession(sessionId: string): UseSessionReturn {
 
         case "permission_request": {
           const req = msg.request as { request_id: string; tool_name: string; description?: string };
+          // Browser notification so user knows action is needed
+          notify(
+            `Permission needed: ${getSessionName()}`,
+            `${req.tool_name}${req.description ? ` — ${req.description}` : ""}`,
+          );
           addLog({
             sessionId,
             sessionName: getSessionName(),
@@ -314,6 +373,7 @@ export function useSession(sessionId: string): UseSessionReturn {
         }
 
         case "message_history": {
+          historyReceivedRef.current = true;
           if (msg.messages && Array.isArray(msg.messages)) {
             const historical: Message[] = msg.messages
               .filter(
@@ -411,6 +471,42 @@ export function useSession(sessionId: string): UseSessionReturn {
           setPendingPermissions((prev) =>
             prev.filter((p) => p.requestId !== msg.request_id),
           );
+          break;
+        }
+
+        case "budget_warning": {
+          const bwMsg = msg as { type: "budget_warning"; budget: number; spent: number; percentage: number };
+          import("sonner").then(({ toast }) => {
+            toast.warning(`Budget at ${bwMsg.percentage}%: $${bwMsg.spent.toFixed(2)} / $${bwMsg.budget.toFixed(2)}`, {
+              description: "Approaching session cost budget. Increase budget in settings if needed.",
+              duration: 8000,
+            });
+          });
+          addLog({
+            sessionId,
+            sessionName: getSessionName(),
+            timestamp: Date.now(),
+            type: "error",
+            content: `Budget warning: $${bwMsg.spent.toFixed(2)} / $${bwMsg.budget.toFixed(2)} (${bwMsg.percentage}% used)`,
+          });
+          break;
+        }
+
+        case "budget_exceeded": {
+          const beMsg = msg as { type: "budget_exceeded"; budget: number; spent: number };
+          import("sonner").then(({ toast }) => {
+            toast.error(`Budget exceeded — $${beMsg.spent.toFixed(2)} / $${beMsg.budget.toFixed(2)}`, {
+              description: "Increase your budget in session settings to continue.",
+              duration: 0,
+            });
+          });
+          addLog({
+            sessionId,
+            sessionName: getSessionName(),
+            timestamp: Date.now(),
+            type: "error",
+            content: `Budget exceeded: $${beMsg.spent.toFixed(2)} spent, $${beMsg.budget.toFixed(2)} limit. Message was not sent.`,
+          });
           break;
         }
 

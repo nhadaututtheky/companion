@@ -9,6 +9,7 @@ import { settingsRoutes } from "./settings.js";
 import { templateRoutes } from "./templates.js";
 import { domainRoutes } from "./domain.js";
 import { terminalRoutes } from "./terminal.js";
+import { statsRoutes } from "./stats.js";
 import { apiKeyAuth } from "../middleware/auth.js";
 import { getLicense } from "../services/license.js";
 import type { WsBridge } from "../services/ws-bridge.js";
@@ -44,6 +45,7 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   protectedApi.route("/templates", templateRoutes());
   protectedApi.route("/domain", domainRoutes);
   protectedApi.route("/terminal", terminalRoutes);
+  protectedApi.route("/stats", statsRoutes);
 
   // Anti IDE CDP status
   protectedApi.get("/anti/status", async (c) => {

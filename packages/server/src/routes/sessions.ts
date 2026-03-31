@@ -19,6 +19,7 @@ import {
   dismissResumableSession,
   renameSession,
   updateSessionConfig,
+  updateSessionTags,
 } from "../services/session-store.js";
 import { getProject, upsertProject } from "../services/project-profiles.js";
 import { getTemplate, resolveTemplateVariables } from "../services/templates.js";
@@ -262,14 +263,34 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
 
   app.get("/:id/messages", (c) => {
     const id = c.req.param("id");
+    const beforeParam = c.req.query("before");
+    const before = beforeParam ? parseInt(beforeParam, 10) : undefined;
+
+    if (before !== undefined) {
+      // Cursor-based pagination: newest-first, get messages older than `before` timestamp
+      const limit = Math.min(
+        Math.max(1, parseInt(c.req.query("limit") ?? "50", 10)),
+        200,
+      );
+      const { items: messages, total } = getSessionMessages(id, { limit, before });
+      const hasMore = messages.length > 0 && messages[0]!.timestamp > 0
+        && total > messages.length;
+      return c.json({
+        success: true,
+        data: { messages, hasMore },
+        meta: { total, page: 1, limit },
+      } satisfies ApiResponse);
+    }
+
     const { limit, offset } = paginationSchema.parse({
       limit: c.req.query("limit") ?? "200",
       offset: c.req.query("offset"),
     });
     const { items: messages, total } = getSessionMessages(id, { limit, offset });
+    const hasMore = offset + messages.length < total;
     return c.json({
       success: true,
-      data: messages,
+      data: { messages, hasMore },
       meta: { total, page: Math.floor(offset / limit) + 1, limit },
     } satisfies ApiResponse);
   });
@@ -500,55 +521,101 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     return c.json({ success: true, data: summary } satisfies ApiResponse);
   });
 
-  // ── Export session as markdown ──────────────────────────────────────────
+  // ── Export session as markdown or JSON ─────────────────────────────────
 
   app.get("/:id/export", (c) => {
     const id = c.req.param("id");
+    const format = c.req.query("format") === "json" ? "json" : "md";
     const session = getSessionRecord(id);
 
     if (!session) {
       return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
     }
 
-    const messages = getSessionMessages(id, { limit: 10000 });
+    const { items: msgs } = getSessionMessages(id, { limit: 10000 });
+    const filenameBase = `session-${session.projectSlug ?? "quick"}-${id.slice(0, 8)}`;
+
+    if (format === "json") {
+      const payload = JSON.stringify({
+        session: {
+          id,
+          projectSlug: session.projectSlug ?? null,
+          model: session.model,
+          status: session.status,
+          startedAt: session.startedAt?.toISOString() ?? null,
+          endedAt: session.endedAt?.toISOString() ?? null,
+          numTurns: session.numTurns,
+          totalCostUsd: session.totalCostUsd,
+          totalInputTokens: session.totalInputTokens,
+          totalOutputTokens: session.totalOutputTokens,
+        },
+        messages: msgs,
+      }, null, 2);
+
+      return new Response(payload, {
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Content-Disposition": `attachment; filename="${filenameBase}.json"`,
+        },
+      });
+    }
+
+    // Markdown format
     const date = session.startedAt
       ? new Date(session.startedAt).toISOString().slice(0, 19).replace("T", " ")
       : "unknown";
 
     const lines: string[] = [
-      `# Session Export`,
+      `# Session: ${session.projectSlug ?? "Quick Session"}`,
       ``,
-      `- **Project**: ${session.projectSlug ?? "quick"}`,
-      `- **Model**: ${session.model}`,
-      `- **Status**: ${session.status}`,
-      `- **Started**: ${date}`,
-      `- **Turns**: ${session.numTurns}`,
-      `- **Cost**: $${session.totalCostUsd.toFixed(4)}`,
-      `- **Tokens**: ${session.totalInputTokens + session.totalOutputTokens}`,
+      `Model: ${session.model} | Created: ${date} | Cost: $${session.totalCostUsd.toFixed(4)}`,
       ``,
       `---`,
       ``,
     ];
 
-    for (const msg of messages.items) {
-      const role = msg.role === "user" ? "**User**" : msg.role === "assistant" ? "**Assistant**" : `**${msg.role}**`;
-      const time = new Date(msg.timestamp).toLocaleTimeString("en-US", { hour12: false });
-      lines.push(`### ${role} (${time})`);
+    for (const msg of msgs) {
+      const heading = msg.role === "user" ? "## User" : msg.role === "assistant" ? "## Assistant" : `## ${msg.role}`;
+      lines.push(heading);
       lines.push(``);
       lines.push(msg.content);
+      lines.push(``);
+      lines.push(`---`);
       lines.push(``);
     }
 
     const markdown = lines.join("\n");
-    const filename = `session-${session.projectSlug ?? "quick"}-${id.slice(0, 8)}.md`;
 
     return new Response(markdown, {
       headers: {
         "Content-Type": "text/markdown; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": `attachment; filename="${filenameBase}.md"`,
       },
     });
   });
+
+  // Update session tags
+  const tagsSchema = z.object({
+    tags: z.array(z.string().max(50)).max(20),
+  });
+  app.patch(
+    "/:id/tags",
+    zValidator("json", tagsSchema),
+    (c) => {
+      const sessionId = c.req.param("id");
+      const record = getSessionRecord(sessionId);
+      if (!record) {
+        return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
+      }
+      const { tags } = c.req.valid("json");
+      const ok = updateSessionTags(sessionId, tags);
+      if (!ok) {
+        return c.json({ success: false, error: "Failed to update tags" } satisfies ApiResponse, 500);
+      }
+      log.info("Session tags updated", { sessionId, tags });
+      return c.json({ success: true, data: { tags } } satisfies ApiResponse);
+    },
+  );
 
   return app;
 }

@@ -1,0 +1,141 @@
+name: Tauri Desktop Build
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.4.0)"
+        required: true
+        type: string
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  build:
+    name: Build (${{ matrix.platform }})
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            artifact_pattern: "src-tauri/target/release/bundle/**/*.{msi,exe}"
+            artifact_name: "companion-windows"
+
+          - platform: macos-latest
+            artifact_pattern: "src-tauri/target/release/bundle/**/*.dmg"
+            artifact_name: "companion-macos"
+
+          - platform: ubuntu-22.04
+            artifact_pattern: "src-tauri/target/release/bundle/**/*.{AppImage,deb}"
+            artifact_name: "companion-linux"
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Node + Bun ──────────────────────────────────────────────────────────
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install JS dependencies
+        run: bun install --frozen-lockfile
+
+      # ── Linux system dependencies ────────────────────────────────────────────
+      - name: Install Linux deps
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            libgtk-3-dev
+
+      # ── Rust ─────────────────────────────────────────────────────────────────
+      - name: Setup Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      # ── Build Bun sidecar ────────────────────────────────────────────────────
+      - name: Build Bun server sidecar
+        shell: bash
+        run: |
+          TARGET_TRIPLE=$(rustc -Vv | grep '^host:' | awk '{print $2}')
+          echo "Target triple: $TARGET_TRIPLE"
+          mkdir -p src-tauri/binaries
+          OUTFILE="src-tauri/binaries/bun-server-${TARGET_TRIPLE}"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            OUTFILE="${OUTFILE}.exe"
+          fi
+          bun build packages/server/src/index.ts \
+            --compile \
+            --target bun \
+            --outfile "$OUTFILE"
+          ls -lh src-tauri/binaries/
+
+      # ── Build Tauri ──────────────────────────────────────────────────────────
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS signing (optional — set in repo secrets)
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Windows signing (optional)
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || inputs.tag }}
+          releaseName: "Companion ${{ github.ref_type == 'tag' && github.ref_name || inputs.tag }}"
+          releaseBody: |
+            ## Companion Desktop Release
+
+            Multi-session Claude Code Manager — desktop app powered by Tauri 2.
+
+            ### Downloads
+            | Platform | File |
+            |----------|------|
+            | Windows  | `.msi` (recommended) or `.exe` (NSIS) |
+            | macOS    | `.dmg` |
+            | Linux    | `.AppImage` or `.deb` |
+
+            ### Changelog
+            See [CHANGELOG](https://github.com/theio-vn/companion/blob/main/CHANGELOG.md) for details.
+          releaseDraft: true
+          prerelease: false
+          tauriScript: cargo tauri
+          args: ""
+
+      # ── Upload artifacts (for non-release workflow_dispatch) ─────────────────
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            src-tauri/target/release/bundle/**/*.msi
+            src-tauri/target/release/bundle/**/*.exe
+            src-tauri/target/release/bundle/**/*.dmg
+            src-tauri/target/release/bundle/**/*.AppImage
+            src-tauri/target/release/bundle/**/*.deb
+          retention-days: 7
+          if-no-files-found: warn

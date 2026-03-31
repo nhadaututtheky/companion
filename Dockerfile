@@ -41,13 +41,8 @@ COPY --from=web-builder /app/packages/shared/ ./packages/shared/
 COPY packages/server/ packages/server/
 COPY --from=web-builder /app/packages/server/node_modules packages/server/node_modules
 
-# Copy web config + built output
-COPY packages/web/package.json packages/web/
-COPY packages/web/next.config.ts packages/web/
-COPY packages/web/tsconfig.json packages/web/
-COPY packages/web/postcss.config.mjs packages/web/
-COPY --from=web-builder /app/packages/web/.next packages/web/.next
-COPY --from=web-builder /app/packages/web/node_modules packages/web/node_modules
+# Copy web static export output only (no node_modules needed at runtime)
+COPY --from=web-builder /app/packages/web/out packages/web/out
 
 # Create non-root user for security with a proper home directory
 RUN groupadd --system companion && \
@@ -56,7 +51,7 @@ RUN groupadd --system companion && \
 # Create data directory owned by companion user
 RUN mkdir -p data && chown companion:companion data
 
-EXPOSE 3579 3580
+EXPOSE 3579
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
     CMD curl -f http://localhost:3579/api/health || exit 1

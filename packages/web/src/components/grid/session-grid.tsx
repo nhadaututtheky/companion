@@ -32,35 +32,42 @@ export function SessionGrid({ sessions, onExpand }: SessionGridProps) {
   const expandedSessionId = useSessionStore((s) => s.expandedSessionId);
 
   return (
-    <div
-      className="session-grid-inner"
-      style={{
-        display: "grid",
-        gridTemplateColumns: getGridCols(sessions.length),
-        gridTemplateRows: getGridRows(sessions.length),
-        gap: 12,
-        padding: 12,
-        height: "100%",
-        minHeight: 0,
-        overflow: "auto",
-      }}
-    >
-      {sessions.map((s) => (
-        <div
-          key={s.id}
-          style={{
-            opacity: expandedSessionId && expandedSessionId !== s.id ? 0.6 : 1,
-            transition: "opacity 250ms ease",
-            minHeight: 0,
-            overflow: "hidden",
-          }}
-        >
-          <MiniTerminal
-            sessionId={s.id}
-            onExpand={onExpand}
-          />
-        </div>
-      ))}
+    // Outer wrapper handles scroll + padding
+    <div className="h-full overflow-auto p-3">
+      {/*
+        Responsive grid:
+        - Mobile (<768px): single column
+        - md (768-1023px): 2 columns max
+        - lg+ (1024px+): count-based (up to 3 columns)
+        We apply mobile-first Tailwind classes and only use the inline count-based
+        column/row logic at md+ via a CSS custom property approach.
+      */}
+      <div
+        className="session-grid-inner grid gap-3 h-full min-h-0"
+        style={
+          {
+            "--grid-cols-desktop": getGridCols(sessions.length),
+            "--grid-rows-desktop": getGridRows(sessions.length),
+          } as React.CSSProperties
+        }
+      >
+        {sessions.map((s) => (
+          <div
+            key={s.id}
+            style={{
+              opacity: expandedSessionId && expandedSessionId !== s.id ? 0.6 : 1,
+              transition: "opacity 250ms ease",
+              minHeight: 200,
+              overflow: "hidden",
+            }}
+          >
+            <MiniTerminal
+              sessionId={s.id}
+              onExpand={onExpand}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

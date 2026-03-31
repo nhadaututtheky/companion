@@ -15,6 +15,8 @@ import { seedDefaultTemplates } from "./services/templates.js";
 import { DEFAULT_PORT, APP_VERSION } from "@companion/shared";
 import { timingSafeEqual } from "node:crypto";
 import { terminalManager } from "./services/terminal-manager.js";
+import { join, resolve } from "node:path";
+import { existsSync, statSync } from "node:fs";
 
 const log = createLogger("server");
 
@@ -147,7 +149,7 @@ botRegistry.autoStart().catch((err) => {
 const app = new Hono();
 
 // Global middleware — restrict CORS to known origins
-const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "http://localhost:3580,http://localhost:3000")
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? `http://localhost:${port},http://localhost:3580,http://localhost:3000`)
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
@@ -176,8 +178,57 @@ app.use("/api/*", rateLimiter());
 const routes = createRoutes(bridge, botRegistry);
 app.route("/", routes);
 
-// Root redirect
-app.get("/", (c) => c.redirect("/api/health"));
+// ─── Static web UI (production) ──────────────────────────────────────────────
+// Serve the pre-built Next.js static export from packages/web/out/.
+// In dev mode the Next.js dev server runs separately on port 3580.
+
+const WEB_OUT_DIR = join(import.meta.dir, "../../../packages/web/out");
+const WEB_ENABLED = existsSync(WEB_OUT_DIR);
+
+if (WEB_ENABLED) {
+  log.info("Serving web UI from static export", { dir: WEB_OUT_DIR });
+
+  app.get("*", async (c) => {
+    const pathname = new URL(c.req.url).pathname;
+
+    // Strip trailing slash (except root) to find the actual file
+    const cleanPath = pathname === "/" ? "/" : pathname.replace(/\/$/, "");
+
+    // Build candidate file paths (Next.js trailingSlash:true uses index.html)
+    const candidates: string[] = [];
+
+    if (cleanPath === "/") {
+      candidates.push(join(WEB_OUT_DIR, "index.html"));
+    } else {
+      candidates.push(join(WEB_OUT_DIR, cleanPath));
+      candidates.push(join(WEB_OUT_DIR, `${cleanPath}.html`));
+      candidates.push(join(WEB_OUT_DIR, cleanPath, "index.html"));
+    }
+
+    const resolvedBase = resolve(WEB_OUT_DIR);
+    for (const candidate of candidates) {
+      const resolvedCandidate = resolve(candidate);
+      if (!resolvedCandidate.startsWith(resolvedBase + "/") && resolvedCandidate !== resolvedBase) {
+        continue; // path traversal attempt — skip
+      }
+      if (existsSync(candidate) && statSync(candidate).isFile()) {
+        const file = Bun.file(candidate);
+        return new Response(file, {
+          headers: { "Content-Type": file.type },
+        });
+      }
+    }
+
+    // SPA fallback — serve index.html for unknown paths (client-side routing)
+    const indexHtml = Bun.file(join(WEB_OUT_DIR, "index.html"));
+    return new Response(indexHtml, {
+      headers: { "Content-Type": "text/html; charset=utf-8" },
+    });
+  });
+} else {
+  // Dev mode fallback: redirect to Next.js dev server hint
+  app.get("/", (c) => c.redirect("/api/health"));
+}
 
 // ─── WebSocket data attached to each connection ──────────────────────────────
 

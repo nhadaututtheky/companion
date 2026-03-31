@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Companion-v0.3.0-4285F4?style=for-the-badge" alt="Version" />
+  <img src="https://img.shields.io/badge/Companion-v0.4.0-4285F4?style=for-the-badge" alt="Version" />
   <img src="https://img.shields.io/badge/License-BSL_1.1-EA4335?style=for-the-badge" alt="License" />
   <img src="https://img.shields.io/badge/Bun-1.3+-34A853?style=for-the-badge" alt="Bun" />
   <img src="https://img.shields.io/badge/Next.js-16-FBBC04?style=for-the-badge" alt="Next.js" />
@@ -37,7 +37,7 @@ docker compose up -d --build
 
 | Host | Container | Purpose |
 |------|-----------|---------|
-| `~/.claude` | `/root/.claude` | Claude CLI credentials (auto-detected) |
+| `~/.claude` | `/home/companion/.claude` | Claude CLI credentials (auto-detected) |
 | `C:/` | `/mnt/c` | File browser access (Windows — edit `docker-compose.yml` for your drives) |
 | `D:/` | `/mnt/d` | File browser access |
 | Docker volume | `/app/data` | SQLite database persistence |
