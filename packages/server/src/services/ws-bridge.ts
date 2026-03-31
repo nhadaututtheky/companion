@@ -11,6 +11,7 @@ import { summarizeSession, buildSummaryInjection } from "./session-summarizer.js
 import { buildSessionContext } from "./session-context.js";
 import { handleMentions } from "./mention-router.js";
 import { scrapeForContext, isAvailable as isWebIntelAvailable } from "./web-intel.js";
+import { detectLibraryMentions, resolveDocsUrl } from "./web-intel-detector.js";
 import {
   createActiveSession,
   getActiveSession,
@@ -1585,6 +1586,89 @@ export class WsBridge {
       );
     }
 
+    // ── WebIntel: auto-inject library docs (async, best-effort) ────────
+    // Try to enrich with docs before sending to CLI/SDK (timeout 3s)
+    this.maybeEnrichWithDocs(session, content).then((enrichedContent) => {
+      if (!getActiveSession(session.id)) return; // session ended during enrichment
+      this.sendToEngine(session, enrichedContent);
+    }).catch(() => {
+      // Enrichment failed — send original content
+      if (!getActiveSession(session.id)) return;
+      this.sendToEngine(session, content);
+    });
+
+    this.updateStatus(session, "busy");
+  }
+
+  /**
+   * Auto-detect library mentions and inject documentation.
+   * Returns enriched content or original if no docs found.
+   * Times out after 3 seconds to avoid blocking.
+   */
+  private async maybeEnrichWithDocs(session: ActiveSession, content: string): Promise<string> {
+    // Skip if webclaw unavailable
+    if (!(await isWebIntelAvailable())) return content;
+
+    // Track already-injected libraries per session to avoid re-injection
+    if (!session.webIntelInjected) {
+      session.webIntelInjected = new Set<string>();
+    }
+
+    const mentions = detectLibraryMentions(content);
+    const newMentions = mentions.filter((m) => !session.webIntelInjected!.has(m));
+
+    if (newMentions.length === 0) return content;
+
+    // Resolve docs for first 2 new mentions (token budget)
+    const docsBlocks: string[] = [];
+    let totalChars = 0;
+    const MAX_TOTAL_CHARS = 16_000; // ~4000 tokens total
+
+    for (const lib of newMentions.slice(0, 2)) {
+      try {
+        const docsUrl = await Promise.race([
+          resolveDocsUrl(lib),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)),
+        ]);
+
+        if (!docsUrl) continue;
+
+        const maxTokens = Math.floor((MAX_TOTAL_CHARS - totalChars) / 4);
+        if (maxTokens < 500) break; // not enough budget left
+
+        const docsContent = await Promise.race([
+          scrapeForContext(docsUrl, maxTokens),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+        ]);
+
+        if (docsContent) {
+          docsBlocks.push(
+            `<web-docs library="${lib}" url="${docsUrl}" auto-injected="true">\n${docsContent}\n</web-docs>`,
+          );
+          totalChars += docsContent.length;
+          session.webIntelInjected!.add(lib);
+
+          log.info("Auto-injected library docs", {
+            sessionId: session.id,
+            library: lib,
+            url: docsUrl,
+            chars: docsContent.length,
+          });
+        }
+      } catch {
+        // Skip this library silently
+      }
+    }
+
+    if (docsBlocks.length === 0) return content;
+
+    return `${content}\n\n${docsBlocks.join("\n\n")}`;
+  }
+
+  /**
+   * Send content to the active engine (SDK or CLI).
+   */
+  private sendToEngine(session: ActiveSession, content: string): void {
     // SDK engine path
     const existingSdkHandle = this.sdkHandles.get(session.id);
     if (existingSdkHandle || USE_SDK_ENGINE) {
@@ -1610,8 +1694,6 @@ export class WsBridge {
           prompt: content,
         });
       }
-
-      this.updateStatus(session, "busy");
       return;
     }
 
@@ -1621,7 +1703,6 @@ export class WsBridge {
       message: { role: "user", content },
     });
     this.sendToCLI(session, ndjson);
-    this.updateStatus(session, "busy");
   }
 
   private handlePermissionResponse(

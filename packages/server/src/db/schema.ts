@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
 
 // ─── Projects ────────────────────────────────────────────────────────────────
 
@@ -198,3 +198,18 @@ export const sessionSummaries = sqliteTable("session_summaries", {
   filesModified: text("files_modified", { mode: "json" }).$type<string[]>(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
 });
+
+// ─── WebIntel Docs Cache ───────────────────────────────────────────────────
+
+export const webIntelDocs = sqliteTable("web_intel_docs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  libraryName: text("library_name").notNull(),
+  docsUrl: text("docs_url").notNull(),
+  contentHash: text("content_hash").notNull(),
+  llmContent: text("llm_content").notNull(),
+  fetchedAt: integer("fetched_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+  accessCount: integer("access_count").notNull().default(1),
+  lastAccessedAt: integer("last_accessed_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+}, (table) => [
+  index("idx_webintel_docs_library").on(table.libraryName),
+]);

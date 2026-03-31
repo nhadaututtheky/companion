@@ -57,6 +57,8 @@ export interface ActiveSession {
   compactPending?: boolean;
   /** Identity prompt for re-injection after compaction */
   identityPrompt?: string;
+  /** Libraries already auto-injected this session (avoid re-injection) */
+  webIntelInjected?: Set<string>;
 }
 
 /** Max number of messages to keep in memory per session (FIFO eviction) */
