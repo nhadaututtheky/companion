@@ -590,5 +590,76 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
     });
   });
 
+  // ── /web <url> — scrape web page via webclaw ────────────────────────────
+
+  bot.command("web", async (ctx) => {
+    const url = ctx.match?.trim();
+    if (!url) {
+      await ctx.reply("Usage: /web <url>\nFetches web content via webclaw.");
+      return;
+    }
+
+    // Validate URL
+    try {
+      new URL(url);
+    } catch {
+      await ctx.reply("Invalid URL. Please provide a full URL (https://...).");
+      return;
+    }
+
+    // Show typing while fetching
+    await ctx.replyWithChatAction("typing");
+
+    try {
+      const { scrapeForContext, assertSafeUrl } = await import("../../services/web-intel.js");
+
+      // SSRF protection
+      try {
+        assertSafeUrl(url);
+      } catch {
+        await ctx.reply("That URL is not allowed (private/internal addresses blocked).", {
+          message_thread_id: ctx.message?.message_thread_id,
+        });
+        return;
+      }
+
+      const content = await scrapeForContext(url, 3000);
+
+      if (!content) {
+        await ctx.reply(
+          "Could not fetch content — webclaw may be unavailable. Enable the webclaw sidecar in docker-compose.yml.",
+          { message_thread_id: ctx.message?.message_thread_id },
+        );
+        return;
+      }
+
+      // Split long content for Telegram (max ~4000 chars per message)
+      const header = `<b>🌐 Web</b>: ${escapeHTML(url)}\n\n`;
+      const maxContent = TG_MAX_CHARS - header.length - 50;
+
+      if (content.length <= maxContent) {
+        await ctx.reply(
+          `${header}<pre>${escapeHTML(content)}</pre>`,
+          { parse_mode: "HTML", message_thread_id: ctx.message?.message_thread_id },
+        );
+      } else {
+        // Send as document for long content
+        const buffer = Buffer.from(content, "utf-8");
+        const filename = `web-${new URL(url).hostname}.md`;
+        const inputFile = new InputFile(buffer, filename);
+        await ctx.replyWithDocument(inputFile, {
+          caption: `🌐 Content from ${url}`,
+          message_thread_id: ctx.message?.message_thread_id,
+        });
+      }
+    } catch (err) {
+      log.warn("Error in /web command", { url, error: String(err) });
+      await ctx.reply(
+        "Error fetching web content.",
+        { message_thread_id: ctx.message?.message_thread_id },
+      );
+    }
+  });
+
   log.info("Utility commands registered");
 }

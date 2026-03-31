@@ -10,6 +10,7 @@ import { startSdkSession, type SdkSessionHandle } from "./sdk-engine.js";
 import { summarizeSession, buildSummaryInjection } from "./session-summarizer.js";
 import { buildSessionContext } from "./session-context.js";
 import { handleMentions } from "./mention-router.js";
+import { scrapeForContext, isAvailable as isWebIntelAvailable } from "./web-intel.js";
 import {
   createActiveSession,
   getActiveSession,
@@ -1478,6 +1479,79 @@ export class WsBridge {
       return;
     }
 
+    // ── WebIntel: /docs command — fetch web docs and inject into message ──
+    const docsMatch = content.match(/^\/docs\s+(https?:\/\/\S+)(\s+--refresh)?/i);
+    if (docsMatch) {
+      const url = docsMatch[1]!;
+      const refresh = !!docsMatch[2];
+      this.handleDocsCommand(session, content, url, refresh, source);
+      return;
+    }
+
+    // Delegate to shared internal handler
+    this.handleUserMessageInternal(session, content, source);
+  }
+
+  /**
+   * Handle /docs <url> command — fetch web content and inject into the user message.
+   */
+  private handleDocsCommand(
+    session: ActiveSession,
+    originalContent: string,
+    url: string,
+    refresh: boolean,
+    source?: string,
+  ): void {
+    // Async: fetch docs, then send enriched message through normal flow
+    scrapeForContext(url, 4000, { skipCache: refresh }).then((docsContent) => {
+      // Guard: session may have ended during async fetch
+      if (!getActiveSession(session.id)) {
+        log.warn("/docs fetch completed but session is gone", { sessionId: session.id });
+        return;
+      }
+
+      let enrichedContent: string;
+
+      if (docsContent) {
+        // Replace /docs command with the fetched content
+        const userText = originalContent
+          .replace(/^\/docs\s+https?:\/\/\S+(\s+--refresh)?/i, "")
+          .trim();
+
+        enrichedContent = userText
+          ? `${userText}\n\n<web-docs url="${url}" auto-injected="true">\n${docsContent}\n</web-docs>`
+          : `Here are the docs I fetched:\n\n<web-docs url="${url}" auto-injected="true">\n${docsContent}\n</web-docs>`;
+
+        log.info("Injected web docs into message", {
+          sessionId: session.id,
+          url,
+          contentLength: docsContent.length,
+        });
+      } else {
+        // webclaw unavailable or failed — pass original message with note
+        enrichedContent = originalContent.replace(
+          /^\/docs\s+/i,
+          "[Note: webclaw unavailable — could not fetch docs] ",
+        );
+        log.debug("webclaw unavailable for /docs", { sessionId: session.id, url });
+      }
+
+      // Send through normal message flow (skip /docs detection on re-entry)
+      this.handleUserMessageInternal(session, enrichedContent, source);
+    }).catch((err) => {
+      log.warn("Error fetching docs", { sessionId: session.id, url, error: String(err) });
+      this.handleUserMessageInternal(session, originalContent, source);
+    });
+  }
+
+  /**
+   * Internal message handler — called after /docs processing to avoid re-detection loop.
+   */
+  private handleUserMessageInternal(
+    session: ActiveSession,
+    content: string,
+    source?: string,
+  ): void {
     // Reset idle timer whenever user sends a message
     this.clearIdleTimer(session.id);
 
@@ -1501,7 +1575,7 @@ export class WsBridge {
       source: (source as "telegram" | "web" | "api" | "agent" | "system") ?? "api",
     });
 
-    // Route @mentions to target sessions — skip if source is "mention" or "debate" to prevent loops
+    // Route @mentions to target sessions
     if (session.state.short_id && source !== "mention" && source !== "debate") {
       handleMentions(
         content,
@@ -1511,17 +1585,14 @@ export class WsBridge {
       );
     }
 
-    // SDK engine path: start a new query with resume to continue the conversation
+    // SDK engine path
     const existingSdkHandle = this.sdkHandles.get(session.id);
     if (existingSdkHandle || USE_SDK_ENGINE) {
-      // If SDK is still running from previous turn, abort and wait for cleanup
       if (existingSdkHandle?.isRunning()) {
         existingSdkHandle.abort();
       }
-      // Always clear stale handle before starting new one (prevents duplicate loops)
       this.sdkHandles.delete(session.id);
 
-      // Resume the conversation with the new user message
       if (session.cliSessionId) {
         this.startSessionWithSdk(session.id, session, {
           cwd: session.state.cwd || ".",
@@ -1532,9 +1603,6 @@ export class WsBridge {
           cliSessionId: session.cliSessionId,
         });
       } else {
-        log.warn("No cliSessionId for SDK resume — starting fresh session", {
-          sessionId: session.id,
-        });
         this.startSessionWithSdk(session.id, session, {
           cwd: session.state.cwd || ".",
           model: session.state.model || "claude-sonnet-4-6",
@@ -1547,7 +1615,7 @@ export class WsBridge {
       return;
     }
 
-    // CLI engine path: send NDJSON to stdin
+    // CLI engine path
     const ndjson = JSON.stringify({
       type: "user",
       message: { role: "user", content },
