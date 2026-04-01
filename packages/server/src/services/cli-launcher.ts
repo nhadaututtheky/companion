@@ -3,12 +3,15 @@
  * Includes plan mode fix: retry + escalation + watchdog.
  */
 
+import { mkdirSync, writeFileSync, readFileSync, existsSync, unlinkSync } from "node:fs";
+import { join } from "node:path";
 import { createLogger } from "../logger.js";
 import {
   PLAN_MODE_WATCHDOG_MS,
   EXIT_PLAN_MAX_RETRIES,
   EXIT_PLAN_RETRY_DELAY_MS,
 } from "@companion/shared";
+import type { HooksSettings } from "@companion/shared";
 
 const log = createLogger("cli-launcher");
 
@@ -21,6 +24,8 @@ export interface LaunchOptions {
   resume?: boolean;
   cliSessionId?: string;
   envVars?: Record<string, string>;
+  /** Companion hook endpoint URL — injected into project settings for CLI */
+  hooksUrl?: string;
 }
 
 export interface LaunchResult {
@@ -125,6 +130,77 @@ function buildCleanEnv(extra?: Record<string, string>): Record<string, string> {
 }
 
 /**
+ * Inject Companion hooks config into project-level .claude/settings.local.json.
+ * Claude Code reads this file for project-specific overrides.
+ * Returns a cleanup function that removes the injected hooks on session exit.
+ */
+function injectHooksConfig(cwd: string, hooksUrl: string, sessionId: string): () => void {
+  const claudeDir = join(cwd, ".claude");
+  const settingsPath = join(claudeDir, "settings.local.json");
+
+  // Read existing settings if present
+  let existing: Record<string, unknown> = {};
+  try {
+    if (existsSync(settingsPath)) {
+      existing = JSON.parse(readFileSync(settingsPath, "utf-8")) as Record<string, unknown>;
+    }
+  } catch {
+    // Corrupt or unreadable — start fresh
+  }
+
+  // Save original hooks for restoration
+  const originalHooks = existing.hooks as Record<string, unknown> | undefined;
+
+  // Build hooks config pointing to Companion's hook receiver
+  const hookUrl = `${hooksUrl}/${sessionId}`;
+  const companionHook = { type: "http" as const, url: hookUrl };
+  const hooks: HooksSettings = {
+    PreToolUse: [companionHook],
+    PostToolUse: [companionHook],
+    Stop: [companionHook],
+    Notification: [companionHook],
+  };
+
+  // Merge with existing settings (preserve everything else)
+  const merged = { ...existing, hooks };
+
+  // Ensure .claude dir exists
+  mkdirSync(claudeDir, { recursive: true });
+
+  // Write settings
+  writeFileSync(settingsPath, JSON.stringify(merged, null, 2), "utf-8");
+  log.info("Injected hooks config", { settingsPath, hookUrl });
+
+  // Return cleanup function
+  return () => {
+    try {
+      if (originalHooks !== undefined) {
+        // Restore original hooks
+        const current = existsSync(settingsPath)
+          ? JSON.parse(readFileSync(settingsPath, "utf-8")) as Record<string, unknown>
+          : {};
+        const restored = { ...current, hooks: originalHooks };
+        writeFileSync(settingsPath, JSON.stringify(restored, null, 2), "utf-8");
+      } else {
+        // Remove hooks key entirely
+        if (existsSync(settingsPath)) {
+          const current = JSON.parse(readFileSync(settingsPath, "utf-8")) as Record<string, unknown>;
+          delete current.hooks;
+          if (Object.keys(current).length === 0) {
+            unlinkSync(settingsPath);
+          } else {
+            writeFileSync(settingsPath, JSON.stringify(current, null, 2), "utf-8");
+          }
+        }
+      }
+      log.debug("Cleaned up hooks config", { settingsPath });
+    } catch (err) {
+      log.warn("Failed to clean up hooks config", { error: String(err) });
+    }
+  };
+}
+
+/**
  * Launch a Claude Code CLI session with NDJSON piped I/O.
  */
 export function launchCLI(
@@ -153,12 +229,19 @@ export function launchCLI(
   // NOTE: Do NOT use --prompt flag — it runs single-turn mode and CLI exits after response.
   // Instead, send the initial prompt via stdin NDJSON after CLI starts (interactive mode).
 
+  // Inject hooks config into project-level settings if hooksUrl is provided
+  let hooksCleanup: (() => void) | undefined;
+  if (opts.hooksUrl) {
+    hooksCleanup = injectHooksConfig(opts.cwd, opts.hooksUrl, opts.sessionId);
+  }
+
   log.info("Launching CLI", {
     binary,
     cwd: opts.cwd,
     model: opts.model,
     sessionId: opts.sessionId,
     resume: opts.resume,
+    hooks: !!opts.hooksUrl,
   });
 
   const env = buildCleanEnv(opts.envVars);
@@ -249,6 +332,8 @@ export function launchCLI(
   // Track process exit
   const exited = proc.exited.then((code) => {
     log.info("CLI process exited", { pid, code, sessionId: opts.sessionId });
+    // Clean up injected hooks config
+    hooksCleanup?.();
     onExit(code);
     return code;
   });

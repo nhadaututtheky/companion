@@ -52,6 +52,8 @@ import type {
   SessionState,
   SessionStatus,
   PermissionRequest,
+  HookEvent,
+  PreToolUseResponse,
 } from "@companion/shared";
 import { SESSION_IDLE_TIMEOUT_MS, HEALTH_CHECK_INTERVAL_MS, getMaxContextTokens } from "@companion/shared";
 import type { LaunchResult } from "./cli-launcher.js";
@@ -476,7 +478,8 @@ export class WsBridge {
     planWatcher.start();
     this.planWatchers.set(sessionId, planWatcher);
 
-    // Launch CLI process
+    // Launch CLI process with hooks URL pointing to Companion's hook receiver
+    const hooksUrl = this.getHooksBaseUrl();
     const launch = launchCLI(
       {
         sessionId,
@@ -487,6 +490,7 @@ export class WsBridge {
         resume: opts.resume,
         cliSessionId: opts.cliSessionId,
         envVars: opts.envVars,
+        hooksUrl,
       },
       (ndjsonLine) => this.handleCLIMessage(session, ndjsonLine),
       (exitCode) => {
@@ -2248,5 +2252,56 @@ export class WsBridge {
     });
 
     this.onStatusChange?.(session.id, status);
+  }
+
+  /** Get the base URL for the hook receiver endpoint */
+  private getHooksBaseUrl(): string {
+    const port = parseInt(process.env.PORT ?? "3456", 10);
+    const host = process.env.HOST ?? "127.0.0.1";
+    return `http://${host}:${port}/api/hooks`;
+  }
+
+  // ── HTTP Hook handling ──────────────────────────────────────────────────
+
+  /**
+   * Handle an incoming HTTP hook event from Claude Code CLI.
+   * Returns routing result + optional PreToolUse decision.
+   */
+  handleHookEvent(
+    sessionId: string,
+    event: HookEvent,
+  ): { found: boolean; decision?: PreToolUseResponse } {
+    const session = getActiveSession(sessionId);
+    if (!session) {
+      log.debug("Hook event for unknown session", { sessionId, type: event.type });
+      return { found: false };
+    }
+
+    const timestamp = event.timestamp ?? Date.now();
+
+    // Broadcast hook event to all subscribers (browser, Telegram)
+    this.broadcastToAll(session, {
+      type: "hook_event",
+      hookType: event.type,
+      toolName: event.tool_name,
+      toolInput: event.tool_input,
+      toolOutput: event.tool_output,
+      toolError: event.tool_error,
+      message: event.message,
+      timestamp,
+    });
+
+    log.debug("Hook event received", {
+      sessionId,
+      type: event.type,
+      tool: event.tool_name,
+    });
+
+    // PreToolUse: default allow (extensible — custom rules can be added here)
+    if (event.type === "PreToolUse") {
+      return { found: true, decision: { decision: "allow" } };
+    }
+
+    return { found: true };
   }
 }

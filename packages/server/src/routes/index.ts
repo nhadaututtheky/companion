@@ -12,6 +12,7 @@ import { terminalRoutes } from "./terminal.js";
 import { statsRoutes } from "./stats.js";
 import { webintelRoutes } from "./webintel.js";
 import { codegraphRoutes } from "./codegraph.js";
+import { hookRoutes } from "./hooks.js";
 import { apiKeyAuth } from "../middleware/auth.js";
 import { getLicense } from "../services/license.js";
 import type { WsBridge } from "../services/ws-bridge.js";
@@ -23,6 +24,9 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
 
   // Public routes
   api.route("/api", healthRoutes);
+
+  // Hook receiver — no auth (Claude Code CLI posts directly)
+  api.route("/api/hooks", hookRoutes(bridge));
 
   // License info (public — so web can check before auth)
   const licenseRoute = new Hono();

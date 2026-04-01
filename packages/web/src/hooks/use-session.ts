@@ -519,6 +519,30 @@ export function useSession(sessionId: string): UseSessionReturn {
           break;
         }
 
+        case "hook_event": {
+          const hook = msg as {
+            type: "hook_event";
+            hookType: string;
+            toolName?: string;
+            toolOutput?: string;
+            toolError?: boolean;
+            message?: string;
+            timestamp: number;
+          };
+          const hookLabel = hook.toolName
+            ? `[${hook.hookType}] ${hook.toolName}`
+            : `[${hook.hookType}]${hook.message ? ` ${hook.message}` : ""}`;
+          addLog({
+            sessionId,
+            sessionName: getSessionName(),
+            timestamp: hook.timestamp,
+            type: hook.hookType === "Stop" ? "result" : "tool_use",
+            content: hookLabel,
+            meta: { hookType: hook.hookType, toolName: hook.toolName },
+          });
+          break;
+        }
+
         case "error": {
           addLog({
             sessionId,

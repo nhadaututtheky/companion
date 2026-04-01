@@ -186,7 +186,8 @@ export type BrowserIncomingMessage =
   | { type: "cost_warning"; level: "warning" | "critical"; costUsd: number; budgetUsd: number; message: string }
   | { type: "budget_exceeded"; budget: number; spent: number }
   | { type: "budget_warning"; budget: number; spent: number; percentage: number }
-  | { type: "compact_handoff"; stage: "summarizing" | "compacting" | "done"; message: string };
+  | { type: "compact_handoff"; stage: "summarizing" | "compacting" | "done"; message: string }
+  | { type: "hook_event"; hookType: string; toolName?: string; toolInput?: Record<string, unknown>; toolOutput?: string; toolError?: boolean; message?: string; timestamp: number };
 
 // ─── Session State ───────────────────────────────────────────────────────────
 
