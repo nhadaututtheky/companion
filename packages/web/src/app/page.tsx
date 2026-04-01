@@ -443,10 +443,14 @@ export default function DashboardPage() {
         const projectSlug = original?.projectSlug ?? "session";
         const modelShort = original?.model ?? "claude-sonnet-4-6";
 
+        // Derive display name from cwd (folder name), not slug
+        const cwdParts = (original?.cwd ?? "").replace(/\\/g, "/").split("/").filter(Boolean);
+        const projectName = cwdParts[cwdParts.length - 1] ?? projectSlug;
+
         useSessionStore.getState().setSession(sessionId, {
           id: sessionId,
           projectSlug,
-          projectName: projectSlug,
+          projectName,
           model: modelShort,
           status: "starting",
           createdAt: Date.now(),

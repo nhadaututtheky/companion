@@ -471,6 +471,9 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         source: "api",
       });
 
+      // Clear cliSessionId on old session so it won't appear in resumable list again
+      dismissResumableSession(id);
+
       log.info("Session resumed via API", { originalId: id, newSessionId: sessionId });
       return c.json({ success: true, data: { sessionId } } satisfies ApiResponse, 201);
     } catch (err) {
