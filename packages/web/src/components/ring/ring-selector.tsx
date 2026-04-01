@@ -34,13 +34,16 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
   const [open, setOpen] = useState(false);
   const [hoveredBubble, setHoveredBubble] = useState<number>(-1);
 
-  const reducedMotion = typeof window !== "undefined"
-    && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reducedMotion =
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const activeSessions = sessions.filter((s) => ACTIVE_STATUSES.has(s.status));
 
   useEffect(() => {
-    if (reducedMotion) { setOpen(true); return; } // eslint-disable-line react-hooks/set-state-in-effect
+    if (reducedMotion) {
+      setOpen(true); // eslint-disable-line react-hooks/set-state-in-effect -- reduced-motion: open immediately on mount
+      return;
+    }
     requestAnimationFrame(() => setOpen(true));
   }, [reducedMotion]);
 
@@ -133,9 +136,15 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
               height: size,
               zIndex: 43,
               borderRadius: "50%",
-              border: isSelected ? `3px solid ${color}` : "2px solid var(--color-border, rgba(0,0,0,0.1))",
+              border: isSelected
+                ? `3px solid ${color}`
+                : "2px solid var(--color-border, rgba(0,0,0,0.1))",
               background: isSelected ? `${color}12` : "var(--color-bg-card, #fff)",
-              boxShadow: isHovered ? `0 4px 16px ${color}40` : isSelected ? `0 0 12px ${color}30` : "0 2px 8px rgba(0,0,0,0.08)",
+              boxShadow: isHovered
+                ? `0 4px 16px ${color}40`
+                : isSelected
+                  ? `0 0 12px ${color}30`
+                  : "0 2px 8px rgba(0,0,0,0.08)",
               cursor: "pointer",
               display: "flex",
               flexDirection: "column",
@@ -145,27 +154,48 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
               padding: 0,
               transform: open ? "scale(1)" : "scale(0)",
               opacity: open ? 1 : 0,
-              transition: reducedMotion ? "none" : `all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
+              transition: reducedMotion
+                ? "none"
+                : `all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
             }}
             title={session.projectName ?? session.id}
           >
             <div style={{ width: 9, height: 9, borderRadius: "50%", background: color }} />
-            <span style={{
-              fontSize: isHovered ? 8 : 7, fontWeight: isSelected ? 700 : 500,
-              color: isSelected ? color : "var(--color-text-secondary, #555)",
-              maxWidth: size - 10, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            }}>
+            <span
+              style={{
+                fontSize: isHovered ? 8 : 7,
+                fontWeight: isSelected ? 700 : 500,
+                color: isSelected ? color : "var(--color-text-secondary, #555)",
+                maxWidth: size - 10,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
               {(session.projectName ?? session.id).slice(0, 6)}
             </span>
             {/* Selection checkmark */}
             {isSelected && (
-              <div style={{
-                position: "absolute", bottom: -2, right: -2,
-                width: 12, height: 12, borderRadius: "50%",
-                background: color, border: "1.5px solid #fff",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 8, color: "#fff", fontWeight: 700,
-              }}>✓</div>
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: -2,
+                  right: -2,
+                  width: 12,
+                  height: 12,
+                  borderRadius: "50%",
+                  background: color,
+                  border: "1.5px solid #fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 8,
+                  color: "#fff",
+                  fontWeight: 700,
+                }}
+              >
+                ✓
+              </div>
             )}
           </button>
         );
@@ -194,20 +224,52 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <LinkSimple size={14} weight="bold" style={{ color: "#4285F4" }} />
-          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--color-text-primary, #333)", flex: 1 }}>Link Sessions</span>
-          <button onClick={() => setSelecting(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "#999", display: "flex" }} aria-label="Close">
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: "var(--color-text-primary, #333)",
+              flex: 1,
+            }}
+          >
+            Link Sessions
+          </span>
+          <button
+            onClick={() => setSelecting(false)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 2,
+              color: "#999",
+              display: "flex",
+            }}
+            aria-label="Close"
+          >
             <X size={12} weight="bold" />
           </button>
         </div>
 
         <input
-          type="text" value={topic} onChange={(e) => setTopicLocal(e.target.value)}
+          type="text"
+          value={topic}
+          onChange={(e) => setTopicLocal(e.target.value)}
           placeholder="Shared topic (optional)"
-          style={{ padding: "6px 10px", fontSize: 11, borderRadius: 8, border: "1px solid var(--color-border, rgba(0,0,0,0.08))", outline: "none", background: "var(--color-bg-elevated, #f8f8f8)", color: "var(--color-text-primary, #333)" }}
+          style={{
+            padding: "6px 10px",
+            fontSize: 11,
+            borderRadius: 8,
+            border: "1px solid var(--color-border, rgba(0,0,0,0.08))",
+            outline: "none",
+            background: "var(--color-bg-elevated, #f8f8f8)",
+            color: "var(--color-text-primary, #333)",
+          }}
         />
 
         {activeSessions.length === 0 && (
-          <p style={{ fontSize: 11, color: "#999", textAlign: "center", padding: 8 }}>No active sessions — start one first</p>
+          <p style={{ fontSize: 11, color: "#999", textAlign: "center", padding: 8 }}>
+            No active sessions — start one first
+          </p>
         )}
 
         {activeSessions.length > 0 && (
@@ -217,12 +279,33 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
         )}
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
-          <button onClick={() => setSelecting(false)} style={{ padding: "5px 14px", fontSize: 11, borderRadius: 8, border: "1px solid var(--color-border, rgba(0,0,0,0.1))", background: "transparent", cursor: "pointer", color: "#666" }}>
+          <button
+            onClick={() => setSelecting(false)}
+            style={{
+              padding: "5px 14px",
+              fontSize: 11,
+              borderRadius: 8,
+              border: "1px solid var(--color-border, rgba(0,0,0,0.1))",
+              background: "transparent",
+              cursor: "pointer",
+              color: "#666",
+            }}
+          >
             Cancel
           </button>
           <button
-            onClick={handleLink} disabled={selected.size === 0}
-            style={{ padding: "5px 14px", fontSize: 11, fontWeight: 600, borderRadius: 8, border: "none", background: selected.size > 0 ? "#4285F4" : "#ccc", color: "#fff", cursor: selected.size > 0 ? "pointer" : "default" }}
+            onClick={handleLink}
+            disabled={selected.size === 0}
+            style={{
+              padding: "5px 14px",
+              fontSize: 11,
+              fontWeight: 600,
+              borderRadius: 8,
+              border: "none",
+              background: selected.size > 0 ? "#4285F4" : "#ccc",
+              color: "#fff",
+              cursor: selected.size > 0 ? "pointer" : "default",
+            }}
           >
             Link {selected.size > 0 ? `(${selected.size})` : ""}
           </button>

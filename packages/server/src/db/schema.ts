@@ -9,70 +9,87 @@ export const projects = sqliteTable("projects", {
   defaultModel: text("default_model").notNull().default("claude-sonnet-4-6"),
   permissionMode: text("permission_mode").notNull().default("default"),
   envVars: text("env_vars", { mode: "json" }).$type<Record<string, string>>(),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // ─── Sessions ────────────────────────────────────────────────────────────────
 
-export const sessions = sqliteTable("sessions", {
-  id: text("id").primaryKey(),
-  /** Short memorable ID for @mentions (e.g. "fox", "bear") */
-  shortId: text("short_id"),
-  /** User-defined session name (persists after session end) */
-  name: text("name"),
-  projectSlug: text("project_slug").references(() => projects.slug),
-  model: text("model").notNull(),
-  status: text("status").notNull().default("starting"),
-  cwd: text("cwd").notNull(),
-  pid: integer("pid"),
-  permissionMode: text("permission_mode").notNull().default("default"),
-  claudeCodeVersion: text("claude_code_version"),
-  cliSessionId: text("cli_session_id"),
-  /** Source that created this session */
-  source: text("source").notNull().default("api"),
-  /** Parent session ID for forking */
-  parentId: text("parent_id"),
-  /** Shared channel ID for debate/collab */
-  channelId: text("channel_id"),
+export const sessions = sqliteTable(
+  "sessions",
+  {
+    id: text("id").primaryKey(),
+    /** Short memorable ID for @mentions (e.g. "fox", "bear") */
+    shortId: text("short_id"),
+    /** User-defined session name (persists after session end) */
+    name: text("name"),
+    projectSlug: text("project_slug").references(() => projects.slug),
+    model: text("model").notNull(),
+    status: text("status").notNull().default("starting"),
+    cwd: text("cwd").notNull(),
+    pid: integer("pid"),
+    permissionMode: text("permission_mode").notNull().default("default"),
+    claudeCodeVersion: text("claude_code_version"),
+    cliSessionId: text("cli_session_id"),
+    /** Source that created this session */
+    source: text("source").notNull().default("api"),
+    /** Parent session ID for forking */
+    parentId: text("parent_id"),
+    /** Shared channel ID for debate/collab */
+    channelId: text("channel_id"),
 
-  // Session management config
-  /** Cost warning threshold in USD (null = no budget) */
-  costBudgetUsd: real("cost_budget_usd"),
-  /** Budget warning state: 0=none, 1=warned at 80%, 2=warned at 100% */
-  costWarned: integer("cost_warned").notNull().default(0),
-  /** Compact mode: manual | smart | aggressive */
-  compactMode: text("compact_mode").notNull().default("manual"),
-  /** Context % threshold to trigger compact (default 75) */
-  compactThreshold: integer("compact_threshold").notNull().default(75),
+    // Session management config
+    /** Cost warning threshold in USD (null = no budget) */
+    costBudgetUsd: real("cost_budget_usd"),
+    /** Budget warning state: 0=none, 1=warned at 80%, 2=warned at 100% */
+    costWarned: integer("cost_warned").notNull().default(0),
+    /** Compact mode: manual | smart | aggressive */
+    compactMode: text("compact_mode").notNull().default("manual"),
+    /** Context % threshold to trigger compact (default 75) */
+    compactThreshold: integer("compact_threshold").notNull().default(75),
 
-  // Accumulated metrics
-  totalCostUsd: real("total_cost_usd").notNull().default(0),
-  numTurns: integer("num_turns").notNull().default(0),
-  totalInputTokens: integer("total_input_tokens").notNull().default(0),
-  totalOutputTokens: integer("total_output_tokens").notNull().default(0),
-  cacheCreationTokens: integer("cache_creation_tokens").notNull().default(0),
-  cacheReadTokens: integer("cache_read_tokens").notNull().default(0),
-  totalLinesAdded: integer("total_lines_added").notNull().default(0),
-  totalLinesRemoved: integer("total_lines_removed").notNull().default(0),
+    // Accumulated metrics
+    totalCostUsd: real("total_cost_usd").notNull().default(0),
+    numTurns: integer("num_turns").notNull().default(0),
+    totalInputTokens: integer("total_input_tokens").notNull().default(0),
+    totalOutputTokens: integer("total_output_tokens").notNull().default(0),
+    cacheCreationTokens: integer("cache_creation_tokens").notNull().default(0),
+    cacheReadTokens: integer("cache_read_tokens").notNull().default(0),
+    totalLinesAdded: integer("total_lines_added").notNull().default(0),
+    totalLinesRemoved: integer("total_lines_removed").notNull().default(0),
 
-  // File tracking (JSON arrays)
-  filesRead: text("files_read", { mode: "json" }).$type<string[]>().default([]),
-  filesModified: text("files_modified", { mode: "json" }).$type<string[]>().default([]),
-  filesCreated: text("files_created", { mode: "json" }).$type<string[]>().default([]),
+    // File tracking (JSON arrays)
+    filesRead: text("files_read", { mode: "json" }).$type<string[]>().default([]),
+    filesModified: text("files_modified", { mode: "json" }).$type<string[]>().default([]),
+    filesCreated: text("files_created", { mode: "json" }).$type<string[]>().default([]),
 
-  /** Session tags for filtering/organization (JSON array of strings) */
-  tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
+    /** Session tags for filtering/organization (JSON array of strings) */
+    tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
 
-  startedAt: integer("started_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
-  endedAt: integer("ended_at", { mode: "timestamp_ms" }),
-});
+    startedAt: integer("started_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    endedAt: integer("ended_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [
+    index("idx_sessions_status").on(table.status),
+    index("idx_sessions_project").on(table.projectSlug),
+    index("idx_sessions_started_at").on(table.startedAt),
+    index("idx_sessions_ended_at").on(table.endedAt),
+  ],
+);
 
 // ─── Session Messages ────────────────────────────────────────────────────────
 
 export const sessionMessages = sqliteTable("session_messages", {
   id: text("id").primaryKey(),
-  sessionId: text("session_id").notNull().references(() => sessions.id),
+  sessionId: text("session_id")
+    .notNull()
+    .references(() => sessions.id),
   role: text("role").notNull(), // 'user' | 'assistant' | 'system'
   content: text("content").notNull(),
   /** Where the message came from */
@@ -81,7 +98,9 @@ export const sessionMessages = sqliteTable("session_messages", {
   sourceId: text("source_id"),
   /** For agent messages in debates */
   agentRole: text("agent_role"),
-  timestamp: integer("timestamp", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+  timestamp: integer("timestamp", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // ─── Telegram Bots ───────────────────────────────────────────────────────────
@@ -91,11 +110,19 @@ export const telegramBots = sqliteTable("telegram_bots", {
   label: text("label").notNull(),
   role: text("role").notNull().default("claude"), // 'claude' | 'anti' | 'general'
   botToken: text("bot_token").notNull(),
-  allowedChatIds: text("allowed_chat_ids", { mode: "json" }).$type<number[]>().notNull().default([]),
-  allowedUserIds: text("allowed_user_ids", { mode: "json" }).$type<number[]>().notNull().default([]),
+  allowedChatIds: text("allowed_chat_ids", { mode: "json" })
+    .$type<number[]>()
+    .notNull()
+    .default([]),
+  allowedUserIds: text("allowed_user_ids", { mode: "json" })
+    .$type<number[]>()
+    .notNull()
+    .default([]),
   enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
   notificationGroupId: integer("notification_group_id"),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // ─── Telegram Session Mappings ───────────────────────────────────────────────
@@ -103,7 +130,9 @@ export const telegramBots = sqliteTable("telegram_bots", {
 export const telegramSessionMappings = sqliteTable("telegram_session_mappings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   chatId: integer("chat_id").notNull(),
-  sessionId: text("session_id").notNull().references(() => sessions.id),
+  sessionId: text("session_id")
+    .notNull()
+    .references(() => sessions.id),
   projectSlug: text("project_slug").notNull(),
   model: text("model").notNull(),
   topicId: integer("topic_id"),
@@ -111,8 +140,12 @@ export const telegramSessionMappings = sqliteTable("telegram_session_mappings", 
   idleTimeoutEnabled: integer("idle_timeout_enabled", { mode: "boolean" }).notNull().default(true),
   idleTimeoutMs: integer("idle_timeout_ms").notNull().default(3_600_000),
   cliSessionId: text("cli_session_id"),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
-  lastActivityAt: integer("last_activity_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  lastActivityAt: integer("last_activity_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // ─── Daily Costs ─────────────────────────────────────────────────────────────
@@ -131,7 +164,9 @@ export const dailyCosts = sqliteTable("daily_costs", {
 export const settings = sqliteTable("settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // ─── Shared Channels (for debate/collab) ─────────────────────────────────────
@@ -146,7 +181,9 @@ export const channels = sqliteTable("channels", {
   maxRounds: integer("max_rounds").notNull().default(5),
   currentRound: integer("current_round").notNull().default(0),
   verdict: text("verdict", { mode: "json" }),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
   concludedAt: integer("concluded_at", { mode: "timestamp_ms" }),
 });
 
@@ -154,12 +191,16 @@ export const channels = sqliteTable("channels", {
 
 export const channelMessages = sqliteTable("channel_messages", {
   id: text("id").primaryKey(),
-  channelId: text("channel_id").notNull().references(() => channels.id),
+  channelId: text("channel_id")
+    .notNull()
+    .references(() => channels.id),
   agentId: text("agent_id").notNull(),
   role: text("role").notNull(), // 'advocate' | 'challenger' | 'judge' | 'reviewer' | 'human'
   content: text("content").notNull(),
   round: integer("round").notNull().default(0),
-  timestamp: integer("timestamp", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+  timestamp: integer("timestamp", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // ─── Session Templates ──────────────────────────────────────────────────────
@@ -175,102 +216,138 @@ export const sessionTemplates = sqliteTable("session_templates", {
   icon: text("icon").notNull().default("⚡"),
   sortOrder: integer("sort_order").notNull().default(0),
   variables: text("variables"), // JSON string: Array<{ key: string, label: string, defaultValue?: string, required?: boolean }>
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // ─── Session Notes ──────────────────────────────────────────────────────────
 
 export const sessionNotes = sqliteTable("session_notes", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  sessionId: text("session_id").notNull().references(() => sessions.id),
+  sessionId: text("session_id")
+    .notNull()
+    .references(() => sessions.id),
   content: text("content").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // ─── Session Summaries ───────────────────────────────────────────────────────
 
 export const sessionSummaries = sqliteTable("session_summaries", {
   id: text("id").primaryKey(),
-  sessionId: text("session_id").notNull().references(() => sessions.id),
+  sessionId: text("session_id")
+    .notNull()
+    .references(() => sessions.id),
   summary: text("summary").notNull(),
   keyDecisions: text("key_decisions", { mode: "json" }).$type<string[]>(),
   filesModified: text("files_modified", { mode: "json" }).$type<string[]>(),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // ─── WebIntel Docs Cache ───────────────────────────────────────────────────
 
-export const webIntelDocs = sqliteTable("web_intel_docs", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  libraryName: text("library_name").notNull(),
-  docsUrl: text("docs_url").notNull(),
-  contentHash: text("content_hash").notNull(),
-  llmContent: text("llm_content").notNull(),
-  fetchedAt: integer("fetched_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
-  accessCount: integer("access_count").notNull().default(1),
-  lastAccessedAt: integer("last_accessed_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
-}, (table) => [
-  index("idx_webintel_docs_library").on(table.libraryName),
-]);
+export const webIntelDocs = sqliteTable(
+  "web_intel_docs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    libraryName: text("library_name").notNull(),
+    docsUrl: text("docs_url").notNull(),
+    contentHash: text("content_hash").notNull(),
+    llmContent: text("llm_content").notNull(),
+    fetchedAt: integer("fetched_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    accessCount: integer("access_count").notNull().default(1),
+    lastAccessedAt: integer("last_accessed_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [index("idx_webintel_docs_library").on(table.libraryName)],
+);
 
 // ─── CodeGraph: Files ─────────────────────────────────────────────────────────
 
-export const codeFiles = sqliteTable("code_files", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  projectSlug: text("project_slug").notNull(),
-  filePath: text("file_path").notNull(),
-  fileHash: text("file_hash").notNull(),
-  totalLines: integer("total_lines").notNull().default(0),
-  language: text("language").notNull().default("typescript"),
-  description: text("description"),
-  lastScannedAt: integer("last_scanned_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
-  scanVersion: integer("scan_version").notNull().default(1),
-}, (table) => [
-  index("idx_code_files_project").on(table.projectSlug),
-  uniqueIndex("idx_code_files_path").on(table.projectSlug, table.filePath),
-]);
+export const codeFiles = sqliteTable(
+  "code_files",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    projectSlug: text("project_slug").notNull(),
+    filePath: text("file_path").notNull(),
+    fileHash: text("file_hash").notNull(),
+    totalLines: integer("total_lines").notNull().default(0),
+    language: text("language").notNull().default("typescript"),
+    description: text("description"),
+    lastScannedAt: integer("last_scanned_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    scanVersion: integer("scan_version").notNull().default(1),
+  },
+  (table) => [
+    index("idx_code_files_project").on(table.projectSlug),
+    uniqueIndex("idx_code_files_path").on(table.projectSlug, table.filePath),
+  ],
+);
 
 // ─── CodeGraph: Nodes (symbols) ──────────────────────────────────────────────
 
-export const codeNodes = sqliteTable("code_nodes", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  projectSlug: text("project_slug").notNull(),
-  fileId: integer("file_id").notNull(),
-  filePath: text("file_path").notNull(),
-  symbolName: text("symbol_name").notNull(),
-  symbolType: text("symbol_type").notNull(),
-  signature: text("signature"),
-  description: text("description"),
-  isExported: integer("is_exported", { mode: "boolean" }).notNull().default(false),
-  lineStart: integer("line_start").notNull(),
-  lineEnd: integer("line_end").notNull(),
-  bodyPreview: text("body_preview"),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
-}, (table) => [
-  index("idx_code_nodes_project").on(table.projectSlug),
-  index("idx_code_nodes_file").on(table.fileId),
-  index("idx_code_nodes_symbol").on(table.projectSlug, table.symbolName),
-  index("idx_code_nodes_type").on(table.projectSlug, table.symbolType),
-]);
+export const codeNodes = sqliteTable(
+  "code_nodes",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    projectSlug: text("project_slug").notNull(),
+    fileId: integer("file_id").notNull(),
+    filePath: text("file_path").notNull(),
+    symbolName: text("symbol_name").notNull(),
+    symbolType: text("symbol_type").notNull(),
+    signature: text("signature"),
+    description: text("description"),
+    isExported: integer("is_exported", { mode: "boolean" }).notNull().default(false),
+    lineStart: integer("line_start").notNull(),
+    lineEnd: integer("line_end").notNull(),
+    bodyPreview: text("body_preview"),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [
+    index("idx_code_nodes_project").on(table.projectSlug),
+    index("idx_code_nodes_file").on(table.fileId),
+    index("idx_code_nodes_symbol").on(table.projectSlug, table.symbolName),
+    index("idx_code_nodes_type").on(table.projectSlug, table.symbolType),
+  ],
+);
 
 // ─── CodeGraph: Edges (relationships) ────────────────────────────────────────
 
-export const codeEdges = sqliteTable("code_edges", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  projectSlug: text("project_slug").notNull(),
-  sourceNodeId: integer("source_node_id").notNull(),
-  targetNodeId: integer("target_node_id").notNull(),
-  edgeType: text("edge_type").notNull(),
-  trustWeight: real("trust_weight").notNull().default(0.5),
-  context: text("context"),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
-}, (table) => [
-  index("idx_code_edges_source").on(table.sourceNodeId),
-  index("idx_code_edges_target").on(table.targetNodeId),
-  index("idx_code_edges_project").on(table.projectSlug),
-  index("idx_code_edges_type").on(table.projectSlug, table.edgeType),
-]);
+export const codeEdges = sqliteTable(
+  "code_edges",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    projectSlug: text("project_slug").notNull(),
+    sourceNodeId: integer("source_node_id").notNull(),
+    targetNodeId: integer("target_node_id").notNull(),
+    edgeType: text("edge_type").notNull(),
+    trustWeight: real("trust_weight").notNull().default(0.5),
+    context: text("context"),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [
+    index("idx_code_edges_source").on(table.sourceNodeId),
+    index("idx_code_edges_target").on(table.targetNodeId),
+    index("idx_code_edges_project").on(table.projectSlug),
+    index("idx_code_edges_type").on(table.projectSlug, table.edgeType),
+  ],
+);
 
 // ─── CodeGraph: Scan Jobs ────────────────────────────────────────────────────
 
@@ -283,6 +360,8 @@ export const codeScanJobs = sqliteTable("code_scan_jobs", {
   totalNodes: integer("total_nodes").notNull().default(0),
   totalEdges: integer("total_edges").notNull().default(0),
   errorMessage: text("error_message"),
-  startedAt: integer("started_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+  startedAt: integer("started_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
   completedAt: integer("completed_at", { mode: "timestamp_ms" }),
 });

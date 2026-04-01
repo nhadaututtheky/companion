@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { createRoutes } from "./routes/index.js";
-import { rateLimiter } from "./middleware/rate-limiter.js";
+import { createRateLimit } from "./middleware/rate-limit.js";
 import { getDb, closeDb } from "./db/client.js";
 import { eq } from "drizzle-orm";
 import { sessions as sessionsTable } from "./db/schema.js";
@@ -60,28 +60,36 @@ if (startupCleaned > 0) {
 // ── License / Trial verification ────────────────────────────────────────────
 const licenseKey = process.env.COMPANION_LICENSE_KEY;
 if (licenseKey) {
-  verifyLicense(licenseKey).then((license) => {
-    if (license.valid) {
-      log.info(`License: ${license.tier.toUpperCase()} — max ${license.maxSessions} sessions, expires ${license.expiresAt}`);
-    } else {
-      log.warn(`License invalid: ${license.error ?? "unknown"} — falling back to trial`);
-      return checkOrActivateTrial();
-    }
-  }).catch(() => {
-    log.warn("License check failed — activating trial");
-    checkOrActivateTrial();
-  });
+  verifyLicense(licenseKey)
+    .then((license) => {
+      if (license.valid) {
+        log.info(
+          `License: ${license.tier.toUpperCase()} — max ${license.maxSessions} sessions, expires ${license.expiresAt}`,
+        );
+      } else {
+        log.warn(`License invalid: ${license.error ?? "unknown"} — falling back to trial`);
+        return checkOrActivateTrial();
+      }
+    })
+    .catch(() => {
+      log.warn("License check failed — activating trial");
+      checkOrActivateTrial();
+    });
 } else {
   // No license key — check or activate 7-day free trial
-  checkOrActivateTrial().then((trial) => {
-    if (trial.tier === "trial") {
-      log.info(`Free trial: ${trial.daysLeft} days left — all Pro features unlocked`);
-    } else {
-      log.info("Trial expired — free mode (1 session). Get a license at https://companion.theio.vn — buy at https://pay.theio.vn");
-    }
-  }).catch(() => {
-    log.info("No license, no trial — free mode (1 session)");
-  });
+  checkOrActivateTrial()
+    .then((trial) => {
+      if (trial.tier === "trial") {
+        log.info(`Free trial: ${trial.daysLeft} days left — all Pro features unlocked`);
+      } else {
+        log.info(
+          "Trial expired — free mode (1 session). Get a license at https://companion.theio.vn — buy at https://pay.theio.vn",
+        );
+      }
+    })
+    .catch(() => {
+      log.info("No license, no trial — free mode (1 session)");
+    });
 }
 
 // ─── WsBridge ────────────────────────────────────────────────────────────────
@@ -113,12 +121,12 @@ const bridge = new WsBridge({
           .where(eq(sessionsTable.id, sessionId))
           .get();
         projectSlug = row?.projectSlug ?? undefined;
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
 
       const eventType =
-        status === "error"
-          ? "session_error" as const
-          : "session_complete" as const;
+        status === "error" ? ("session_error" as const) : ("session_complete" as const);
 
       void botRegistry.sendNotification({
         type: eventType,
@@ -149,17 +157,23 @@ botRegistry.autoStart().catch((err) => {
 const app = new Hono();
 
 // Global middleware — restrict CORS to known origins
-const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? `http://localhost:${port},http://localhost:3580,http://localhost:3000`)
+const allowedOrigins = (
+  process.env.ALLOWED_ORIGINS ??
+  `http://localhost:${port},http://localhost:3580,http://localhost:3000`
+)
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
 
-app.use("*", cors({
-  origin: (origin) => allowedOrigins.includes(origin) ? origin : null,
-  allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowHeaders: ["Content-Type", "Authorization", "X-API-Key"],
-  credentials: true,
-}));
+app.use(
+  "*",
+  cors({
+    origin: (origin) => (allowedOrigins.includes(origin) ? origin : null),
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization", "X-API-Key"],
+    credentials: true,
+  }),
+);
 
 // Security headers — X-Content-Type-Options, X-Frame-Options, Referrer-Policy, etc.
 app.use("*", async (c, next) => {
@@ -169,10 +183,13 @@ app.use("*", async (c, next) => {
   c.res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   c.res.headers.set("X-XSS-Protection", "0");
   c.res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-  c.res.headers.set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws: wss:; font-src 'self' data:;");
+  c.res.headers.set(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws: wss:; font-src 'self' data:;",
+  );
 });
 
-app.use("/api/*", rateLimiter());
+app.use("/api/*", createRateLimit({ max: 100, windowMs: 60_000 }));
 
 // Mount routes
 const routes = createRoutes(bridge, botRegistry);

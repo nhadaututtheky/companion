@@ -10,7 +10,12 @@ import { startSdkSession, type SdkSessionHandle } from "./sdk-engine.js";
 import { summarizeSession, buildSummaryInjection } from "./session-summarizer.js";
 import { buildSessionContext } from "./session-context.js";
 import { handleMentions } from "./mention-router.js";
-import { scrapeForContext, isAvailable as isWebIntelAvailable, research as webResearch, startCrawl } from "./web-intel.js";
+import {
+  scrapeForContext,
+  isAvailable as isWebIntelAvailable,
+  research as webResearch,
+  startCrawl,
+} from "./web-intel.js";
 import { detectLibraryMentions, resolveDocsUrl } from "./web-intel-detector.js";
 import { registerJob, pollCrawlJob } from "./web-intel-jobs.js";
 import {
@@ -55,7 +60,11 @@ import type {
   HookEvent,
   PreToolUseResponse,
 } from "@companion/shared";
-import { SESSION_IDLE_TIMEOUT_MS, HEALTH_CHECK_INTERVAL_MS, getMaxContextTokens } from "@companion/shared";
+import {
+  SESSION_IDLE_TIMEOUT_MS,
+  HEALTH_CHECK_INTERVAL_MS,
+  getMaxContextTokens,
+} from "@companion/shared";
 import type { LaunchResult } from "./cli-launcher.js";
 
 const log = createLogger("ws-bridge");
@@ -106,7 +115,11 @@ export class WsBridge {
   /** Permission resolvers: requestId → resolve function (for SDK canUseTool bridge) */
   private permissionResolvers = new Map<
     string,
-    (result: { behavior: "allow" | "deny"; message?: string; updatedPermissions?: unknown[] }) => void
+    (result: {
+      behavior: "allow" | "deny";
+      message?: string;
+      updatedPermissions?: unknown[];
+    }) => void
   >();
   private planWatchers = new Map<string, ReturnType<typeof createPlanModeWatcher>>();
   private onStatusChange?: StatusChangeCallback;
@@ -116,10 +129,20 @@ export class WsBridge {
   private sessionSettings = new Map<string, SessionSettings>();
   /** Process liveness check interval handle */
   private healthCheckInterval: ReturnType<typeof setInterval> | null = null;
+  /** Cleanup timers keyed by session ID — cancellable 5-min post-end removal */
+  private cleanupTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  /** Periodic sweep interval — catches sessions that slipped through per-session timers */
+  private cleanupSweepInterval: ReturnType<typeof setInterval> | null = null;
+
+  /** Delay before removing an ended session from in-memory maps (5 minutes) */
+  private static readonly SESSION_CLEANUP_DELAY_MS = 5 * 60 * 1000;
+  /** How often the periodic sweep runs (10 minutes) */
+  private static readonly CLEANUP_SWEEP_INTERVAL_MS = 10 * 60 * 1000;
 
   constructor(opts?: { onStatusChange?: StatusChangeCallback }) {
     this.onStatusChange = opts?.onStatusChange;
     this.startHealthCheck();
+    this.startCleanupSweep();
   }
 
   /** Stop the health check interval (call on server shutdown) */
@@ -127,6 +150,61 @@ export class WsBridge {
     if (this.healthCheckInterval !== null) {
       clearInterval(this.healthCheckInterval);
       this.healthCheckInterval = null;
+    }
+    if (this.cleanupSweepInterval !== null) {
+      clearInterval(this.cleanupSweepInterval);
+      this.cleanupSweepInterval = null;
+    }
+    // Cancel all pending cleanup timers
+    for (const timer of this.cleanupTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.cleanupTimers.clear();
+  }
+
+  /**
+   * Every CLEANUP_SWEEP_INTERVAL_MS, sweep all in-memory sessions and remove any
+   * that are in a terminal state (ended/error) but have no pending cleanup timer.
+   * This catches sessions that transitioned to terminal via paths that didn't call
+   * scheduleCleanup, or where the timer fired but removeActiveSession wasn't reached.
+   */
+  private startCleanupSweep(): void {
+    this.cleanupSweepInterval = setInterval(() => {
+      for (const session of getAllActiveSessions()) {
+        const isTerminal = session.state.status === "ended" || session.state.status === "error";
+        if (!isTerminal) continue;
+        // If no cleanup timer is pending, this session slipped through — remove it now
+        if (!this.cleanupTimers.has(session.id)) {
+          removeActiveSession(session.id);
+          log.debug("Sweep: removed stale ended session from memory", { sessionId: session.id });
+        }
+      }
+    }, WsBridge.CLEANUP_SWEEP_INTERVAL_MS);
+  }
+
+  /** Schedule removal of an ended session from in-memory maps after the cleanup delay. */
+  private scheduleCleanup(sessionId: string): void {
+    // Cancel any existing timer for this session
+    this.cancelCleanupTimer(sessionId);
+
+    const timer = setTimeout(() => {
+      this.cleanupTimers.delete(sessionId);
+      const s = getActiveSession(sessionId);
+      if (s && (s.state.status === "ended" || s.state.status === "error")) {
+        removeActiveSession(sessionId);
+        log.debug("Removed ended session from memory", { sessionId });
+      }
+    }, WsBridge.SESSION_CLEANUP_DELAY_MS);
+
+    this.cleanupTimers.set(sessionId, timer);
+  }
+
+  /** Cancel a pending cleanup timer (e.g. when a session is resumed before cleanup fires). */
+  private cancelCleanupTimer(sessionId: string): void {
+    const existing = this.cleanupTimers.get(sessionId);
+    if (existing !== undefined) {
+      clearTimeout(existing);
+      this.cleanupTimers.delete(sessionId);
     }
   }
 
@@ -158,9 +236,7 @@ export class WsBridge {
    * Returns count of cleaned sessions.
    */
   cleanupZombieSessions(): number {
-    return cleanupZombieSessions(
-      (id) => this.cliProcesses.has(id) || this.sdkHandles.has(id),
-    );
+    return cleanupZombieSessions((id) => this.cliProcesses.has(id) || this.sdkHandles.has(id));
   }
 
   // ── Session lifecycle ───────────────────────────────────────────────────
@@ -301,7 +377,11 @@ export class WsBridge {
       // CodeGraph: inject project map if graph is ready
       let codeGraphMap = "";
       if (opts.projectSlug && isGraphReady(opts.projectSlug)) {
-        try { codeGraphMap = buildProjectMap(opts.projectSlug) ?? ""; } catch { /* skip */ }
+        try {
+          codeGraphMap = buildProjectMap(opts.projectSlug) ?? "";
+        } catch {
+          /* skip */
+        }
       }
       fullPrompt = `${fullPrompt}${summaryContext ?? ""}${sessionContext}${codeGraphMap}`;
     }
@@ -413,7 +493,9 @@ export class WsBridge {
               if (response.behavior === "allow") {
                 resolve({
                   behavior: "allow",
-                  updatedPermissions: response.updatedPermissions as import("@anthropic-ai/claude-agent-sdk").PermissionUpdate[] | undefined,
+                  updatedPermissions: response.updatedPermissions as
+                    | import("@anthropic-ai/claude-agent-sdk").PermissionUpdate[]
+                    | undefined,
                 });
               } else {
                 resolve({ behavior: "deny", message: "Denied by user" });
@@ -428,7 +510,8 @@ export class WsBridge {
                 subtype: "can_use_tool",
                 tool_name: toolName,
                 input,
-                permission_suggestions: permOpts.suggestions as PermissionRequest["permission_suggestions"],
+                permission_suggestions:
+                  permOpts.suggestions as PermissionRequest["permission_suggestions"],
                 description: permOpts.description,
                 tool_use_id: permOpts.toolUseId,
               },
@@ -528,7 +611,11 @@ export class WsBridge {
       // CodeGraph: inject project map if graph is ready
       let codeGraphMapCli = "";
       if (opts.projectSlug && isGraphReady(opts.projectSlug)) {
-        try { codeGraphMapCli = buildProjectMap(opts.projectSlug) ?? ""; } catch { /* skip */ }
+        try {
+          codeGraphMapCli = buildProjectMap(opts.projectSlug) ?? "";
+        } catch {
+          /* skip */
+        }
       }
       const fullPrompt = `${opts.prompt}${summaryContext ?? ""}${sessionContext}${codeGraphMapCli}`;
 
@@ -547,6 +634,7 @@ export class WsBridge {
 
   killSession(sessionId: string): void {
     this.clearIdleTimer(sessionId);
+    this.cancelCleanupTimer(sessionId);
     this.sessionSettings.delete(sessionId);
     this.earlyResults.delete(sessionId);
 
@@ -639,11 +727,7 @@ export class WsBridge {
 
   // ── Subscriber system (for Telegram, etc.) ──────────────────────────────
 
-  subscribe(
-    sessionId: string,
-    subscriberId: string,
-    callback: (msg: unknown) => void,
-  ): () => void {
+  subscribe(sessionId: string, subscriberId: string, callback: (msg: unknown) => void): () => void {
     const session = getActiveSession(sessionId);
     if (!session) {
       log.warn("Cannot subscribe — session not found", { sessionId, subscriberId });
@@ -686,16 +770,20 @@ export class WsBridge {
     session.browserSockets.add(ws);
 
     // Send current state + message history
-    ws.send(JSON.stringify({
-      type: "session_init",
-      session: session.state,
-    } satisfies BrowserIncomingMessage));
+    ws.send(
+      JSON.stringify({
+        type: "session_init",
+        session: session.state,
+      } satisfies BrowserIncomingMessage),
+    );
 
     if (session.messageHistory.length > 0) {
-      ws.send(JSON.stringify({
-        type: "message_history",
-        messages: session.messageHistory as BrowserIncomingMessage[],
-      } satisfies BrowserIncomingMessage));
+      ws.send(
+        JSON.stringify({
+          type: "message_history",
+          messages: session.messageHistory as BrowserIncomingMessage[],
+        } satisfies BrowserIncomingMessage),
+      );
     }
 
     // Replay any buffered early result to this browser (race window fix)
@@ -718,10 +806,12 @@ export class WsBridge {
     if (session.cliSend || sdkRunning) {
       ws.send(JSON.stringify({ type: "cli_connected" }));
     } else if (session.state.status !== "ended" && session.state.status !== "error") {
-      ws.send(JSON.stringify({
-        type: "cli_disconnected",
-        reason: "CLI process not connected",
-      }));
+      ws.send(
+        JSON.stringify({
+          type: "cli_disconnected",
+          reason: "CLI process not connected",
+        }),
+      );
     }
   }
 
@@ -805,10 +895,7 @@ export class WsBridge {
     }
   }
 
-  private handleSystemInit(
-    session: ActiveSession,
-    msg: CLISystemInitMessage,
-  ): void {
+  private handleSystemInit(session: ActiveSession, msg: CLISystemInitMessage): void {
     session.state = {
       ...session.state,
       session_id: msg.session_id || session.state.session_id,
@@ -881,9 +968,7 @@ export class WsBridge {
 
     const projectName = session.state.name ?? session.state.session_id.slice(0, 8);
     const cwd = session.state.cwd;
-    const identityPart = session.identityPrompt
-      ? ` ${session.identityPrompt}`
-      : "";
+    const identityPart = session.identityPrompt ? ` ${session.identityPrompt}` : "";
 
     const reinjectMsg = [
       `[System context re-injection after compaction]`,
@@ -905,10 +990,7 @@ export class WsBridge {
     this.sendToCLI(session, ndjson);
   }
 
-  private handleAssistant(
-    session: ActiveSession,
-    msg: CLIAssistantMessage,
-  ): void {
+  private handleAssistant(session: ActiveSession, msg: CLIAssistantMessage): void {
     // Track file operations from tool_use blocks
     if (msg.message?.content) {
       for (const block of msg.message.content) {
@@ -1001,7 +1083,9 @@ export class WsBridge {
               if (hint) {
                 session.pendingCodeGraphHint = hint;
               }
-            } catch { /* skip */ }
+            } catch {
+              /* skip */
+            }
           }
         }
       }
@@ -1074,11 +1158,13 @@ export class WsBridge {
     const subtype = response.subtype as string | undefined;
 
     if (subtype === "get_context_usage") {
-      const usage = response.usage as {
-        input_tokens?: number;
-        output_tokens?: number;
-        context_window?: number;
-      } | undefined;
+      const usage = response.usage as
+        | {
+            input_tokens?: number;
+            output_tokens?: number;
+            context_window?: number;
+          }
+        | undefined;
 
       if (!usage) return;
 
@@ -1095,10 +1181,7 @@ export class WsBridge {
     }
   }
 
-  private handleResult(
-    session: ActiveSession,
-    msg: CLIResultMessage,
-  ): void {
+  private handleResult(session: ActiveSession, msg: CLIResultMessage): void {
     session.state = {
       ...session.state,
       total_cost_usd: msg.total_cost_usd,
@@ -1109,8 +1192,7 @@ export class WsBridge {
       total_output_tokens: msg.usage?.output_tokens ?? session.state.total_output_tokens,
       cache_creation_tokens:
         msg.usage?.cache_creation_input_tokens ?? session.state.cache_creation_tokens,
-      cache_read_tokens:
-        msg.usage?.cache_read_input_tokens ?? session.state.cache_read_tokens,
+      cache_read_tokens: msg.usage?.cache_read_input_tokens ?? session.state.cache_read_tokens,
     };
 
     const browserMsg: BrowserIncomingMessage = {
@@ -1123,8 +1205,7 @@ export class WsBridge {
     // Buffer result for subscribers that may not yet be registered (race window fix).
     // If no subscribers or browser sockets are connected, stash with TTL so late
     // arrivals can replay it when they subscribe.
-    const hasActiveReceivers =
-      session.browserSockets.size > 0 || session.subscribers.size > 0;
+    const hasActiveReceivers = session.browserSockets.size > 0 || session.subscribers.size > 0;
     if (!hasActiveReceivers) {
       this.earlyResults.set(session.id, {
         msg: browserMsg,
@@ -1164,7 +1245,9 @@ export class WsBridge {
           if (hint) {
             session.pendingCodeGraphHint = hint;
           }
-        } catch { /* skip */ }
+        } catch {
+          /* skip */
+        }
       }
     }
 
@@ -1260,7 +1343,10 @@ export class WsBridge {
     if (compact_mode === "aggressive") {
       // Guard against double-compact
       session.compactPending = true;
-      log.info("Aggressive compact triggered", { session: session.id, contextPct: Math.round(contextPct) });
+      log.info("Aggressive compact triggered", {
+        session: session.id,
+        contextPct: Math.round(contextPct),
+      });
       this.sendCompactCommand(session);
       return;
     }
@@ -1268,7 +1354,10 @@ export class WsBridge {
     // Smart mode: session just went idle in handleResult → trigger handoff now
     if (session.state.status === "idle") {
       session.compactPending = true;
-      log.info("Smart compact handoff triggered at idle", { session: session.id, contextPct: Math.round(contextPct) });
+      log.info("Smart compact handoff triggered at idle", {
+        session: session.id,
+        contextPct: Math.round(contextPct),
+      });
       this.triggerSmartCompactHandoff(session);
     }
   }
@@ -1298,10 +1387,13 @@ export class WsBridge {
       "Keep it concise — this will be injected after compaction to restore context.",
     ].join("\n");
 
-    this.sendToCLI(session, JSON.stringify({
-      type: "user",
-      content: `[SYSTEM: Context at ${session.state.compact_threshold}% — auto-compact handoff]\n\n${handoffPrompt}`,
-    }));
+    this.sendToCLI(
+      session,
+      JSON.stringify({
+        type: "user",
+        content: `[SYSTEM: Context at ${session.state.compact_threshold}% — auto-compact handoff]\n\n${handoffPrompt}`,
+      }),
+    );
 
     // The response will come through normal handleResult flow.
     // We detect completion by watching for the next idle transition
@@ -1311,7 +1403,10 @@ export class WsBridge {
   }
 
   /** Compact handoff timers keyed by session ID — cleared on session removal */
-  private compactTimers = new Map<string, { interval: ReturnType<typeof setInterval>; timeout: ReturnType<typeof setTimeout> }>();
+  private compactTimers = new Map<
+    string,
+    { interval: ReturnType<typeof setInterval>; timeout: ReturnType<typeof setTimeout> }
+  >();
 
   /**
    * EarlyResults buffer — stores result messages that arrived before a subscriber
@@ -1331,7 +1426,11 @@ export class WsBridge {
     // Wait for Claude to respond (poll status transitions)
     const checkInterval = setInterval(() => {
       // Session ended or compact cancelled
-      if (!session.compactPending || session.state.status === "ended" || session.state.status === "error") {
+      if (
+        !session.compactPending ||
+        session.state.status === "ended" ||
+        session.state.status === "error"
+      ) {
         this.clearCompactTimers(session.id);
         session.compactPending = false;
         return;
@@ -1381,16 +1480,16 @@ export class WsBridge {
 
   /** Send /compact slash command to CLI. */
   private sendCompactCommand(session: ActiveSession): void {
-    this.sendToCLI(session, JSON.stringify({
-      type: "user",
-      content: "/compact",
-    }));
+    this.sendToCLI(
+      session,
+      JSON.stringify({
+        type: "user",
+        content: "/compact",
+      }),
+    );
   }
 
-  private handleStreamEvent(
-    session: ActiveSession,
-    msg: CLIStreamEventMessage,
-  ): void {
+  private handleStreamEvent(session: ActiveSession, msg: CLIStreamEventMessage): void {
     this.broadcastToAll(session, {
       type: "stream_event",
       event: msg.event,
@@ -1399,20 +1498,12 @@ export class WsBridge {
   }
 
   // Tools that are safe state transitions — auto-approve immediately
-  private static readonly ALWAYS_APPROVE_TOOLS = new Set([
-    "EnterPlanMode",
-    "ExitPlanMode",
-  ]);
+  private static readonly ALWAYS_APPROVE_TOOLS = new Set(["EnterPlanMode", "ExitPlanMode"]);
 
   // Tools that should NEVER be auto-approved
-  private static readonly NEVER_AUTO_APPROVE_TOOLS = new Set([
-    "AskUserQuestion",
-  ]);
+  private static readonly NEVER_AUTO_APPROVE_TOOLS = new Set(["AskUserQuestion"]);
 
-  private handleControlRequest(
-    session: ActiveSession,
-    msg: CLIControlRequestMessage,
-  ): void {
+  private handleControlRequest(session: ActiveSession, msg: CLIControlRequestMessage): void {
     const toolName = msg.request.tool_name ?? "";
     const subtype = msg.request.subtype;
 
@@ -1460,10 +1551,7 @@ export class WsBridge {
     this.startAutoApproveTimer(session, perm);
   }
 
-  private handleToolProgress(
-    session: ActiveSession,
-    msg: CLIToolProgressMessage,
-  ): void {
+  private handleToolProgress(session: ActiveSession, msg: CLIToolProgressMessage): void {
     this.broadcastToAll(session, {
       type: "tool_progress",
       tool_use_id: msg.tool_use_id,
@@ -1478,7 +1566,13 @@ export class WsBridge {
     const uptimeMs = Date.now() - session.state.started_at;
     const isEarlyExit = uptimeMs < 10_000 && !hadTurns;
 
-    log.info("CLI process exited", { sessionId: session.id, exitCode, wasStarting, uptimeMs, hadTurns });
+    log.info("CLI process exited", {
+      sessionId: session.id,
+      exitCode,
+      wasStarting,
+      uptimeMs,
+      hadTurns,
+    });
 
     session.cliSend = null;
     this.cliProcesses.delete(session.id);
@@ -1508,7 +1602,8 @@ export class WsBridge {
     if (isEarlyExit && exitCode !== 0) {
       reason = `CLI crashed on startup (exit code ${exitCode}). Check that Claude Code is installed and authenticated.`;
     } else if (isEarlyExit && exitCode === 0) {
-      reason = "CLI exited immediately — this may indicate a --print mode issue. Session can be retried.";
+      reason =
+        "CLI exited immediately — this may indicate a --print mode issue. Session can be retried.";
     } else if (exitCode !== 0) {
       reason = `CLI exited unexpectedly (exit code ${exitCode})`;
     }
@@ -1546,33 +1641,33 @@ export class WsBridge {
         const created = (record.filesCreated as string[]) ?? [];
         const changed = [...modified, ...created];
         if (changed.length > 0) {
-          import("../codegraph/diff-updater.js").then(({ incrementalRescan }) => {
-            void incrementalRescan(record.projectSlug!, changed).then((result) => {
-              log.info("CodeGraph incremental rescan", { projectSlug: record.projectSlug, ...result });
-            }).catch((err) => {
-              log.warn("CodeGraph rescan failed", { error: String(err) });
+          import("../codegraph/diff-updater.js")
+            .then(({ incrementalRescan }) => {
+              void incrementalRescan(record.projectSlug!, changed)
+                .then((result) => {
+                  log.info("CodeGraph incremental rescan", {
+                    projectSlug: record.projectSlug,
+                    ...result,
+                  });
+                })
+                .catch((err) => {
+                  log.warn("CodeGraph rescan failed", { error: String(err) });
+                });
+            })
+            .catch(() => {
+              /* codegraph module not available */
             });
-          }).catch(() => { /* codegraph module not available */ });
         }
       }
     }
 
     // Schedule removal from in-memory map after 5 minutes (allows browser reconnect/replay)
-    setTimeout(() => {
-      const s = getActiveSession(session.id);
-      if (s && (s.state.status === "ended" || s.state.status === "error")) {
-        removeActiveSession(session.id);
-        log.debug("Removed ended session from memory", { sessionId: session.id });
-      }
-    }, 5 * 60 * 1000);
+    this.scheduleCleanup(session.id);
   }
 
   // ── Browser message routing ─────────────────────────────────────────────
 
-  private routeBrowserMessage(
-    session: ActiveSession,
-    msg: BrowserOutgoingMessage,
-  ): void {
+  private routeBrowserMessage(session: ActiveSession, msg: BrowserOutgoingMessage): void {
     switch (msg.type) {
       case "user_message":
         this.handleUserMessage(session, msg.content);
@@ -1596,11 +1691,7 @@ export class WsBridge {
     }
   }
 
-  private handleUserMessage(
-    session: ActiveSession,
-    content: string,
-    source?: string,
-  ): void {
+  private handleUserMessage(session: ActiveSession, content: string, source?: string): void {
     // ── Budget gate: block message if budget is exceeded ─────────────────
     const { cost_budget_usd, total_cost_usd } = session.state;
     if (cost_budget_usd && cost_budget_usd > 0 && total_cost_usd >= cost_budget_usd) {
@@ -1635,7 +1726,9 @@ export class WsBridge {
     }
 
     // ── WebIntel: /crawl command — site crawl ──
-    const crawlMatch = content.match(/^\/crawl\s+(https?:\/\/\S+)(?:\s+--depth\s+(\d+))?(?:\s+--max\s+(\d+))?/i);
+    const crawlMatch = content.match(
+      /^\/crawl\s+(https?:\/\/\S+)(?:\s+--depth\s+(\d+))?(?:\s+--max\s+(\d+))?/i,
+    );
     if (crawlMatch) {
       const url = crawlMatch[1]!;
       const depth = Math.min(crawlMatch[2] ? parseInt(crawlMatch[2], 10) : 2, 5);
@@ -1659,45 +1752,47 @@ export class WsBridge {
     source?: string,
   ): void {
     // Async: fetch docs, then send enriched message through normal flow
-    scrapeForContext(url, 4000, { skipCache: refresh }).then((docsContent) => {
-      // Guard: session may have ended during async fetch
-      if (!getActiveSession(session.id)) {
-        log.warn("/docs fetch completed but session is gone", { sessionId: session.id });
-        return;
-      }
+    scrapeForContext(url, 4000, { skipCache: refresh })
+      .then((docsContent) => {
+        // Guard: session may have ended during async fetch
+        if (!getActiveSession(session.id)) {
+          log.warn("/docs fetch completed but session is gone", { sessionId: session.id });
+          return;
+        }
 
-      let enrichedContent: string;
+        let enrichedContent: string;
 
-      if (docsContent) {
-        // Replace /docs command with the fetched content
-        const userText = originalContent
-          .replace(/^\/docs\s+https?:\/\/\S+(\s+--refresh)?/i, "")
-          .trim();
+        if (docsContent) {
+          // Replace /docs command with the fetched content
+          const userText = originalContent
+            .replace(/^\/docs\s+https?:\/\/\S+(\s+--refresh)?/i, "")
+            .trim();
 
-        enrichedContent = userText
-          ? `${userText}\n\n<web-docs url="${url}" auto-injected="true">\n${docsContent}\n</web-docs>`
-          : `Here are the docs I fetched:\n\n<web-docs url="${url}" auto-injected="true">\n${docsContent}\n</web-docs>`;
+          enrichedContent = userText
+            ? `${userText}\n\n<web-docs url="${url}" auto-injected="true">\n${docsContent}\n</web-docs>`
+            : `Here are the docs I fetched:\n\n<web-docs url="${url}" auto-injected="true">\n${docsContent}\n</web-docs>`;
 
-        log.info("Injected web docs into message", {
-          sessionId: session.id,
-          url,
-          contentLength: docsContent.length,
-        });
-      } else {
-        // webclaw unavailable or failed — pass original message with note
-        enrichedContent = originalContent.replace(
-          /^\/docs\s+/i,
-          "[Note: webclaw unavailable — could not fetch docs] ",
-        );
-        log.debug("webclaw unavailable for /docs", { sessionId: session.id, url });
-      }
+          log.info("Injected web docs into message", {
+            sessionId: session.id,
+            url,
+            contentLength: docsContent.length,
+          });
+        } else {
+          // webclaw unavailable or failed — pass original message with note
+          enrichedContent = originalContent.replace(
+            /^\/docs\s+/i,
+            "[Note: webclaw unavailable — could not fetch docs] ",
+          );
+          log.debug("webclaw unavailable for /docs", { sessionId: session.id, url });
+        }
 
-      // Send through normal message flow (skip /docs detection on re-entry)
-      this.handleUserMessageInternal(session, enrichedContent, source);
-    }).catch((err) => {
-      log.warn("Error fetching docs", { sessionId: session.id, url, error: String(err) });
-      this.handleUserMessageInternal(session, originalContent, source);
-    });
+        // Send through normal message flow (skip /docs detection on re-entry)
+        this.handleUserMessageInternal(session, enrichedContent, source);
+      })
+      .catch((err) => {
+        log.warn("Error fetching docs", { sessionId: session.id, url, error: String(err) });
+        this.handleUserMessageInternal(session, originalContent, source);
+      });
   }
 
   /**
@@ -1706,39 +1801,37 @@ export class WsBridge {
   /**
    * Handle /research <query> — search + scrape + synthesize.
    */
-  private handleResearchCommand(
-    session: ActiveSession,
-    query: string,
-    source?: string,
-  ): void {
-    webResearch(query, 3000).then((result) => {
-      if (!getActiveSession(session.id)) return;
+  private handleResearchCommand(session: ActiveSession, query: string, source?: string): void {
+    webResearch(query, 3000)
+      .then((result) => {
+        if (!getActiveSession(session.id)) return;
 
-      let enrichedContent: string;
+        let enrichedContent: string;
 
-      if (result) {
-        const sourceList = result.sources
-          .map((s, i) => `${i + 1}. [${s.title}](${s.url})`)
-          .join("\n");
+        if (result) {
+          const sourceList = result.sources
+            .map((s, i) => `${i + 1}. [${s.title}](${s.url})`)
+            .join("\n");
 
-        enrichedContent = `Here is research on: ${query}\n\n<web-research query="${query}" sources="${result.sources.length}">\n${result.content}\n\nSources:\n${sourceList}\n</web-research>`;
+          enrichedContent = `Here is research on: ${query}\n\n<web-research query="${query}" sources="${result.sources.length}">\n${result.content}\n\nSources:\n${sourceList}\n</web-research>`;
 
-        log.info("Research completed", {
-          sessionId: session.id,
-          query,
-          sources: result.sources.length,
-        });
-      } else {
-        enrichedContent = `[Research failed — WEBCLAW_API_KEY may be required for search] ${query}`;
-      }
+          log.info("Research completed", {
+            sessionId: session.id,
+            query,
+            sources: result.sources.length,
+          });
+        } else {
+          enrichedContent = `[Research failed — WEBCLAW_API_KEY may be required for search] ${query}`;
+        }
 
-      this.handleUserMessageInternal(session, enrichedContent, source);
-    }).catch((err) => {
-      log.warn("Research error", { sessionId: session.id, query, error: String(err) });
-      if (getActiveSession(session.id)) {
-        this.handleUserMessageInternal(session, `[Research failed] ${query}`, source);
-      }
-    });
+        this.handleUserMessageInternal(session, enrichedContent, source);
+      })
+      .catch((err) => {
+        log.warn("Research error", { sessionId: session.id, query, error: String(err) });
+        if (getActiveSession(session.id)) {
+          this.handleUserMessageInternal(session, `[Research failed] ${query}`, source);
+        }
+      });
   }
 
   /**
@@ -1751,87 +1844,89 @@ export class WsBridge {
     maxPages: number,
     source?: string,
   ): void {
-    startCrawl(url, { maxDepth: depth, maxPages }).then((jobId) => {
-      if (!getActiveSession(session.id)) return;
+    startCrawl(url, { maxDepth: depth, maxPages })
+      .then((jobId) => {
+        if (!getActiveSession(session.id)) return;
 
-      if (!jobId) {
-        this.handleUserMessageInternal(
-          session,
-          `[Crawl failed to start — webclaw may be unavailable] ${url}`,
-          source,
-        );
-        return;
-      }
-
-      // Register job for tracking
-      const registered = registerJob({
-        id: jobId,
-        type: "crawl",
-        sessionId: session.id,
-        url,
-      });
-
-      if (!registered) {
-        this.handleUserMessageInternal(
-          session,
-          `[Crawl job limit reached — wait for current crawl to finish] ${url}`,
-          source,
-        );
-        return;
-      }
-
-      // Notify user that crawl started
-      this.broadcastToAll(session, {
-        type: "system_message",
-        content: `🌐 Crawl started: ${url} (depth: ${depth}, max: ${maxPages} pages). Job ID: ${jobId}`,
-        timestamp: Date.now(),
-      } as unknown as BrowserIncomingMessage);
-
-      // Poll until complete (every 3s, max 100 polls = ~5 min safety net)
-      let pollCount = 0;
-      const pollInterval = setInterval(async () => {
-        pollCount++;
-        // Safety: stop polling if session ended or exceeded max polls
-        if (!getActiveSession(session.id) || pollCount > 100) {
-          clearInterval(pollInterval);
+        if (!jobId) {
+          this.handleUserMessageInternal(
+            session,
+            `[Crawl failed to start — webclaw may be unavailable] ${url}`,
+            source,
+          );
           return;
         }
-        const job = await pollCrawlJob(jobId);
-        if (!job || job.status !== "running") {
-          clearInterval(pollInterval);
 
-          if (!getActiveSession(session.id)) return;
+        // Register job for tracking
+        const registered = registerJob({
+          id: jobId,
+          type: "crawl",
+          sessionId: session.id,
+          url,
+        });
 
-          if (job?.status === "completed" && job.result) {
-            const pages = job.result as Array<{ url: string; llm?: string; markdown?: string }>;
-            const summary = pages
-              .slice(0, 10) // max 10 pages in context
-              .map((p) => {
-                const content = (p.llm ?? p.markdown ?? "").slice(0, 2000);
-                return `## ${p.url}\n${content}`;
-              })
-              .join("\n\n---\n\n");
-
-            this.handleUserMessageInternal(
-              session,
-              `Crawl completed for ${url}\n\n<web-crawl url="${url}" pages="${pages.length}" depth="${depth}">\n${summary}\n</web-crawl>`,
-              source,
-            );
-          } else {
-            this.handleUserMessageInternal(
-              session,
-              `[Crawl failed: ${job?.error ?? "unknown error"}] ${url}`,
-              source,
-            );
-          }
+        if (!registered) {
+          this.handleUserMessageInternal(
+            session,
+            `[Crawl job limit reached — wait for current crawl to finish] ${url}`,
+            source,
+          );
+          return;
         }
-      }, 3000);
-    }).catch((err) => {
-      log.warn("Crawl start error", { sessionId: session.id, url, error: String(err) });
-      if (getActiveSession(session.id)) {
-        this.handleUserMessageInternal(session, `[Crawl failed] ${url}`, source);
-      }
-    });
+
+        // Notify user that crawl started
+        this.broadcastToAll(session, {
+          type: "system_message",
+          content: `🌐 Crawl started: ${url} (depth: ${depth}, max: ${maxPages} pages). Job ID: ${jobId}`,
+          timestamp: Date.now(),
+        } as unknown as BrowserIncomingMessage);
+
+        // Poll until complete (every 3s, max 100 polls = ~5 min safety net)
+        let pollCount = 0;
+        const pollInterval = setInterval(async () => {
+          pollCount++;
+          // Safety: stop polling if session ended or exceeded max polls
+          if (!getActiveSession(session.id) || pollCount > 100) {
+            clearInterval(pollInterval);
+            return;
+          }
+          const job = await pollCrawlJob(jobId);
+          if (!job || job.status !== "running") {
+            clearInterval(pollInterval);
+
+            if (!getActiveSession(session.id)) return;
+
+            if (job?.status === "completed" && job.result) {
+              const pages = job.result as Array<{ url: string; llm?: string; markdown?: string }>;
+              const summary = pages
+                .slice(0, 10) // max 10 pages in context
+                .map((p) => {
+                  const content = (p.llm ?? p.markdown ?? "").slice(0, 2000);
+                  return `## ${p.url}\n${content}`;
+                })
+                .join("\n\n---\n\n");
+
+              this.handleUserMessageInternal(
+                session,
+                `Crawl completed for ${url}\n\n<web-crawl url="${url}" pages="${pages.length}" depth="${depth}">\n${summary}\n</web-crawl>`,
+                source,
+              );
+            } else {
+              this.handleUserMessageInternal(
+                session,
+                `[Crawl failed: ${job?.error ?? "unknown error"}] ${url}`,
+                source,
+              );
+            }
+          }
+        }, 3000);
+      })
+      .catch((err) => {
+        log.warn("Crawl start error", { sessionId: session.id, url, error: String(err) });
+        if (getActiveSession(session.id)) {
+          this.handleUserMessageInternal(session, `[Crawl failed] ${url}`, source);
+        }
+      });
   }
 
   private handleUserMessageInternal(
@@ -1864,11 +1959,8 @@ export class WsBridge {
 
     // Route @mentions to target sessions
     if (session.state.short_id && source !== "mention" && source !== "debate") {
-      handleMentions(
-        content,
-        session.id,
-        session.state.short_id,
-        (targetId, msg) => this.sendUserMessage(targetId, msg, "mention"),
+      handleMentions(content, session.id, session.state.short_id, (targetId, msg) =>
+        this.sendUserMessage(targetId, msg, "mention"),
       );
     }
 
@@ -1886,19 +1978,23 @@ export class WsBridge {
       try {
         const ctx = buildMessageContext(cgSlug, content);
         if (ctx) cgContent = `${cgContent}${ctx}`;
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
 
     // ── WebIntel: auto-inject library docs (async, best-effort) ────────
     // Try to enrich with docs before sending to CLI/SDK (timeout 3s)
-    this.maybeEnrichWithDocs(session, cgContent).then((enrichedContent) => {
-      if (!getActiveSession(session.id)) return; // session ended during enrichment
-      this.sendToEngine(session, enrichedContent);
-    }).catch(() => {
-      // Enrichment failed — send CodeGraph-enriched content without WebIntel
-      if (!getActiveSession(session.id)) return;
-      this.sendToEngine(session, cgContent);
-    });
+    this.maybeEnrichWithDocs(session, cgContent)
+      .then((enrichedContent) => {
+        if (!getActiveSession(session.id)) return; // session ended during enrichment
+        this.sendToEngine(session, enrichedContent);
+      })
+      .catch(() => {
+        // Enrichment failed — send CodeGraph-enriched content without WebIntel
+        if (!getActiveSession(session.id)) return;
+        this.sendToEngine(session, cgContent);
+      });
 
     this.updateStatus(session, "busy");
   }
@@ -2030,9 +2126,7 @@ export class WsBridge {
     if (resolver) {
       resolver({
         behavior: msg.behavior,
-        ...(msg.updated_permissions
-          ? { updatedPermissions: msg.updated_permissions }
-          : {}),
+        ...(msg.updated_permissions ? { updatedPermissions: msg.updated_permissions } : {}),
       });
       this.permissionResolvers.delete(msg.request_id);
     } else if (session.cliSend) {
@@ -2047,9 +2141,7 @@ export class WsBridge {
             response: {
               behavior: "allow",
               updatedInput: {},
-              ...(msg.updated_permissions
-                ? { updatedPermissions: msg.updated_permissions }
-                : {}),
+              ...(msg.updated_permissions ? { updatedPermissions: msg.updated_permissions } : {}),
             },
           },
         });
@@ -2166,10 +2258,7 @@ export class WsBridge {
 
   // ── Auto-approve timer ──────────────────────────────────────────────────
 
-  private startAutoApproveTimer(
-    session: ActiveSession,
-    perm: PermissionRequest,
-  ): void {
+  private startAutoApproveTimer(session: ActiveSession, perm: PermissionRequest): void {
     const config = session.autoApproveConfig;
     if (!config.enabled || config.timeoutSeconds <= 0) return;
 
@@ -2214,10 +2303,7 @@ export class WsBridge {
     }
   }
 
-  private broadcastToAll(
-    session: ActiveSession,
-    msg: BrowserIncomingMessage,
-  ): void {
+  private broadcastToAll(session: ActiveSession, msg: BrowserIncomingMessage): void {
     const payload = JSON.stringify(msg);
 
     // Send to browser WebSockets
@@ -2233,10 +2319,7 @@ export class WsBridge {
     this.broadcastToSubscribers(session, msg);
   }
 
-  private broadcastToSubscribers(
-    session: ActiveSession,
-    msg: unknown,
-  ): void {
+  private broadcastToSubscribers(session: ActiveSession, msg: unknown): void {
     for (const [id, callback] of session.subscribers) {
       try {
         callback(msg);
