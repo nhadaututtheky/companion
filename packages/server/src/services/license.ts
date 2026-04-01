@@ -16,7 +16,7 @@ const TRIAL_URL = process.env.COMPANION_TRIAL_URL ?? "https://pay.theio.vn/trial
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 const DATA_DIR = process.env.DATABASE_PATH ? join(process.env.DATABASE_PATH, "..") : "./data";
 
-export type LicenseTier = "free" | "trial" | "pro" | "team";
+export type LicenseTier = "free" | "trial" | "starter" | "pro";
 
 export interface LicenseInfo {
   valid: boolean;
@@ -30,26 +30,43 @@ export interface LicenseInfo {
   error?: string;
 }
 
-const FREE_LICENSE: LicenseInfo = {
-  valid: false,
-  tier: "free",
-  email: "",
-  expiresAt: "",
-  maxSessions: 1,
-  features: ["web_terminal", "basic_commands"],
-  cachedAt: Date.now(),
-};
+// ── Feature definitions by tier ─────────────────────────────────────────────
 
-const TRIAL_FEATURES = [
+const FREE_FEATURES = [
   "web_terminal",
   "basic_commands",
   "multi_session",
   "telegram_bot",
   "magic_ring",
   "stream_bridge",
-  "shared_context",
   "permission_gate_telegram",
+  "templates",
+  "debate_mode",
+  "desktop_app",
+  "thinking_mode",
 ];
+
+const STARTER_FEATURES = [...FREE_FEATURES, "shared_context"];
+
+const PRO_FEATURES = [
+  ...STARTER_FEATURES,
+  "web_intel",
+  "codegraph",
+  "scheduled_sessions",
+];
+
+const FREE_LICENSE: LicenseInfo = {
+  valid: false,
+  tier: "free",
+  email: "",
+  expiresAt: "",
+  maxSessions: 2,
+  features: FREE_FEATURES,
+  cachedAt: Date.now(),
+};
+
+// Trial gets starter-level features for 7 days
+const TRIAL_FEATURES = STARTER_FEATURES;
 
 // In-memory cache
 let cachedLicense: LicenseInfo | null = null;
@@ -121,7 +138,7 @@ export async function verifyLicense(
     const res = await fetch(
       `${VERIFY_URL}?key=${encodeURIComponent(key)}&mid=${encodeURIComponent(mid)}`,
       {
-        headers: { "User-Agent": "Companion/0.2.0" },
+        headers: { "User-Agent": "Companion/0.5.1" },
         signal: AbortSignal.timeout(10000),
       },
     );
@@ -186,14 +203,17 @@ export async function checkOrActivateTrial(): Promise<LicenseInfo> {
 
   // Check persistent cache first
   const persisted = loadCachedLicense();
-  if (persisted?.valid && (persisted.tier === "trial" || persisted.tier === "pro")) {
+  if (
+    persisted?.valid &&
+    (persisted.tier === "trial" || persisted.tier === "starter" || persisted.tier === "pro")
+  ) {
     cachedLicense = persisted;
     return persisted;
   }
 
   try {
     const res = await fetch(`${TRIAL_URL}?mid=${encodeURIComponent(machineId)}`, {
-      headers: { "User-Agent": "Companion/0.2.0" },
+      headers: { "User-Agent": "Companion/0.5.1" },
       signal: AbortSignal.timeout(10000),
     });
 
@@ -226,7 +246,7 @@ export async function checkOrActivateTrial(): Promise<LicenseInfo> {
         maxSessions: license.maxSessions,
       });
     } else {
-      log.info("Trial expired — running in free mode (1 session)");
+      log.info("Trial expired — running in free mode (2 sessions)");
     }
 
     return license;
@@ -267,7 +287,7 @@ export async function checkOrActivateTrial(): Promise<LicenseInfo> {
       tier: isValid ? "trial" : "free",
       email: "",
       expiresAt: trialEnd.toISOString(),
-      maxSessions: isValid ? 6 : 1,
+      maxSessions: isValid ? 6 : 2,
       features: isValid ? TRIAL_FEATURES : FREE_LICENSE.features,
       cachedAt: Date.now(),
       daysLeft,
@@ -306,7 +326,7 @@ export function getMaxSessions(): number {
 
 /** Check if current plan is at least the given tier */
 export function isAtLeast(tier: LicenseTier): boolean {
-  const order: LicenseTier[] = ["free", "trial", "pro", "team"];
+  const order: LicenseTier[] = ["free", "trial", "starter", "pro"];
   const current = getLicense().tier;
   return order.indexOf(current) >= order.indexOf(tier);
 }

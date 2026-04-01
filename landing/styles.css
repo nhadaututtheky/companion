@@ -1552,7 +1552,11 @@ code {
   display: block;
 }
 
-/* ── 4-column Pricing ──────────────────────────────────────────────────── */
+/* ── Pricing Grid ─────────────────────────────────────────────────────── */
+.pricing-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .pricing-grid-4 {
   grid-template-columns: repeat(4, 1fr);
 }
@@ -1843,6 +1847,7 @@ code {
   }
 
   .pricing-grid,
+  .pricing-grid-3,
   .pricing-grid-4 {
     grid-template-columns: 1fr;
     max-width: 400px;
@@ -1889,6 +1894,10 @@ code {
 }
 
 @media (max-width: 1024px) and (min-width: 769px) {
+  .pricing-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   .pricing-grid-4 {
     grid-template-columns: repeat(2, 1fr);
     max-width: 720px;
