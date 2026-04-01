@@ -203,7 +203,7 @@ function QuickScrape() {
           >
             {expanded ? <CaretDown size={10} /> : <CaretRight size={10} />}
             <CheckCircle size={12} color="#34A853" />
-            <span className="truncate flex-1 text-left">{result.metadata?.title as string ?? result.url}</span>
+            <span className="truncate flex-1 text-left">{typeof result.metadata?.title === "string" ? result.metadata.title : result.url}</span>
             <span style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-mono)" }}>
               {wordCount.toLocaleString()} words
             </span>

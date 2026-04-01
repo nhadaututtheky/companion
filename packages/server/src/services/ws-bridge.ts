@@ -1502,8 +1502,8 @@ export class WsBridge {
     const crawlMatch = content.match(/^\/crawl\s+(https?:\/\/\S+)(?:\s+--depth\s+(\d+))?(?:\s+--max\s+(\d+))?/i);
     if (crawlMatch) {
       const url = crawlMatch[1]!;
-      const depth = crawlMatch[2] ? parseInt(crawlMatch[2], 10) : 2;
-      const maxPages = crawlMatch[3] ? parseInt(crawlMatch[3], 10) : 50;
+      const depth = Math.min(crawlMatch[2] ? parseInt(crawlMatch[2], 10) : 2, 5);
+      const maxPages = Math.min(crawlMatch[3] ? parseInt(crawlMatch[3], 10) : 50, 200);
       this.handleCrawlCommand(session, url, depth, maxPages, source);
       return;
     }
@@ -1651,8 +1651,15 @@ export class WsBridge {
         timestamp: Date.now(),
       } as BrowserIncomingMessage);
 
-      // Poll until complete (every 3s, max 5 min handled by job timeout)
+      // Poll until complete (every 3s, max 100 polls = ~5 min safety net)
+      let pollCount = 0;
       const pollInterval = setInterval(async () => {
+        pollCount++;
+        // Safety: stop polling if session ended or exceeded max polls
+        if (!getActiveSession(session.id) || pollCount > 100) {
+          clearInterval(pollInterval);
+          return;
+        }
         const job = await pollCrawlJob(jobId);
         if (!job || job.status !== "running") {
           clearInterval(pollInterval);

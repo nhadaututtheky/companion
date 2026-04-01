@@ -4,6 +4,7 @@
  */
 
 import { createLogger } from "../logger.js";
+import { assertSafeUrl } from "./web-intel.js";
 
 const log = createLogger("web-intel-detector");
 
@@ -202,6 +203,10 @@ export async function resolveDocsUrl(libraryName: string): Promise<string | null
     return KNOWN_LIBRARIES[normalized]!;
   }
 
+  const isSafeUrl = (url: string): boolean => {
+    try { assertSafeUrl(url); return true; } catch { return false; }
+  };
+
   // 2. Try npm registry
   try {
     const res = await fetch(`https://registry.npmjs.org/${encodeURIComponent(normalized)}`, {
@@ -215,8 +220,8 @@ export async function resolveDocsUrl(libraryName: string): Promise<string | null
         repository?: { url?: string } | string;
       };
 
-      // Prefer homepage
-      if (data.homepage && data.homepage.startsWith("http")) {
+      // Prefer homepage (SSRF-validated)
+      if (data.homepage && data.homepage.startsWith("http") && isSafeUrl(data.homepage)) {
         return data.homepage;
       }
 
@@ -233,7 +238,7 @@ export async function resolveDocsUrl(libraryName: string): Promise<string | null
           .replace(/^git:\/\//, "https://")
           .replace(/^ssh:\/\/git@/, "https://");
 
-        if (cleaned.startsWith("http")) {
+        if (cleaned.startsWith("http") && isSafeUrl(cleaned)) {
           return cleaned;
         }
       }
@@ -260,10 +265,10 @@ export async function resolveDocsUrl(libraryName: string): Promise<string | null
       if (urls) {
         // Prefer "Documentation" or "Docs" key
         const docsUrl = urls["Documentation"] ?? urls["Docs"] ?? urls["Homepage"];
-        if (docsUrl?.startsWith("http")) return docsUrl;
+        if (docsUrl?.startsWith("http") && isSafeUrl(docsUrl)) return docsUrl;
       }
 
-      if (data.info?.home_page?.startsWith("http")) return data.info.home_page;
+      if (data.info?.home_page?.startsWith("http") && isSafeUrl(data.info.home_page)) return data.info.home_page;
     }
   } catch {
     // Silently skip PyPI fallback

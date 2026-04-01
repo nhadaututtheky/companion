@@ -224,6 +224,19 @@ export async function batchScrape(
   opts?: BatchOptions,
 ): Promise<ScrapeResult[]> {
   if (urls.length === 0) return [];
+
+  // SSRF protection — validate every URL before sending to webclaw
+  const safeUrls: string[] = [];
+  for (const url of urls) {
+    try {
+      assertSafeUrl(url);
+      safeUrls.push(url);
+    } catch {
+      log.warn("SSRF blocked in batch", { url });
+    }
+  }
+  if (safeUrls.length === 0) return [];
+
   if (!(await isAvailable())) return [];
 
   try {
@@ -236,7 +249,7 @@ export async function batchScrape(
       method: "POST",
       headers,
       body: JSON.stringify({
-        urls,
+        urls: safeUrls,
         formats: opts?.formats ?? ["llm"],
         concurrency: opts?.concurrency ?? 5,
       }),

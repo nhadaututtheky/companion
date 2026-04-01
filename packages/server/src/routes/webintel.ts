@@ -36,6 +36,10 @@ webintelRoutes.post("/scrape", async (c) => {
     return c.json({ success: false, error: "url is required" } satisfies ApiResponse, 400);
   }
 
+  if (body.url.length > 2048) {
+    return c.json({ success: false, error: "URL too long (max 2048 chars)" } satisfies ApiResponse, 400);
+  }
+
   // URL validation + SSRF protection
   try {
     assertSafeUrl(body.url);
@@ -102,6 +106,10 @@ webintelRoutes.post("/search", async (c) => {
     return c.json({ success: false, error: "query is required" } satisfies ApiResponse, 400);
   }
 
+  if (body.query.length > 500) {
+    return c.json({ success: false, error: "Query too long (max 500 chars)" } satisfies ApiResponse, 400);
+  }
+
   const results = await webIntel.search(body.query, body.num ?? 5);
 
   if (results.length === 0) {
@@ -120,6 +128,10 @@ webintelRoutes.post("/research", async (c) => {
 
   if (!body.query || typeof body.query !== "string") {
     return c.json({ success: false, error: "query is required" } satisfies ApiResponse, 400);
+  }
+
+  if (body.query.length > 500) {
+    return c.json({ success: false, error: "Query too long (max 500 chars)" } satisfies ApiResponse, 400);
   }
 
   const maxTokens = Math.min(body.maxTokens ?? 3000, 8000);
