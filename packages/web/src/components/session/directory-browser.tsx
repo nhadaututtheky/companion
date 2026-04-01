@@ -108,7 +108,7 @@ function SkeletonRow() {
         style={{
           height: 12,
           background: "var(--color-bg-elevated)",
-          width: `${40 + Math.random() * 40}%`,
+          width: `${40 + Math.random() * 40}%`, // eslint-disable-line react-hooks/purity
         }}
       />
     </div>

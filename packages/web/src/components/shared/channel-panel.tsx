@@ -501,7 +501,7 @@ export function ChannelPanel({
   // Initial load + poll every 5 seconds
   useEffect(() => {
     if (!channelId) {
-      setChannel(null);
+      setChannel(null); // eslint-disable-line react-hooks/set-state-in-effect -- reset on channel change
       return;
     }
 

@@ -115,6 +115,7 @@ export function SessionDetails({ session }: SessionDetailsProps) {
   }
 
   const s = session.state;
+  // eslint-disable-next-line react-hooks/purity -- Date.now() for elapsed display, re-renders via parent
   const elapsed = s.started_at ? Date.now() - s.started_at : 0;
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useCallback, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { ArrowCounterClockwise, X, TelegramLogo, Globe, Trash, List } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, X, TelegramLogo, Globe, Trash } from "@phosphor-icons/react";
 import { Header } from "@/components/layout/header";
 import { SessionList } from "@/components/session/session-list";
 // StatsGrid moved to Header

@@ -12,7 +12,7 @@ import {
 } from "../codegraph/index.js";
 import { describeNodes } from "../codegraph/semantic-describer.js";
 import { incrementalRescan } from "../codegraph/diff-updater.js";
-import { findNodesByName, getNodeEdges } from "../codegraph/graph-store.js";
+import { getNodeEdges } from "../codegraph/graph-store.js";
 import {
   getImpactRadius,
   getReverseDependencies,
@@ -36,7 +36,7 @@ codegraphRoutes.post("/scan", async (c) => {
   try {
     const jobId = await scanProject(body.projectSlug);
     return c.json({ success: true, data: { jobId } } satisfies ApiResponse);
-  } catch (err) {
+  } catch {
     return c.json({ success: false, error: "Operation failed" } satisfies ApiResponse, 400);
   }
 });
@@ -51,7 +51,7 @@ codegraphRoutes.post("/rescan", async (c) => {
   try {
     const result = await incrementalRescan(body.projectSlug, body.files);
     return c.json({ success: true, data: result } satisfies ApiResponse);
-  } catch (err) {
+  } catch {
     return c.json({ success: false, error: "Operation failed" } satisfies ApiResponse, 400);
   }
 });
@@ -66,7 +66,7 @@ codegraphRoutes.post("/describe", async (c) => {
   try {
     const described = await describeNodes(body.projectSlug);
     return c.json({ success: true, data: { described } } satisfies ApiResponse);
-  } catch (err) {
+  } catch {
     return c.json({ success: false, error: "Operation failed" } satisfies ApiResponse, 400);
   }
 });

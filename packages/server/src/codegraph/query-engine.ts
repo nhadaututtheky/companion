@@ -4,7 +4,7 @@
 
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { getDb } from "../db/client.js";
-import { codeNodes, codeEdges, codeFiles } from "../db/schema.js";
+import { codeNodes, codeEdges } from "../db/schema.js";
 
 // ─── Types ───────────────────────────────────────────────────────────────
 

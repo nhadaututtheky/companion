@@ -18,9 +18,9 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    setContent(null);
+    setLoading(true); // eslint-disable-line react-hooks/set-state-in-effect
+    setError(null);  
+    setContent(null);  
 
     api.fs
       .read(filePath)

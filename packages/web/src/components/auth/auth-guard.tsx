@@ -20,7 +20,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         router.replace("/");
         return;
       }
-      setChecked(true);
+      setChecked(true); // eslint-disable-line react-hooks/set-state-in-effect -- auth guard mount check
       return;
     }
 
@@ -31,7 +31,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    setChecked(true);
+    setChecked(true);  
   }, [pathname, router]);
 
   // Prevent flash of content before redirect

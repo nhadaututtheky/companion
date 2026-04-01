@@ -74,7 +74,7 @@ export function CommandPalette() {
   const [recentActions, setRecentActions] = useState<string[]>([]);
   useEffect(() => {
     if (open) {
-      setRecentActions(getRecentActions());
+      setRecentActions(getRecentActions()); // eslint-disable-line react-hooks/set-state-in-effect -- refresh on open
     }
   }, [open]);
 

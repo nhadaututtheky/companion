@@ -165,7 +165,7 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
       setConnecting(false);
       toast.error("Failed to spawn terminal");
     }
-  }, [defaultCwd, connecting, cleanupTerminal]);
+  }, [defaultCwd, connecting]);  
 
   useEffect(() => {
     spawnTerminal();

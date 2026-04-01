@@ -403,7 +403,7 @@ function SessionCompareModalInner({
 export function SessionCompareModal(props: SessionCompareModalProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    setMounted(true);
+    setMounted(true); // eslint-disable-line react-hooks/set-state-in-effect -- SSR portal guard
     return () => setMounted(false);
   }, []);
 

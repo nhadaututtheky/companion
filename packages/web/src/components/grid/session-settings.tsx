@@ -62,7 +62,7 @@ function SessionSettingsPopover({
 
   // Load current settings
   useEffect(() => {
-    setLoading(true);
+    setLoading(true); // eslint-disable-line react-hooks/set-state-in-effect -- fetch on mount
     Promise.all([
       api.sessions.getSettings(sessionId).catch(() => null),
       api.sessions.get(sessionId).catch(() => null),

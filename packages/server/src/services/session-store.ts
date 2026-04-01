@@ -519,7 +519,7 @@ export function listResumableSessions(opts?: {
       conditions.push(eq(sessions.projectSlug, opts.projectSlug));
     }
 
-    let query = db
+    const query = db
       .select({
         id: sessions.id,
         name: sessions.name,

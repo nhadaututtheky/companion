@@ -10,7 +10,7 @@ import {
   getRelatedNodes,
   getReverseDependencies,
   getExportedNodesByFile,
-  type CodeNodeWithEdges,
+  type CodeNodeWithEdges as _CodeNodeWithEdges,
 } from "./query-engine.js";
 import { getPackageUsageCounts } from "./webintel-bridge.js";
 

@@ -389,8 +389,8 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
   // Load file content when active tab changes or has no cached content
   useEffect(() => {
     if (!activeTab || activeTab.content !== null) return;
-    setFileLoading(true);
-    setFileError(null);
+    setFileLoading(true); // eslint-disable-line react-hooks/set-state-in-effect
+    setFileError(null);  
     api.fs
       .read(activeTab.path)
       .then((res) => {
@@ -409,7 +409,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
 
   // Reset error when active tab changes
   useEffect(() => {
-    setFileError(null);
+    setFileError(null); // eslint-disable-line react-hooks/set-state-in-effect
   }, [activeTabId]);
 
   const handleSelect = useCallback(

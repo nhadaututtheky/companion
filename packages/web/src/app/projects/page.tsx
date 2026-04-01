@@ -8,7 +8,6 @@ import {
   Trash,
   X,
   TelegramLogo,
-  Info,
   Copy,
   Check,
   Warning,

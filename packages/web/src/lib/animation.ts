@@ -30,7 +30,7 @@ export function useAnimatePresence(
 
   useEffect(() => {
     if (isVisible) {
-      setShouldRender(true);
+      setShouldRender(true); // eslint-disable-line react-hooks/set-state-in-effect -- animation state machine
       // Trigger enter on next frame so CSS transition fires
       const rafId = requestAnimationFrame(() => {
         setAnimationState("entering");

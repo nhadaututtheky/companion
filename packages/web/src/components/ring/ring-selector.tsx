@@ -40,7 +40,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
   const activeSessions = sessions.filter((s) => ACTIVE_STATUSES.has(s.status));
 
   useEffect(() => {
-    if (reducedMotion) { setOpen(true); return; }
+    if (reducedMotion) { setOpen(true); return; } // eslint-disable-line react-hooks/set-state-in-effect
     requestAnimationFrame(() => setOpen(true));
   }, [reducedMotion]);
 

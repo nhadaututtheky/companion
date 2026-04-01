@@ -40,6 +40,7 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
     const parts = text.split(regex);
 
     return (
+      // eslint-disable-next-line react-hooks/error-boundaries -- highlight helper, no async risk
       <>
         {parts.map((part, i) =>
           regex.test(part) ? (

@@ -81,7 +81,7 @@ function estimateEndLine(code: string, startLine: number): number {
 
 // ─── TypeScript/JavaScript Scanner ───────────────────────────────────────
 
-function scanTypeScript(code: string, filePath: string): ScanResult {
+function scanTypeScript(code: string, _filePath: string): ScanResult {
   const nodes: ScannedNode[] = [];
   const edges: ScannedEdge[] = [];
 

@@ -475,7 +475,7 @@ export function ExpandedSession({ sessionId, onClose }: ExpandedSessionProps2) {
 
   // Ensure we're in the browser before creating portal
   useEffect(() => {
-    setMounted(true);
+    setMounted(true); // eslint-disable-line react-hooks/set-state-in-effect -- SSR portal guard
   }, []);
 
   if (!mounted || !shouldRender || !sessionId) return null;

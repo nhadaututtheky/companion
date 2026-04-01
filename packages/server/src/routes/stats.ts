@@ -127,14 +127,14 @@ statsRoutes.get("/", (c) => {
   // Start from today or yesterday (if no sessions today yet, streak can still be valid)
   const startCheckDate = dateSet.has(today) ? new Date() : (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d; })();
 
-  let checkDate = new Date(startCheckDate);
+  const checkDate = new Date(startCheckDate);
   checkDate.setHours(0, 0, 0, 0);
 
   // Only count streak if at least today or yesterday had a session
   const checkDateStr = toDateStr(checkDate);
   if (dateSet.has(checkDateStr)) {
     streak = 1;
-    let cursor = new Date(checkDate);
+    const cursor = new Date(checkDate);
     cursor.setDate(cursor.getDate() - 1);
 
     while (dateSet.has(toDateStr(cursor))) {

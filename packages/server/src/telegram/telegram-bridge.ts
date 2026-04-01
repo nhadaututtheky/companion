@@ -551,7 +551,7 @@ export class TelegramBridge {
     const aaLabel = !aa?.enabled ? "Off" : `${aa.timeoutSeconds}s`;
     const idleMs = cfg.idleTimeoutMs;
     const idleLabel = idleMs <= 0 ? "Never" : idleMs === 1_800_000 ? "30m" : idleMs === 3_600_000 ? "1h" : idleMs === 14_400_000 ? "4h" : idleMs === 43_200_000 ? "12h" : `${Math.round(idleMs / 60_000)}m`;
-    const permMode = session?.state.permissionMode ?? "default";
+    const _permMode = session?.state.permissionMode ?? "default";
 
     // Context meter — uses cumulative tokens as rough estimate (actual window may be smaller after compaction)
     const state = session?.state;

@@ -7,8 +7,6 @@ import {
   MagnifyingGlass,
   ArrowClockwise,
   CircleNotch,
-  CheckCircle,
-  WarningCircle,
   Lightning,
   TreeStructure,
   File,
@@ -310,9 +308,9 @@ export default function CodeGraphPanel({ onClose, projectSlug }: CodeGraphPanelP
 
   // Initial load + polling
   useEffect(() => {
-    loadStatus();
-    loadStats();
-    loadHotFiles();
+    loadStatus(); // eslint-disable-line react-hooks/set-state-in-effect -- fetch on mount
+    loadStats();  
+    loadHotFiles();  
 
     const interval = setInterval(() => {
       loadStatus();
@@ -327,8 +325,8 @@ export default function CodeGraphPanel({ onClose, projectSlug }: CodeGraphPanelP
   // Refresh stats + hot files when scan completes
   useEffect(() => {
     if (ready && !scanning) {
-      loadStats();
-      loadHotFiles();
+      loadStats(); // eslint-disable-line react-hooks/set-state-in-effect -- refresh on scan complete
+      loadHotFiles();  
     }
   }, [ready, scanning, loadStats, loadHotFiles]);
 

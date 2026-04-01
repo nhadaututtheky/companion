@@ -6,12 +6,9 @@
  * to include documentation for libraries actually used in the project.
  */
 
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { codeEdges, codeNodes } from "../db/schema.js";
-import { createLogger } from "../logger.js";
-
-const log = createLogger("codegraph-bridge");
 
 /**
  * Extract unique external package names from a project's import edges.

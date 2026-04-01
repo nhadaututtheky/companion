@@ -7,9 +7,9 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { createLogger } from "../logger.js";
 import { getDb } from "../db/client.js";
-import { projects, codeFiles, codeNodes, codeEdges } from "../db/schema.js";
-import { eq, and, inArray } from "drizzle-orm";
-import { discoverFiles, hashFile, detectLanguage, countLines } from "./utils.js";
+import { projects, codeFiles } from "../db/schema.js";
+import { eq, and } from "drizzle-orm";
+import { hashFile, detectLanguage, countLines } from "./utils.js";
 import { scanFile } from "./scanner.js";
 import { calculateTrustWeight, type EdgeType } from "./trust-calculator.js";
 import {

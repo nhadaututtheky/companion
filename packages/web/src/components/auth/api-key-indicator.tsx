@@ -11,7 +11,7 @@ export function ApiKeyIndicator() {
   useEffect(() => {
     const key = localStorage.getItem("api_key") ?? "";
     if (key) {
-      // Show first 4 chars followed by ••••
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage read on mount
       setKeyHint(key.slice(0, 4) + "••••");
     }
   }, []);

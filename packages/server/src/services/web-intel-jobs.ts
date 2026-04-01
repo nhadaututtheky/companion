@@ -4,7 +4,7 @@
  */
 
 import { createLogger } from "../logger.js";
-import { getCrawlStatus, type CrawlJob } from "./web-intel.js";
+import { getCrawlStatus, type CrawlJob as _CrawlJob } from "./web-intel.js";
 
 const log = createLogger("web-intel-jobs");
 

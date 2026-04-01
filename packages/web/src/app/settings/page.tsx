@@ -558,8 +558,8 @@ function GeneralTab() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setApiKey(localStorage.getItem("api_key") ?? "");
-    setServerUrl(localStorage.getItem("server_url") ?? "");
+    setApiKey(localStorage.getItem("api_key") ?? ""); // eslint-disable-line react-hooks/set-state-in-effect
+    setServerUrl(localStorage.getItem("server_url") ?? "");  
   }, []);
 
   useEffect(() => {

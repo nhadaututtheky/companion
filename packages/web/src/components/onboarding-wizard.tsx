@@ -35,7 +35,7 @@ interface StepDotProps {
   total: number;
 }
 
-function StepDot({ index, current, total }: StepDotProps) {
+function StepDot({ index, current, total: _total }: StepDotProps) {
   const done = index < current;
   const active = index === current;
 

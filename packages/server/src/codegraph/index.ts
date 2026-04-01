@@ -21,7 +21,6 @@ import {
   deleteEdgesForProject,
   insertEdges,
   getProjectNodes,
-  getProjectStats,
   createScanJob,
   updateScanJob,
   getLatestScanJob,
@@ -130,7 +129,6 @@ async function runScan(
 ): Promise<void> {
   const startTime = Date.now();
   let totalNodes = 0;
-  let totalEdges = 0;
 
   try {
     log.info("Starting scan", { projectSlug, projectDir });
@@ -292,7 +290,7 @@ async function runScan(
     const uniqueEdges = [...new Map(resolvedEdges.map((e) => [edgeKey(e), e])).values()];
 
     insertEdges(uniqueEdges);
-    totalEdges = uniqueEdges.length;
+    const totalEdges = uniqueEdges.length;
 
     // 5. Semantic descriptions (non-blocking phase)
     updateScanJob(jobId, { status: "describing" as "running" });

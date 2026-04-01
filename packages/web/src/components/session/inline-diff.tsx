@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { GitDiff, CaretRight, CaretDown, File } from "@phosphor-icons/react";
 import { computeDiff, extractHunks } from "../../lib/diff-utils";
-import type { DiffLine } from "../../lib/diff-utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

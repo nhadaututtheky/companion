@@ -13,7 +13,7 @@ import { createLogger } from "../logger.js";
 import type { WsBridge } from "../services/ws-bridge.js";
 import type { HookEvent, HookEventType, PreToolUseResponse, HookAckResponse } from "@companion/shared";
 
-const log = createLogger("hooks");
+const _log = createLogger("hooks");
 
 const VALID_HOOK_TYPES = new Set<HookEventType>(["PreToolUse", "PostToolUse", "Stop", "Notification"]);
 

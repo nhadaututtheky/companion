@@ -3,7 +3,7 @@ import { use, useRef, useState } from "react";
 import { ArrowLeft, PushPin } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
-import { MessageFeed, type Message } from "@/components/session/message-feed";
+import { MessageFeed } from "@/components/session/message-feed";
 import { MessageComposer } from "@/components/session/message-composer";
 import { PermissionGate } from "@/components/session/permission-gate";
 import { SessionDetails } from "@/components/session/session-details";

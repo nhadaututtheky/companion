@@ -2,7 +2,7 @@
  * CodeGraph utilities — file discovery, hashing, gitignore filter, language detection.
  */
 
-import { readdir, stat } from "fs/promises";
+import { readdir } from "fs/promises";
 import { join, relative, extname, resolve } from "path";
 import ignore from "ignore";
 import { readFileSync, existsSync } from "fs";
