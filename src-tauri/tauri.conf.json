@@ -44,7 +44,6 @@
     "shell": {
       "open": false
     },
-    "notification": {},
     "updater": {
       "pubkey": "",
       "endpoints": [
