@@ -1,0 +1,192 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Companion app icon">
+  <defs>
+    <!-- Background inner shadow filter -->
+    <filter id="bg-inner-shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feFlood flood-color="#000000" flood-opacity="0.5" result="flood"/>
+      <feComposite in="flood" in2="SourceGraphic" operator="in" result="shadow"/>
+      <feGaussianBlur in="shadow" stdDeviation="40" result="blurred"/>
+      <feComposite in="blurred" in2="SourceGraphic" operator="over"/>
+    </filter>
+
+    <!-- Glow filter for ring -->
+    <filter id="ring-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Strong outer glow for the ring stroke -->
+    <filter id="ring-outer-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="22" result="blur1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Node glow -->
+    <filter id="node-glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Soft radial glow behind ring -->
+    <radialGradient id="bg-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a4a5a" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#0d2d38" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#0f2228" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Multi-color ring gradient — blue → red → yellow → green → blue -->
+    <linearGradient id="ring-gradient-1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#4285F4"/>
+      <stop offset="33%"  stop-color="#EA4335"/>
+      <stop offset="66%"  stop-color="#FBBC04"/>
+      <stop offset="100%" stop-color="#34A853"/>
+    </linearGradient>
+
+    <!-- Second gradient segment (the other half arc, green → blue) -->
+    <linearGradient id="ring-gradient-2" x1="100%" y1="0%" x2="0%" y2="0%">
+      <stop offset="0%"   stop-color="#4285F4"/>
+      <stop offset="50%"  stop-color="#34A853"/>
+      <stop offset="100%" stop-color="#FBBC04"/>
+    </linearGradient>
+
+    <!-- Conic-like gradient approximation using 4 arcs via stop colors on a full ring path -->
+    <!-- We use a gradient mapped along the ellipse path via gradientUnits="userSpaceOnUse" -->
+    <linearGradient id="ring-grad-full" x1="132" y1="512" x2="892" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#4285F4"/>
+      <stop offset="25%"  stop-color="#EA4335"/>
+      <stop offset="50%"  stop-color="#FBBC04"/>
+      <stop offset="75%"  stop-color="#34A853"/>
+      <stop offset="100%" stop-color="#4285F4"/>
+    </linearGradient>
+
+    <!-- Glow color matching the gradient (blue-ish overall) -->
+    <linearGradient id="ring-glow-grad" x1="132" y1="512" x2="892" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#4285F4" stop-opacity="0.7"/>
+      <stop offset="25%"  stop-color="#EA4335" stop-opacity="0.7"/>
+      <stop offset="50%"  stop-color="#FBBC04" stop-opacity="0.7"/>
+      <stop offset="75%"  stop-color="#34A853" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#4285F4" stop-opacity="0.7"/>
+    </linearGradient>
+
+    <!-- Session node colors -->
+    <radialGradient id="node-blue" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#7bb8ff"/>
+      <stop offset="100%" stop-color="#4285F4"/>
+    </radialGradient>
+    <radialGradient id="node-green" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#6ee89a"/>
+      <stop offset="100%" stop-color="#34A853"/>
+    </radialGradient>
+    <radialGradient id="node-yellow" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#ffe07a"/>
+      <stop offset="100%" stop-color="#FBBC04"/>
+    </radialGradient>
+
+    <!-- Clip path for the rounded rect icon shape -->
+    <clipPath id="icon-clip">
+      <rect x="0" y="0" width="1024" height="1024" rx="220" ry="220"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background: dark green-navy rounded rect -->
+  <rect x="0" y="0" width="1024" height="1024" rx="220" ry="220" fill="#0f2228"/>
+
+  <!-- Subtle inner edge darkening -->
+  <rect x="0" y="0" width="1024" height="1024" rx="220" ry="220"
+        fill="none" stroke="#000000" stroke-width="60" stroke-opacity="0.25"/>
+
+  <!-- Subtle background texture: very faint radial highlight at center top -->
+  <ellipse cx="512" cy="320" rx="380" ry="240"
+           fill="url(#bg-glow)" opacity="0.7"/>
+
+  <!-- All clipped to icon shape -->
+  <g clip-path="url(#icon-clip)">
+
+    <!-- =====================================================
+         MAGIC RING — tilted orbital ellipse
+         The ring is rendered as a path (full ellipse) tilted ~-25deg
+         Center: 512,512  Outer rx=380 ry=118  Stroke width=28
+         Tilt applied via transform rotate(-25, 512, 512)
+         ===================================================== -->
+
+    <!-- Glow layer (wide, soft) — behind everything -->
+    <g transform="rotate(-25, 512, 512)" filter="url(#ring-outer-glow)">
+      <ellipse cx="512" cy="512" rx="380" ry="118"
+               fill="none"
+               stroke="url(#ring-glow-grad)"
+               stroke-width="52"
+               opacity="0.55"/>
+    </g>
+
+    <!-- Ring front arc — drawn as the main visible stroke with gradient -->
+    <g transform="rotate(-25, 512, 512)" filter="url(#ring-glow)">
+      <ellipse cx="512" cy="512" rx="380" ry="118"
+               fill="none"
+               stroke="url(#ring-grad-full)"
+               stroke-width="28"
+               stroke-linecap="round"/>
+    </g>
+
+    <!-- =====================================================
+         SESSION NODES — 3 small dots inside the ring center
+         connected by thin lines
+         Represent: 3 concurrent Claude Code sessions
+         ===================================================== -->
+
+    <!-- Connection lines (thin, semi-transparent) -->
+    <!-- Line: node1 (center-left) to node2 (center-right) -->
+    <line x1="400" y1="498" x2="624" y2="498"
+          stroke="#4285F4" stroke-width="3" stroke-opacity="0.5"
+          stroke-dasharray="6 4"/>
+    <!-- Line: node1 to node3 (bottom center) -->
+    <line x1="400" y1="498" x2="512" y2="558"
+          stroke="#34A853" stroke-width="3" stroke-opacity="0.5"
+          stroke-dasharray="6 4"/>
+    <!-- Line: node2 to node3 -->
+    <line x1="624" y1="498" x2="512" y2="558"
+          stroke="#FBBC04" stroke-width="3" stroke-opacity="0.5"
+          stroke-dasharray="6 4"/>
+
+    <!-- Node 1 — left — blue (session 1) -->
+    <g filter="url(#node-glow)">
+      <circle cx="400" cy="498" r="26" fill="url(#node-blue)" opacity="0.95"/>
+      <circle cx="400" cy="498" r="26" fill="none" stroke="#4285F4" stroke-width="2" stroke-opacity="0.8"/>
+    </g>
+
+    <!-- Node 2 — right — yellow (session 2) -->
+    <g filter="url(#node-glow)">
+      <circle cx="624" cy="498" r="26" fill="url(#node-yellow)" opacity="0.95"/>
+      <circle cx="624" cy="498" r="26" fill="none" stroke="#FBBC04" stroke-width="2" stroke-opacity="0.8"/>
+    </g>
+
+    <!-- Node 3 — bottom center — green (session 3) -->
+    <g filter="url(#node-glow)">
+      <circle cx="512" cy="558" r="26" fill="url(#node-green)" opacity="0.95"/>
+      <circle cx="512" cy="558" r="26" fill="none" stroke="#34A853" stroke-width="2" stroke-opacity="0.8"/>
+    </g>
+
+    <!-- Small inner dot inside each node — depth detail -->
+    <circle cx="400" cy="495" r="7" fill="#ffffff" opacity="0.55"/>
+    <circle cx="624" cy="495" r="7" fill="#ffffff" opacity="0.55"/>
+    <circle cx="512" cy="555" r="7" fill="#ffffff" opacity="0.55"/>
+
+  </g>
+
+  <!-- Final vignette: subtle dark edge frame -->
+  <rect x="0" y="0" width="1024" height="1024" rx="220" ry="220"
+        fill="none"
+        stroke="#000000"
+        stroke-width="3"
+        stroke-opacity="0.6"/>
+</svg>
