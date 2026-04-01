@@ -603,7 +603,8 @@ export class TelegramBridge {
     const shortIdStr = shortId ? ` · <code>#${escapeHTML(shortId)}</code>` : "";
 
     const thinkingMode = session?.state.thinking_mode ?? "adaptive";
-    const thinkingLabel = thinkingMode === "adaptive" ? "⚡Adaptive" : thinkingMode === "off" ? "💤Off" : "🧠Deep";
+    const thinkingLabel =
+      thinkingMode === "adaptive" ? "⚡Adaptive" : thinkingMode === "off" ? "💤Off" : "🧠Deep";
 
     const text = [
       `<b>${escapeHTML(projectName)}</b> · <code>${escapeHTML(model)}</code> · ${statusEmoji(status)} ${status}${shortIdStr}`,

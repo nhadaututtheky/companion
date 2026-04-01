@@ -5,7 +5,12 @@ import { useSessionStore } from "@/lib/stores/session-store";
 import { useActivityStore } from "@/lib/stores/activity-store";
 import { notify } from "./use-notifications";
 import { api } from "@/lib/api-client";
-import type { BrowserIncomingMessage, ContentBlock, SessionState, ThinkingMode } from "@companion/shared";
+import type {
+  BrowserIncomingMessage,
+  ContentBlock,
+  SessionState,
+  ThinkingMode,
+} from "@companion/shared";
 
 interface Message {
   id: string;
@@ -611,5 +616,13 @@ export function useSession(sessionId: string): UseSessionReturn {
     [send],
   );
 
-  return { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel, setThinkingMode };
+  return {
+    messages,
+    pendingPermissions,
+    wsStatus,
+    sendMessage,
+    respondPermission,
+    setModel,
+    setThinkingMode,
+  };
 }

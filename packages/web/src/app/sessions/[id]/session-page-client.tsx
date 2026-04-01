@@ -104,8 +104,15 @@ function ContextStatusBar({
 export function SessionPageClient({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel, setThinkingMode } =
-    useSession(id);
+  const {
+    messages,
+    pendingPermissions,
+    wsStatus,
+    sendMessage,
+    respondPermission,
+    setModel,
+    setThinkingMode,
+  } = useSession(id);
   const session = useSessionStore((s) => s.sessions[id]);
   const [pinnedDrawerOpen, setPinnedDrawerOpen] = useState(false);
   const scrollToMessageRef = useRef<((index: number) => void) | null>(null);

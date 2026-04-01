@@ -66,7 +66,9 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     keyboard.row();
     keyboard.text("↩ Back", `panel:status:${sessionId}`);
 
-    await ctx.editMessageText("Select model & thinking mode:", { reply_markup: keyboard }).catch(() => {});
+    await ctx
+      .editMessageText("Select model & thinking mode:", { reply_markup: keyboard })
+      .catch(() => {});
   });
 
   bot.callbackQuery(/^panel:setmodel:([^:]+):(.+)$/, async (ctx) => {

@@ -1,7 +1,7 @@
 # Pre-Compact Snapshot
-Generated: 2026-03-17T20:05:41.925Z
+Generated: 2026-04-01T08:14:14.712Z
 
 ## Session Metrics
-- Tool calls: 96
-- Session start: 2026-03-17T18:58:33.020Z
-- Top tools: unknown(96)
+- Tool calls: 25
+- Session start: 2026-04-01T05:59:24.831Z
+- Top tools: unknown(25)

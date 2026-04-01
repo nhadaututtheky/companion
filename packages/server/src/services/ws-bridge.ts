@@ -297,7 +297,8 @@ export class WsBridge {
       cost_warned: 0,
       compact_mode: (opts.compactMode as SessionState["compact_mode"]) ?? "manual",
       compact_threshold: opts.compactThreshold ?? 75,
-      thinking_mode: opts.thinkingBudget === undefined ? "adaptive" : opts.thinkingBudget === 0 ? "off" : "deep",
+      thinking_mode:
+        opts.thinkingBudget === undefined ? "adaptive" : opts.thinkingBudget === 0 ? "off" : "deep",
     };
 
     // Create in-memory session
