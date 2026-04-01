@@ -133,8 +133,22 @@ export function buildProjectMap(projectSlug: string): string | null {
 
 // ─── Injection Point B: Message Context ─────────────────────────────────
 
-// Simple memoization cache
+// Simple memoization cache (capped at 200 entries)
 const contextCache = new Map<string, { result: string | null; expires: number }>();
+const CACHE_MAX_SIZE = 200;
+
+function cacheSet(key: string, value: { result: string | null; expires: number }) {
+  if (contextCache.size >= CACHE_MAX_SIZE) {
+    // Evict oldest entries (Map preserves insertion order)
+    const toDelete = contextCache.size - CACHE_MAX_SIZE + 50;
+    let i = 0;
+    for (const k of contextCache.keys()) {
+      if (i++ >= toDelete) break;
+      contextCache.delete(k);
+    }
+  }
+  contextCache.set(key, value);
+}
 
 /**
  * Build relevant code context for a user message.
@@ -157,7 +171,7 @@ export function buildMessageContext(
   try {
     const related = getRelatedNodes(projectSlug, keywords, 5);
     if (related.length === 0) {
-      contextCache.set(cacheKey, { result: null, expires: Date.now() + 60_000 });
+      cacheSet(cacheKey, { result: null, expires: Date.now() + 60_000 });
       return null;
     }
 
@@ -183,7 +197,7 @@ export function buildMessageContext(
     lines.push(`</codegraph>`);
     const result = "\n\n" + lines.join("\n");
 
-    contextCache.set(cacheKey, { result, expires: Date.now() + 60_000 });
+    cacheSet(cacheKey, { result, expires: Date.now() + 60_000 });
     return result;
   } catch (err) {
     log.warn("Failed to build message context", { error: String(err) });
@@ -276,13 +290,13 @@ export function checkBreaks(
       const exports = getExportedNodesByFile(projectSlug, filePath);
       if (exports.length === 0) continue;
 
-      // Check which exports have incoming edges (are depended on)
-      for (const exp of exports) {
-        const reverseDeps = getReverseDependencies(projectSlug, filePath)
-          .filter((d) => d.cumulativeTrust >= 0.5);
+      // Check reverse deps once per file (not per export)
+      const reverseDeps = getReverseDependencies(projectSlug, filePath)
+        .filter((d) => d.cumulativeTrust >= 0.5);
 
-        if (reverseDeps.length > 0) {
-          const uniqueFiles = [...new Set(reverseDeps.map((d) => d.filePath))].slice(0, 3);
+      if (reverseDeps.length > 0) {
+        const uniqueFiles = [...new Set(reverseDeps.map((d) => d.filePath))].slice(0, 3);
+        for (const exp of exports) {
           breakages.push({
             file: filePath,
             symbol: exp.symbolName,

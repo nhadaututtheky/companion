@@ -2,7 +2,7 @@
  * CodeGraph query engine — graph traversal utilities for agent context injection.
  */
 
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { codeNodes, codeEdges, codeFiles } from "../db/schema.js";
 
@@ -73,9 +73,11 @@ export function getImpactRadius(
     visited.set(s.id, { distance: 0, trust: 1.0 });
   }
 
+  const MAX_VISITED = 2000;
+
   // BFS
   for (let depth = 1; depth <= maxDepth; depth++) {
-    if (frontier.length === 0) break;
+    if (frontier.length === 0 || visited.size >= MAX_VISITED) break;
 
     const frontierIds = frontier.map((f) => f.id);
     // Get outgoing edges from frontier
@@ -88,7 +90,7 @@ export function getImpactRadius(
       .from(codeEdges)
       .where(and(
         eq(codeEdges.projectSlug, projectSlug),
-        sql`${codeEdges.sourceNodeId} IN (${sql.raw(frontierIds.join(","))})`,
+        inArray(codeEdges.sourceNodeId, frontierIds),
       ))
       .all();
 
@@ -128,7 +130,7 @@ export function getImpactRadius(
       description: codeNodes.description,
     })
     .from(codeNodes)
-    .where(sql`${codeNodes.id} IN (${sql.raw(resultIds.join(","))})`)
+    .where(inArray(codeNodes.id, resultIds))
     .all();
 
   return nodes
@@ -182,7 +184,7 @@ export function getReverseDependencies(
     .from(codeEdges)
     .where(and(
       eq(codeEdges.projectSlug, projectSlug),
-      sql`${codeEdges.targetNodeId} IN (${sql.raw(targetIds.join(","))})`,
+      inArray(codeEdges.targetNodeId, targetIds),
     ))
     .all();
 
@@ -211,7 +213,7 @@ export function getReverseDependencies(
       description: codeNodes.description,
     })
     .from(codeNodes)
-    .where(sql`${codeNodes.id} IN (${sql.raw(sourceIds.join(","))})`)
+    .where(inArray(codeNodes.id, sourceIds))
     .all();
 
   return nodes
@@ -303,7 +305,7 @@ export function getRelatedNodes(
       ? db
           .select({ id: codeNodes.id, symbolName: codeNodes.symbolName, filePath: codeNodes.filePath })
           .from(codeNodes)
-          .where(sql`${codeNodes.id} IN (${sql.raw(edgeNodeIds.join(","))})`)
+          .where(inArray(codeNodes.id, edgeNodeIds))
           .all()
       : [];
 
@@ -357,14 +359,14 @@ export function getHotFiles(projectSlug: string, limit = 8): HotFile[] {
     LEFT JOIN (
       SELECT n.file_path, COUNT(*) as cnt, SUM(e.trust_weight) as trust_sum
       FROM code_edges e
-      JOIN code_nodes n ON e.target_node_id = n.id
+      JOIN code_nodes n ON e.target_node_id = n.id AND n.project_slug = ${projectSlug}
       WHERE e.project_slug = ${projectSlug}
       GROUP BY n.file_path
     ) inc ON f.file_path = inc.file_path
     LEFT JOIN (
       SELECT n.file_path, COUNT(*) as cnt, SUM(e.trust_weight) as trust_sum
       FROM code_edges e
-      JOIN code_nodes n ON e.source_node_id = n.id
+      JOIN code_nodes n ON e.source_node_id = n.id AND n.project_slug = ${projectSlug}
       WHERE e.project_slug = ${projectSlug}
       GROUP BY n.file_path
     ) out ON f.file_path = out.file_path

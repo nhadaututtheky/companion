@@ -2,7 +2,7 @@
  * CodeGraph graph store — Drizzle CRUD for code_files, code_nodes, code_edges.
  */
 
-import { eq, and, inArray, sql } from "drizzle-orm";
+import { eq, and, inArray, sql, like } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { codeFiles, codeNodes, codeEdges, codeScanJobs } from "../db/schema.js";
 import type { EdgeType } from "./trust-calculator.js";
@@ -212,7 +212,7 @@ export function findNodesByName(projectSlug: string, symbolName: string) {
     .from(codeNodes)
     .where(and(
       eq(codeNodes.projectSlug, projectSlug),
-      sql`lower(${codeNodes.symbolName}) LIKE lower(${"%" + symbolName + "%"})`,
+      like(codeNodes.symbolName, `%${symbolName}%`),
     ))
     .all();
 }

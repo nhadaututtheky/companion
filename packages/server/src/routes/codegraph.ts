@@ -36,7 +36,7 @@ codegraphRoutes.post("/scan", async (c) => {
     const jobId = await scanProject(body.projectSlug);
     return c.json({ success: true, data: { jobId } } satisfies ApiResponse);
   } catch (err) {
-    return c.json({ success: false, error: String(err) } satisfies ApiResponse, 400);
+    return c.json({ success: false, error: "Operation failed" } satisfies ApiResponse, 400);
   }
 });
 
@@ -51,7 +51,7 @@ codegraphRoutes.post("/rescan", async (c) => {
     const result = await incrementalRescan(body.projectSlug, body.files);
     return c.json({ success: true, data: result } satisfies ApiResponse);
   } catch (err) {
-    return c.json({ success: false, error: String(err) } satisfies ApiResponse, 400);
+    return c.json({ success: false, error: "Operation failed" } satisfies ApiResponse, 400);
   }
 });
 
@@ -66,7 +66,7 @@ codegraphRoutes.post("/describe", async (c) => {
     const described = await describeNodes(body.projectSlug);
     return c.json({ success: true, data: { described } } satisfies ApiResponse);
   } catch (err) {
-    return c.json({ success: false, error: String(err) } satisfies ApiResponse, 400);
+    return c.json({ success: false, error: "Operation failed" } satisfies ApiResponse, 400);
   }
 });
 
@@ -174,7 +174,8 @@ codegraphRoutes.get("/hot-files", (c) => {
     return c.json({ success: false, error: "project query param required" } satisfies ApiResponse, 400);
   }
 
-  const limit = Math.min(parseInt(c.req.query("limit") ?? "10", 10), 50);
+  const rawLimit = parseInt(c.req.query("limit") ?? "10", 10);
+  const limit = Math.min(isNaN(rawLimit) ? 10 : rawLimit, 50);
   const files = getHotFiles(project, limit);
   return c.json({ success: true, data: files } satisfies ApiResponse);
 });

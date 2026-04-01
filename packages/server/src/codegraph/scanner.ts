@@ -157,7 +157,7 @@ function scanTypeScript(code: string, filePath: string): ScanResult {
   }
 
   // ── Arrow Functions (const name = (...) => ...) ──
-  const arrowRegex = /^(export\s+(?:default\s+)?)?const\s+(\w+)\s*(?::\s*\w+(?:<[^>]+>)?\s*)?=\s*(?:async\s+)?\(([^)]*)\)\s*(?::\s*[^=]+)?\s*=>/gm;
+  const arrowRegex = /^(export\s+(?:default\s+)?)?const\s+(\w+)\s*(?::\s*\w+(?:<[^>]+>)?\s*)?=\s*(?:async\s+)?\(([^)]*)\)\s*(?::\s*[^\n=>]+)?\s*=>/gm;
   while ((match = arrowRegex.exec(code)) !== null) {
     const isExported = !!match[1];
     const name = match[2]!;

@@ -3,7 +3,7 @@
  */
 
 import { readdir, stat } from "fs/promises";
-import { join, relative, extname } from "path";
+import { join, relative, extname, resolve } from "path";
 import ignore from "ignore";
 import { readFileSync, existsSync } from "fs";
 
@@ -79,11 +79,20 @@ export async function discoverFiles(projectDir: string): Promise<string[]> {
 
   const files: string[] = [];
 
+  const resolvedRoot = resolve(projectDir);
+
   async function walk(dir: string): Promise<void> {
     const entries = await readdir(dir, { withFileTypes: true });
 
     for (const entry of entries) {
+      // Skip symlinks to prevent path traversal
+      if (entry.isSymbolicLink()) continue;
+
       const fullPath = join(dir, entry.name);
+
+      // Boundary check: ensure path stays within project
+      if (!resolve(fullPath).startsWith(resolvedRoot)) continue;
+
       const relPath = relative(projectDir, fullPath).replace(/\\/g, "/");
 
       // Skip ignored directories
