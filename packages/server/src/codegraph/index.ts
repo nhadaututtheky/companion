@@ -95,6 +95,17 @@ export function isGraphReady(projectSlug: string): boolean {
 export { getProjectStats } from "./graph-store.js";
 
 /**
+ * Generate semantic descriptions for undescribed exported nodes.
+ * Uses AI (Haiku tier). Returns count of descriptions generated.
+ */
+export { describeNodes as describeProject } from "./semantic-describer.js";
+
+/**
+ * Incrementally rescan changed files in a project.
+ */
+export { incrementalRescan } from "./diff-updater.js";
+
+/**
  * Cancel an active scan.
  */
 export function cancelScan(projectSlug: string): boolean {
@@ -278,7 +289,17 @@ async function runScan(
     insertEdges(uniqueEdges);
     totalEdges = uniqueEdges.length;
 
-    // 5. Done
+    // 5. Semantic descriptions (non-blocking phase)
+    updateScanJob(jobId, { status: "describing" as "running" });
+    try {
+      const { describeNodes } = await import("./semantic-describer.js");
+      const described = await describeNodes(projectSlug);
+      log.info("Descriptions generated", { projectSlug, described });
+    } catch (err) {
+      log.warn("Description phase failed (non-fatal)", { error: String(err) });
+    }
+
+    // 6. Done
     const elapsed = Date.now() - startTime;
     updateScanJob(jobId, {
       status: "done",

@@ -1421,6 +1421,25 @@ export class WsBridge {
       void summarizeSession(session.id);
     }
 
+    // CodeGraph: incremental rescan if session modified files
+    if (hadTurns) {
+      const record = getSessionRecord(session.id);
+      if (record?.projectSlug) {
+        const modified = (record.filesModified as string[]) ?? [];
+        const created = (record.filesCreated as string[]) ?? [];
+        const changed = [...modified, ...created];
+        if (changed.length > 0) {
+          import("../codegraph/diff-updater.js").then(({ incrementalRescan }) => {
+            void incrementalRescan(record.projectSlug!, changed).then((result) => {
+              log.info("CodeGraph incremental rescan", { projectSlug: record.projectSlug, ...result });
+            }).catch((err) => {
+              log.warn("CodeGraph rescan failed", { error: String(err) });
+            });
+          }).catch(() => { /* codegraph module not available */ });
+        }
+      }
+    }
+
     // Schedule removal from in-memory map after 5 minutes (allows browser reconnect/replay)
     setTimeout(() => {
       const s = getActiveSession(session.id);
