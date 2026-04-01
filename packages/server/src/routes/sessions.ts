@@ -49,6 +49,7 @@ const createSessionSchema = z.object({
   source: z.string().optional(),
   idleTimeoutMs: z.number().int().min(0).max(86_400_000).optional(),
   keepAlive: z.boolean().optional(),
+  bare: z.boolean().optional(),
 });
 
 const sendMessageSchema = z.object({
@@ -219,6 +220,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         cliSessionId: body.cliSessionId,
         source: body.source,
         envVars: project?.envVars,
+        bare: body.bare,
       });
 
       // Apply idle timeout / keep-alive settings from the request

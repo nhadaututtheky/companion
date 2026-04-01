@@ -185,6 +185,8 @@ export class WsBridge {
     identityPrompt?: string;
     /** When false, disables auto re-injection on compact for this session (default: true). */
     autoReinjectOnCompact?: boolean;
+    /** Bare mode — minimal output, lower cost. Maps to --bare CLI flag. */
+    bare?: boolean;
   }): Promise<string> {
     const sessionId = randomUUID();
 
@@ -459,6 +461,7 @@ export class WsBridge {
       cliSessionId?: string;
       source?: string;
       envVars?: Record<string, string>;
+      bare?: boolean;
     },
   ): string {
     // Create plan mode watcher
@@ -491,6 +494,7 @@ export class WsBridge {
         cliSessionId: opts.cliSessionId,
         envVars: opts.envVars,
         hooksUrl,
+        bare: opts.bare,
       },
       (ndjsonLine) => this.handleCLIMessage(session, ndjsonLine),
       (exitCode) => {

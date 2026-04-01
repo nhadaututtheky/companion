@@ -302,6 +302,8 @@ export interface CreateSessionRequest {
   permissionMode?: string;
   prompt?: string;
   resume?: boolean;
+  /** Bare mode — minimal output, lower cost. Maps to --bare CLI flag. */
+  bare?: boolean;
 }
 
 export interface SessionListItem {

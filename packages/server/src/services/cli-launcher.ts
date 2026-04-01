@@ -26,6 +26,8 @@ export interface LaunchOptions {
   envVars?: Record<string, string>;
   /** Companion hook endpoint URL — injected into project settings for CLI */
   hooksUrl?: string;
+  /** Bare mode — minimal output, no thinking/verbose. For cost-sensitive sessions. */
+  bare?: boolean;
 }
 
 export interface LaunchResult {
@@ -219,12 +221,19 @@ export function launchCLI(
     "--model", opts.model,
   ];
 
+  // Bare mode: minimal output for cost-sensitive sessions
+  if (opts.bare) {
+    args.push("--bare");
+  }
+
   if (opts.permissionMode) {
     args.push("--permission-mode", opts.permissionMode);
   }
 
   if (opts.resume && opts.cliSessionId) {
     args.push("--resume", opts.cliSessionId);
+    // Replay user messages for better context restoration on resume
+    args.push("--replay-user-messages");
   }
   // NOTE: Do NOT use --prompt flag — it runs single-turn mode and CLI exits after response.
   // Instead, send the initial prompt via stdin NDJSON after CLI starts (interactive mode).
