@@ -79,6 +79,8 @@ export interface DebateState {
   /** Consecutive rounds with no new points (for stale detection) */
   staleRoundCount: number;
   status: "active" | "concluding" | "concluded";
+  /** Coordinator scratchpad — accumulated key points per round (caps at ~2000 tokens) */
+  scratchpad: string;
 }
 
 export interface Verdict {
@@ -334,6 +336,7 @@ export async function startDebate(
     totalCostUsd: 0,
     staleRoundCount: 0,
     status: "active",
+    scratchpad: "",
   };
 
   activeDebates.set(channel.id, state);
@@ -377,7 +380,7 @@ async function runDebateLoop(
 
       const agentResults = await Promise.all(
         state.agents.map(async (agent) => {
-          const conversationMessages = buildConversation(history, agent, state.currentRound);
+          const conversationMessages = buildConversation(history, agent, state.currentRound, state.scratchpad || undefined);
           const { text, costUsd } = await callDebateAI(
             agent.systemPrompt,
             conversationMessages,
@@ -416,6 +419,19 @@ async function runDebateLoop(
       if (state.totalCostUsd >= state.maxCostUsd) {
         await concludeDebate(state.channelId, onMessage);
         return;
+      }
+
+      // Coordinator synthesis: extract key points from this round into scratchpad
+      try {
+        const roundMsgs = agentResults.map((r) => ({ agent: r.agent, text: r.text }));
+        state.scratchpad = await coordinatorSynthesize(state, roundMsgs);
+        log.debug("Coordinator scratchpad updated", {
+          channelId: state.channelId,
+          round: state.currentRound,
+          scratchpadLength: state.scratchpad.length,
+        });
+      } catch (err) {
+        log.warn("Coordinator synthesis failed (non-fatal)", { error: String(err) });
       }
 
       // Convergence check (skip round 1 — need at least 2 rounds)
@@ -458,24 +474,40 @@ async function runDebateLoop(
 
 /**
  * Build conversation messages for an agent from channel history.
+ * Uses <task-notification> XML format for structured context (CC Coordinator pattern).
+ * Includes scratchpad for accumulated key points when available.
  */
 function buildConversation(
   history: Array<{ agentId: string; role: string; content: string; round: number }>,
   agent: DebateAgent,
   currentRound: number,
+  scratchpad?: string,
 ): Array<{ role: "user" | "assistant"; content: string }> {
   const messages: Array<{ role: "user" | "assistant"; content: string }> = [];
 
-  // Present previous messages as conversation
+  // Inject scratchpad as context if available (from round 2+)
+  if (scratchpad) {
+    messages.push({
+      role: "user",
+      content: `<coordinator-scratchpad>\n${scratchpad}\n</coordinator-scratchpad>\n\nAbove is the coordinator's summary of key points so far. Build on these — don't repeat arguments already noted.`,
+    });
+    // Need a placeholder assistant response to keep alternation valid
+    messages.push({
+      role: "assistant",
+      content: "Understood. I'll build on the accumulated points and bring new arguments.",
+    });
+  }
+
+  // Present previous messages as task-notification XML
   for (const msg of history) {
     if (msg.agentId === agent.id) {
       // Agent's own messages = assistant
       messages.push({ role: "assistant", content: msg.content });
     } else {
-      // Other agents' messages = user (opponent)
+      // Other agents' messages = user (opponent), wrapped in task-notification XML
       messages.push({
         role: "user",
-        content: `[${msg.role.toUpperCase()} — Round ${msg.round}]: ${msg.content}`,
+        content: `<task-notification agent="${msg.role}" round="${msg.round}">\n${msg.content}\n</task-notification>`,
       });
     }
   }
@@ -492,12 +524,59 @@ function buildConversation(
     if (last && last.role === "assistant") {
       messages.push({
         role: "user",
-        content: `Round ${currentRound} — please respond to the previous arguments and advance your position.`,
+        content: `Round ${currentRound} — respond to the previous arguments and advance your position.`,
       });
     }
   }
 
   return messages;
+}
+
+// ── Coordinator Synthesis ──────────────────────────────────────────────────
+
+/**
+ * Coordinator synthesis: after each round, summarize progress and extract key points.
+ * Inspired by Claude Code Coordinator Mode — "never delegate understanding".
+ * The scratchpad accumulates across rounds, capped to ~2000 chars to prevent context bloat.
+ */
+async function coordinatorSynthesize(
+  state: DebateState,
+  roundMessages: Array<{ agent: DebateAgent; text: string }>,
+): Promise<string> {
+  const agentLabels = state.agents.map((a) => `${a.emoji} ${a.label}`).join(" vs ");
+  const roundSummary = roundMessages
+    .map((m) => `<task-notification agent="${m.agent.label}" round="${state.currentRound}">\n${m.text}\n</task-notification>`)
+    .join("\n\n");
+
+  const { text } = await callDebateAI(
+    `You are the COORDINATOR synthesizing Round ${state.currentRound} of a debate.
+Topic: "${state.topic}" | Agents: ${agentLabels}
+
+Your job: Extract the 3-5 most important NEW points from this round. Be concise.
+${state.scratchpad ? `\nPrevious rounds scratchpad:\n${state.scratchpad}` : ""}
+
+Rules:
+- Only list genuinely new arguments or evidence (skip rehashed points)
+- Format: bullet points, max 1 sentence each
+- If agents are converging, note what they agree on
+- Max 5 bullet points`,
+    [{ role: "user", content: roundSummary }],
+    "fast",
+  );
+
+  // Append to scratchpad, cap at ~2000 chars
+  const newEntry = `\n## Round ${state.currentRound}\n${text.trim()}`;
+  let updated = state.scratchpad + newEntry;
+  if (updated.length > 2000) {
+    // Keep only recent rounds (trim from front)
+    const lines = updated.split("\n");
+    while (updated.length > 2000 && lines.length > 5) {
+      lines.shift();
+      updated = lines.join("\n");
+    }
+  }
+
+  return updated;
 }
 
 // ── Conclude & Verdict ─────────────────────────────────────────────────────
@@ -571,20 +650,36 @@ export async function concludeDebate(
   }
 }
 
+/**
+ * Generate verdict using independent verification pattern (CC Coordinator Mode).
+ * Judge gets scratchpad + last round only — NOT the full transcript.
+ * This prevents the judge from inheriting implementation assumptions.
+ */
 async function generateVerdict(
   state: DebateState,
   history: Array<{ agentId: string; role: string; content: string; round: number }>,
 ): Promise<Verdict> {
-  const transcript = history
-    .map((m) => `[${m.role.toUpperCase()} R${m.round}]: ${m.content}`)
-    .join("\n\n---\n\n");
-
   const agentLabels = state.agents.map((a) => `${a.emoji} ${a.label} (${a.role})`).join(", ");
 
-  const { text } = await callDebateAI(
-    `You are the JUDGE in a structured debate. Agents: ${agentLabels}. Topic: "${state.topic}".
+  // Independent verification: use scratchpad (coordinator summary) + last round only
+  // This prevents the judge from being biased by rhetorical style of earlier rounds
+  const lastRound = history.filter((m) => m.round === state.currentRound);
+  const lastRoundText = lastRound
+    .map((m) => `<task-notification agent="${m.role}" round="${m.round}">\n${m.content}\n</task-notification>`)
+    .join("\n\n");
 
-Analyze the full debate transcript and produce a JSON verdict:
+  const judgeContext = state.scratchpad
+    ? `<coordinator-scratchpad>\n${state.scratchpad}\n</coordinator-scratchpad>\n\n--- Final Round ---\n\n${lastRoundText}`
+    : history.map((m) => `[${m.role.toUpperCase()} R${m.round}]: ${m.content}`).join("\n\n---\n\n");
+
+  const { text } = await callDebateAI(
+    `You are an INDEPENDENT JUDGE evaluating a ${state.currentRound}-round debate.
+Agents: ${agentLabels}. Topic: "${state.topic}".
+
+You receive a coordinator's summary of all rounds plus the final round transcript.
+Judge based on argument quality and evidence, NOT rhetorical style.
+
+Produce a JSON verdict:
 {
   "winner": "which role had the stronger argument (or 'draw')",
   "recommendation": "1-2 sentence practical recommendation",
@@ -595,8 +690,8 @@ Analyze the full debate transcript and produce a JSON verdict:
 }
 
 Respond ONLY with valid JSON.`,
-    [{ role: "user", content: transcript }],
-    "fast", // Judge uses fast/cheap model
+    [{ role: "user", content: judgeContext }],
+    "fast",
   );
 
   try {
