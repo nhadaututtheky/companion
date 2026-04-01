@@ -120,6 +120,7 @@ html {
   font-size: 16px;
   line-height: 1.6;
   scroll-behavior: smooth;
+  scroll-padding-top: 80px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -1022,11 +1023,6 @@ code {
   margin-right: auto;
 }
 
-/* 3-column pricing */
-.pricing-grid-3 {
-  grid-template-columns: repeat(3, 1fr);
-}
-
 /* Check icon for pricing list items */
 .check-icon {
   display: flex;
@@ -1046,33 +1042,6 @@ code {
   background-repeat: no-repeat;
 }
 
-.pricing-save {
-  display: inline-block;
-  background: rgba(52, 168, 83, 0.1);
-  color: var(--green);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 9999px;
-}
-
-/* Team teaser */
-.team-teaser {
-  text-align: center;
-  margin-top: 32px;
-  padding: 16px 24px;
-  background: var(--bg-card);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-lg);
-  max-width: 480px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.team-teaser p {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
 
 .btn:disabled {
   opacity: 0.5;
@@ -1263,7 +1232,8 @@ code {
 }
 
 .pay-form input:focus {
-  outline: none;
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
   border-color: var(--blue);
 }
 
@@ -1465,6 +1435,201 @@ code {
 
 .pricing-features svg {
   flex-shrink: 0;
+}
+
+/* ── Intelligence Layer ────────────────────────────────────────────────── */
+.intel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.intel-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  padding: 32px;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.intel-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.dark .intel-card:hover {
+  box-shadow: 0 12px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03);
+}
+
+.intel-header {
+  margin-bottom: 24px;
+}
+
+.intel-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.intel-icon-web {
+  background: linear-gradient(135deg, rgba(66, 133, 244, 0.15), rgba(52, 168, 83, 0.15));
+  color: var(--blue);
+}
+
+.dark .intel-icon-web {
+  background: linear-gradient(135deg, rgba(66, 133, 244, 0.25), rgba(52, 168, 83, 0.2));
+}
+
+.intel-icon-code {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(234, 67, 53, 0.15));
+  color: #8B5CF6;
+}
+
+.dark .intel-icon-code {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(234, 67, 53, 0.2));
+}
+
+.intel-header h3 {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.intel-label {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.intel-features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.intel-features li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.intel-features li strong {
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.intel-features li span {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.intel-features code {
+  background: var(--bg-elevated);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+/* Mockup SVG container */
+.intel-mockup {
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.mockup-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ── 4-column Pricing ──────────────────────────────────────────────────── */
+.pricing-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.pricing-tier-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.pricing-card-featured .pricing-tier-icon {
+  color: #F26522;
+}
+
+/* Pricing trust bar */
+.pricing-trust {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.pricing-trust span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.pricing-trust svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+/* ── Desktop Download ──────────────────────────────────────────────────── */
+.desktop-download {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.desktop-desc {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.desktop-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.desktop-btn {
+  min-width: 160px;
+}
+
+/* ── CTA Actions ──────────────────────────────────────────────────────── */
+.cta-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.cta-note {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
 }
 
 /* ── FAQ ─────────────────────────────────────────────────────────────────── */
@@ -1678,11 +1843,26 @@ code {
   }
 
   .pricing-grid,
-  .pricing-grid-3 {
+  .pricing-grid-4 {
     grid-template-columns: 1fr;
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
+  }
+
+  .intel-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-trust {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .desktop-buttons {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .section-header h2 {
@@ -1705,6 +1885,19 @@ code {
 
   .cta-inner h2 {
     font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .pricing-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

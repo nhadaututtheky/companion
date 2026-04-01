@@ -57,7 +57,7 @@
 
   // ── Scroll Reveal ──────────────────────────────────────────────────────
   var reveals = document.querySelectorAll(
-    ".feature-card, .comparison-card, .step-card, .pricing-card, .faq-item, .cta-inner"
+    ".feature-card, .comparison-card, .step-card, .pricing-card, .faq-item, .cta-inner, .intel-card"
   );
   reveals.forEach(function (el) { el.classList.add("reveal"); });
 
@@ -103,8 +103,9 @@
   var BANK_NAME = "NGUYEN VIET NAM";
 
   var PRODUCTS = {
-    "CMP-MONTHLY": { name: "Companion Pro — Monthly", price: 375000, priceUSD: 15, polarUrl: "https://buy.polar.sh/polar_cl_bH3oM1b9ub5rugiUyeV4NvdHQf3IhkhtZBRkb0h2bmr" },
-    "CMP-QUARTERLY": { name: "Companion Pro — Quarterly", price: 975000, priceUSD: 39, polarUrl: "https://buy.polar.sh/polar_cl_TlAeQhWrsnoKEoG6Ay17wIEZa7s6Heg6ntZb11V7qsZ" },
+    "CMP-1DEV": { name: "Companion — 1 Device", price: 725000, priceUSD: 29, polarUrl: "https://buy.polar.sh/polar_cl_bH3oM1b9ub5rugiUyeV4NvdHQf3IhkhtZBRkb0h2bmr" },
+    "CMP-3DEV": { name: "Companion — 3 Devices", price: 1225000, priceUSD: 49, polarUrl: "https://buy.polar.sh/polar_cl_TlAeQhWrsnoKEoG6Ay17wIEZa7s6Heg6ntZb11V7qsZ" },
+    "CMP-5DEV": { name: "Companion — 5 Devices", price: 1975000, priceUSD: 79, polarUrl: "" },
   };
 
   var payState = {
