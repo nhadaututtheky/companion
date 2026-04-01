@@ -8,6 +8,7 @@ import { MessageComposer } from "@/components/session/message-composer";
 import { PermissionGate } from "@/components/session/permission-gate";
 import { SessionDetails } from "@/components/session/session-details";
 import { PinnedMessagesDrawer } from "@/components/session/pinned-messages-drawer";
+import { ModelSelector } from "@/components/session/model-selector";
 import { usePinnedMessagesStore } from "@/lib/stores/pinned-messages-store";
 import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
@@ -18,15 +19,21 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-function ContextStatusBar({ session }: { session: { state?: Partial<import("@companion/shared").SessionState> } | undefined }) {
+function ContextStatusBar({ session }: { session: { state?: Partial<import("@companion/shared").SessionState>; contextUsedPercent?: number; contextTokens?: number; contextMaxTokens?: number } | undefined }) {
   if (!session?.state) return null;
 
+  // Prefer real-time context data from CLI polling when available
+  const hasRealtimeContext = session.contextTokens !== undefined && session.contextMaxTokens !== undefined;
+
   const { total_input_tokens = 0, total_output_tokens = 0, cache_read_tokens = 0, model = "" } = session.state;
-  const totalTokens = total_input_tokens + total_output_tokens + cache_read_tokens;
+  const fallbackTotal = total_input_tokens + total_output_tokens + cache_read_tokens;
+
+  const totalTokens = hasRealtimeContext ? session.contextTokens! : fallbackTotal;
+  const maxTokens = hasRealtimeContext ? session.contextMaxTokens! : (model.includes("haiku") ? 200_000 : 1_000_000);
+
   if (totalTokens === 0) return null;
 
-  const maxTokens = model.includes("haiku") ? 200_000 : 1_000_000;
-  const pct = Math.min(100, (totalTokens / maxTokens) * 100);
+  const pct = hasRealtimeContext ? (session.contextUsedPercent ?? 0) : Math.min(100, (totalTokens / maxTokens) * 100);
   const remaining = maxTokens - totalTokens;
 
   const color = pct < 60 ? "#34A853" : pct < 85 ? "#FBBC04" : "#EA4335";
@@ -73,7 +80,7 @@ function ContextStatusBar({ session }: { session: { state?: Partial<import("@com
 export function SessionPageClient({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission } = useSession(id);
+  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel } = useSession(id);
   const session = useSessionStore((s) => s.sessions[id]);
   const [pinnedDrawerOpen, setPinnedDrawerOpen] = useState(false);
   const scrollToMessageRef = useRef<((index: number) => void) | null>(null);
@@ -128,6 +135,15 @@ export function SessionPageClient({ params }: PageProps) {
                 #{id.slice(0, 8)}
               </span>
             </div>
+
+            {/* Mid-session model selector */}
+            {session?.status !== "ended" && session?.status !== "error" && (
+              <ModelSelector
+                currentModel={session?.model ?? "claude-sonnet-4-6"}
+                onModelChange={setModel}
+                disabled={session?.status === "starting"}
+              />
+            )}
 
             {wsStatus !== "connected" && (
               <span

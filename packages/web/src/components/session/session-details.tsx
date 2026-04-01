@@ -35,6 +35,8 @@ interface SessionDetailsProps {
       started_at: number;
       cwd?: string;
     };
+    contextTokens?: number;
+    contextMaxTokens?: number;
   } | null;
 }
 
@@ -147,10 +149,11 @@ export function SessionDetails({ session }: SessionDetailsProps) {
         </div>
       </div>
 
-      {/* Context meter */}
+      {/* Context meter — use real-time CLI data when available */}
       <ContextMeter
         inputTokens={s.total_input_tokens}
         outputTokens={s.total_output_tokens}
+        maxTokens={session.contextMaxTokens}
       />
 
       {/* Stats */}

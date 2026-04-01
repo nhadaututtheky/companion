@@ -119,7 +119,7 @@ async function describeBatch(
   });
 
   // Parse JSON response
-  const text = response.content.trim();
+  const text = response.text.trim();
 
   try {
     // Try to extract JSON from response (may have markdown wrapping)

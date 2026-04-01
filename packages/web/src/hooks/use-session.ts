@@ -31,6 +31,7 @@ interface UseSessionReturn {
   wsStatus: "connecting" | "connected" | "disconnected";
   sendMessage: (text: string) => void;
   respondPermission: (requestId: string, behavior: "allow" | "deny") => void;
+  setModel: (model: string) => void;
 }
 
 export function useSession(sessionId: string): UseSessionReturn {
@@ -418,9 +419,17 @@ export function useSession(sessionId: string): UseSessionReturn {
         }
 
         case "context_update": {
-          // Token state is already refreshed via session_update from the server.
-          // This event is primarily for Telegram compact warnings.
-          // No additional store update needed here.
+          const ctx = msg as {
+            type: "context_update";
+            contextUsedPercent: number;
+            totalTokens: number;
+            maxTokens: number;
+          };
+          setSession(sessionId, {
+            contextUsedPercent: ctx.contextUsedPercent,
+            contextTokens: ctx.totalTokens,
+            contextMaxTokens: ctx.maxTokens,
+          });
           break;
         }
 
@@ -554,5 +563,12 @@ export function useSession(sessionId: string): UseSessionReturn {
     [send],
   );
 
-  return { messages, pendingPermissions, wsStatus, sendMessage, respondPermission };
+  const setModel = useCallback(
+    (model: string) => {
+      send({ type: "set_model", model });
+    },
+    [send],
+  );
+
+  return { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel };
 }

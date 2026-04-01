@@ -97,7 +97,7 @@ export function buildProjectMap(projectSlug: string): string | null {
     const layers = new Map<string, string[]>();
     for (const hf of hotFiles) {
       const parts = hf.filePath.split("/");
-      const layer = parts.length >= 2 ? parts[parts.length - 2] : "root";
+      const layer = (parts.length >= 2 ? parts[parts.length - 2] : undefined) ?? "root";
       if (!layers.has(layer)) layers.set(layer, []);
       layers.get(layer)!.push(hf.filePath.split("/").pop() ?? hf.filePath);
     }

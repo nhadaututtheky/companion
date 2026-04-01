@@ -751,13 +751,22 @@ export class WsBridge {
   // ── CLI message handling ────────────────────────────────────────────────
 
   private handleCLIMessage(session: ActiveSession, line: string): void {
-    let msg: CLIMessage;
+    let parsed: Record<string, unknown>;
     try {
-      msg = JSON.parse(line);
+      parsed = JSON.parse(line);
     } catch {
       log.debug("Non-JSON CLI output", { line: line.slice(0, 100) });
       return;
     }
+
+    // Handle control_response separately — not part of CLIMessage union
+    // (responses to control_requests we sent TO the CLI, e.g. get_context_usage)
+    if (parsed.type === "control_response") {
+      this.handleControlResponse(session, parsed);
+      return;
+    }
+
+    const msg = parsed as CLIMessage;
 
     switch (msg.type) {
       case "system":
@@ -1029,6 +1038,55 @@ export class WsBridge {
     });
   }
 
+  /**
+   * Request accurate context usage from Claude CLI via get_context_usage control_request.
+   * Sent after each turn completes (idle). Response arrives as control_response on stdout.
+   */
+  private requestContextUsage(session: ActiveSession): void {
+    // Only for CLI engine sessions (SDK has its own tracking)
+    if (this.sdkHandles.has(session.id)) return;
+    // Don't request if session is ended
+    if (session.state.status === "ended" || session.state.status === "error") return;
+
+    const ndjson = JSON.stringify({
+      type: "control_request",
+      request: { subtype: "get_context_usage" },
+    });
+    this.sendToCLI(session, ndjson);
+  }
+
+  /**
+   * Handle control_response messages from CLI (e.g. get_context_usage response).
+   * These are responses to control_requests we sent TO the CLI.
+   */
+  private handleControlResponse(session: ActiveSession, msg: Record<string, unknown>): void {
+    const response = msg.response as Record<string, unknown> | undefined;
+    if (!response) return;
+
+    const subtype = response.subtype as string | undefined;
+
+    if (subtype === "get_context_usage") {
+      const usage = response.usage as {
+        input_tokens?: number;
+        output_tokens?: number;
+        context_window?: number;
+      } | undefined;
+
+      if (!usage) return;
+
+      const totalTokens = (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0);
+      const maxTokens = usage.context_window ?? WsBridge.getMaxContextTokens(session.state.model);
+      const contextUsedPercent = maxTokens > 0 ? Math.min(100, (totalTokens / maxTokens) * 100) : 0;
+
+      this.broadcastToAll(session, {
+        type: "context_update",
+        contextUsedPercent,
+        totalTokens,
+        maxTokens,
+      });
+    }
+  }
+
   private handleResult(
     session: ActiveSession,
     msg: CLIResultMessage,
@@ -1105,8 +1163,11 @@ export class WsBridge {
     // Check cost budget warnings
     this.checkCostBudget(session);
 
-    // Broadcast context usage after updating token counts
+    // Broadcast context usage after updating token counts (estimate from deltas)
     this.broadcastContextUpdate(session);
+
+    // Request accurate context usage from CLI (if supported)
+    this.requestContextUsage(session);
 
     // Check smart compact (must be after context broadcast, before idle timer)
     this.checkSmartCompact(session);
@@ -1716,7 +1777,7 @@ export class WsBridge {
         type: "system_message",
         content: `🌐 Crawl started: ${url} (depth: ${depth}, max: ${maxPages} pages). Job ID: ${jobId}`,
         timestamp: Date.now(),
-      } as BrowserIncomingMessage);
+      } as unknown as BrowserIncomingMessage);
 
       // Poll until complete (every 3s, max 100 polls = ~5 min safety net)
       let pollCount = 0;

@@ -12,6 +12,10 @@ interface Session {
   createdAt: number;
   /** Session tags for filtering/organization */
   tags?: string[];
+  /** Real-time context window usage from CLI polling */
+  contextUsedPercent?: number;
+  contextTokens?: number;
+  contextMaxTokens?: number;
 }
 
 interface SessionStore {
