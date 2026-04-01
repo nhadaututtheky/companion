@@ -59,6 +59,8 @@ export interface ActiveSession {
   identityPrompt?: string;
   /** Libraries already auto-injected this session (avoid re-injection) */
   webIntelInjected?: Set<string>;
+  /** Pending CodeGraph context hint to prepend to next user message */
+  pendingCodeGraphHint?: string;
 }
 
 /** Max number of messages to keep in memory per session (FIFO eviction) */

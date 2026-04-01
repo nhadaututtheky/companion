@@ -14,6 +14,15 @@ import { scrapeForContext, isAvailable as isWebIntelAvailable, research as webRe
 import { detectLibraryMentions, resolveDocsUrl } from "./web-intel-detector.js";
 import { registerJob, pollCrawlJob } from "./web-intel-jobs.js";
 import {
+  buildProjectMap,
+  buildMessageContext,
+  reviewPlan,
+  checkBreaks,
+  hasPlanIndicators,
+  extractFilePaths,
+} from "../codegraph/agent-context-provider.js";
+import { isGraphReady } from "../codegraph/index.js";
+import {
   createActiveSession,
   getActiveSession,
   getAllActiveSessions,
@@ -285,7 +294,12 @@ export class WsBridge {
         cwd: opts.cwd,
         source: opts.source ?? "sdk",
       });
-      fullPrompt = `${fullPrompt}${summaryContext ?? ""}${sessionContext}`;
+      // CodeGraph: inject project map if graph is ready
+      let codeGraphMap = "";
+      if (opts.projectSlug && isGraphReady(opts.projectSlug)) {
+        try { codeGraphMap = buildProjectMap(opts.projectSlug) ?? ""; } catch { /* skip */ }
+      }
+      fullPrompt = `${fullPrompt}${summaryContext ?? ""}${sessionContext}${codeGraphMap}`;
     }
 
     const handle = startSdkSession(
@@ -503,7 +517,12 @@ export class WsBridge {
         cwd: opts.cwd,
         source: opts.source ?? "cli",
       });
-      const fullPrompt = `${opts.prompt}${summaryContext ?? ""}${sessionContext}`;
+      // CodeGraph: inject project map if graph is ready
+      let codeGraphMapCli = "";
+      if (opts.projectSlug && isGraphReady(opts.projectSlug)) {
+        try { codeGraphMapCli = buildProjectMap(opts.projectSlug) ?? ""; } catch { /* skip */ }
+      }
+      const fullPrompt = `${opts.prompt}${summaryContext ?? ""}${sessionContext}${codeGraphMapCli}`;
 
       const ndjson = JSON.stringify({
         type: "user",
@@ -953,6 +972,21 @@ export class WsBridge {
           content: textContent,
           source: "api",
         });
+
+        // ── CodeGraph: plan review (non-blocking) ──
+        const cgRecord = getSessionRecord(session.id);
+        const cgPlanSlug = cgRecord?.projectSlug;
+        if (cgPlanSlug && isGraphReady(cgPlanSlug) && hasPlanIndicators(textContent)) {
+          const files = extractFilePaths(textContent);
+          if (files.length > 0) {
+            try {
+              const hint = reviewPlan(cgPlanSlug, files);
+              if (hint) {
+                session.pendingCodeGraphHint = hint;
+              }
+            } catch { /* skip */ }
+          }
+        }
       }
     }
   }
@@ -1053,6 +1087,20 @@ export class WsBridge {
 
     this.updateStatus(session, "idle");
     persistSession(session);
+
+    // ── CodeGraph: break check if files were modified (non-blocking) ──
+    if (session.state.files_modified.length > 0) {
+      const cgResultRecord = getSessionRecord(session.id);
+      const cgBreakSlug = cgResultRecord?.projectSlug;
+      if (cgBreakSlug && isGraphReady(cgBreakSlug)) {
+        try {
+          const hint = checkBreaks(cgBreakSlug, session.state.files_modified);
+          if (hint) {
+            session.pendingCodeGraphHint = hint;
+          }
+        } catch { /* skip */ }
+      }
+    }
 
     // Check cost budget warnings
     this.checkCostBudget(session);
@@ -1755,15 +1803,32 @@ export class WsBridge {
       );
     }
 
+    // ── CodeGraph: prepend pending hint from plan-review or break-check ──
+    let cgContent = content;
+    if (session.pendingCodeGraphHint) {
+      cgContent = `${session.pendingCodeGraphHint}\n\n${cgContent}`;
+      session.pendingCodeGraphHint = undefined;
+    }
+
+    // ── CodeGraph: inject relevant code context (sync, <200ms) ──
+    const record = getSessionRecord(session.id);
+    const cgSlug = record?.projectSlug;
+    if (cgSlug && isGraphReady(cgSlug)) {
+      try {
+        const ctx = buildMessageContext(cgSlug, content);
+        if (ctx) cgContent = `${cgContent}${ctx}`;
+      } catch { /* skip */ }
+    }
+
     // ── WebIntel: auto-inject library docs (async, best-effort) ────────
     // Try to enrich with docs before sending to CLI/SDK (timeout 3s)
-    this.maybeEnrichWithDocs(session, content).then((enrichedContent) => {
+    this.maybeEnrichWithDocs(session, cgContent).then((enrichedContent) => {
       if (!getActiveSession(session.id)) return; // session ended during enrichment
       this.sendToEngine(session, enrichedContent);
     }).catch(() => {
-      // Enrichment failed — send original content
+      // Enrichment failed — send CodeGraph-enriched content without WebIntel
       if (!getActiveSession(session.id)) return;
-      this.sendToEngine(session, content);
+      this.sendToEngine(session, cgContent);
     });
 
     this.updateStatus(session, "busy");

@@ -15,7 +15,7 @@
 | 5 | WebIntel | Full Review + Integration Test | ✅ Done | 76047e4 |
 | 6 | CodeGraph | Phase 1: Scanner + Store | ✅ Done | 0c7ca9a |
 | 7 | CodeGraph | Phase 2: Semantic + Diff | ✅ Done | — |
-| 8 | CodeGraph | Phase 3: Agent Interface | ⬚ TODO | — |
+| 8 | CodeGraph | Phase 3: Agent Interface | ✅ Done | — |
 | 9 | CodeGraph | Phase 4: API + Web UI | ⬚ TODO | — |
 | 10 | CodeGraph | Full Review + Integration Test | ⬚ TODO | — |
 | 11 | Bridge | CodeGraph ↔ WebIntel integration | ⬚ TODO | — |
@@ -58,7 +58,7 @@ _Updated by each session:_
 
 - **Session start**: 2026-04-01
 - **Last completed step**: CodeGraph Phase 1 (step 6) — 906 nodes, 745 edges in 2.4s
-- **Currently working on**: CodeGraph Phase 3 (step 8)
+- **Currently working on**: CodeGraph Phase 4 (step 9)
 - **Blockers**: None
 - **Decisions made this session**:
   - webclaw as Docker sidecar (REST API on port 3100)
