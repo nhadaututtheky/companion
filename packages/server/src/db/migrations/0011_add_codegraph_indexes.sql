@@ -21,4 +21,4 @@ CREATE INDEX IF NOT EXISTS `idx_code_edges_project` ON `code_edges` (`project_sl
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS `idx_code_edges_type` ON `code_edges` (`project_slug`, `edge_type`);
 --> statement-breakpoint
-CREATE INDEX IF NOT EXISTS `idx_webintel_docs_library` ON `webintel_docs` (`library_name`);
+CREATE INDEX IF NOT EXISTS `idx_webintel_docs_library` ON `web_intel_docs` (`library_name`);

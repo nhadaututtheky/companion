@@ -103,8 +103,8 @@
   var BANK_NAME = "NGUYEN VIET NAM";
 
   var PRODUCTS = {
-    "CMP-STARTER": { name: "Companion Starter — 1 year", price: 975000, priceUSD: 39, polarUrl: "" },
-    "CMP-PRO": { name: "Companion Pro — 1 year", price: 1975000, priceUSD: 79, polarUrl: "" },
+    "CMP-STARTER": { name: "Companion Starter — 1 year", price: 975000, priceUSD: 39, polarUrl: "https://buy.polar.sh/polar_cl_FbxFpo0LqLA1kENgDfKKL8rmNjeL2UBdecWw93NvX9a" },
+    "CMP-PRO": { name: "Companion Pro — 1 year", price: 1975000, priceUSD: 79, polarUrl: "https://buy.polar.sh/polar_cl_CGWIyshnh7Xkodt1CaLkYPG0Z5jL1wjmLmD7Q4CEACZ" },
   };
 
   var payState = {
@@ -224,10 +224,16 @@
         var res = await fetch(PAY_API + "/order/" + payState.orderCode);
         var data = await res.json();
 
-        if (data.status === "delivered" || data.status === "completed") {
+        if (data.status === "fulfilled" || data.status === "delivered" || data.status === "completed") {
           clearInterval(payState.pollTimer);
           payState.pollTimer = null;
           document.getElementById("pay-success-email").textContent = email;
+          var keyEl = document.getElementById("pay-success-key");
+          var keyWrap = document.getElementById("pay-success-key-wrap");
+          if (keyEl && keyWrap && data.licenseKey) {
+            keyEl.textContent = data.licenseKey;
+            keyWrap.style.display = "block";
+          }
           showPayStep(4);
         } else if (data.status === "underpaid") {
           document.getElementById("pay-status").innerHTML =

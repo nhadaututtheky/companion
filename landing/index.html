@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Companion — Your AI Coding Command Center</title>
-  <meta name="description" content="Run multiple Claude Code sessions from one dashboard. Web research, code intelligence, Telegram bot, desktop app — pay once, use forever.">
+  <meta name="description" content="Run multiple Claude Code sessions from one dashboard. Web research, code intelligence, Telegram bot, desktop app. Free tier forever, paid plans from $39/yr.">
   <meta property="og:title" content="Companion — Your AI Coding Command Center">
-  <meta property="og:description" content="Multi-session Claude Code manager with built-in intelligence. Web UI, Telegram, Desktop. Pay once, own forever.">
+  <meta property="og:description" content="Multi-session Claude Code manager with built-in intelligence. Web UI, Telegram, Desktop. Free tier forever, paid plans from $39/yr.">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
 
@@ -32,7 +32,7 @@
           <svg class="icon-sun" width="20" height="20" viewBox="0 0 256 256" fill="none"><circle cx="128" cy="128" r="60" stroke="currentColor" stroke-width="16"/><line x1="128" y1="36" x2="128" y2="16" stroke="currentColor" stroke-width="16" stroke-linecap="round"/><line x1="128" y1="240" x2="128" y2="220" stroke="currentColor" stroke-width="16" stroke-linecap="round"/><line x1="36" y1="128" x2="16" y2="128" stroke="currentColor" stroke-width="16" stroke-linecap="round"/><line x1="240" y1="128" x2="220" y2="128" stroke="currentColor" stroke-width="16" stroke-linecap="round"/><line x1="62.9" y1="62.9" x2="48.8" y2="48.8" stroke="currentColor" stroke-width="16" stroke-linecap="round"/><line x1="207.2" y1="207.2" x2="193.1" y2="193.1" stroke="currentColor" stroke-width="16" stroke-linecap="round"/><line x1="62.9" y1="193.1" x2="48.8" y2="207.2" stroke="currentColor" stroke-width="16" stroke-linecap="round"/><line x1="207.2" y1="48.8" x2="193.1" y2="62.9" stroke="currentColor" stroke-width="16" stroke-linecap="round"/></svg>
           <svg class="icon-moon" width="20" height="20" viewBox="0 0 256 256" fill="none"><path d="M216 128A88 88 0 0 1 128 216 88 88 0 0 1 40 128a88 88 0 0 1 128-80 72 72 0 0 0-32 60 72 72 0 0 0 72 72 72 72 0 0 0 8-.4Z" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-        <a href="#pricing" class="btn btn-primary btn-sm">Get Started</a>
+        <a href="#get-started" class="btn btn-primary btn-sm nav-download-btn">Download</a>
       </div>
     </div>
   </nav>
@@ -73,12 +73,14 @@
       <p class="hero-subtitle">
         Run multiple Claude Code sessions with built-in intelligence.<br>
         Web research. Code graph. Telegram. Desktop app.<br>
-        <strong>Pay once, own forever.</strong>
+        <strong>Free forever. Upgrade from $39/yr.</strong>
       </p>
 
       <div class="hero-actions">
-        <a href="#pricing" class="btn btn-primary btn-lg">Get Started Free</a>
-        <a href="#how-it-works" class="btn btn-ghost">See How It Works</a>
+        <a href="#get-started" class="btn btn-primary btn-lg" id="hero-download-btn">
+          <svg width="18" height="18" viewBox="0 0 256 256" fill="none" style="vertical-align:-3px;margin-right:6px;"><path d="M128 24v152M56 128l72 72 72-72" stroke="currentColor" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 216h176" stroke="currentColor" stroke-width="20" stroke-linecap="round"/></svg>Download Free
+        </a>
+        <a href="#pricing" class="btn btn-ghost">View Pricing</a>
       </div>
 
       <div class="hero-stats">
@@ -406,10 +408,8 @@
           <div class="code-block">
             <code class="code-label">Docker (recommended):</code>
             <code>curl -fsSL companion.theio.vn/install | sh</code>
-            <code class="code-label" style="margin-top:8px">Desktop App:</code>
-            <code>Download from GitHub Releases</code>
           </div>
-          <p>Docker pulls the image. Desktop app installs natively on Windows, macOS, or Linux.</p>
+          <p>One command pulls the image and creates your config. Works on macOS, Windows, and Linux.</p>
         </div>
 
         <div class="step-connector" aria-hidden="true">
@@ -437,7 +437,7 @@
             <code># Click "New Session"</code>
             <code># Start coding with Claude</code>
           </div>
-          <p>Create sessions, run research, scan your codebase. Upgrade anytime — pay once, keep forever.</p>
+          <p>Create sessions, run research, scan your codebase. Free tier is forever — upgrade anytime from $39/yr.</p>
         </div>
       </div>
     </div>
@@ -473,11 +473,13 @@
             <li class="check-icon">Web dashboard + Magic Ring</li>
             <li class="check-icon">Telegram bot (full access)</li>
             <li class="check-icon">Templates + Debate mode</li>
-            <li class="check-icon">Desktop app</li>
+            <li class="check-icon">Desktop app (macOS/Win/Linux)</li>
             <li class="check-icon">Thinking mode toggle</li>
             <li class="check-icon">macOS, Windows, Linux</li>
           </ul>
-          <a href="#get-started" class="btn btn-outline btn-full">Download Free</a>
+          <a href="#get-started" class="btn btn-outline btn-full">
+            <svg width="16" height="16" viewBox="0 0 256 256" fill="none" style="vertical-align:-2px;margin-right:4px;"><path d="M128 24v152M56 128l72 72 72-72" stroke="currentColor" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 216h176" stroke="currentColor" stroke-width="20" stroke-linecap="round"/></svg>Download Free
+          </a>
         </div>
 
         <!-- Starter -->
@@ -613,22 +615,22 @@ docker compose up -d
 
         <div class="install-panel" id="tab-desktop">
           <div class="desktop-download">
-            <p class="desktop-desc">Download the native desktop app — no Docker required. Includes built-in server and auto-updater.</p>
+            <p class="desktop-desc">Native desktop app — no Docker required. Built-in server and auto-updater.</p>
             <div class="desktop-buttons">
-              <a href="/download/macos" class="btn btn-ghost desktop-btn">
+              <a href="https://dl.theio.vn/companion/latest/Companion-macOS.dmg" class="btn btn-ghost desktop-btn">
                 <svg width="20" height="20" viewBox="0 0 256 256" fill="none"><path d="M128 24C62.6 24 8.8 72.6 0 136h82.5c6.5-26.5 30.5-46 59.5-46s53 19.5 59.5 46H256c-4-33.5-20-63.5-43.5-85.5C189 28.5 160 16 128 24z" fill="currentColor" opacity="0.8"/><path d="M0 136c8.8 63.4 62.6 112 128 112s119.2-48.6 128-112h-54.5c-6.5 26.5-30.5 46-59.5 46s-53-19.5-59.5-46z" fill="currentColor"/></svg>
                 macOS (.dmg)
               </a>
-              <a href="/download/windows" class="btn btn-ghost desktop-btn">
+              <a href="https://dl.theio.vn/companion/latest/Companion-Windows-setup.exe" class="btn btn-ghost desktop-btn">
                 <svg width="20" height="20" viewBox="0 0 256 256" fill="none"><rect x="4" y="4" width="116" height="116" rx="4" fill="currentColor" opacity="0.8"/><rect x="136" y="4" width="116" height="116" rx="4" fill="currentColor" opacity="0.8"/><rect x="4" y="136" width="116" height="116" rx="4" fill="currentColor" opacity="0.8"/><rect x="136" y="136" width="116" height="116" rx="4" fill="currentColor" opacity="0.8"/></svg>
-                Windows (.msi)
+                Windows (.exe)
               </a>
-              <a href="/download/linux" class="btn btn-ghost desktop-btn">
+              <a href="https://dl.theio.vn/companion/latest/Companion-Linux.deb" class="btn btn-ghost desktop-btn">
                 <svg width="20" height="20" viewBox="0 0 256 256" fill="none"><circle cx="128" cy="128" r="96" stroke="currentColor" stroke-width="14" fill="none"/><circle cx="128" cy="128" r="16" fill="currentColor"/></svg>
-                Linux (.AppImage)
+                Linux (.deb)
               </a>
             </div>
-            <p class="install-note">v0.5.1 &middot; Requires your own <a href="https://claude.ai" target="_blank" rel="noopener">Claude subscription</a>.</p>
+            <p class="install-note">v0.5.0 &middot; Requires your own <a href="https://claude.ai" target="_blank" rel="noopener">Claude subscription</a>.</p>
           </div>
         </div>
 
@@ -679,7 +681,7 @@ docker compose up -d
 
         <details class="faq-item">
           <summary>What's included in the free tier?</summary>
-          <p>Free tier gives you <strong>2 concurrent sessions forever</strong> with the full web dashboard, Magic Ring, Telegram bot, templates, Debate mode, and desktop app. No account, no credit card, no time limit. Paid plans unlock more sessions and intelligence features (WebIntel, CodeGraph, Scheduled Sessions).</p>
+          <p>Free tier gives you <strong>2 concurrent sessions forever</strong> with the full web dashboard, Magic Ring, Telegram bot, templates, Debate mode, desktop app, and thinking mode. No account, no credit card, no time limit. Paid plans unlock more sessions and intelligence features (WebIntel, CodeGraph, Scheduled Sessions).</p>
         </details>
 
         <details class="faq-item">
@@ -694,7 +696,7 @@ docker compose up -d
 
         <details class="faq-item">
           <summary>Why does it run locally?</summary>
-          <p>Companion must run on the machine where your code lives — it spawns Claude Code processes that need direct filesystem access. The app runs on <code>localhost:3580</code>. The only external call is license verification via <code>pay.theio.vn</code>. Your code and credentials never leave your machine.</p>
+          <p>Companion runs locally on your machine via Docker or desktop app — it spawns Claude Code processes that need direct filesystem access. The app runs on <code>localhost:3580</code>. The only external call is license verification via <code>pay.theio.vn</code>. Your code and credentials never leave your machine.</p>
         </details>
 
         <details class="faq-item">
@@ -727,8 +729,10 @@ docker compose up -d
         <h2>Ready to level up your<br>Claude Code workflow?</h2>
         <p>Join developers who ship faster with Companion.</p>
         <div class="cta-actions">
-          <a href="#get-started" class="btn btn-primary btn-lg">Get Started Free</a>
-          <span class="cta-note">Free tier &middot; No account needed &middot; 2 sessions forever</span>
+          <a href="#get-started" class="btn btn-primary btn-lg">
+            <svg width="18" height="18" viewBox="0 0 256 256" fill="none" style="vertical-align:-3px;margin-right:6px;"><path d="M128 24v152M56 128l72 72 72-72" stroke="currentColor" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 216h176" stroke="currentColor" stroke-width="20" stroke-linecap="round"/></svg>Download Free
+          </a>
+          <span class="cta-note">Docker or Desktop &middot; No account needed &middot; 2 sessions forever</span>
         </div>
       </div>
     </div>
@@ -754,10 +758,10 @@ docker compose up -d
         </div>
         <div class="footer-col">
           <h4>Resources</h4>
-          <a href="https://github.com/nhadaututtheky/companion" target="_blank" rel="noopener">GitHub</a>
-          <a href="https://github.com/nhadaututtheky/companion/issues" target="_blank" rel="noopener">Issues</a>
-          <a href="https://github.com/nhadaututtheky/companion/releases" target="_blank" rel="noopener">Releases</a>
-          <a href="https://github.com/nhadaututtheky/companion/blob/main/LICENSE" target="_blank" rel="noopener">License (BSL 1.1)</a>
+          <a href="#get-started">Installation Guide</a>
+          <a href="#faq">FAQ</a>
+          <a href="mailto:vietnam11399@gmail.com">Support</a>
+          <a href="#pricing">License (BSL 1.1)</a>
         </div>
         <div class="footer-col">
           <h4>XLabs</h4>
@@ -842,12 +846,16 @@ docker compose up -d
         </div>
         <h3>Payment Confirmed!</h3>
         <p>License key sent to <strong id="pay-success-email"></strong></p>
+        <div id="pay-success-key-wrap" style="display:none;background:var(--bg-elevated,#f1f5f9);border:1px solid var(--border,#e2e8f0);border-radius:8px;padding:12px 16px;margin:12px 0;text-align:center;">
+          <p style="color:var(--text-secondary);font-size:12px;margin:0 0 4px;">Your License Key</p>
+          <code id="pay-success-key" style="font-size:16px;font-weight:700;letter-spacing:1px;"></code>
+        </div>
         <p class="pay-step-desc">Check your inbox. Add the key to your <code>.env</code> file or activate from the web UI Settings.</p>
         <button class="btn btn-primary btn-full" onclick="closePayment()">Done</button>
       </div>
     </div>
   </div>
 
-  <script src="script.js?v=7"></script>
+  <script src="script.js?v=11"></script>
 </body>
 </html>

@@ -42,25 +42,14 @@
   },
   "plugins": {
     "shell": {
-      "open": false,
-      "sidecar": true,
-      "scope": [
-        {
-          "name": "binaries/bun-server",
-          "sidecar": true,
-          "args": true
-        }
-      ]
+      "open": false
     },
-    "notification": {
-      "all": false
-    },
+    "notification": {},
     "updater": {
       "pubkey": "",
       "endpoints": [
         "https://companion.theio.vn/updates/{{target}}/{{arch}}/{{current_version}}"
       ],
-      "dialog": true,
       "active": false
     }
   },
