@@ -24,7 +24,7 @@
         "visible": false,
         "decorations": true,
         "alwaysOnTop": false,
-        "fileDropEnabled": false,
+        "dragDropEnabled": false,
         "label": "main"
       }
     ],
@@ -91,16 +91,7 @@
         "headerImage": "icons/installer-header.bmp",
         "sidebarImage": "icons/installer-sidebar.bmp",
         "installMode": "currentUser",
-        "languages": ["English"],
-        "displayInstallMode": true,
-        "enabledLanguages": true,
-        "shortcuts": {
-          "desktop": true,
-          "startMenu": true
-        }
-      },
-      "msi": {
-        "enableElevatedUpdateTask": true
+        "languages": ["English"]
       }
     },
     "macOS": {
