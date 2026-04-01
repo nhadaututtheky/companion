@@ -49,8 +49,8 @@ async fn main() {
                 e
             })?;
 
-            // Keep child handle alive for the entire app lifetime
-            let child_arc = Arc::new(tokio::sync::Mutex::new(sidecar_child));
+            // Keep child handle alive for the entire app lifetime (Option so we can .take() for kill)
+            let child_arc = Arc::new(tokio::sync::Mutex::new(Some(sidecar_child)));
             app.manage(child_arc.clone());
 
             // ── 4. Wait for server to be healthy, then show window ────────────
@@ -107,7 +107,7 @@ async fn main() {
             if let RunEvent::Exit = event {
                 // Kill the Bun sidecar when the app actually exits
                 if let Some(child_arc) = app
-                    .try_state::<Arc<tokio::sync::Mutex<tauri_plugin_shell::process::CommandChild>>>()
+                    .try_state::<Arc<tokio::sync::Mutex<Option<tauri_plugin_shell::process::CommandChild>>>>()
                 {
                     let child_arc = child_arc.inner().clone();
                     // Attempt a graceful kill; ignore errors (process may have already exited)
@@ -115,11 +115,13 @@ async fn main() {
                     match rt {
                         Ok(handle) => {
                             handle.spawn(async move {
-                                let mut child = child_arc.lock().await;
-                                if let Err(e) = child.kill() {
-                                    log::warn!("Failed to kill sidecar on exit: {}", e);
-                                } else {
-                                    log::info!("Sidecar killed successfully");
+                                let mut guard = child_arc.lock().await;
+                                if let Some(child) = guard.take() {
+                                    if let Err(e) = child.kill() {
+                                        log::warn!("Failed to kill sidecar on exit: {}", e);
+                                    } else {
+                                        log::info!("Sidecar killed successfully");
+                                    }
                                 }
                             });
                         }
