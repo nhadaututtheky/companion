@@ -125,6 +125,37 @@ jobs:
           tauriScript: cargo tauri
           args: ""
 
+      # ── Upload version-less aliases for direct download links ──────────────
+      - name: Upload version-less download aliases
+        if: github.ref_type == 'tag' || inputs.tag
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_type == 'tag' && github.ref_name || inputs.tag }}"
+          BUNDLE_DIR="src-tauri/target/release/bundle"
+
+          # macOS
+          DMG=$(find "$BUNDLE_DIR" -name "*.dmg" | head -1)
+          if [ -n "$DMG" ]; then
+            cp "$DMG" "Companion_aarch64.dmg"
+            gh release upload "$TAG" "Companion_aarch64.dmg" --clobber
+          fi
+
+          # Windows
+          MSI=$(find "$BUNDLE_DIR" -name "*.msi" | head -1)
+          if [ -n "$MSI" ]; then
+            cp "$MSI" "Companion_x64-setup.msi"
+            gh release upload "$TAG" "Companion_x64-setup.msi" --clobber
+          fi
+
+          # Linux
+          APPIMAGE=$(find "$BUNDLE_DIR" -name "*.AppImage" | head -1)
+          if [ -n "$APPIMAGE" ]; then
+            cp "$APPIMAGE" "Companion_amd64.AppImage"
+            gh release upload "$TAG" "Companion_amd64.AppImage" --clobber
+          fi
+
       # ── Upload artifacts (for non-release workflow_dispatch) ─────────────────
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

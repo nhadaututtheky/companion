@@ -1,3 +1,9 @@
+# Desktop download redirects — update version on each release
+/download/macos https://github.com/nhadaututtheky/companion/releases/latest/download/Companion_aarch64.dmg 302
+/download/windows https://github.com/nhadaututtheky/companion/releases/latest/download/Companion_x64-setup.msi 302
+/download/linux https://github.com/nhadaututtheky/companion/releases/latest/download/Companion_amd64.AppImage 302
+
+# Install script redirects
 /install https://pay.theio.vn/companion/install 302
 /install.sh https://pay.theio.vn/companion/install 302
 /install.ps1 https://pay.theio.vn/companion/install.ps1 302
