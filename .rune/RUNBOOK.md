@@ -18,7 +18,7 @@
 | 8 | CodeGraph | Phase 3: Agent Interface | ✅ Done | — |
 | 9 | CodeGraph | Phase 4: API + Web UI | ✅ Done | — |
 | 10 | CodeGraph | Full Review + Integration Test | ✅ Done | — |
-| 11 | Bridge | CodeGraph ↔ WebIntel integration | ⬚ TODO | — |
+| 11 | Bridge | CodeGraph ↔ WebIntel integration | ✅ Done | — |
 | 12 | Final | E2E test all features + ship | ⬚ TODO | — |
 
 ## Protocol Per Phase
@@ -58,7 +58,7 @@ _Updated by each session:_
 
 - **Session start**: 2026-04-01
 - **Last completed step**: CodeGraph Phase 1 (step 6) — 906 nodes, 745 edges in 2.4s
-- **Currently working on**: Bridge (step 11)
+- **Currently working on**: Final E2E (step 12)
 - **Blockers**: None
 - **Decisions made this session**:
   - webclaw as Docker sidecar (REST API on port 3100)

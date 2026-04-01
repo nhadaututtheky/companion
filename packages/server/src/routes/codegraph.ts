@@ -19,6 +19,7 @@ import {
   getRelatedNodes,
   getHotFiles,
 } from "../codegraph/query-engine.js";
+import { getExternalPackages, getPackageUsageCounts } from "../codegraph/webintel-bridge.js";
 import type { ApiResponse } from "@companion/shared";
 
 export const codegraphRoutes = new Hono();
@@ -178,4 +179,24 @@ codegraphRoutes.get("/hot-files", (c) => {
   const limit = Math.min(isNaN(rawLimit) ? 10 : rawLimit, 50);
   const files = getHotFiles(project, limit);
   return c.json({ success: true, data: files } satisfies ApiResponse);
+});
+
+// ─── Bridge: CodeGraph ↔ WebIntel ───────────────────────────────────────
+
+/** GET /codegraph/packages?project=slug — external package dependencies */
+codegraphRoutes.get("/packages", (c) => {
+  const project = c.req.query("project");
+  if (!project) {
+    return c.json({ success: false, error: "project query param required" } satisfies ApiResponse, 400);
+  }
+
+  const packages = getExternalPackages(project);
+  const counts = getPackageUsageCounts(project);
+
+  const data = packages.map((pkg) => ({
+    name: pkg,
+    fileCount: counts.get(pkg) ?? 0,
+  }));
+
+  return c.json({ success: true, data } satisfies ApiResponse);
 });

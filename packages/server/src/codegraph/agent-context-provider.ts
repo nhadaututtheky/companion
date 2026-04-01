@@ -12,6 +12,7 @@ import {
   getExportedNodesByFile,
   type CodeNodeWithEdges,
 } from "./query-engine.js";
+import { getPackageUsageCounts } from "./webintel-bridge.js";
 
 const log = createLogger("codegraph-context");
 
@@ -122,6 +123,20 @@ export function buildProjectMap(projectSlug: string): string | null {
         lines.push(`  ${layer}/: ${files.join(", ")}`);
       }
     }
+
+    // External dependencies (top 10 by usage)
+    try {
+      const pkgCounts = getPackageUsageCounts(projectSlug);
+      if (pkgCounts.size > 0) {
+        const topPkgs = [...pkgCounts.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10);
+        lines.push("", "Key dependencies:");
+        for (const [pkg, count] of topPkgs) {
+          lines.push(`  ${pkg} (${count} file${count > 1 ? "s" : ""})`);
+        }
+      }
+    } catch { /* skip */ }
 
     lines.push(`</codegraph>`);
     return "\n\n" + lines.join("\n");

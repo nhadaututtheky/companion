@@ -106,6 +106,11 @@ export { describeNodes as describeProject } from "./semantic-describer.js";
 export { incrementalRescan } from "./diff-updater.js";
 
 /**
+ * Get external package dependencies from the code graph.
+ */
+export { getExternalPackages, buildDependencySummary } from "./webintel-bridge.js";
+
+/**
  * Cancel an active scan.
  */
 export function cancelScan(projectSlug: string): boolean {
