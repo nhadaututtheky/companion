@@ -35,8 +35,8 @@
       "tooltip": "Companion"
     },
     "security": {
-      "csp": "default-src 'self' http://localhost:3579 ws://localhost:3579; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-eval'",
-      "dangerousDisableAssetCspModification": false,
+      "csp": null,
+      "dangerousDisableAssetCspModification": true,
       "freezePrototype": false
     }
   },
