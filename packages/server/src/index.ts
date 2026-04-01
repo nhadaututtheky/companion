@@ -15,7 +15,7 @@ import { seedDefaultTemplates } from "./services/templates.js";
 import { DEFAULT_PORT, APP_VERSION } from "@companion/shared";
 import { timingSafeEqual } from "node:crypto";
 import { terminalManager } from "./services/terminal-manager.js";
-import { join, resolve } from "node:path";
+import { join, resolve, dirname } from "node:path";
 import { existsSync, statSync } from "node:fs";
 
 const log = createLogger("server");
@@ -199,7 +199,12 @@ app.route("/", routes);
 // Serve the pre-built Next.js static export from packages/web/out/.
 // In dev mode the Next.js dev server runs separately on port 3580.
 
-const WEB_OUT_DIR = join(import.meta.dir, "../../../packages/web/out");
+// Resolve web UI: try next to executable (compiled), then source tree (dev)
+const WEB_OUT_CANDIDATES = [
+  join(dirname(process.execPath), "web"),          // compiled: <install>/web/
+  join(import.meta.dir, "../../../packages/web/out"), // dev: source tree
+];
+const WEB_OUT_DIR = WEB_OUT_CANDIDATES.find((d) => existsSync(d)) ?? WEB_OUT_CANDIDATES[1];
 const WEB_ENABLED = existsSync(WEB_OUT_DIR);
 
 if (WEB_ENABLED) {
