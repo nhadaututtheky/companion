@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // ─── Projects ────────────────────────────────────────────────────────────────
 
@@ -213,3 +213,76 @@ export const webIntelDocs = sqliteTable("web_intel_docs", {
 }, (table) => [
   index("idx_webintel_docs_library").on(table.libraryName),
 ]);
+
+// ─── CodeGraph: Files ─────────────────────────────────────────────────────────
+
+export const codeFiles = sqliteTable("code_files", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  projectSlug: text("project_slug").notNull(),
+  filePath: text("file_path").notNull(),
+  fileHash: text("file_hash").notNull(),
+  totalLines: integer("total_lines").notNull().default(0),
+  language: text("language").notNull().default("typescript"),
+  description: text("description"),
+  lastScannedAt: integer("last_scanned_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+  scanVersion: integer("scan_version").notNull().default(1),
+}, (table) => [
+  index("idx_code_files_project").on(table.projectSlug),
+  uniqueIndex("idx_code_files_path").on(table.projectSlug, table.filePath),
+]);
+
+// ─── CodeGraph: Nodes (symbols) ──────────────────────────────────────────────
+
+export const codeNodes = sqliteTable("code_nodes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  projectSlug: text("project_slug").notNull(),
+  fileId: integer("file_id").notNull(),
+  filePath: text("file_path").notNull(),
+  symbolName: text("symbol_name").notNull(),
+  symbolType: text("symbol_type").notNull(),
+  signature: text("signature"),
+  description: text("description"),
+  isExported: integer("is_exported", { mode: "boolean" }).notNull().default(false),
+  lineStart: integer("line_start").notNull(),
+  lineEnd: integer("line_end").notNull(),
+  bodyPreview: text("body_preview"),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+}, (table) => [
+  index("idx_code_nodes_project").on(table.projectSlug),
+  index("idx_code_nodes_file").on(table.fileId),
+  index("idx_code_nodes_symbol").on(table.projectSlug, table.symbolName),
+  index("idx_code_nodes_type").on(table.projectSlug, table.symbolType),
+]);
+
+// ─── CodeGraph: Edges (relationships) ────────────────────────────────────────
+
+export const codeEdges = sqliteTable("code_edges", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  projectSlug: text("project_slug").notNull(),
+  sourceNodeId: integer("source_node_id").notNull(),
+  targetNodeId: integer("target_node_id").notNull(),
+  edgeType: text("edge_type").notNull(),
+  trustWeight: real("trust_weight").notNull().default(0.5),
+  context: text("context"),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+}, (table) => [
+  index("idx_code_edges_source").on(table.sourceNodeId),
+  index("idx_code_edges_target").on(table.targetNodeId),
+  index("idx_code_edges_project").on(table.projectSlug),
+  index("idx_code_edges_type").on(table.projectSlug, table.edgeType),
+]);
+
+// ─── CodeGraph: Scan Jobs ────────────────────────────────────────────────────
+
+export const codeScanJobs = sqliteTable("code_scan_jobs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  projectSlug: text("project_slug").notNull(),
+  status: text("status").notNull().default("pending"),
+  totalFiles: integer("total_files").notNull().default(0),
+  scannedFiles: integer("scanned_files").notNull().default(0),
+  totalNodes: integer("total_nodes").notNull().default(0),
+  totalEdges: integer("total_edges").notNull().default(0),
+  errorMessage: text("error_message"),
+  startedAt: integer("started_at", { mode: "timestamp_ms" }).notNull().$defaultFn(() => new Date()),
+  completedAt: integer("completed_at", { mode: "timestamp_ms" }),
+});

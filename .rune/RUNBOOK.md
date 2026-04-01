@@ -12,7 +12,7 @@
 | 2 | WebIntel | Phase 2: Agent Auto-Injection | ✅ Done | 48e276c |
 | 3 | WebIntel | Phase 3: Web Research + Crawl | ✅ Done | ab06b91 |
 | 4 | WebIntel | Phase 4: UI + Telegram Commands | ✅ Done | — |
-| 5 | WebIntel | Full Review + Integration Test | ⬚ TODO | — |
+| 5 | WebIntel | Full Review + Integration Test | ✅ Done | 76047e4 |
 | 6 | CodeGraph | Phase 1: Scanner + Store | ⬚ TODO | — |
 | 7 | CodeGraph | Phase 2: Semantic + Diff | ⬚ TODO | — |
 | 8 | CodeGraph | Phase 3: Agent Interface | ⬚ TODO | — |
@@ -57,8 +57,8 @@ If context is running low:
 _Updated by each session:_
 
 - **Session start**: 2026-04-01
-- **Last completed step**: WebIntel Phase 4 (MCP tools + Web UI panel)
-- **Currently working on**: WebIntel Full Review (step 5)
+- **Last completed step**: WebIntel Full Review (step 5)
+- **Currently working on**: CodeGraph Phase 1 (step 6)
 - **Blockers**: None
 - **Decisions made this session**:
   - webclaw as Docker sidecar (REST API on port 3100)
