@@ -83,8 +83,7 @@ jobs:
         run: |
           TARGET_TRIPLE=$(rustc -Vv | grep '^host:' | awk '{print $2}')
           echo "Target triple: $TARGET_TRIPLE"
-          mkdir -p src-tauri/binaries
-          OUTFILE="src-tauri/binaries/bun-server-${TARGET_TRIPLE}"
+          OUTFILE="src-tauri/bun-server-${TARGET_TRIPLE}"
           if [[ "$RUNNER_OS" == "Windows" ]]; then
             OUTFILE="${OUTFILE}.exe"
           fi
@@ -92,7 +91,7 @@ jobs:
             --compile \
             --target bun \
             --outfile "$OUTFILE"
-          ls -lh src-tauri/binaries/
+          ls -lh src-tauri/bun-server-*
 
       # ── Build Tauri ──────────────────────────────────────────────────────────
       - name: Build Tauri app

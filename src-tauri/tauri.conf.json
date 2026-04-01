@@ -64,7 +64,7 @@
     ],
     "resources": [],
     "externalBin": [
-      "binaries/bun-server"
+      "bun-server"
     ],
     "copyright": "© 2026 theio.vn",
     "category": "DeveloperTool",

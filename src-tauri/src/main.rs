@@ -34,7 +34,7 @@ async fn main() {
             // ── 3. Spawn the Bun sidecar ──────────────────────────────────────
             let sidecar_cmd = app
                 .shell()
-                .sidecar("binaries/bun-server")
+                .sidecar("bun-server")
                 .map_err(|e| {
                     log::error!("Failed to resolve sidecar: {}", e);
                     e

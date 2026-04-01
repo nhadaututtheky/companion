@@ -23,7 +23,7 @@
       "identifier": "shell:allow-spawn",
       "allow": [
         {
-          "name": "binaries/bun-server",
+          "name": "bun-server",
           "sidecar": true,
           "args": true
         }
