@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS projects (
 CREATE TABLE IF NOT EXISTS sessions (
   id TEXT PRIMARY KEY NOT NULL,
   short_id TEXT,
+  name TEXT,
   project_slug TEXT REFERENCES projects(slug),
   model TEXT NOT NULL,
   status TEXT DEFAULT 'starting' NOT NULL,
@@ -35,6 +36,10 @@ CREATE TABLE IF NOT EXISTS sessions (
   source TEXT DEFAULT 'api' NOT NULL,
   parent_id TEXT,
   channel_id TEXT,
+  cost_budget_usd REAL,
+  cost_warned INTEGER DEFAULT 0 NOT NULL,
+  compact_mode TEXT DEFAULT 'manual' NOT NULL,
+  compact_threshold INTEGER DEFAULT 75 NOT NULL,
   total_cost_usd REAL DEFAULT 0 NOT NULL,
   num_turns INTEGER DEFAULT 0 NOT NULL,
   total_input_tokens INTEGER DEFAULT 0 NOT NULL,
@@ -46,6 +51,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   files_read TEXT DEFAULT '[]',
   files_modified TEXT DEFAULT '[]',
   files_created TEXT DEFAULT '[]',
+  tags TEXT DEFAULT '[]',
   started_at INTEGER NOT NULL,
   ended_at INTEGER
 );
