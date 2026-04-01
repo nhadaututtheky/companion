@@ -43,11 +43,13 @@ export async function describeNodes(projectSlug: string): Promise<number> {
       filePath: codeNodes.filePath,
     })
     .from(codeNodes)
-    .where(and(
-      eq(codeNodes.projectSlug, projectSlug),
-      eq(codeNodes.isExported, true),
-      isNull(codeNodes.description),
-    ))
+    .where(
+      and(
+        eq(codeNodes.projectSlug, projectSlug),
+        eq(codeNodes.isExported, true),
+        isNull(codeNodes.description),
+      ),
+    )
     .all();
 
   if (undescribed.length === 0) {
@@ -112,7 +114,8 @@ async function describeBatch(
     .join("\n\n");
 
   const response = await callAI({
-    systemPrompt: "You are a code documentation assistant. For each symbol, write a concise 1-sentence description of what it DOES (not what it IS). Focus on behavior and purpose. Return ONLY a JSON array of objects with \"index\" (1-based) and \"description\" fields. No markdown, no explanation.",
+    systemPrompt:
+      'You are a code documentation assistant. For each symbol, write a concise 1-sentence description of what it DOES (not what it IS). Focus on behavior and purpose. Return ONLY a JSON array of objects with "index" (1-based) and "description" fields. No markdown, no explanation.',
     messages: [{ role: "user", content: `Describe these code symbols:\n\n${symbolList}` }],
     tier: "fast",
     maxTokens: 1024,

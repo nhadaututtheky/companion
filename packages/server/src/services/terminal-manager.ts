@@ -17,9 +17,7 @@ class TerminalManager {
   spawn(cwd: string): string {
     const id = randomUUID();
     const shell =
-      process.platform === "win32"
-        ? "powershell.exe"
-        : (process.env.SHELL ?? "/bin/bash");
+      process.platform === "win32" ? "powershell.exe" : (process.env.SHELL ?? "/bin/bash");
 
     const proc = Bun.spawn([shell], {
       cwd,
@@ -52,10 +50,7 @@ class TerminalManager {
     return id;
   }
 
-  private async pipeStream(
-    terminal: TerminalProcess,
-    stream: ReadableStream<Uint8Array> | null
-  ) {
+  private async pipeStream(terminal: TerminalProcess, stream: ReadableStream<Uint8Array> | null) {
     if (!stream) return;
     const reader = stream.getReader();
     const decoder = new TextDecoder();

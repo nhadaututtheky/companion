@@ -50,10 +50,7 @@ function StatusBadge({ available }: { available: boolean }) {
         }}
         aria-hidden="true"
       />
-      <span
-        className="text-xs font-medium"
-        style={{ color: available ? "#34A853" : "#EA4335" }}
-      >
+      <span className="text-xs font-medium" style={{ color: available ? "#34A853" : "#EA4335" }}>
         {available ? "Online" : "Offline"}
       </span>
     </div>
@@ -71,15 +68,13 @@ function CacheStats({
   onClear: () => void;
   clearing: boolean;
 }) {
-  const hitRate = cache.hits + cache.misses > 0
-    ? ((cache.hits / (cache.hits + cache.misses)) * 100).toFixed(0)
-    : "0";
+  const hitRate =
+    cache.hits + cache.misses > 0
+      ? ((cache.hits / (cache.hits + cache.misses)) * 100).toFixed(0)
+      : "0";
 
   return (
-    <div
-      className="rounded-lg p-3"
-      style={{ background: "var(--color-bg-elevated)" }}
-    >
+    <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
           Cache
@@ -97,22 +92,37 @@ function CacheStats({
       </div>
       <div className="grid grid-cols-3 gap-2 text-center">
         <div>
-          <div className="text-sm font-bold" style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-mono)" }}>
+          <div
+            className="text-sm font-bold"
+            style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-mono)" }}
+          >
             {cache.size}
           </div>
-          <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>entries</div>
+          <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            entries
+          </div>
         </div>
         <div>
-          <div className="text-sm font-bold" style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-mono)" }}>
+          <div
+            className="text-sm font-bold"
+            style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-mono)" }}
+          >
             {hitRate}%
           </div>
-          <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>hit rate</div>
+          <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            hit rate
+          </div>
         </div>
         <div>
-          <div className="text-sm font-bold" style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-mono)" }}>
+          <div
+            className="text-sm font-bold"
+            style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-mono)" }}
+          >
             {cache.maxSize}
           </div>
-          <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>max</div>
+          <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            max
+          </div>
         </div>
       </div>
     </div>
@@ -148,11 +158,11 @@ function QuickScrape() {
   const wordCount = content ? content.split(/\s+/).length : 0;
 
   return (
-    <div
-      className="rounded-lg p-3"
-      style={{ background: "var(--color-bg-elevated)" }}
-    >
-      <span className="text-xs font-semibold block mb-2" style={{ color: "var(--color-text-secondary)" }}>
+    <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
+      <span
+        className="text-xs font-semibold block mb-2"
+        style={{ color: "var(--color-text-secondary)" }}
+      >
         Quick Scrape
       </span>
       <div className="flex gap-1.5">
@@ -177,11 +187,7 @@ function QuickScrape() {
           style={{ background: "#4285F4", color: "#fff" }}
           aria-label="Scrape URL"
         >
-          {loading ? (
-            <CircleNotch size={12} className="animate-spin" />
-          ) : (
-            <Globe size={12} />
-          )}
+          {loading ? <CircleNotch size={12} className="animate-spin" /> : <Globe size={12} />}
           Scrape
         </button>
       </div>
@@ -203,7 +209,9 @@ function QuickScrape() {
           >
             {expanded ? <CaretDown size={10} /> : <CaretRight size={10} />}
             <CheckCircle size={12} color="#34A853" />
-            <span className="truncate flex-1 text-left">{typeof result.metadata?.title === "string" ? result.metadata.title : result.url}</span>
+            <span className="truncate flex-1 text-left">
+              {typeof result.metadata?.title === "string" ? result.metadata.title : result.url}
+            </span>
             <span style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-mono)" }}>
               {wordCount.toLocaleString()} words
             </span>
@@ -234,7 +242,10 @@ function QuickScrape() {
 function QuickResearch() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ content: string; sources: Array<{ title: string; url: string }> } | null>(null);
+  const [result, setResult] = useState<{
+    content: string;
+    sources: Array<{ title: string; url: string }>;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
 
@@ -255,11 +266,11 @@ function QuickResearch() {
   }, [query]);
 
   return (
-    <div
-      className="rounded-lg p-3"
-      style={{ background: "var(--color-bg-elevated)" }}
-    >
-      <span className="text-xs font-semibold block mb-2" style={{ color: "var(--color-text-secondary)" }}>
+    <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
+      <span
+        className="text-xs font-semibold block mb-2"
+        style={{ color: "var(--color-text-secondary)" }}
+      >
         Web Research
       </span>
       <div className="flex gap-1.5">
@@ -428,7 +439,11 @@ export function WebIntelPanel({ onClose }: WebIntelPanelProps) {
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         {loading && (
           <div className="flex items-center justify-center py-8">
-            <CircleNotch size={24} className="animate-spin" style={{ color: "var(--color-text-muted)" }} />
+            <CircleNotch
+              size={24}
+              className="animate-spin"
+              style={{ color: "var(--color-text-muted)" }}
+            />
           </div>
         )}
 
@@ -451,10 +466,7 @@ export function WebIntelPanel({ onClose }: WebIntelPanelProps) {
         )}
 
         {!status?.available && !loading && !error && (
-          <div
-            className="text-xs text-center py-4"
-            style={{ color: "var(--color-text-muted)" }}
-          >
+          <div className="text-xs text-center py-4" style={{ color: "var(--color-text-muted)" }}>
             webclaw sidecar is offline. Start it with:
             <pre
               className="mt-2 p-2 rounded text-left"

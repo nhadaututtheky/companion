@@ -48,11 +48,7 @@ function formatData(data?: Record<string, unknown>): string {
 export function createLogger(module: string): Logger {
   const prefix = `[${module}]`;
 
-  function log(
-    level: Level,
-    msg: string,
-    data?: Record<string, unknown>,
-  ): void {
+  function log(level: Level, msg: string, data?: Record<string, unknown>): void {
     if (LEVEL_ORDER[level] < LEVEL_ORDER[globalLevel]) return;
 
     if (jsonFormat) {
@@ -73,10 +69,8 @@ export function createLogger(module: string): Logger {
     const line = `${color}${ts} ${levelTag}${RESET} ${prefix} ${msg}${formatData(data)}`;
 
     if (level === "error") {
-       
       console.error(line);
     } else if (level === "warn") {
-       
       console.warn(line);
     } else {
       // eslint-disable-next-line no-console

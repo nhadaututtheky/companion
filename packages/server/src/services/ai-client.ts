@@ -31,7 +31,9 @@ interface AIConfig {
  * Resolve OpenRouter provider config from DB settings.
  * Returns undefined if OpenRouter is not configured.
  */
-export function getOpenRouterConfig(): { provider: Provider; baseUrl: string; apiKey: string } | undefined {
+export function getOpenRouterConfig():
+  | { provider: Provider; baseUrl: string; apiKey: string }
+  | undefined {
   const baseUrl = getSetting("ai.openrouterBaseUrl") ?? process.env.OPENROUTER_BASE_URL;
   const apiKey = getSetting("ai.openrouterApiKey") ?? process.env.OPENROUTER_API_KEY;
 
@@ -149,9 +151,11 @@ export async function callAI(opts: {
   const config = getConfig();
 
   const model =
-    opts.tier === "fast" ? config.fastModel :
-    opts.tier === "strong" ? config.strongModel :
-    config.defaultModel;
+    opts.tier === "fast"
+      ? config.fastModel
+      : opts.tier === "strong"
+        ? config.strongModel
+        : config.defaultModel;
 
   if (config.provider === "anthropic") {
     return callAnthropic(config, model, opts);
@@ -260,7 +264,8 @@ export async function callAIWithModel(opts: {
 export async function translateViToEn(text: string): Promise<string | null> {
   try {
     const response = await callAI({
-      systemPrompt: "You are a translator. Translate Vietnamese text to English. Output ONLY the English translation, nothing else.",
+      systemPrompt:
+        "You are a translator. Translate Vietnamese text to English. Output ONLY the English translation, nothing else.",
       messages: [{ role: "user", content: text }],
       tier: "fast",
       maxTokens: 1024,

@@ -5,7 +5,7 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 async function request<T>(path: string, opts?: RequestInit): Promise<T> {
-  const apiKey = typeof window !== "undefined" ? localStorage.getItem("api_key") ?? "" : "";
+  const apiKey = typeof window !== "undefined" ? (localStorage.getItem("api_key") ?? "") : "";
 
   const res = await fetch(`${BASE}${path}`, {
     ...opts,
@@ -36,7 +36,16 @@ export const api = {
 
   health: () => request<{ success: boolean; data: { status: string } }>("/api/health"),
 
-  license: () => request<{ data: { valid: boolean; tier: string; features: string[]; maxSessions: number; expiresAt?: string } }>("/api/license"),
+  license: () =>
+    request<{
+      data: {
+        valid: boolean;
+        tier: string;
+        features: string[];
+        maxSessions: number;
+        expiresAt?: string;
+      };
+    }>("/api/license"),
 
   // Sessions
   sessions: {
@@ -53,13 +62,15 @@ export const api = {
       resume?: boolean;
       idleTimeoutMs?: number;
       keepAlive?: boolean;
-    }) => request<{ data: { sessionId: string; projectCreated?: boolean } }>("/api/sessions", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
-    stop: (id: string) => request<{ success: boolean }>(`/api/sessions/${id}`, {
-      method: "DELETE",
-    }),
+    }) =>
+      request<{ data: { sessionId: string; projectCreated?: boolean } }>("/api/sessions", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    stop: (id: string) =>
+      request<{ success: boolean }>(`/api/sessions/${id}`, {
+        method: "DELETE",
+      }),
     message: (id: string, content: string) =>
       request<{ success: boolean }>(`/api/sessions/${id}/messages`, {
         method: "POST",
@@ -76,9 +87,7 @@ export const api = {
       }),
     killAll: async (ids: string[]) => {
       const results = await Promise.allSettled(
-        ids.map((id) =>
-          request<{ success: boolean }>(`/api/sessions/${id}`, { method: "DELETE" }),
-        ),
+        ids.map((id) => request<{ success: boolean }>(`/api/sessions/${id}`, { method: "DELETE" })),
       );
       const killed = results.filter((r) => r.status === "fulfilled").length;
       return { killed };
@@ -122,29 +131,36 @@ export const api = {
         method: "POST",
       }),
     streamTelegramStatus: (id: string) =>
-      request<{ success: boolean; data: { streaming: boolean; chatId?: number; topicId?: number } }>(
-        `/api/sessions/${id}/stream/telegram`,
-      ),
+      request<{
+        success: boolean;
+        data: { streaming: boolean; chatId?: number; topicId?: number };
+      }>(`/api/sessions/${id}/stream/telegram`),
     streamTelegram: (id: string, chatId: number, topicId?: number) =>
-      request<{ success: boolean; data: { sessionId: string; chatId: number; streaming: boolean } }>(
-        `/api/sessions/${id}/stream/telegram`,
-        { method: "POST", body: JSON.stringify({ chatId, topicId: topicId ?? undefined }) },
-      ),
+      request<{
+        success: boolean;
+        data: { sessionId: string; chatId: number; streaming: boolean };
+      }>(`/api/sessions/${id}/stream/telegram`, {
+        method: "POST",
+        body: JSON.stringify({ chatId, topicId: topicId ?? undefined }),
+      }),
     detachTelegramStream: (id: string) =>
       request<{ success: boolean; data: { sessionId: string; detached: boolean } }>(
         `/api/sessions/${id}/stream/telegram`,
         { method: "DELETE" },
       ),
     rename: (id: string, name: string | null) =>
-      request<{ success: boolean; data: { name: string | null } }>(
-        `/api/sessions/${id}/rename`,
-        { method: "PATCH", body: JSON.stringify({ name }) },
-      ),
-    updateConfig: (id: string, config: { costBudgetUsd?: number | null; compactMode?: string; compactThreshold?: number }) =>
-      request<{ success: boolean }>(
-        `/api/sessions/${id}/config`,
-        { method: "PATCH", body: JSON.stringify(config) },
-      ),
+      request<{ success: boolean; data: { name: string | null } }>(`/api/sessions/${id}/rename`, {
+        method: "PATCH",
+        body: JSON.stringify({ name }),
+      }),
+    updateConfig: (
+      id: string,
+      config: { costBudgetUsd?: number | null; compactMode?: string; compactThreshold?: number },
+    ) =>
+      request<{ success: boolean }>(`/api/sessions/${id}/config`, {
+        method: "PATCH",
+        body: JSON.stringify(config),
+      }),
     messages: (id: string, opts?: { limit?: number; before?: number }) => {
       const params = new URLSearchParams();
       if (opts?.limit) params.set("limit", String(opts.limit));
@@ -153,7 +169,13 @@ export const api = {
       return request<{
         success: boolean;
         data: {
-          messages: Array<{ id: string; role: string; content: string; timestamp: number; source: string }>;
+          messages: Array<{
+            id: string;
+            role: string;
+            content: string;
+            timestamp: number;
+            source: string;
+          }>;
           hasMore: boolean;
         };
         meta: { total: number; limit: number };
@@ -162,10 +184,10 @@ export const api = {
     exportUrl: (id: string, format: "md" | "json" = "md") =>
       `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/sessions/${id}/export?format=${format}`,
     updateTags: (id: string, tags: string[]) =>
-      request<{ success: boolean; data: { tags: string[] } }>(
-        `/api/sessions/${id}/tags`,
-        { method: "PATCH", body: JSON.stringify({ tags }) },
-      ),
+      request<{ success: boolean; data: { tags: string[] } }>(`/api/sessions/${id}/tags`, {
+        method: "PATCH",
+        body: JSON.stringify({ tags }),
+      }),
   },
 
   // Projects
@@ -177,9 +199,10 @@ export const api = {
         method: "PUT",
         body: JSON.stringify(body),
       }),
-    delete: (slug: string) => request<{ success: boolean }>(`/api/projects/${slug}`, {
-      method: "DELETE",
-    }),
+    delete: (slug: string) =>
+      request<{ success: boolean }>(`/api/projects/${slug}`, {
+        method: "DELETE",
+      }),
   },
 
   // Telegram
@@ -255,9 +278,7 @@ export const api = {
       }),
 
     testBot: (id: string) =>
-      request<{ data: { username: string; firstName: string } }>(
-        `/api/telegram/bots/${id}/test`,
-      ),
+      request<{ data: { username: string; firstName: string } }>(`/api/telegram/bots/${id}/test`),
   },
 
   // Settings (key-value store)
@@ -268,9 +289,7 @@ export const api = {
       ),
 
     get: (key: string) =>
-      request<{ data: { key: string; value: string } }>(
-        `/api/settings/${encodeURIComponent(key)}`,
-      ),
+      request<{ data: { key: string; value: string } }>(`/api/settings/${encodeURIComponent(key)}`),
 
     set: (key: string, value: string) =>
       request<{ data: { key: string } }>(`/api/settings/${encodeURIComponent(key)}`, {
@@ -406,7 +425,9 @@ export const api = {
         body: JSON.stringify({ cwd }),
       }),
     list: () =>
-      request<{ data: { terminals: Array<{ id: string; cwd: string; createdAt: number }> } }>("/api/terminal"),
+      request<{ data: { terminals: Array<{ id: string; cwd: string; createdAt: number }> } }>(
+        "/api/terminal",
+      ),
     kill: (id: string) =>
       request<{ success: boolean }>(`/api/terminal/${id}`, { method: "DELETE" }),
   },
@@ -460,7 +481,12 @@ export const api = {
       icon?: string;
       model?: string | null;
       sortOrder?: number;
-      variables?: Array<{ key: string; label: string; defaultValue?: string; required?: boolean }> | null;
+      variables?: Array<{
+        key: string;
+        label: string;
+        defaultValue?: string;
+        required?: boolean;
+      }> | null;
     }) =>
       request<{ success: boolean; data: { id: string } }>("/api/templates", {
         method: "POST",
@@ -506,10 +532,10 @@ export const api = {
       }),
 
     docs: (url: string, maxTokens?: number) =>
-      request<{ success: boolean; data: { url: string; content: string } }>(
-        "/api/webintel/docs",
-        { method: "POST", body: JSON.stringify({ url, maxTokens }) },
-      ),
+      request<{ success: boolean; data: { url: string; content: string } }>("/api/webintel/docs", {
+        method: "POST",
+        body: JSON.stringify({ url, maxTokens }),
+      }),
 
     research: (query: string, maxTokens?: number) =>
       request<{
@@ -524,19 +550,16 @@ export const api = {
       }),
 
     crawl: (url: string, opts?: { maxDepth?: number; maxPages?: number }) =>
-      request<{ success: boolean; data: { jobId: string } }>(
-        "/api/webintel/crawl",
-        { method: "POST", body: JSON.stringify({ url, ...opts }) },
-      ),
+      request<{ success: boolean; data: { jobId: string } }>("/api/webintel/crawl", {
+        method: "POST",
+        body: JSON.stringify({ url, ...opts }),
+      }),
 
-    jobs: () =>
-      request<{ success: boolean; data: unknown[] }>("/api/webintel/jobs"),
+    jobs: () => request<{ success: boolean; data: unknown[] }>("/api/webintel/jobs"),
 
-    job: (id: string) =>
-      request<{ success: boolean; data: unknown }>(`/api/webintel/jobs/${id}`),
+    job: (id: string) => request<{ success: boolean; data: unknown }>(`/api/webintel/jobs/${id}`),
 
-    clearCache: () =>
-      request<{ success: boolean }>("/api/webintel/cache", { method: "DELETE" }),
+    clearCache: () => request<{ success: boolean }>("/api/webintel/cache", { method: "DELETE" }),
   },
 
   codegraph: {
@@ -566,10 +589,10 @@ export const api = {
       }>(`/api/codegraph/stats?project=${encodeURIComponent(project)}`),
 
     scan: (projectSlug: string) =>
-      request<{ success: boolean; data: { jobId: number } }>(
-        "/api/codegraph/scan",
-        { method: "POST", body: JSON.stringify({ projectSlug }) },
-      ),
+      request<{ success: boolean; data: { jobId: number } }>("/api/codegraph/scan", {
+        method: "POST",
+        body: JSON.stringify({ projectSlug }),
+      }),
 
     rescan: (projectSlug: string, files?: string[]) =>
       request<{
@@ -581,16 +604,16 @@ export const api = {
       }),
 
     describe: (projectSlug: string) =>
-      request<{ success: boolean; data: { described: number } }>(
-        "/api/codegraph/describe",
-        { method: "POST", body: JSON.stringify({ projectSlug }) },
-      ),
+      request<{ success: boolean; data: { described: number } }>("/api/codegraph/describe", {
+        method: "POST",
+        body: JSON.stringify({ projectSlug }),
+      }),
 
     cancel: (projectSlug: string) =>
-      request<{ success: boolean; data: { cancelled: boolean } }>(
-        "/api/codegraph/cancel",
-        { method: "POST", body: JSON.stringify({ projectSlug }) },
-      ),
+      request<{ success: boolean; data: { cancelled: boolean } }>("/api/codegraph/cancel", {
+        method: "POST",
+        body: JSON.stringify({ projectSlug }),
+      }),
 
     search: (project: string, query: string) =>
       request<{ success: boolean; data: unknown[] }>(

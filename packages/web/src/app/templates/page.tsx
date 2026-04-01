@@ -40,7 +40,12 @@ function TemplateForm({
   onCancel,
 }: {
   initial?: Template;
-  onSave: (data: { name: string; prompt: string; icon: string; model: string | null }) => Promise<void>;
+  onSave: (data: {
+    name: string;
+    prompt: string;
+    icon: string;
+    model: string | null;
+  }) => Promise<void>;
   onCancel: () => void;
 }) {
   const [name, setName] = useState(initial?.name ?? "");
@@ -76,7 +81,8 @@ function TemplateForm({
               className="w-8 h-8 rounded-md flex items-center justify-center text-base cursor-pointer transition-all"
               style={{
                 background: icon === e ? "var(--color-accent)" : "var(--color-bg-elevated)",
-                border: icon === e ? "2px solid var(--color-accent)" : "1px solid var(--color-border)",
+                border:
+                  icon === e ? "2px solid var(--color-accent)" : "1px solid var(--color-border)",
                 opacity: icon === e ? 1 : 0.7,
               }}
             >
@@ -210,10 +216,7 @@ function TemplateCard({
               {template.name}
             </h3>
             <div className="flex items-center gap-2 mt-0.5">
-              <span
-                className="text-xs font-mono"
-                style={{ color: "var(--color-text-muted)" }}
-              >
+              <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
                 {template.slug}
               </span>
               {template.projectSlug && (
@@ -235,7 +238,11 @@ function TemplateCard({
                     color: "var(--color-accent)",
                   }}
                 >
-                  {template.model.includes("opus") ? "Opus" : template.model.includes("haiku") ? "Haiku" : "Sonnet"}
+                  {template.model.includes("opus")
+                    ? "Opus"
+                    : template.model.includes("haiku")
+                      ? "Haiku"
+                      : "Sonnet"}
                 </span>
               )}
             </div>
@@ -263,10 +270,7 @@ function TemplateCard({
         </div>
       </div>
 
-      <p
-        className="text-xs mt-2 line-clamp-2"
-        style={{ color: "var(--color-text-secondary)" }}
-      >
+      <p className="text-xs mt-2 line-clamp-2" style={{ color: "var(--color-text-secondary)" }}>
         {template.prompt}
       </p>
     </div>
@@ -296,7 +300,12 @@ export default function TemplatesPage() {
     fetchTemplates();
   }, [fetchTemplates]);
 
-  const handleCreate = async (data: { name: string; prompt: string; icon: string; model: string | null }) => {
+  const handleCreate = async (data: {
+    name: string;
+    prompt: string;
+    icon: string;
+    model: string | null;
+  }) => {
     try {
       await api.templates.create({
         name: data.name,
@@ -312,7 +321,12 @@ export default function TemplatesPage() {
     }
   };
 
-  const handleUpdate = async (data: { name: string; prompt: string; icon: string; model: string | null }) => {
+  const handleUpdate = async (data: {
+    name: string;
+    prompt: string;
+    icon: string;
+    model: string | null;
+  }) => {
     if (!editingTemplate) return;
     try {
       await api.templates.update(editingTemplate.id, {
@@ -340,10 +354,7 @@ export default function TemplatesPage() {
   };
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ background: "var(--color-bg-base)" }}
-    >
+    <div className="min-h-screen" style={{ background: "var(--color-bg-base)" }}>
       {/* Header */}
       <div
         className="sticky top-0 z-10 px-6 py-4 flex items-center justify-between"
@@ -362,10 +373,7 @@ export default function TemplatesPage() {
             <ArrowLeft size={18} />
           </Link>
           <div>
-            <h1
-              className="text-lg font-semibold"
-              style={{ color: "var(--color-text-primary)" }}
-            >
+            <h1 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>
               <Lightning size={20} className="inline mr-1" weight="fill" />
               Templates
             </h1>

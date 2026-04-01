@@ -34,11 +34,14 @@ export function registerControlCommands(bridge: TelegramBridge): void {
     bridge.cancelAllAutoApproveCountdowns();
 
     for (const requestId of pending) {
-      bridge.wsBridge.handleBrowserMessage(mapping.sessionId, JSON.stringify({
-        type: "permission_response",
-        request_id: requestId,
-        behavior: "allow",
-      }));
+      bridge.wsBridge.handleBrowserMessage(
+        mapping.sessionId,
+        JSON.stringify({
+          type: "permission_response",
+          request_id: requestId,
+          behavior: "allow",
+        }),
+      );
     }
 
     await ctx.reply(`✅ Allowed ${pending.length} permission(s)`);
@@ -68,11 +71,14 @@ export function registerControlCommands(bridge: TelegramBridge): void {
     bridge.cancelAllAutoApproveCountdowns();
 
     for (const requestId of pending) {
-      bridge.wsBridge.handleBrowserMessage(mapping.sessionId, JSON.stringify({
-        type: "permission_response",
-        request_id: requestId,
-        behavior: "deny",
-      }));
+      bridge.wsBridge.handleBrowserMessage(
+        mapping.sessionId,
+        JSON.stringify({
+          type: "permission_response",
+          request_id: requestId,
+          behavior: "deny",
+        }),
+      );
     }
 
     await ctx.reply(`❌ Denied ${pending.length} permission(s)`);
@@ -91,9 +97,12 @@ export function registerControlCommands(bridge: TelegramBridge): void {
     bridge.wsBridge.sendUserMessage(mapping.sessionId, "/exitplan", "telegram");
 
     // Also send interrupt
-    bridge.wsBridge.handleBrowserMessage(mapping.sessionId, JSON.stringify({
-      type: "interrupt",
-    }));
+    bridge.wsBridge.handleBrowserMessage(
+      mapping.sessionId,
+      JSON.stringify({
+        type: "interrupt",
+      }),
+    );
 
     await ctx.reply("🔄 Sent exitplan + interrupt to session");
   });
@@ -107,9 +116,12 @@ export function registerControlCommands(bridge: TelegramBridge): void {
       return;
     }
 
-    bridge.wsBridge.handleBrowserMessage(mapping.sessionId, JSON.stringify({
-      type: "interrupt",
-    }));
+    bridge.wsBridge.handleBrowserMessage(
+      mapping.sessionId,
+      JSON.stringify({
+        type: "interrupt",
+      }),
+    );
 
     await ctx.reply("⚡ Interrupt sent");
   });
@@ -140,11 +152,14 @@ export function registerControlCommands(bridge: TelegramBridge): void {
       bridge.cancelAutoApproveCountdown(msgId);
     }
 
-    bridge.wsBridge.handleBrowserMessage(sessionId, JSON.stringify({
-      type: "permission_response",
-      request_id: requestId,
-      behavior,
-    }));
+    bridge.wsBridge.handleBrowserMessage(
+      sessionId,
+      JSON.stringify({
+        type: "permission_response",
+        request_id: requestId,
+        behavior,
+      }),
+    );
 
     const emoji = behavior === "allow" ? "✅" : "❌";
     await ctx.answerCallbackQuery(`${emoji} ${behavior === "allow" ? "Allowed" : "Denied"}`);
@@ -178,11 +193,14 @@ export function registerControlCommands(bridge: TelegramBridge): void {
     }
 
     for (const [requestId] of safeEntries) {
-      bridge.wsBridge.handleBrowserMessage(sessionId, JSON.stringify({
-        type: "permission_response",
-        request_id: requestId,
-        behavior: "allow",
-      }));
+      bridge.wsBridge.handleBrowserMessage(
+        sessionId,
+        JSON.stringify({
+          type: "permission_response",
+          request_id: requestId,
+          behavior: "allow",
+        }),
+      );
     }
 
     const remaining = allPending.length - safeEntries.length;
@@ -191,11 +209,13 @@ export function registerControlCommands(bridge: TelegramBridge): void {
       await ctx.editMessageReplyMarkup({ reply_markup: undefined }).catch(() => {});
     } else {
       // Keep message — dangerous ones still need individual review
-      await ctx.editMessageText(
-        (ctx.callbackQuery.message?.text ?? "") +
-        `\n\n⚠️ <b>${remaining} dangerous permission(s) still pending — use Allow/Deny above.</b>`,
-        { parse_mode: "HTML" },
-      ).catch(() => {});
+      await ctx
+        .editMessageText(
+          (ctx.callbackQuery.message?.text ?? "") +
+            `\n\n⚠️ <b>${remaining} dangerous permission(s) still pending — use Allow/Deny above.</b>`,
+          { parse_mode: "HTML" },
+        )
+        .catch(() => {});
     }
   });
 
@@ -206,14 +226,15 @@ export function registerControlCommands(bridge: TelegramBridge): void {
     const session = bridge.wsBridge.getSession(sessionId);
 
     const dangerCount = session
-      ? ([...session.pendingPermissions.values()] as PermissionRequest[]).filter(
-          (p) => isPermissionDangerous(p.tool_name, p.input),
+      ? ([...session.pendingPermissions.values()] as PermissionRequest[]).filter((p) =>
+          isPermissionDangerous(p.tool_name, p.input),
         ).length
       : 0;
 
-    const alertText = dangerCount > 0
-      ? `⚠️ ${dangerCount} dangerous permission(s) — use Allow/Deny buttons per item above.`
-      : "No dangerous permissions pending.";
+    const alertText =
+      dangerCount > 0
+        ? `⚠️ ${dangerCount} dangerous permission(s) — use Allow/Deny buttons per item above.`
+        : "No dangerous permissions pending.";
     await ctx.api.answerCallbackQuery(ctx.callbackQuery.id, {
       text: alertText,
       show_alert: true,

@@ -31,10 +31,11 @@ function setup() {
 }
 
 function insertSetting(sqlite: Database, key: string, value: string) {
-  sqlite.run(
-    `INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, ?)`,
-    [key, value, Date.now()],
-  );
+  sqlite.run(`INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, ?)`, [
+    key,
+    value,
+    Date.now(),
+  ]);
 }
 
 describe("getSetting", () => {

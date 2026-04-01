@@ -37,7 +37,9 @@ interface UseSessionReturn {
 export function useSession(sessionId: string): UseSessionReturn {
   const [messages, setMessages] = useState<Message[]>([]);
   const [pendingPermissions, setPendingPermissions] = useState<PermissionRequest[]>([]);
-  const [wsStatus, setWsStatus] = useState<"connecting" | "connected" | "disconnected">("disconnected");
+  const [wsStatus, setWsStatus] = useState<"connecting" | "connected" | "disconnected">(
+    "disconnected",
+  );
   const setSession = useSessionStore((s) => s.setSession);
   const addLog = useActivityStore((s) => s.addLog);
   // Track whether WS message_history replay populated messages
@@ -58,10 +60,7 @@ export function useSession(sessionId: string): UseSessionReturn {
     setMessages((prev) => {
       const last = prev[prev.length - 1];
       if (last?.isStreaming && last.role === "assistant") {
-        return [
-          ...prev.slice(0, -1),
-          { ...last, content: last.content + buffered },
-        ];
+        return [...prev.slice(0, -1), { ...last, content: last.content + buffered }];
       }
       return [
         ...prev,
@@ -155,7 +154,9 @@ export function useSession(sessionId: string): UseSessionReturn {
             .map((b) => ({ id: b.id, name: b.name, input: b.input ?? {} }));
 
           const toolResultBlocks = content
-            .filter((b): b is Extract<ContentBlock, { type: "tool_result" }> => b.type === "tool_result")
+            .filter(
+              (b): b is Extract<ContentBlock, { type: "tool_result" }> => b.type === "tool_result",
+            )
             .map((b) => ({
               toolUseId: b.tool_use_id,
               content: typeof b.content === "string" ? b.content : JSON.stringify(b.content),
@@ -180,15 +181,15 @@ export function useSession(sessionId: string): UseSessionReturn {
 
           // Get cost from usage using model-specific rates
           const MODEL_RATES: Record<string, { input: number; output: number }> = {
-            "claude-haiku-4-5": { input: 0.80 / 1_000_000, output: 4.00 / 1_000_000 },
-            "claude-sonnet-4-6": { input: 3.00 / 1_000_000, output: 15.00 / 1_000_000 },
-            "claude-opus-4-6": { input: 15.00 / 1_000_000, output: 75.00 / 1_000_000 },
+            "claude-haiku-4-5": { input: 0.8 / 1_000_000, output: 4.0 / 1_000_000 },
+            "claude-sonnet-4-6": { input: 3.0 / 1_000_000, output: 15.0 / 1_000_000 },
+            "claude-opus-4-6": { input: 15.0 / 1_000_000, output: 75.0 / 1_000_000 },
           };
           const sessionModel = useSessionStore.getState().sessions[sessionId]?.model ?? "";
           const rates = MODEL_RATES[sessionModel] ?? MODEL_RATES["claude-sonnet-4-6"]!;
           const usage = msg.message?.usage;
           const costUsd = usage
-            ? (usage.input_tokens * rates.input + usage.output_tokens * rates.output)
+            ? usage.input_tokens * rates.input + usage.output_tokens * rates.output
             : undefined;
 
           const messageData = {
@@ -208,10 +209,7 @@ export function useSession(sessionId: string): UseSessionReturn {
               const last = prev[prev.length - 1];
               // Always replace last assistant message (handles partial + final)
               if (last?.role === "assistant") {
-                return [
-                  ...prev.slice(0, -1),
-                  { ...last, ...messageData },
-                ];
+                return [...prev.slice(0, -1), { ...last, ...messageData }];
               }
               return [...prev, messageData];
             });
@@ -278,9 +276,15 @@ export function useSession(sessionId: string): UseSessionReturn {
               : `Done — ${costStr}, ${tokensStr}, ${result.num_turns} turn(s)`;
             // Browser notification for session result
             if (result.is_error) {
-              notify(`Session error: ${getSessionName()}`, result.errors?.join("; ") ?? "Unknown error");
+              notify(
+                `Session error: ${getSessionName()}`,
+                result.errors?.join("; ") ?? "Unknown error",
+              );
             } else {
-              notify(`Session complete: ${getSessionName()}`, `${costStr} · ${tokensStr} · ${result.num_turns} turn(s)`);
+              notify(
+                `Session complete: ${getSessionName()}`,
+                `${costStr} · ${tokensStr} · ${result.num_turns} turn(s)`,
+              );
             }
             addLog({
               sessionId,
@@ -317,7 +321,11 @@ export function useSession(sessionId: string): UseSessionReturn {
         }
 
         case "permission_request": {
-          const req = msg.request as { request_id: string; tool_name: string; description?: string };
+          const req = msg.request as {
+            request_id: string;
+            tool_name: string;
+            description?: string;
+          };
           // Browser notification so user knows action is needed
           notify(
             `Permission needed: ${getSessionName()}`,
@@ -378,12 +386,8 @@ export function useSession(sessionId: string): UseSessionReturn {
           if (msg.messages && Array.isArray(msg.messages)) {
             const historical: Message[] = msg.messages
               .filter(
-                (
-                  m,
-                ): m is Extract<
-                  typeof m,
-                  { type: "assistant" | "user_message" }
-                > => m.type === "assistant" || m.type === "user_message",
+                (m): m is Extract<typeof m, { type: "assistant" | "user_message" }> =>
+                  m.type === "assistant" || m.type === "user_message",
               )
               .map((m) => {
                 if (m.type === "user_message") {
@@ -396,10 +400,7 @@ export function useSession(sessionId: string): UseSessionReturn {
                 }
                 // assistant message
                 const content = (m.message?.content ?? [])
-                  .filter(
-                    (b): b is Extract<ContentBlock, { type: "text" }> =>
-                      b.type === "text",
-                  )
+                  .filter((b): b is Extract<ContentBlock, { type: "text" }> => b.type === "text")
                   .map((b) => b.text)
                   .join("");
                 return {
@@ -411,9 +412,7 @@ export function useSession(sessionId: string): UseSessionReturn {
               })
               .filter((m) => m.content.length > 0);
 
-            setMessages((prev) =>
-              prev.length === 0 ? historical : prev,
-            );
+            setMessages((prev) => (prev.length === 0 ? historical : prev));
           }
           break;
         }
@@ -477,19 +476,26 @@ export function useSession(sessionId: string): UseSessionReturn {
         }
 
         case "permission_cancelled": {
-          setPendingPermissions((prev) =>
-            prev.filter((p) => p.requestId !== msg.request_id),
-          );
+          setPendingPermissions((prev) => prev.filter((p) => p.requestId !== msg.request_id));
           break;
         }
 
         case "budget_warning": {
-          const bwMsg = msg as { type: "budget_warning"; budget: number; spent: number; percentage: number };
+          const bwMsg = msg as {
+            type: "budget_warning";
+            budget: number;
+            spent: number;
+            percentage: number;
+          };
           import("sonner").then(({ toast }) => {
-            toast.warning(`Budget at ${bwMsg.percentage}%: $${bwMsg.spent.toFixed(2)} / $${bwMsg.budget.toFixed(2)}`, {
-              description: "Approaching session cost budget. Increase budget in settings if needed.",
-              duration: 8000,
-            });
+            toast.warning(
+              `Budget at ${bwMsg.percentage}%: $${bwMsg.spent.toFixed(2)} / $${bwMsg.budget.toFixed(2)}`,
+              {
+                description:
+                  "Approaching session cost budget. Increase budget in settings if needed.",
+                duration: 8000,
+              },
+            );
           });
           addLog({
             sessionId,
@@ -504,10 +510,13 @@ export function useSession(sessionId: string): UseSessionReturn {
         case "budget_exceeded": {
           const beMsg = msg as { type: "budget_exceeded"; budget: number; spent: number };
           import("sonner").then(({ toast }) => {
-            toast.error(`Budget exceeded — $${beMsg.spent.toFixed(2)} / $${beMsg.budget.toFixed(2)}`, {
-              description: "Increase your budget in session settings to continue.",
-              duration: 0,
-            });
+            toast.error(
+              `Budget exceeded — $${beMsg.spent.toFixed(2)} / $${beMsg.budget.toFixed(2)}`,
+              {
+                description: "Increase your budget in session settings to continue.",
+                duration: 0,
+              },
+            );
           });
           addLog({
             sessionId,

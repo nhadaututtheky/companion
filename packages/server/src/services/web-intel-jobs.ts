@@ -49,7 +49,10 @@ export function registerJob(job: Omit<WebIntelJob, "startedAt" | "status">): boo
   }).length;
 
   if (sessionRunning >= MAX_JOBS_PER_SESSION) {
-    log.warn("Session job limit reached", { sessionId: job.sessionId, limit: MAX_JOBS_PER_SESSION });
+    log.warn("Session job limit reached", {
+      sessionId: job.sessionId,
+      limit: MAX_JOBS_PER_SESSION,
+    });
     return false;
   }
 

@@ -18,9 +18,9 @@ healthRoutes.get("/health", (c) => {
   let dbStatus: "connected" | "error" = "error"; // eslint-disable-line no-useless-assignment
   try {
     const sqlite = getSqlite();
-    sqlite
-      .prepare("SELECT count(*) as count FROM sqlite_master WHERE type='table'")
-      .get() as { count: number } | undefined;
+    sqlite.prepare("SELECT count(*) as count FROM sqlite_master WHERE type='table'").get() as
+      | { count: number }
+      | undefined;
     dbStatus = "connected";
   } catch {
     dbStatus = "error";
@@ -49,14 +49,14 @@ healthRoutes.get("/setup-status", (c) => {
   let hasSessions = false;
   try {
     const sqlite = getSqlite();
-    const projectCount = sqlite
-      .prepare("SELECT count(*) as count FROM projects")
-      .get() as { count: number } | undefined;
+    const projectCount = sqlite.prepare("SELECT count(*) as count FROM projects").get() as
+      | { count: number }
+      | undefined;
     hasProjects = (projectCount?.count ?? 0) > 0;
 
-    const sessionCount = sqlite
-      .prepare("SELECT count(*) as count FROM sessions")
-      .get() as { count: number } | undefined;
+    const sessionCount = sqlite.prepare("SELECT count(*) as count FROM sessions").get() as
+      | { count: number }
+      | undefined;
     hasSessions = (sessionCount?.count ?? 0) > 0;
   } catch {
     // DB may not be ready yet — treat as false
@@ -98,11 +98,14 @@ licenseActivateRoute.post("/activate", zValidator("json", activateSchema), async
 
   if (!license.valid) {
     log.warn("License activation failed", { error: license.error });
-    return c.json({
-      success: false,
-      error: license.error ?? "Invalid or expired license key",
-      tier: "free",
-    }, 400);
+    return c.json(
+      {
+        success: false,
+        error: license.error ?? "Invalid or expired license key",
+        tier: "free",
+      },
+      400,
+    );
   }
 
   log.info("License activated!", {

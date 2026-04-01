@@ -19,8 +19,8 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
 
   useEffect(() => {
     setLoading(true); // eslint-disable-line react-hooks/set-state-in-effect
-    setError(null);  
-    setContent(null);  
+    setError(null);
+    setContent(null);
 
     api.fs
       .read(filePath)
@@ -142,8 +142,9 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
             {error}
           </div>
         )}
-        {content !== null && !loading && (
-          isMarkdown ? (
+        {content !== null &&
+          !loading &&
+          (isMarkdown ? (
             <MarkdownMessage content={content} compact />
           ) : (
             <pre
@@ -157,8 +158,7 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
             >
               {content}
             </pre>
-          )
-        )}
+          ))}
       </div>
 
       {/* Footer — file path */}

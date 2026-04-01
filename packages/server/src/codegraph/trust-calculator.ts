@@ -33,7 +33,10 @@ const BASE_WEIGHTS: Record<EdgeType, number> = {
  * Calculate trust weight for an edge.
  * Combines base weight with context-based adjustments.
  */
-export function calculateTrustWeight(edgeType: EdgeType, context?: { hasCall?: boolean; isReExport?: boolean }): number {
+export function calculateTrustWeight(
+  edgeType: EdgeType,
+  context?: { hasCall?: boolean; isReExport?: boolean },
+): number {
   let weight = BASE_WEIGHTS[edgeType] ?? 0.5;
 
   // Import + call in same file = tight coupling

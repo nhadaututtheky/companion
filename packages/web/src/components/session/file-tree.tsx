@@ -98,18 +98,24 @@ function TreeItem({
         {node.isDir ? (
           <>
             <span style={{ color: "var(--color-text-muted)", width: 12 }}>
-              {expanded ? <CaretDown size={10} weight="bold" /> : <CaretRight size={10} weight="bold" />}
+              {expanded ? (
+                <CaretDown size={10} weight="bold" />
+              ) : (
+                <CaretRight size={10} weight="bold" />
+              )}
             </span>
             <span style={{ color: "#FBBC04" }}>
-              {expanded ? <FolderOpen size={14} weight="fill" /> : <FolderSimple size={14} weight="fill" />}
+              {expanded ? (
+                <FolderOpen size={14} weight="fill" />
+              ) : (
+                <FolderSimple size={14} weight="fill" />
+              )}
             </span>
           </>
         ) : (
           <>
             <span style={{ width: 12 }} />
-            <span style={{ color: "var(--color-text-muted)" }}>
-              {getFileIcon(node.name)}
-            </span>
+            <span style={{ color: "var(--color-text-muted)" }}>{getFileIcon(node.name)}</span>
           </>
         )}
         <span className="truncate font-mono" style={{ fontSize: 11 }}>

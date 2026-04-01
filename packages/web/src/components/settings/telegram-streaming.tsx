@@ -152,168 +152,169 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
             </span>
           )}
         </span>
-        <span
-          className="text-sm font-medium px-2"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
+        <span className="text-sm font-medium px-2" style={{ color: "var(--color-text-secondary)" }}>
           {collapsed ? "Configure ▸" : "▾ Close"}
         </span>
       </button>
 
       {collapsed ? null : (
-      <>
-      {/* Enable streaming toggle */}
-      <ToggleRow
-        label="Stream session output"
-        description="Forward Claude session events to Telegram in real-time"
-        checked={streamEnabled}
-        onChange={setStreamEnabled}
-      />
-
-      {streamEnabled && (
         <>
-          {/* Target Chat ID */}
-          <div className="flex flex-col gap-1.5">
-            <label
-              className="text-xs font-medium"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              Target Chat ID
-            </label>
-            <input
-              type="text"
-              value={targetChatId}
-              onChange={(e) => setTargetChatId(e.target.value)}
-              placeholder="-100123456789"
-              className="px-3 py-2 rounded-lg text-sm outline-none font-mono"
-              style={{
-                background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-text-primary)",
-              }}
-            />
-          </div>
+          {/* Enable streaming toggle */}
+          <ToggleRow
+            label="Stream session output"
+            description="Forward Claude session events to Telegram in real-time"
+            checked={streamEnabled}
+            onChange={setStreamEnabled}
+          />
 
-          {/* Target Topic/Thread ID */}
-          <div className="flex flex-col gap-1.5">
-            <label
-              className="text-xs font-medium"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              Topic / Thread ID{" "}
-              <span style={{ color: "var(--color-text-muted)" }}>(optional, for forum groups)</span>
-            </label>
-            <input
-              type="text"
-              value={targetTopicId}
-              onChange={(e) => setTargetTopicId(e.target.value)}
-              placeholder="12345"
-              className="px-3 py-2 rounded-lg text-sm outline-none font-mono"
-              style={{
-                background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-text-primary)",
-              }}
-            />
-          </div>
-
-          {/* Message format */}
-          <div className="flex flex-col gap-1.5">
-            <label
-              className="text-xs font-medium"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              Message Format
-            </label>
-            <select
-              value={messageFormat}
-              onChange={(e) =>
-                setMessageFormat(e.target.value as "compact" | "full" | "code_only")
-              }
-              className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
-              style={{
-                background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-text-primary)",
-              }}
-            >
-              <option value="compact">Compact — brief summaries</option>
-              <option value="full">Full — complete message content</option>
-              <option value="code_only">Code Only — tool calls and code blocks</option>
-            </select>
-          </div>
-
-          {/* Events to stream */}
-          <div className="flex flex-col gap-2">
-            <label
-              className="text-xs font-medium"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              Events to Stream
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {EVENT_OPTIONS.map(({ key, label, icon }) => (
-                <button
-                  key={key}
-                  onClick={() => toggleEvent(key)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-                  style={{
-                    background: events.has(key) ? "var(--color-accent)" : "var(--color-bg-elevated)",
-                    border: "1px solid var(--color-border)",
-                    color: events.has(key) ? "#fff" : "var(--color-text-secondary)",
-                  }}
-                  aria-pressed={events.has(key)}
+          {streamEnabled && (
+            <>
+              {/* Target Chat ID */}
+              <div className="flex flex-col gap-1.5">
+                <label
+                  className="text-xs font-medium"
+                  style={{ color: "var(--color-text-secondary)" }}
                 >
-                  {icon}
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
+                  Target Chat ID
+                </label>
+                <input
+                  type="text"
+                  value={targetChatId}
+                  onChange={(e) => setTargetChatId(e.target.value)}
+                  placeholder="-100123456789"
+                  className="px-3 py-2 rounded-lg text-sm outline-none font-mono"
+                  style={{
+                    background: "var(--color-bg-elevated)",
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                />
+              </div>
 
-          {/* Permission forwarding */}
-          <ToggleRow
-            label="Forward permission requests"
-            description="Send Claude tool permission requests to Telegram for review"
-            checked={permForwarding}
-            onChange={setPermForwarding}
-          />
+              {/* Target Topic/Thread ID */}
+              <div className="flex flex-col gap-1.5">
+                <label
+                  className="text-xs font-medium"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  Topic / Thread ID{" "}
+                  <span style={{ color: "var(--color-text-muted)" }}>
+                    (optional, for forum groups)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={targetTopicId}
+                  onChange={(e) => setTargetTopicId(e.target.value)}
+                  placeholder="12345"
+                  className="px-3 py-2 rounded-lg text-sm outline-none font-mono"
+                  style={{
+                    background: "var(--color-bg-elevated)",
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                />
+              </div>
 
-          {/* Auto-approve */}
-          <ToggleRow
-            label="Auto-approve from Telegram"
-            description="Allow Telegram replies to approve permission requests"
-            checked={autoApprove}
-            onChange={setAutoApprove}
-          />
+              {/* Message format */}
+              <div className="flex flex-col gap-1.5">
+                <label
+                  className="text-xs font-medium"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  Message Format
+                </label>
+                <select
+                  value={messageFormat}
+                  onChange={(e) =>
+                    setMessageFormat(e.target.value as "compact" | "full" | "code_only")
+                  }
+                  className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
+                  style={{
+                    background: "var(--color-bg-elevated)",
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text-primary)",
+                  }}
+                >
+                  <option value="compact">Compact — brief summaries</option>
+                  <option value="full">Full — complete message content</option>
+                  <option value="code_only">Code Only — tool calls and code blocks</option>
+                </select>
+              </div>
+
+              {/* Events to stream */}
+              <div className="flex flex-col gap-2">
+                <label
+                  className="text-xs font-medium"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  Events to Stream
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {EVENT_OPTIONS.map(({ key, label, icon }) => (
+                    <button
+                      key={key}
+                      onClick={() => toggleEvent(key)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                      style={{
+                        background: events.has(key)
+                          ? "var(--color-accent)"
+                          : "var(--color-bg-elevated)",
+                        border: "1px solid var(--color-border)",
+                        color: events.has(key) ? "#fff" : "var(--color-text-secondary)",
+                      }}
+                      aria-pressed={events.has(key)}
+                    >
+                      {icon}
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Permission forwarding */}
+              <ToggleRow
+                label="Forward permission requests"
+                description="Send Claude tool permission requests to Telegram for review"
+                checked={permForwarding}
+                onChange={setPermForwarding}
+              />
+
+              {/* Auto-approve */}
+              <ToggleRow
+                label="Auto-approve from Telegram"
+                description="Allow Telegram replies to approve permission requests"
+                checked={autoApprove}
+                onChange={setAutoApprove}
+              />
+            </>
+          )}
+
+          {/* Save */}
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+            style={{
+              background: saved ? "var(--color-success)" : "var(--color-accent)",
+              color: "#fff",
+              border: "none",
+              opacity: saving ? 0.7 : 1,
+            }}
+          >
+            {saved ? (
+              <>
+                <Check size={12} weight="bold" aria-hidden="true" />
+                Saved
+              </>
+            ) : (
+              <>
+                <FloppyDisk size={12} weight="bold" aria-hidden="true" />
+                Save Streaming Config
+              </>
+            )}
+          </button>
         </>
-      )}
-
-      {/* Save */}
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
-        style={{
-          background: saved ? "var(--color-success)" : "var(--color-accent)",
-          color: "#fff",
-          border: "none",
-          opacity: saving ? 0.7 : 1,
-        }}
-      >
-        {saved ? (
-          <>
-            <Check size={12} weight="bold" aria-hidden="true" />
-            Saved
-          </>
-        ) : (
-          <>
-            <FloppyDisk size={12} weight="bold" aria-hidden="true" />
-            Save Streaming Config
-          </>
-        )}
-      </button>
-      </>
       )}
     </div>
   );

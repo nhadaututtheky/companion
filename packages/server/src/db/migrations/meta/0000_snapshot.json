@@ -64,12 +64,8 @@
           "name": "channel_messages_channel_id_channels_id_fk",
           "tableFrom": "channel_messages",
           "tableTo": "channels",
-          "columnsFrom": [
-            "channel_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["channel_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -169,12 +165,8 @@
           "name": "channels_project_slug_projects_slug_fk",
           "tableFrom": "channels",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_slug"
-          ],
-          "columnsTo": [
-            "slug"
-          ],
+          "columnsFrom": ["project_slug"],
+          "columnsTo": ["slug"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -373,12 +365,8 @@
           "name": "session_messages_session_id_sessions_id_fk",
           "tableFrom": "session_messages",
           "tableTo": "sessions",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -439,12 +427,8 @@
           "name": "session_summaries_session_id_sessions_id_fk",
           "tableFrom": "session_summaries",
           "tableTo": "sessions",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -652,12 +636,8 @@
           "name": "sessions_project_slug_projects_slug_fk",
           "tableFrom": "sessions",
           "tableTo": "projects",
-          "columnsFrom": [
-            "project_slug"
-          ],
-          "columnsTo": [
-            "slug"
-          ],
+          "columnsFrom": ["project_slug"],
+          "columnsTo": ["slug"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -862,12 +842,8 @@
           "name": "telegram_session_mappings_session_id_sessions_id_fk",
           "tableFrom": "telegram_session_mappings",
           "tableTo": "sessions",
-          "columnsFrom": [
-            "session_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["session_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

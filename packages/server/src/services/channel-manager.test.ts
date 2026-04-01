@@ -88,7 +88,11 @@ describe("channel-manager", () => {
         ["my-app", "My App", "/tmp", Date.now(), Date.now()],
       );
 
-      const channel = createChannel({ type: "brainstorm", topic: "Architecture", projectSlug: "my-app" });
+      const channel = createChannel({
+        type: "brainstorm",
+        topic: "Architecture",
+        projectSlug: "my-app",
+      });
       expect(channel.projectSlug).toBe("my-app");
     });
   });
@@ -100,8 +104,18 @@ describe("channel-manager", () => {
 
     it("returns channel with messages and linked sessions", () => {
       const channel = createChannel({ type: "debate", topic: "Test topic" });
-      postMessage({ channelId: channel.id, agentId: "agent-1", role: "advocate", content: "I think X" });
-      postMessage({ channelId: channel.id, agentId: "agent-2", role: "critic", content: "I disagree" });
+      postMessage({
+        channelId: channel.id,
+        agentId: "agent-1",
+        role: "advocate",
+        content: "I think X",
+      });
+      postMessage({
+        channelId: channel.id,
+        agentId: "agent-2",
+        role: "critic",
+        content: "I disagree",
+      });
 
       const result = getChannel(channel.id);
       expect(result).not.toBeNull();
@@ -222,7 +236,9 @@ describe("channel-manager", () => {
       deleteChannel(channel.id);
 
       // Session should still exist but with no channel
-      const row = sqlite.prepare("SELECT channel_id FROM sessions WHERE id = ?").get("sess-3") as { channel_id: string | null };
+      const row = sqlite.prepare("SELECT channel_id FROM sessions WHERE id = ?").get("sess-3") as {
+        channel_id: string | null;
+      };
       expect(row.channel_id).toBeNull();
     });
   });

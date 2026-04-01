@@ -56,9 +56,7 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
         {
           parse_mode: "HTML",
           reply_markup: {
-            inline_keyboard: [[
-              { text: "⚡ Quick Session", callback_data: "quick:session" },
-            ]],
+            inline_keyboard: [[{ text: "⚡ Quick Session", callback_data: "quick:session" }]],
           },
         },
       );
@@ -97,9 +95,14 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     type Btn = { text: string; callback_data: string };
     const rows: Btn[][] = [];
     for (let i = 0; i < projects.length; i += 2) {
-      const row: Btn[] = [{ text: `📂 ${projects[i]!.name}`, callback_data: `project:${projects[i]!.slug}` }];
+      const row: Btn[] = [
+        { text: `📂 ${projects[i]!.name}`, callback_data: `project:${projects[i]!.slug}` },
+      ];
       if (i + 1 < projects.length) {
-        row.push({ text: `📂 ${projects[i + 1]!.name}`, callback_data: `project:${projects[i + 1]!.slug}` });
+        row.push({
+          text: `📂 ${projects[i + 1]!.name}`,
+          callback_data: `project:${projects[i + 1]!.slug}`,
+        });
       }
       rows.push(row);
     }
@@ -130,7 +133,8 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     }
 
     const lines = projects.map(
-      (p) => `📂 <b>${escapeHTML(p.name)}</b> (<code>${escapeHTML(p.slug)}</code>)\n   ${escapeHTML(p.dir)}`,
+      (p) =>
+        `📂 <b>${escapeHTML(p.name)}</b> (<code>${escapeHTML(p.slug)}</code>)\n   ${escapeHTML(p.dir)}`,
     );
 
     await ctx.reply(lines.join("\n\n"), { parse_mode: "HTML" });
@@ -152,14 +156,15 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
       const cwd = s.state.cwd ?? "";
       const project = cwd.split(/[\\/]/).pop() || "quick";
       const model = s.state.model?.replace("claude-", "").replace(/-\d+$/, "") ?? "?";
-      const label = s.state.name ? `<b>${escapeHTML(s.state.name)}</b>` : `📂 ${escapeHTML(project)}`;
+      const label = s.state.name
+        ? `<b>${escapeHTML(s.state.name)}</b>`
+        : `📂 ${escapeHTML(project)}`;
       return `${tag}  ${label}  · ${model}`;
     });
 
-    await ctx.reply(
-      [`🗂 <b>Active Sessions</b> (${sessions.length})`, "", ...lines].join("\n"),
-      { parse_mode: "HTML" },
-    );
+    await ctx.reply([`🗂 <b>Active Sessions</b> (${sessions.length})`, "", ...lines].join("\n"), {
+      parse_mode: "HTML",
+    });
   });
 
   // ── /new [project] — New session ────────────────────────────────────────
@@ -206,10 +211,10 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
       .text("✅ Stop", `stop:confirm:${mapping.sessionId}`)
       .text("❌ Cancel", "stop:cancel");
 
-    await ctx.reply(
-      `Stop session <code>${mapping.sessionId.slice(0, 8)}</code>?`,
-      { parse_mode: "HTML", reply_markup: keyboard },
-    );
+    await ctx.reply(`Stop session <code>${mapping.sessionId.slice(0, 8)}</code>?`, {
+      parse_mode: "HTML",
+      reply_markup: keyboard,
+    });
   });
 
   // ── /resume — Resume last dead session ─────────────────────────────────
@@ -230,7 +235,9 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     if (searchQuery) {
       const results = listResumableSessions({ search: searchQuery, limit: 10 });
       if (results.length === 0) {
-        await ctx.reply(`No resumable sessions matching "<b>${escapeHTML(searchQuery)}</b>".`, { parse_mode: "HTML" });
+        await ctx.reply(`No resumable sessions matching "<b>${escapeHTML(searchQuery)}</b>".`, {
+          parse_mode: "HTML",
+        });
         return;
       }
 
@@ -263,10 +270,10 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
       }
       keyboard.text("🆕 Start Fresh", "quick:session").row();
 
-      await ctx.reply(
-        `↩ <b>Resumable Sessions</b> (${resumable.length})`,
-        { parse_mode: "HTML", reply_markup: keyboard },
-      );
+      await ctx.reply(`↩ <b>Resumable Sessions</b> (${resumable.length})`, {
+        parse_mode: "HTML",
+        reply_markup: keyboard,
+      });
       return;
     }
 
@@ -283,14 +290,27 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
       if (dead) {
         const project = getProject(slug);
         const keyboard = {
-          inline_keyboard: [[
-            { text: "Resume Session", callback_data: `resume:${slug}:${chatId}`, style: "success" as const },
-            { text: "Start Fresh", callback_data: `fresh:${slug}:${chatId}`, style: "primary" as const },
-          ]],
+          inline_keyboard: [
+            [
+              {
+                text: "Resume Session",
+                callback_data: `resume:${slug}:${chatId}`,
+                style: "success" as const,
+              },
+              {
+                text: "Start Fresh",
+                callback_data: `fresh:${slug}:${chatId}`,
+                style: "primary" as const,
+              },
+            ],
+          ],
         };
         await ctx.reply(
           `Found a previous <b>${escapeHTML(project?.name ?? slug)}</b> session that was interrupted.\nResume to continue where you left off, or start fresh.`,
-          { parse_mode: "HTML", reply_markup: keyboard as unknown as import("grammy").InlineKeyboard },
+          {
+            parse_mode: "HTML",
+            reply_markup: keyboard as unknown as import("grammy").InlineKeyboard,
+          },
         );
       } else {
         await ctx.reply("No resumable session found. Use /new to start fresh.");
@@ -349,9 +369,9 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
 
       await ctx.reply(
         `🔀 <b>Session forked</b>\n` +
-        `Old: <code>${escapeHTML(oldSessionId.slice(0, 8))}</code> (still running)\n` +
-        `New: <code>${escapeHTML(newSessionId.slice(0, 8))}</code>\n\n` +
-        `Use <code>/stream ${escapeHTML(oldSessionId.slice(0, 8))}</code> to watch the old session.`,
+          `Old: <code>${escapeHTML(oldSessionId.slice(0, 8))}</code> (still running)\n` +
+          `New: <code>${escapeHTML(newSessionId.slice(0, 8))}</code>\n\n` +
+          `Use <code>/stream ${escapeHTML(oldSessionId.slice(0, 8))}</code> to watch the old session.`,
         { parse_mode: "HTML" },
       );
     } catch {
@@ -368,7 +388,8 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
     if (!chatId) return;
 
-    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+      ?.message_thread_id;
 
     // Check if there's already an active session for this chat
     const existingMapping = bridge.getMapping(chatId, topicId);
@@ -377,16 +398,23 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
       if (activeSession) {
         // Session is alive — ask user what to do
         const keyboard = {
-          inline_keyboard: [[
-            { text: "Keep Current", callback_data: `keep:${existingMapping.sessionId}` },
-            { text: "Restart", callback_data: `restart:${slug}:${chatId}` },
-          ]],
+          inline_keyboard: [
+            [
+              { text: "Keep Current", callback_data: `keep:${existingMapping.sessionId}` },
+              { text: "Restart", callback_data: `restart:${slug}:${chatId}` },
+            ],
+          ],
         };
         const project = getProject(existingMapping.projectSlug);
-        await ctx.editMessageText(
-          `<b>${escapeHTML(project?.name ?? existingMapping.projectSlug)}</b> is already running.\nKeep current session or restart?`,
-          { parse_mode: "HTML", reply_markup: keyboard as unknown as import("grammy").InlineKeyboard },
-        ).catch(() => {});
+        await ctx
+          .editMessageText(
+            `<b>${escapeHTML(project?.name ?? existingMapping.projectSlug)}</b> is already running.\nKeep current session or restart?`,
+            {
+              parse_mode: "HTML",
+              reply_markup: keyboard as unknown as import("grammy").InlineKeyboard,
+            },
+          )
+          .catch(() => {});
         return;
       }
       // Session mapping exists but CLI died — clean up stale mapping
@@ -398,21 +426,36 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     if (dead) {
       const project = getProject(slug);
       const keyboard = {
-        inline_keyboard: [[
-          { text: "Resume Session", callback_data: `resume:${slug}:${chatId}`, style: "success" as const },
-          { text: "Start Fresh", callback_data: `fresh:${slug}:${chatId}`, style: "primary" as const },
-        ]],
+        inline_keyboard: [
+          [
+            {
+              text: "Resume Session",
+              callback_data: `resume:${slug}:${chatId}`,
+              style: "success" as const,
+            },
+            {
+              text: "Start Fresh",
+              callback_data: `fresh:${slug}:${chatId}`,
+              style: "primary" as const,
+            },
+          ],
+        ],
       };
 
-      await ctx.editMessageText(
-        `Found a previous <b>${escapeHTML(project?.name ?? slug)}</b> session that was interrupted.\nResume to continue where you left off, or start fresh.`,
-        { parse_mode: "HTML", reply_markup: keyboard as unknown as import("grammy").InlineKeyboard },
-      ).catch(() => {
-        ctx.reply(
+      await ctx
+        .editMessageText(
           `Found a previous <b>${escapeHTML(project?.name ?? slug)}</b> session that was interrupted.\nResume to continue where you left off, or start fresh.`,
-          { parse_mode: "HTML", reply_markup: keyboard },
-        );
-      });
+          {
+            parse_mode: "HTML",
+            reply_markup: keyboard as unknown as import("grammy").InlineKeyboard,
+          },
+        )
+        .catch(() => {
+          ctx.reply(
+            `Found a previous <b>${escapeHTML(project?.name ?? slug)}</b> session that was interrupted.\nResume to continue where you left off, or start fresh.`,
+            { parse_mode: "HTML", reply_markup: keyboard },
+          );
+        });
       return;
     }
 
@@ -451,7 +494,8 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     await ctx.editMessageText("Restarting session...").catch(() => {});
 
     // Kill existing session for this chat
-    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+      ?.message_thread_id;
     const mapping = bridge.getMapping(chatId, topicId);
     if (mapping) {
       bridge.killSession(mapping.sessionId);
@@ -470,7 +514,8 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
     if (!chatId) return;
 
-    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+      ?.message_thread_id;
 
     // Use home directory as CWD
     const os = await import("os");
@@ -491,7 +536,13 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
       });
       bridge.subscribeToSession(sessionId, chatId, topicId);
 
-      const panelMsg = await bridge.sendSettingsPanel(chatId, topicId, sessionId, "Quick Session", DEFAULT_MODEL);
+      const panelMsg = await bridge.sendSettingsPanel(
+        chatId,
+        topicId,
+        sessionId,
+        "Quick Session",
+        DEFAULT_MODEL,
+      );
       if (panelMsg) {
         bridge.setSessionPanelMessageId(sessionId, panelMsg.message_id);
       }

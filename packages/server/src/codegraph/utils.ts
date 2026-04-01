@@ -45,19 +45,49 @@ const EXT_TO_LANGUAGE: Record<string, string> = {
 
 /** Supported scannable extensions (worth extracting symbols from) */
 const SCANNABLE_EXTENSIONS = new Set([
-  ".ts", ".tsx", ".js", ".jsx",
-  ".py", ".rs", ".go", ".java", ".rb",
-  ".vue", ".svelte",
-  ".c", ".cpp", ".h", ".hpp",
-  ".cs", ".php", ".swift", ".kt", ".scala",
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".py",
+  ".rs",
+  ".go",
+  ".java",
+  ".rb",
+  ".vue",
+  ".svelte",
+  ".c",
+  ".cpp",
+  ".h",
+  ".hpp",
+  ".cs",
+  ".php",
+  ".swift",
+  ".kt",
+  ".scala",
 ]);
 
 /** Directories to always skip */
 const SKIP_DIRS = new Set([
-  "node_modules", "dist", ".git", ".next", ".rune",
-  "coverage", "__pycache__", "target", ".svelte-kit",
-  ".turbo", ".cache", "build", "out", ".output",
-  ".nuxt", "vendor", ".venv", "venv", "env",
+  "node_modules",
+  "dist",
+  ".git",
+  ".next",
+  ".rune",
+  "coverage",
+  "__pycache__",
+  "target",
+  ".svelte-kit",
+  ".turbo",
+  ".cache",
+  "build",
+  "out",
+  ".output",
+  ".nuxt",
+  "vendor",
+  ".venv",
+  "venv",
+  "env",
 ]);
 
 // ─── File Discovery ──────────────────────────────────────────────────────
@@ -186,15 +216,30 @@ export function treeSitterGrammarName(language: string): string | null {
 export function extractKeywords(text: string): string[] {
   // Split camelCase and other boundaries
   const tokens = text
-    .replace(/([a-z])([A-Z])/g, "$1 $2")  // camelCase -> camel Case
-    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")  // HTTPClient -> HTTP Client
+    .replace(/([a-z])([A-Z])/g, "$1 $2") // camelCase -> camel Case
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2") // HTTPClient -> HTTP Client
     .replace(/[^a-zA-Z0-9]/g, " ")
     .split(/\s+/)
     .map((t) => t.toLowerCase())
     .filter((t) => t.length > 2);
 
   // Remove noise words
-  const noise = new Set(["the", "and", "for", "from", "with", "this", "that", "are", "was", "will", "can", "has", "not", "but"]);
+  const noise = new Set([
+    "the",
+    "and",
+    "for",
+    "from",
+    "with",
+    "this",
+    "that",
+    "are",
+    "was",
+    "will",
+    "can",
+    "has",
+    "not",
+    "but",
+  ]);
   return [...new Set(tokens.filter((t) => !noise.has(t)))];
 }
 

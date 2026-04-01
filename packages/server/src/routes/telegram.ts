@@ -67,12 +67,19 @@ export function telegramRoutes(registry: BotRegistry) {
     const id = `bot_${Date.now()}`;
 
     try {
-      registry.saveBotConfig({ id, ...body, notificationGroupId: body.notificationGroupId ?? null });
+      registry.saveBotConfig({
+        id,
+        ...body,
+        notificationGroupId: body.notificationGroupId ?? null,
+      });
     } catch {
-      return c.json({
-        success: false,
-        error: "Failed to save bot config",
-      } satisfies ApiResponse, 500);
+      return c.json(
+        {
+          success: false,
+          error: "Failed to save bot config",
+        } satisfies ApiResponse,
+        500,
+      );
     }
 
     // Auto-start if enabled
@@ -116,7 +123,10 @@ export function telegramRoutes(registry: BotRegistry) {
 
     try {
       const res = await fetch(`https://api.telegram.org/bot${row.botToken}/getMe`);
-      const json = await res.json() as { ok: boolean; result?: { username: string; first_name: string } };
+      const json = (await res.json()) as {
+        ok: boolean;
+        result?: { username: string; first_name: string };
+      };
 
       if (!json.ok) {
         return c.json({ success: false, error: "Invalid bot token" } satisfies ApiResponse);
@@ -130,7 +140,10 @@ export function telegramRoutes(registry: BotRegistry) {
         },
       } satisfies ApiResponse);
     } catch {
-      return c.json({ success: false, error: "Failed to test bot token" } satisfies ApiResponse, 500);
+      return c.json(
+        { success: false, error: "Failed to test bot token" } satisfies ApiResponse,
+        500,
+      );
     }
   });
 
@@ -154,7 +167,11 @@ export function telegramRoutes(registry: BotRegistry) {
       botToken = row.botToken;
     }
 
-    registry.saveBotConfig({ ...body, botToken, notificationGroupId: body.notificationGroupId ?? null });
+    registry.saveBotConfig({
+      ...body,
+      botToken,
+      notificationGroupId: body.notificationGroupId ?? null,
+    });
 
     return c.json({ success: true, data: { id: body.id } } satisfies ApiResponse);
   });

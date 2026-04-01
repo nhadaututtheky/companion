@@ -49,15 +49,12 @@ export function upsertFile(file: FileRecord): number {
   const existing = db
     .select({ id: codeFiles.id, fileHash: codeFiles.fileHash })
     .from(codeFiles)
-    .where(and(
-      eq(codeFiles.projectSlug, file.projectSlug),
-      eq(codeFiles.filePath, file.filePath),
-    ))
+    .where(and(eq(codeFiles.projectSlug, file.projectSlug), eq(codeFiles.filePath, file.filePath)))
     .get();
 
   if (existing) {
     if (existing.fileHash === file.fileHash) {
-      return existing.id;  // unchanged
+      return existing.id; // unchanged
     }
     db.update(codeFiles)
       .set({
@@ -93,10 +90,7 @@ export function isFileUnchanged(projectSlug: string, filePath: string, fileHash:
   const existing = db
     .select({ fileHash: codeFiles.fileHash })
     .from(codeFiles)
-    .where(and(
-      eq(codeFiles.projectSlug, projectSlug),
-      eq(codeFiles.filePath, filePath),
-    ))
+    .where(and(eq(codeFiles.projectSlug, projectSlug), eq(codeFiles.filePath, filePath)))
     .get();
 
   return existing?.fileHash === fileHash;
@@ -114,16 +108,12 @@ export function deleteStaleFiles(projectSlug: string, currentPaths: string[]): n
     .all();
 
   const currentSet = new Set(currentPaths);
-  const staleIds = existingFiles
-    .filter((f) => !currentSet.has(f.filePath))
-    .map((f) => f.id);
+  const staleIds = existingFiles.filter((f) => !currentSet.has(f.filePath)).map((f) => f.id);
 
   if (staleIds.length === 0) return 0;
 
   // CASCADE will handle nodes and edges
-  db.delete(codeFiles)
-    .where(inArray(codeFiles.id, staleIds))
-    .run();
+  db.delete(codeFiles).where(inArray(codeFiles.id, staleIds)).run();
 
   return staleIds.length;
 }
@@ -133,9 +123,7 @@ export function deleteStaleFiles(projectSlug: string, currentPaths: string[]): n
 /** Delete all nodes for a file (before re-inserting fresh scan results). */
 export function deleteNodesForFile(fileId: number): void {
   const db = getDb();
-  db.delete(codeNodes)
-    .where(eq(codeNodes.fileId, fileId))
-    .run();
+  db.delete(codeNodes).where(eq(codeNodes.fileId, fileId)).run();
 }
 
 /** Bulk insert nodes. Returns inserted IDs. */
@@ -151,10 +139,12 @@ export function insertNodes(nodes: NodeRecord[]): number[] {
     const batch = nodes.slice(i, i + 100);
     const results = db
       .insert(codeNodes)
-      .values(batch.map((n) => ({
-        ...n,
-        updatedAt: now,
-      })))
+      .values(
+        batch.map((n) => ({
+          ...n,
+          updatedAt: now,
+        })),
+      )
       .returning({ id: codeNodes.id })
       .all();
 
@@ -169,9 +159,7 @@ export function insertNodes(nodes: NodeRecord[]): number[] {
 /** Delete all edges for a project (full rescan). */
 export function deleteEdgesForProject(projectSlug: string): void {
   const db = getDb();
-  db.delete(codeEdges)
-    .where(eq(codeEdges.projectSlug, projectSlug))
-    .run();
+  db.delete(codeEdges).where(eq(codeEdges.projectSlug, projectSlug)).run();
 }
 
 /** Bulk insert edges. */
@@ -184,10 +172,12 @@ export function insertEdges(edges: EdgeRecord[]): void {
   for (let i = 0; i < edges.length; i += 100) {
     const batch = edges.slice(i, i + 100);
     db.insert(codeEdges)
-      .values(batch.map((e) => ({
-        ...e,
-        updatedAt: now,
-      })))
+      .values(
+        batch.map((e) => ({
+          ...e,
+          updatedAt: now,
+        })),
+      )
       .run();
   }
 }
@@ -197,11 +187,7 @@ export function insertEdges(edges: EdgeRecord[]): void {
 /** Get all nodes for a project. */
 export function getProjectNodes(projectSlug: string) {
   const db = getDb();
-  return db
-    .select()
-    .from(codeNodes)
-    .where(eq(codeNodes.projectSlug, projectSlug))
-    .all();
+  return db.select().from(codeNodes).where(eq(codeNodes.projectSlug, projectSlug)).all();
 }
 
 /** Find nodes by symbol name (case-insensitive LIKE). */
@@ -210,26 +196,17 @@ export function findNodesByName(projectSlug: string, symbolName: string) {
   return db
     .select()
     .from(codeNodes)
-    .where(and(
-      eq(codeNodes.projectSlug, projectSlug),
-      like(codeNodes.symbolName, `%${symbolName}%`),
-    ))
+    .where(
+      and(eq(codeNodes.projectSlug, projectSlug), like(codeNodes.symbolName, `%${symbolName}%`)),
+    )
     .all();
 }
 
 /** Get edges where a node is source or target. */
 export function getNodeEdges(nodeId: number) {
   const db = getDb();
-  const asSource = db
-    .select()
-    .from(codeEdges)
-    .where(eq(codeEdges.sourceNodeId, nodeId))
-    .all();
-  const asTarget = db
-    .select()
-    .from(codeEdges)
-    .where(eq(codeEdges.targetNodeId, nodeId))
-    .all();
+  const asSource = db.select().from(codeEdges).where(eq(codeEdges.sourceNodeId, nodeId)).all();
+  const asTarget = db.select().from(codeEdges).where(eq(codeEdges.targetNodeId, nodeId)).all();
   return { outgoing: asSource, incoming: asTarget };
 }
 
@@ -280,20 +257,20 @@ export function createScanJob(projectSlug: string): number {
 }
 
 /** Update scan job progress. */
-export function updateScanJob(jobId: number, update: {
-  status?: string;
-  scannedFiles?: number;
-  totalFiles?: number;
-  totalNodes?: number;
-  totalEdges?: number;
-  errorMessage?: string;
-  completedAt?: Date;
-}): void {
+export function updateScanJob(
+  jobId: number,
+  update: {
+    status?: string;
+    scannedFiles?: number;
+    totalFiles?: number;
+    totalNodes?: number;
+    totalEdges?: number;
+    errorMessage?: string;
+    completedAt?: Date;
+  },
+): void {
   const db = getDb();
-  db.update(codeScanJobs)
-    .set(update)
-    .where(eq(codeScanJobs.id, jobId))
-    .run();
+  db.update(codeScanJobs).set(update).where(eq(codeScanJobs.id, jobId)).run();
 }
 
 /** Get latest scan job for a project. */

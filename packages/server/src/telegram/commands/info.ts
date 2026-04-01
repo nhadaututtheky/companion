@@ -99,17 +99,26 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
     const sections: string[] = [];
 
     if (s.files_created.length > 0) {
-      sections.push(`🟢 <b>Created (${s.files_created.length})</b>\n` +
-        s.files_created.map((f) => `  <code>${escapeHTML(f)}</code>`).join("\n"));
+      sections.push(
+        `🟢 <b>Created (${s.files_created.length})</b>\n` +
+          s.files_created.map((f) => `  <code>${escapeHTML(f)}</code>`).join("\n"),
+      );
     }
     if (s.files_modified.length > 0) {
-      sections.push(`🟡 <b>Modified (${s.files_modified.length})</b>\n` +
-        s.files_modified.map((f) => `  <code>${escapeHTML(f)}</code>`).join("\n"));
+      sections.push(
+        `🟡 <b>Modified (${s.files_modified.length})</b>\n` +
+          s.files_modified.map((f) => `  <code>${escapeHTML(f)}</code>`).join("\n"),
+      );
     }
     if (s.files_read.length > 0) {
-      sections.push(`🔵 <b>Read (${s.files_read.length})</b>\n` +
-        s.files_read.slice(-10).map((f) => `  <code>${escapeHTML(f)}</code>`).join("\n") +
-        (s.files_read.length > 10 ? `\n  <i>... and ${s.files_read.length - 10} more</i>` : ""));
+      sections.push(
+        `🔵 <b>Read (${s.files_read.length})</b>\n` +
+          s.files_read
+            .slice(-10)
+            .map((f) => `  <code>${escapeHTML(f)}</code>`)
+            .join("\n") +
+          (s.files_read.length > 10 ? `\n  <i>... and ${s.files_read.length - 10} more</i>` : ""),
+      );
     }
 
     if (sections.length === 0) {
@@ -133,10 +142,13 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
 
     if (args) {
       // Direct model set
-      bridge.wsBridge.handleBrowserMessage(mapping.sessionId, JSON.stringify({
-        type: "set_model",
-        model: args,
-      }));
+      bridge.wsBridge.handleBrowserMessage(
+        mapping.sessionId,
+        JSON.stringify({
+          type: "set_model",
+          model: args,
+        }),
+      );
       await ctx.reply(`Model set to <code>${escapeHTML(args)}</code>`, { parse_mode: "HTML" });
       return;
     }
@@ -185,13 +197,22 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
 
     const lines = result.items.map((s) => {
       const project = s.projectSlug ? `<b>${escapeHTML(s.projectSlug)}</b>` : "<i>quick</i>";
-      const model = s.model.includes("opus") ? "Opus" : s.model.includes("haiku") ? "Haiku" : "Sonnet";
+      const model = s.model.includes("opus")
+        ? "Opus"
+        : s.model.includes("haiku")
+          ? "Haiku"
+          : "Sonnet";
       const cost = `$${s.total_cost_usd.toFixed(4)}`;
       const duration = s.endedAt
         ? formatDuration(s.endedAt - s.startedAt)
         : formatDuration(Date.now() - s.startedAt) + " (active)";
       const statusDot = s.status === "ended" ? "⚫" : s.status === "error" ? "🔴" : "🟢";
-      const date = new Date(s.startedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+      const date = new Date(s.startedAt).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
 
       return `${statusDot} ${project} · ${model} · ${cost} · ${duration}\n   <code>${date}</code> · ${s.num_turns} turns`;
     });
@@ -340,9 +361,10 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
     else if (totalPct >= 60) statusIcon = "🟡";
 
     const remaining = Math.max(maxTokens - totalUsed, 0);
-    const maxLabel = maxTokens >= 1_000_000
-      ? `${(maxTokens / 1_000_000).toFixed(0)}M`
-      : `${(maxTokens / 1_000).toFixed(0)}K`;
+    const maxLabel =
+      maxTokens >= 1_000_000
+        ? `${(maxTokens / 1_000_000).toFixed(0)}M`
+        : `${(maxTokens / 1_000).toFixed(0)}K`;
 
     // Compact model display
     const modelShort = model.includes("opus")
@@ -405,7 +427,9 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
       if (detail) {
         await ctx.reply(`<b>/${escapeHTML(cmd)}</b>\n${detail}`, { parse_mode: "HTML" });
       } else {
-        await ctx.reply(`Unknown command: <code>/${escapeHTML(cmd)}</code>`, { parse_mode: "HTML" });
+        await ctx.reply(`Unknown command: <code>/${escapeHTML(cmd)}</code>`, {
+          parse_mode: "HTML",
+        });
       }
       return;
     }
@@ -471,10 +495,13 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
     const sessionId = ctx.match[1]!;
     const model = ctx.match[2]!;
 
-    bridge.wsBridge.handleBrowserMessage(sessionId, JSON.stringify({
-      type: "set_model",
-      model,
-    }));
+    bridge.wsBridge.handleBrowserMessage(
+      sessionId,
+      JSON.stringify({
+        type: "set_model",
+        model,
+      }),
+    );
 
     await ctx.answerCallbackQuery(`Model: ${model}`);
     await ctx.editMessageText(`Model set to <code>${escapeHTML(model)}</code>`, {
@@ -486,7 +513,8 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
 // ─── Per-command Help Details ──────────────────────────────────────────────────
 
 const COMMAND_HELP: Record<string, string> = {
-  start: "Show available projects and start a session.\nAlso shows Quick Session option if no projects are configured.",
+  start:
+    "Show available projects and start a session.\nAlso shows Quick Session option if no projects are configured.",
   new: "<code>/new [project-slug]</code>\nStart a new session. If no project specified, shows project picker.",
   stop: "Stop the current active session with confirmation prompt.",
   resume: "Resume a previously interrupted session.\nShows resumable sessions per project.",
@@ -497,25 +525,33 @@ const COMMAND_HELP: Record<string, string> = {
   exitplan: "Force exit from plan mode (sends /exitplan + interrupt).",
   compact: "Compact Claude's context window to free up token space.",
   templates: "Show all available session templates as clickable buttons.\nAlias: /t",
-  template: "<code>/template save \"Name\" prompt text</code> — Create a template\n<code>/template delete slug</code> — Delete a template",
+  template:
+    '<code>/template save "Name" prompt text</code> — Create a template\n<code>/template delete slug</code> — Delete a template',
   btw: "<code>/btw message</code>\nInject context into Claude's conversation without expecting a response.",
   file: "<code>/file path/to/file</code>\nRead and display file content. Files under 4KB shown inline, larger sent as document.\nAlias: /cat",
   cat: "Alias for /file.",
   send: "<code>/send path/to/file</code>\nSend a file as a Telegram document attachment.",
-  skill: "<code>/skill</code> — List available skills\n<code>/skill name</code> — Invoke a specific skill",
+  skill:
+    "<code>/skill</code> — List available skills\n<code>/skill name</code> — Invoke a specific skill",
   note: "<code>/note text</code>\nSave a note for the current session.",
   notes: "Show all saved notes for the current session.",
   todo: "Forward /todo to Claude to display the current task list.",
   status: "Show current session status: model, turns, cost, tokens, files.",
   cost: "Show detailed cost breakdown: tokens, cache, duration.",
   files: "Show files created, modified, and read in the current session.",
-  model: "<code>/model</code> — Show model picker\n<code>/model claude-sonnet-4-6</code> — Set model directly",
-  history: "<code>/history [n]</code>\nShow last N sessions (default 5, max 20).\nIncludes project, model, cost, duration, and turn count.",
-  usage: "<code>/usage [today|week|month]</code>\nShow cost and usage summary.\nBreaks down by project with session count and token totals.",
-  context: "Show a visual context window usage meter.\nDisplays tokens used vs. max capacity for the current session with a progress bar.\n⚠️ shown at 60%, 🔴 at 85%. Includes tip to /compact when high.",
+  model:
+    "<code>/model</code> — Show model picker\n<code>/model claude-sonnet-4-6</code> — Set model directly",
+  history:
+    "<code>/history [n]</code>\nShow last N sessions (default 5, max 20).\nIncludes project, model, cost, duration, and turn count.",
+  usage:
+    "<code>/usage [today|week|month]</code>\nShow cost and usage summary.\nBreaks down by project with session count and token totals.",
+  context:
+    "Show a visual context window usage meter.\nDisplays tokens used vs. max capacity for the current session with a progress bar.\n⚠️ shown at 60%, 🔴 at 85%. Includes tip to /compact when high.",
   fork: "Fork current session — start a new session for the same project while keeping the old one running.\nOld session remains accessible via /stream.",
-  stream: "<code>/stream</code> — List active sessions to stream\n<code>/stream sessionId</code> — Attach to specific session\nReceive live events from a session without controlling it.",
+  stream:
+    "<code>/stream</code> — List active sessions to stream\n<code>/stream sessionId</code> — Attach to specific session\nReceive live events from a session without controlling it.",
   detach: "Detach from a streamed session. The session continues running.",
-  autoapprove: "<code>/autoapprove [on|off|seconds]</code>\nToggle auto-approve for permission requests.\nWhen on, permissions are automatically allowed after the timeout.",
+  autoapprove:
+    "<code>/autoapprove [on|off|seconds]</code>\nToggle auto-approve for permission requests.\nWhen on, permissions are automatically allowed after the timeout.",
   debate: "<code>/debate [topic]</code>\nStart a multi-agent debate session.",
 };

@@ -27,11 +27,45 @@ function extractKeywords(text: string): string[] {
 
   // Filter noise words
   const noise = new Set([
-    "the", "this", "that", "with", "from", "into", "have", "been", "will",
-    "would", "could", "should", "about", "what", "when", "where", "which",
-    "file", "code", "function", "class", "type", "import", "export",
-    "create", "update", "delete", "add", "remove", "fix", "change",
-    "make", "need", "want", "like", "use", "using", "can", "how",
+    "the",
+    "this",
+    "that",
+    "with",
+    "from",
+    "into",
+    "have",
+    "been",
+    "will",
+    "would",
+    "could",
+    "should",
+    "about",
+    "what",
+    "when",
+    "where",
+    "which",
+    "file",
+    "code",
+    "function",
+    "class",
+    "type",
+    "import",
+    "export",
+    "create",
+    "update",
+    "delete",
+    "add",
+    "remove",
+    "fix",
+    "change",
+    "make",
+    "need",
+    "want",
+    "like",
+    "use",
+    "using",
+    "can",
+    "how",
   ]);
 
   const keywords = identifiers
@@ -40,7 +74,10 @@ function extractKeywords(text: string): string[] {
 
   // Add file path basenames as keywords
   for (const fp of filePaths) {
-    const base = fp.split("/").pop()?.replace(/\.\w+$/, "");
+    const base = fp
+      .split("/")
+      .pop()
+      ?.replace(/\.\w+$/, "");
     if (base && base.length >= 3) keywords.push(base);
   }
 
@@ -114,7 +151,9 @@ export function buildProjectMap(projectSlug: string): string | null {
     lines.push("", "Key modules (by coupling):");
     for (const hf of hotFiles) {
       const total = hf.incomingEdges + hf.outgoingEdges;
-      lines.push(`  ${hf.filePath} (${total} edges: ${hf.incomingEdges} in, ${hf.outgoingEdges} out)`);
+      lines.push(
+        `  ${hf.filePath} (${total} edges: ${hf.incomingEdges} in, ${hf.outgoingEdges} out)`,
+      );
     }
 
     if (layers.size > 0) {
@@ -128,15 +167,15 @@ export function buildProjectMap(projectSlug: string): string | null {
     try {
       const pkgCounts = getPackageUsageCounts(projectSlug);
       if (pkgCounts.size > 0) {
-        const topPkgs = [...pkgCounts.entries()]
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 10);
+        const topPkgs = [...pkgCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
         lines.push("", "Key dependencies:");
         for (const [pkg, count] of topPkgs) {
           lines.push(`  ${pkg} (${count} file${count > 1 ? "s" : ""})`);
         }
       }
-    } catch { /* skip */ }
+    } catch {
+      /* skip */
+    }
 
     lines.push(`</codegraph>`);
     return "\n\n" + lines.join("\n");
@@ -169,10 +208,7 @@ function cacheSet(key: string, value: { result: string | null; expires: number }
  * Build relevant code context for a user message.
  * Returns null if no relevant nodes found. Max ~800 tokens.
  */
-export function buildMessageContext(
-  projectSlug: string,
-  userMessage: string,
-): string | null {
+export function buildMessageContext(projectSlug: string, userMessage: string): string | null {
   if (!isGraphReady(projectSlug)) return null;
 
   const keywords = extractKeywords(userMessage);
@@ -226,15 +262,13 @@ export function buildMessageContext(
  * Review a plan by checking if mentioned files have unmentioned dependencies.
  * Returns null if no gaps found.
  */
-export function reviewPlan(
-  projectSlug: string,
-  mentionedFiles: string[],
-): string | null {
+export function reviewPlan(projectSlug: string, mentionedFiles: string[]): string | null {
   if (!isGraphReady(projectSlug) || mentionedFiles.length === 0) return null;
 
   try {
     const mentionedSet = new Set(mentionedFiles);
-    const missingDeps: Array<{ dependentFile: string; dependsOnFile: string; symbols: string[] }> = [];
+    const missingDeps: Array<{ dependentFile: string; dependsOnFile: string; symbols: string[] }> =
+      [];
 
     for (const filePath of mentionedFiles) {
       const reverseDeps = getReverseDependencies(projectSlug, filePath);
@@ -269,7 +303,9 @@ export function reviewPlan(
     ];
 
     for (const dep of uniqueDeps.slice(0, 5)) {
-      lines.push(`  ${dep.dependentFile} — depends on ${dep.dependsOnFile} via ${dep.symbols.join(", ")}`);
+      lines.push(
+        `  ${dep.dependentFile} — depends on ${dep.dependsOnFile} via ${dep.symbols.join(", ")}`,
+      );
     }
 
     if (uniqueDeps.length > 5) {
@@ -291,10 +327,7 @@ export function reviewPlan(
  * Check if modified files have removed exports that other files depend on.
  * Returns null if no breaks detected.
  */
-export function checkBreaks(
-  projectSlug: string,
-  modifiedFiles: string[],
-): string | null {
+export function checkBreaks(projectSlug: string, modifiedFiles: string[]): string | null {
   if (!isGraphReady(projectSlug) || modifiedFiles.length === 0) return null;
 
   try {
@@ -306,8 +339,9 @@ export function checkBreaks(
       if (exports.length === 0) continue;
 
       // Check reverse deps once per file (not per export)
-      const reverseDeps = getReverseDependencies(projectSlug, filePath)
-        .filter((d) => d.cumulativeTrust >= 0.5);
+      const reverseDeps = getReverseDependencies(projectSlug, filePath).filter(
+        (d) => d.cumulativeTrust >= 0.5,
+      );
 
       if (reverseDeps.length > 0) {
         const uniqueFiles = [...new Set(reverseDeps.map((d) => d.filePath))].slice(0, 3);

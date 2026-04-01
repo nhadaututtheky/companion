@@ -103,9 +103,10 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
         allowedChatIds: parsedChatIds,
         allowedUserIds: parsedUserIds,
         enabled: config.enabled,
-        notificationGroupId: parsedNotificationGroupId && !isNaN(parsedNotificationGroupId)
-          ? parsedNotificationGroupId
-          : null,
+        notificationGroupId:
+          parsedNotificationGroupId && !isNaN(parsedNotificationGroupId)
+            ? parsedNotificationGroupId
+            : null,
       });
 
       toast.success("Bot updated");
@@ -282,7 +283,11 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
             }}
             aria-label={confirmDelete ? "Confirm delete" : "Delete bot"}
           >
-            {confirmDelete ? <XCircle size={14} weight="fill" /> : <Trash size={14} weight="bold" />}
+            {confirmDelete ? (
+              <XCircle size={14} weight="fill" />
+            ) : (
+              <Trash size={14} weight="bold" />
+            )}
           </button>
         </div>
       </div>
@@ -292,7 +297,9 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
         <div
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
           style={{
-            background: testResult.error ? "var(--color-danger-bg, #fef2f2)" : "var(--color-success-bg, #f0fdf4)",
+            background: testResult.error
+              ? "var(--color-danger-bg, #fef2f2)"
+              : "var(--color-success-bg, #f0fdf4)",
             color: testResult.error ? "var(--color-danger)" : "var(--color-success)",
             border: `1px solid ${testResult.error ? "var(--color-danger)" : "var(--color-success)"}30`,
           }}
@@ -355,7 +362,9 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
               Bot Token{" "}
-              <span style={{ color: "var(--color-text-muted)" }}>(leave blank to keep existing)</span>
+              <span style={{ color: "var(--color-text-muted)" }}>
+                (leave blank to keep existing)
+              </span>
             </label>
             <div className="relative">
               <input
@@ -386,7 +395,9 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
               Allowed Chat/Group IDs{" "}
-              <span style={{ color: "var(--color-text-muted)" }}>(comma-separated, empty = allow all)</span>
+              <span style={{ color: "var(--color-text-muted)" }}>
+                (comma-separated, empty = allow all)
+              </span>
             </label>
             <input
               type="text"
@@ -406,7 +417,9 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
               Admin User IDs{" "}
-              <span style={{ color: "var(--color-text-muted)" }}>(comma-separated, only these users can use bot)</span>
+              <span style={{ color: "var(--color-text-muted)" }}>
+                (comma-separated, only these users can use bot)
+              </span>
             </label>
             <input
               type="text"
@@ -480,7 +493,9 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
                 setBotToken("");
                 setChatIds(config.allowedChatIds.join(", "));
                 setUserIds((config.allowedUserIds ?? []).join(", "));
-                setNotificationGroupId(config.notificationGroupId ? String(config.notificationGroupId) : "");
+                setNotificationGroupId(
+                  config.notificationGroupId ? String(config.notificationGroupId) : "",
+                );
               }}
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
               style={{
@@ -517,14 +532,20 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
 
       {/* Notification badge (when not editing) */}
       {!editing && config.notificationGroupId && (
-        <div className="flex items-center gap-1.5 text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <div
+          className="flex items-center gap-1.5 text-xs"
+          style={{ color: "var(--color-text-muted)" }}
+        >
           <Bell size={12} weight="fill" aria-hidden="true" />
           Notifications → <span className="font-mono">{config.notificationGroupId}</span>
         </div>
       )}
 
       {config.allowedChatIds.length === 0 && !editing && (
-        <div className="flex items-center gap-1.5 text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <div
+          className="flex items-center gap-1.5 text-xs"
+          style={{ color: "var(--color-text-muted)" }}
+        >
           <WarningCircle size={12} aria-hidden="true" />
           No allowed chats — bot will reject all messages
         </div>

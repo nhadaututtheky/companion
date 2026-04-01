@@ -268,11 +268,14 @@ function TreeNode({
         }}
         draggable={!entry.isDir}
         onDragStart={(e) => {
-          e.dataTransfer.setData("application/x-companion-file", JSON.stringify({
-            path: entry.path,
-            name: entry.name,
-            ext: entry.ext ?? "",
-          }));
+          e.dataTransfer.setData(
+            "application/x-companion-file",
+            JSON.stringify({
+              path: entry.path,
+              name: entry.name,
+              ext: entry.ext ?? "",
+            }),
+          );
           e.dataTransfer.effectAllowed = "copy";
         }}
       >
@@ -291,9 +294,7 @@ function TreeNode({
           fileIcon(entry.ext ?? "", 13)
         )}
         <span className="truncate">{entry.name}</span>
-        {loading && (
-          <span style={{ color: "var(--color-text-muted)", fontSize: 10 }}>...</span>
-        )}
+        {loading && <span style={{ color: "var(--color-text-muted)", fontSize: 10 }}>...</span>}
       </button>
 
       {expanded && children && (
@@ -308,10 +309,7 @@ function TreeNode({
             />
           ))}
           {children.length === 0 && (
-            <div
-              className="text-xs pl-8 py-0.5"
-              style={{ color: "var(--color-text-muted)" }}
-            >
+            <div className="text-xs pl-8 py-0.5" style={{ color: "var(--color-text-muted)" }}>
               (empty)
             </div>
           )}
@@ -390,7 +388,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
   useEffect(() => {
     if (!activeTab || activeTab.content !== null) return;
     setFileLoading(true); // eslint-disable-line react-hooks/set-state-in-effect
-    setFileError(null);  
+    setFileError(null);
     api.fs
       .read(activeTab.path)
       .then((res) => {
@@ -573,10 +571,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
             />
           ))}
           {filteredEntries.length === 0 && (
-            <div
-              className="text-xs text-center py-8"
-              style={{ color: "var(--color-text-muted)" }}
-            >
+            <div className="text-xs text-center py-8" style={{ color: "var(--color-text-muted)" }}>
               {filter ? "No matches" : "Empty directory"}
             </div>
           )}

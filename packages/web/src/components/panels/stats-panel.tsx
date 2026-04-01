@@ -94,7 +94,10 @@ function KpiCard({ label, value, sub, icon, accent = "#4285f4" }: KpiCardProps) 
       </div>
       <span
         className="text-lg font-bold leading-tight"
-        style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)" }}
+        style={{
+          color: "var(--color-text-primary)",
+          fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+        }}
       >
         {value}
       </span>
@@ -171,7 +174,10 @@ export function StatsPanel({ onClose }: StatsPanelProps) {
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-5">
         {loading && (
-          <div className="flex items-center justify-center py-12 gap-2" style={{ color: "var(--color-text-muted)" }}>
+          <div
+            className="flex items-center justify-center py-12 gap-2"
+            style={{ color: "var(--color-text-muted)" }}
+          >
             <CircleNotch size={18} className="animate-spin" aria-hidden="true" />
             <span className="text-sm">Loading stats…</span>
           </div>
@@ -337,7 +343,10 @@ function ModelBreakdown({ breakdown }: { breakdown: StatsData["modelBreakdown"] 
             <div className="flex items-center justify-between">
               <span
                 className="text-xs font-semibold"
-                style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-mono, monospace)" }}
+                style={{
+                  color: "var(--color-text-primary)",
+                  fontFamily: "var(--font-mono, monospace)",
+                }}
               >
                 {modelLabel(m.model)}
               </span>
@@ -407,7 +416,12 @@ function TopProjects({ projects }: { projects: StatsData["topProjects"] }) {
             </div>
             <span
               className="text-xs flex-shrink-0 font-semibold"
-              style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-mono, monospace)", minWidth: 20, textAlign: "right" }}
+              style={{
+                color: "var(--color-text-muted)",
+                fontFamily: "var(--font-mono, monospace)",
+                minWidth: 20,
+                textAlign: "right",
+              }}
             >
               {p.sessions}
             </span>

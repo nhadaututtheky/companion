@@ -101,34 +101,30 @@ channelRoutes.get("/:id", (c) => {
 });
 
 // POST /channels/:id/messages — post message to channel
-channelRoutes.post(
-  "/:id/messages",
-  zValidator("json", postMessageSchema),
-  (c) => {
-    const id = c.req.param("id");
-    const body = c.req.valid("json");
+channelRoutes.post("/:id/messages", zValidator("json", postMessageSchema), (c) => {
+  const id = c.req.param("id");
+  const body = c.req.valid("json");
 
-    const channel = getChannel(id);
-    if (!channel) {
-      return c.json({ success: false, error: "Channel not found" } satisfies ApiResponse, 404);
-    }
+  const channel = getChannel(id);
+  if (!channel) {
+    return c.json({ success: false, error: "Channel not found" } satisfies ApiResponse, 404);
+  }
 
-    try {
-      const message = postMessage({
-        channelId: id,
-        agentId: body.agentId,
-        role: body.role,
-        content: body.content,
-        round: body.round,
-      });
+  try {
+    const message = postMessage({
+      channelId: id,
+      agentId: body.agentId,
+      role: body.role,
+      content: body.content,
+      round: body.round,
+    });
 
-      return c.json({ success: true, data: message } satisfies ApiResponse, 201);
-    } catch (err) {
-      log.error("Failed to post message", { channelId: id, error: String(err) });
-      return c.json({ success: false, error: "Failed to post message" } satisfies ApiResponse, 500);
-    }
-  },
-);
+    return c.json({ success: true, data: message } satisfies ApiResponse, 201);
+  } catch (err) {
+    log.error("Failed to post message", { channelId: id, error: String(err) });
+    return c.json({ success: false, error: "Failed to post message" } satisfies ApiResponse, 500);
+  }
+});
 
 // PATCH /channels/:id — update channel status
 channelRoutes.patch("/:id", zValidator("json", patchChannelSchema), (c) => {
@@ -145,7 +141,10 @@ channelRoutes.patch("/:id", zValidator("json", patchChannelSchema), (c) => {
     return c.json({ success: true } satisfies ApiResponse);
   } catch (err) {
     log.error("Failed to update channel status", { id, error: String(err) });
-    return c.json({ success: false, error: "Failed to update channel status" } satisfies ApiResponse, 500);
+    return c.json(
+      { success: false, error: "Failed to update channel status" } satisfies ApiResponse,
+      500,
+    );
   }
 });
 
@@ -188,7 +187,9 @@ const debateSchema = z.object({
   format: z.enum(["pro_con", "red_team", "review", "brainstorm"]).default("pro_con"),
   projectSlug: z.string().optional(),
   maxRounds: z.number().int().min(1).max(20).optional(),
-  agentModels: z.array(agentModelSchema).max(2)
+  agentModels: z
+    .array(agentModelSchema)
+    .max(2)
     .refine((arr) => !arr || new Set(arr.map((a) => a.agentId)).size === arr.length, {
       message: "Duplicate agentId in agentModels",
     })
@@ -207,18 +208,24 @@ channelRoutes.post("/debate", zValidator("json", debateSchema), async (c) => {
       agentModels: body.agentModels,
     });
 
-    return c.json({
-      success: true,
-      data: {
-        channelId: state.channelId,
-        topic: state.topic,
-        format: state.format,
-        agents: state.agents.map((a) => ({
-          id: a.id, label: a.label, role: a.role,
-          model: a.model, modelLabel: a.modelLabel,
-        })),
-      },
-    } satisfies ApiResponse, 201);
+    return c.json(
+      {
+        success: true,
+        data: {
+          channelId: state.channelId,
+          topic: state.topic,
+          format: state.format,
+          agents: state.agents.map((a) => ({
+            id: a.id,
+            label: a.label,
+            role: a.role,
+            model: a.model,
+            modelLabel: a.modelLabel,
+          })),
+        },
+      } satisfies ApiResponse,
+      201,
+    );
   } catch {
     return c.json({ success: false, error: "Failed to start debate" } satisfies ApiResponse, 500);
   }

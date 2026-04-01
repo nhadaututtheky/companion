@@ -15,7 +15,10 @@ import { getProjectSummaries } from "../services/session-summarizer.js";
 import type { ApiResponse } from "@companion/shared";
 
 const projectSchema = z.object({
-  slug: z.string().min(1).regex(/^[a-z0-9-]+$/),
+  slug: z
+    .string()
+    .min(1)
+    .regex(/^[a-z0-9-]+$/),
   name: z.string().min(1),
   dir: z.string().min(1),
   defaultModel: z.string().optional(),
@@ -41,10 +44,7 @@ projectRoutes.get("/:slug", (c) => {
   const project = getProject(slug);
 
   if (!project) {
-    return c.json(
-      { success: false, error: "Project not found" } satisfies ApiResponse,
-      404,
-    );
+    return c.json({ success: false, error: "Project not found" } satisfies ApiResponse, 404);
   }
 
   return c.json({ success: true, data: project } satisfies ApiResponse);
@@ -80,10 +80,7 @@ projectRoutes.delete("/:slug", (c) => {
   const deleted = deleteProject(slug);
 
   if (!deleted) {
-    return c.json(
-      { success: false, error: "Project not found" } satisfies ApiResponse,
-      404,
-    );
+    return c.json({ success: false, error: "Project not found" } satisfies ApiResponse, 404);
   }
 
   return c.json({ success: true } satisfies ApiResponse);

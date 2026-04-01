@@ -99,9 +99,27 @@ describe("project-profiles", () => {
     });
 
     it("returns all projects", () => {
-      upsertProject({ slug: "alpha", name: "Alpha", dir: "/a", defaultModel: "claude-sonnet-4-6", permissionMode: "default" });
-      upsertProject({ slug: "beta", name: "Beta", dir: "/b", defaultModel: "claude-sonnet-4-6", permissionMode: "default" });
-      upsertProject({ slug: "gamma", name: "Gamma", dir: "/c", defaultModel: "claude-sonnet-4-6", permissionMode: "default" });
+      upsertProject({
+        slug: "alpha",
+        name: "Alpha",
+        dir: "/a",
+        defaultModel: "claude-sonnet-4-6",
+        permissionMode: "default",
+      });
+      upsertProject({
+        slug: "beta",
+        name: "Beta",
+        dir: "/b",
+        defaultModel: "claude-sonnet-4-6",
+        permissionMode: "default",
+      });
+      upsertProject({
+        slug: "gamma",
+        name: "Gamma",
+        dir: "/c",
+        defaultModel: "claude-sonnet-4-6",
+        permissionMode: "default",
+      });
 
       const projects = listProjects();
       expect(projects).toHaveLength(3);
@@ -112,7 +130,13 @@ describe("project-profiles", () => {
 
   describe("deleteProject", () => {
     it("deletes existing project and returns true", () => {
-      upsertProject({ slug: "to-delete", name: "Delete Me", dir: "/d", defaultModel: "claude-sonnet-4-6", permissionMode: "default" });
+      upsertProject({
+        slug: "to-delete",
+        name: "Delete Me",
+        dir: "/d",
+        defaultModel: "claude-sonnet-4-6",
+        permissionMode: "default",
+      });
       expect(deleteProject("to-delete")).toBe(true);
       expect(getProject("to-delete")).toBeNull();
     });
@@ -124,7 +148,13 @@ describe("project-profiles", () => {
 
   describe("findProjectByDir", () => {
     it("finds project by directory path", () => {
-      upsertProject({ slug: "my-app", name: "My App", dir: "/home/user/my-app", defaultModel: "claude-sonnet-4-6", permissionMode: "default" });
+      upsertProject({
+        slug: "my-app",
+        name: "My App",
+        dir: "/home/user/my-app",
+        defaultModel: "claude-sonnet-4-6",
+        permissionMode: "default",
+      });
 
       const project = findProjectByDir("/home/user/my-app");
       expect(project).not.toBeNull();

@@ -226,7 +226,11 @@ describe("updateTemplate", () => {
 
   it("updates multiple fields at once", () => {
     const tpl = createTemplate({ name: "Orig", prompt: "old", icon: "⚡", sortOrder: 0 });
-    const updated = updateTemplate(tpl.id, { name: "New Name", prompt: "new prompt", sortOrder: 10 });
+    const updated = updateTemplate(tpl.id, {
+      name: "New Name",
+      prompt: "new prompt",
+      sortOrder: 10,
+    });
     expect(updated!.name).toBe("New Name");
     expect(updated!.prompt).toBe("new prompt");
     expect(updated!.sortOrder).toBe(10);

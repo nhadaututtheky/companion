@@ -26,9 +26,7 @@ export function CommandPaletteProvider() {
       if (modifier && e.shiftKey && e.key === "F") {
         e.preventDefault();
         const uiStore = useUiStore.getState();
-        uiStore.setRightPanelMode(
-          uiStore.rightPanelMode === "search" ? "none" : "search",
-        );
+        uiStore.setRightPanelMode(uiStore.rightPanelMode === "search" ? "none" : "search");
       }
     };
 

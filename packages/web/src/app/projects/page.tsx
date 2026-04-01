@@ -63,7 +63,9 @@ function ProjectCard({
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const modelLabel = MODELS.find((m) => m.value === project.defaultModel)?.label.split(" (")[0] ?? project.defaultModel;
+  const modelLabel =
+    MODELS.find((m) => m.value === project.defaultModel)?.label.split(" (")[0] ??
+    project.defaultModel;
 
   return (
     <div
@@ -81,7 +83,10 @@ function ProjectCard({
           <FolderOpen size={22} style={{ color: "#4285F4" }} weight="fill" />
         </div>
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold mb-0.5 truncate" style={{ color: "var(--color-text-primary)" }}>
+          <h3
+            className="text-sm font-semibold mb-0.5 truncate"
+            style={{ color: "var(--color-text-primary)" }}
+          >
             {project.name}
           </h3>
           <div className="flex items-center gap-1 mb-2 group">
@@ -100,13 +105,19 @@ function ProjectCard({
           <div className="flex gap-2">
             <span
               className="text-xs px-2 py-0.5 rounded-full"
-              style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-secondary)" }}
+              style={{
+                background: "var(--color-bg-elevated)",
+                color: "var(--color-text-secondary)",
+              }}
             >
               {modelLabel}
             </span>
             <span
               className="text-xs px-2 py-0.5 rounded-full"
-              style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-secondary)" }}
+              style={{
+                background: "var(--color-bg-elevated)",
+                color: "var(--color-text-secondary)",
+              }}
             >
               {project.permissionMode}
             </span>
@@ -195,7 +206,12 @@ function ProjectDialog({
           <h2 className="text-lg font-bold" style={{ fontFamily: "Outfit, sans-serif" }}>
             {isEdit ? "Edit Project" : "New Project"}
           </h2>
-          <button type="button" onClick={onClose} style={{ color: "var(--color-text-muted)" }} className="cursor-pointer">
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ color: "var(--color-text-muted)" }}
+            className="cursor-pointer"
+          >
             <X size={18} />
           </button>
         </div>
@@ -272,7 +288,9 @@ function ProjectDialog({
 
         {/* Model */}
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>Default Model</span>
+          <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+            Default Model
+          </span>
           <select
             value={form.defaultModel ?? "claude-sonnet-4-6"}
             onChange={(e) => updateField("defaultModel", e.target.value)}
@@ -284,14 +302,18 @@ function ProjectDialog({
             }}
           >
             {MODELS.map((m) => (
-              <option key={m.value} value={m.value}>{m.label}</option>
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
             ))}
           </select>
         </label>
 
         {/* Permission Mode */}
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>Permission Mode</span>
+          <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+            Permission Mode
+          </span>
           <select
             value={form.permissionMode ?? "default"}
             onChange={(e) => updateField("permissionMode", e.target.value)}
@@ -303,7 +325,9 @@ function ProjectDialog({
             }}
           >
             {PERMISSION_MODES.map((m) => (
-              <option key={m.value} value={m.value}>{m.label}</option>
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
             ))}
           </select>
         </label>
@@ -426,7 +450,9 @@ export default function ProjectsPage() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleSave = async (data: Partial<Project>) => {
     try {
@@ -452,12 +478,18 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="flex flex-col" style={{ minHeight: "100vh", background: "var(--color-bg-base)" }}>
+    <div
+      className="flex flex-col"
+      style={{ minHeight: "100vh", background: "var(--color-bg-base)" }}
+    >
       <Header />
 
       <div className="flex-1 px-6 py-6 max-w-3xl mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold" style={{ fontFamily: "Outfit, sans-serif", color: "var(--color-text-primary)" }}>
+          <h1
+            className="text-2xl font-bold"
+            style={{ fontFamily: "Outfit, sans-serif", color: "var(--color-text-primary)" }}
+          >
             Projects
           </h1>
           <div className="flex gap-2">
@@ -487,10 +519,19 @@ export default function ProjectsPage() {
             border: "1px solid var(--color-border)",
           }}
         >
-          <TelegramLogo size={20} weight="fill" style={{ color: "#29B6F6", flexShrink: 0, marginTop: 1 }} />
+          <TelegramLogo
+            size={20}
+            weight="fill"
+            style={{ color: "#29B6F6", flexShrink: 0, marginTop: 1 }}
+          />
           <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
             Projects you add here will automatically appear in your Telegram bot&apos;s{" "}
-            <code className="px-1 py-0.5 rounded text-[11px]" style={{ background: "var(--color-bg-card)" }}>/start</code>{" "}
+            <code
+              className="px-1 py-0.5 rounded text-[11px]"
+              style={{ background: "var(--color-bg-card)" }}
+            >
+              /start
+            </code>{" "}
             menu. Removing a project here removes it from Telegram too.
           </p>
         </div>
@@ -498,7 +539,11 @@ export default function ProjectsPage() {
         {loading ? (
           <div className="flex flex-col gap-3">
             {[1, 2].map((i) => (
-              <div key={i} className="h-24 rounded-2xl animate-pulse" style={{ background: "var(--color-bg-card)" }} />
+              <div
+                key={i}
+                className="h-24 rounded-2xl animate-pulse"
+                style={{ background: "var(--color-bg-card)" }}
+              />
             ))}
           </div>
         ) : projects.length === 0 ? (
@@ -513,11 +558,15 @@ export default function ProjectsPage() {
               <FolderOpen size={32} style={{ color: "#4285F4" }} weight="duotone" />
             </div>
             <div className="text-center">
-              <p className="text-sm font-semibold mb-1" style={{ color: "var(--color-text-primary)" }}>
+              <p
+                className="text-sm font-semibold mb-1"
+                style={{ color: "var(--color-text-primary)" }}
+              >
                 No projects yet
               </p>
               <p className="text-xs max-w-xs" style={{ color: "var(--color-text-muted)" }}>
-                Add your project folders to start Claude Code sessions from both the web UI and Telegram.
+                Add your project folders to start Claude Code sessions from both the web UI and
+                Telegram.
               </p>
             </div>
             <button
@@ -531,7 +580,12 @@ export default function ProjectsPage() {
         ) : (
           <div className="flex flex-col gap-3">
             {projects.map((p) => (
-              <ProjectCard key={p.slug} project={p} onEdit={setEditProject} onDelete={() => setDeleteTarget(p)} />
+              <ProjectCard
+                key={p.slug}
+                project={p}
+                onEdit={setEditProject}
+                onDelete={() => setDeleteTarget(p)}
+              />
             ))}
           </div>
         )}

@@ -62,9 +62,10 @@ export class WebIntelCache<T = string> {
   }
 
   invalidate(urlPattern: string | RegExp): number {
-    const pattern = typeof urlPattern === "string"
-      ? new RegExp(urlPattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-      : urlPattern;
+    const pattern =
+      typeof urlPattern === "string"
+        ? new RegExp(urlPattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+        : urlPattern;
 
     let removed = 0;
     for (const key of this.store.keys()) {
@@ -99,8 +100,9 @@ export class WebIntelCache<T = string> {
   }
 
   private evictOldest(count: number): void {
-    const entries = [...this.store.entries()]
-      .sort((a, b) => a[1].lastAccessedAt - b[1].lastAccessedAt);
+    const entries = [...this.store.entries()].sort(
+      (a, b) => a[1].lastAccessedAt - b[1].lastAccessedAt,
+    );
 
     for (let i = 0; i < Math.min(count, entries.length); i++) {
       this.store.delete(entries[i]![0]);
@@ -122,10 +124,10 @@ export const scrapeCache = new WebIntelCache<ScrapeResult>();
 
 /** Cache TTLs */
 export const CACHE_TTL = {
-  docs: 60 * 60 * 1000,      // 1 hour
-  research: 15 * 60 * 1000,  // 15 minutes
-  crawl: 30 * 60 * 1000,     // 30 minutes
-  general: 30 * 60 * 1000,   // 30 minutes
+  docs: 60 * 60 * 1000, // 1 hour
+  research: 15 * 60 * 1000, // 15 minutes
+  crawl: 30 * 60 * 1000, // 30 minutes
+  general: 30 * 60 * 1000, // 30 minutes
 } as const;
 
 export interface ScrapeResult {

@@ -108,7 +108,9 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
       const res = await api.get<{ available: boolean }>("/api/anti/status");
       setCdpStatus(res.available ? "connected" : "disconnected");
       toast[res.available ? "success" : "error"](
-        res.available ? "CDP connected" : "CDP not available — is the IDE running with remote debugging?",
+        res.available
+          ? "CDP connected"
+          : "CDP not available — is the IDE running with remote debugging?",
       );
     } catch {
       setCdpStatus("disconnected");
@@ -132,7 +134,12 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
       {/* CDP Connection */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
-          <Plugs size={14} weight="bold" style={{ color: "var(--color-accent)" }} aria-hidden="true" />
+          <Plugs
+            size={14}
+            weight="bold"
+            style={{ color: "var(--color-accent)" }}
+            aria-hidden="true"
+          />
           <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
             CDP Connection
           </span>
@@ -141,8 +148,18 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 8 }}>
           <FieldInput label="Host" value={cdpHost} onChange={setCdpHost} placeholder="127.0.0.1" />
-          <FieldInput label="Base Port" value={cdpBasePort} onChange={setCdpBasePort} placeholder="9000" />
-          <FieldInput label="Range" value={cdpPortRange} onChange={setCdpPortRange} placeholder="3" />
+          <FieldInput
+            label="Base Port"
+            value={cdpBasePort}
+            onChange={setCdpBasePort}
+            placeholder="9000"
+          />
+          <FieldInput
+            label="Range"
+            value={cdpPortRange}
+            onChange={setCdpPortRange}
+            placeholder="3"
+          />
         </div>
 
         <button
@@ -170,7 +187,12 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
       {/* Chat Watcher */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <ChatCircleText size={14} weight="bold" style={{ color: "var(--color-accent)" }} aria-hidden="true" />
+          <ChatCircleText
+            size={14}
+            weight="bold"
+            style={{ color: "var(--color-accent)" }}
+            aria-hidden="true"
+          />
           <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
             Chat Watcher
           </span>
@@ -193,7 +215,12 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
       {/* Task Watcher */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <ListChecks size={14} weight="bold" style={{ color: "var(--color-accent)" }} aria-hidden="true" />
+          <ListChecks
+            size={14}
+            weight="bold"
+            style={{ color: "var(--color-accent)" }}
+            aria-hidden="true"
+          />
           <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
             Task Watcher
           </span>
@@ -216,7 +243,12 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
       {/* Auto-approve */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <Timer size={14} weight="bold" style={{ color: "var(--color-accent)" }} aria-hidden="true" />
+          <Timer
+            size={14}
+            weight="bold"
+            style={{ color: "var(--color-accent)" }}
+            aria-hidden="true"
+          />
           <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
             Auto-approve
           </span>

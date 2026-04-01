@@ -1,11 +1,5 @@
 "use client";
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  type ChangeEvent,
-} from "react";
+import { useState, useEffect, useCallback, useRef, type ChangeEvent } from "react";
 import { createPortal } from "react-dom";
 import {
   X,
@@ -24,10 +18,7 @@ import { useAnimatePresence } from "@/lib/animation";
 import { DirectoryBrowser } from "./directory-browser";
 import { api } from "@/lib/api-client";
 import { useSessionStore } from "@/lib/stores/session-store";
-import {
-  TemplateVariablesForm,
-  type TemplateVariable,
-} from "./template-variables-form";
+import { TemplateVariablesForm, type TemplateVariable } from "./template-variables-form";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -94,10 +85,7 @@ function StepPills({ current }: { current: Step }) {
               style={{
                 width: 24,
                 height: 1,
-                background:
-                  current > idx
-                    ? "#4285F4"
-                    : "var(--color-border)",
+                background: current > idx ? "#4285F4" : "var(--color-border)",
               }}
               aria-hidden="true"
             />
@@ -109,32 +97,20 @@ function StepPills({ current }: { current: Step }) {
                 width: 22,
                 height: 22,
                 background:
-                  current === n
-                    ? "#4285F4"
-                    : current > n
-                      ? "#34A853"
-                      : "var(--color-bg-elevated)",
-                color:
-                  current >= n ? "#fff" : "var(--color-text-muted)",
+                  current === n ? "#4285F4" : current > n ? "#34A853" : "var(--color-bg-elevated)",
+                color: current >= n ? "#fff" : "var(--color-text-muted)",
                 border:
                   current === n
                     ? "none"
                     : `1px solid ${current > n ? "#34A853" : "var(--color-border)"}`,
               }}
             >
-              {current > n ? (
-                <Check size={12} weight="bold" aria-hidden="true" />
-              ) : (
-                n
-              )}
+              {current > n ? <Check size={12} weight="bold" aria-hidden="true" /> : n}
             </div>
             <span
               className="text-xs font-medium"
               style={{
-                color:
-                  current === n
-                    ? "var(--color-text-primary)"
-                    : "var(--color-text-muted)",
+                color: current === n ? "var(--color-text-primary)" : "var(--color-text-muted)",
               }}
             >
               {label}
@@ -193,10 +169,11 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
 
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  const sessionCount = useSessionStore((s) =>
-    Object.values(s.sessions).filter((sess) =>
-      ["running", "waiting", "idle"].includes(sess.status),
-    ).length,
+  const sessionCount = useSessionStore(
+    (s) =>
+      Object.values(s.sessions).filter((sess) =>
+        ["running", "waiting", "idle"].includes(sess.status),
+      ).length,
   );
   const atLimit = sessionCount >= 6;
 
@@ -253,33 +230,37 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
     };
   }, []);
 
-  const handleResumeSession = useCallback(async (s: ResumableSession) => {
-    if (atLimit) return;
-    setResumingId(s.id);
-    try {
-      const res = await api.sessions.resume(s.id);
-      const sessionId = res.data.sessionId;
-      const label = s.projectSlug ?? s.cwd.replace(/\\/g, "/").split("/").filter(Boolean).pop() ?? "session";
+  const handleResumeSession = useCallback(
+    async (s: ResumableSession) => {
+      if (atLimit) return;
+      setResumingId(s.id);
+      try {
+        const res = await api.sessions.resume(s.id);
+        const sessionId = res.data.sessionId;
+        const label =
+          s.projectSlug ?? s.cwd.replace(/\\/g, "/").split("/").filter(Boolean).pop() ?? "session";
 
-      useSessionStore.getState().setSession(sessionId, {
-        id: sessionId,
-        projectSlug: s.projectSlug ?? label,
-        projectName: label,
-        model: s.model,
-        status: "starting",
-        createdAt: Date.now(),
-      });
-      useSessionStore.getState().addToGrid(sessionId);
-      useSessionStore.getState().setActiveSession(sessionId);
+        useSessionStore.getState().setSession(sessionId, {
+          id: sessionId,
+          projectSlug: s.projectSlug ?? label,
+          projectName: label,
+          model: s.model,
+          status: "starting",
+          createdAt: Date.now(),
+        });
+        useSessionStore.getState().addToGrid(sessionId);
+        useSessionStore.getState().setActiveSession(sessionId);
 
-      toast.success(`Resuming session: ${label}`);
-      onClose();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to resume session");
-    } finally {
-      setResumingId(null);
-    }
-  }, [atLimit, onClose]);
+        toast.success(`Resuming session: ${label}`);
+        onClose();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to resume session");
+      } finally {
+        setResumingId(null);
+      }
+    },
+    [atLimit, onClose],
+  );
 
   const handleSelectProject = useCallback((p: ProjectItem) => {
     setSelectedDir(p.dir);
@@ -302,10 +283,8 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
   const handleGithubAdd = useCallback(() => {
     if (!githubUrl.trim()) return;
     // Parse github.com/<owner>/<repo>
-    const match = githubUrl.match(
-      /github\.com[/:]([^/]+)\/([^/\s]+?)(?:\.git)?$/,
-    );
-    const repoName = match ? match[2] : githubUrl.split("/").pop() ?? "repo";
+    const match = githubUrl.match(/github\.com[/:]([^/]+)\/([^/\s]+?)(?:\.git)?$/);
+    const repoName = match ? match[2] : (githubUrl.split("/").pop() ?? "repo");
     setProjectName(repoName ?? "repo");
     // Store URL as the "dir" metadata placeholder
     setSelectedDir(`github://${githubUrl.trim()}`);
@@ -343,9 +322,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
   // Check if all required template variables are filled
   const templateVarsValid =
     templateVariables.length === 0 ||
-    templateVariables.every(
-      (v) => !v.required || (templateVars[v.key] ?? "").trim() !== "",
-    );
+    templateVariables.every((v) => !v.required || (templateVars[v.key] ?? "").trim() !== "");
 
   const handleLaunch = useCallback(async () => {
     if (atLimit) return;
@@ -368,9 +345,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
         prompt: initialPrompt.trim() || undefined,
         templateId: selectedTemplateId ?? undefined,
         templateVars:
-          selectedTemplateId && Object.keys(templateVars).length > 0
-            ? templateVars
-            : undefined,
+          selectedTemplateId && Object.keys(templateVars).length > 0 ? templateVars : undefined,
         idleTimeoutMs: idleTimeout,
         keepAlive: idleTimeout === 0,
       });
@@ -379,9 +354,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
       const projectCreated = res.data.projectCreated === true;
 
       // Add to store and grid
-      const slug = projectName
-        ? projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-")
-        : "session";
+      const slug = projectName ? projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-") : "session";
       useSessionStore.getState().setSession(sessionId, {
         id: sessionId,
         projectSlug: slug,
@@ -396,13 +369,13 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
 
       toast.success(`Session started: ${projectName || selectedDir}`);
       if (projectCreated) {
-        toast.info(`Project "${projectName}" saved — now available in Telegram /start`, { duration: 5000 });
+        toast.info(`Project "${projectName}" saved — now available in Telegram /start`, {
+          duration: 5000,
+        });
       }
       onClose();
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to start session",
-      );
+      toast.error(err instanceof Error ? err.message : "Failed to start session");
     } finally {
       setLaunching(false);
     }
@@ -470,8 +443,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             border: "1px solid rgba(255,255,255,0.18)",
-            boxShadow:
-              "0 8px 40px rgba(0,0,0,0.18), inset 0 0 0 1px rgba(255,255,255,0.1)",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.18), inset 0 0 0 1px rgba(255,255,255,0.1)",
           }}
           className="dark:bg-glass-dark"
         >
@@ -490,10 +462,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
               >
                 New Session
               </h2>
-              <p
-                className="text-xs mt-0.5"
-                style={{ color: "var(--color-text-muted)" }}
-              >
+              <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
                 {atLimit
                   ? "Maximum 6 sessions active — stop one to continue"
                   : "Launch a Claude Code session in a project"}
@@ -548,9 +517,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                 <input
                   type="text"
                   value={projectSearch}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setProjectSearch(e.target.value)
-                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setProjectSearch(e.target.value)}
                   placeholder="Search projects..."
                   className="flex-1 bg-transparent outline-none text-sm"
                   style={{
@@ -582,9 +549,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   >
                     <FolderOpen size={28} aria-hidden="true" />
                     <p className="text-sm">
-                      {projectSearch
-                        ? "No matching projects"
-                        : "No projects yet — browse a folder"}
+                      {projectSearch ? "No matching projects" : "No projects yet — browse a folder"}
                     </p>
                   </div>
                 )}
@@ -592,9 +557,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                 {!projectsLoading &&
                   filteredProjects.map((p) => {
                     // Check if this project has a resumable session
-                    const resumable = resumableSessions.find(
-                      (r) => r.projectSlug === p.slug,
-                    );
+                    const resumable = resumableSessions.find((r) => r.projectSlug === p.slug);
                     return (
                       <div key={p.slug}>
                         <button
@@ -606,8 +569,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                               "var(--color-bg-hover)";
                           }}
                           onMouseLeave={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.background =
-                              "transparent";
+                            (e.currentTarget as HTMLButtonElement).style.background = "transparent";
                           }}
                         >
                           <div className="flex items-center gap-2">
@@ -651,8 +613,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                               }
                             }}
                             onMouseLeave={(e) => {
-                              (e.currentTarget as HTMLButtonElement).style.background =
-                                "#4285F408";
+                              (e.currentTarget as HTMLButtonElement).style.background = "#4285F408";
                             }}
                             aria-label={`Resume last session for ${p.name}`}
                           >
@@ -664,9 +625,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                               aria-hidden="true"
                             />
                             <span className="text-xs font-semibold" style={{ color: "#4285F4" }}>
-                              {resumingId === resumable.id
-                                ? "Resuming..."
-                                : "Resume last session"}
+                              {resumingId === resumable.id ? "Resuming..." : "Resume last session"}
                             </span>
                             <span className="text-xs ml-auto" style={{ color: "#4285F480" }}>
                               {new Date(resumable.endedAt).toLocaleDateString(undefined, {
@@ -719,9 +678,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                     <input
                       type="url"
                       value={githubUrl}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                        setGithubUrl(e.target.value)
-                      }
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setGithubUrl(e.target.value)}
                       placeholder="https://github.com/owner/repo"
                       className="flex-1 px-2.5 py-1.5 rounded-md text-sm outline-none"
                       style={{
@@ -777,9 +734,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   id="project-name-input"
                   type="text"
                   value={projectName}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setProjectName(e.target.value)
-                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setProjectName(e.target.value)}
                   placeholder="my-project"
                   className="w-full px-3 py-2 rounded-lg text-sm outline-none"
                   style={{
@@ -804,9 +759,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                 <select
                   id="model-select"
                   value={model}
-                  onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                    setModel(e.target.value)
-                  }
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) => setModel(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
                   style={{
                     background: "var(--color-bg-elevated)",
@@ -832,51 +785,46 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   PERMISSION MODE
                 </p>
                 <div className="flex flex-col gap-2">
-                  {(
-                    Object.entries(PERMISSION_DESCRIPTIONS) as [
-                      PermissionMode,
-                      string,
-                    ][]
-                  ).map(([mode, desc]) => (
-                    <label
-                      key={mode}
-                      className="flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors"
-                      style={{
-                        background:
-                          permissionMode === mode
-                            ? "#4285F408"
-                            : "var(--color-bg-elevated)",
-                        border:
-                          permissionMode === mode
-                            ? "1px solid #4285F440"
-                            : "1px solid var(--color-border)",
-                      }}
-                    >
-                      <input
-                        type="radio"
-                        name="permission-mode"
-                        value={mode}
-                        checked={permissionMode === mode}
-                        onChange={() => setPermissionMode(mode)}
-                        className="mt-0.5 cursor-pointer"
-                        style={{ accentColor: "#4285F4" }}
-                      />
-                      <div>
-                        <p
-                          className="text-sm font-semibold capitalize"
-                          style={{ color: "var(--color-text-primary)" }}
-                        >
-                          {mode}
-                        </p>
-                        <p
-                          className="text-xs mt-0.5"
-                          style={{ color: "var(--color-text-muted)" }}
-                        >
-                          {desc}
-                        </p>
-                      </div>
-                    </label>
-                  ))}
+                  {(Object.entries(PERMISSION_DESCRIPTIONS) as [PermissionMode, string][]).map(
+                    ([mode, desc]) => (
+                      <label
+                        key={mode}
+                        className="flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors"
+                        style={{
+                          background:
+                            permissionMode === mode ? "#4285F408" : "var(--color-bg-elevated)",
+                          border:
+                            permissionMode === mode
+                              ? "1px solid #4285F440"
+                              : "1px solid var(--color-border)",
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name="permission-mode"
+                          value={mode}
+                          checked={permissionMode === mode}
+                          onChange={() => setPermissionMode(mode)}
+                          className="mt-0.5 cursor-pointer"
+                          style={{ accentColor: "#4285F4" }}
+                        />
+                        <div>
+                          <p
+                            className="text-sm font-semibold capitalize"
+                            style={{ color: "var(--color-text-primary)" }}
+                          >
+                            {mode}
+                          </p>
+                          <p
+                            className="text-xs mt-0.5"
+                            style={{ color: "var(--color-text-muted)" }}
+                          >
+                            {desc}
+                          </p>
+                        </div>
+                      </label>
+                    ),
+                  )}
                 </div>
               </div>
 
@@ -888,10 +836,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                     style={{ color: "var(--color-text-secondary)" }}
                   >
                     TEMPLATE
-                    <span
-                      className="ml-1 font-normal"
-                      style={{ color: "var(--color-text-muted)" }}
-                    >
+                    <span className="ml-1 font-normal" style={{ color: "var(--color-text-muted)" }}>
                       (optional)
                     </span>
                   </p>
@@ -905,15 +850,11 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                           onClick={() => handleSelectTemplate(tpl)}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
                           style={{
-                            background: isSelected
-                              ? "#4285F415"
-                              : "var(--color-bg-elevated)",
+                            background: isSelected ? "#4285F415" : "var(--color-bg-elevated)",
                             border: isSelected
                               ? "1px solid #4285F440"
                               : "1px solid var(--color-border)",
-                            color: isSelected
-                              ? "#4285F4"
-                              : "var(--color-text-secondary)",
+                            color: isSelected ? "#4285F4" : "var(--color-text-secondary)",
                           }}
                           aria-pressed={isSelected}
                         >
@@ -952,10 +893,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   htmlFor="initial-prompt"
                 >
                   INITIAL PROMPT{" "}
-                  <span
-                    className="font-normal"
-                    style={{ color: "var(--color-text-muted)" }}
-                  >
+                  <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>
                     (optional)
                   </span>
                 </label>
@@ -979,7 +917,10 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
 
               {/* Idle Timeout */}
               <div className="flex flex-col gap-1.5">
-                <p className="text-xs font-semibold tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+                <p
+                  className="text-xs font-semibold tracking-wider"
+                  style={{ color: "var(--color-text-muted)" }}
+                >
                   IDLE TIMEOUT
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -995,7 +936,10 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                       onClick={() => setIdleTimeout(opt.value)}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
                       style={{
-                        background: idleTimeout === opt.value ? "var(--color-google-blue)" : "var(--color-bg-elevated)",
+                        background:
+                          idleTimeout === opt.value
+                            ? "var(--color-google-blue)"
+                            : "var(--color-bg-elevated)",
                         color: idleTimeout === opt.value ? "#fff" : "var(--color-text-secondary)",
                         border: `1px solid ${idleTimeout === opt.value ? "var(--color-google-blue)" : "var(--color-border)"}`,
                       }}
@@ -1017,9 +961,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                 <input
                   type="checkbox"
                   checked={resume}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setResume(e.target.checked)
-                  }
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setResume(e.target.checked)}
                   className="cursor-pointer"
                   style={{ accentColor: "#4285F4" }}
                 />
@@ -1030,10 +972,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   >
                     Resume previous session
                   </p>
-                  <p
-                    className="text-xs mt-0.5"
-                    style={{ color: "var(--color-text-muted)" }}
-                  >
+                  <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
                     Continue from last conversation in this project
                   </p>
                 </div>
@@ -1114,8 +1053,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                       className="text-xs font-mono"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
-                      {MODEL_OPTIONS.find((m) => m.value === model)?.label ??
-                        model}
+                      {MODEL_OPTIONS.find((m) => m.value === model)?.label ?? model}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1140,10 +1078,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                       >
                         Resume
                       </span>
-                      <span
-                        className="text-xs"
-                        style={{ color: "#34A853" }}
-                      >
+                      <span className="text-xs" style={{ color: "#34A853" }}>
                         Yes
                       </span>
                     </div>
@@ -1156,10 +1091,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                       >
                         Prompt
                       </span>
-                      <span
-                        className="text-xs"
-                        style={{ color: "var(--color-text-secondary)" }}
-                      >
+                      <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
                         {initialPrompt.length > 120
                           ? `${initialPrompt.slice(0, 120)}…`
                           : initialPrompt}
@@ -1192,11 +1124,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                 >
                   {launching ? (
                     <>
-                      <CircleNotch
-                        size={15}
-                        className="animate-spin"
-                        aria-hidden="true"
-                      />
+                      <CircleNotch size={15} className="animate-spin" aria-hidden="true" />
                       Starting…
                     </>
                   ) : (
@@ -1232,8 +1160,5 @@ export function NewSessionModal({ open, onClose }: NewSessionModalProps) {
 
   if (!mounted || !shouldRender) return null;
 
-  return createPortal(
-    <NewSessionModalInner onClose={onClose} />,
-    document.body,
-  );
+  return createPortal(<NewSessionModalInner onClose={onClose} />, document.body);
 }

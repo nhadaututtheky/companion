@@ -12,7 +12,6 @@ import type { WsBridge } from "../services/ws-bridge.js";
 import type { BotConfig } from "./bot-factory.js";
 import { escapeHTML } from "./formatter.js";
 
-
 const log = createLogger("bot-registry");
 
 interface BotEntry {
@@ -54,14 +53,17 @@ export class BotRegistry {
       // Load notificationGroupId from DB
       try {
         const db = getDb();
-        const row = db.select({ notificationGroupId: telegramBots.notificationGroupId })
+        const row = db
+          .select({ notificationGroupId: telegramBots.notificationGroupId })
           .from(telegramBots)
           .where(eq(telegramBots.id, config.botId))
           .get();
         if (row?.notificationGroupId) {
           entry.notificationGroupId = row.notificationGroupId;
         }
-      } catch { /* ignore — env-only bots won't have DB rows */ }
+      } catch {
+        /* ignore — env-only bots won't have DB rows */
+      }
 
       log.info("Bot started", { botId: config.botId, label: config.label, role: config.role });
       return true;
@@ -261,9 +263,7 @@ export class BotRegistry {
     const model = escapeHTML(event.model ?? "–");
     const cost = event.costUsd != null ? `$${event.costUsd.toFixed(4)}` : "–";
     const turns = event.turns ?? 0;
-    const duration = event.durationMs
-      ? `${Math.round(event.durationMs / 1000)}s`
-      : "–";
+    const duration = event.durationMs ? `${Math.round(event.durationMs / 1000)}s` : "–";
 
     switch (event.type) {
       case "session_complete":
@@ -368,14 +368,17 @@ export class BotRegistry {
     notificationGroupId: number | null;
   }> {
     const db = getDb();
-    return db.select({
-      id: telegramBots.id,
-      label: telegramBots.label,
-      role: telegramBots.role,
-      enabled: telegramBots.enabled,
-      allowedChatIds: telegramBots.allowedChatIds,
-      allowedUserIds: telegramBots.allowedUserIds,
-      notificationGroupId: telegramBots.notificationGroupId,
-    }).from(telegramBots).all();
+    return db
+      .select({
+        id: telegramBots.id,
+        label: telegramBots.label,
+        role: telegramBots.role,
+        enabled: telegramBots.enabled,
+        allowedChatIds: telegramBots.allowedChatIds,
+        allowedUserIds: telegramBots.allowedUserIds,
+        notificationGroupId: telegramBots.notificationGroupId,
+      })
+      .from(telegramBots)
+      .all();
   }
 }

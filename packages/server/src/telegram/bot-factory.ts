@@ -30,10 +30,12 @@ export function createBot(config: BotConfig): Bot {
   bot.api.config.use(apiThrottler());
 
   // Auto-retry on 429 and network errors
-  bot.api.config.use(autoRetry({
-    maxRetryAttempts: 3,
-    maxDelaySeconds: 10,
-  }));
+  bot.api.config.use(
+    autoRetry({
+      maxRetryAttempts: 3,
+      maxDelaySeconds: 10,
+    }),
+  );
 
   // ── Auth middleware: restrict to allowed chats + users ────────────────
 

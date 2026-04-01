@@ -117,7 +117,11 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
 
       ws.onmessage = (event) => {
         try {
-          const msg = JSON.parse(event.data as string) as { type: string; data?: string; code?: number };
+          const msg = JSON.parse(event.data as string) as {
+            type: string;
+            data?: string;
+            code?: number;
+          };
           if (msg.type === "output" && msg.data) {
             term.write(msg.data);
           } else if (msg.type === "exit") {
@@ -165,7 +169,7 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
       setConnecting(false);
       toast.error("Failed to spawn terminal");
     }
-  }, [defaultCwd, connecting]);  
+  }, [defaultCwd, connecting]);
 
   useEffect(() => {
     spawnTerminal();
@@ -272,11 +276,7 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
       </div>
 
       {/* xterm.js mount point */}
-      <div
-        ref={termRef}
-        className="flex-1 overflow-hidden"
-        style={{ padding: "4px 8px" }}
-      />
+      <div ref={termRef} className="flex-1 overflow-hidden" style={{ padding: "4px 8px" }} />
     </div>
   );
 }

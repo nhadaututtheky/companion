@@ -71,10 +71,7 @@ export default function LoginPage() {
         {/* Logo + title */}
         <div className="flex flex-col items-center gap-2 text-center">
           <CompanionLogo size="lg" />
-          <p
-            className="text-sm leading-relaxed"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
+          <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
             Enter your API key to access the dashboard
           </p>
         </div>
@@ -167,10 +164,7 @@ export default function LoginPage() {
         </form>
 
         {/* Footer hint */}
-        <p
-          className="text-center text-xs"
-          style={{ color: "var(--color-text-muted)" }}
-        >
+        <p className="text-center text-xs" style={{ color: "var(--color-text-muted)" }}>
           The API key is set in your Companion server config.
         </p>
       </div>

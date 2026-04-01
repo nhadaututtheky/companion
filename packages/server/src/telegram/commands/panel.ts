@@ -65,11 +65,19 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     const messageId = ctx.callbackQuery.message?.message_id;
     if (chatId && messageId) {
       // Find mapping to get project info
-      const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+      const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+        ?.message_thread_id;
       const mapping = bridge.getMapping(chatId, topicId);
       if (mapping) {
         const project = getProject(mapping.projectSlug);
-        await bridge.sendSettingsPanel(chatId, topicId, sessionId, project?.name ?? mapping.projectSlug, model, messageId);
+        await bridge.sendSettingsPanel(
+          chatId,
+          topicId,
+          sessionId,
+          project?.name ?? mapping.projectSlug,
+          model,
+          messageId,
+        );
       }
     }
   });
@@ -84,7 +92,8 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     const messageId = ctx.callbackQuery.message?.message_id;
     if (!chatId || !messageId) return;
 
-    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+      ?.message_thread_id;
     const mapping = bridge.getMapping(chatId, topicId);
     if (!mapping) {
       await ctx.editMessageText("No active session.").catch(() => {});
@@ -94,7 +103,14 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     const session = bridge.wsBridge.getSession(sessionId);
     const model = session?.state.model ?? mapping.model;
     const project = getProject(mapping.projectSlug);
-    await bridge.sendSettingsPanel(chatId, topicId, sessionId, project?.name ?? mapping.projectSlug, model, messageId);
+    await bridge.sendSettingsPanel(
+      chatId,
+      topicId,
+      sessionId,
+      project?.name ?? mapping.projectSlug,
+      model,
+      messageId,
+    );
   });
 
   // ── Auto-approve presets ────────────────────────────────────────────────
@@ -118,11 +134,14 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
       session.autoApproveConfig = { enabled: true, timeoutSeconds: 0, allowBash: true };
       // Approve all pending permissions immediately
       for (const [reqId] of session.pendingPermissions) {
-        bridge.wsBridge.handleBrowserMessage(sessionId, JSON.stringify({
-          type: "permission_response",
-          request_id: reqId,
-          behavior: "allow",
-        }));
+        bridge.wsBridge.handleBrowserMessage(
+          sessionId,
+          JSON.stringify({
+            type: "permission_response",
+            request_id: reqId,
+            behavior: "allow",
+          }),
+        );
       }
       label = "Full auto-approve ON";
     } else {
@@ -137,14 +156,15 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
     const messageId = ctx.callbackQuery.message?.message_id;
     if (chatId && messageId) {
-      const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+      const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+        ?.message_thread_id;
       const mapping = bridge.getMapping(chatId, topicId);
       const project = mapping ? getProject(mapping.projectSlug) : undefined;
       await bridge.sendSettingsPanel(
         chatId,
         topicId,
         sessionId,
-        project?.name ?? (mapping?.projectSlug ?? ""),
+        project?.name ?? mapping?.projectSlug ?? "",
         session.state.model,
         messageId,
       );
@@ -160,14 +180,20 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
 
     bridge.setIdleTimeout(sessionId, ms);
 
-    const label = ms <= 0 ? "Idle timeout: Never" : ms < 3_600_000 ? `Idle timeout: ${Math.round(ms / 60_000)}m` : `Idle timeout: ${Math.round(ms / 3_600_000)}h`;
+    const label =
+      ms <= 0
+        ? "Idle timeout: Never"
+        : ms < 3_600_000
+          ? `Idle timeout: ${Math.round(ms / 60_000)}m`
+          : `Idle timeout: ${Math.round(ms / 3_600_000)}h`;
     await ctx.answerCallbackQuery(label);
 
     // Refresh panel
     const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
     const messageId = ctx.callbackQuery.message?.message_id;
     if (chatId && messageId) {
-      const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+      const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+        ?.message_thread_id;
       const mapping = bridge.getMapping(chatId, topicId);
       const session = bridge.wsBridge.getSession(sessionId);
       const project = mapping ? getProject(mapping.projectSlug) : undefined;
@@ -175,8 +201,8 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
         chatId,
         topicId,
         sessionId,
-        project?.name ?? (mapping?.projectSlug ?? ""),
-        session?.state.model ?? (mapping?.model ?? ""),
+        project?.name ?? mapping?.projectSlug ?? "",
+        session?.state.model ?? mapping?.model ?? "",
         messageId,
       );
     }
@@ -200,7 +226,13 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
     const messageId = ctx.callbackQuery.message?.message_id;
     if (chatId && messageId) {
-      await ctx.api.editMessageText(chatId, messageId, "⚠️ Claude interrupted. Type a new message to continue.").catch(() => {});
+      await ctx.api
+        .editMessageText(
+          chatId,
+          messageId,
+          "⚠️ Claude interrupted. Type a new message to continue.",
+        )
+        .catch(() => {});
     }
   });
 
@@ -213,7 +245,8 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     bridge.killSession(sessionId);
 
     const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
-    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+      ?.message_thread_id;
     if (chatId) bridge.removeMapping(chatId, topicId);
 
     await ctx.editMessageText("⏹ Session stopped.").catch(() => {});
@@ -226,16 +259,25 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     const keyboard = {
       inline_keyboard: [
         [
-          { text: "✅ Confirm Stop", callback_data: `panel:stop:confirm:${sessionId}`, style: "danger" as const },
+          {
+            text: "✅ Confirm Stop",
+            callback_data: `panel:stop:confirm:${sessionId}`,
+            style: "danger" as const,
+          },
           { text: "❌ Cancel", callback_data: `panel:status:${sessionId}` },
         ],
       ],
     };
 
-    await ctx.editMessageText(
-      `Stop session <code>${escapeHTML(sessionId.slice(0, 8))}</code>?\n\nThis will end the Claude session.`,
-      { parse_mode: "HTML", reply_markup: keyboard as unknown as import("grammy").InlineKeyboard },
-    ).catch(() => {});
+    await ctx
+      .editMessageText(
+        `Stop session <code>${escapeHTML(sessionId.slice(0, 8))}</code>?\n\nThis will end the Claude session.`,
+        {
+          parse_mode: "HTML",
+          reply_markup: keyboard as unknown as import("grammy").InlineKeyboard,
+        },
+      )
+      .catch(() => {});
   });
 
   // ── /pin — Re-send and pin settings panel ─────────────────────────────
@@ -282,7 +324,8 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
     if (!chatId) return;
 
-    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+      ?.message_thread_id;
     const mapping = bridge.getMapping(chatId, topicId);
     if (!mapping) {
       await ctx.answerCallbackQuery("No active session.");
@@ -307,7 +350,10 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     const rows: Btn[][] = [];
     for (let i = 0; i < templates.length; i += 2) {
       const row: Btn[] = [
-        { text: `${templates[i]!.icon} ${templates[i]!.name}`, callback_data: `tpl:use:${templates[i]!.slug}` },
+        {
+          text: `${templates[i]!.icon} ${templates[i]!.name}`,
+          callback_data: `tpl:use:${templates[i]!.slug}`,
+        },
       ];
       if (i + 1 < templates.length) {
         row.push({
@@ -374,9 +420,14 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
       return;
     }
 
-    await ctx.editMessageText(`Resuming session <code>${escapeHTML(dead.cliSessionId.slice(0, 8))}</code>...`, {
-      parse_mode: "HTML",
-    }).catch(() => {});
+    await ctx
+      .editMessageText(
+        `Resuming session <code>${escapeHTML(dead.cliSessionId.slice(0, 8))}</code>...`,
+        {
+          parse_mode: "HTML",
+        },
+      )
+      .catch(() => {});
 
     // Resume into the ORIGINAL topicId where the session died
     await bridge.startSessionForChat(ctx, projectSlug, {
@@ -400,10 +451,12 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
       return;
     }
 
-    await ctx.editMessageText(
-      `Resuming session <code>${escapeHTML(record.cliSessionId.slice(0, 8))}</code>...`,
-      { parse_mode: "HTML" },
-    ).catch(() => {});
+    await ctx
+      .editMessageText(
+        `Resuming session <code>${escapeHTML(record.cliSessionId.slice(0, 8))}</code>...`,
+        { parse_mode: "HTML" },
+      )
+      .catch(() => {});
 
     await bridge.startSessionForChat(ctx, record.projectSlug ?? "quick", {
       resume: true,

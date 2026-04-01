@@ -125,7 +125,13 @@ statsRoutes.get("/", (c) => {
   const today = toDateStr(new Date());
 
   // Start from today or yesterday (if no sessions today yet, streak can still be valid)
-  const startCheckDate = dateSet.has(today) ? new Date() : (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d; })();
+  const startCheckDate = dateSet.has(today)
+    ? new Date()
+    : (() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        return d;
+      })();
 
   const checkDate = new Date(startCheckDate);
   checkDate.setHours(0, 0, 0, 0);
@@ -175,7 +181,10 @@ statsRoutes.get("/", (c) => {
   const projectNames = new Map<string, string>();
 
   if (knownProjectSlugs.length > 0) {
-    const projectRows = db.select({ slug: projects.slug, name: projects.name }).from(projects).all();
+    const projectRows = db
+      .select({ slug: projects.slug, name: projects.name })
+      .from(projects)
+      .all();
     for (const p of projectRows) {
       projectNames.set(p.slug, p.name);
     }

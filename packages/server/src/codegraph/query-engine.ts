@@ -56,10 +56,7 @@ export function getImpactRadius(
   const seedNodes = db
     .select({ id: codeNodes.id })
     .from(codeNodes)
-    .where(and(
-      eq(codeNodes.projectSlug, projectSlug),
-      eq(codeNodes.filePath, filePath),
-    ))
+    .where(and(eq(codeNodes.projectSlug, projectSlug), eq(codeNodes.filePath, filePath)))
     .all();
 
   if (seedNodes.length === 0) return [];
@@ -88,10 +85,9 @@ export function getImpactRadius(
         trustWeight: codeEdges.trustWeight,
       })
       .from(codeEdges)
-      .where(and(
-        eq(codeEdges.projectSlug, projectSlug),
-        inArray(codeEdges.sourceNodeId, frontierIds),
-      ))
+      .where(
+        and(eq(codeEdges.projectSlug, projectSlug), inArray(codeEdges.sourceNodeId, frontierIds)),
+      )
       .all();
 
     const nextFrontier: typeof frontier = [];
@@ -154,20 +150,14 @@ export function getImpactRadius(
 /**
  * Follow INCOMING edges to find "who depends on this file".
  */
-export function getReverseDependencies(
-  projectSlug: string,
-  filePath: string,
-): ImpactNode[] {
+export function getReverseDependencies(projectSlug: string, filePath: string): ImpactNode[] {
   const db = getDb();
 
   // Get all nodes in the target file
   const fileNodes = db
     .select({ id: codeNodes.id })
     .from(codeNodes)
-    .where(and(
-      eq(codeNodes.projectSlug, projectSlug),
-      eq(codeNodes.filePath, filePath),
-    ))
+    .where(and(eq(codeNodes.projectSlug, projectSlug), eq(codeNodes.filePath, filePath)))
     .all();
 
   if (fileNodes.length === 0) return [];
@@ -182,10 +172,7 @@ export function getReverseDependencies(
       trustWeight: codeEdges.trustWeight,
     })
     .from(codeEdges)
-    .where(and(
-      eq(codeEdges.projectSlug, projectSlug),
-      inArray(codeEdges.targetNodeId, targetIds),
-    ))
+    .where(and(eq(codeEdges.projectSlug, projectSlug), inArray(codeEdges.targetNodeId, targetIds)))
     .all();
 
   if (edges.length === 0) return [];
@@ -253,10 +240,12 @@ export function getRelatedNodes(
     const results = db
       .select()
       .from(codeNodes)
-      .where(and(
-        eq(codeNodes.projectSlug, projectSlug),
-        sql`(lower(${codeNodes.symbolName}) LIKE lower(${"%" + kw + "%"}) OR lower(${codeNodes.description}) LIKE lower(${"%" + kw + "%"}))`,
-      ))
+      .where(
+        and(
+          eq(codeNodes.projectSlug, projectSlug),
+          sql`(lower(${codeNodes.symbolName}) LIKE lower(${"%" + kw + "%"}) OR lower(${codeNodes.description}) LIKE lower(${"%" + kw + "%"}))`,
+        ),
+      )
       .limit(10)
       .all();
 
@@ -301,13 +290,18 @@ export function getRelatedNodes(
       ...inEdges.map((e) => e.sourceNodeId),
     ];
 
-    const edgeNodes = edgeNodeIds.length > 0
-      ? db
-          .select({ id: codeNodes.id, symbolName: codeNodes.symbolName, filePath: codeNodes.filePath })
-          .from(codeNodes)
-          .where(inArray(codeNodes.id, edgeNodeIds))
-          .all()
-      : [];
+    const edgeNodes =
+      edgeNodeIds.length > 0
+        ? db
+            .select({
+              id: codeNodes.id,
+              symbolName: codeNodes.symbolName,
+              filePath: codeNodes.filePath,
+            })
+            .from(codeNodes)
+            .where(inArray(codeNodes.id, edgeNodeIds))
+            .all()
+        : [];
 
     const nodeMap = new Map(edgeNodes.map((n) => [n.id, n]));
 
@@ -322,13 +316,17 @@ export function getRelatedNodes(
       outgoing: outEdges
         .map((e) => {
           const t = nodeMap.get(e.targetNodeId);
-          return t ? { symbolName: t.symbolName, filePath: t.filePath, edgeType: e.edgeType } : null;
+          return t
+            ? { symbolName: t.symbolName, filePath: t.filePath, edgeType: e.edgeType }
+            : null;
         })
         .filter((e): e is NonNullable<typeof e> => e !== null),
       incoming: inEdges
         .map((e) => {
           const s = nodeMap.get(e.sourceNodeId);
-          return s ? { symbolName: s.symbolName, filePath: s.filePath, edgeType: e.edgeType } : null;
+          return s
+            ? { symbolName: s.symbolName, filePath: s.filePath, edgeType: e.edgeType }
+            : null;
         })
         .filter((e): e is NonNullable<typeof e> => e !== null),
     };
@@ -400,10 +398,12 @@ export function getExportedNodesByFile(projectSlug: string, filePath: string) {
       isExported: codeNodes.isExported,
     })
     .from(codeNodes)
-    .where(and(
-      eq(codeNodes.projectSlug, projectSlug),
-      eq(codeNodes.filePath, filePath),
-      eq(codeNodes.isExported, true),
-    ))
+    .where(
+      and(
+        eq(codeNodes.projectSlug, projectSlug),
+        eq(codeNodes.filePath, filePath),
+        eq(codeNodes.isExported, true),
+      ),
+    )
     .all();
 }

@@ -11,11 +11,21 @@
 import { Hono } from "hono";
 import { createLogger } from "../logger.js";
 import type { WsBridge } from "../services/ws-bridge.js";
-import type { HookEvent, HookEventType, PreToolUseResponse, HookAckResponse } from "@companion/shared";
+import type {
+  HookEvent,
+  HookEventType,
+  PreToolUseResponse,
+  HookAckResponse,
+} from "@companion/shared";
 
 const _log = createLogger("hooks");
 
-const VALID_HOOK_TYPES = new Set<HookEventType>(["PreToolUse", "PostToolUse", "Stop", "Notification"]);
+const VALID_HOOK_TYPES = new Set<HookEventType>([
+  "PreToolUse",
+  "PostToolUse",
+  "Stop",
+  "Notification",
+]);
 
 export function hookRoutes(bridge: WsBridge): Hono {
   const app = new Hono();

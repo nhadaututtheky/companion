@@ -33,15 +33,55 @@ export interface DebateAgentModel {
 /** Popular model presets — OpenRouter model IDs (updated 2026-03) */
 export const MODEL_PRESETS: ModelPreset[] = [
   { id: "default", label: "Default (Settings)", provider: "openai-compatible" },
-  { id: "anthropic/claude-sonnet-4-6", label: "Claude Sonnet 4.6", provider: "openai-compatible", viaOpenRouter: true },
-  { id: "anthropic/claude-haiku-4-5", label: "Claude Haiku 4.5", provider: "openai-compatible", viaOpenRouter: true },
+  {
+    id: "anthropic/claude-sonnet-4-6",
+    label: "Claude Sonnet 4.6",
+    provider: "openai-compatible",
+    viaOpenRouter: true,
+  },
+  {
+    id: "anthropic/claude-haiku-4-5",
+    label: "Claude Haiku 4.5",
+    provider: "openai-compatible",
+    viaOpenRouter: true,
+  },
   { id: "openai/gpt-4o", label: "GPT-4o", provider: "openai-compatible", viaOpenRouter: true },
-  { id: "openai/gpt-4o-mini", label: "GPT-4o Mini", provider: "openai-compatible", viaOpenRouter: true },
-  { id: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash", provider: "openai-compatible", viaOpenRouter: true },
-  { id: "google/gemini-2.5-pro", label: "Gemini 2.5 Pro", provider: "openai-compatible", viaOpenRouter: true },
-  { id: "deepseek/deepseek-r1", label: "DeepSeek R1", provider: "openai-compatible", viaOpenRouter: true },
-  { id: "deepseek/deepseek-chat-v3-0324", label: "DeepSeek V3", provider: "openai-compatible", viaOpenRouter: true },
-  { id: "meta-llama/llama-4-maverick", label: "Llama 4 Maverick", provider: "openai-compatible", viaOpenRouter: true },
+  {
+    id: "openai/gpt-4o-mini",
+    label: "GPT-4o Mini",
+    provider: "openai-compatible",
+    viaOpenRouter: true,
+  },
+  {
+    id: "google/gemini-2.5-flash",
+    label: "Gemini 2.5 Flash",
+    provider: "openai-compatible",
+    viaOpenRouter: true,
+  },
+  {
+    id: "google/gemini-2.5-pro",
+    label: "Gemini 2.5 Pro",
+    provider: "openai-compatible",
+    viaOpenRouter: true,
+  },
+  {
+    id: "deepseek/deepseek-r1",
+    label: "DeepSeek R1",
+    provider: "openai-compatible",
+    viaOpenRouter: true,
+  },
+  {
+    id: "deepseek/deepseek-chat-v3-0324",
+    label: "DeepSeek V3",
+    provider: "openai-compatible",
+    viaOpenRouter: true,
+  },
+  {
+    id: "meta-llama/llama-4-maverick",
+    label: "Llama 4 Maverick",
+    provider: "openai-compatible",
+    viaOpenRouter: true,
+  },
   { id: "x-ai/grok-3", label: "Grok 3", provider: "openai-compatible", viaOpenRouter: true },
 ];
 
@@ -105,8 +145,7 @@ export const useRingStore = create<RingStore>((set) => ({
 
   setPosition: (pos) => set({ position: pos }),
 
-  addSharedMessage: (msg) =>
-    set((s) => ({ sharedMessages: [...s.sharedMessages, msg] })),
+  addSharedMessage: (msg) => set((s) => ({ sharedMessages: [...s.sharedMessages, msg] })),
 
   setMode: (mode) => set({ mode }),
 

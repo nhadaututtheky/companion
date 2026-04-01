@@ -32,8 +32,11 @@ const log = createLogger("routes:sessions");
 
 // Allowlist of valid Claude model identifiers — prevents CLI argument injection
 const ALLOWED_MODELS = [
-  "claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5",
-  "claude-sonnet-4-5-20250514", "claude-haiku-4-5-20251001",
+  "claude-opus-4-6",
+  "claude-sonnet-4-6",
+  "claude-haiku-4-5",
+  "claude-sonnet-4-5-20250514",
+  "claude-haiku-4-5-20251001",
 ] as const;
 
 const createSessionSchema = z.object({
@@ -85,7 +88,14 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     const { items, total } = listSessions({ projectSlug, status, limit, offset });
 
     // Health-check: auto-fix sessions that appear active in DB but have no in-memory session
-    const activeStatuses = new Set(["starting", "running", "waiting", "idle", "busy", "compacting"]);
+    const activeStatuses = new Set([
+      "starting",
+      "running",
+      "waiting",
+      "idle",
+      "busy",
+      "compacting",
+    ]);
     let selfHealedCount = 0;
     for (const item of items) {
       if (activeStatuses.has(item.status) && !bridge.getSession(item.id)) {
@@ -149,18 +159,34 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     const resolved = pathResolve(normalize(body.projectDir));
 
     if (!existsSync(resolved) || !statSync(resolved).isDirectory()) {
-      return c.json({ success: false, error: "projectDir does not exist or is not a directory" } satisfies ApiResponse, 400);
+      return c.json(
+        {
+          success: false,
+          error: "projectDir does not exist or is not a directory",
+        } satisfies ApiResponse,
+        400,
+      );
     }
 
     const allowedRoots = process.env.ALLOWED_BROWSE_ROOTS;
     if (allowedRoots) {
       const roots = allowedRoots.split(";").map((r: string) => pathResolve(normalize(r)));
-      const isAllowed = roots.some((root: string) =>
-        resolved === root || resolved.startsWith(root + "/") || resolved.startsWith(root + "\\"),
+      const isAllowed = roots.some(
+        (root: string) =>
+          resolved === root || resolved.startsWith(root + "/") || resolved.startsWith(root + "\\"),
       );
       if (!isAllowed) {
-        log.warn("Session creation blocked — projectDir outside allowed roots", { projectDir: resolved, allowedRoots });
-        return c.json({ success: false, error: "projectDir is outside allowed directories" } satisfies ApiResponse, 403);
+        log.warn("Session creation blocked — projectDir outside allowed roots", {
+          projectDir: resolved,
+          allowedRoots,
+        });
+        return c.json(
+          {
+            success: false,
+            error: "projectDir is outside allowed directories",
+          } satisfies ApiResponse,
+          403,
+        );
       }
     }
 
@@ -232,10 +258,16 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       }
 
       log.info("Session created via API", { sessionId, model, projectCreated });
-      return c.json({ success: true, data: { sessionId, projectCreated } } satisfies ApiResponse, 201);
+      return c.json(
+        { success: true, data: { sessionId, projectCreated } } satisfies ApiResponse,
+        201,
+      );
     } catch (err) {
       log.error("Failed to create session", { error: String(err) });
-      return c.json({ success: false, error: "Failed to create session" } satisfies ApiResponse, 500);
+      return c.json(
+        { success: false, error: "Failed to create session" } satisfies ApiResponse,
+        500,
+      );
     }
   });
 
@@ -243,7 +275,10 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     const id = c.req.param("id");
     const active = bridge.getSession(id);
     if (active) {
-      return c.json({ success: true, data: { ...active.state, isActive: true } } satisfies ApiResponse);
+      return c.json({
+        success: true,
+        data: { ...active.state, isActive: true },
+      } satisfies ApiResponse);
     }
     const record = getSessionRecord(id);
     if (!record) {
@@ -270,13 +305,9 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
 
     if (before !== undefined) {
       // Cursor-based pagination: newest-first, get messages older than `before` timestamp
-      const limit = Math.min(
-        Math.max(1, parseInt(c.req.query("limit") ?? "50", 10)),
-        200,
-      );
+      const limit = Math.min(Math.max(1, parseInt(c.req.query("limit") ?? "50", 10)), 200);
       const { items: messages, total } = getSessionMessages(id, { limit, before });
-      const hasMore = messages.length > 0 && messages[0]!.timestamp > 0
-        && total > messages.length;
+      const hasMore = messages.length > 0 && messages[0]!.timestamp > 0 && total > messages.length;
       return c.json({
         success: true,
         data: { messages, hasMore },
@@ -304,65 +335,59 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
   });
 
   // Permission response — behavior required, no default to prevent accidental allow
-  app.post(
-    "/:id/permissions/:requestId",
-    zValidator("json", permissionResponseSchema),
-    (c) => {
-      const sessionId = c.req.param("id");
-      const requestId = c.req.param("requestId");
-      const { behavior } = c.req.valid("json");
-      const session = bridge.getSession(sessionId);
-      if (!session) {
-        return c.json({ success: false, error: "Session not active" } satisfies ApiResponse, 404);
-      }
-      bridge.handleBrowserMessage(sessionId, JSON.stringify({
+  app.post("/:id/permissions/:requestId", zValidator("json", permissionResponseSchema), (c) => {
+    const sessionId = c.req.param("id");
+    const requestId = c.req.param("requestId");
+    const { behavior } = c.req.valid("json");
+    const session = bridge.getSession(sessionId);
+    if (!session) {
+      return c.json({ success: false, error: "Session not active" } satisfies ApiResponse, 404);
+    }
+    bridge.handleBrowserMessage(
+      sessionId,
+      JSON.stringify({
         type: "permission_response",
         request_id: requestId,
         behavior,
-      }));
-      log.info("Permission response", { sessionId, requestId, behavior });
-      return c.json({ success: true } satisfies ApiResponse);
-    },
-  );
+      }),
+    );
+    log.info("Permission response", { sessionId, requestId, behavior });
+    return c.json({ success: true } satisfies ApiResponse);
+  });
 
   // Session settings (idle timeout, keep-alive)
-  app.patch(
-    "/:id/settings",
-    zValidator("json", sessionSettingsSchema),
-    (c) => {
-      const sessionId = c.req.param("id");
-      const body = c.req.valid("json");
-      const session = bridge.getSession(sessionId);
-      if (!session) {
-        return c.json({ success: false, error: "Session not active" } satisfies ApiResponse, 404);
-      }
-      bridge.setSessionSettings(sessionId, body);
-      const settings = bridge.getSessionSettings(sessionId);
-      log.info("Session settings updated via API", { sessionId, settings });
-      return c.json({ success: true, data: settings } satisfies ApiResponse);
-    },
-  );
+  app.patch("/:id/settings", zValidator("json", sessionSettingsSchema), (c) => {
+    const sessionId = c.req.param("id");
+    const body = c.req.valid("json");
+    const session = bridge.getSession(sessionId);
+    if (!session) {
+      return c.json({ success: false, error: "Session not active" } satisfies ApiResponse, 404);
+    }
+    bridge.setSessionSettings(sessionId, body);
+    const settings = bridge.getSessionSettings(sessionId);
+    log.info("Session settings updated via API", { sessionId, settings });
+    return c.json({ success: true, data: settings } satisfies ApiResponse);
+  });
 
   // Rename session
   const renameSchema = z.object({ name: z.string().max(100).nullable() });
-  app.patch(
-    "/:id/rename",
-    zValidator("json", renameSchema),
-    (c) => {
-      const sessionId = c.req.param("id");
-      const record = getSessionRecord(sessionId);
-      if (!record) {
-        return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
-      }
-      const { name } = c.req.valid("json");
-      const ok = renameSession(sessionId, name);
-      if (!ok) {
-        return c.json({ success: false, error: "Failed to rename session" } satisfies ApiResponse, 500);
-      }
-      log.info("Session renamed", { sessionId, name });
-      return c.json({ success: true, data: { name } } satisfies ApiResponse);
-    },
-  );
+  app.patch("/:id/rename", zValidator("json", renameSchema), (c) => {
+    const sessionId = c.req.param("id");
+    const record = getSessionRecord(sessionId);
+    if (!record) {
+      return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
+    }
+    const { name } = c.req.valid("json");
+    const ok = renameSession(sessionId, name);
+    if (!ok) {
+      return c.json(
+        { success: false, error: "Failed to rename session" } satisfies ApiResponse,
+        500,
+      );
+    }
+    log.info("Session renamed", { sessionId, name });
+    return c.json({ success: true, data: { name } } satisfies ApiResponse);
+  });
 
   // Update session config (compact mode, budget, etc.)
   const configSchema = z.object({
@@ -370,24 +395,23 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     compactMode: z.enum(["manual", "smart", "aggressive"]).optional(),
     compactThreshold: z.number().int().min(50).max(95).optional(),
   });
-  app.patch(
-    "/:id/config",
-    zValidator("json", configSchema),
-    (c) => {
-      const sessionId = c.req.param("id");
-      const record = getSessionRecord(sessionId);
-      if (!record) {
-        return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
-      }
-      const body = c.req.valid("json");
-      const ok = updateSessionConfig(sessionId, body);
-      if (!ok) {
-        return c.json({ success: false, error: "Failed to update config" } satisfies ApiResponse, 500);
-      }
-      log.info("Session config updated", { sessionId, ...body });
-      return c.json({ success: true, data: body } satisfies ApiResponse);
-    },
-  );
+  app.patch("/:id/config", zValidator("json", configSchema), (c) => {
+    const sessionId = c.req.param("id");
+    const record = getSessionRecord(sessionId);
+    if (!record) {
+      return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
+    }
+    const body = c.req.valid("json");
+    const ok = updateSessionConfig(sessionId, body);
+    if (!ok) {
+      return c.json(
+        { success: false, error: "Failed to update config" } satisfies ApiResponse,
+        500,
+      );
+    }
+    log.info("Session config updated", { sessionId, ...body });
+    return c.json({ success: true, data: body } satisfies ApiResponse);
+  });
 
   // Get session settings
   app.get("/:id/settings", (c) => {
@@ -396,7 +420,10 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     if (!session) {
       return c.json({ success: false, error: "Session not active" } satisfies ApiResponse, 404);
     }
-    return c.json({ success: true, data: bridge.getSessionSettings(sessionId) } satisfies ApiResponse);
+    return c.json({
+      success: true,
+      data: bridge.getSessionSettings(sessionId),
+    } satisfies ApiResponse);
   });
 
   // Resume an ended session
@@ -410,7 +437,13 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       return c.json({ success: false, error: "Session is not ended" } satisfies ApiResponse, 400);
     }
     if (!record.cliSessionId) {
-      return c.json({ success: false, error: "Session has no CLI session ID — cannot resume" } satisfies ApiResponse, 400);
+      return c.json(
+        {
+          success: false,
+          error: "Session has no CLI session ID — cannot resume",
+        } satisfies ApiResponse,
+        400,
+      );
     }
 
     const activeCount = countActiveSessions();
@@ -439,7 +472,10 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       return c.json({ success: true, data: { sessionId } } satisfies ApiResponse, 201);
     } catch (err) {
       log.error("Failed to resume session", { id, error: String(err) });
-      return c.json({ success: false, error: "Failed to resume session" } satisfies ApiResponse, 500);
+      return c.json(
+        { success: false, error: "Failed to resume session" } satisfies ApiResponse,
+        500,
+      );
     }
   });
 
@@ -467,7 +503,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
 
   app.post("/:id/stream/telegram", async (c) => {
     const sessionId = c.req.param("id");
-    const body = await c.req.json().catch(() => ({})) as { chatId?: number; topicId?: number };
+    const body = (await c.req.json().catch(() => ({}))) as { chatId?: number; topicId?: number };
 
     if (!body.chatId) {
       return c.json({ success: false, error: "chatId is required" } satisfies ApiResponse, 400);
@@ -475,7 +511,10 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
 
     const tgBridge = botRegistry?.getPrimary?.();
     if (!tgBridge) {
-      return c.json({ success: false, error: "No Telegram bot running" } satisfies ApiResponse, 503);
+      return c.json(
+        { success: false, error: "No Telegram bot running" } satisfies ApiResponse,
+        503,
+      );
     }
 
     const session = bridge.getSession(sessionId);
@@ -485,10 +524,16 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
 
     const ok = tgBridge.attachStreamToSession(sessionId, body.chatId, body.topicId);
     if (!ok) {
-      return c.json({ success: false, error: "Failed to attach stream" } satisfies ApiResponse, 500);
+      return c.json(
+        { success: false, error: "Failed to attach stream" } satisfies ApiResponse,
+        500,
+      );
     }
 
-    return c.json({ success: true, data: { sessionId, chatId: body.chatId, streaming: true } } satisfies ApiResponse);
+    return c.json({
+      success: true,
+      data: { sessionId, chatId: body.chatId, streaming: true },
+    } satisfies ApiResponse);
   });
 
   // Detach stream — server does reverse lookup, no chatId needed from client
@@ -497,7 +542,10 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
 
     const tgBridge = botRegistry?.getPrimary?.();
     if (!tgBridge) {
-      return c.json({ success: false, error: "No Telegram bot running" } satisfies ApiResponse, 503);
+      return c.json(
+        { success: false, error: "No Telegram bot running" } satisfies ApiResponse,
+        503,
+      );
     }
 
     const sub = tgBridge.getStreamSubscriberForSession(sessionId);
@@ -538,21 +586,25 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     const filenameBase = `session-${session.projectSlug ?? "quick"}-${id.slice(0, 8)}`;
 
     if (format === "json") {
-      const payload = JSON.stringify({
-        session: {
-          id,
-          projectSlug: session.projectSlug ?? null,
-          model: session.model,
-          status: session.status,
-          startedAt: session.startedAt?.toISOString() ?? null,
-          endedAt: session.endedAt?.toISOString() ?? null,
-          numTurns: session.numTurns,
-          totalCostUsd: session.totalCostUsd,
-          totalInputTokens: session.totalInputTokens,
-          totalOutputTokens: session.totalOutputTokens,
+      const payload = JSON.stringify(
+        {
+          session: {
+            id,
+            projectSlug: session.projectSlug ?? null,
+            model: session.model,
+            status: session.status,
+            startedAt: session.startedAt?.toISOString() ?? null,
+            endedAt: session.endedAt?.toISOString() ?? null,
+            numTurns: session.numTurns,
+            totalCostUsd: session.totalCostUsd,
+            totalInputTokens: session.totalInputTokens,
+            totalOutputTokens: session.totalOutputTokens,
+          },
+          messages: msgs,
         },
-        messages: msgs,
-      }, null, 2);
+        null,
+        2,
+      );
 
       return new Response(payload, {
         headers: {
@@ -577,7 +629,12 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     ];
 
     for (const msg of msgs) {
-      const heading = msg.role === "user" ? "## User" : msg.role === "assistant" ? "## Assistant" : `## ${msg.role}`;
+      const heading =
+        msg.role === "user"
+          ? "## User"
+          : msg.role === "assistant"
+            ? "## Assistant"
+            : `## ${msg.role}`;
       lines.push(heading);
       lines.push(``);
       lines.push(msg.content);
@@ -600,24 +657,20 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
   const tagsSchema = z.object({
     tags: z.array(z.string().max(50)).max(20),
   });
-  app.patch(
-    "/:id/tags",
-    zValidator("json", tagsSchema),
-    (c) => {
-      const sessionId = c.req.param("id");
-      const record = getSessionRecord(sessionId);
-      if (!record) {
-        return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
-      }
-      const { tags } = c.req.valid("json");
-      const ok = updateSessionTags(sessionId, tags);
-      if (!ok) {
-        return c.json({ success: false, error: "Failed to update tags" } satisfies ApiResponse, 500);
-      }
-      log.info("Session tags updated", { sessionId, tags });
-      return c.json({ success: true, data: { tags } } satisfies ApiResponse);
-    },
-  );
+  app.patch("/:id/tags", zValidator("json", tagsSchema), (c) => {
+    const sessionId = c.req.param("id");
+    const record = getSessionRecord(sessionId);
+    if (!record) {
+      return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
+    }
+    const { tags } = c.req.valid("json");
+    const ok = updateSessionTags(sessionId, tags);
+    if (!ok) {
+      return c.json({ success: false, error: "Failed to update tags" } satisfies ApiResponse, 500);
+    }
+    log.info("Session tags updated", { sessionId, tags });
+    return c.json({ success: true, data: { tags } } satisfies ApiResponse);
+  });
 
   return app;
 }

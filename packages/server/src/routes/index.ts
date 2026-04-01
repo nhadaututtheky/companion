@@ -14,13 +14,37 @@ import { webintelRoutes } from "./webintel.js";
 import { codegraphRoutes } from "./codegraph.js";
 import { hookRoutes } from "./hooks.js";
 import { apiKeyAuth } from "../middleware/auth.js";
+import { createRateLimit } from "../middleware/rate-limit.js";
 import { getLicense } from "../services/license.js";
 import type { WsBridge } from "../services/ws-bridge.js";
 import type { BotRegistry } from "../telegram/bot-registry.js";
 import type { ApiResponse } from "@companion/shared";
 
+// General rate limit: 100 req/min per IP on all /api/* routes.
+// Excludes WebSocket upgrade requests (they don't pass through Hono middleware)
+// and the health endpoint (which has no path prefix match issue but is cheap).
+const generalRateLimit = createRateLimit({ max: 100, windowMs: 60_000 });
+
+// Strict rate limit: 10 POST /api/sessions per minute (session creation).
+const sessionCreateRateLimit = createRateLimit({
+  max: 10,
+  windowMs: 60_000,
+  method: "POST",
+});
+
 export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   const api = new Hono();
+
+  // Apply general rate limit to all /api/* routes except /api/health
+  api.use("/api/*", async (c, next) => {
+    const pathname = new URL(c.req.url).pathname;
+    // Skip health endpoint — cheap, no auth, used by uptime monitors
+    if (pathname === "/api/health") return next();
+    return generalRateLimit(c, next);
+  });
+
+  // Strict rate limit specifically for session creation
+  api.use("/api/sessions", sessionCreateRateLimit);
 
   // Public routes
   api.route("/api", healthRoutes);

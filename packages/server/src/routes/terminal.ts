@@ -16,7 +16,7 @@ terminalRoutes.post("/", async (c) => {
   if (!parsed.success) {
     return c.json(
       { success: false, error: "Invalid body: cwd is required" } satisfies ApiResponse,
-      400
+      400,
     );
   }
 
@@ -35,10 +35,7 @@ terminalRoutes.delete("/:id", (c) => {
   const id = c.req.param("id");
   const killed = terminalManager.kill(id);
   if (!killed) {
-    return c.json(
-      { success: false, error: "Terminal not found" } satisfies ApiResponse,
-      404
-    );
+    return c.json({ success: false, error: "Terminal not found" } satisfies ApiResponse, 404);
   }
   return c.json({ success: true } satisfies ApiResponse);
 });

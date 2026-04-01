@@ -7,26 +7,24 @@ import { resolveTemplateVariables } from "../services/templates.js";
 
 describe("resolveTemplateVariables", () => {
   it("replaces a single variable", () => {
-    const result = resolveTemplateVariables(
-      "Review the {{project_name}} codebase",
-      { project_name: "companion" },
-    );
+    const result = resolveTemplateVariables("Review the {{project_name}} codebase", {
+      project_name: "companion",
+    });
     expect(result).toBe("Review the companion codebase");
   });
 
   it("replaces multiple distinct variables", () => {
-    const result = resolveTemplateVariables(
-      "Fix bug in {{file}} at line {{line}}",
-      { file: "index.ts", line: "42" },
-    );
+    const result = resolveTemplateVariables("Fix bug in {{file}} at line {{line}}", {
+      file: "index.ts",
+      line: "42",
+    });
     expect(result).toBe("Fix bug in index.ts at line 42");
   });
 
   it("keeps unresolved placeholders when key is missing", () => {
-    const result = resolveTemplateVariables(
-      "Deploy {{project}} to {{env}}",
-      { project: "companion" },
-    );
+    const result = resolveTemplateVariables("Deploy {{project}} to {{env}}", {
+      project: "companion",
+    });
     expect(result).toBe("Deploy companion to {{env}}");
   });
 
@@ -46,10 +44,9 @@ describe("resolveTemplateVariables", () => {
   });
 
   it("replaces multiple occurrences of the same variable", () => {
-    const result = resolveTemplateVariables(
-      "{{name}} is great. I love {{name}}.",
-      { name: "Companion" },
-    );
+    const result = resolveTemplateVariables("{{name}} is great. I love {{name}}.", {
+      name: "Companion",
+    });
     expect(result).toBe("Companion is great. I love Companion.");
   });
 

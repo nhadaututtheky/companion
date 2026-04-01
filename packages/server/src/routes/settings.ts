@@ -40,7 +40,11 @@ settingsRoutes.get("/", (c) => {
   const db = getDb();
 
   const rows = prefix
-    ? db.select().from(settings).where(like(settings.key, `${prefix}%`)).all()
+    ? db
+        .select()
+        .from(settings)
+        .where(like(settings.key, `${prefix}%`))
+        .all()
     : db.select().from(settings).all();
 
   const data: Record<string, string> = {};
@@ -61,7 +65,10 @@ settingsRoutes.get("/:key", (c) => {
     return c.json({ success: false, error: "Setting not found" } satisfies ApiResponse, 404);
   }
 
-  return c.json({ success: true, data: { key: row.key, value: maskValue(row.key, row.value) } } satisfies ApiResponse);
+  return c.json({
+    success: true,
+    data: { key: row.key, value: maskValue(row.key, row.value) },
+  } satisfies ApiResponse);
 });
 
 // Upsert setting
@@ -73,10 +80,7 @@ settingsRoutes.put("/:key", zValidator("json", upsertSchema), (c) => {
   const existing = db.select().from(settings).where(eq(settings.key, key)).get();
 
   if (existing) {
-    db.update(settings)
-      .set({ value, updatedAt: new Date() })
-      .where(eq(settings.key, key))
-      .run();
+    db.update(settings).set({ value, updatedAt: new Date() }).where(eq(settings.key, key)).run();
   } else {
     db.insert(settings).values({ key, value, updatedAt: new Date() }).run();
   }

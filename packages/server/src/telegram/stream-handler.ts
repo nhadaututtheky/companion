@@ -48,18 +48,22 @@ export class StreamHandler {
 
     if (!p) {
       // First chunk — start typing indicator
-      this.api.sendChatAction(chatId, "typing", {
-        message_thread_id: topicId,
-      }).catch(() => {});
+      this.api
+        .sendChatAction(chatId, "typing", {
+          message_thread_id: topicId,
+        })
+        .catch(() => {});
 
       p = {
         chatId,
         topicId,
         rawText: text,
         typingTimer: setInterval(() => {
-          this.api.sendChatAction(chatId, "typing", {
-            message_thread_id: topicId,
-          }).catch(() => {});
+          this.api
+            .sendChatAction(chatId, "typing", {
+              message_thread_id: topicId,
+            })
+            .catch(() => {});
         }, TYPING_REFRESH_MS),
       };
 

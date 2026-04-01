@@ -1,6 +1,20 @@
 "use client";
 import { useMemo } from "react";
-import { MagnifyingGlass, Moon, Sun, Gear, Terminal, ListBullets, FolderOpen, Globe, TerminalWindow, List, ChartBar, CloudArrowDown, Graph } from "@phosphor-icons/react";
+import {
+  MagnifyingGlass,
+  Moon,
+  Sun,
+  Gear,
+  Terminal,
+  ListBullets,
+  FolderOpen,
+  Globe,
+  TerminalWindow,
+  List,
+  ChartBar,
+  CloudArrowDown,
+  Graph,
+} from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { CompanionLogo } from "./companion-logo";
@@ -187,8 +201,10 @@ export function Header({ onMenuToggle }: HeaderProps) {
           onClick={() => setRightPanelMode(rightPanelMode === "terminal" ? "none" : "terminal")}
           className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
           style={{
-            color: rightPanelMode === "terminal" ? "var(--color-accent)" : "var(--color-text-muted)",
-            background: rightPanelMode === "terminal" ? "var(--color-accent)" + "15" : "transparent",
+            color:
+              rightPanelMode === "terminal" ? "var(--color-accent)" : "var(--color-text-muted)",
+            background:
+              rightPanelMode === "terminal" ? "var(--color-accent)" + "15" : "transparent",
           }}
           aria-label="Terminal"
           title="Terminal"

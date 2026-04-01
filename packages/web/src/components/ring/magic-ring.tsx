@@ -27,12 +27,7 @@ function SiriOrb({ sessionIds, size }: { sessionIds: string[]; size: number }) {
   const r = size / 2 - 2;
 
   return (
-    <svg
-      width={size}
-      height={size}
-      style={{ position: "absolute", inset: 0 }}
-      aria-hidden="true"
-    >
+    <svg width={size} height={size} style={{ position: "absolute", inset: 0 }} aria-hidden="true">
       <defs>
         {/* Animated gradient for the orb glow */}
         <radialGradient id="orb-base" cx="40%" cy="35%" r="60%">
@@ -78,22 +73,10 @@ function SiriOrb({ sessionIds, size }: { sessionIds: string[]; size: number }) {
       })}
 
       {/* Inner fill — dark translucent */}
-      <circle
-        cx={cx}
-        cy={cy}
-        r={r - 4}
-        fill="rgba(15,15,15,0.85)"
-        stroke="none"
-      />
+      <circle cx={cx} cy={cy} r={r - 4} fill="rgba(15,15,15,0.85)" stroke="none" />
 
       {/* Inner highlight */}
-      <circle
-        cx={cx}
-        cy={cy}
-        r={r - 4}
-        fill="url(#orb-base)"
-        stroke="none"
-      />
+      <circle cx={cx} cy={cy} r={r - 4} fill="url(#orb-base)" stroke="none" />
 
       {/* Center dot — shows linked count or sparkle */}
       {hasLinked && (
@@ -181,8 +164,14 @@ export function MagicRing() {
       }
       if (!isDraggingRef.current) return;
 
-      const newX = Math.max(0, Math.min(window.innerWidth - RING_SIZE, e.clientX - dragOffsetRef.current.x));
-      const newY = Math.max(0, Math.min(window.innerHeight - RING_SIZE, e.clientY - dragOffsetRef.current.y));
+      const newX = Math.max(
+        0,
+        Math.min(window.innerWidth - RING_SIZE, e.clientX - dragOffsetRef.current.x),
+      );
+      const newY = Math.max(
+        0,
+        Math.min(window.innerHeight - RING_SIZE, e.clientY - dragOffsetRef.current.y),
+      );
       setPos({ x: newX, y: newY });
     },
     [dragging],
@@ -202,7 +191,7 @@ export function MagicRing() {
       setPosition(pos);
     }
     isDraggingRef.current = false;
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- dragging is included to re-evaluate after drag ends
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- dragging is included to re-evaluate after drag ends
   }, [dragging, hasLinked, isExpanded, isSelecting, pos, setExpanded, setSelecting, setPosition]);
 
   const ringCenterX = pos.x + RING_SIZE / 2;
@@ -243,13 +232,9 @@ export function MagicRing() {
         <SiriOrb sessionIds={linkedSessionIds} size={RING_SIZE} />
       </button>
 
-      {isSelecting && (
-        <RingSelector anchorX={ringCenterX} anchorY={ringCenterY} />
-      )}
+      {isSelecting && <RingSelector anchorX={ringCenterX} anchorY={ringCenterY} />}
 
-      {isExpanded && hasLinked && (
-        <RingWindow anchorX={ringCenterX} anchorY={ringCenterY} />
-      )}
+      {isExpanded && hasLinked && <RingWindow anchorX={ringCenterX} anchorY={ringCenterY} />}
     </>
   );
 }

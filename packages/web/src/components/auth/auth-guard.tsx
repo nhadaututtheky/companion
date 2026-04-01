@@ -31,7 +31,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    setChecked(true);  
+    setChecked(true);
   }, [pathname, router]);
 
   // Prevent flash of content before redirect

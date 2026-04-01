@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { SessionHeader } from "./session-header";
 import { CompactMessageFeed } from "./compact-message";
 
-
 interface ChannelInfo {
   id: string;
   topic: string;
@@ -67,10 +66,7 @@ function CompactPermissionGate({
         <XCircle size={10} weight="bold" /> Deny
       </button>
       {permissions.length > 1 && (
-        <span
-          className="text-xs flex-shrink-0"
-          style={{ color: "var(--color-text-muted)" }}
-        >
+        <span className="text-xs flex-shrink-0" style={{ color: "var(--color-text-muted)" }}>
           +{permissions.length - 1}
         </span>
       )}
@@ -252,9 +248,7 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
       className="flex flex-col overflow-hidden rounded-xl"
       style={{
         background: "var(--color-bg-card)",
-        border: hasSharedContext
-          ? `2px dashed ${sessionColor}`
-          : "1px solid var(--color-border)",
+        border: hasSharedContext ? `2px dashed ${sessionColor}` : "1px solid var(--color-border)",
         boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 0 0 1px rgba(0,0,0,0.02)",
         height: "100%",
         minHeight: 0,
@@ -300,10 +294,7 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
       <CompactMessageFeed messages={messages} feedRef={feedRef} />
 
       {/* Permission gate */}
-      <CompactPermissionGate
-        permissions={pendingPermissions}
-        onRespond={respondPermission}
-      />
+      <CompactPermissionGate permissions={pendingPermissions} onRespond={respondPermission} />
 
       {/* Composer */}
       <CompactComposer onSend={sendMessage} isRunning={isRunning} />

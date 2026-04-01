@@ -161,7 +161,11 @@ CREATE TABLE IF NOT EXISTS session_summaries (
  * Returns the drizzle instance — close the underlying sqlite via the
  * exported closeTestDb() helper.
  */
-export function createTestDb(): { db: TestDb; sqlite: Database; insertProject: (slug: string, name?: string) => void } {
+export function createTestDb(): {
+  db: TestDb;
+  sqlite: Database;
+  insertProject: (slug: string, name?: string) => void;
+} {
   const sqlite = new Database(":memory:");
   sqlite.run("PRAGMA journal_mode = WAL");
   sqlite.run("PRAGMA foreign_keys = ON");

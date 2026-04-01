@@ -5,7 +5,11 @@ test.describe("Session Flow", () => {
     await page.goto("/");
 
     // Click new session button (usually "+" or "New Session")
-    const newBtn = page.locator('button:has-text("New"), button[aria-label*="new" i], button[aria-label*="session" i]').first();
+    const newBtn = page
+      .locator(
+        'button:has-text("New"), button[aria-label*="new" i], button[aria-label*="session" i]',
+      )
+      .first();
     if (await newBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await newBtn.click();
 

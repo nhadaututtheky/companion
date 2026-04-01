@@ -52,7 +52,10 @@ function SessionManagementBar() {
   const removeSession = useSessionStore((s) => s.removeSession);
 
   const endedIds = useMemo(
-    () => Object.values(sessions).filter((s) => ["ended", "error"].includes(s.status)).map((s) => s.id),
+    () =>
+      Object.values(sessions)
+        .filter((s) => ["ended", "error"].includes(s.status))
+        .map((s) => s.id),
     [sessions],
   );
   const activeIds = useMemo(
@@ -98,9 +101,7 @@ function SessionManagementBar() {
   if (endedIds.length === 0 && activeIds.length === 0) return null;
 
   return (
-    <div
-      className="flex items-center gap-1.5 px-4 py-2"
-    >
+    <div className="flex items-center gap-1.5 px-4 py-2">
       {endedIds.length > 0 && (
         <button
           onClick={handleClearEnded}
@@ -180,7 +181,15 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
     model.includes("opus") ? "Opus" : model.includes("haiku") ? "Haiku" : "Sonnet";
 
   const SourceIcon = ({ source }: { source: string }) => {
-    if (source === "telegram") return <TelegramLogo size={12} weight="fill" style={{ color: "#29B6F6" }} aria-label="From Telegram" />;
+    if (source === "telegram")
+      return (
+        <TelegramLogo
+          size={12}
+          weight="fill"
+          style={{ color: "#29B6F6" }}
+          aria-label="From Telegram"
+        />
+      );
     return <Globe size={12} style={{ color: "var(--color-text-muted)" }} aria-label="From Web" />;
   };
 
@@ -222,10 +231,7 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
 
       {/* Expanded session list */}
       {expanded && (
-        <div
-          className="flex flex-col"
-          style={{ borderTop: "1px solid #4285F420" }}
-        >
+        <div className="flex flex-col" style={{ borderTop: "1px solid #4285F420" }}>
           {sessions.map((s) => (
             <div
               key={s.id}
@@ -308,19 +314,27 @@ export default function DashboardPage() {
   // Request browser notification permission on first load
   useNotificationPermission();
 
-  const { sessions, activeSessionId, setActiveSession, gridOrder, addToGrid, expandedSessionId, setExpandedSession, closedIds } =
-    useSessionStore(
-      useShallow((s) => ({
-        sessions: s.sessions,
-        activeSessionId: s.activeSessionId,
-        setActiveSession: s.setActiveSession,
-        gridOrder: s.gridOrder,
-        addToGrid: s.addToGrid,
-        expandedSessionId: s.expandedSessionId,
-        setExpandedSession: s.setExpandedSession,
-        closedIds: s.closedIds,
-      })),
-    );
+  const {
+    sessions,
+    activeSessionId,
+    setActiveSession,
+    gridOrder,
+    addToGrid,
+    expandedSessionId,
+    setExpandedSession,
+    closedIds,
+  } = useSessionStore(
+    useShallow((s) => ({
+      sessions: s.sessions,
+      activeSessionId: s.activeSessionId,
+      setActiveSession: s.setActiveSession,
+      gridOrder: s.gridOrder,
+      addToGrid: s.addToGrid,
+      expandedSessionId: s.expandedSessionId,
+      setExpandedSession: s.setExpandedSession,
+      closedIds: s.closedIds,
+    })),
+  );
 
   const sessionList = useMemo(
     () =>
@@ -340,17 +354,12 @@ export default function DashboardPage() {
 
   // Ordered active sessions for grid (up to 6)
   const gridSessions = useMemo(() => {
-    const active = Object.values(sessions).filter((s) =>
-      ACTIVE_STATUSES.includes(s.status),
-    );
+    const active = Object.values(sessions).filter((s) => ACTIVE_STATUSES.includes(s.status));
 
     // Use gridOrder for ordering, fallback to insertion order
     const ordered = gridOrder
       .map((id) => sessions[id])
-      .filter(
-        (s): s is NonNullable<typeof s> =>
-          !!s && ACTIVE_STATUSES.includes(s.status),
-      );
+      .filter((s): s is NonNullable<typeof s> => !!s && ACTIVE_STATUSES.includes(s.status));
 
     // Add any active sessions not yet in gridOrder (unless user closed them)
     for (const s of active) {
@@ -529,30 +538,24 @@ export default function DashboardPage() {
     setNewSessionOpen(false);
   }, [setNewSessionOpen]);
 
-  const handleExpand = useCallback((id: string) => {
-    setExpandedSession(id);
-  }, [setExpandedSession]);
+  const handleExpand = useCallback(
+    (id: string) => {
+      setExpandedSession(id);
+    },
+    [setExpandedSession],
+  );
 
   const handleCloseExpanded = useCallback(() => {
     setExpandedSession(null);
   }, [setExpandedSession]);
 
   return (
-    <div
-      className="flex flex-col"
-      style={{ height: "100vh", background: "var(--color-bg-base)" }}
-    >
+    <div className="flex flex-col" style={{ height: "100vh", background: "var(--color-bg-base)" }}>
       {/* Expanded session overlay (Phase 3) */}
-      <ExpandedSession
-        sessionId={expandedSessionId}
-        onClose={handleCloseExpanded}
-      />
+      <ExpandedSession sessionId={expandedSessionId} onClose={handleCloseExpanded} />
 
       {/* New Session modal (Phase 4) */}
-      <NewSessionModal
-        open={newSessionOpen}
-        onClose={handleCloseNewSession}
-      />
+      <NewSessionModal open={newSessionOpen} onClose={handleCloseNewSession} />
 
       {/* Session Compare modal */}
       {compareModalOpen && (
@@ -568,7 +571,6 @@ export default function DashboardPage() {
 
       <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
         <div style={{ flex: 1, overflow: "hidden", display: "flex" }}>
-
           {/* Mobile sidebar overlay backdrop */}
           {mobileSidebarOpen && (
             <div
@@ -603,8 +605,16 @@ export default function DashboardPage() {
             aria-label="Session sidebar"
           >
             {/* Mobile close button */}
-            <div className="md:hidden flex items-center justify-between px-4 py-2" style={{ borderBottom: "1px solid var(--color-border)" }}>
-              <span className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>Sessions</span>
+            <div
+              className="md:hidden flex items-center justify-between px-4 py-2"
+              style={{ borderBottom: "1px solid var(--color-border)" }}
+            >
+              <span
+                className="text-xs font-semibold"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
+                Sessions
+              </span>
               <button
                 onClick={() => setMobileSidebarOpen(false)}
                 className="p-2 rounded-lg cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -634,7 +644,10 @@ export default function DashboardPage() {
           </aside>
 
           {/* Corner arc SVG — concave curve where sidebar meets content (desktop only) */}
-          <div className="hidden md:block companion-corner-arc" style={{ position: "relative", width: 0, height: 0, flexShrink: 0 }}>
+          <div
+            className="hidden md:block companion-corner-arc"
+            style={{ position: "relative", width: 0, height: 0, flexShrink: 0 }}
+          >
             <svg
               width="16"
               height="16"
@@ -651,17 +664,9 @@ export default function DashboardPage() {
                 </linearGradient>
               </defs>
               {/* Fill: sidebar bg covers the square, quadratic curve reveals main bg */}
-              <path
-                d="M 0 0 L 16 0 Q 0 0 0 16 L 0 0 Z"
-                fill="var(--color-bg-sidebar)"
-              />
+              <path d="M 0 0 L 16 0 Q 0 0 0 16 L 0 0 Z" fill="var(--color-bg-sidebar)" />
               {/* Subtle gradient arc */}
-              <path
-                d="M 16 0 Q 0 0 0 16"
-                fill="none"
-                stroke="url(#corner-grad)"
-                strokeWidth="2"
-              />
+              <path d="M 16 0 Q 0 0 0 16" fill="none" stroke="url(#corner-grad)" strokeWidth="2" />
             </svg>
           </div>
 
@@ -691,10 +696,7 @@ export default function DashboardPage() {
             {gridSessions.length === 0 ? (
               <EmptyCenter />
             ) : (
-              <SessionGrid
-                sessions={gridSessions}
-                onExpand={handleExpand}
-              />
+              <SessionGrid sessions={gridSessions} onExpand={handleExpand} />
             )}
           </main>
 
@@ -703,7 +705,18 @@ export default function DashboardPage() {
             <aside
               className="hidden md:flex flex-col flex-shrink-0 overflow-hidden"
               style={{
-                width: rightPanelMode === "browser" ? 600 : rightPanelMode === "terminal" ? 600 : rightPanelMode === "stats" ? 360 : rightPanelMode === "webintel" ? 400 : rightPanelMode === "codegraph" ? 380 : 500,
+                width:
+                  rightPanelMode === "browser"
+                    ? 600
+                    : rightPanelMode === "terminal"
+                      ? 600
+                      : rightPanelMode === "stats"
+                        ? 360
+                        : rightPanelMode === "webintel"
+                          ? 400
+                          : rightPanelMode === "codegraph"
+                            ? 380
+                            : 500,
                 borderLeft: "1px solid var(--color-border)",
                 transition: "width 200ms ease",
               }}
@@ -731,19 +744,13 @@ export default function DashboardPage() {
                 />
               )}
               {rightPanelMode === "terminal" && (
-                <TerminalPanel
-                  onClose={() => setRightPanelMode("none")}
-                />
+                <TerminalPanel onClose={() => setRightPanelMode("none")} />
               )}
               {rightPanelMode === "stats" && (
-                <StatsPanel
-                  onClose={() => setRightPanelMode("none")}
-                />
+                <StatsPanel onClose={() => setRightPanelMode("none")} />
               )}
               {rightPanelMode === "webintel" && (
-                <WebIntelPanel
-                  onClose={() => setRightPanelMode("none")}
-                />
+                <WebIntelPanel onClose={() => setRightPanelMode("none")} />
               )}
               {rightPanelMode === "codegraph" && (
                 <CodeGraphPanel

@@ -158,7 +158,11 @@ async function runScan(
     for (let i = 0; i < filePaths.length; i += BATCH_SIZE) {
       if (scanState.abort) {
         log.info("Scan aborted", { projectSlug, jobId });
-        updateScanJob(jobId, { status: "error", errorMessage: "Aborted by user", completedAt: new Date() });
+        updateScanJob(jobId, {
+          status: "error",
+          errorMessage: "Aborted by user",
+          completedAt: new Date(),
+        });
         return;
       }
 
@@ -174,10 +178,12 @@ async function runScan(
           const existing = getDb()
             .select({ id: codeFilesTable.id })
             .from(codeFilesTable)
-            .where(and(
-              eq(codeFilesTable.projectSlug, projectSlug),
-              eq(codeFilesTable.filePath, relPath),
-            ))
+            .where(
+              and(
+                eq(codeFilesTable.projectSlug, projectSlug),
+                eq(codeFilesTable.filePath, relPath),
+              ),
+            )
             .get();
           if (existing) fileIdMap.set(relPath, existing.id);
           continue;
@@ -231,7 +237,10 @@ async function runScan(
         }
       }
 
-      updateScanJob(jobId, { scannedFiles: Math.min(i + BATCH_SIZE, filePaths.length), totalNodes });
+      updateScanJob(jobId, {
+        scannedFiles: Math.min(i + BATCH_SIZE, filePaths.length),
+        totalNodes,
+      });
     }
 
     // 4. Second pass: resolve edges (match symbols to actual node IDs)
@@ -239,7 +248,7 @@ async function runScan(
     deleteEdgesForProject(projectSlug);
 
     const allNodes = getProjectNodes(projectSlug);
-    const nodesByName = new Map<string, typeof allNodes[0]>();
+    const nodesByName = new Map<string, (typeof allNodes)[0]>();
     for (const node of allNodes) {
       nodesByName.set(node.symbolName, node);
     }
@@ -252,9 +261,10 @@ async function runScan(
 
       for (const edge of edges) {
         // Find source node
-        let sourceNode = edge.sourceSymbol === "__file__"
-          ? fileNodes[0]  // Use first symbol in file as proxy
-          : fileNodes.find((n) => n.symbolName === edge.sourceSymbol);
+        let sourceNode =
+          edge.sourceSymbol === "__file__"
+            ? fileNodes[0] // Use first symbol in file as proxy
+            : fileNodes.find((n) => n.symbolName === edge.sourceSymbol);
 
         if (!sourceNode && fileNodes.length > 0) {
           sourceNode = fileNodes[0];
@@ -265,7 +275,12 @@ async function runScan(
         let targetNode = nodesByName.get(edge.targetSymbol);
 
         // For import edges, try to find target by resolving the path
-        if (!targetNode && edge.edgeType === "imports" && edge.targetSymbol !== "*" && edge.targetSymbol !== "default") {
+        if (
+          !targetNode &&
+          edge.edgeType === "imports" &&
+          edge.targetSymbol !== "*" &&
+          edge.targetSymbol !== "default"
+        ) {
           targetNode = nodesByName.get(edge.targetSymbol);
         }
 

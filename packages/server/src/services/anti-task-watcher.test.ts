@@ -7,7 +7,9 @@ import { describe, it, expect, mock } from "bun:test";
 
 // Mock DB client to prevent import errors (task-watcher imports settings-helpers)
 mock.module("../db/client.js", () => ({
-  getDb: () => { throw new Error("Not available in test"); },
+  getDb: () => {
+    throw new Error("Not available in test");
+  },
   getSqlite: () => null,
   closeDb: () => {},
 }));

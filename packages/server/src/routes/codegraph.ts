@@ -88,7 +88,10 @@ codegraphRoutes.post("/cancel", async (c) => {
 codegraphRoutes.get("/status", (c) => {
   const project = c.req.query("project");
   if (!project) {
-    return c.json({ success: false, error: "project query param required" } satisfies ApiResponse, 400);
+    return c.json(
+      { success: false, error: "project query param required" } satisfies ApiResponse,
+      400,
+    );
   }
 
   const job = getScanStatus(project);
@@ -104,7 +107,10 @@ codegraphRoutes.get("/status", (c) => {
 codegraphRoutes.get("/stats", (c) => {
   const project = c.req.query("project");
   if (!project) {
-    return c.json({ success: false, error: "project query param required" } satisfies ApiResponse, 400);
+    return c.json(
+      { success: false, error: "project query param required" } satisfies ApiResponse,
+      400,
+    );
   }
 
   const stats = getProjectStats(project);
@@ -119,11 +125,17 @@ codegraphRoutes.get("/search", (c) => {
   const query = c.req.query("q");
 
   if (!project || !query) {
-    return c.json({ success: false, error: "project and q params required" } satisfies ApiResponse, 400);
+    return c.json(
+      { success: false, error: "project and q params required" } satisfies ApiResponse,
+      400,
+    );
   }
 
   if (query.length > 200) {
-    return c.json({ success: false, error: "Query too long (max 200 chars)" } satisfies ApiResponse, 400);
+    return c.json(
+      { success: false, error: "Query too long (max 200 chars)" } satisfies ApiResponse,
+      400,
+    );
   }
 
   const keywords = query.split(/\s+/).filter((k) => k.length >= 2);
@@ -148,7 +160,10 @@ codegraphRoutes.get("/impact", (c) => {
   const file = c.req.query("file");
 
   if (!project || !file) {
-    return c.json({ success: false, error: "project and file params required" } satisfies ApiResponse, 400);
+    return c.json(
+      { success: false, error: "project and file params required" } satisfies ApiResponse,
+      400,
+    );
   }
 
   const impact = getImpactRadius(project, file, { maxDepth: 2, minTrust: 0.3 });
@@ -161,7 +176,10 @@ codegraphRoutes.get("/reverse-deps", (c) => {
   const file = c.req.query("file");
 
   if (!project || !file) {
-    return c.json({ success: false, error: "project and file params required" } satisfies ApiResponse, 400);
+    return c.json(
+      { success: false, error: "project and file params required" } satisfies ApiResponse,
+      400,
+    );
   }
 
   const deps = getReverseDependencies(project, file);
@@ -172,7 +190,10 @@ codegraphRoutes.get("/reverse-deps", (c) => {
 codegraphRoutes.get("/hot-files", (c) => {
   const project = c.req.query("project");
   if (!project) {
-    return c.json({ success: false, error: "project query param required" } satisfies ApiResponse, 400);
+    return c.json(
+      { success: false, error: "project query param required" } satisfies ApiResponse,
+      400,
+    );
   }
 
   const rawLimit = parseInt(c.req.query("limit") ?? "10", 10);
@@ -187,7 +208,10 @@ codegraphRoutes.get("/hot-files", (c) => {
 codegraphRoutes.get("/packages", (c) => {
   const project = c.req.query("project");
   if (!project) {
-    return c.json({ success: false, error: "project query param required" } satisfies ApiResponse, 400);
+    return c.json(
+      { success: false, error: "project query param required" } satisfies ApiResponse,
+      400,
+    );
   }
 
   const packages = getExternalPackages(project);

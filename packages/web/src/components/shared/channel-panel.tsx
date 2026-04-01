@@ -118,10 +118,7 @@ function ChannelFeed({ messages }: { messages: ChannelMessage[] }) {
               ) : (
                 <Robot size={11} style={{ color: roleColor, flexShrink: 0 }} />
               )}
-              <span
-                className="text-xs font-semibold capitalize"
-                style={{ color: roleColor }}
-              >
+              <span className="text-xs font-semibold capitalize" style={{ color: roleColor }}>
                 {msg.role}
               </span>
               <span
@@ -130,10 +127,7 @@ function ChannelFeed({ messages }: { messages: ChannelMessage[] }) {
               >
                 {msg.agentId}
               </span>
-              <span
-                className="text-xs flex-shrink-0"
-                style={{ color: "var(--color-text-muted)" }}
-              >
+              <span className="text-xs flex-shrink-0" style={{ color: "var(--color-text-muted)" }}>
                 {formatRelativeTime(msg.timestamp)}
               </span>
             </div>
@@ -153,13 +147,7 @@ function ChannelFeed({ messages }: { messages: ChannelMessage[] }) {
 
 // ── Human message composer ──────────────────────────────────────────────────
 
-function MessageComposer({
-  channelId,
-  onPosted,
-}: {
-  channelId: string;
-  onPosted: () => void;
-}) {
+function MessageComposer({ channelId, onPosted }: { channelId: string; onPosted: () => void }) {
   const [text, setText] = useState("");
   const [posting, setPosting] = useState(false);
 
@@ -271,10 +259,7 @@ function CreateChannelForm({
 
   return (
     <div className="flex flex-col gap-3 p-3">
-      <p
-        className="text-xs font-semibold"
-        style={{ color: "var(--color-text-secondary)" }}
-      >
+      <p className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
         New Shared Context
       </p>
 
@@ -377,11 +362,7 @@ interface LinkSessionFormProps {
   onLinked: () => void;
 }
 
-function LinkSessionSelector({
-  channelId,
-  alreadyLinked,
-  onLinked,
-}: LinkSessionFormProps) {
+function LinkSessionSelector({ channelId, alreadyLinked, onLinked }: LinkSessionFormProps) {
   const [sessions, setSessions] = useState<
     Array<{ id: string; model: string; status: string; projectSlug: string | null }>
   >([]);
@@ -392,12 +373,14 @@ function LinkSessionSelector({
     api.sessions
       .list()
       .then((res) => {
-        const all = (res.data.sessions as Array<{
-          id: string;
-          model: string;
-          status: string;
-          projectSlug?: string;
-        }>).filter((s) => !alreadyLinked.includes(s.id));
+        const all = (
+          res.data.sessions as Array<{
+            id: string;
+            model: string;
+            status: string;
+            projectSlug?: string;
+          }>
+        ).filter((s) => !alreadyLinked.includes(s.id));
         setSessions(
           all.map((s) => ({
             id: s.id,
@@ -558,10 +541,7 @@ export function ChannelPanel({
           style={{ color: "var(--color-text-muted)" }}
           aria-hidden="true"
         />
-        <p
-          className="text-xs text-center"
-          style={{ color: "var(--color-text-muted)" }}
-        >
+        <p className="text-xs text-center" style={{ color: "var(--color-text-muted)" }}>
           No shared context channel linked to this session.
         </p>
         <button
@@ -609,11 +589,7 @@ export function ChannelPanel({
         style={{ borderBottom: "1px solid var(--color-border)" }}
       >
         <div className="flex items-center gap-2">
-          <LinkSimple
-            size={13}
-            style={{ color: statusColor, flexShrink: 0 }}
-            aria-hidden="true"
-          />
+          <LinkSimple size={13} style={{ color: statusColor, flexShrink: 0 }} aria-hidden="true" />
           <span
             className="text-xs font-semibold flex-1 truncate"
             style={{ color: "var(--color-text-primary)" }}
@@ -653,10 +629,7 @@ export function ChannelPanel({
           >
             {TYPE_LABELS[channel.type] ?? channel.type}
           </span>
-          <span
-            className="text-xs"
-            style={{ color: "var(--color-text-muted)", fontSize: 10 }}
-          >
+          <span className="text-xs" style={{ color: "var(--color-text-muted)", fontSize: 10 }}>
             {channel.linkedSessions.length} session
             {channel.linkedSessions.length !== 1 ? "s" : ""}
           </span>
@@ -677,10 +650,7 @@ export function ChannelPanel({
 
       {/* Message composer (human messages) */}
       {isActive && (
-        <MessageComposer
-          channelId={channel.id}
-          onPosted={() => void fetchChannel(channel.id)}
-        />
+        <MessageComposer channelId={channel.id} onPosted={() => void fetchChannel(channel.id)} />
       )}
     </div>
   );

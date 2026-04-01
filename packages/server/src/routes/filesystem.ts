@@ -30,7 +30,9 @@ const HIDDEN_DIRS = new Set([
 ]);
 
 /** Validate that a path is an existing directory and not obviously dangerous */
-function validateDir(p: string): { ok: true; resolved: string } | { ok: false; error: string; status: 400 | 403 } {
+function validateDir(
+  p: string,
+): { ok: true; resolved: string } | { ok: false; error: string; status: 400 | 403 } {
   if (!p || typeof p !== "string") {
     return { ok: false, error: "path is required", status: 400 };
   }
@@ -59,8 +61,9 @@ function validateDir(p: string): { ok: true; resolved: string } | { ok: false; e
   const allowedRoots = process.env.ALLOWED_BROWSE_ROOTS;
   if (allowedRoots) {
     const roots = allowedRoots.split(";").map((r) => resolve(normalize(r)));
-    const allowed = roots.some((root) =>
-      resolved === root || resolved.startsWith(root + "/") || resolved.startsWith(root + "\\"),
+    const allowed = roots.some(
+      (root) =>
+        resolved === root || resolved.startsWith(root + "/") || resolved.startsWith(root + "\\"),
     );
     if (!allowed) {
       return { ok: false, error: "Path outside allowed roots", status: 403 };
@@ -82,20 +85,14 @@ filesystemRoutes.get("/browse", (c) => {
 
   const check = validateDir(rawPath);
   if (!check.ok) {
-    return c.json(
-      { success: false, error: check.error } satisfies ApiResponse,
-      check.status,
-    );
+    return c.json({ success: false, error: check.error } satisfies ApiResponse, check.status);
   }
 
   let entries: string[];
   try {
     entries = readdirSync(check.resolved);
   } catch {
-    return c.json(
-      { success: false, error: "Cannot read directory" } satisfies ApiResponse,
-      500,
-    );
+    return c.json({ success: false, error: "Cannot read directory" } satisfies ApiResponse, 500);
   }
 
   const dirs: string[] = [];
@@ -133,13 +130,43 @@ const MAX_READ_SIZE = 512 * 1024;
 
 // Extensions we allow reading (text-based files only)
 const READABLE_EXTENSIONS = new Set([
-  ".md", ".txt", ".json", ".yaml", ".yml", ".toml",
-  ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs",
-  ".py", ".rs", ".go", ".java", ".rb", ".sh", ".bash",
-  ".css", ".scss", ".html", ".svg", ".xml",
-  ".env", ".env.example", ".gitignore", ".dockerignore",
-  ".dockerfile", ".prisma", ".graphql", ".sql",
-  ".csv", ".log", ".ini", ".cfg", ".conf",
+  ".md",
+  ".txt",
+  ".json",
+  ".yaml",
+  ".yml",
+  ".toml",
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".mjs",
+  ".cjs",
+  ".py",
+  ".rs",
+  ".go",
+  ".java",
+  ".rb",
+  ".sh",
+  ".bash",
+  ".css",
+  ".scss",
+  ".html",
+  ".svg",
+  ".xml",
+  ".env",
+  ".env.example",
+  ".gitignore",
+  ".dockerignore",
+  ".dockerfile",
+  ".prisma",
+  ".graphql",
+  ".sql",
+  ".csv",
+  ".log",
+  ".ini",
+  ".cfg",
+  ".conf",
 ]);
 
 /** Validate that a path is an existing, readable file within allowed roots */
@@ -167,7 +194,11 @@ function validateFile(
       return { ok: false, error: "Path is not a file", status: 400 };
     }
     if (stat.size > MAX_READ_SIZE) {
-      return { ok: false, error: `File too large (${(stat.size / 1024).toFixed(0)}KB > ${MAX_READ_SIZE / 1024}KB limit)`, status: 400 };
+      return {
+        ok: false,
+        error: `File too large (${(stat.size / 1024).toFixed(0)}KB > ${MAX_READ_SIZE / 1024}KB limit)`,
+        status: 400,
+      };
     }
   } catch {
     return { ok: false, error: "Cannot stat path", status: 400 };
@@ -177,7 +208,14 @@ function validateFile(
   const ext = extname(resolved).toLowerCase();
   // Allow extensionless files like Dockerfile, Makefile
   const basename = resolved.split(/[\\/]/).pop() ?? "";
-  const knownExtensionless = ["Dockerfile", "Makefile", "Procfile", "Vagrantfile", "Gemfile", "Rakefile"];
+  const knownExtensionless = [
+    "Dockerfile",
+    "Makefile",
+    "Procfile",
+    "Vagrantfile",
+    "Gemfile",
+    "Rakefile",
+  ];
   if (ext && !READABLE_EXTENSIONS.has(ext) && !knownExtensionless.includes(basename)) {
     return { ok: false, error: `File type '${ext}' not supported for reading`, status: 400 };
   }
@@ -186,8 +224,9 @@ function validateFile(
   const allowedRoots = process.env.ALLOWED_BROWSE_ROOTS;
   if (allowedRoots) {
     const roots = allowedRoots.split(";").map((r) => resolve(normalize(r)));
-    const allowed = roots.some((root) =>
-      resolved === root || resolved.startsWith(root + "/") || resolved.startsWith(root + "\\"),
+    const allowed = roots.some(
+      (root) =>
+        resolved === root || resolved.startsWith(root + "/") || resolved.startsWith(root + "\\"),
     );
     if (!allowed) {
       return { ok: false, error: "Path outside allowed roots", status: 403 };
@@ -206,20 +245,14 @@ filesystemRoutes.get("/read", (c) => {
 
   const check = validateFile(rawPath);
   if (!check.ok) {
-    return c.json(
-      { success: false, error: check.error } satisfies ApiResponse,
-      check.status,
-    );
+    return c.json({ success: false, error: check.error } satisfies ApiResponse, check.status);
   }
 
   let content: string;
   try {
     content = readFileSync(check.resolved, "utf-8");
   } catch {
-    return c.json(
-      { success: false, error: "Cannot read file" } satisfies ApiResponse,
-      500,
-    );
+    return c.json({ success: false, error: "Cannot read file" } satisfies ApiResponse, 500);
   }
 
   const basename = check.resolved.split(/[\\/]/).pop() ?? "";
@@ -268,7 +301,9 @@ filesystemRoutes.get("/roots", (c) => {
         if (existsSync(drive)) {
           roots.push({ label: `${letter}:`, path: drive });
         }
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
   } else {
     // Linux/macOS — auto-detect Docker-mounted Windows drives at /mnt/<letter>
@@ -285,11 +320,15 @@ filesystemRoutes.get("/roots", (c) => {
               if (contents.length > 0) {
                 roots.push({ label: `${entry.name.toUpperCase()}:`, path: drivePath });
               }
-            } catch { /* not readable — skip */ }
+            } catch {
+              /* not readable — skip */
+            }
           }
         }
       }
-    } catch { /* /mnt doesn't exist or not readable */ }
+    } catch {
+      /* /mnt doesn't exist or not readable */
+    }
 
     // Also add standard Linux/macOS roots
     for (const cp of [
@@ -394,7 +433,10 @@ filesystemRoutes.get("/search", async (c) => {
   const glob = c.req.query("glob") ?? "";
 
   if (!query.trim()) {
-    return c.json({ success: false, error: "q (search query) is required" } satisfies ApiResponse, 400);
+    return c.json(
+      { success: false, error: "q (search query) is required" } satisfies ApiResponse,
+      400,
+    );
   }
 
   const check = validateDir(rawPath);

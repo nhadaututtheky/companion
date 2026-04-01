@@ -21,7 +21,9 @@ function isAutoSummaryEnabled(): boolean {
     const db = getDb();
     const row = db.select().from(settings).where(eq(settings.key, "ai.autoSummary")).get();
     if (row) return row.value !== "false";
-  } catch { /* fall through */ }
+  } catch {
+    /* fall through */
+  }
   return true; // default on
 }
 const MAX_MESSAGES_FOR_CONTEXT = 50;
@@ -65,7 +67,11 @@ export async function summarizeSession(sessionId: string): Promise<void> {
 
     // Skip if already summarized
     const db = getDb();
-    const existing = db.select().from(sessionSummaries).where(eq(sessionSummaries.sessionId, sessionId)).get();
+    const existing = db
+      .select()
+      .from(sessionSummaries)
+      .where(eq(sessionSummaries.sessionId, sessionId))
+      .get();
     if (existing) {
       log.debug("Skip summary: already exists", { sessionId });
       return;
@@ -94,10 +100,12 @@ export async function summarizeSession(sessionId: string): Promise<void> {
 
     const aiResponse = await callAI({
       systemPrompt: SUMMARY_PROMPT,
-      messages: [{
-        role: "user",
-        content: `--- Session Context ---\n${contextHeader}\n\n--- Conversation ---\n${conversationText}`,
-      }],
+      messages: [
+        {
+          role: "user",
+          content: `--- Session Context ---\n${contextHeader}\n\n--- Conversation ---\n${conversationText}`,
+        },
+      ],
       tier: "fast",
       maxTokens: 500,
     });
@@ -123,9 +131,10 @@ export async function summarizeSession(sessionId: string): Promise<void> {
         sessionId,
         summary: parsed.summary,
         keyDecisions: parsed.keyDecisions,
-        filesModified: parsed.filesModified.length > 0
-          ? parsed.filesModified
-          : (record.filesModified as string[]) ?? [],
+        filesModified:
+          parsed.filesModified.length > 0
+            ? parsed.filesModified
+            : ((record.filesModified as string[]) ?? []),
         createdAt: new Date(),
       })
       .run();
@@ -147,7 +156,13 @@ export async function summarizeSession(sessionId: string): Promise<void> {
 export function getProjectSummaries(
   projectSlug: string,
   limit = 3,
-): Array<{ sessionId: string; summary: string; keyDecisions: string[]; filesModified: string[]; createdAt: Date | null }> {
+): Array<{
+  sessionId: string;
+  summary: string;
+  keyDecisions: string[];
+  filesModified: string[];
+  createdAt: Date | null;
+}> {
   const db = getDb();
 
   // Join session_summaries with sessions to filter by project
@@ -190,7 +205,11 @@ export function getSessionSummary(sessionId: string): {
   createdAt: Date | null;
 } | null {
   const db = getDb();
-  const row = db.select().from(sessionSummaries).where(eq(sessionSummaries.sessionId, sessionId)).get();
+  const row = db
+    .select()
+    .from(sessionSummaries)
+    .where(eq(sessionSummaries.sessionId, sessionId))
+    .get();
   if (!row) return null;
 
   return {
@@ -213,7 +232,9 @@ export function buildSummaryInjection(projectSlug: string | undefined): string {
     const db = getDb();
     const row = db.select().from(settings).where(eq(settings.key, "ai.autoInjectSummaries")).get();
     if (row?.value === "false") return "";
-  } catch { /* fall through — default on */ }
+  } catch {
+    /* fall through — default on */
+  }
 
   const summaries = getProjectSummaries(projectSlug, 3);
   if (summaries.length === 0) return "";

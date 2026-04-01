@@ -63,7 +63,11 @@ function ThinkingSection({ blocks }: { blocks: ThinkingBlock[] }) {
   const text = blocks.map((b) => b.text).join("\n");
   if (!text.trim()) return null;
 
-  const firstLine = text.split("\n").find((l) => l.trim())?.trim() ?? "";
+  const firstLine =
+    text
+      .split("\n")
+      .find((l) => l.trim())
+      ?.trim() ?? "";
   const summary = firstLine.length > 100 ? firstLine.slice(0, 100) + "..." : firstLine;
 
   return (
@@ -82,8 +86,14 @@ function ThinkingSection({ blocks }: { blocks: ThinkingBlock[] }) {
       >
         <Brain size={14} weight="bold" style={{ color: "#a855f7" }} />
         <span className="font-medium">Thinking</span>
-        <span className="opacity-40 text-xs">({blocks.length} block{blocks.length > 1 ? "s" : ""})</span>
-        {expanded ? <CaretDown size={12} className="ml-auto" /> : <CaretRight size={12} className="ml-auto" />}
+        <span className="opacity-40 text-xs">
+          ({blocks.length} block{blocks.length > 1 ? "s" : ""})
+        </span>
+        {expanded ? (
+          <CaretDown size={12} className="ml-auto" />
+        ) : (
+          <CaretRight size={12} className="ml-auto" />
+        )}
         {!expanded && summary && (
           <span className="truncate opacity-50 ml-1 font-normal" style={{ maxWidth: 350 }}>
             {summary}
@@ -107,13 +117,7 @@ function ThinkingSection({ blocks }: { blocks: ThinkingBlock[] }) {
 
 // ── Tool Use Block ───────────────────────────────────────────────────────────
 
-function ToolUseSection({
-  tools,
-  results,
-}: {
-  tools: ToolBlock[];
-  results?: ToolResultBlock[];
-}) {
+function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: ToolResultBlock[] }) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const addAttachment = useComposerStore((s) => s.addAttachment);
   const setQuickAction = useComposerStore((s) => s.setQuickAction);
@@ -151,7 +155,10 @@ function ToolUseSection({
               aria-expanded={expanded}
             >
               <Wrench size={14} weight="bold" style={{ color: "#4285F4" }} />
-              <code className="font-mono font-semibold" style={{ color: "var(--color-text-primary)" }}>
+              <code
+                className="font-mono font-semibold"
+                style={{ color: "var(--color-text-primary)" }}
+              >
                 {tool.name}
               </code>
               {isShort && !expanded && (
@@ -163,18 +170,28 @@ function ToolUseSection({
                 </span>
               )}
               {result?.isError && (
-                <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "#ef444420", color: "#ef4444" }}>
+                <span
+                  className="text-xs px-1.5 py-0.5 rounded"
+                  style={{ background: "#ef444420", color: "#ef4444" }}
+                >
                   error
                 </span>
               )}
-              {expanded ? <CaretDown size={12} className="ml-auto" /> : <CaretRight size={12} className="ml-auto" />}
+              {expanded ? (
+                <CaretDown size={12} className="ml-auto" />
+              ) : (
+                <CaretRight size={12} className="ml-auto" />
+              )}
             </button>
 
             {expanded && (
               <div style={{ borderTop: "1px solid var(--color-border)" }}>
                 {/* Input */}
                 <div className="px-3 py-2">
-                  <div className="text-xs font-semibold mb-1" style={{ color: "var(--color-text-muted)" }}>
+                  <div
+                    className="text-xs font-semibold mb-1"
+                    style={{ color: "var(--color-text-muted)" }}
+                  >
                     Input
                   </div>
                   <ToolInput input={tool.input} />
@@ -184,7 +201,10 @@ function ToolUseSection({
                 {result && (
                   <div className="px-3 py-2" style={{ borderTop: "1px solid var(--color-border)" }}>
                     <div className="flex items-center justify-between mb-1">
-                      <div className="text-xs font-semibold" style={{ color: result.isError ? "#ef4444" : "var(--color-text-muted)" }}>
+                      <div
+                        className="text-xs font-semibold"
+                        style={{ color: result.isError ? "#ef4444" : "var(--color-text-muted)" }}
+                      >
                         {result.isError ? "Error" : "Output"}
                       </div>
                       <div className="flex items-center gap-1">
@@ -264,13 +284,7 @@ function ToolInput({ input }: { input: Record<string, unknown> }) {
   // Write tool — show as "new file" diff (all additions)
   if ((input.file_path || input.path) && input.content !== undefined) {
     const path = String(input.file_path ?? input.path);
-    return (
-      <InlineDiff
-        filePath={path}
-        oldContent=""
-        newContent={String(input.content)}
-      />
-    );
+    return <InlineDiff filePath={path} oldContent="" newContent={String(input.content)} />;
   }
 
   // Write/file tool with path but no content
@@ -285,7 +299,10 @@ function ToolInput({ input }: { input: Record<string, unknown> }) {
           </code>
         </div>
         {input.command != null && (
-          <pre className="text-xs font-mono whitespace-pre-wrap m-0" style={{ color: "var(--color-text-secondary)" }}>
+          <pre
+            className="text-xs font-mono whitespace-pre-wrap m-0"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
             {String(input.command).slice(0, 2000)}
           </pre>
         )}
@@ -296,7 +313,10 @@ function ToolInput({ input }: { input: Record<string, unknown> }) {
   // Bash command
   if (input.command) {
     return (
-      <pre className="text-xs font-mono whitespace-pre-wrap m-0" style={{ color: "var(--color-text-secondary)" }}>
+      <pre
+        className="text-xs font-mono whitespace-pre-wrap m-0"
+        style={{ color: "var(--color-text-secondary)" }}
+      >
         $ {String(input.command).slice(0, 2000)}
       </pre>
     );
@@ -305,7 +325,10 @@ function ToolInput({ input }: { input: Record<string, unknown> }) {
   // Generic JSON
   const str = JSON.stringify(input, null, 2);
   return (
-    <pre className="text-xs font-mono whitespace-pre-wrap m-0 max-h-[200px] overflow-y-auto" style={{ color: "var(--color-text-secondary)" }}>
+    <pre
+      className="text-xs font-mono whitespace-pre-wrap m-0 max-h-[200px] overflow-y-auto"
+      style={{ color: "var(--color-text-secondary)" }}
+    >
       {str.slice(0, 3000)}
     </pre>
   );
@@ -424,11 +447,7 @@ function MessageBubble({
     <div
       ref={msgRef}
       className={`flex gap-3 px-4 py-2 ${isUser ? "flex-row-reverse" : "flex-row"}`}
-      style={
-        isPinned
-          ? { borderLeft: "3px solid #FBBC04", paddingLeft: 13 }
-          : undefined
-      }
+      style={isPinned ? { borderLeft: "3px solid #FBBC04", paddingLeft: 13 } : undefined}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -578,12 +597,7 @@ export function MessageFeed({ messages, sessionId = "", onScrollToRef }: Message
       <div ref={parentRef} className="flex flex-col flex-1 overflow-y-auto py-4">
         {messages.map((msg, index) => (
           <div key={msg.id} data-msg-index={index}>
-            <MessageBubble
-              msg={msg}
-              index={index}
-              sessionId={sessionId}
-              msgRef={() => {}}
-            />
+            <MessageBubble msg={msg} index={index} sessionId={sessionId} msgRef={() => {}} />
           </div>
         ))}
       </div>

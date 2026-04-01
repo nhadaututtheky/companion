@@ -44,11 +44,7 @@ export interface CLIAssistantMessage {
 
 export interface CLIResultMessage {
   type: "result";
-  subtype:
-    | "success"
-    | "error_during_execution"
-    | "error_max_turns"
-    | "error_max_budget_usd";
+  subtype: "success" | "error_during_execution" | "error_max_turns" | "error_max_budget_usd";
   is_error: boolean;
   result?: string;
   errors?: string[];
@@ -183,11 +179,26 @@ export type BrowserIncomingMessage =
   | { type: "user_message"; content: string; timestamp: number }
   | { type: "message_history"; messages: BrowserIncomingMessage[] }
   | { type: "context_update"; contextUsedPercent: number; totalTokens: number; maxTokens: number }
-  | { type: "cost_warning"; level: "warning" | "critical"; costUsd: number; budgetUsd: number; message: string }
+  | {
+      type: "cost_warning";
+      level: "warning" | "critical";
+      costUsd: number;
+      budgetUsd: number;
+      message: string;
+    }
   | { type: "budget_exceeded"; budget: number; spent: number }
   | { type: "budget_warning"; budget: number; spent: number; percentage: number }
   | { type: "compact_handoff"; stage: "summarizing" | "compacting" | "done"; message: string }
-  | { type: "hook_event"; hookType: string; toolName?: string; toolInput?: Record<string, unknown>; toolOutput?: string; toolError?: boolean; message?: string; timestamp: number };
+  | {
+      type: "hook_event";
+      hookType: string;
+      toolName?: string;
+      toolInput?: Record<string, unknown>;
+      toolOutput?: string;
+      toolError?: boolean;
+      message?: string;
+      timestamp: number;
+    };
 
 // ─── Session State ───────────────────────────────────────────────────────────
 

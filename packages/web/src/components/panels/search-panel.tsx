@@ -131,10 +131,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
   }, [query, glob, runSearch]);
 
   return (
-    <div
-      className="flex flex-col h-full"
-      style={{ background: "var(--color-bg-card)" }}
-    >
+    <div className="flex flex-col h-full" style={{ background: "var(--color-bg-card)" }}>
       {/* Header */}
       <div
         className="flex items-center gap-2 px-3 py-3 flex-shrink-0"

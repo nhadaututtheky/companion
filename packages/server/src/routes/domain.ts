@@ -83,10 +83,13 @@ domainRoutes.put("/", zValidator("json", domainSchema), (c) => {
       generateConfigs(body.mode, body.hostname, body.tunnelToken);
     } catch (err) {
       log.error("Failed to generate domain configs", { error: String(err) });
-      return c.json({
-        success: false,
-        error: "Config saved but failed to generate files",
-      } satisfies ApiResponse, 500);
+      return c.json(
+        {
+          success: false,
+          error: "Config saved but failed to generate files",
+        } satisfies ApiResponse,
+        500,
+      );
     }
   }
 
@@ -201,9 +204,9 @@ function generateConfigs(mode: string, hostname: string, tunnelToken?: string): 
   // Find project root — navigate up from server package
   // In Docker: /app/nginx/  On host: D:/Project/Companion/nginx/
   const possibleRoots = [
-    "/app",                    // Docker
+    "/app", // Docker
     join(process.cwd(), ".."), // Dev (from packages/server)
-    process.cwd(),             // Dev (from root)
+    process.cwd(), // Dev (from root)
   ];
 
   let projectRoot = possibleRoots[0]!;

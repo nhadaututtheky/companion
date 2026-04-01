@@ -113,7 +113,12 @@ export interface DeadSessionInfo {
 
 /** Permission batch to avoid spamming */
 interface PermBatch {
-  perms: Array<{ requestId: string; toolName: string; input: Record<string, unknown>; description?: string }>;
+  perms: Array<{
+    requestId: string;
+    toolName: string;
+    input: Record<string, unknown>;
+    description?: string;
+  }>;
   timer: ReturnType<typeof setTimeout>;
   sessionId: string;
 }
@@ -453,7 +458,9 @@ export class TelegramBridge {
     },
   ): Promise<void> {
     const chatId = ctx.chat!.id;
-    const topicId = ctx.message?.message_thread_id ?? (ctx.callbackQuery?.message as { message_thread_id?: number })?.message_thread_id;
+    const topicId =
+      ctx.message?.message_thread_id ??
+      (ctx.callbackQuery?.message as { message_thread_id?: number })?.message_thread_id;
 
     const project = getProject(projectSlug);
     if (!project) {
@@ -493,7 +500,13 @@ export class TelegramBridge {
       this.subscribeToSession(sessionId, chatId, topicId);
 
       // Send settings panel (includes status + inline keyboard)
-      const panelMsg = await this.sendSettingsPanel(chatId, topicId, sessionId, project.name, effectiveModel);
+      const panelMsg = await this.sendSettingsPanel(
+        chatId,
+        topicId,
+        sessionId,
+        project.name,
+        effectiveModel,
+      );
       if (panelMsg) {
         this.setSessionPanelMessageId(sessionId, panelMsg.message_id);
       }
@@ -511,7 +524,9 @@ export class TelegramBridge {
             this.wsBridge.sendUserMessage(sessionId, prompt, "telegram");
           } else {
             log.warn("Session not ready in time for initial prompt", { sessionId });
-            this.bot.api.sendMessage(chatId, "⚠️ Session took too long to start. Send your prompt manually.").catch(() => {});
+            this.bot.api
+              .sendMessage(chatId, "⚠️ Session took too long to start. Send your prompt manually.")
+              .catch(() => {});
           }
         });
       }
@@ -545,19 +560,35 @@ export class TelegramBridge {
     const status = session?.state.status ?? "starting";
     const cost = session?.state.total_cost_usd ?? 0;
     const turns = session?.state.num_turns ?? 0;
-    const updatedAt = new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
+    const updatedAt = new Date().toLocaleTimeString("en-US", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
     const aa = session?.autoApproveConfig;
     const aaLabel = !aa?.enabled ? "Off" : `${aa.timeoutSeconds}s`;
     const idleMs = cfg.idleTimeoutMs;
-    const idleLabel = idleMs <= 0 ? "Never" : idleMs === 1_800_000 ? "30m" : idleMs === 3_600_000 ? "1h" : idleMs === 14_400_000 ? "4h" : idleMs === 43_200_000 ? "12h" : `${Math.round(idleMs / 60_000)}m`;
+    const idleLabel =
+      idleMs <= 0
+        ? "Never"
+        : idleMs === 1_800_000
+          ? "30m"
+          : idleMs === 3_600_000
+            ? "1h"
+            : idleMs === 14_400_000
+              ? "4h"
+              : idleMs === 43_200_000
+                ? "12h"
+                : `${Math.round(idleMs / 60_000)}m`;
     const _permMode = session?.state.permissionMode ?? "default";
 
     // Context meter — uses cumulative tokens as rough estimate (actual window may be smaller after compaction)
     const state = session?.state;
     let contextStr = "";
     if (state) {
-      const totalTokens = state.total_input_tokens + state.total_output_tokens + state.cache_read_tokens;
+      const totalTokens =
+        state.total_input_tokens + state.total_output_tokens + state.cache_read_tokens;
       if (totalTokens > 0) {
         const maxTokens = state.model.includes("haiku") ? 200_000 : 1_000_000;
         const pct = Math.min(100, Math.round((totalTokens / maxTokens) * 100));
@@ -604,19 +635,39 @@ export class TelegramBridge {
         ],
         // Row 2: Auto-approve presets
         [
-          btn(`Off${aaOff ? " ✓" : ""}`, `panel:aa:off:${sessionId}`, aaOff ? "success" : undefined),
+          btn(
+            `Off${aaOff ? " ✓" : ""}`,
+            `panel:aa:off:${sessionId}`,
+            aaOff ? "success" : undefined,
+          ),
           btn(`15s${aa15 ? " ✓" : ""}`, `panel:aa:15:${sessionId}`, aa15 ? "success" : undefined),
           btn(`30s${aa30 ? " ✓" : ""}`, `panel:aa:30:${sessionId}`, aa30 ? "success" : undefined),
           btn(`60s${aa60 ? " ✓" : ""}`, `panel:aa:60:${sessionId}`, aa60 ? "success" : undefined),
-          btn(`🛡 Safe${aaSafe ? " ✓" : ""}`, `panel:aa:safe:${sessionId}`, aaSafe ? "danger" : undefined),
+          btn(
+            `🛡 Safe${aaSafe ? " ✓" : ""}`,
+            `panel:aa:safe:${sessionId}`,
+            aaSafe ? "danger" : undefined,
+          ),
         ],
         // Row 3: Idle timeout presets
         [
-          btn(`Never${iNever ? " ✓" : ""}`, `panel:idle:0:${sessionId}`, iNever ? "success" : undefined),
-          btn(`30m${i30m ? " ✓" : ""}`, `panel:idle:1800:${sessionId}`, i30m ? "success" : undefined),
+          btn(
+            `Never${iNever ? " ✓" : ""}`,
+            `panel:idle:0:${sessionId}`,
+            iNever ? "success" : undefined,
+          ),
+          btn(
+            `30m${i30m ? " ✓" : ""}`,
+            `panel:idle:1800:${sessionId}`,
+            i30m ? "success" : undefined,
+          ),
           btn(`1h${i1h ? " ✓" : ""}`, `panel:idle:3600:${sessionId}`, i1h ? "success" : undefined),
           btn(`4h${i4h ? " ✓" : ""}`, `panel:idle:14400:${sessionId}`, i4h ? "success" : undefined),
-          btn(`12h${i12h ? " ✓" : ""}`, `panel:idle:43200:${sessionId}`, i12h ? "success" : undefined),
+          btn(
+            `12h${i12h ? " ✓" : ""}`,
+            `panel:idle:43200:${sessionId}`,
+            i12h ? "success" : undefined,
+          ),
         ],
         // Row 4: Actions
         [
@@ -741,7 +792,9 @@ export class TelegramBridge {
   async sendToChatWithKeyboard(
     chatId: number,
     text: string,
-    keyboard: { inline_keyboard: Array<Array<{ text: string; callback_data: string; style?: string }>> },
+    keyboard: {
+      inline_keyboard: Array<Array<{ text: string; callback_data: string; style?: string }>>;
+    },
     topicId?: number,
   ): Promise<number> {
     const sent = await this.bot.api.sendMessage(chatId, text, {
@@ -786,13 +839,19 @@ export class TelegramBridge {
   }
 
   /** Send quick action buttons after session start */
-  private async sendQuickActions(chatId: number, topicId: number | undefined, sessionId: string): Promise<void> {
+  private async sendQuickActions(
+    chatId: number,
+    topicId: number | undefined,
+    sessionId: string,
+  ): Promise<void> {
     const keyboard = {
-      inline_keyboard: [[
-        { text: "📋 Templates", callback_data: `quick:tpl:${sessionId}` },
-        { text: "📌 Pin Panel", callback_data: `quick:pin:${sessionId}` },
-        { text: "⚡ AA 30s", callback_data: `quick:aa30:${sessionId}` },
-      ]],
+      inline_keyboard: [
+        [
+          { text: "📋 Templates", callback_data: `quick:tpl:${sessionId}` },
+          { text: "📌 Pin Panel", callback_data: `quick:pin:${sessionId}` },
+          { text: "⚡ AA 30s", callback_data: `quick:aa30:${sessionId}` },
+        ],
+      ],
     };
 
     try {
@@ -814,12 +873,18 @@ export class TelegramBridge {
       const start = Date.now();
       const check = () => {
         const session = this.wsBridge.getSession(sessionId);
-        if (!session) { resolve(false); return; }
+        if (!session) {
+          resolve(false);
+          return;
+        }
         if (session.state.status === "idle" || session.state.status === "busy") {
           resolve(true);
           return;
         }
-        if (Date.now() - start > maxWaitMs) { resolve(false); return; }
+        if (Date.now() - start > maxWaitMs) {
+          resolve(false);
+          return;
+        }
         setTimeout(check, 500);
       };
       check();
@@ -901,7 +966,9 @@ export class TelegramBridge {
   }
 
   /** Reverse lookup: find the stream subscriber info for a given sessionId */
-  getStreamSubscriberForSession(sessionId: string): { chatId: number; topicId: number } | undefined {
+  getStreamSubscriberForSession(
+    sessionId: string,
+  ): { chatId: number; topicId: number } | undefined {
     for (const [chatKey, sid] of this.streamSubscriptions.entries()) {
       if (sid === sessionId) {
         const [chatIdStr, topicIdStr] = chatKey.split(":");
@@ -955,11 +1022,13 @@ export class TelegramBridge {
 
         case "cost_warning": {
           const icon = msg.level === "critical" ? "🔴" : "⚠️";
-          await this.bot.api.sendMessage(
-            chatId,
-            `${icon} <b>Cost Budget ${msg.level === "critical" ? "Reached" : "Warning"}</b>\n${escapeHTML(msg.message)}\n\nUse <code>/stop</code> to end session or continue working.`,
-            { parse_mode: "HTML", message_thread_id: topicId },
-          ).catch(() => {});
+          await this.bot.api
+            .sendMessage(
+              chatId,
+              `${icon} <b>Cost Budget ${msg.level === "critical" ? "Reached" : "Warning"}</b>\n${escapeHTML(msg.message)}\n\nUse <code>/stop</code> to end session or continue working.`,
+              { parse_mode: "HTML", message_thread_id: topicId },
+            )
+            .catch(() => {});
           break;
         }
 
@@ -972,11 +1041,13 @@ export class TelegramBridge {
           const exitCode = (msg as unknown as { exitCode?: number }).exitCode;
           const reason = (msg as unknown as { reason?: string }).reason;
           const reasonText = reason ? `\n<code>${escapeHTML(reason.slice(0, 300))}</code>` : "";
-          await this.bot.api.sendMessage(
-            chatId,
-            `⚠️ <b>Session disconnected</b> (exit ${exitCode ?? "?"})${reasonText}`,
-            { parse_mode: "HTML", message_thread_id: topicId },
-          ).catch(() => {});
+          await this.bot.api
+            .sendMessage(
+              chatId,
+              `⚠️ <b>Session disconnected</b> (exit ${exitCode ?? "?"})${reasonText}`,
+              { parse_mode: "HTML", message_thread_id: topicId },
+            )
+            .catch(() => {});
           break;
         }
 
@@ -993,9 +1064,11 @@ export class TelegramBridge {
 
         case "tool_progress":
           // Refresh typing indicator while tools run
-          this.bot.api.sendChatAction(chatId, "typing", {
-            message_thread_id: topicId,
-          }).catch(() => {});
+          this.bot.api
+            .sendChatAction(chatId, "typing", {
+              message_thread_id: topicId,
+            })
+            .catch(() => {});
           break;
 
         case "error":
@@ -1013,7 +1086,11 @@ export class TelegramBridge {
   // ── Tool feed (progress indicators) ──────────────────────────────────
 
   /** Create or update the tool feed message ("Thinking...", "Running...") */
-  private async upsertToolFeed(chatId: number, topicId: number | undefined, newLine: string): Promise<void> {
+  private async upsertToolFeed(
+    chatId: number,
+    topicId: number | undefined,
+    newLine: string,
+  ): Promise<void> {
     const k = this.mapKey(chatId, topicId);
 
     // Create initial feed message if none exists
@@ -1038,9 +1115,11 @@ export class TelegramBridge {
     this.toolFeedLines.set(k, trimmed);
 
     // Edit the feed message
-    this.bot.api.editMessageText(chatId, msgId, trimmed.join("\n"), {
-      parse_mode: "HTML",
-    }).catch(() => {});
+    this.bot.api
+      .editMessageText(chatId, msgId, trimmed.join("\n"), {
+        parse_mode: "HTML",
+      })
+      .catch(() => {});
   }
 
   /** Clean up tool feed state after result */
@@ -1062,7 +1141,8 @@ export class TelegramBridge {
     // Anti mode: route messages to IDE via CDP (anti-role bots always, or when anti mode is toggled)
     if (this.config.role === "anti" || this.isAntiMode(chatId, topicId ?? 0)) {
       const antiCdp = await import("../services/anti-cdp.js");
-      const { startChatWatcher, isChatWatcherRunning } = await import("../services/anti-chat-watcher.js");
+      const { startChatWatcher, isChatWatcherRunning } =
+        await import("../services/anti-chat-watcher.js");
 
       // Auto-start chat watcher so IDE responses come back to Telegram
       if (!isChatWatcherRunning()) {
@@ -1072,7 +1152,11 @@ export class TelegramBridge {
       const result = await antiCdp.sendChatMessage(text);
       if (result.success) {
         // React with 👀 then ✅ on success
-        try { await ctx.react("👍"); } catch { /* ignore */ }
+        try {
+          await ctx.react("👍");
+        } catch {
+          /* ignore */
+        }
       } else {
         await this.sendToChat(chatId, `⚠️ ${result.detail}`, topicId);
       }
@@ -1119,10 +1203,12 @@ export class TelegramBridge {
         if (translated) {
           messageToSend = translated;
           // Echo the translated text so the user sees what was sent
-          await this.bot.api.sendMessage(chatId, `🔄 <i>${escapeHTML(translated)}</i>`, {
-            parse_mode: "HTML",
-            message_thread_id: topicId,
-          }).catch(() => {});
+          await this.bot.api
+            .sendMessage(chatId, `🔄 <i>${escapeHTML(translated)}</i>`, {
+              parse_mode: "HTML",
+              message_thread_id: topicId,
+            })
+            .catch(() => {});
         }
       } catch {
         // Translation failed — send original text
@@ -1133,7 +1219,9 @@ export class TelegramBridge {
     const userMsgId = ctx.message?.message_id;
     const k = this.mapKey(chatId, topicId);
     if (userMsgId) {
-      this.bot.api.setMessageReaction(chatId, userMsgId, [{ type: "emoji", emoji: "👀" }]).catch(() => {});
+      this.bot.api
+        .setMessageReaction(chatId, userMsgId, [{ type: "emoji", emoji: "👀" }])
+        .catch(() => {});
       this.lastUserMsgId.set(k, userMsgId);
     }
 
@@ -1303,7 +1391,9 @@ export class TelegramBridge {
     if (!Array.isArray(content) || content.length === 0) return;
 
     // ── Tool progress: show tool_use blocks in the feed message ──
-    const toolFeed = formatToolFeed(content as Array<{ type: string; name?: string; input?: unknown }>);
+    const toolFeed = formatToolFeed(
+      content as Array<{ type: string; name?: string; input?: unknown }>,
+    );
     if (toolFeed) {
       await this.upsertToolFeed(chatId, topicId, toolFeed);
     }
@@ -1392,7 +1482,9 @@ export class TelegramBridge {
     const originMsgId = this.responseOriginMsg.get(k) ?? this.lastUserMsgId.get(k);
     if (originMsgId) {
       const emoji = result.is_error ? "👎" : "👍";
-      this.bot.api.setMessageReaction(chatId, originMsgId, [{ type: "emoji", emoji }]).catch(() => {});
+      this.bot.api
+        .setMessageReaction(chatId, originMsgId, [{ type: "emoji", emoji }])
+        .catch(() => {});
     }
     // Clean up turn-scoped state
     this.responseOriginMsg.delete(k);
@@ -1404,11 +1496,10 @@ export class TelegramBridge {
     // Send result summary if it was an error
     if (result.is_error) {
       const errorText = result.result ?? result.errors?.join("\n") ?? "Unknown error";
-      await this.bot.api.sendMessage(
-        chatId,
-        `⚠️ <b>Error:</b> ${escapeHTML(errorText)}`,
-        { parse_mode: "HTML", message_thread_id: topicId },
-      );
+      await this.bot.api.sendMessage(chatId, `⚠️ <b>Error:</b> ${escapeHTML(errorText)}`, {
+        parse_mode: "HTML",
+        message_thread_id: topicId,
+      });
     }
   }
 
@@ -1422,14 +1513,20 @@ export class TelegramBridge {
     if (this.compactWarningSent.has(sessionId)) return;
 
     this.compactWarningSent.add(sessionId);
-    await this.bot.api.sendMessage(
-      chatId,
-      `⚠️ <b>Context ${Math.round(contextUsedPercent)}% full</b> — consider running <code>/compact</code> to compress history.`,
-      { parse_mode: "HTML", message_thread_id: topicId },
-    ).catch(() => {});
+    await this.bot.api
+      .sendMessage(
+        chatId,
+        `⚠️ <b>Context ${Math.round(contextUsedPercent)}% full</b> — consider running <code>/compact</code> to compress history.`,
+        { parse_mode: "HTML", message_thread_id: topicId },
+      )
+      .catch(() => {});
   }
 
-  private async sendSessionSummary(chatId: number, topicId: number | undefined, sessionId: string): Promise<void> {
+  private async sendSessionSummary(
+    chatId: number,
+    topicId: number | undefined,
+    sessionId: string,
+  ): Promise<void> {
     // Wait for summarizer to finish (it runs async after session end)
     const maxWait = 15_000;
     const pollInterval = 2_000;
@@ -1439,18 +1536,22 @@ export class TelegramBridge {
       await new Promise((r) => setTimeout(r, pollInterval));
       const summary = getSessionSummary(sessionId);
       if (summary) {
-        const files = summary.filesModified.length > 0
-          ? `\n\n📁 <b>Files:</b> ${summary.filesModified.map((f) => `<code>${escapeHTML(f)}</code>`).join(", ")}`
-          : "";
-        const decisions = summary.keyDecisions.length > 0
-          ? `\n\n🎯 <b>Decisions:</b>\n${summary.keyDecisions.map((d) => `• ${escapeHTML(d)}`).join("\n")}`
-          : "";
+        const files =
+          summary.filesModified.length > 0
+            ? `\n\n📁 <b>Files:</b> ${summary.filesModified.map((f) => `<code>${escapeHTML(f)}</code>`).join(", ")}`
+            : "";
+        const decisions =
+          summary.keyDecisions.length > 0
+            ? `\n\n🎯 <b>Decisions:</b>\n${summary.keyDecisions.map((d) => `• ${escapeHTML(d)}`).join("\n")}`
+            : "";
 
-        await this.bot.api.sendMessage(
-          chatId,
-          `📝 <b>Session Summary</b>\n\n${escapeHTML(summary.summary)}${decisions}${files}`,
-          { parse_mode: "HTML", message_thread_id: topicId },
-        ).catch(() => {});
+        await this.bot.api
+          .sendMessage(
+            chatId,
+            `📝 <b>Session Summary</b>\n\n${escapeHTML(summary.summary)}${decisions}${files}`,
+            { parse_mode: "HTML", message_thread_id: topicId },
+          )
+          .catch(() => {});
         return;
       }
     }
@@ -1479,12 +1580,14 @@ export class TelegramBridge {
 
     // Start new batch
     const batch: PermBatch = {
-      perms: [{
-        requestId: request.request_id,
-        toolName: request.tool_name,
-        input: request.input,
-        description: request.description,
-      }],
+      perms: [
+        {
+          requestId: request.request_id,
+          toolName: request.tool_name,
+          input: request.input,
+          description: request.description,
+        },
+      ],
       sessionId,
       timer: setTimeout(() => {
         this.flushPermBatch(chatId, topicId, key);
@@ -1519,9 +1622,8 @@ export class TelegramBridge {
     const baseText = lines.join("\n\n");
 
     // Add countdown suffix if auto-approve is on
-    const countdownSuffix = autoApproveSeconds > 0
-      ? `\n\n⏱️ Auto-approve in <b>${autoApproveSeconds}s</b>`
-      : "";
+    const countdownSuffix =
+      autoApproveSeconds > 0 ? `\n\n⏱️ Auto-approve in <b>${autoApproveSeconds}s</b>` : "";
 
     // Build keyboard with styled allow/deny buttons (Telegram Bot API style field)
     type PermBtn = { text: string; callback_data: string; style?: string };
@@ -1529,14 +1631,26 @@ export class TelegramBridge {
 
     if (perms.length === 1) {
       permRows.push([
-        { text: "✅ Allow", callback_data: `perm:allow:${sessionId}:${perms[0]!.requestId}`, style: "success" },
-        { text: "❌ Deny", callback_data: `perm:deny:${sessionId}:${perms[0]!.requestId}`, style: "danger" },
+        {
+          text: "✅ Allow",
+          callback_data: `perm:allow:${sessionId}:${perms[0]!.requestId}`,
+          style: "success",
+        },
+        {
+          text: "❌ Deny",
+          callback_data: `perm:deny:${sessionId}:${perms[0]!.requestId}`,
+          style: "danger",
+        },
       ]);
     } else {
       for (const p of permsWithFlags) {
         const icon = p.dangerous ? "⚠️" : "✅";
         permRows.push([
-          { text: `${icon} ${p.toolName}`, callback_data: `perm:allow:${sessionId}:${p.requestId}`, style: "success" },
+          {
+            text: `${icon} ${p.toolName}`,
+            callback_data: `perm:allow:${sessionId}:${p.requestId}`,
+            style: "success",
+          },
           { text: "❌", callback_data: `perm:deny:${sessionId}:${p.requestId}`, style: "danger" },
         ]);
       }
@@ -1546,26 +1660,42 @@ export class TelegramBridge {
         // Build compact callback — only sessionId needed; safe IDs resolved server-side
         // Keep callback_data under 64 bytes: "perm:allowsafe:<sessionId(36)>"
         permRows.push([
-          { text: "✅ Allow All Safe", callback_data: `perm:allowsafe:${sessionId}`, style: "success" },
-          { text: "⚠️ Review Dangerous", callback_data: `perm:reviewdanger:${sessionId}`, style: "warning" },
+          {
+            text: "✅ Allow All Safe",
+            callback_data: `perm:allowsafe:${sessionId}`,
+            style: "success",
+          },
+          {
+            text: "⚠️ Review Dangerous",
+            callback_data: `perm:reviewdanger:${sessionId}`,
+            style: "warning",
+          },
         ]);
       }
     }
 
-    const sentMsg = await this.bot.api.sendMessage(chatId, baseText + countdownSuffix, {
-      parse_mode: "HTML",
-      reply_markup: { inline_keyboard: permRows } as unknown as import("grammy").InlineKeyboard,
-      message_thread_id: topicId,
-    }).catch((err) => {
-      log.error("Failed to send permission batch", { error: String(err) });
-      return undefined;
-    });
+    const sentMsg = await this.bot.api
+      .sendMessage(chatId, baseText + countdownSuffix, {
+        parse_mode: "HTML",
+        reply_markup: { inline_keyboard: permRows } as unknown as import("grammy").InlineKeyboard,
+        message_thread_id: topicId,
+      })
+      .catch((err) => {
+        log.error("Failed to send permission batch", { error: String(err) });
+        return undefined;
+      });
 
     // Start auto-approve countdown if enabled
     if (sentMsg && autoApproveSeconds > 0) {
       this.startAutoApproveCountdown(
-        chatId, topicId, sentMsg.message_id,
-        sessionId, perms, baseText, permRows, autoApproveSeconds,
+        chatId,
+        topicId,
+        sentMsg.message_id,
+        sessionId,
+        perms,
+        baseText,
+        permRows,
+        autoApproveSeconds,
       );
     }
   }
@@ -1575,7 +1705,12 @@ export class TelegramBridge {
     topicId: number | undefined,
     messageId: number,
     sessionId: string,
-    perms: Array<{ requestId: string; toolName: string; input: Record<string, unknown>; description?: string }>,
+    perms: Array<{
+      requestId: string;
+      toolName: string;
+      input: Record<string, unknown>;
+      description?: string;
+    }>,
     baseText: string,
     permRows: Array<Array<{ text: string; callback_data: string; style?: string }>>,
     totalSeconds: number,
@@ -1598,31 +1733,39 @@ export class TelegramBridge {
         this.sessionAutoApproveMessages.get(sessionId)?.delete(messageId);
 
         for (const p of perms) {
-          this.wsBridge.handleBrowserMessage(sessionId, JSON.stringify({
-            type: "permission_response",
-            request_id: p.requestId,
-            behavior: "allow",
-          }));
+          this.wsBridge.handleBrowserMessage(
+            sessionId,
+            JSON.stringify({
+              type: "permission_response",
+              request_id: p.requestId,
+              behavior: "allow",
+            }),
+          );
         }
 
         // Edit message to show approved (no keyboard)
-        await this.bot.api.editMessageText(
-          chatId, messageId,
-          baseText + "\n\n✅ <b>Auto-approved</b>",
-          { parse_mode: "HTML" },
-        ).catch(() => {});
+        await this.bot.api
+          .editMessageText(chatId, messageId, baseText + "\n\n✅ <b>Auto-approved</b>", {
+            parse_mode: "HTML",
+          })
+          .catch(() => {});
         return;
       }
 
       // Update countdown text, keep existing keyboard
-      await this.bot.api.editMessageText(
-        chatId, messageId,
-        baseText + `\n\n⏱️ Auto-approve in <b>${remaining}s</b>`,
-        {
-          parse_mode: "HTML",
-          reply_markup: { inline_keyboard: permRows } as unknown as import("grammy").InlineKeyboard,
-        },
-      ).catch(() => {});
+      await this.bot.api
+        .editMessageText(
+          chatId,
+          messageId,
+          baseText + `\n\n⏱️ Auto-approve in <b>${remaining}s</b>`,
+          {
+            parse_mode: "HTML",
+            reply_markup: {
+              inline_keyboard: permRows,
+            } as unknown as import("grammy").InlineKeyboard,
+          },
+        )
+        .catch(() => {});
     }, 3000);
 
     this.autoApproveTimers.set(messageId, interval);
@@ -1686,9 +1829,7 @@ export class TelegramBridge {
           dead++;
         } else {
           // No cliSessionId — truly stale, clean up
-          db.delete(telegramSessionMappings)
-            .where(eq(telegramSessionMappings.id, row.id))
-            .run();
+          db.delete(telegramSessionMappings).where(eq(telegramSessionMappings.id, row.id)).run();
           stale++;
         }
       }

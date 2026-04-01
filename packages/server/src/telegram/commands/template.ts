@@ -33,7 +33,7 @@ export function registerTemplateCommands(bridge: TelegramBridge): void {
 
     if (templates.length === 0) {
       await ctx.reply(
-        "No templates yet. Create one:\n<code>/template save \"Name\" Your prompt here</code>",
+        'No templates yet. Create one:\n<code>/template save "Name" Your prompt here</code>',
         { parse_mode: "HTML" },
       );
       return;
@@ -44,7 +44,10 @@ export function registerTemplateCommands(bridge: TelegramBridge): void {
     const rows: Btn[][] = [];
     for (let i = 0; i < templates.length; i += 2) {
       const row: Btn[] = [
-        { text: `${templates[i]!.icon} ${templates[i]!.name}`, callback_data: `tpl:use:${templates[i]!.slug}` },
+        {
+          text: `${templates[i]!.icon} ${templates[i]!.name}`,
+          callback_data: `tpl:use:${templates[i]!.slug}`,
+        },
       ];
       if (i + 1 < templates.length) {
         row.push({
@@ -76,9 +79,9 @@ export function registerTemplateCommands(bridge: TelegramBridge): void {
     if (!args) {
       await ctx.reply(
         "<b>Template commands:</b>\n" +
-        "• <code>/templates</code> — list templates\n" +
-        "• <code>/template save \"Name\" prompt text</code> — create\n" +
-        "• <code>/template delete name-slug</code> — delete",
+          "• <code>/templates</code> — list templates\n" +
+          '• <code>/template save "Name" prompt text</code> — create\n' +
+          "• <code>/template delete name-slug</code> — delete",
         { parse_mode: "HTML" },
       );
       return;
@@ -124,18 +127,22 @@ export function registerTemplateCommands(bridge: TelegramBridge): void {
       const slug = deleteMatch[1]!.trim();
       const tpl = getTemplate(slug);
       if (!tpl) {
-        await ctx.reply(`Template <code>${escapeHTML(slug)}</code> not found.`, { parse_mode: "HTML" });
+        await ctx.reply(`Template <code>${escapeHTML(slug)}</code> not found.`, {
+          parse_mode: "HTML",
+        });
         return;
       }
       deleteTemplate(tpl.id);
-      await ctx.reply(`🗑️ Template <b>${escapeHTML(tpl.name)}</b> deleted.`, { parse_mode: "HTML" });
+      await ctx.reply(`🗑️ Template <b>${escapeHTML(tpl.name)}</b> deleted.`, {
+        parse_mode: "HTML",
+      });
       return;
     }
 
     await ctx.reply(
       "Unknown subcommand. Use:\n" +
-      "<code>/template save \"Name\" prompt</code>\n" +
-      "<code>/template delete slug</code>",
+        '<code>/template save "Name" prompt</code>\n' +
+        "<code>/template delete slug</code>",
       { parse_mode: "HTML" },
     );
   });
@@ -156,7 +163,8 @@ export function registerTemplateCommands(bridge: TelegramBridge): void {
     const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
     if (!chatId) return;
 
-    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+      ?.message_thread_id;
     const mapping = bridge.getMapping(chatId, topicId);
 
     if (mapping) {
@@ -165,16 +173,20 @@ export function registerTemplateCommands(bridge: TelegramBridge): void {
       if (session) {
         // Apply model override if specified
         if (tpl.model && tpl.model !== session.state.model) {
-          bridge.wsBridge.handleBrowserMessage(mapping.sessionId, JSON.stringify({
-            type: "set_model",
-            model: tpl.model,
-          }));
+          bridge.wsBridge.handleBrowserMessage(
+            mapping.sessionId,
+            JSON.stringify({
+              type: "set_model",
+              model: tpl.model,
+            }),
+          );
         }
         bridge.wsBridge.sendUserMessage(mapping.sessionId, tpl.prompt, "telegram");
-        await ctx.editMessageText(
-          `${tpl.icon} <b>${escapeHTML(tpl.name)}</b> sent to session.`,
-          { parse_mode: "HTML" },
-        ).catch(() => {});
+        await ctx
+          .editMessageText(`${tpl.icon} <b>${escapeHTML(tpl.name)}</b> sent to session.`, {
+            parse_mode: "HTML",
+          })
+          .catch(() => {});
         return;
       }
     }
@@ -182,10 +194,11 @@ export function registerTemplateCommands(bridge: TelegramBridge): void {
     // No active session — need to start one
     // If template has a projectSlug, use that. Otherwise show project picker.
     if (tpl.projectSlug) {
-      await ctx.editMessageText(
-        `${tpl.icon} Starting <b>${escapeHTML(tpl.name)}</b> session...`,
-        { parse_mode: "HTML" },
-      ).catch(() => {});
+      await ctx
+        .editMessageText(`${tpl.icon} Starting <b>${escapeHTML(tpl.name)}</b> session...`, {
+          parse_mode: "HTML",
+        })
+        .catch(() => {});
       await bridge.startSessionForChat(ctx, tpl.projectSlug, {
         initialPrompt: tpl.prompt,
         model: tpl.model ?? undefined,
@@ -202,10 +215,11 @@ export function registerTemplateCommands(bridge: TelegramBridge): void {
       }
 
       if (projects.length === 1) {
-        await ctx.editMessageText(
-          `${tpl.icon} Starting <b>${escapeHTML(tpl.name)}</b> session...`,
-          { parse_mode: "HTML" },
-        ).catch(() => {});
+        await ctx
+          .editMessageText(`${tpl.icon} Starting <b>${escapeHTML(tpl.name)}</b> session...`, {
+            parse_mode: "HTML",
+          })
+          .catch(() => {});
         await bridge.startSessionForChat(ctx, projects[0]!.slug, {
           initialPrompt: tpl.prompt,
           model: tpl.model ?? undefined,
@@ -220,10 +234,12 @@ export function registerTemplateCommands(bridge: TelegramBridge): void {
       for (const p of projects) {
         keyboard.text(`📂 ${p.name}`, `tpl:p:${tplId}:${p.slug}`).row();
       }
-      await ctx.editMessageText(
-        `${tpl.icon} <b>${escapeHTML(tpl.name)}</b>\nSelect project:`,
-        { parse_mode: "HTML", reply_markup: keyboard },
-      ).catch(() => {});
+      await ctx
+        .editMessageText(`${tpl.icon} <b>${escapeHTML(tpl.name)}</b>\nSelect project:`, {
+          parse_mode: "HTML",
+          reply_markup: keyboard,
+        })
+        .catch(() => {});
     }
   });
 
@@ -240,10 +256,12 @@ export function registerTemplateCommands(bridge: TelegramBridge): void {
     }
 
     await ctx.answerCallbackQuery(`Starting ${tpl.name}...`);
-    await ctx.editMessageText(
-      `${tpl.icon} Starting <b>${escapeHTML(tpl.name)}</b> on <b>${escapeHTML(projectSlug)}</b>...`,
-      { parse_mode: "HTML" },
-    ).catch(() => {});
+    await ctx
+      .editMessageText(
+        `${tpl.icon} Starting <b>${escapeHTML(tpl.name)}</b> on <b>${escapeHTML(projectSlug)}</b>...`,
+        { parse_mode: "HTML" },
+      )
+      .catch(() => {});
 
     await bridge.startSessionForChat(ctx, projectSlug, {
       initialPrompt: tpl.prompt,

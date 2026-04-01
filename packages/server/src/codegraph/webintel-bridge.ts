@@ -41,9 +41,8 @@ export function getExternalPackages(projectSlug: string): string[] {
 
     // Extract package name (handle scoped packages like @scope/name)
     const parts = fromPath.split("/");
-    const pkgName = fromPath.startsWith("@") && parts.length >= 2
-      ? `${parts[0]}/${parts[1]}`
-      : parts[0]!;
+    const pkgName =
+      fromPath.startsWith("@") && parts.length >= 2 ? `${parts[0]}/${parts[1]}` : parts[0]!;
 
     // Skip Node.js built-ins
     if (isNodeBuiltin(pkgName)) continue;
@@ -85,9 +84,8 @@ export function getPackageUsageCounts(projectSlug: string): Map<string, number> 
     if (fromPath.startsWith(".") || fromPath.startsWith("/")) continue;
 
     const parts = fromPath.split("/");
-    const pkgName = fromPath.startsWith("@") && parts.length >= 2
-      ? `${parts[0]}/${parts[1]}`
-      : parts[0]!;
+    const pkgName =
+      fromPath.startsWith("@") && parts.length >= 2 ? `${parts[0]}/${parts[1]}` : parts[0]!;
 
     if (isNodeBuiltin(pkgName)) continue;
 
@@ -111,9 +109,7 @@ export function buildDependencySummary(projectSlug: string, limit = 15): string 
   const counts = getPackageUsageCounts(projectSlug);
   if (counts.size === 0) return null;
 
-  const sorted = [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit);
+  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
 
   const lines = [
     `<codegraph type="dependencies">`,
@@ -135,17 +131,60 @@ export function buildDependencySummary(projectSlug: string, limit = 15): string 
 // ─── Node.js Builtins ───────────────────────────────────────────────────
 
 const NODE_BUILTINS = new Set([
-  "assert", "buffer", "child_process", "cluster", "crypto", "dgram",
-  "dns", "domain", "events", "fs", "http", "http2", "https", "net",
-  "os", "path", "perf_hooks", "process", "querystring", "readline",
-  "repl", "stream", "string_decoder", "timers", "tls", "tty",
-  "url", "util", "v8", "vm", "worker_threads", "zlib",
-  "node:assert", "node:buffer", "node:child_process", "node:crypto",
-  "node:events", "node:fs", "node:http", "node:https", "node:net",
-  "node:os", "node:path", "node:process", "node:readline",
-  "node:stream", "node:url", "node:util", "node:worker_threads",
-  "node:zlib", "node:test",
-  "bun", "bun:test", "bun:sqlite",
+  "assert",
+  "buffer",
+  "child_process",
+  "cluster",
+  "crypto",
+  "dgram",
+  "dns",
+  "domain",
+  "events",
+  "fs",
+  "http",
+  "http2",
+  "https",
+  "net",
+  "os",
+  "path",
+  "perf_hooks",
+  "process",
+  "querystring",
+  "readline",
+  "repl",
+  "stream",
+  "string_decoder",
+  "timers",
+  "tls",
+  "tty",
+  "url",
+  "util",
+  "v8",
+  "vm",
+  "worker_threads",
+  "zlib",
+  "node:assert",
+  "node:buffer",
+  "node:child_process",
+  "node:crypto",
+  "node:events",
+  "node:fs",
+  "node:http",
+  "node:https",
+  "node:net",
+  "node:os",
+  "node:path",
+  "node:process",
+  "node:readline",
+  "node:stream",
+  "node:url",
+  "node:util",
+  "node:worker_threads",
+  "node:zlib",
+  "node:test",
+  "bun",
+  "bun:test",
+  "bun:sqlite",
 ]);
 
 function isNodeBuiltin(name: string): boolean {

@@ -87,10 +87,7 @@ export function linkSession(channelId: string, sessionId: string): void {
   const channel = db.select().from(channels).where(eq(channels.id, channelId)).get();
   if (!channel) throw new Error(`Channel not found: ${channelId}`);
 
-  db.update(sessions)
-    .set({ channelId })
-    .where(eq(sessions.id, sessionId))
-    .run();
+  db.update(sessions).set({ channelId }).where(eq(sessions.id, sessionId)).run();
 
   log.info("Session linked to channel", { channelId, sessionId });
 }
@@ -100,10 +97,7 @@ export function linkSession(channelId: string, sessionId: string): void {
 export function unlinkSession(sessionId: string): void {
   const db = getDb();
 
-  db.update(sessions)
-    .set({ channelId: null })
-    .where(eq(sessions.id, sessionId))
-    .run();
+  db.update(sessions).set({ channelId: null }).where(eq(sessions.id, sessionId)).run();
 
   log.info("Session unlinked from channel", { sessionId });
 }
@@ -139,10 +133,7 @@ export function postMessage(opts: {
 
 // ─── Get messages ─────────────────────────────────────────────────────────────
 
-export function getChannelMessages(
-  channelId: string,
-  limit = 50,
-): ChannelMessage[] {
+export function getChannelMessages(channelId: string, limit = 50): ChannelMessage[] {
   const db = getDb();
 
   return db
@@ -202,11 +193,7 @@ export function listChannels(opts?: {
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const totalRow = db
-    .select({ total: count() })
-    .from(channels)
-    .where(where)
-    .get();
+  const totalRow = db.select({ total: count() }).from(channels).where(where).get();
   const total = totalRow?.total ?? 0;
 
   const rows = db
@@ -223,10 +210,7 @@ export function listChannels(opts?: {
 
 // ─── Update channel status ────────────────────────────────────────────────────
 
-export function updateChannelStatus(
-  channelId: string,
-  status: ChannelStatus,
-): void {
+export function updateChannelStatus(channelId: string, status: ChannelStatus): void {
   const db = getDb();
 
   db.update(channels)
@@ -249,20 +233,13 @@ export function deleteChannel(channelId: string): boolean {
   if (!existing) return false;
 
   // Unlink all sessions first
-  db.update(sessions)
-    .set({ channelId: null })
-    .where(eq(sessions.channelId, channelId))
-    .run();
+  db.update(sessions).set({ channelId: null }).where(eq(sessions.channelId, channelId)).run();
 
   // Delete messages
-  db.delete(channelMessages)
-    .where(eq(channelMessages.channelId, channelId))
-    .run();
+  db.delete(channelMessages).where(eq(channelMessages.channelId, channelId)).run();
 
   // Delete channel
-  db.delete(channels)
-    .where(eq(channels.id, channelId))
-    .run();
+  db.delete(channels).where(eq(channels.id, channelId)).run();
 
   log.info("Channel deleted", { channelId });
   return true;

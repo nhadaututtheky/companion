@@ -38,10 +38,7 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
   const fontSize = compact ? 14 : 15;
 
   return (
-    <div
-      className="markdown-content"
-      style={{ fontSize, lineHeight: 1.6 }}
-    >
+    <div className="markdown-content" style={{ fontSize, lineHeight: 1.6 }}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -53,7 +50,10 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
 
             if (isBlock || codeText.includes("\n")) {
               return (
-                <div className="relative group my-2 rounded-lg overflow-hidden" style={{ maxHeight: compact ? 200 : 400 }}>
+                <div
+                  className="relative group my-2 rounded-lg overflow-hidden"
+                  style={{ maxHeight: compact ? 200 : 400 }}
+                >
                   {lang && (
                     <div
                       className="px-3 py-1 text-xs font-mono"
@@ -189,7 +189,11 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
 
           // ── Inline elements ─────────────────────────────
           strong({ children }) {
-            return <strong style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>{children}</strong>;
+            return (
+              <strong style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>
+                {children}
+              </strong>
+            );
           },
           em({ children }) {
             return <em>{children}</em>;
@@ -201,8 +205,12 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: "#4285F4", textDecoration: "none" }}
-                onMouseEnter={(e) => { (e.target as HTMLElement).style.textDecoration = "underline"; }}
-                onMouseLeave={(e) => { (e.target as HTMLElement).style.textDecoration = "none"; }}
+                onMouseEnter={(e) => {
+                  (e.target as HTMLElement).style.textDecoration = "underline";
+                }}
+                onMouseLeave={(e) => {
+                  (e.target as HTMLElement).style.textDecoration = "none";
+                }}
               >
                 {children}
               </a>
@@ -211,18 +219,38 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
 
           // ── Headings (scale down for chat) ──────────────
           h1({ children }) {
-            return <h3 style={{ fontSize: compact ? 15 : 17, fontWeight: 700, margin: "8px 0 4px" }}>{children}</h3>;
+            return (
+              <h3 style={{ fontSize: compact ? 15 : 17, fontWeight: 700, margin: "8px 0 4px" }}>
+                {children}
+              </h3>
+            );
           },
           h2({ children }) {
-            return <h4 style={{ fontSize: compact ? 14 : 16, fontWeight: 600, margin: "6px 0 3px" }}>{children}</h4>;
+            return (
+              <h4 style={{ fontSize: compact ? 14 : 16, fontWeight: 600, margin: "6px 0 3px" }}>
+                {children}
+              </h4>
+            );
           },
           h3({ children }) {
-            return <h5 style={{ fontSize: compact ? 13 : 15, fontWeight: 600, margin: "4px 0 2px" }}>{children}</h5>;
+            return (
+              <h5 style={{ fontSize: compact ? 13 : 15, fontWeight: 600, margin: "4px 0 2px" }}>
+                {children}
+              </h5>
+            );
           },
 
           // ── Horizontal rule ─────────────────────────────
           hr() {
-            return <hr style={{ border: "none", borderTop: "1px solid var(--color-border)", margin: "8px 0" }} />;
+            return (
+              <hr
+                style={{
+                  border: "none",
+                  borderTop: "1px solid var(--color-border)",
+                  margin: "8px 0",
+                }}
+              />
+            );
           },
         }}
       >

@@ -125,9 +125,7 @@ export function CommandPalette() {
 
   const handleStopAllSessions = async () => {
     close("Stop All Sessions");
-    const running = sessions.filter((s) =>
-      ["running", "waiting", "idle"].includes(s.status),
-    );
+    const running = sessions.filter((s) => ["running", "waiting", "idle"].includes(s.status));
     await Promise.allSettled(running.map((s) => api.sessions.stop(s.id)));
   };
 
@@ -157,10 +155,7 @@ export function CommandPalette() {
     router.push("/templates");
   };
 
-  const handleTogglePanel = (
-    mode: "files" | "search" | "terminal" | "browser",
-    label: string,
-  ) => {
+  const handleTogglePanel = (mode: "files" | "search" | "terminal" | "browser", label: string) => {
     close(label);
     setRightPanelMode(rightPanelMode === mode ? "none" : mode);
   };
@@ -196,9 +191,7 @@ export function CommandPalette() {
 
   if (!open) return null;
 
-  const activeSessions = sessions.filter((s) =>
-    ["running", "waiting", "idle"].includes(s.status),
-  );
+  const activeSessions = sessions.filter((s) => ["running", "waiting", "idle"].includes(s.status));
 
   return (
     <div
@@ -564,10 +557,7 @@ const metaStyle: React.CSSProperties = {
   flexShrink: 0,
 };
 
-function commandItemStyle(
-  active: boolean,
-  disabled = false,
-): React.CSSProperties {
+function commandItemStyle(active: boolean, disabled = false): React.CSSProperties {
   return {
     display: "flex",
     alignItems: "center",

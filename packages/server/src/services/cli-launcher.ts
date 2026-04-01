@@ -179,14 +179,17 @@ function injectHooksConfig(cwd: string, hooksUrl: string, sessionId: string): ()
       if (originalHooks !== undefined) {
         // Restore original hooks
         const current = existsSync(settingsPath)
-          ? JSON.parse(readFileSync(settingsPath, "utf-8")) as Record<string, unknown>
+          ? (JSON.parse(readFileSync(settingsPath, "utf-8")) as Record<string, unknown>)
           : {};
         const restored = { ...current, hooks: originalHooks };
         writeFileSync(settingsPath, JSON.stringify(restored, null, 2), "utf-8");
       } else {
         // Remove hooks key entirely
         if (existsSync(settingsPath)) {
-          const current = JSON.parse(readFileSync(settingsPath, "utf-8")) as Record<string, unknown>;
+          const current = JSON.parse(readFileSync(settingsPath, "utf-8")) as Record<
+            string,
+            unknown
+          >;
           delete current.hooks;
           if (Object.keys(current).length === 0) {
             unlinkSync(settingsPath);
@@ -214,11 +217,14 @@ export function launchCLI(
 
   const args: string[] = [
     "--print",
-    "--output-format", "stream-json",
-    "--input-format", "stream-json",
+    "--output-format",
+    "stream-json",
+    "--input-format",
+    "stream-json",
     "--include-partial-messages",
     "--verbose",
-    "--model", opts.model,
+    "--model",
+    opts.model,
   ];
 
   // Bare mode: minimal output for cost-sensitive sessions

@@ -52,16 +52,19 @@ export function runMigrations() {
           // SQLite has no ALTER TABLE ADD COLUMN IF NOT EXISTS —
           // skip "duplicate column" errors from partially-applied migrations
           if (String(stmtErr).includes("duplicate column name")) {
-            log.warn("Skipping duplicate column (already exists)", { file, stmt: stmt.slice(0, 80) });
+            log.warn("Skipping duplicate column (already exists)", {
+              file,
+              stmt: stmt.slice(0, 80),
+            });
             continue;
           }
           throw stmtErr;
         }
       }
-      sqlite.run(
-        "INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)",
-        [file, Date.now()],
-      );
+      sqlite.run("INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)", [
+        file,
+        Date.now(),
+      ]);
       sqlite.run("COMMIT");
       log.info("Migration applied", { file });
     } catch (err) {

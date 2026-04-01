@@ -23,7 +23,7 @@ import { createLogger } from "../logger.js";
 const log = createLogger("debate-engine");
 
 const DEFAULT_MAX_ROUNDS = 5;
-const DEFAULT_MAX_COST_USD = 0.50;
+const DEFAULT_MAX_COST_USD = 0.5;
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -380,7 +380,12 @@ async function runDebateLoop(
 
       const agentResults = await Promise.all(
         state.agents.map(async (agent) => {
-          const conversationMessages = buildConversation(history, agent, state.currentRound, state.scratchpad || undefined);
+          const conversationMessages = buildConversation(
+            history,
+            agent,
+            state.currentRound,
+            state.scratchpad || undefined,
+          );
           const { text, costUsd } = await callDebateAI(
             agent.systemPrompt,
             conversationMessages,
@@ -545,7 +550,10 @@ async function coordinatorSynthesize(
 ): Promise<string> {
   const agentLabels = state.agents.map((a) => `${a.emoji} ${a.label}`).join(" vs ");
   const roundSummary = roundMessages
-    .map((m) => `<task-notification agent="${m.agent.label}" round="${state.currentRound}">\n${m.text}\n</task-notification>`)
+    .map(
+      (m) =>
+        `<task-notification agent="${m.agent.label}" round="${state.currentRound}">\n${m.text}\n</task-notification>`,
+    )
     .join("\n\n");
 
   const { text } = await callDebateAI(
@@ -665,7 +673,10 @@ async function generateVerdict(
   // This prevents the judge from being biased by rhetorical style of earlier rounds
   const lastRound = history.filter((m) => m.round === state.currentRound);
   const lastRoundText = lastRound
-    .map((m) => `<task-notification agent="${m.role}" round="${m.round}">\n${m.content}\n</task-notification>`)
+    .map(
+      (m) =>
+        `<task-notification agent="${m.role}" round="${m.round}">\n${m.content}\n</task-notification>`,
+    )
     .join("\n\n");
 
   const judgeContext = state.scratchpad

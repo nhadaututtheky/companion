@@ -132,16 +132,11 @@ export function startSdkSession(
     const requestId = randomUUID();
 
     try {
-      const result = await callbacks.requestPermission(
-        requestId,
-        toolName,
-        input,
-        {
-          suggestions: toolOpts.suggestions,
-          description: toolOpts.decisionReason ?? toolOpts.renderedPrompt,
-          toolUseId: toolOpts.toolUseID,
-        },
-      );
+      const result = await callbacks.requestPermission(requestId, toolName, input, {
+        suggestions: toolOpts.suggestions,
+        description: toolOpts.decisionReason ?? toolOpts.renderedPrompt,
+        toolUseId: toolOpts.toolUseID,
+      });
       return result;
     } catch {
       // If permission request fails (e.g. abort), deny
@@ -216,11 +211,7 @@ export function startSdkSession(
 
 // ─── Message Router ──────────────────────────────────────────────────────────
 
-function routeMessage(
-  msg: SDKMessage,
-  callbacks: SdkMessageCallbacks,
-  sessionId: string,
-): void {
+function routeMessage(msg: SDKMessage, callbacks: SdkMessageCallbacks, sessionId: string): void {
   switch (msg.type) {
     case "system": {
       if ("subtype" in msg && msg.subtype === "init") {

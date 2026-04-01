@@ -84,10 +84,7 @@ export function pushMessageHistory(session: ActiveSession, msg: unknown): void {
 
 // ─── Active session management ──────────────────────────────────────────────
 
-export function createActiveSession(
-  id: string,
-  initialState: SessionState,
-): ActiveSession {
+export function createActiveSession(id: string, initialState: SessionState): ActiveSession {
   const session: ActiveSession = {
     id,
     state: initialState,
@@ -296,10 +293,7 @@ export function getSessionRecord(id: string) {
 export function updateCliSessionId(id: string, cliSessionId: string): void {
   const db = getDb();
   try {
-    db.update(sessions)
-      .set({ cliSessionId })
-      .where(eq(sessions.id, id))
-      .run();
+    db.update(sessions).set({ cliSessionId }).where(eq(sessions.id, id)).run();
   } catch (err) {
     log.error("Failed to update cliSessionId", { id, error: String(err) });
   }
@@ -332,16 +326,16 @@ export function findDeadSessionForChat(opts: {
     for (const row of mappingRow) {
       // Check that the corresponding session is ended and has a cliSessionId
       const sessionRow = db
-        .select({ status: sessions.status, cliSessionId: sessions.cliSessionId, model: sessions.model })
+        .select({
+          status: sessions.status,
+          cliSessionId: sessions.cliSessionId,
+          model: sessions.model,
+        })
         .from(sessions)
         .where(eq(sessions.id, row.sessionId))
         .get();
 
-      if (
-        sessionRow &&
-        sessionRow.status === "ended" &&
-        sessionRow.cliSessionId
-      ) {
+      if (sessionRow && sessionRow.status === "ended" && sessionRow.cliSessionId) {
         return {
           sessionId: row.sessionId,
           cliSessionId: sessionRow.cliSessionId,
@@ -372,11 +366,7 @@ export function listSessions(opts?: {
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const totalRow = db
-    .select({ total: count() })
-    .from(sessions)
-    .where(where)
-    .get();
+  const totalRow = db.select({ total: count() }).from(sessions).where(where).get();
   const total = totalRow?.total ?? 0;
 
   const rows = db
@@ -448,9 +438,7 @@ export function bulkEndSessions(): number {
  * active in DB but have no in-memory session are marked 'ended'.
  * Returns the count of sessions cleaned up.
  */
-export function cleanupZombieSessions(
-  isInMemory: (id: string) => boolean,
-): number {
+export function cleanupZombieSessions(isInMemory: (id: string) => boolean): number {
   const db = getDb();
   const terminalStatuses = ["ended", "error"];
 
@@ -461,9 +449,7 @@ export function cleanupZombieSessions(
       .where(notInArray(sessions.status, terminalStatuses))
       .all();
 
-    const zombieIds = activeInDb
-      .map((r) => r.id)
-      .filter((id) => !isInMemory(id));
+    const zombieIds = activeInDb.map((r) => r.id).filter((id) => !isInMemory(id));
 
     if (zombieIds.length === 0) return 0;
 
@@ -510,10 +496,7 @@ export function listResumableSessions(opts?: {
   const offset = opts?.offset ?? 0;
 
   try {
-    const conditions = [
-      eq(sessions.status, "ended"),
-      isNotNull(sessions.cliSessionId),
-    ];
+    const conditions = [eq(sessions.status, "ended"), isNotNull(sessions.cliSessionId)];
 
     if (opts?.projectSlug) {
       conditions.push(eq(sessions.projectSlug, opts.projectSlug));
@@ -575,10 +558,7 @@ export function listResumableSessions(opts?: {
 export function dismissResumableSession(sessionId: string): boolean {
   const db = getDb();
   try {
-    db.update(sessions)
-      .set({ cliSessionId: null })
-      .where(eq(sessions.id, sessionId))
-      .run();
+    db.update(sessions).set({ cliSessionId: null }).where(eq(sessions.id, sessionId)).run();
     return true;
   } catch (err) {
     log.warn("Failed to dismiss resumable session", { sessionId, error: String(err) });
@@ -608,10 +588,7 @@ export function clearCliSessionId(cliSessionId: string): void {
 export function renameSession(sessionId: string, name: string | null): boolean {
   const db = getDb();
   try {
-    db.update(sessions)
-      .set({ name })
-      .where(eq(sessions.id, sessionId))
-      .run();
+    db.update(sessions).set({ name }).where(eq(sessions.id, sessionId)).run();
 
     // Also update in-memory state if session is active
     const active = activeSessions.get(sessionId);
@@ -643,10 +620,7 @@ export function updateSessionConfig(
 
     if (Object.keys(updates).length === 0) return true;
 
-    db.update(sessions)
-      .set(updates)
-      .where(eq(sessions.id, sessionId))
-      .run();
+    db.update(sessions).set(updates).where(eq(sessions.id, sessionId)).run();
 
     // Sync to in-memory state
     const active = activeSessions.get(sessionId);
@@ -675,10 +649,7 @@ export function updateSessionConfig(
 export function updateSessionTags(sessionId: string, tags: string[]): boolean {
   const db = getDb();
   try {
-    db.update(sessions)
-      .set({ tags })
-      .where(eq(sessions.id, sessionId))
-      .run();
+    db.update(sessions).set({ tags }).where(eq(sessions.id, sessionId)).run();
     return true;
   } catch (err) {
     log.warn("Failed to update session tags", { sessionId, error: String(err) });
@@ -689,10 +660,7 @@ export function updateSessionTags(sessionId: string, tags: string[]): boolean {
 export function updateSessionCostWarned(sessionId: string, level: number): void {
   const db = getDb();
   try {
-    db.update(sessions)
-      .set({ costWarned: level })
-      .where(eq(sessions.id, sessionId))
-      .run();
+    db.update(sessions).set({ costWarned: level }).where(eq(sessions.id, sessionId)).run();
   } catch (err) {
     log.warn("Failed to update cost warned level", { sessionId, error: String(err) });
   }
@@ -740,11 +708,7 @@ export function getSessionMessages(
     ? and(baseWhere, lt(sessionMessages.timestamp, new Date(opts.before)))
     : baseWhere;
 
-  const totalRow = db
-    .select({ total: count() })
-    .from(sessionMessages)
-    .where(baseWhere)
-    .get();
+  const totalRow = db.select({ total: count() }).from(sessionMessages).where(baseWhere).get();
   const total = totalRow?.total ?? 0;
 
   const limit = opts?.limit ?? 200;

@@ -1,9 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowClockwise, CurrencyDollar, FolderOpen,
-} from "@phosphor-icons/react";
+import { ArrowClockwise, CurrencyDollar, FolderOpen } from "@phosphor-icons/react";
 import { Header } from "@/components/layout/header";
 import { api } from "@/lib/api-client";
 
@@ -58,10 +56,16 @@ export default function SessionsPage() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const filtered = sessions.filter((s) => {
-    if (filter === "active" && !["running", "waiting", "idle", "busy", "starting"].includes(s.status)) return false;
+    if (
+      filter === "active" &&
+      !["running", "waiting", "idle", "busy", "starting"].includes(s.status)
+    )
+      return false;
     if (filter === "ended" && !["ended", "error"].includes(s.status)) return false;
     if (search) {
       const q = search.toLowerCase();
@@ -75,12 +79,18 @@ export default function SessionsPage() {
   });
 
   return (
-    <div className="flex flex-col" style={{ minHeight: "100vh", background: "var(--color-bg-base)" }}>
+    <div
+      className="flex flex-col"
+      style={{ minHeight: "100vh", background: "var(--color-bg-base)" }}
+    >
       <Header />
 
       <div className="flex-1 px-6 py-6 max-w-5xl mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold" style={{ fontFamily: "Outfit, sans-serif", color: "var(--color-text-primary)" }}>
+          <h1
+            className="text-2xl font-bold"
+            style={{ fontFamily: "Outfit, sans-serif", color: "var(--color-text-primary)" }}
+          >
             Sessions
           </h1>
           <button
@@ -156,17 +166,26 @@ export default function SessionsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
                     <StatusBadge status={s.status} />
-                    <span className="text-sm font-semibold truncate" style={{ color: "var(--color-text-primary)" }}>
+                    <span
+                      className="text-sm font-semibold truncate"
+                      style={{ color: "var(--color-text-primary)" }}
+                    >
                       {s.projectSlug}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 text-xs" style={{ color: "var(--color-text-muted)" }}>
+                  <div
+                    className="flex items-center gap-4 text-xs"
+                    style={{ color: "var(--color-text-muted)" }}
+                  >
                     <span>{s.model}</span>
                     <span>{s.numTurns} turns</span>
                     <span>{new Date(s.createdAt).toLocaleString()}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 font-mono text-sm font-semibold" style={{ color: "#34A853" }}>
+                <div
+                  className="flex items-center gap-1 font-mono text-sm font-semibold"
+                  style={{ color: "#34A853" }}
+                >
                   <CurrencyDollar size={14} weight="bold" />
                   {s.totalCostUsd.toFixed(4)}
                 </div>

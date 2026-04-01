@@ -19,11 +19,7 @@ interface TemplateVariablesFormProps {
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export function TemplateVariablesForm({
-  variables,
-  values,
-  onChange,
-}: TemplateVariablesFormProps) {
+export function TemplateVariablesForm({ variables, values, onChange }: TemplateVariablesFormProps) {
   if (variables.length === 0) return null;
 
   const handleChange = (key: string, value: string) => {
@@ -35,15 +31,10 @@ export function TemplateVariablesForm({
 
   return (
     <div>
-      <p
-        className="text-xs font-semibold mb-2"
-        style={{ color: "var(--color-text-secondary)" }}
-      >
+      <p className="text-xs font-semibold mb-2" style={{ color: "var(--color-text-secondary)" }}>
         TEMPLATE VARIABLES
       </p>
-      <div
-        className={useGrid ? "grid grid-cols-2 gap-3" : "flex flex-col gap-3"}
-      >
+      <div className={useGrid ? "grid grid-cols-2 gap-3" : "flex flex-col gap-3"}>
         {variables.map((variable) => (
           <div key={variable.key}>
             <label
@@ -53,11 +44,7 @@ export function TemplateVariablesForm({
             >
               {variable.label}
               {variable.required && (
-                <span
-                  className="ml-1 font-bold"
-                  style={{ color: "#EA4335" }}
-                  aria-hidden="true"
-                >
+                <span className="ml-1 font-bold" style={{ color: "#EA4335" }} aria-hidden="true">
                   *
                 </span>
               )}

@@ -14,9 +14,7 @@ const log = createLogger("license");
 const VERIFY_URL = process.env.COMPANION_VERIFY_URL ?? "https://pay.theio.vn/verify";
 const TRIAL_URL = process.env.COMPANION_TRIAL_URL ?? "https://pay.theio.vn/trial";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
-const DATA_DIR = process.env.DATABASE_PATH
-  ? join(process.env.DATABASE_PATH, "..")
-  : "./data";
+const DATA_DIR = process.env.DATABASE_PATH ? join(process.env.DATABASE_PATH, "..") : "./data";
 
 export type LicenseTier = "free" | "trial" | "pro" | "team";
 
@@ -43,9 +41,14 @@ const FREE_LICENSE: LicenseInfo = {
 };
 
 const TRIAL_FEATURES = [
-  "web_terminal", "basic_commands", "multi_session",
-  "telegram_bot", "magic_ring", "stream_bridge",
-  "shared_context", "permission_gate_telegram",
+  "web_terminal",
+  "basic_commands",
+  "multi_session",
+  "telegram_bot",
+  "magic_ring",
+  "stream_bridge",
+  "shared_context",
+  "permission_gate_telegram",
 ];
 
 // In-memory cache
@@ -96,7 +99,10 @@ function saveLicenseCache(license: LicenseInfo): void {
  * Verify license key against the cloud API.
  * Returns cached result if still valid.
  */
-export async function verifyLicense(key: string, options?: { skipCache?: boolean }): Promise<LicenseInfo> {
+export async function verifyLicense(
+  key: string,
+  options?: { skipCache?: boolean },
+): Promise<LicenseInfo> {
   // Check cache (skip when explicitly activating a new key)
   if (!options?.skipCache) {
     if (cachedLicense?.valid && Date.now() - cachedLicense.cachedAt < CACHE_TTL_MS) {
@@ -112,12 +118,15 @@ export async function verifyLicense(key: string, options?: { skipCache?: boolean
 
   try {
     const mid = getMachineId();
-    const res = await fetch(`${VERIFY_URL}?key=${encodeURIComponent(key)}&mid=${encodeURIComponent(mid)}`, {
-      headers: { "User-Agent": "Companion/0.2.0" },
-      signal: AbortSignal.timeout(10000),
-    });
+    const res = await fetch(
+      `${VERIFY_URL}?key=${encodeURIComponent(key)}&mid=${encodeURIComponent(mid)}`,
+      {
+        headers: { "User-Agent": "Companion/0.2.0" },
+        signal: AbortSignal.timeout(10000),
+      },
+    );
 
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       valid: boolean;
       tier?: string;
       email?: string;
@@ -188,7 +197,7 @@ export async function checkOrActivateTrial(): Promise<LicenseInfo> {
       signal: AbortSignal.timeout(10000),
     });
 
-    const data = await res.json() as {
+    const data = (await res.json()) as {
       valid: boolean;
       tier?: string;
       expiresAt?: string;

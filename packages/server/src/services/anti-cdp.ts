@@ -89,7 +89,7 @@ async function getPages(port: number): Promise<CDPPage[]> {
         p.webSocketDebuggerUrl &&
         (p.type === "page" || p.type === "webview") &&
         !p.url?.startsWith("devtools://") &&
-        !p.url?.startsWith("chrome-devtools://")
+        !p.url?.startsWith("chrome-devtools://"),
     );
   } catch {
     return [];
@@ -124,15 +124,12 @@ async function findAllPages(): Promise<{ port: number; page: CDPPage }[]> {
   }
   const basePort = getCdpBasePort();
   const portRange = getCdpPortRange();
-  const ports = Array.from(
-    { length: portRange * 2 + 1 },
-    (_, i) => basePort - portRange + i
-  );
+  const ports = Array.from({ length: portRange * 2 + 1 }, (_, i) => basePort - portRange + i);
   const results = await Promise.all(
     ports.map(async (port) => {
       const pages = await getPages(port);
       return pages.map((page) => ({ port, page }));
-    })
+    }),
   );
   _pageCache = results.flat();
   _pageCacheAt = now;
@@ -149,15 +146,12 @@ export function invalidatePageCache(): void {
 async function findAllTargetsRaw(): Promise<{ port: number; targets: CDPPage[] }[]> {
   const basePort = getCdpBasePort();
   const portRange = getCdpPortRange();
-  const ports = Array.from(
-    { length: portRange * 2 + 1 },
-    (_, i) => basePort - portRange + i
-  );
+  const ports = Array.from({ length: portRange * 2 + 1 }, (_, i) => basePort - portRange + i);
   const results = await Promise.all(
     ports.map(async (port) => {
       const targets = await getRawTargets(port);
       return targets.length > 0 ? { port, targets } : null;
-    })
+    }),
   );
   return results.filter((r): r is { port: number; targets: CDPPage[] } => r !== null);
 }
@@ -166,12 +160,16 @@ async function findAllTargetsRaw(): Promise<{ port: number; targets: CDPPage[] }
 async function evaluate(
   wsUrl: string,
   expression: string,
-  timeout = CDP_TIMEOUT
+  timeout = CDP_TIMEOUT,
 ): Promise<{ result?: { value?: unknown } }> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(wsUrl);
     const timer = setTimeout(() => {
-      try { ws.close(); } catch { /* ignore */ }
+      try {
+        ws.close();
+      } catch {
+        /* ignore */
+      }
       reject(new Error("CDP timeout"));
     }, timeout);
 
@@ -181,7 +179,7 @@ async function evaluate(
           id: 1,
           method: "Runtime.evaluate",
           params: { expression, userGesture: true, awaitPromise: true, returnByValue: true },
-        })
+        }),
       );
     });
 
@@ -193,7 +191,9 @@ async function evaluate(
           ws.close();
           resolve(msg.result ?? {});
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     });
 
     ws.addEventListener("error", () => {
@@ -210,7 +210,7 @@ async function evaluate(
 async function cdpSendCommands(
   wsUrl: string,
   commands: { method: string; params?: Record<string, unknown> }[],
-  timeout = CDP_TIMEOUT
+  timeout = CDP_TIMEOUT,
 ): Promise<unknown[]> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(wsUrl);
@@ -218,7 +218,11 @@ async function cdpSendCommands(
     let currentId = 0;
 
     const timer = setTimeout(() => {
-      try { ws.close(); } catch { /* ignore */ }
+      try {
+        ws.close();
+      } catch {
+        /* ignore */
+      }
       reject(new Error("CDP timeout"));
     }, timeout);
 
@@ -243,7 +247,9 @@ async function cdpSendCommands(
           currentId++;
           setTimeout(() => sendNext(), 50);
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     });
 
     ws.addEventListener("error", () => {
@@ -381,7 +387,9 @@ async function ensureChatOpen(pages: { port: number; page: CDPPage }[]): Promise
       if (parsed?.chatOpen) return;
       await new Promise((r) => setTimeout(r, 800));
       return;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -389,7 +397,7 @@ async function ensureChatOpen(pages: { port: number; page: CDPPage }[]): Promise
 
 export interface AntiSession {
   title: string;
-  age: string;       // e.g. "22h", "2d", "6d"
+  age: string; // e.g. "22h", "2d", "6d"
   index: number;
 }
 
@@ -405,7 +413,12 @@ export async function listAntiSessions(): Promise<SessionListResult> {
   const pages = await findAllPages();
   const target = pages.find((p) => p.page.title !== "Launchpad");
   if (!target) {
-    return { success: false, sessions: [], hasActiveSession: false, detail: "No CDP targets. Is Anti running?" };
+    return {
+      success: false,
+      sessions: [],
+      hasActiveSession: false,
+      detail: "No CDP targets. Is Anti running?",
+    };
   }
 
   await ensureChatOpen(pages);
@@ -451,7 +464,9 @@ export async function listAntiSessions(): Promise<SessionListResult> {
     if (openInfo?.opened) {
       await new Promise((r) => setTimeout(r, 500));
     }
-  } catch { /* continue anyway, panel might already be open */ }
+  } catch {
+    /* continue anyway, panel might already be open */
+  }
 
   // Step 2: Read conversation items from the history panel
   const script = `(function() {
@@ -550,28 +565,49 @@ export async function listAntiSessions(): Promise<SessionListResult> {
     const evalResult = await evaluate(target.page.webSocketDebuggerUrl, script, 8_000);
     const raw = evalResult.result?.value;
     if (!raw || typeof raw !== "string") {
-      return { success: false, sessions: [], hasActiveSession: false, detail: "CDP returned no data" };
+      return {
+        success: false,
+        sessions: [],
+        hasActiveSession: false,
+        detail: "CDP returned no data",
+      };
     }
 
     const parsed = JSON.parse(raw) as { sessions: AntiSession[]; hasActive: boolean };
 
     // Close history panel with Escape
-    await cdpSendCommands(target.page.webSocketDebuggerUrl, [
-      { method: "Input.dispatchKeyEvent", params: { type: "keyDown", key: "Escape", code: "Escape" } },
-      { method: "Input.dispatchKeyEvent", params: { type: "keyUp", key: "Escape", code: "Escape" } },
-    ], 2000).catch(() => {});
+    await cdpSendCommands(
+      target.page.webSocketDebuggerUrl,
+      [
+        {
+          method: "Input.dispatchKeyEvent",
+          params: { type: "keyDown", key: "Escape", code: "Escape" },
+        },
+        {
+          method: "Input.dispatchKeyEvent",
+          params: { type: "keyUp", key: "Escape", code: "Escape" },
+        },
+      ],
+      2000,
+    ).catch(() => {});
 
     return {
       success: true,
       sessions: parsed.sessions,
       hasActiveSession: parsed.hasActive,
-      detail: parsed.sessions.length > 0
-        ? `${parsed.sessions.length} session(s) found`
-        : "No sessions found in sidebar",
+      detail:
+        parsed.sessions.length > 0
+          ? `${parsed.sessions.length} session(s) found`
+          : "No sessions found in sidebar",
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return { success: false, sessions: [], hasActiveSession: false, detail: `Session list failed: ${msg}` };
+    return {
+      success: false,
+      sessions: [],
+      hasActiveSession: false,
+      detail: `Session list failed: ${msg}`,
+    };
   }
 }
 
@@ -622,7 +658,9 @@ export async function selectAntiSession(sessionIndex: number): Promise<CDPResult
     if (openInfo?.opened) {
       await new Promise((r) => setTimeout(r, 500));
     }
-  } catch { /* continue — panel might already be open */ }
+  } catch {
+    /* continue — panel might already be open */
+  }
 
   // Step 2: Click the session item using the SAME selector as listAntiSessions
   const script = `(function() {
@@ -683,7 +721,9 @@ export async function selectAntiSession(sessionIndex: number): Promise<CDPResult
 
     try {
       await evaluate(wsUrl, dismissScript, 3000);
-    } catch { /* dialog may not appear for all sessions */ }
+    } catch {
+      /* dialog may not appear for all sessions */
+    }
 
     return { success: true, detail: `Selected session #${sessionIndex + 1}` };
   } catch (err) {
@@ -696,7 +736,10 @@ export async function selectAntiSession(sessionIndex: number): Promise<CDPResult
 export async function sendChatMessage(text: string): Promise<CDPResult> {
   const pages = await findAllPages();
   if (pages.length === 0) {
-    return { success: false, detail: "No CDP targets. Is Anti running with --remote-debugging-port=9000?" };
+    return {
+      success: false,
+      detail: "No CDP targets. Is Anti running with --remote-debugging-port=9000?",
+    };
   }
 
   await ensureChatOpen(pages);
@@ -788,31 +831,74 @@ export async function sendChatMessage(text: string): Promise<CDPResult> {
         if (!info?.found) continue;
 
         const commands: { method: string; params?: Record<string, unknown> }[] = [
-          { method: "Input.dispatchMouseEvent", params: { type: "mousePressed", x: info.x, y: info.y, button: "left", clickCount: 1 } },
-          { method: "Input.dispatchMouseEvent", params: { type: "mouseReleased", x: info.x, y: info.y, button: "left", clickCount: 1 } },
-          { method: "Input.dispatchKeyEvent", params: { type: "keyDown", key: "a", code: "KeyA", modifiers: 2 } },
-          { method: "Input.dispatchKeyEvent", params: { type: "keyUp", key: "a", code: "KeyA", modifiers: 2 } },
-          { method: "Input.dispatchKeyEvent", params: { type: "keyDown", key: "Backspace", code: "Backspace" } },
-          { method: "Input.dispatchKeyEvent", params: { type: "keyUp", key: "Backspace", code: "Backspace" } },
+          {
+            method: "Input.dispatchMouseEvent",
+            params: { type: "mousePressed", x: info.x, y: info.y, button: "left", clickCount: 1 },
+          },
+          {
+            method: "Input.dispatchMouseEvent",
+            params: { type: "mouseReleased", x: info.x, y: info.y, button: "left", clickCount: 1 },
+          },
+          {
+            method: "Input.dispatchKeyEvent",
+            params: { type: "keyDown", key: "a", code: "KeyA", modifiers: 2 },
+          },
+          {
+            method: "Input.dispatchKeyEvent",
+            params: { type: "keyUp", key: "a", code: "KeyA", modifiers: 2 },
+          },
+          {
+            method: "Input.dispatchKeyEvent",
+            params: { type: "keyDown", key: "Backspace", code: "Backspace" },
+          },
+          {
+            method: "Input.dispatchKeyEvent",
+            params: { type: "keyUp", key: "Backspace", code: "Backspace" },
+          },
           { method: "Input.insertText", params: { text } },
         ];
 
         if (info.hasSend) {
           commands.push(
-            { method: "Input.dispatchMouseEvent", params: { type: "mousePressed", x: info.sendX, y: info.sendY, button: "left", clickCount: 1 } },
-            { method: "Input.dispatchMouseEvent", params: { type: "mouseReleased", x: info.sendX, y: info.sendY, button: "left", clickCount: 1 } },
+            {
+              method: "Input.dispatchMouseEvent",
+              params: {
+                type: "mousePressed",
+                x: info.sendX,
+                y: info.sendY,
+                button: "left",
+                clickCount: 1,
+              },
+            },
+            {
+              method: "Input.dispatchMouseEvent",
+              params: {
+                type: "mouseReleased",
+                x: info.sendX,
+                y: info.sendY,
+                button: "left",
+                clickCount: 1,
+              },
+            },
           );
         } else {
           commands.push(
-            { method: "Input.dispatchKeyEvent", params: { type: "keyDown", key: "Enter", code: "Enter" } },
-            { method: "Input.dispatchKeyEvent", params: { type: "keyUp", key: "Enter", code: "Enter" } },
+            {
+              method: "Input.dispatchKeyEvent",
+              params: { type: "keyDown", key: "Enter", code: "Enter" },
+            },
+            {
+              method: "Input.dispatchKeyEvent",
+              params: { type: "keyUp", key: "Enter", code: "Enter" },
+            },
           );
         }
 
         await cdpSendCommands(page.webSocketDebuggerUrl, commands, 8000);
         return { success: true, detail: `CDP port ${port} Input.insertText (${info.inputInfo})` };
-
-      } catch { /* try next target */ }
+      } catch {
+        /* try next target */
+      }
     }
 
     if (attempt === 0) {
@@ -847,7 +933,10 @@ export interface ChatMessagesResult {
  * Messages are fingerprinted via DJB2 hash for stable identity across re-renders.
  * Optional `sinceFingerprints` set returns only messages not already seen.
  */
-export async function getChatMessages(since = -1, sinceFingerprints?: Set<string>): Promise<ChatMessagesResult> {
+export async function getChatMessages(
+  since = -1,
+  sinceFingerprints?: Set<string>,
+): Promise<ChatMessagesResult> {
   const pages = await findAllPages();
   if (pages.length === 0) {
     return { success: false, messages: [], detail: "No CDP targets" };
@@ -1044,14 +1133,18 @@ export async function getChatMessages(since = -1, sinceFingerprints?: Set<string
         messages: filtered,
         detail: `Found ${msgs.length} messages on port ${port}`,
       };
-    } catch { /* try next target */ }
+    } catch {
+      /* try next target */
+    }
   }
 
   return { success: false, messages: [], detail: "No chat messages found" };
 }
 
 /** Diagnostic: list all visible buttons across all CDP targets. */
-export async function listAllButtons(): Promise<{ port: number; title: string; buttons: string[] }[]> {
+export async function listAllButtons(): Promise<
+  { port: number; title: string; buttons: string[] }[]
+> {
   const pages = await findAllPages();
   const results: { port: number; title: string; buttons: string[] }[] = [];
 
@@ -1099,7 +1192,9 @@ export async function listAllButtons(): Promise<{ port: number; title: string; b
       const val = result.result?.value;
       const buttons = typeof val === "string" ? JSON.parse(val) : [];
       results.push({ port, title: page.title, buttons });
-    } catch { /* skip */ }
+    } catch {
+      /* skip */
+    }
   }
   return results;
 }
@@ -1115,12 +1210,38 @@ export async function startNewConversation(): Promise<CDPResult> {
     if (page.title === "Launchpad") continue;
     try {
       // Ctrl+Shift+L = modifiers 6 (Ctrl=2 + Shift=4)
-      await cdpSendCommands(page.webSocketDebuggerUrl, [
-        { method: "Input.dispatchKeyEvent", params: { type: "keyDown", key: "l", code: "KeyL", windowsVirtualKeyCode: 76, nativeVirtualKeyCode: 76, modifiers: 6 } },
-        { method: "Input.dispatchKeyEvent", params: { type: "keyUp", key: "l", code: "KeyL", windowsVirtualKeyCode: 76, nativeVirtualKeyCode: 76, modifiers: 6 } },
-      ], 3000);
+      await cdpSendCommands(
+        page.webSocketDebuggerUrl,
+        [
+          {
+            method: "Input.dispatchKeyEvent",
+            params: {
+              type: "keyDown",
+              key: "l",
+              code: "KeyL",
+              windowsVirtualKeyCode: 76,
+              nativeVirtualKeyCode: 76,
+              modifiers: 6,
+            },
+          },
+          {
+            method: "Input.dispatchKeyEvent",
+            params: {
+              type: "keyUp",
+              key: "l",
+              code: "KeyL",
+              windowsVirtualKeyCode: 76,
+              nativeVirtualKeyCode: 76,
+              modifiers: 6,
+            },
+          },
+        ],
+        3000,
+      );
       return { success: true, detail: `New conversation started (Ctrl+Shift+L) on port ${port}` };
-    } catch { /* try next */ }
+    } catch {
+      /* try next */
+    }
   }
 
   return { success: false, detail: "Failed to send Ctrl+Shift+L" };
@@ -1146,18 +1267,66 @@ export async function sendAcceptAllChanges(): Promise<CDPResult> {
 
   for (let i = 0; i < 15; i++) {
     try {
-      await cdpSendCommands(wsUrl, [
-        { method: "Input.dispatchKeyEvent", params: { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 13, modifiers: 2 } },
-        { method: "Input.dispatchKeyEvent", params: { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, nativeVirtualKeyCode: 13, modifiers: 2 } },
-      ], 3000);
+      await cdpSendCommands(
+        wsUrl,
+        [
+          {
+            method: "Input.dispatchKeyEvent",
+            params: {
+              type: "keyDown",
+              key: "Enter",
+              code: "Enter",
+              windowsVirtualKeyCode: 13,
+              nativeVirtualKeyCode: 13,
+              modifiers: 2,
+            },
+          },
+          {
+            method: "Input.dispatchKeyEvent",
+            params: {
+              type: "keyUp",
+              key: "Enter",
+              code: "Enter",
+              windowsVirtualKeyCode: 13,
+              nativeVirtualKeyCode: 13,
+              modifiers: 2,
+            },
+          },
+        ],
+        3000,
+      );
       accepted++;
 
       await new Promise((r) => setTimeout(r, 400));
 
-      await cdpSendCommands(wsUrl, [
-        { method: "Input.dispatchKeyEvent", params: { type: "keyDown", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39, nativeVirtualKeyCode: 39, modifiers: 1 } },
-        { method: "Input.dispatchKeyEvent", params: { type: "keyUp", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39, nativeVirtualKeyCode: 39, modifiers: 1 } },
-      ], 3000);
+      await cdpSendCommands(
+        wsUrl,
+        [
+          {
+            method: "Input.dispatchKeyEvent",
+            params: {
+              type: "keyDown",
+              key: "ArrowRight",
+              code: "ArrowRight",
+              windowsVirtualKeyCode: 39,
+              nativeVirtualKeyCode: 39,
+              modifiers: 1,
+            },
+          },
+          {
+            method: "Input.dispatchKeyEvent",
+            params: {
+              type: "keyUp",
+              key: "ArrowRight",
+              code: "ArrowRight",
+              windowsVirtualKeyCode: 39,
+              nativeVirtualKeyCode: 39,
+              modifiers: 1,
+            },
+          },
+        ],
+        3000,
+      );
 
       await new Promise((r) => setTimeout(r, 300));
     } catch {
@@ -1184,17 +1353,44 @@ async function sendKeyboardShortcut(key: string, modifiers: number): Promise<CDP
 
   const keyCode = key === "Enter" ? 13 : key === "Backspace" ? 8 : 0;
   const code = key === "Enter" ? "Enter" : key === "Backspace" ? "Backspace" : `Key${key}`;
-  const modStr = modifiers === 1 ? "Alt" : modifiers === 2 ? "Ctrl" : modifiers === 3 ? "Ctrl+Alt" : "";
+  const modStr =
+    modifiers === 1 ? "Alt" : modifiers === 2 ? "Ctrl" : modifiers === 3 ? "Ctrl+Alt" : "";
 
   for (const { port, page } of pages) {
     if (page.title === "Launchpad") continue;
     try {
-      await cdpSendCommands(page.webSocketDebuggerUrl, [
-        { method: "Input.dispatchKeyEvent", params: { type: "keyDown", key, code, windowsVirtualKeyCode: keyCode, nativeVirtualKeyCode: keyCode, modifiers } },
-        { method: "Input.dispatchKeyEvent", params: { type: "keyUp", key, code, windowsVirtualKeyCode: keyCode, nativeVirtualKeyCode: keyCode, modifiers } },
-      ], 3000);
+      await cdpSendCommands(
+        page.webSocketDebuggerUrl,
+        [
+          {
+            method: "Input.dispatchKeyEvent",
+            params: {
+              type: "keyDown",
+              key,
+              code,
+              windowsVirtualKeyCode: keyCode,
+              nativeVirtualKeyCode: keyCode,
+              modifiers,
+            },
+          },
+          {
+            method: "Input.dispatchKeyEvent",
+            params: {
+              type: "keyUp",
+              key,
+              code,
+              windowsVirtualKeyCode: keyCode,
+              nativeVirtualKeyCode: keyCode,
+              modifiers,
+            },
+          },
+        ],
+        3000,
+      );
       return { success: true, detail: `Sent ${modStr}+${key} to port ${port}` };
-    } catch { /* try next */ }
+    } catch {
+      /* try next */
+    }
   }
 
   return { success: false, detail: "No targets responded" };
@@ -1203,8 +1399,16 @@ async function sendKeyboardShortcut(key: string, modifiers: number): Promise<CDP
 /** Click an accept/allow/run button via CDP (fallback). */
 export async function clickAccept(): Promise<CDPResult> {
   return clickButtonByText([
-    "accept all", "accept", "allow", "always allow", "allow once",
-    "run", "keep waiting", "continue", "continue generating", "proceed",
+    "accept all",
+    "accept",
+    "allow",
+    "always allow",
+    "allow once",
+    "run",
+    "keep waiting",
+    "continue",
+    "continue generating",
+    "proceed",
   ]);
 }
 
@@ -1286,9 +1490,14 @@ async function clickButtonByText(patterns: string[]): Promise<CDPResult> {
       const result = await evaluate(page.webSocketDebuggerUrl, script);
       const parsed = parseResult(result.result?.value);
       if (parsed?.success) {
-        return { success: true, detail: `Clicked "${parsed.clicked}" (${parsed.pattern}) port ${port}` };
+        return {
+          success: true,
+          detail: `Clicked "${parsed.clicked}" (${parsed.pattern}) port ${port}`,
+        };
       }
-    } catch { /* try next */ }
+    } catch {
+      /* try next */
+    }
   }
 
   return { success: false, detail: `No matching button in ${pages.length} targets` };
@@ -1303,7 +1512,9 @@ export async function listAllTargets(): Promise<{ port: number; targets: CDPPage
 }
 
 /** Diagnostic: dump Anti chat panel DOM structure for selector debugging. */
-export async function debugChatDom(): Promise<{ port: number; title: string; url: string; dom: unknown }[]> {
+export async function debugChatDom(): Promise<
+  { port: number; title: string; url: string; dom: unknown }[]
+> {
   const pages = await findAllPages();
   const results: { port: number; title: string; url: string; dom: unknown }[] = [];
 
@@ -1390,7 +1601,9 @@ export async function debugChatDom(): Promise<{ port: number; title: string; url
       const val = result.result?.value;
       const dom = typeof val === "string" ? JSON.parse(val) : val;
       results.push({ port, title: page.title, url: page.url, dom });
-    } catch { /* skip */ }
+    } catch {
+      /* skip */
+    }
   }
 
   return results;
@@ -1478,10 +1691,32 @@ export async function listModels(): Promise<ModelListResult> {
     }
 
     // Click the model button to open dropdown
-    await cdpSendCommands(wsUrl, [
-      { method: "Input.dispatchMouseEvent", params: { type: "mousePressed", x: openInfo.x, y: openInfo.y, button: "left", clickCount: 1 } },
-      { method: "Input.dispatchMouseEvent", params: { type: "mouseReleased", x: openInfo.x, y: openInfo.y, button: "left", clickCount: 1 } },
-    ], 3000);
+    await cdpSendCommands(
+      wsUrl,
+      [
+        {
+          method: "Input.dispatchMouseEvent",
+          params: {
+            type: "mousePressed",
+            x: openInfo.x,
+            y: openInfo.y,
+            button: "left",
+            clickCount: 1,
+          },
+        },
+        {
+          method: "Input.dispatchMouseEvent",
+          params: {
+            type: "mouseReleased",
+            x: openInfo.x,
+            y: openInfo.y,
+            button: "left",
+            clickCount: 1,
+          },
+        },
+      ],
+      3000,
+    );
 
     await new Promise((r) => setTimeout(r, 500));
 
@@ -1541,20 +1776,33 @@ export async function listModels(): Promise<ModelListResult> {
 
     const readResult = await evaluate(wsUrl, readScript, 5000);
     const readInfo = parseResult(readResult.result?.value);
-    const models = ((readInfo?.models as AntiModelInfo[]) || []);
+    const models = (readInfo?.models as AntiModelInfo[]) || [];
 
     // Close dropdown by pressing Escape
-    await cdpSendCommands(wsUrl, [
-      { method: "Input.dispatchKeyEvent", params: { type: "keyDown", key: "Escape", code: "Escape" } },
-      { method: "Input.dispatchKeyEvent", params: { type: "keyUp", key: "Escape", code: "Escape" } },
-    ], 2000).catch(() => {});
+    await cdpSendCommands(
+      wsUrl,
+      [
+        {
+          method: "Input.dispatchKeyEvent",
+          params: { type: "keyDown", key: "Escape", code: "Escape" },
+        },
+        {
+          method: "Input.dispatchKeyEvent",
+          params: { type: "keyUp", key: "Escape", code: "Escape" },
+        },
+      ],
+      2000,
+    ).catch(() => {});
 
     const active = models.find((m) => m.isActive)?.name || String(openInfo.current || "");
     return {
       success: models.length > 0,
       models,
       activeModel: active,
-      detail: models.length > 0 ? `${models.length} models, active: ${active}` : "No models found in dropdown",
+      detail:
+        models.length > 0
+          ? `${models.length} models, active: ${active}`
+          : "No models found in dropdown",
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -1620,10 +1868,32 @@ export async function selectModel(modelIndex: number): Promise<CDPResult> {
     if (!openInfo?.found) return { success: false, detail: "Model selector not found" };
 
     // Click to open
-    await cdpSendCommands(wsUrl, [
-      { method: "Input.dispatchMouseEvent", params: { type: "mousePressed", x: openInfo.x, y: openInfo.y, button: "left", clickCount: 1 } },
-      { method: "Input.dispatchMouseEvent", params: { type: "mouseReleased", x: openInfo.x, y: openInfo.y, button: "left", clickCount: 1 } },
-    ], 3000);
+    await cdpSendCommands(
+      wsUrl,
+      [
+        {
+          method: "Input.dispatchMouseEvent",
+          params: {
+            type: "mousePressed",
+            x: openInfo.x,
+            y: openInfo.y,
+            button: "left",
+            clickCount: 1,
+          },
+        },
+        {
+          method: "Input.dispatchMouseEvent",
+          params: {
+            type: "mouseReleased",
+            x: openInfo.x,
+            y: openInfo.y,
+            button: "left",
+            clickCount: 1,
+          },
+        },
+      ],
+      3000,
+    );
 
     await new Promise((r) => setTimeout(r, 500));
 
@@ -1907,10 +2177,20 @@ export async function listWorkflows(): Promise<WorkflowListResult> {
     const clickInfo = parseResult(clickResult.result?.value);
     if (!clickInfo?.found) {
       // Close menu with Escape
-      await cdpSendCommands(wsUrl, [
-        { method: "Input.dispatchKeyEvent", params: { type: "keyDown", key: "Escape", code: "Escape" } },
-        { method: "Input.dispatchKeyEvent", params: { type: "keyUp", key: "Escape", code: "Escape" } },
-      ], 2000).catch(() => {});
+      await cdpSendCommands(
+        wsUrl,
+        [
+          {
+            method: "Input.dispatchKeyEvent",
+            params: { type: "keyDown", key: "Escape", code: "Escape" },
+          },
+          {
+            method: "Input.dispatchKeyEvent",
+            params: { type: "keyUp", key: "Escape", code: "Escape" },
+          },
+        ],
+        2000,
+      ).catch(() => {});
       return { success: false, workflows: [], detail: "Workflows option not found in menu" };
     }
 
@@ -1949,10 +2229,20 @@ export async function listWorkflows(): Promise<WorkflowListResult> {
     const workflows = (readInfo?.workflows as AntiWorkflow[]) || [];
 
     // Close with Escape
-    await cdpSendCommands(wsUrl, [
-      { method: "Input.dispatchKeyEvent", params: { type: "keyDown", key: "Escape", code: "Escape" } },
-      { method: "Input.dispatchKeyEvent", params: { type: "keyUp", key: "Escape", code: "Escape" } },
-    ], 2000).catch(() => {});
+    await cdpSendCommands(
+      wsUrl,
+      [
+        {
+          method: "Input.dispatchKeyEvent",
+          params: { type: "keyDown", key: "Escape", code: "Escape" },
+        },
+        {
+          method: "Input.dispatchKeyEvent",
+          params: { type: "keyUp", key: "Escape", code: "Escape" },
+        },
+      ],
+      2000,
+    ).catch(() => {});
 
     return {
       success: workflows.length > 0,
@@ -1976,9 +2266,10 @@ export async function runWorkflow(name: string): Promise<CDPResult> {
 
 function buildDiffReviewScript(action: "accept" | "reject"): string {
   const cssClass = action === "accept" ? "keep-changes" : "discard-changes";
-  const textMatches = action === "accept"
-    ? "directText === 'accept changes' || directText === 'accept all' || directText === 'accept'"
-    : "directText === 'reject' || directText === 'reject all' || directText === 'discard changes'";
+  const textMatches =
+    action === "accept"
+      ? "directText === 'accept changes' || directText === 'accept all' || directText === 'accept'"
+      : "directText === 'reject' || directText === 'reject all' || directText === 'discard changes'";
 
   return `
 (function() {
@@ -2044,7 +2335,9 @@ async function executeDiffReview(action: "accept" | "reject"): Promise<CDPResult
             detail: `Clicked "${parsed.clicked}" [${parsed.strategy}] (${parsed.tag}) in ${target.title || target.type} port ${port}`,
           };
         }
-      } catch { /* try next target */ }
+      } catch {
+        /* try next target */
+      }
     }
   }
 
@@ -2208,7 +2501,10 @@ export async function detectPermissions(): Promise<PermissionDetectResult> {
     return {
       success: true,
       permissions: perms,
-      detail: perms.length > 0 ? `${perms.length} permission request(s) pending` : "No pending permissions",
+      detail:
+        perms.length > 0
+          ? `${perms.length} permission request(s) pending`
+          : "No pending permissions",
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -2278,13 +2574,16 @@ export interface ScreenshotResult {
 }
 
 /** Capture a screenshot of the Anti IDE via CDP Page.captureScreenshot. */
-export async function captureScreenshot(
-  options?: { clip?: { x: number; y: number; width: number; height: number; scale?: number } }
-): Promise<ScreenshotResult> {
+export async function captureScreenshot(options?: {
+  clip?: { x: number; y: number; width: number; height: number; scale?: number };
+}): Promise<ScreenshotResult> {
   const pages = await findAllPages();
   const target = pages.find((p) => p.page.title !== "Launchpad");
   if (!target) {
-    return { success: false, detail: "No CDP targets. Is Anti running with --remote-debugging-port=9000?" };
+    return {
+      success: false,
+      detail: "No CDP targets. Is Anti running with --remote-debugging-port=9000?",
+    };
   }
 
   try {
@@ -2296,7 +2595,7 @@ export async function captureScreenshot(
     const [result] = await cdpSendCommands(
       target.page.webSocketDebuggerUrl,
       [{ method: "Page.captureScreenshot", params }],
-      10_000
+      10_000,
     );
 
     const data = (result as { data?: string } | null)?.data;

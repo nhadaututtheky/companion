@@ -11,112 +11,112 @@ const log = createLogger("web-intel-detector");
 /** Well-known libraries and their docs URLs (top 100) */
 const KNOWN_LIBRARIES: Record<string, string> = {
   // JavaScript/TypeScript frameworks
-  "react": "https://react.dev/reference/react",
+  react: "https://react.dev/reference/react",
   "next.js": "https://nextjs.org/docs",
-  "nextjs": "https://nextjs.org/docs",
-  "vue": "https://vuejs.org/guide/introduction",
-  "nuxt": "https://nuxt.com/docs",
-  "svelte": "https://svelte.dev/docs",
-  "sveltekit": "https://svelte.dev/docs/kit",
-  "angular": "https://angular.dev/guide",
-  "solid": "https://docs.solidjs.com",
-  "remix": "https://remix.run/docs",
-  "astro": "https://docs.astro.build",
+  nextjs: "https://nextjs.org/docs",
+  vue: "https://vuejs.org/guide/introduction",
+  nuxt: "https://nuxt.com/docs",
+  svelte: "https://svelte.dev/docs",
+  sveltekit: "https://svelte.dev/docs/kit",
+  angular: "https://angular.dev/guide",
+  solid: "https://docs.solidjs.com",
+  remix: "https://remix.run/docs",
+  astro: "https://docs.astro.build",
 
   // Server frameworks
-  "hono": "https://hono.dev/docs",
-  "express": "https://expressjs.com/en/api.html",
-  "fastify": "https://fastify.dev/docs/latest",
-  "koa": "https://koajs.com",
-  "nest": "https://docs.nestjs.com",
-  "nestjs": "https://docs.nestjs.com",
+  hono: "https://hono.dev/docs",
+  express: "https://expressjs.com/en/api.html",
+  fastify: "https://fastify.dev/docs/latest",
+  koa: "https://koajs.com",
+  nest: "https://docs.nestjs.com",
+  nestjs: "https://docs.nestjs.com",
 
   // ORMs & databases
-  "drizzle": "https://orm.drizzle.team/docs/overview",
+  drizzle: "https://orm.drizzle.team/docs/overview",
   "drizzle-orm": "https://orm.drizzle.team/docs/overview",
-  "prisma": "https://www.prisma.io/docs",
-  "typeorm": "https://typeorm.io",
-  "mongoose": "https://mongoosejs.com/docs/guide.html",
-  "sequelize": "https://sequelize.org/docs/v6",
-  "knex": "https://knexjs.org/guide",
+  prisma: "https://www.prisma.io/docs",
+  typeorm: "https://typeorm.io",
+  mongoose: "https://mongoosejs.com/docs/guide.html",
+  sequelize: "https://sequelize.org/docs/v6",
+  knex: "https://knexjs.org/guide",
 
   // Styling
-  "tailwind": "https://tailwindcss.com/docs",
-  "tailwindcss": "https://tailwindcss.com/docs",
+  tailwind: "https://tailwindcss.com/docs",
+  tailwindcss: "https://tailwindcss.com/docs",
   "styled-components": "https://styled-components.com/docs",
 
   // State management
-  "zustand": "https://zustand.docs.pmnd.rs/getting-started/introduction",
-  "redux": "https://redux.js.org/introduction/getting-started",
-  "jotai": "https://jotai.org/docs/introduction",
+  zustand: "https://zustand.docs.pmnd.rs/getting-started/introduction",
+  redux: "https://redux.js.org/introduction/getting-started",
+  jotai: "https://jotai.org/docs/introduction",
   "tanstack-query": "https://tanstack.com/query/latest/docs",
   "react-query": "https://tanstack.com/query/latest/docs",
-  "swr": "https://swr.vercel.app/docs/getting-started",
+  swr: "https://swr.vercel.app/docs/getting-started",
 
   // Validation
-  "zod": "https://zod.dev",
-  "yup": "https://github.com/jquense/yup",
-  "joi": "https://joi.dev/api",
+  zod: "https://zod.dev",
+  yup: "https://github.com/jquense/yup",
+  joi: "https://joi.dev/api",
 
   // Testing
-  "vitest": "https://vitest.dev/guide",
-  "jest": "https://jestjs.io/docs/getting-started",
-  "playwright": "https://playwright.dev/docs/intro",
-  "cypress": "https://docs.cypress.io",
+  vitest: "https://vitest.dev/guide",
+  jest: "https://jestjs.io/docs/getting-started",
+  playwright: "https://playwright.dev/docs/intro",
+  cypress: "https://docs.cypress.io",
 
   // Build tools
-  "vite": "https://vite.dev/guide",
-  "webpack": "https://webpack.js.org/concepts",
-  "esbuild": "https://esbuild.github.io",
-  "turbo": "https://turbo.build/repo/docs",
-  "bun": "https://bun.sh/docs",
+  vite: "https://vite.dev/guide",
+  webpack: "https://webpack.js.org/concepts",
+  esbuild: "https://esbuild.github.io",
+  turbo: "https://turbo.build/repo/docs",
+  bun: "https://bun.sh/docs",
 
   // Auth
-  "lucia": "https://lucia-auth.com",
+  lucia: "https://lucia-auth.com",
   "next-auth": "https://next-auth.js.org/getting-started/introduction",
   "auth.js": "https://authjs.dev/getting-started",
-  "clerk": "https://clerk.com/docs",
+  clerk: "https://clerk.com/docs",
   "supabase-auth": "https://supabase.com/docs/guides/auth",
 
   // APIs & HTTP
-  "axios": "https://axios-http.com/docs/intro",
-  "trpc": "https://trpc.io/docs",
-  "graphql": "https://graphql.org/learn",
-  "apollo": "https://www.apollographql.com/docs",
+  axios: "https://axios-http.com/docs/intro",
+  trpc: "https://trpc.io/docs",
+  graphql: "https://graphql.org/learn",
+  apollo: "https://www.apollographql.com/docs",
 
   // Cloud/infra
-  "docker": "https://docs.docker.com/reference",
-  "supabase": "https://supabase.com/docs",
-  "firebase": "https://firebase.google.com/docs",
+  docker: "https://docs.docker.com/reference",
+  supabase: "https://supabase.com/docs",
+  firebase: "https://firebase.google.com/docs",
   "cloudflare-workers": "https://developers.cloudflare.com/workers",
-  "vercel": "https://vercel.com/docs",
+  vercel: "https://vercel.com/docs",
 
   // Telegram
-  "grammy": "https://grammy.dev/guide",
-  "telegraf": "https://telegraf.js.org",
+  grammy: "https://grammy.dev/guide",
+  telegraf: "https://telegraf.js.org",
 
   // Desktop
-  "tauri": "https://v2.tauri.app/start",
-  "electron": "https://www.electronjs.org/docs/latest",
+  tauri: "https://v2.tauri.app/start",
+  electron: "https://www.electronjs.org/docs/latest",
 
   // Python
-  "fastapi": "https://fastapi.tiangolo.com",
-  "django": "https://docs.djangoproject.com",
-  "flask": "https://flask.palletsprojects.com",
-  "pydantic": "https://docs.pydantic.dev/latest",
-  "sqlalchemy": "https://docs.sqlalchemy.org",
-  "pytorch": "https://pytorch.org/docs/stable",
-  "tensorflow": "https://www.tensorflow.org/api_docs",
+  fastapi: "https://fastapi.tiangolo.com",
+  django: "https://docs.djangoproject.com",
+  flask: "https://flask.palletsprojects.com",
+  pydantic: "https://docs.pydantic.dev/latest",
+  sqlalchemy: "https://docs.sqlalchemy.org",
+  pytorch: "https://pytorch.org/docs/stable",
+  tensorflow: "https://www.tensorflow.org/api_docs",
 
   // Rust
-  "tokio": "https://docs.rs/tokio/latest/tokio",
-  "actix": "https://actix.rs/docs",
-  "axum": "https://docs.rs/axum/latest/axum",
-  "serde": "https://serde.rs",
+  tokio: "https://docs.rs/tokio/latest/tokio",
+  actix: "https://actix.rs/docs",
+  axum: "https://docs.rs/axum/latest/axum",
+  serde: "https://serde.rs",
 
   // Go
-  "gin": "https://gin-gonic.com/docs",
-  "fiber": "https://docs.gofiber.io",
+  gin: "https://gin-gonic.com/docs",
+  fiber: "https://docs.gofiber.io",
 };
 
 // ── Patterns ────────────────────────────────────────────────────────────────
@@ -204,18 +204,23 @@ export async function resolveDocsUrl(libraryName: string): Promise<string | null
   }
 
   const isSafeUrl = (url: string): boolean => {
-    try { assertSafeUrl(url); return true; } catch { return false; }
+    try {
+      assertSafeUrl(url);
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   // 2. Try npm registry
   try {
     const res = await fetch(`https://registry.npmjs.org/${encodeURIComponent(normalized)}`, {
       signal: AbortSignal.timeout(5000),
-      headers: { "Accept": "application/json" },
+      headers: { Accept: "application/json" },
     });
 
     if (res.ok) {
-      const data = await res.json() as {
+      const data = (await res.json()) as {
         homepage?: string;
         repository?: { url?: string } | string;
       };
@@ -226,9 +231,7 @@ export async function resolveDocsUrl(libraryName: string): Promise<string | null
       }
 
       // Fall back to repository URL
-      const repoUrl = typeof data.repository === "string"
-        ? data.repository
-        : data.repository?.url;
+      const repoUrl = typeof data.repository === "string" ? data.repository : data.repository?.url;
 
       if (repoUrl) {
         // Convert git URLs to HTTPS
@@ -254,7 +257,7 @@ export async function resolveDocsUrl(libraryName: string): Promise<string | null
     });
 
     if (res.ok) {
-      const data = await res.json() as {
+      const data = (await res.json()) as {
         info?: {
           project_urls?: Record<string, string>;
           home_page?: string;
@@ -268,7 +271,8 @@ export async function resolveDocsUrl(libraryName: string): Promise<string | null
         if (docsUrl?.startsWith("http") && isSafeUrl(docsUrl)) return docsUrl;
       }
 
-      if (data.info?.home_page?.startsWith("http") && isSafeUrl(data.info.home_page)) return data.info.home_page;
+      if (data.info?.home_page?.startsWith("http") && isSafeUrl(data.info.home_page))
+        return data.info.home_page;
     }
   } catch {
     // Silently skip PyPI fallback

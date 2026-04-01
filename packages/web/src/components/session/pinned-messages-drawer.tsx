@@ -47,9 +47,7 @@ export function PinnedMessagesDrawer({
 
   const pinnedMessages = pins
     .map((idx) => ({ idx, msg: messages[idx] }))
-    .filter((entry): entry is { idx: number; msg: PinnedMessage } =>
-      entry.msg !== undefined
-    );
+    .filter((entry): entry is { idx: number; msg: PinnedMessage } => entry.msg !== undefined);
 
   return (
     <>
@@ -81,10 +79,7 @@ export function PinnedMessagesDrawer({
         >
           <div className="flex items-center gap-2">
             <PushPin size={15} weight="fill" style={{ color: "#FBBC04" }} />
-            <span
-              className="text-sm font-semibold"
-              style={{ color: "var(--color-text-primary)" }}
-            >
+            <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
               Pinned Messages
             </span>
             {pinnedMessages.length > 0 && (
@@ -104,8 +99,7 @@ export function PinnedMessagesDrawer({
             className="p-1.5 rounded-lg cursor-pointer transition-colors"
             style={{ color: "var(--color-text-muted)" }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background =
-                "var(--color-bg-elevated)";
+              (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -120,14 +114,8 @@ export function PinnedMessagesDrawer({
         <div className="flex-1 overflow-y-auto">
           {pinnedMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-3 px-6">
-              <PushPin
-                size={32}
-                style={{ color: "var(--color-text-muted)", opacity: 0.4 }}
-              />
-              <p
-                className="text-sm text-center"
-                style={{ color: "var(--color-text-muted)" }}
-              >
+              <PushPin size={32} style={{ color: "var(--color-text-muted)", opacity: 0.4 }} />
+              <p className="text-sm text-center" style={{ color: "var(--color-text-muted)" }}>
                 No pinned messages
               </p>
               <p
@@ -204,12 +192,10 @@ export function PinnedMessagesDrawer({
                           color: "#FBBC04",
                         }}
                         onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLElement).style.background =
-                            "#FBBC0430";
+                          (e.currentTarget as HTMLElement).style.background = "#FBBC0430";
                         }}
                         onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLElement).style.background =
-                            "#FBBC0415";
+                          (e.currentTarget as HTMLElement).style.background = "#FBBC0415";
                         }}
                         aria-label="Unpin message"
                       >
@@ -229,12 +215,10 @@ export function PinnedMessagesDrawer({
                           color: "#4285F4",
                         }}
                         onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLElement).style.background =
-                            "#4285F430";
+                          (e.currentTarget as HTMLElement).style.background = "#4285F430";
                         }}
                         onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLElement).style.background =
-                            "#4285F415";
+                          (e.currentTarget as HTMLElement).style.background = "#4285F415";
                         }}
                         aria-label="Jump to message"
                       >

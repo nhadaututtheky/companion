@@ -43,7 +43,9 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
 
     if (args === "on") {
       session.autoApproveConfig = { enabled: true, timeoutSeconds: 30, allowBash: false };
-      await ctx.reply("Auto-approve <b>enabled</b> (30s timeout, Bash excluded)", { parse_mode: "HTML" });
+      await ctx.reply("Auto-approve <b>enabled</b> (30s timeout, Bash excluded)", {
+        parse_mode: "HTML",
+      });
       return;
     }
 
@@ -125,7 +127,10 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
     }
 
     // Remove #mentions from topic text
-    const topic = remaining.replace(/#[a-z][a-z0-9-]*/gi, "").replace(/\s+/g, " ").trim();
+    const topic = remaining
+      .replace(/#[a-z][a-z0-9-]*/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
 
     if (!topic) {
       await ctx.reply("Please provide a topic after the format.");
@@ -144,17 +149,22 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
     // Try to create a forum topic for the debate (if group supports it)
     let debateTopicId = topicId;
     try {
-      if (chatId < 0) { // Only in groups
-        const forumTopic = await bridge.bot.api.createForumTopic(chatId, `⚖️ ${topic.slice(0, 100)}`);
+      if (chatId < 0) {
+        // Only in groups
+        const forumTopic = await bridge.bot.api.createForumTopic(
+          chatId,
+          `⚖️ ${topic.slice(0, 100)}`,
+        );
         debateTopicId = forumTopic.message_thread_id;
       }
     } catch {
       // Forum topics not enabled — use current thread or main chat
     }
 
-    const sessionInfo = mentionedSessions.length > 0
-      ? `\n👥 Sessions: ${mentionedSessions.map((s) => `<code>#${escapeHTML(s.shortId)}</code>`).join(", ")}`
-      : "";
+    const sessionInfo =
+      mentionedSessions.length > 0
+        ? `\n👥 Sessions: ${mentionedSessions.map((s) => `<code>#${escapeHTML(s.shortId)}</code>`).join(", ")}`
+        : "";
 
     await ctx.reply(
       [
@@ -179,18 +189,24 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
 
           // Split if too long (Telegram 4096 limit)
           if (text.length <= 4000) {
-            await bridge.bot.api.sendMessage(chatId, text, {
-              parse_mode: "HTML",
-              message_thread_id: debateTopicId,
-            }).catch(() => {});
+            await bridge.bot.api
+              .sendMessage(chatId, text, {
+                parse_mode: "HTML",
+                message_thread_id: debateTopicId,
+              })
+              .catch(() => {});
           } else {
-            await bridge.bot.api.sendMessage(chatId, label, {
-              parse_mode: "HTML",
-              message_thread_id: debateTopicId,
-            }).catch(() => {});
-            await bridge.bot.api.sendMessage(chatId, escapeHTML(content), {
-              message_thread_id: debateTopicId,
-            }).catch(() => {});
+            await bridge.bot.api
+              .sendMessage(chatId, label, {
+                parse_mode: "HTML",
+                message_thread_id: debateTopicId,
+              })
+              .catch(() => {});
+            await bridge.bot.api
+              .sendMessage(chatId, escapeHTML(content), {
+                message_thread_id: debateTopicId,
+              })
+              .catch(() => {});
           }
         },
       );
@@ -247,10 +263,12 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
 
     await concludeDebate(channelId, async (_cId, agent, content, _round) => {
       const label = `${agent.emoji} <b>${escapeHTML(agent.label)}</b>`;
-      await bridge.bot.api.sendMessage(chatId, `${label}\n\n${escapeHTML(content)}`, {
-        parse_mode: "HTML",
-        message_thread_id: topicId,
-      }).catch(() => {});
+      await bridge.bot.api
+        .sendMessage(chatId, `${label}\n\n${escapeHTML(content)}`, {
+          parse_mode: "HTML",
+          message_thread_id: topicId,
+        })
+        .catch(() => {});
     });
 
     bridge.clearActiveDebate(chatId, topicId);
@@ -274,10 +292,9 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
     };
 
     await ctx.answerCallbackQuery(newEnabled ? "Enabled" : "Disabled");
-    await ctx.editMessageText(
-      `Auto-approve: <b>${newEnabled ? "Enabled (30s)" : "Disabled"}</b>`,
-      { parse_mode: "HTML" },
-    );
+    await ctx.editMessageText(`Auto-approve: <b>${newEnabled ? "Enabled (30s)" : "Disabled"}</b>`, {
+      parse_mode: "HTML",
+    });
   });
 
   bot.callbackQuery(/^aa:set:(.+):(\d+)$/, async (ctx) => {
@@ -291,9 +308,6 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
 
     session.autoApproveConfig = { enabled: true, timeoutSeconds: seconds, allowBash: false };
     await ctx.answerCallbackQuery(`Set to ${seconds}s`);
-    await ctx.editMessageText(
-      `Auto-approve: <b>Enabled (${seconds}s)</b>`,
-      { parse_mode: "HTML" },
-    );
+    await ctx.editMessageText(`Auto-approve: <b>Enabled (${seconds}s)</b>`, { parse_mode: "HTML" });
   });
 }

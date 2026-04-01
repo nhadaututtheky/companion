@@ -37,14 +37,20 @@ webintelRoutes.post("/scrape", async (c) => {
   }
 
   if (body.url.length > 2048) {
-    return c.json({ success: false, error: "URL too long (max 2048 chars)" } satisfies ApiResponse, 400);
+    return c.json(
+      { success: false, error: "URL too long (max 2048 chars)" } satisfies ApiResponse,
+      400,
+    );
   }
 
   // URL validation + SSRF protection
   try {
     assertSafeUrl(body.url);
   } catch (err) {
-    return c.json({ success: false, error: String((err as Error).message) } satisfies ApiResponse, 400);
+    return c.json(
+      { success: false, error: String((err as Error).message) } satisfies ApiResponse,
+      400,
+    );
   }
 
   const result = await webIntel.scrape(body.url, {
@@ -56,10 +62,13 @@ webintelRoutes.post("/scrape", async (c) => {
   });
 
   if (!result) {
-    return c.json({
-      success: false,
-      error: "Scrape failed — webclaw may be unavailable",
-    } satisfies ApiResponse, 502);
+    return c.json(
+      {
+        success: false,
+        error: "Scrape failed — webclaw may be unavailable",
+      } satisfies ApiResponse,
+      502,
+    );
   }
 
   return c.json({ success: true, data: result } satisfies ApiResponse);
@@ -80,7 +89,10 @@ webintelRoutes.post("/docs", async (c) => {
   try {
     assertSafeUrl(body.url);
   } catch (err) {
-    return c.json({ success: false, error: String((err as Error).message) } satisfies ApiResponse, 400);
+    return c.json(
+      { success: false, error: String((err as Error).message) } satisfies ApiResponse,
+      400,
+    );
   }
 
   const maxTokens = Math.min(body.maxTokens ?? 4000, 16_000);
@@ -89,10 +101,13 @@ webintelRoutes.post("/docs", async (c) => {
   });
 
   if (!content) {
-    return c.json({
-      success: false,
-      error: "Could not fetch docs — webclaw may be unavailable",
-    } satisfies ApiResponse, 502);
+    return c.json(
+      {
+        success: false,
+        error: "Could not fetch docs — webclaw may be unavailable",
+      } satisfies ApiResponse,
+      502,
+    );
   }
 
   return c.json({ success: true, data: { url: body.url, content } } satisfies ApiResponse);
@@ -107,16 +122,22 @@ webintelRoutes.post("/search", async (c) => {
   }
 
   if (body.query.length > 500) {
-    return c.json({ success: false, error: "Query too long (max 500 chars)" } satisfies ApiResponse, 400);
+    return c.json(
+      { success: false, error: "Query too long (max 500 chars)" } satisfies ApiResponse,
+      400,
+    );
   }
 
   const results = await webIntel.search(body.query, body.num ?? 5);
 
   if (results.length === 0) {
-    return c.json({
-      success: false,
-      error: "No results — search may require WEBCLAW_API_KEY",
-    } satisfies ApiResponse, 502);
+    return c.json(
+      {
+        success: false,
+        error: "No results — search may require WEBCLAW_API_KEY",
+      } satisfies ApiResponse,
+      502,
+    );
   }
 
   return c.json({ success: true, data: results } satisfies ApiResponse);
@@ -131,17 +152,23 @@ webintelRoutes.post("/research", async (c) => {
   }
 
   if (body.query.length > 500) {
-    return c.json({ success: false, error: "Query too long (max 500 chars)" } satisfies ApiResponse, 400);
+    return c.json(
+      { success: false, error: "Query too long (max 500 chars)" } satisfies ApiResponse,
+      400,
+    );
   }
 
   const maxTokens = Math.min(body.maxTokens ?? 3000, 8000);
   const result = await webIntel.research(body.query, maxTokens);
 
   if (!result) {
-    return c.json({
-      success: false,
-      error: "Research failed — WEBCLAW_API_KEY may be required for search",
-    } satisfies ApiResponse, 502);
+    return c.json(
+      {
+        success: false,
+        error: "Research failed — WEBCLAW_API_KEY may be required for search",
+      } satisfies ApiResponse,
+      502,
+    );
   }
 
   return c.json({ success: true, data: result } satisfies ApiResponse);
@@ -163,7 +190,10 @@ webintelRoutes.post("/crawl", async (c) => {
   try {
     assertSafeUrl(body.url);
   } catch (err) {
-    return c.json({ success: false, error: String((err as Error).message) } satisfies ApiResponse, 400);
+    return c.json(
+      { success: false, error: String((err as Error).message) } satisfies ApiResponse,
+      400,
+    );
   }
 
   const jobId = await webIntel.startCrawl(body.url, {
@@ -172,10 +202,13 @@ webintelRoutes.post("/crawl", async (c) => {
   });
 
   if (!jobId) {
-    return c.json({
-      success: false,
-      error: "Crawl failed to start — webclaw may be unavailable",
-    } satisfies ApiResponse, 502);
+    return c.json(
+      {
+        success: false,
+        error: "Crawl failed to start — webclaw may be unavailable",
+      } satisfies ApiResponse,
+      502,
+    );
   }
 
   webIntelJobs.registerJob({

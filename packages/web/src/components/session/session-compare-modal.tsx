@@ -74,9 +74,7 @@ function CompareMessage({ msg }: { msg: Message }) {
   const [collapsed, setCollapsed] = useState(msg.role === "tool");
 
   const isLong = msg.content.length > 600;
-  const displayContent = collapsed && isLong
-    ? msg.content.slice(0, 400) + "…"
-    : msg.content;
+  const displayContent = collapsed && isLong ? msg.content.slice(0, 400) + "…" : msg.content;
 
   return (
     <div
@@ -176,7 +174,10 @@ function SessionColumn({ sessionId, sessions, side, onSelect }: SessionColumnPro
       {/* Selector header */}
       <div
         className="flex items-center gap-2 px-4 py-3 flex-shrink-0"
-        style={{ borderBottom: "1px solid var(--color-border)", background: "var(--color-bg-card)" }}
+        style={{
+          borderBottom: "1px solid var(--color-border)",
+          background: "var(--color-bg-card)",
+        }}
       >
         <label
           htmlFor={`compare-select-${side}`}
@@ -215,7 +216,10 @@ function SessionColumn({ sessionId, sessions, side, onSelect }: SessionColumnPro
             background: "var(--color-bg-elevated)",
           }}
         >
-          <span className="flex items-center gap-1.5 text-xs" style={{ color: "var(--color-text-muted)" }}>
+          <span
+            className="flex items-center gap-1.5 text-xs"
+            style={{ color: "var(--color-text-muted)" }}
+          >
             <span
               style={{
                 display: "inline-block",
@@ -226,7 +230,9 @@ function SessionColumn({ sessionId, sessions, side, onSelect }: SessionColumnPro
               }}
               aria-hidden="true"
             />
-            <span style={{ color: "var(--color-text-secondary)", fontWeight: 600 }}>{session.projectName}</span>
+            <span style={{ color: "var(--color-text-secondary)", fontWeight: 600 }}>
+              {session.projectName}
+            </span>
           </span>
           <span
             className="text-xs px-1.5 py-0.5 rounded font-medium"
@@ -264,7 +270,11 @@ function SessionColumn({ sessionId, sessions, side, onSelect }: SessionColumnPro
       {/* Message feed */}
       {!sessionId ? (
         <div className="flex flex-col items-center justify-center flex-1 gap-3 px-6">
-          <ArrowsLeftRight size={32} style={{ color: "var(--color-text-muted)", opacity: 0.4 }} aria-hidden="true" />
+          <ArrowsLeftRight
+            size={32}
+            style={{ color: "var(--color-text-muted)", opacity: 0.4 }}
+            aria-hidden="true"
+          />
           <p className="text-sm text-center" style={{ color: "var(--color-text-muted)" }}>
             Select a session to compare
           </p>
@@ -359,7 +369,10 @@ function SessionCompareModalInner({
         {/* Top bar */}
         <div
           className="flex items-center gap-3 px-5 py-3 flex-shrink-0"
-          style={{ borderBottom: "1px solid var(--color-border)", background: "var(--color-bg-card)" }}
+          style={{
+            borderBottom: "1px solid var(--color-border)",
+            background: "var(--color-bg-card)",
+          }}
         >
           <ArrowsLeftRight size={18} style={{ color: "var(--color-accent)" }} aria-hidden="true" />
           <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
@@ -373,8 +386,12 @@ function SessionCompareModalInner({
             className="p-1.5 rounded-md transition-colors cursor-pointer"
             style={{ color: "var(--color-text-muted)" }}
             aria-label="Close compare modal"
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#EA4335"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-text-muted)"; }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.color = "#EA4335";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.color = "var(--color-text-muted)";
+            }}
           >
             <X size={16} weight="bold" aria-hidden="true" />
           </button>

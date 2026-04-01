@@ -46,7 +46,9 @@ function getSessionCwd(bridge: TelegramBridge, sessionId: string): string | null
 
 // ── File reading helper ──────────────────────────────────────────────────────
 
-function readFileContent(filePath: string): { content: string; truncated: boolean } | { error: string } {
+function readFileContent(
+  filePath: string,
+): { content: string; truncated: boolean } | { error: string } {
   try {
     const stat = fs.statSync(filePath);
     if (!stat.isFile()) {
@@ -255,9 +257,12 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
       }
 
       if (skillFiles.length === 0) {
-        await ctx.reply("No skills found in <code>.rune/skills/</code> or <code>.claude/skills/</code>.", {
-          parse_mode: "HTML",
-        });
+        await ctx.reply(
+          "No skills found in <code>.rune/skills/</code> or <code>.claude/skills/</code>.",
+          {
+            parse_mode: "HTML",
+          },
+        );
         return;
       }
 
@@ -297,9 +302,7 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
 
     try {
       const db = getDb();
-      db.insert(notesTable)
-        .values({ sessionId: mapping.sessionId, content: text })
-        .run();
+      db.insert(notesTable).values({ sessionId: mapping.sessionId, content: text }).run();
       await ctx.reply(`📝 Note saved: ${escapeHTML(text)}`, { parse_mode: "HTML" });
     } catch (err) {
       log.warn("Failed to save note", { error: String(err) });
@@ -318,7 +321,8 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
 
     try {
       const db = getDb();
-      const notes = db.select()
+      const notes = db
+        .select()
         .from(notesTable)
         .where(eq(notesTable.sessionId, mapping.sessionId))
         .orderBy(desc(notesTable.createdAt))
@@ -350,9 +354,12 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
       // Direct attach to specified session
       const session = bridge.wsBridge.getSession(arg);
       if (!session) {
-        await ctx.reply(`Session <code>${escapeHTML(arg.slice(0, 8))}</code> not found or not active.`, {
-          parse_mode: "HTML",
-        });
+        await ctx.reply(
+          `Session <code>${escapeHTML(arg.slice(0, 8))}</code> not found or not active.`,
+          {
+            parse_mode: "HTML",
+          },
+        );
         return;
       }
 
@@ -362,7 +369,8 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
         return;
       }
 
-      const projectName = (session.state as unknown as { projectSlug?: string })?.projectSlug ?? "Session";
+      const projectName =
+        (session.state as unknown as { projectSlug?: string })?.projectSlug ?? "Session";
       await ctx.reply(
         `Streaming <b>${escapeHTML(projectName)}</b> <code>${escapeHTML(arg.slice(0, 8))}</code>\n\nEvents will be forwarded here. Use /detach to stop.`,
         { parse_mode: "HTML" },
@@ -383,7 +391,8 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
         : s.state.model.includes("haiku")
           ? "Haiku"
           : "Sonnet";
-      const slug = (s.state as unknown as { projectSlug?: string })?.projectSlug ?? s.id.slice(0, 6);
+      const slug =
+        (s.state as unknown as { projectSlug?: string })?.projectSlug ?? s.id.slice(0, 6);
       const statusDot =
         s.state.status === "idle"
           ? "🟢"
@@ -434,7 +443,8 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
       return;
     }
 
-    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+      ?.message_thread_id;
 
     const session = bridge.wsBridge.getSession(sessionId);
     if (!session) {
@@ -449,12 +459,15 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
       return;
     }
 
-    const projectName = (session.state as unknown as { projectSlug?: string })?.projectSlug ?? "Session";
+    const projectName =
+      (session.state as unknown as { projectSlug?: string })?.projectSlug ?? "Session";
     await ctx.answerCallbackQuery("Streaming started");
-    await ctx.editMessageText(
-      `Streaming <b>${escapeHTML(projectName)}</b> <code>${escapeHTML(sessionId.slice(0, 8))}</code>\n\nEvents will be forwarded here. Use /detach to stop.`,
-      { parse_mode: "HTML" },
-    ).catch(() => {});
+    await ctx
+      .editMessageText(
+        `Streaming <b>${escapeHTML(projectName)}</b> <code>${escapeHTML(sessionId.slice(0, 8))}</code>\n\nEvents will be forwarded here. Use /detach to stop.`,
+        { parse_mode: "HTML" },
+      )
+      .catch(() => {});
   });
 
   // ── viewfile callback query ───────────────────────────────────────────────
@@ -496,7 +509,8 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
       ? `<b>${escapeHTML(relPath)}</b> (first 50 KB)\n`
       : `<b>${escapeHTML(relPath)}</b>\n`;
     const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
-    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })?.message_thread_id;
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+      ?.message_thread_id;
 
     if (!chatId) return;
 
@@ -509,15 +523,11 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
     } else {
       const fileName = path.basename(resolved);
       const inputFile = new InputFile(Buffer.from(content, "utf-8"), fileName);
-      await ctx.api.sendDocument(
-        chatId,
-        inputFile,
-        {
-          caption: header + (truncated ? "(truncated to 50 KB)" : ""),
-          parse_mode: "HTML",
-          message_thread_id: topicId,
-        },
-      );
+      await ctx.api.sendDocument(chatId, inputFile, {
+        caption: header + (truncated ? "(truncated to 50 KB)" : ""),
+        parse_mode: "HTML",
+        message_thread_id: topicId,
+      });
     }
   });
 
@@ -638,10 +648,10 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
       const maxContent = TG_MAX_CHARS - header.length - 50;
 
       if (content.length <= maxContent) {
-        await ctx.reply(
-          `${header}<pre>${escapeHTML(content)}</pre>`,
-          { parse_mode: "HTML", message_thread_id: ctx.message?.message_thread_id },
-        );
+        await ctx.reply(`${header}<pre>${escapeHTML(content)}</pre>`, {
+          parse_mode: "HTML",
+          message_thread_id: ctx.message?.message_thread_id,
+        });
       } else {
         // Send as document for long content
         const buffer = Buffer.from(content, "utf-8");
@@ -654,10 +664,9 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
       }
     } catch (err) {
       log.warn("Error in /web command", { url, error: String(err) });
-      await ctx.reply(
-        "Error fetching web content.",
-        { message_thread_id: ctx.message?.message_thread_id },
-      );
+      await ctx.reply("Error fetching web content.", {
+        message_thread_id: ctx.message?.message_thread_id,
+      });
     }
   });
 
@@ -677,10 +686,9 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
       const result = await research(query, 3000);
 
       if (!result) {
-        await ctx.reply(
-          "Research failed — WEBCLAW_API_KEY may be required for web search.",
-          { message_thread_id: ctx.message?.message_thread_id },
-        );
+        await ctx.reply("Research failed — WEBCLAW_API_KEY may be required for web search.", {
+          message_thread_id: ctx.message?.message_thread_id,
+        });
         return;
       }
 
@@ -691,12 +699,15 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
       const header = `<b>🔍 Research:</b> ${escapeHTML(query)}\n<b>Sources:</b> ${result.sources.length}\n\n`;
 
       if (result.content.length + header.length + sourceList.length < TG_MAX_CHARS - 100) {
-        await ctx.reply(
-          `${header}<pre>${escapeHTML(result.content)}</pre>\n\n${sourceList}`,
-          { parse_mode: "HTML", message_thread_id: ctx.message?.message_thread_id },
-        );
+        await ctx.reply(`${header}<pre>${escapeHTML(result.content)}</pre>\n\n${sourceList}`, {
+          parse_mode: "HTML",
+          message_thread_id: ctx.message?.message_thread_id,
+        });
       } else {
-        const buffer = Buffer.from(`# Research: ${query}\n\n${result.content}\n\n## Sources\n${result.sources.map((s, i) => `${i + 1}. [${s.title}](${s.url})`).join("\n")}`, "utf-8");
+        const buffer = Buffer.from(
+          `# Research: ${query}\n\n${result.content}\n\n## Sources\n${result.sources.map((s, i) => `${i + 1}. [${s.title}](${s.url})`).join("\n")}`,
+          "utf-8",
+        );
         const inputFile = new InputFile(buffer, `research-${Date.now()}.md`);
         await ctx.replyWithDocument(inputFile, {
           caption: `🔍 Research: ${query} (${result.sources.length} sources)`,
@@ -705,7 +716,9 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
       }
     } catch (err) {
       log.warn("Error in /research command", { query, error: String(err) });
-      await ctx.reply("Error performing research.", { message_thread_id: ctx.message?.message_thread_id });
+      await ctx.reply("Error performing research.", {
+        message_thread_id: ctx.message?.message_thread_id,
+      });
     }
   });
 
@@ -718,20 +731,23 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
       const cache = getCacheStats();
 
       const status = available ? "✅ Online" : "❌ Offline";
-      const hitRate = cache.hits + cache.misses > 0
-        ? Math.round((cache.hits / (cache.hits + cache.misses)) * 100)
-        : 0;
+      const hitRate =
+        cache.hits + cache.misses > 0
+          ? Math.round((cache.hits / (cache.hits + cache.misses)) * 100)
+          : 0;
 
       await ctx.reply(
         `<b>🌐 WebIntel Status</b>\n\n` +
-        `webclaw: ${status}\n` +
-        `Cache: ${cache.size}/${cache.maxSize} entries\n` +
-        `Hit rate: ${hitRate}% (${cache.hits} hits, ${cache.misses} misses)`,
+          `webclaw: ${status}\n` +
+          `Cache: ${cache.size}/${cache.maxSize} entries\n` +
+          `Hit rate: ${hitRate}% (${cache.hits} hits, ${cache.misses} misses)`,
         { parse_mode: "HTML", message_thread_id: ctx.message?.message_thread_id },
       );
     } catch (err) {
       log.warn("Error in /webstatus", { error: String(err) });
-      await ctx.reply("Error checking status.", { message_thread_id: ctx.message?.message_thread_id });
+      await ctx.reply("Error checking status.", {
+        message_thread_id: ctx.message?.message_thread_id,
+      });
     }
   });
 

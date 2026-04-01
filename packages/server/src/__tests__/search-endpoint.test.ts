@@ -83,19 +83,16 @@ describe("GET /api/fs/search — parameter validation", () => {
 
   it("returns 400 for a path that does not exist", async () => {
     if (skipIfOffline()) return;
-    const res = await fetch(
-      `${BASE}/api/fs/search?q=test&path=/nonexistent/path/xyz/abc`,
-      { headers: HEADERS },
-    );
+    const res = await fetch(`${BASE}/api/fs/search?q=test&path=/nonexistent/path/xyz/abc`, {
+      headers: HEADERS,
+    });
     expect(res.status).toBe(400);
   });
 
   it("returns 400 for a path that is a file, not a directory", async () => {
     if (skipIfOffline()) return;
     // Use package.json from server package — guaranteed to exist, guaranteed to be a file
-    const filePath = encodeURIComponent(
-      resolve(process.cwd(), "package.json"),
-    );
+    const filePath = encodeURIComponent(resolve(process.cwd(), "package.json"));
     const res = await fetch(`${BASE}/api/fs/search?q=test&path=${filePath}`, {
       headers: HEADERS,
     });
@@ -107,9 +104,7 @@ describe("GET /api/fs/search — successful searches", () => {
   it("returns 200 with matches when query is found", async () => {
     if (skipIfOffline()) return;
     // "Hono" is referenced throughout the server source — guaranteed hits
-    const srcPath = encodeURIComponent(
-      resolve(process.cwd(), "src"),
-    );
+    const srcPath = encodeURIComponent(resolve(process.cwd(), "src"));
     const res = await fetch(`${BASE}/api/fs/search?q=Hono&path=${srcPath}`, {
       headers: HEADERS,
     });
@@ -124,9 +119,7 @@ describe("GET /api/fs/search — successful searches", () => {
 
   it("match objects contain file, line, text, and col fields", async () => {
     if (skipIfOffline()) return;
-    const srcPath = encodeURIComponent(
-      resolve(process.cwd(), "src"),
-    );
+    const srcPath = encodeURIComponent(resolve(process.cwd(), "src"));
     const res = await fetch(`${BASE}/api/fs/search?q=Hono&path=${srcPath}`, {
       headers: HEADERS,
     });
@@ -142,13 +135,10 @@ describe("GET /api/fs/search — successful searches", () => {
 
   it("returns empty matches array when query has no results", async () => {
     if (skipIfOffline()) return;
-    const srcPath = encodeURIComponent(
-      resolve(process.cwd(), "src"),
-    );
-    const res = await fetch(
-      `${BASE}/api/fs/search?q=xyzNonExistentToken999abc&path=${srcPath}`,
-      { headers: HEADERS },
-    );
+    const srcPath = encodeURIComponent(resolve(process.cwd(), "src"));
+    const res = await fetch(`${BASE}/api/fs/search?q=xyzNonExistentToken999abc&path=${srcPath}`, {
+      headers: HEADERS,
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       success: boolean;
@@ -162,13 +152,10 @@ describe("GET /api/fs/search — successful searches", () => {
 describe("GET /api/fs/search — glob filter", () => {
   it("only returns files matching the glob pattern", async () => {
     if (skipIfOffline()) return;
-    const srcPath = encodeURIComponent(
-      resolve(process.cwd(), "src"),
-    );
-    const res = await fetch(
-      `${BASE}/api/fs/search?q=import&path=${srcPath}&glob=*.ts`,
-      { headers: HEADERS },
-    );
+    const srcPath = encodeURIComponent(resolve(process.cwd(), "src"));
+    const res = await fetch(`${BASE}/api/fs/search?q=import&path=${srcPath}&glob=*.ts`, {
+      headers: HEADERS,
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       data: { matches: Array<{ file: string }> };
@@ -180,14 +167,11 @@ describe("GET /api/fs/search — glob filter", () => {
 
   it("returns empty matches when glob excludes all files containing the query", async () => {
     if (skipIfOffline()) return;
-    const srcPath = encodeURIComponent(
-      resolve(process.cwd(), "src"),
-    );
+    const srcPath = encodeURIComponent(resolve(process.cwd(), "src"));
     // Search for "import" in *.xyz files — there are none
-    const res = await fetch(
-      `${BASE}/api/fs/search?q=import&path=${srcPath}&glob=*.xyz`,
-      { headers: HEADERS },
-    );
+    const res = await fetch(`${BASE}/api/fs/search?q=import&path=${srcPath}&glob=*.xyz`, {
+      headers: HEADERS,
+    });
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       data: { matches: unknown[] };
@@ -199,9 +183,7 @@ describe("GET /api/fs/search — glob filter", () => {
 describe("GET /api/fs/search — response shape", () => {
   it("includes total and truncated fields in data", async () => {
     if (skipIfOffline()) return;
-    const srcPath = encodeURIComponent(
-      resolve(process.cwd(), "src"),
-    );
+    const srcPath = encodeURIComponent(resolve(process.cwd(), "src"));
     const res = await fetch(`${BASE}/api/fs/search?q=import&path=${srcPath}`, {
       headers: HEADERS,
     });

@@ -38,11 +38,7 @@ export function isChatWatcherRunning(): boolean {
   return state !== null;
 }
 
-export function startChatWatcher(
-  bridge: TelegramBridge,
-  chatId: number,
-  topicId: number,
-): void {
+export function startChatWatcher(bridge: TelegramBridge, chatId: number, topicId: number): void {
   if (state) stopChatWatcher();
 
   const pollMs = getSettingInt("anti.chatPollInterval", DEFAULT_POLL_INTERVAL_MS);
@@ -102,13 +98,11 @@ async function pollChat(bridge: TelegramBridge): Promise<void> {
         const icon = msg.role === "assistant" ? "🤖" : "ℹ️";
         const preview = msg.text.length > 3000 ? msg.text.slice(0, 3000) + "..." : msg.text;
         // Fire-and-forget — don't block the loop waiting for TG API
-        bridge.sendToChat(
-          state.chatId,
-          `${icon} <b>Anti</b>\n${escapeHtml(preview)}`,
-          state.topicId,
-        ).catch((err) => {
-          log.error("TG send failed", { error: String(err) });
-        });
+        bridge
+          .sendToChat(state.chatId, `${icon} <b>Anti</b>\n${escapeHtml(preview)}`, state.topicId)
+          .catch((err) => {
+            log.error("TG send failed", { error: String(err) });
+          });
         state.lastSeenIndex = Math.max(state.lastSeenIndex, msg.index);
       }
 
@@ -121,16 +115,24 @@ async function pollChat(bridge: TelegramBridge): Promise<void> {
       state.failures++;
       log.warn("poll failed", { failures: state.failures, detail: chatResult.detail });
       if (state.failures === 3) {
-        bridge.sendToChat(
-          state.chatId,
-          `⚠️ Anti chat watcher: 3 consecutive poll failures.\n<code>${escapeHtml(chatResult.detail)}</code>\nWill stop after ${MAX_FAILURES} failures.`,
-          state.topicId,
-        ).catch(() => {});
+        bridge
+          .sendToChat(
+            state.chatId,
+            `⚠️ Anti chat watcher: 3 consecutive poll failures.\n<code>${escapeHtml(chatResult.detail)}</code>\nWill stop after ${MAX_FAILURES} failures.`,
+            state.topicId,
+          )
+          .catch(() => {});
       }
       if (state.failures >= MAX_FAILURES) {
         const { chatId, topicId } = state;
         stopChatWatcher();
-        bridge.sendToChat(chatId, "❌ Anti chat watcher stopped — CDP unreachable after 10 attempts.", topicId).catch(() => {});
+        bridge
+          .sendToChat(
+            chatId,
+            "❌ Anti chat watcher stopped — CDP unreachable after 10 attempts.",
+            topicId,
+          )
+          .catch(() => {});
         return;
       }
     }
@@ -160,16 +162,19 @@ async function pollChat(bridge: TelegramBridge): Promise<void> {
         // Check auto-approve settings
         const autoApprove = getSettingBool("anti.autoApprove", false);
         const autoDelay = getSettingInt("anti.autoApproveDelay", 5000);
-        const countdown = autoApprove && allowAction ? ` (auto-approve in ${Math.round(autoDelay / 1000)}s)` : "";
+        const countdown =
+          autoApprove && allowAction ? ` (auto-approve in ${Math.round(autoDelay / 1000)}s)` : "";
 
-        bridge.sendToChatWithKeyboard(
-          state.chatId,
-          `🔔 <b>Permission Request</b>${countdown}\n<pre>${escapeHtml(promptText.slice(0, 500))}</pre>`,
-          { inline_keyboard: [buttons] },
-          state.topicId,
-        ).catch((err) => {
-          log.error("TG permission send failed", { error: String(err) });
-        });
+        bridge
+          .sendToChatWithKeyboard(
+            state.chatId,
+            `🔔 <b>Permission Request</b>${countdown}\n<pre>${escapeHtml(promptText.slice(0, 500))}</pre>`,
+            { inline_keyboard: [buttons] },
+            state.topicId,
+          )
+          .catch((err) => {
+            log.error("TG permission send failed", { error: String(err) });
+          });
 
         // Schedule auto-approve
         if (autoApprove && allowAction) {
@@ -178,11 +183,13 @@ async function pollChat(bridge: TelegramBridge): Promise<void> {
           state.autoApproveTimer = setTimeout(async () => {
             try {
               const result = await antiCdp.respondPermission(allowAction);
-              bridge.sendToChat(
-                capturedChatId,
-                `⏱️ Auto-approved: ${escapeHtml(result.detail)}`,
-                capturedTopicId,
-              ).catch(() => {});
+              bridge
+                .sendToChat(
+                  capturedChatId,
+                  `⏱️ Auto-approved: ${escapeHtml(result.detail)}`,
+                  capturedTopicId,
+                )
+                .catch(() => {});
               log.info("Auto-approved permission", { action: allowAction });
             } catch (err) {
               log.error("Auto-approve failed", { error: String(err) });

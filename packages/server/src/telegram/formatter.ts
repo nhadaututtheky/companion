@@ -8,10 +8,7 @@ import { TELEGRAM_MAX_LENGTH } from "@companion/shared";
 // ─── HTML Escaping ──────────────────────────────────────────────────────────
 
 export function escapeHTML(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 // ─── Markdown → Telegram HTML ───────────────────────────────────────────────
@@ -76,7 +73,10 @@ export function toTelegramHTML(markdown: string): string {
   result = result.replace(/~~(.+?)~~/g, (_, t) => `<s>${t}</s>`);
 
   // Links: [text](url)
-  result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => `<a href="${url}">${text}</a>`);
+  result = result.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    (_, text, url) => `<a href="${url}">${text}</a>`,
+  );
 
   // Restore code blocks and inline code
   result = result.replace(/\x00CB(\d+)\x00/g, (_, idx) => codeBlocks[parseInt(idx)] ?? "");
@@ -116,8 +116,7 @@ function formatTables(text: string): string {
           continue;
         }
 
-        const cells = lines[j]!
-          .split("|")
+        const cells = lines[j]!.split("|")
           .map((c) => c.trim())
           .filter((c) => c !== "");
 
@@ -242,7 +241,8 @@ export function splitMessage(text: string, maxLen = TELEGRAM_MAX_LENGTH - 100): 
  */
 function repairHtmlTags(chunk: string): string {
   // Match open tags (with optional attributes) and close tags for Telegram-supported elements
-  const tagRe = /<(b|i|u|s|code|pre|a|blockquote|tg-spoiler|tg-emoji)(?:\s[^>]*)?>|<\/(b|i|u|s|code|pre|a|blockquote|tg-spoiler|tg-emoji)>/gi;
+  const tagRe =
+    /<(b|i|u|s|code|pre|a|blockquote|tg-spoiler|tg-emoji)(?:\s[^>]*)?>|<\/(b|i|u|s|code|pre|a|blockquote|tg-spoiler|tg-emoji)>/gi;
   // Stack stores { tagName, fullOpenTag } so we can re-emit the full opening tag
   const stack: Array<{ tagName: string; fullOpen: string }> = [];
 
@@ -390,7 +390,9 @@ export function formatToolAction(name: string, input: Record<string, unknown>): 
 /**
  * Format tool_use blocks from an assistant message into a tool feed string.
  */
-export function formatToolFeed(content: Array<{ type: string; name?: string; input?: unknown }>): string | null {
+export function formatToolFeed(
+  content: Array<{ type: string; name?: string; input?: unknown }>,
+): string | null {
   const actions: string[] = [];
   for (const block of content) {
     if (block.type === "tool_use" && block.name) {
@@ -413,13 +415,7 @@ const DANGEROUS_BASH_PATTERNS = [
   /\bsudo\b/,
 ];
 
-const DANGEROUS_FILE_PATTERNS = [
-  /\.env(\b|$)/i,
-  /credentials/i,
-  /secret/i,
-  /password/i,
-  /token/i,
-];
+const DANGEROUS_FILE_PATTERNS = [/\.env(\b|$)/i, /credentials/i, /secret/i, /password/i, /token/i];
 
 /**
  * Returns true if a Bash command is considered dangerous.
@@ -488,7 +484,7 @@ export function formatPermission(
       }
   }
 
-  const detailSuffix = detail ? `\n${detail}` : (description ? `\n${escapeHTML(description)}` : "");
+  const detailSuffix = detail ? `\n${detail}` : description ? `\n${escapeHTML(description)}` : "";
   return `${prefix} <b>${escapeHTML(toolName)}</b>${detailSuffix}`;
 }
 

@@ -22,7 +22,12 @@ const templateVariableSchema = z.object({
 
 const createSchema = z.object({
   name: z.string().min(1).max(100),
-  slug: z.string().min(1).max(20).regex(/^[a-z0-9-]+$/).optional(),
+  slug: z
+    .string()
+    .min(1)
+    .max(20)
+    .regex(/^[a-z0-9-]+$/)
+    .optional(),
   projectSlug: z.string().nullish(),
   prompt: z.string().min(1).max(10000),
   model: z.string().nullish(),
@@ -56,7 +61,9 @@ export function templateRoutes(): Hono {
   // POST / — create template
   app.post("/", async (c) => {
     let body: unknown;
-    try { body = await c.req.json(); } catch {
+    try {
+      body = await c.req.json();
+    } catch {
       return c.json({ success: false, error: "Invalid JSON body" } satisfies ApiResponse, 400);
     }
     const parsed = createSchema.safeParse(body);
@@ -69,7 +76,13 @@ export function templateRoutes(): Hono {
     } catch (err) {
       const msg = String(err);
       if (msg.includes("UNIQUE")) {
-        return c.json({ success: false, error: "A template with that slug already exists" } satisfies ApiResponse, 409);
+        return c.json(
+          {
+            success: false,
+            error: "A template with that slug already exists",
+          } satisfies ApiResponse,
+          409,
+        );
       }
       throw err;
     }
@@ -78,7 +91,9 @@ export function templateRoutes(): Hono {
   // PUT /:id — update template
   app.put("/:id", async (c) => {
     let body: unknown;
-    try { body = await c.req.json(); } catch {
+    try {
+      body = await c.req.json();
+    } catch {
       return c.json({ success: false, error: "Invalid JSON body" } satisfies ApiResponse, 400);
     }
     const parsed = updateSchema.safeParse(body);
@@ -94,7 +109,13 @@ export function templateRoutes(): Hono {
     } catch (err) {
       const msg = String(err);
       if (msg.includes("UNIQUE")) {
-        return c.json({ success: false, error: "A template with that slug already exists" } satisfies ApiResponse, 409);
+        return c.json(
+          {
+            success: false,
+            error: "A template with that slug already exists",
+          } satisfies ApiResponse,
+          409,
+        );
       }
       throw err;
     }

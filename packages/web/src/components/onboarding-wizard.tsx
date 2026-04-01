@@ -49,8 +49,8 @@ function StepDot({ index, current, total: _total }: StepDotProps) {
         background: done
           ? "var(--color-accent, #4285F4)"
           : active
-          ? "var(--color-accent, #4285F4)"
-          : "var(--color-border, #2a3f52)",
+            ? "var(--color-accent, #4285F4)"
+            : "var(--color-border, #2a3f52)",
         opacity: done ? 0.6 : 1,
       }}
       aria-hidden="true"
@@ -80,7 +80,10 @@ function StepWelcome() {
       <div>
         <h2
           className="text-2xl font-bold mb-2"
-          style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-sans, Space Grotesk, sans-serif)" }}
+          style={{
+            color: "var(--color-text-primary)",
+            fontFamily: "var(--font-sans, Space Grotesk, sans-serif)",
+          }}
         >
           Welcome to Companion!
         </h2>
@@ -154,10 +157,7 @@ function StepClaudeCLI({ available }: { available: boolean }) {
           />
         </div>
         <div>
-          <h2
-            className="text-lg font-bold"
-            style={{ color: "var(--color-text-primary)" }}
-          >
+          <h2 className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
             Claude CLI
           </h2>
           <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
@@ -223,10 +223,7 @@ function StepClaudeCLI({ available }: { available: boolean }) {
           >
             View installation docs →
           </a>
-          <p
-            className="text-xs"
-            style={{ color: "var(--color-text-muted, #6b7280)" }}
-          >
+          <p className="text-xs" style={{ color: "var(--color-text-muted, #6b7280)" }}>
             After installing, restart Companion and run setup again.
           </p>
         </div>
@@ -262,10 +259,7 @@ function StepProjects({ hasProjects }: { hasProjects: boolean }) {
           />
         </div>
         <div>
-          <h2
-            className="text-lg font-bold"
-            style={{ color: "var(--color-text-primary)" }}
-          >
+          <h2 className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
             Project Directories
           </h2>
           <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
@@ -332,12 +326,10 @@ function StepProjects({ hasProjects }: { hasProjects: boolean }) {
             >
               Then add a project via Settings
             </p>
-            <p
-              className="text-xs"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              Go to <strong>Settings → Projects</strong> and add a project pointing to <code>/workspace</code> (or any mounted directory).
-              Projects can also be added via the API or Telegram.
+            <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+              Go to <strong>Settings → Projects</strong> and add a project pointing to{" "}
+              <code>/workspace</code> (or any mounted directory). Projects can also be added via the
+              API or Telegram.
             </p>
           </div>
         </div>
@@ -374,7 +366,10 @@ function StepFirstSession({
       <div>
         <h2
           className="text-2xl font-bold mb-2"
-          style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-sans, Space Grotesk, sans-serif)" }}
+          style={{
+            color: "var(--color-text-primary)",
+            fontFamily: "var(--font-sans, Space Grotesk, sans-serif)",
+          }}
         >
           You're all set!
         </h2>
@@ -428,9 +423,7 @@ export function OnboardingWizard({ onOpenNewSession }: OnboardingWizardProps) {
       .then((r) => r.json())
       .then((data: SetupStatus) => {
         setStatus(data);
-        const isComplete =
-          data.hasApiKey &&
-          data.hasProjects;
+        const isComplete = data.hasApiKey && data.hasProjects;
         if (!isComplete) {
           setVisible(true);
         }
@@ -496,10 +489,7 @@ export function OnboardingWizard({ onOpenNewSession }: OnboardingWizardProps) {
               <StepDot key={i} index={i} current={step} total={TOTAL_STEPS} />
             ))}
           </div>
-          <span
-            className="text-xs"
-            style={{ color: "var(--color-text-muted, #6b7280)" }}
-          >
+          <span className="text-xs" style={{ color: "var(--color-text-muted, #6b7280)" }}>
             Step {step + 1} of {TOTAL_STEPS}
           </span>
           <button
@@ -507,8 +497,7 @@ export function OnboardingWizard({ onOpenNewSession }: OnboardingWizardProps) {
             className="p-1.5 rounded-lg cursor-pointer transition-colors"
             style={{ color: "var(--color-text-muted, #6b7280)" }}
             onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.color =
-                "var(--color-text-primary)")
+              ((e.currentTarget as HTMLButtonElement).style.color = "var(--color-text-primary)")
             }
             onMouseLeave={(e) =>
               ((e.currentTarget as HTMLButtonElement).style.color =
@@ -558,8 +547,7 @@ export function OnboardingWizard({ onOpenNewSession }: OnboardingWizardProps) {
             className="text-xs cursor-pointer transition-colors"
             style={{ color: "var(--color-text-muted, #6b7280)" }}
             onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.color =
-                "var(--color-text-secondary)")
+              ((e.currentTarget as HTMLButtonElement).style.color = "var(--color-text-secondary)")
             }
             onMouseLeave={(e) =>
               ((e.currentTarget as HTMLButtonElement).style.color =
@@ -579,12 +567,10 @@ export function OnboardingWizard({ onOpenNewSession }: OnboardingWizardProps) {
                 border: "none",
               }}
               onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLButtonElement).style.background =
-                  "#3367D6")
+                ((e.currentTarget as HTMLButtonElement).style.background = "#3367D6")
               }
               onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLButtonElement).style.background =
-                  "#4285F4")
+                ((e.currentTarget as HTMLButtonElement).style.background = "#4285F4")
               }
               aria-label="Next step"
             >

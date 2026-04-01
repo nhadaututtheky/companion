@@ -2,7 +2,11 @@
 import { useState, useRef, useCallback, type KeyboardEvent } from "react";
 import { PaperPlaneTilt, Stop, Microphone, MicrophoneSlash } from "@phosphor-icons/react";
 import { useVoiceInput } from "@/hooks/use-voice-input";
-import { useComposerStore, buildMessageWithContext, QUICK_ACTION_PROMPTS } from "@/lib/stores/composer-store";
+import {
+  useComposerStore,
+  buildMessageWithContext,
+  QUICK_ACTION_PROMPTS,
+} from "@/lib/stores/composer-store";
 import type { QuickAction } from "@/lib/stores/composer-store";
 import { AttachmentChip } from "./attachment-chip";
 import { QuickActions } from "./quick-actions";
@@ -49,8 +53,12 @@ export function MessageComposer({
     });
   }, []);
 
-  const { supported: voiceSupported, listening, interim, toggle: toggleVoice } =
-    useVoiceInput(handleTranscript);
+  const {
+    supported: voiceSupported,
+    listening,
+    interim,
+    toggle: toggleVoice,
+  } = useVoiceInput(handleTranscript);
 
   const hasContent = text.trim() || attachments.length > 0;
 
@@ -76,9 +84,7 @@ export function MessageComposer({
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     // Enter (without shift) or Ctrl+Enter both send
-    const isSendCombo =
-      (e.key === "Enter" && !e.shiftKey) ||
-      (e.key === "Enter" && e.ctrlKey);
+    const isSendCombo = (e.key === "Enter" && !e.shiftKey) || (e.key === "Enter" && e.ctrlKey);
     if (isSendCombo) {
       e.preventDefault();
       if (isRunning) return; // Don't send while Claude is responding
@@ -117,26 +123,29 @@ export function MessageComposer({
         try {
           const file = JSON.parse(data) as { path: string; name: string; ext: string };
           const currentAttachments = useComposerStore.getState().attachments;
-          const isDuplicate = currentAttachments.some(
-            (a) => a.meta?.filePath === file.path
-          );
+          const isDuplicate = currentAttachments.some((a) => a.meta?.filePath === file.path);
           if (isDuplicate) return;
-          api.fs.read(file.path).then((res) => {
-            addAttachment({
-              kind: "file",
-              label: file.name,
-              content: res.data.content,
-              meta: { filePath: file.path, language: file.ext },
+          api.fs
+            .read(file.path)
+            .then((res) => {
+              addAttachment({
+                kind: "file",
+                label: file.name,
+                content: res.data.content,
+                meta: { filePath: file.path, language: file.ext },
+              });
+            })
+            .catch(() => {
+              addAttachment({
+                kind: "file",
+                label: file.name,
+                content: `[File: ${file.path}]`,
+                meta: { filePath: file.path, language: file.ext },
+              });
             });
-          }).catch(() => {
-            addAttachment({
-              kind: "file",
-              label: file.name,
-              content: `[File: ${file.path}]`,
-              meta: { filePath: file.path, language: file.ext },
-            });
-          });
-        } catch { /* ignore malformed data */ }
+        } catch {
+          /* ignore malformed data */
+        }
       }}
     >
       <div
@@ -173,16 +182,10 @@ export function MessageComposer({
           <div className="mb-2 space-y-2">
             <div className="flex flex-wrap gap-1.5">
               {attachments.map((att) => (
-                <AttachmentChip
-                  key={att.id}
-                  attachment={att}
-                  onRemove={removeAttachment}
-                />
+                <AttachmentChip key={att.id} attachment={att} onRemove={removeAttachment} />
               ))}
             </div>
-            {!isRunning && (
-              <QuickActions onAction={handleQuickAction} />
-            )}
+            {!isRunning && <QuickActions onAction={handleQuickAction} />}
           </div>
         )}
 
@@ -190,14 +193,23 @@ export function MessageComposer({
         <div className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
-            value={listening && interim ? text + (text && !text.endsWith(" ") ? " " : "") + interim : text}
-            onChange={(e) => { if (!listening) setText(e.target.value); }}
+            value={
+              listening && interim
+                ? text + (text && !text.endsWith(" ") ? " " : "") + interim
+                : text
+            }
+            onChange={(e) => {
+              if (!listening) setText(e.target.value);
+            }}
             onKeyDown={handleKeyDown}
             onInput={handleInput}
             disabled={disabled}
-            placeholder={attachments.length > 0
-              ? "Add instructions or use a quick action above..."
-              : (listening ? "Listening..." : placeholder)
+            placeholder={
+              attachments.length > 0
+                ? "Add instructions or use a quick action above..."
+                : listening
+                  ? "Listening..."
+                  : placeholder
             }
             rows={1}
             className="flex-1 resize-none bg-transparent outline-none text-sm leading-relaxed"
@@ -257,9 +269,7 @@ export function MessageComposer({
 
       <p className="text-center mt-1.5 text-xs" style={{ color: "var(--color-text-muted)" }}>
         {listening ? (
-          <span style={{ color: "#EA4335" }}>
-            Recording... click mic to stop
-          </span>
+          <span style={{ color: "#EA4335" }}>Recording... click mic to stop</span>
         ) : (
           <>Enter or Ctrl+Enter to send · Shift+Enter for newline</>
         )}

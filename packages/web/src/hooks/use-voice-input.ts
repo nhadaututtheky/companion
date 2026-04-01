@@ -67,19 +67,22 @@ export function useVoiceInput(
   useEffect(() => {
     const SpeechRecognition =
       typeof window !== "undefined"
-        ? window.SpeechRecognition ?? window.webkitSpeechRecognition
+        ? (window.SpeechRecognition ?? window.webkitSpeechRecognition)
         : undefined;
     setSupported(!!SpeechRecognition);
   }, []);
 
   const start = useCallback(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition ?? window.webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition ?? window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
 
     // Clean up any existing instance
     if (recognitionRef.current) {
-      try { recognitionRef.current.abort(); } catch { /* ignore */ }
+      try {
+        recognitionRef.current.abort();
+      } catch {
+        /* ignore */
+      }
     }
 
     const recognition = new SpeechRecognition();
@@ -151,7 +154,11 @@ export function useVoiceInput(
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
-        try { recognitionRef.current.abort(); } catch { /* ignore */ }
+        try {
+          recognitionRef.current.abort();
+        } catch {
+          /* ignore */
+        }
       }
     };
   }, []);

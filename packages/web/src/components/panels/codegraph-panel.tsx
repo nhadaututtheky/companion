@@ -60,7 +60,9 @@ function StatusBadge({ ready, scanning }: { ready: boolean; scanning: boolean })
     return (
       <div className="flex items-center gap-1.5">
         <CircleNotch size={14} className="animate-spin" style={{ color: "#4285F4" }} />
-        <span className="text-xs" style={{ color: "#4285F4" }}>Scanning</span>
+        <span className="text-xs" style={{ color: "#4285F4" }}>
+          Scanning
+        </span>
       </div>
     );
   }
@@ -84,9 +86,7 @@ function StatusBadge({ ready, scanning }: { ready: boolean; scanning: boolean })
 // ── Scan Progress ────────────────────────────────────────────────────────
 
 function ScanProgress({ job }: { job: ScanJob }) {
-  const pct = job.totalFiles > 0
-    ? Math.round((job.scannedFiles / job.totalFiles) * 100)
-    : 0;
+  const pct = job.totalFiles > 0 ? Math.round((job.scannedFiles / job.totalFiles) * 100) : 0;
 
   return (
     <div className="rounded-lg p-3" style={{ background: "var(--bg-elevated, #1a2332)" }}>
@@ -112,7 +112,9 @@ function ScanProgress({ job }: { job: ScanJob }) {
         />
       </div>
       <div className="flex justify-between mt-1.5 text-xs opacity-50">
-        <span>{job.scannedFiles}/{job.totalFiles} files</span>
+        <span>
+          {job.scannedFiles}/{job.totalFiles} files
+        </span>
         <span>{job.totalNodes} symbols</span>
       </div>
       {job.errorMessage && (
@@ -221,16 +223,12 @@ function SearchResults({ results }: { results: SearchResult[] }) {
               {r.symbolType}
             </span>
             <span className="text-sm font-medium truncate">{r.symbolName}</span>
-            {r.isExported && (
-              <span className="text-xs opacity-40">exported</span>
-            )}
+            {r.isExported && <span className="text-xs opacity-40">exported</span>}
           </button>
           {expanded === r.id && (
             <div className="px-3 pb-2 space-y-1.5">
               <div className="text-xs opacity-50">{r.filePath}</div>
-              {r.description && (
-                <div className="text-xs opacity-70">{r.description}</div>
-              )}
+              {r.description && <div className="text-xs opacity-70">{r.description}</div>}
               {r.signature && (
                 <div className="text-xs font-mono opacity-50 truncate">{r.signature}</div>
               )}
@@ -250,8 +248,7 @@ function SearchResults({ results }: { results: SearchResult[] }) {
                   <span className="opacity-50">Uses: </span>
                   {r.outgoing.map((e, i) => (
                     <span key={i} className="opacity-70">
-                      {e.symbolName} ({e.edgeType})
-                      {i < r.outgoing.length - 1 ? ", " : ""}
+                      {e.symbolName} ({e.edgeType}){i < r.outgoing.length - 1 ? ", " : ""}
                     </span>
                   ))}
                 </div>
@@ -287,7 +284,9 @@ export default function CodeGraphPanel({ onClose, projectSlug }: CodeGraphPanelP
         setJob(res.data.job);
         setScanning(res.data.job?.status === "scanning" || res.data.job?.status === "describing");
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [slug]);
 
   const loadStats = useCallback(async () => {
@@ -295,7 +294,9 @@ export default function CodeGraphPanel({ onClose, projectSlug }: CodeGraphPanelP
     try {
       const res = await api.codegraph.stats(slug);
       if (res.success) setStats(res.data);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [slug]);
 
   const loadHotFiles = useCallback(async () => {
@@ -303,21 +304,26 @@ export default function CodeGraphPanel({ onClose, projectSlug }: CodeGraphPanelP
     try {
       const res = await api.codegraph.hotFiles(slug, 8);
       if (res.success) setHotFiles(res.data);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [slug]);
 
   // Initial load + polling
   useEffect(() => {
     loadStatus(); // eslint-disable-line react-hooks/set-state-in-effect -- fetch on mount
-    loadStats();  
-    loadHotFiles();  
+    loadStats();
+    loadHotFiles();
 
-    const interval = setInterval(() => {
-      loadStatus();
-      if (scanning) {
-        loadStats();
-      }
-    }, scanning ? 3000 : 15000);
+    const interval = setInterval(
+      () => {
+        loadStatus();
+        if (scanning) {
+          loadStats();
+        }
+      },
+      scanning ? 3000 : 15000,
+    );
 
     return () => clearInterval(interval);
   }, [loadStatus, loadStats, loadHotFiles, scanning]);
@@ -326,7 +332,7 @@ export default function CodeGraphPanel({ onClose, projectSlug }: CodeGraphPanelP
   useEffect(() => {
     if (ready && !scanning) {
       loadStats(); // eslint-disable-line react-hooks/set-state-in-effect -- refresh on scan complete
-      loadHotFiles();  
+      loadHotFiles();
     }
   }, [ready, scanning, loadStats, loadHotFiles]);
 
@@ -336,7 +342,9 @@ export default function CodeGraphPanel({ onClose, projectSlug }: CodeGraphPanelP
       await api.codegraph.scan(slug);
       setScanning(true);
       loadStatus();
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleSearch = async () => {
@@ -345,7 +353,9 @@ export default function CodeGraphPanel({ onClose, projectSlug }: CodeGraphPanelP
     try {
       const res = await api.codegraph.search(slug, searchQuery);
       if (res.success) setSearchResults(res.data as SearchResult[]);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setSearching(false);
   };
 
@@ -358,7 +368,10 @@ export default function CodeGraphPanel({ onClose, projectSlug }: CodeGraphPanelP
       }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "var(--border, #2a3f52)" }}>
+      <div
+        className="flex items-center justify-between px-4 py-3 border-b"
+        style={{ borderColor: "var(--border, #2a3f52)" }}
+      >
         <div className="flex items-center gap-2">
           <Graph size={18} weight="bold" style={{ color: "#A855F7" }} />
           <span className="font-semibold text-sm">CodeGraph</span>

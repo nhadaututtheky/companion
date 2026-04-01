@@ -58,12 +58,14 @@ function teardownTestDb() {
 let sessionCounter = 0;
 
 /** Create a minimal session record in the DB and return the ID */
-function insertSession(overrides: {
-  id?: string;
-  status?: string;
-  projectSlug?: string;
-  cliSessionId?: string;
-} = {}): string {
+function insertSession(
+  overrides: {
+    id?: string;
+    status?: string;
+    projectSlug?: string;
+    cliSessionId?: string;
+  } = {},
+): string {
   const id = overrides.id ?? `test-session-${++sessionCounter}`;
 
   // Ensure the project exists before creating a session that references it

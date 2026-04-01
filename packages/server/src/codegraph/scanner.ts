@@ -70,8 +70,13 @@ function estimateEndLine(code: string, startLine: number): number {
   for (let i = startLine - 1; i < lines.length; i++) {
     const line = lines[i]!;
     for (const ch of line) {
-      if (ch === "{") { depth++; started = true; }
-      if (ch === "}") { depth--; }
+      if (ch === "{") {
+        depth++;
+        started = true;
+      }
+      if (ch === "}") {
+        depth--;
+      }
     }
     if (started && depth <= 0) return i + 1;
   }
@@ -86,7 +91,8 @@ function scanTypeScript(code: string, _filePath: string): ScanResult {
   const edges: ScannedEdge[] = [];
 
   // ── Imports ──
-  const importRegex = /^import\s+(?:type\s+)?(?:(\{[^}]+\})|(\*\s+as\s+\w+)|(\w+))\s+from\s+['"]([^'"]+)['"]/gm;
+  const importRegex =
+    /^import\s+(?:type\s+)?(?:(\{[^}]+\})|(\*\s+as\s+\w+)|(\w+))\s+from\s+['"]([^'"]+)['"]/gm;
   let match: RegExpExecArray | null;
 
   while ((match = importRegex.exec(code)) !== null) {
@@ -101,7 +107,12 @@ function scanTypeScript(code: string, _filePath: string): ScanResult {
       const symbols = namedImports
         .replace(/[{}]/g, "")
         .split(",")
-        .map((s) => s.trim().split(/\s+as\s+/)[0]!.trim())
+        .map((s) =>
+          s
+            .trim()
+            .split(/\s+as\s+/)[0]!
+            .trim(),
+        )
         .filter(Boolean);
 
       for (const sym of symbols) {
@@ -157,7 +168,8 @@ function scanTypeScript(code: string, _filePath: string): ScanResult {
   }
 
   // ── Arrow Functions (const name = (...) => ...) ──
-  const arrowRegex = /^(export\s+(?:default\s+)?)?const\s+(\w+)\s*(?::\s*\w+(?:<[^>]+>)?\s*)?=\s*(?:async\s+)?\(([^)]*)\)\s*(?::\s*[^\n=>]+)?\s*=>/gm;
+  const arrowRegex =
+    /^(export\s+(?:default\s+)?)?const\s+(\w+)\s*(?::\s*\w+(?:<[^>]+>)?\s*)?=\s*(?:async\s+)?\(([^)]*)\)\s*(?::\s*[^\n=>]+)?\s*=>/gm;
   while ((match = arrowRegex.exec(code)) !== null) {
     const isExported = !!match[1];
     const name = match[2]!;
@@ -179,7 +191,8 @@ function scanTypeScript(code: string, _filePath: string): ScanResult {
   }
 
   // ── Classes ──
-  const classRegex = /^(export\s+(?:default\s+)?)?(?:abstract\s+)?class\s+(\w+)(?:\s+extends\s+(\w+))?(?:\s+implements\s+(\w+(?:\s*,\s*\w+)*))?/gm;
+  const classRegex =
+    /^(export\s+(?:default\s+)?)?(?:abstract\s+)?class\s+(\w+)(?:\s+extends\s+(\w+))?(?:\s+implements\s+(\w+(?:\s*,\s*\w+)*))?/gm;
   while ((match = classRegex.exec(code)) !== null) {
     const isExported = !!match[1];
     const name = match[2]!;
@@ -221,7 +234,8 @@ function scanTypeScript(code: string, _filePath: string): ScanResult {
   }
 
   // ── Interfaces ──
-  const ifaceRegex = /^(export\s+)?interface\s+(\w+)(?:<[^>]+>)?(?:\s+extends\s+(\w+(?:\s*,\s*\w+)*))?/gm;
+  const ifaceRegex =
+    /^(export\s+)?interface\s+(\w+)(?:<[^>]+>)?(?:\s+extends\s+(\w+(?:\s*,\s*\w+)*))?/gm;
   while ((match = ifaceRegex.exec(code)) !== null) {
     const isExported = !!match[1];
     const name = match[2]!;
@@ -296,7 +310,8 @@ function scanTypeScript(code: string, _filePath: string): ScanResult {
   }
 
   // ── Hono Endpoints (app.get/post/put/delete) ──
-  const endpointRegex = /(?:app|router|server|api)\.(get|post|put|delete|patch)\s*\(\s*['"]([^'"]+)['"]/gm;
+  const endpointRegex =
+    /(?:app|router|server|api)\.(get|post|put|delete|patch)\s*\(\s*['"]([^'"]+)['"]/gm;
   while ((match = endpointRegex.exec(code)) !== null) {
     const method = match[1]!.toUpperCase();
     const path = match[2]!;
@@ -320,7 +335,10 @@ function scanTypeScript(code: string, _filePath: string): ScanResult {
     // Find which function/component contains this JSX
     const line = lineAt(code, match.index);
     const parentNode = nodes.find(
-      (n) => (n.symbolType === "component" || n.symbolType === "function") && n.lineStart <= line && n.lineEnd >= line,
+      (n) =>
+        (n.symbolType === "component" || n.symbolType === "function") &&
+        n.lineStart <= line &&
+        n.lineEnd >= line,
     );
 
     if (parentNode) {
@@ -348,7 +366,12 @@ function scanPython(code: string, _filePath: string): ScanResult {
   const importFromRegex = /^from\s+(\S+)\s+import\s+(.+)/gm;
   while ((match = importFromRegex.exec(code)) !== null) {
     const fromPath = match[1]!;
-    const symbols = match[2]!.split(",").map((s) => s.trim().split(/\s+as\s+/)[0]!.trim());
+    const symbols = match[2]!.split(",").map((s) =>
+      s
+        .trim()
+        .split(/\s+as\s+/)[0]!
+        .trim(),
+    );
     for (const sym of symbols) {
       edges.push({
         sourceSymbol: "__file__",
@@ -434,9 +457,9 @@ function scanGeneric(code: string, _filePath: string): ScanResult {
 
   // Generic function patterns (Go, Rust, Java, etc.)
   const funcPatterns = [
-    /^(?:pub\s+)?(?:async\s+)?fn\s+(\w+)\s*[(<]/gm,          // Rust
-    /^func\s+(?:\(\w+\s+\*?\w+\)\s+)?(\w+)\s*\(/gm,          // Go
-    /^(?:public|private|protected)?\s*(?:static\s+)?(?:async\s+)?\w+\s+(\w+)\s*\(/gm,  // Java/C#
+    /^(?:pub\s+)?(?:async\s+)?fn\s+(\w+)\s*[(<]/gm, // Rust
+    /^func\s+(?:\(\w+\s+\*?\w+\)\s+)?(\w+)\s*\(/gm, // Go
+    /^(?:public|private|protected)?\s*(?:static\s+)?(?:async\s+)?\w+\s+(\w+)\s*\(/gm, // Java/C#
   ];
 
   for (const pattern of funcPatterns) {
@@ -457,9 +480,9 @@ function scanGeneric(code: string, _filePath: string): ScanResult {
 
   // Generic class/struct patterns
   const classPatterns = [
-    /^(?:pub\s+)?struct\s+(\w+)/gm,          // Rust
-    /^type\s+(\w+)\s+struct/gm,               // Go
-    /^(?:public\s+)?class\s+(\w+)/gm,         // Java/C#
+    /^(?:pub\s+)?struct\s+(\w+)/gm, // Rust
+    /^type\s+(\w+)\s+struct/gm, // Go
+    /^(?:public\s+)?class\s+(\w+)/gm, // Java/C#
   ];
 
   for (const pattern of classPatterns) {
@@ -480,9 +503,9 @@ function scanGeneric(code: string, _filePath: string): ScanResult {
 
   // Generic import patterns
   const importPatterns = [
-    /^use\s+(\S+)::/gm,                       // Rust
-    /^import\s+"([^"]+)"/gm,                   // Go
-    /^import\s+(\S+)/gm,                       // Java
+    /^use\s+(\S+)::/gm, // Rust
+    /^import\s+"([^"]+)"/gm, // Go
+    /^import\s+(\S+)/gm, // Java
   ];
 
   for (const pattern of importPatterns) {

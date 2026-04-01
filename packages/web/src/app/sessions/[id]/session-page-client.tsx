@@ -19,21 +19,44 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-function ContextStatusBar({ session }: { session: { state?: Partial<import("@companion/shared").SessionState>; contextUsedPercent?: number; contextTokens?: number; contextMaxTokens?: number } | undefined }) {
+function ContextStatusBar({
+  session,
+}: {
+  session:
+    | {
+        state?: Partial<import("@companion/shared").SessionState>;
+        contextUsedPercent?: number;
+        contextTokens?: number;
+        contextMaxTokens?: number;
+      }
+    | undefined;
+}) {
   if (!session?.state) return null;
 
   // Prefer real-time context data from CLI polling when available
-  const hasRealtimeContext = session.contextTokens !== undefined && session.contextMaxTokens !== undefined;
+  const hasRealtimeContext =
+    session.contextTokens !== undefined && session.contextMaxTokens !== undefined;
 
-  const { total_input_tokens = 0, total_output_tokens = 0, cache_read_tokens = 0, model = "" } = session.state;
+  const {
+    total_input_tokens = 0,
+    total_output_tokens = 0,
+    cache_read_tokens = 0,
+    model = "",
+  } = session.state;
   const fallbackTotal = total_input_tokens + total_output_tokens + cache_read_tokens;
 
   const totalTokens = hasRealtimeContext ? session.contextTokens! : fallbackTotal;
-  const maxTokens = hasRealtimeContext ? session.contextMaxTokens! : (model.includes("haiku") ? 200_000 : 1_000_000);
+  const maxTokens = hasRealtimeContext
+    ? session.contextMaxTokens!
+    : model.includes("haiku")
+      ? 200_000
+      : 1_000_000;
 
   if (totalTokens === 0) return null;
 
-  const pct = hasRealtimeContext ? (session.contextUsedPercent ?? 0) : Math.min(100, (totalTokens / maxTokens) * 100);
+  const pct = hasRealtimeContext
+    ? (session.contextUsedPercent ?? 0)
+    : Math.min(100, (totalTokens / maxTokens) * 100);
   const remaining = maxTokens - totalTokens;
 
   const color = pct < 60 ? "#34A853" : pct < 85 ? "#FBBC04" : "#EA4335";
@@ -80,7 +103,8 @@ function ContextStatusBar({ session }: { session: { state?: Partial<import("@com
 export function SessionPageClient({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel } = useSession(id);
+  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel } =
+    useSession(id);
   const session = useSessionStore((s) => s.sessions[id]);
   const [pinnedDrawerOpen, setPinnedDrawerOpen] = useState(false);
   const scrollToMessageRef = useRef<((index: number) => void) | null>(null);
@@ -128,7 +152,10 @@ export function SessionPageClient({ params }: PageProps) {
               <ArrowLeft size={16} weight="bold" />
             </button>
             <div className="flex items-center gap-2 flex-1 min-w-0">
-              <span className="text-sm font-semibold truncate" style={{ color: "var(--color-text-primary)" }}>
+              <span
+                className="text-sm font-semibold truncate"
+                style={{ color: "var(--color-text-primary)" }}
+              >
                 {session?.projectName ?? id.slice(0, 8)}
               </span>
               <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
@@ -162,8 +189,12 @@ export function SessionPageClient({ params }: PageProps) {
               onClick={() => setPinnedDrawerOpen(true)}
               className="relative p-1.5 rounded-lg transition-colors cursor-pointer"
               style={{ color: pinCount > 0 ? "#FBBC04" : "var(--color-text-muted)" }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "transparent";
+              }}
               aria-label={`Pinned messages${pinCount > 0 ? ` (${pinCount})` : ""}`}
               title="Pinned messages"
             >
@@ -171,7 +202,13 @@ export function SessionPageClient({ params }: PageProps) {
               {pinCount > 0 && (
                 <span
                   className="absolute -top-0.5 -right-0.5 text-xs font-mono font-bold px-1 rounded-full leading-tight"
-                  style={{ background: "#FBBC04", color: "#000", fontSize: 9, minWidth: 14, textAlign: "center" }}
+                  style={{
+                    background: "#FBBC04",
+                    color: "#000",
+                    fontSize: 9,
+                    minWidth: 14,
+                    textAlign: "center",
+                  }}
                 >
                   {pinCount}
                 </span>
@@ -182,11 +219,7 @@ export function SessionPageClient({ params }: PageProps) {
           <ContextStatusBar session={session} />
 
           {/* Messages */}
-          <MessageFeed
-            messages={messages}
-            sessionId={id}
-            onScrollToRef={handleScrollToRef}
-          />
+          <MessageFeed messages={messages} sessionId={id} onScrollToRef={handleScrollToRef} />
           <PermissionGate permissions={pendingPermissions} onRespond={respondPermission} />
           <MessageComposer
             onSend={sendMessage}

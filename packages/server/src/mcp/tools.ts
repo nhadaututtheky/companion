@@ -52,9 +52,15 @@ export function registerTools(server: McpServer): void {
     "Spawn a new Claude Code session in Companion. Returns the session ID.",
     {
       projectDir: z.string().describe("Absolute path to the project directory"),
-      projectSlug: z.string().optional().describe("Project slug (optional, auto-detected from dir)"),
+      projectSlug: z
+        .string()
+        .optional()
+        .describe("Project slug (optional, auto-detected from dir)"),
       model: z.string().optional().describe("Model to use (default: claude-sonnet-4-6)"),
-      permissionMode: z.enum(["default", "acceptEdits", "bypassPermissions", "plan"]).optional().describe("Permission mode"),
+      permissionMode: z
+        .enum(["default", "acceptEdits", "bypassPermissions", "plan"])
+        .optional()
+        .describe("Permission mode"),
       prompt: z.string().optional().describe("Initial prompt to send after session starts"),
     },
     async ({ projectDir, projectSlug, model, permissionMode, prompt }) => {
@@ -119,22 +125,32 @@ export function registerTools(server: McpServer): void {
       const [project, sessions, channelsRes] = await Promise.all([
         apiCall<{ data: unknown }>(`/projects/${projectSlug}`).catch(() => ({ data: null })),
         apiCall<{ data: { sessions: unknown[] } }>("/sessions"),
-        apiCall<{ data: { items: unknown[] } }>(`/channels?projectSlug=${projectSlug}`).catch(() => ({ data: { items: [] } })),
+        apiCall<{ data: { items: unknown[] } }>(`/channels?projectSlug=${projectSlug}`).catch(
+          () => ({ data: { items: [] } }),
+        ),
       ]);
 
       const projectSessions = Array.isArray(sessions.data.sessions)
-        ? sessions.data.sessions.filter((s) => (s as Record<string, unknown>).projectSlug === projectSlug)
+        ? sessions.data.sessions.filter(
+            (s) => (s as Record<string, unknown>).projectSlug === projectSlug,
+          )
         : [];
 
       return {
-        content: [{
-          type: "text",
-          text: JSON.stringify({
-            project: project.data,
-            activeSessions: projectSessions,
-            channels: channelsRes.data.items,
-          }, null, 2),
-        }],
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                project: project.data,
+                activeSessions: projectSessions,
+                channels: channelsRes.data.items,
+              },
+              null,
+              2,
+            ),
+          },
+        ],
       };
     },
   );
@@ -145,7 +161,10 @@ export function registerTools(server: McpServer): void {
     "Create a shared context channel for multi-agent collaboration (debate, review, brainstorm)",
     {
       topic: z.string().describe("Channel topic or question"),
-      type: z.enum(["debate", "review", "red_team", "brainstorm"]).default("debate").describe("Channel type"),
+      type: z
+        .enum(["debate", "review", "red_team", "brainstorm"])
+        .default("debate")
+        .describe("Channel type"),
       projectSlug: z.string().optional().describe("Project to associate with"),
       maxRounds: z.number().optional().describe("Max rounds before auto-conclude (default: 5)"),
     },
@@ -155,7 +174,9 @@ export function registerTools(server: McpServer): void {
         body: { topic, type, projectSlug, maxRounds },
       });
       return {
-        content: [{ type: "text", text: `Channel created: ${res.data.id}\nTopic: ${topic}\nType: ${type}` }],
+        content: [
+          { type: "text", text: `Channel created: ${res.data.id}\nTopic: ${topic}\nType: ${type}` },
+        ],
       };
     },
   );
@@ -188,7 +209,10 @@ export function registerTools(server: McpServer): void {
     "Get auto-generated summary for a session, or latest summaries for a project",
     {
       sessionId: z.string().optional().describe("Specific session ID to get summary for"),
-      projectSlug: z.string().optional().describe("Project slug to get latest summaries (returns up to 3)"),
+      projectSlug: z
+        .string()
+        .optional()
+        .describe("Project slug to get latest summaries (returns up to 3)"),
     },
     async ({ sessionId, projectSlug }) => {
       if (sessionId) {
@@ -209,7 +233,10 @@ export function registerTools(server: McpServer): void {
     "Start a multi-agent debate on a topic. Returns channel ID to track the debate.",
     {
       topic: z.string().describe("Debate topic or question"),
-      format: z.enum(["pro_con", "red_team", "review", "brainstorm"]).default("pro_con").describe("Debate format"),
+      format: z
+        .enum(["pro_con", "red_team", "review", "brainstorm"])
+        .default("pro_con")
+        .describe("Debate format"),
       projectSlug: z.string().optional().describe("Project to associate with"),
       maxRounds: z.number().optional().describe("Max rounds (default: 5)"),
     },
@@ -265,8 +292,14 @@ export function registerTools(server: McpServer): void {
     "Scrape a URL via Companion's webclaw integration. Returns clean, token-optimized content for LLM consumption.",
     {
       url: z.string().describe("URL to scrape (must be public http/https)"),
-      maxTokens: z.number().optional().describe("Max tokens in response (default: 4000, max: 16000)"),
-      formats: z.array(z.enum(["markdown", "llm", "text", "json"])).optional().describe("Output formats (default: ['llm'])"),
+      maxTokens: z
+        .number()
+        .optional()
+        .describe("Max tokens in response (default: 4000, max: 16000)"),
+      formats: z
+        .array(z.enum(["markdown", "llm", "text", "json"]))
+        .optional()
+        .describe("Output formats (default: ['llm'])"),
       skipCache: z.boolean().optional().describe("Skip cache and fetch fresh (default: false)"),
     },
     async ({ url, maxTokens, formats, skipCache }) => {
@@ -286,7 +319,10 @@ export function registerTools(server: McpServer): void {
         });
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Scrape failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Scrape failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -297,11 +333,16 @@ export function registerTools(server: McpServer): void {
     "Research a topic by searching the web, scraping top results, and returning synthesized content with source citations.",
     {
       query: z.string().describe("Research query (e.g., 'Hono middleware patterns')"),
-      maxTokens: z.number().optional().describe("Max tokens in response (default: 3000, max: 8000)"),
+      maxTokens: z
+        .number()
+        .optional()
+        .describe("Max tokens in response (default: 3000, max: 8000)"),
     },
     async ({ query, maxTokens }) => {
       try {
-        const res = await apiCall<{ data: { content: string; sources: { title: string; url: string }[] } }>("/webintel/research", {
+        const res = await apiCall<{
+          data: { content: string; sources: { title: string; url: string }[] };
+        }>("/webintel/research", {
           method: "POST",
           body: { query, maxTokens: Math.min(maxTokens ?? 3000, 8000) },
         });
@@ -314,7 +355,10 @@ export function registerTools(server: McpServer): void {
           content: [{ type: "text", text: `${res.data.content}\n\n---\nSources:\n${sourcesText}` }],
         };
       } catch (err) {
-        return { content: [{ type: "text", text: `Research failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Research failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -335,7 +379,12 @@ export function registerTools(server: McpServer): void {
           body: { url, maxDepth, maxPages },
         });
         return {
-          content: [{ type: "text", text: `Crawl started. Job ID: ${res.data.jobId}\nUse companion_web_crawl_status to check progress.` }],
+          content: [
+            {
+              type: "text",
+              text: `Crawl started. Job ID: ${res.data.jobId}\nUse companion_web_crawl_status to check progress.`,
+            },
+          ],
         };
       } catch (err) {
         return { content: [{ type: "text", text: `Crawl failed: ${String(err)}` }], isError: true };
@@ -355,7 +404,10 @@ export function registerTools(server: McpServer): void {
         const res = await apiCall<{ data: unknown }>(`/webintel/jobs/${encodeURIComponent(jobId)}`);
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Job status check failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Job status check failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -367,10 +419,15 @@ export function registerTools(server: McpServer): void {
     {},
     async () => {
       try {
-        const res = await apiCall<{ data: { available: boolean; cache: unknown } }>("/webintel/status");
+        const res = await apiCall<{ data: { available: boolean; cache: unknown } }>(
+          "/webintel/status",
+        );
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Status check failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Status check failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );

@@ -1,6 +1,14 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Gear, Timer, Lightning, X, TelegramLogo, ArrowsClockwise, CurrencyDollar } from "@phosphor-icons/react";
+import {
+  Gear,
+  Timer,
+  Lightning,
+  X,
+  TelegramLogo,
+  ArrowsClockwise,
+  CurrencyDollar,
+} from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -41,11 +49,7 @@ interface SessionSettingsPopoverProps {
   anchorRef: React.RefObject<HTMLButtonElement | null>;
 }
 
-function SessionSettingsPopover({
-  sessionId,
-  onClose,
-  anchorRef,
-}: SessionSettingsPopoverProps) {
+function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettingsPopoverProps) {
   const [settings, setSettings] = useState<SessionSettings>({
     idleTimeoutMs: DEFAULT_TIMEOUT_MS,
     keepAlive: false,
@@ -66,22 +70,24 @@ function SessionSettingsPopover({
     Promise.all([
       api.sessions.getSettings(sessionId).catch(() => null),
       api.sessions.get(sessionId).catch(() => null),
-    ]).then(([settingsRes, sessionRes]) => {
-      if (settingsRes?.data) {
-        setSettings(settingsRes.data);
-      }
-      if (sessionRes?.data) {
-        const s = sessionRes.data as Record<string, unknown>;
-        setConfig({
-          compactMode: (s.compact_mode as CompactMode) ?? "manual",
-          compactThreshold: (s.compact_threshold as number) ?? 75,
-          costBudgetUsd: (s.cost_budget_usd as number) ?? null,
-        });
-        setBudgetInput(s.cost_budget_usd ? String(s.cost_budget_usd) : "");
-      }
-    }).finally(() => {
-      setLoading(false);
-    });
+    ])
+      .then(([settingsRes, sessionRes]) => {
+        if (settingsRes?.data) {
+          setSettings(settingsRes.data);
+        }
+        if (sessionRes?.data) {
+          const s = sessionRes.data as Record<string, unknown>;
+          setConfig({
+            compactMode: (s.compact_mode as CompactMode) ?? "manual",
+            compactThreshold: (s.compact_threshold as number) ?? 75,
+            costBudgetUsd: (s.cost_budget_usd as number) ?? null,
+          });
+          setBudgetInput(s.cost_budget_usd ? String(s.cost_budget_usd) : "");
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [sessionId]);
 
   // Click-outside to close
@@ -114,12 +120,15 @@ function SessionSettingsPopover({
       setSaving(true);
       setSettings((prev) => {
         const next = { ...prev, ...patch };
-        api.sessions.updateSettings(sessionId, patch).catch(() => {
-          // Revert on error
-          setSettings(prev);
-        }).finally(() => {
-          setSaving(false);
-        });
+        api.sessions
+          .updateSettings(sessionId, patch)
+          .catch(() => {
+            // Revert on error
+            setSettings(prev);
+          })
+          .finally(() => {
+            setSaving(false);
+          });
         return next;
       });
     },
@@ -206,13 +215,13 @@ function SessionSettingsPopover({
       ) : (
         <div className="flex flex-col">
           {/* Idle Timeout */}
-          <div
-            className="px-3 py-2.5"
-            style={{ borderBottom: "1px solid var(--color-border)" }}
-          >
+          <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--color-border)" }}>
             <div className="flex items-center gap-1.5 mb-2">
               <Timer size={12} style={{ color: "var(--color-text-muted)" }} aria-hidden="true" />
-              <span className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+              <span
+                className="text-xs font-semibold"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
                 Idle Timeout
               </span>
               {saving && (
@@ -245,10 +254,7 @@ function SessionSettingsPopover({
           </div>
 
           {/* Stream to Telegram */}
-          <div
-            className="px-3 py-2.5"
-            style={{ borderBottom: "1px solid var(--color-border)" }}
-          >
+          <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--color-border)" }}>
             <div className="flex items-start gap-2">
               <TelegramLogo
                 size={12}
@@ -256,21 +262,22 @@ function SessionSettingsPopover({
                 aria-hidden="true"
               />
               <div className="flex flex-col gap-0.5">
-                <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                <span
+                  className="text-xs font-semibold"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
                   Stream to Telegram
                 </span>
                 <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                  Use <code style={{ fontFamily: "var(--font-mono)" }}>/stream</code> in Telegram to attach to this session and see messages in real time.
+                  Use <code style={{ fontFamily: "var(--font-mono)" }}>/stream</code> in Telegram to
+                  attach to this session and see messages in real time.
                 </span>
               </div>
             </div>
           </div>
 
           {/* Keep Alive */}
-          <div
-            className="px-3 py-2.5"
-            style={{ borderBottom: "1px solid var(--color-border)" }}
-          >
+          <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--color-border)" }}>
             <button
               onClick={handleKeepAliveToggle}
               className="w-full flex items-center gap-2 text-left cursor-pointer"
@@ -291,7 +298,10 @@ function SessionSettingsPopover({
                 )}
               </div>
               <div className="flex flex-col">
-                <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                <span
+                  className="text-xs font-semibold"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
                   Keep Alive
                 </span>
                 <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
@@ -302,20 +312,28 @@ function SessionSettingsPopover({
           </div>
 
           {/* Compact Mode */}
-          <div
-            className="px-3 py-2.5"
-            style={{ borderBottom: "1px solid var(--color-border)" }}
-          >
+          <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--color-border)" }}>
             <div className="flex items-center gap-1.5 mb-2">
-              <ArrowsClockwise size={12} style={{ color: "var(--color-text-muted)" }} aria-hidden="true" />
-              <span className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+              <ArrowsClockwise
+                size={12}
+                style={{ color: "var(--color-text-muted)" }}
+                aria-hidden="true"
+              />
+              <span
+                className="text-xs font-semibold"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
                 Auto-Compact
               </span>
             </div>
             <div className="flex flex-wrap gap-1">
               {(["manual", "smart", "aggressive"] as CompactMode[]).map((mode) => {
                 const active = config.compactMode === mode;
-                const labels: Record<CompactMode, string> = { manual: "Manual", smart: "Smart", aggressive: "Aggressive" };
+                const labels: Record<CompactMode, string> = {
+                  manual: "Manual",
+                  smart: "Smart",
+                  aggressive: "Aggressive",
+                };
                 return (
                   <button
                     key={mode}
@@ -335,21 +353,32 @@ function SessionSettingsPopover({
             </div>
             <span className="text-xs mt-1 block" style={{ color: "var(--color-text-muted)" }}>
               {config.compactMode === "manual" && "Warn only, you run /compact"}
-              {config.compactMode === "smart" && `Handoff at idle when >${config.compactThreshold}%`}
-              {config.compactMode === "aggressive" && `Compact immediately at ${config.compactThreshold}%`}
+              {config.compactMode === "smart" &&
+                `Handoff at idle when >${config.compactThreshold}%`}
+              {config.compactMode === "aggressive" &&
+                `Compact immediately at ${config.compactThreshold}%`}
             </span>
           </div>
 
           {/* Cost Budget */}
           <div className="px-3 py-2.5">
             <div className="flex items-center gap-1.5 mb-2">
-              <CurrencyDollar size={12} style={{ color: "var(--color-text-muted)" }} aria-hidden="true" />
-              <span className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+              <CurrencyDollar
+                size={12}
+                style={{ color: "var(--color-text-muted)" }}
+                aria-hidden="true"
+              />
+              <span
+                className="text-xs font-semibold"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
                 Cost Budget
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>$</span>
+              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                $
+              </span>
               <input
                 type="number"
                 min="0"
@@ -357,7 +386,9 @@ function SessionSettingsPopover({
                 value={budgetInput}
                 onChange={(e) => setBudgetInput(e.target.value)}
                 onBlur={handleBudgetSubmit}
-                onKeyDown={(e) => { if (e.key === "Enter") handleBudgetSubmit(); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleBudgetSubmit();
+                }}
                 placeholder="No limit"
                 className="flex-1 text-xs px-2 py-1 rounded bg-transparent outline-none"
                 style={{
@@ -369,7 +400,9 @@ function SessionSettingsPopover({
               />
             </div>
             <span className="text-xs mt-1 block" style={{ color: "var(--color-text-muted)" }}>
-              {config.costBudgetUsd ? `Warn at $${(config.costBudgetUsd * 0.8).toFixed(2)} and $${config.costBudgetUsd.toFixed(2)}` : "No budget set — no warnings"}
+              {config.costBudgetUsd
+                ? `Warn at $${(config.costBudgetUsd * 0.8).toFixed(2)} and $${config.costBudgetUsd.toFixed(2)}`
+                : "No budget set — no warnings"}
             </span>
           </div>
         </div>

@@ -27,27 +27,31 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
 
       return (
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "100vh",
-          padding: "2rem",
-          fontFamily: "Inter, system-ui, sans-serif",
-          color: "var(--color-text-primary, #1a1a1a)",
-          background: "var(--color-bg-base, #faf8f3)",
-        }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "100vh",
+            padding: "2rem",
+            fontFamily: "Inter, system-ui, sans-serif",
+            color: "var(--color-text-primary, #1a1a1a)",
+            background: "var(--color-bg-base, #faf8f3)",
+          }}
+        >
           <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "0.5rem" }}>
             Something went wrong
           </h1>
-          <p style={{
-            fontSize: "0.875rem",
-            color: "var(--color-text-secondary, #666)",
-            marginBottom: "1rem",
-            maxWidth: "400px",
-            textAlign: "center",
-          }}>
+          <p
+            style={{
+              fontSize: "0.875rem",
+              color: "var(--color-text-secondary, #666)",
+              marginBottom: "1rem",
+              maxWidth: "400px",
+              textAlign: "center",
+            }}
+          >
             {this.state.error?.message ?? "An unexpected error occurred."}
           </p>
           <button

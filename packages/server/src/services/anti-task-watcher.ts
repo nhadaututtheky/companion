@@ -34,11 +34,7 @@ export function getWatcherInfo(): { chatId: number; topicId: number } | null {
   return { chatId: state.chatId, topicId: state.topicId };
 }
 
-export function startTaskWatcher(
-  bridge: TelegramBridge,
-  chatId: number,
-  topicId: number,
-): void {
+export function startTaskWatcher(bridge: TelegramBridge, chatId: number, topicId: number): void {
   if (state) stopTaskWatcher();
 
   const pollMs = getSettingInt("anti.taskPollInterval", DEFAULT_POLL_INTERVAL_MS);
@@ -72,7 +68,11 @@ async function pollTasks(bridge: TelegramBridge): Promise<void> {
       if (state.consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
         const { chatId, topicId } = state;
         stopTaskWatcher();
-        await bridge.sendToChat(chatId, "⚠️ Task watcher stopped — Anti CDP unreachable after 5 attempts.", topicId);
+        await bridge.sendToChat(
+          chatId,
+          "⚠️ Task watcher stopped — Anti CDP unreachable after 5 attempts.",
+          topicId,
+        );
       }
       return;
     }
@@ -150,10 +150,7 @@ function formatTaskDelta(
   totalCount: number,
 ): string {
   const bar = buildProgressBar(totalDone, totalCount);
-  const parts: string[] = [
-    `📋 <b>Task Update</b>`,
-    `<code>${bar}</code>`,
-  ];
+  const parts: string[] = [`📋 <b>Task Update</b>`, `<code>${bar}</code>`];
 
   if (completed.length > 0) {
     parts.push("", "<b>Completed:</b>");

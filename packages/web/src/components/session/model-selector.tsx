@@ -87,7 +87,8 @@ export function ModelSelector({ currentModel, onModelChange, disabled }: ModelSe
                   color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive) (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
+                  if (!isActive)
+                    (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -111,7 +112,9 @@ export function ModelSelector({ currentModel, onModelChange, disabled }: ModelSe
                 </span>
                 <span>{m.label}</span>
                 {isActive && (
-                  <span className="ml-auto text-xs" style={{ color: "#4285F4" }}>●</span>
+                  <span className="ml-auto text-xs" style={{ color: "#4285F4" }}>
+                    ●
+                  </span>
                 )}
               </button>
             );

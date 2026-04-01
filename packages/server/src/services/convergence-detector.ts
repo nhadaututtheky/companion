@@ -46,9 +46,10 @@ export async function checkConvergence(
 
     const aiResponse = await callAI({
       systemPrompt: "You analyze debates for convergence. Respond with JSON only.",
-      messages: [{
-        role: "user",
-        content: `Analyze this debate excerpt. Are the participants converging (agreeing) or going in circles (repeating same points)?
+      messages: [
+        {
+          role: "user",
+          content: `Analyze this debate excerpt. Are the participants converging (agreeing) or going in circles (repeating same points)?
 
 ${transcript}
 
@@ -58,7 +59,8 @@ Respond with JSON only:
   "newPointsInLatestRound": true/false,
   "reason": "brief explanation"
 }`,
-      }],
+        },
+      ],
       tier: "fast",
       maxTokens: 300,
     });

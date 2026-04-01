@@ -95,7 +95,5 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   getSession: (id) => get().sessions[id],
 
   getActiveSessions: () =>
-    Object.values(get().sessions).filter((s) =>
-      ["running", "waiting", "idle"].includes(s.status),
-    ),
+    Object.values(get().sessions).filter((s) => ["running", "waiting", "idle"].includes(s.status)),
 }));

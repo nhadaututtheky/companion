@@ -12,7 +12,11 @@ import {
   CaretDown,
   CaretRight,
 } from "@phosphor-icons/react";
-import { useActivityStore, type ActivityLog, type ActivityLogType } from "@/lib/stores/activity-store";
+import {
+  useActivityStore,
+  type ActivityLog,
+  type ActivityLogType,
+} from "@/lib/stores/activity-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -78,7 +82,11 @@ function LogLine({ log }: { log: ActivityLog }) {
   return (
     <div
       className="flex items-start gap-2 px-3 py-0.5 hover:bg-white/5 transition-colors"
-      style={{ fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)", fontSize: 12, lineHeight: "1.6" }}
+      style={{
+        fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+        fontSize: 12,
+        lineHeight: "1.6",
+      }}
     >
       {/* Timestamp */}
       <span style={{ color: "#555", flexShrink: 0, userSelect: "none" }}>
@@ -86,7 +94,14 @@ function LogLine({ log }: { log: ActivityLog }) {
       </span>
       {/* Session */}
       <span
-        style={{ color: "#888", flexShrink: 0, maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+        style={{
+          color: "#888",
+          flexShrink: 0,
+          maxWidth: 100,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
         title={log.sessionName}
       >
         [{log.sessionName}]
@@ -97,10 +112,7 @@ function LogLine({ log }: { log: ActivityLog }) {
         <span style={{ fontSize: 10, fontWeight: 700 }}>{label}</span>
       </span>
       {/* Content */}
-      <span
-        className="flex-1 min-w-0 break-words"
-        style={{ color: "#d4d4d4" }}
-      >
+      <span className="flex-1 min-w-0 break-words" style={{ color: "#d4d4d4" }}>
         {log.content}
       </span>
     </div>
@@ -248,11 +260,7 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
           style={{ color: "#888", background: "none", border: "none", padding: 0 }}
           aria-label={open ? "Collapse activity terminal" : "Expand activity terminal"}
         >
-          {open ? (
-            <CaretDown size={11} weight="bold" />
-          ) : (
-            <CaretRight size={11} weight="bold" />
-          )}
+          {open ? <CaretDown size={11} weight="bold" /> : <CaretRight size={11} weight="bold" />}
           <Terminal size={13} color="#4285F4" weight="bold" />
           <span
             style={{
@@ -372,9 +380,7 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
             </div>
           ) : (
             /* Logs are stored newest-first, display oldest-first */
-            [...displayLogs].reverse().map((log) => (
-              <LogLine key={log.id} log={log} />
-            ))
+            [...displayLogs].reverse().map((log) => <LogLine key={log.id} log={log} />)
           )}
         </div>
       )}

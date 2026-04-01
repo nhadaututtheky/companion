@@ -10,11 +10,7 @@
 
 // ─── Hook Event Types ───────────────────────────────────────────────────────
 
-export type HookEventType =
-  | "PreToolUse"
-  | "PostToolUse"
-  | "Stop"
-  | "Notification";
+export type HookEventType = "PreToolUse" | "PostToolUse" | "Stop" | "Notification";
 
 /** Incoming hook event from Claude Code */
 export interface HookEvent {

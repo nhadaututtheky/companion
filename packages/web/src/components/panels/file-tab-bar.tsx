@@ -88,15 +88,9 @@ export function FileTabBar({ tabs, activeTabId, onSwitch, onClose }: FileTabBarP
               maxWidth: 160,
               border: "none",
               borderRight: "1px solid var(--color-border)",
-              borderBottom: isActive
-                ? "2px solid var(--color-accent)"
-                : "2px solid transparent",
-              background: isActive
-                ? "var(--color-bg-card)"
-                : "var(--color-bg-elevated)",
-              color: isActive
-                ? "var(--color-text-primary)"
-                : "var(--color-text-muted)",
+              borderBottom: isActive ? "2px solid var(--color-accent)" : "2px solid transparent",
+              background: isActive ? "var(--color-bg-card)" : "var(--color-bg-elevated)",
+              color: isActive ? "var(--color-text-primary)" : "var(--color-text-muted)",
               outline: "none",
               transition: "color 150ms ease, background 150ms ease",
             }}
@@ -107,10 +101,7 @@ export function FileTabBar({ tabs, activeTabId, onSwitch, onClose }: FileTabBarP
             </span>
 
             {/* Name */}
-            <span
-              className="truncate"
-              style={{ maxWidth: 100, fontFamily: "var(--font-mono)" }}
-            >
+            <span className="truncate" style={{ maxWidth: 100, fontFamily: "var(--font-mono)" }}>
               {tab.name}
             </span>
 

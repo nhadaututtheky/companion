@@ -1,13 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  ArrowsClockwise,
-  TelegramLogo,
-  CheckCircle,
-  XCircle,
-  Clock,
-} from "@phosphor-icons/react";
+import { ArrowsClockwise, TelegramLogo, CheckCircle, XCircle, Clock } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 
 interface BotStatus {
@@ -106,7 +100,10 @@ export function TelegramStatus() {
                 aria-hidden="true"
               />
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold truncate" style={{ color: "var(--color-text-primary)" }}>
+                <div
+                  className="text-xs font-semibold truncate"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
                   {bot.label}
                 </div>
                 <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>
@@ -131,7 +128,9 @@ export function TelegramStatus() {
                 )}
                 <span
                   className="text-xs font-medium"
-                  style={{ color: bot.running ? "var(--color-success)" : "var(--color-text-muted)" }}
+                  style={{
+                    color: bot.running ? "var(--color-success)" : "var(--color-text-muted)",
+                  }}
                 >
                   {bot.running ? "Running" : "Stopped"}
                 </span>

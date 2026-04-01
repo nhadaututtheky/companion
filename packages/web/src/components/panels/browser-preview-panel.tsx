@@ -35,35 +35,32 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
   const [historyIndex, setHistoryIndex] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const navigate = useCallback(
-    (newUrl: string) => {
-      // Ensure URL has protocol
-      let normalized = newUrl.trim();
-      if (!normalized) return;
+  const navigate = useCallback((newUrl: string) => {
+    // Ensure URL has protocol
+    let normalized = newUrl.trim();
+    if (!normalized) return;
 
-      // Block dangerous URI schemes
-      if (/^(javascript|data|vbscript):/i.test(normalized)) {
-        toast.error("Only http:// and https:// URLs are allowed");
-        return;
-      }
+    // Block dangerous URI schemes
+    if (/^(javascript|data|vbscript):/i.test(normalized)) {
+      toast.error("Only http:// and https:// URLs are allowed");
+      return;
+    }
 
-      if (!normalized.startsWith("http://") && !normalized.startsWith("https://")) {
-        normalized = "http://" + normalized;
-      }
+    if (!normalized.startsWith("http://") && !normalized.startsWith("https://")) {
+      normalized = "http://" + normalized;
+    }
 
-      setUrl(normalized);
-      setInputUrl(normalized);
-      setLoading(true);
+    setUrl(normalized);
+    setInputUrl(normalized);
+    setLoading(true);
 
-      // Add to history — derive index from prev array length to avoid stale closure
-      setHistory((prev) => {
-        const newHistory = [...prev, normalized];
-        return newHistory;
-      });
-      setHistoryIndex((prev) => prev + 1);
-    },
-    []
-  );
+    // Add to history — derive index from prev array length to avoid stale closure
+    setHistory((prev) => {
+      const newHistory = [...prev, normalized];
+      return newHistory;
+    });
+    setHistoryIndex((prev) => prev + 1);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,10 +202,8 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
               onClick={() => setViewport(vp.id as typeof viewport)}
               className="p-1.5 rounded cursor-pointer transition-colors"
               style={{
-                color:
-                  viewport === vp.id ? "var(--color-accent)" : "var(--color-text-muted)",
-                background:
-                  viewport === vp.id ? "var(--color-accent-alpha)" : "none",
+                color: viewport === vp.id ? "var(--color-accent)" : "var(--color-text-muted)",
+                background: viewport === vp.id ? "var(--color-accent-alpha)" : "none",
                 border: "none",
               }}
               aria-label={vp.label}
@@ -318,7 +313,10 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
         >
           {url}
         </span>
-        <span className="text-xs shrink-0" style={{ color: "var(--color-text-muted)", fontSize: 10 }}>
+        <span
+          className="text-xs shrink-0"
+          style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+        >
           {viewport !== "desktop" && `${currentViewport.width} × ${currentViewport.height}`}
         </span>
       </div>

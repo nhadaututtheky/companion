@@ -94,7 +94,11 @@ function PermissionCard({
   );
 }
 
-export function PermissionGate({ permissions, onRespond, autoApproveSeconds }: PermissionGateProps) {
+export function PermissionGate({
+  permissions,
+  onRespond,
+  autoApproveSeconds,
+}: PermissionGateProps) {
   if (permissions.length === 0) return null;
 
   return (

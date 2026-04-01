@@ -132,9 +132,7 @@ const COMMAND_REFERENCE: CommandCategory[] = [
   },
   {
     category: "Config",
-    commands: [
-      { cmd: "/autoapprove", desc: "Toggle auto-approval for tool permissions" },
-    ],
+    commands: [{ cmd: "/autoapprove", desc: "Toggle auto-approval for tool permissions" }],
   },
 ];
 
@@ -209,9 +207,7 @@ function Bubble({ msg }: { msg: ChatMessage }) {
   const bubbleStyle: React.CSSProperties = {
     maxWidth: "80%",
     padding: "7px 10px",
-    borderRadius: isIn
-      ? "12px 12px 12px 2px"
-      : "12px 12px 2px 12px",
+    borderRadius: isIn ? "12px 12px 12px 2px" : "12px 12px 2px 12px",
     background: isIn ? "#182533" : "#2b5278",
     color: "#e3ecf3",
     fontSize: 13.5,
@@ -229,9 +225,7 @@ function Bubble({ msg }: { msg: ChatMessage }) {
     bubbleStyle.fontStyle = "italic";
   }
 
-  const text = msg.isTyping
-    ? msg.text
-    : msg.text;
+  const text = msg.isTyping ? msg.text : msg.text;
 
   return (
     <div

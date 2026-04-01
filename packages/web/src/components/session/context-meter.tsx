@@ -24,10 +24,7 @@ export function ContextMeter({
   const inputPct = maxTokens > 0 ? Math.min((inputTokens / maxTokens) * 100, 100) : 0;
   const outputPct = maxTokens > 0 ? Math.min((outputTokens / maxTokens) * 100, pct) : 0;
 
-  const color =
-    pct < 60 ? "#34A853" :
-    pct < 85 ? "#FBBC04" :
-    "#EA4335";
+  const color = pct < 60 ? "#34A853" : pct < 85 ? "#FBBC04" : "#EA4335";
 
   return (
     <div className="px-4 py-3">
@@ -58,13 +55,29 @@ export function ContextMeter({
       {/* Token breakdown legend */}
       <div className="flex items-center gap-3 mt-1.5">
         <div className="flex items-center gap-1">
-          <span style={{ width: 6, height: 6, borderRadius: 2, background: "#4285F4", display: "inline-block" }} />
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: 2,
+              background: "#4285F4",
+              display: "inline-block",
+            }}
+          />
           <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
             {formatK(inputTokens)} in
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <span style={{ width: 6, height: 6, borderRadius: 2, background: "#A855F7", display: "inline-block" }} />
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: 2,
+              background: "#A855F7",
+              display: "inline-block",
+            }}
+          />
           <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
             {formatK(outputTokens)} out
           </span>

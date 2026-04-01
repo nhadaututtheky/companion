@@ -19,9 +19,7 @@ export function computeDiff(oldContent: string, newContent: string): DiffLine[] 
   const n = newLines.length;
 
   // Build LCS table
-  const dp: number[][] = Array.from({ length: m + 1 }, () =>
-    Array<number>(n + 1).fill(0),
-  );
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array<number>(n + 1).fill(0));
 
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
@@ -42,10 +40,7 @@ export function computeDiff(oldContent: string, newContent: string): DiffLine[] 
       raw.unshift({ type: "context", content: oldLines[i - 1]! });
       i--;
       j--;
-    } else if (
-      j > 0 &&
-      (i === 0 || (dp[i]?.[j - 1] ?? 0) >= (dp[i - 1]?.[j] ?? 0))
-    ) {
+    } else if (j > 0 && (i === 0 || (dp[i]?.[j - 1] ?? 0) >= (dp[i - 1]?.[j] ?? 0))) {
       raw.unshift({ type: "add", content: newLines[j - 1]! });
       j--;
     } else {

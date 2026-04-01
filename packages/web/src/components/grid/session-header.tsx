@@ -105,171 +105,175 @@ export function SessionHeader({
 
   return (
     <>
-    <div
-      className="flex items-center gap-2 px-3 py-2 flex-shrink-0"
-      style={{ borderBottom: contextPercent === undefined ? "1px solid var(--color-border)" : "none" }}
-    >
-      {/* Left: status dot + project name */}
-      <span
-        style={{
-          display: "inline-block",
-          width: 7,
-          height: 7,
-          borderRadius: "50%",
-          background: dotColor,
-          flexShrink: 0,
-        }}
-      />
-      {shortId && (
-        <span
-          className="text-xs font-mono px-1 py-0.5 rounded flex-shrink-0"
-          style={{ background: "var(--color-bg-elevated)", color: "#34A853" }}
-          title={`@${shortId} — mention this session in other chats`}
-        >
-          @{shortId}
-        </span>
-      )}
-      {editing ? (
-        <input
-          ref={inputRef}
-          className="text-sm font-semibold flex-1 bg-transparent outline-none border-b"
-          style={{
-            color: "var(--color-text-primary)",
-            borderColor: "var(--color-border)",
-            minWidth: 0,
-          }}
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onBlur={commitRename}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") commitRename();
-            if (e.key === "Escape") setEditing(false);
-          }}
-          maxLength={100}
-          placeholder={projectName}
-          aria-label="Session name"
-        />
-      ) : (
-        <span
-          className="text-sm font-semibold truncate flex-1 cursor-pointer"
-          style={{ color: "var(--color-text-primary)" }}
-          title={`${displayName} — double-click to rename`}
-          onDoubleClick={startEditing}
-        >
-          {displayName}
-        </span>
-      )}
-
-      {/* Center: model badge */}
-      <span
-        className="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0"
-        style={{
-          background: "var(--color-bg-elevated)",
-          color: "var(--color-text-muted)",
-          fontFamily: "var(--font-mono)",
-        }}
-      >
-        {modelShort}
-      </span>
-
-      {/* Compact cost display */}
-      {totalCostUsd !== undefined && (
-        <CostBreakdown
-          session={{
-            totalCostUsd,
-            totalInputTokens,
-            totalOutputTokens,
-            cacheCreationTokens,
-            cacheReadTokens,
-          }}
-          compact
-        />
-      )}
-
-      {/* Channel badge */}
-      {channelId && (
-        <span
-          className="flex-shrink-0 p-0.5 rounded"
-          style={{ color: channelColor }}
-          title={channelTopic ? `Linked to: ${channelTopic}` : "Linked to a shared channel"}
-          aria-label={channelTopic ? `Linked to channel: ${channelTopic}` : "Linked to shared channel"}
-        >
-          <LinkSimple size={12} weight="bold" aria-hidden="true" />
-        </span>
-      )}
-
-      {/* Settings gear — only for active sessions */}
-      {isActive && <SessionSettingsButton sessionId={sessionId} />}
-
-      {/* Right: expand + close */}
-      <button
-        onClick={onExpand}
-        className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"
-        style={{ color: "var(--color-text-muted)" }}
-        aria-label="Expand session"
-        title="Expand to full view"
-      >
-        <ArrowsOut size={14} />
-      </button>
-      <button
-        onClick={onClose}
-        className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"
-        style={{ color: "var(--color-text-muted)" }}
-        aria-label="Close session"
-        title="Stop & close session"
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.color = "#EA4335";
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.color = "var(--color-text-muted)";
-        }}
-      >
-        <X size={14} weight="bold" />
-      </button>
-    </div>
-
-    {/* Context meter — thin progress bar */}
-    {contextPercent !== undefined && contextBarColor && (
       <div
+        className="flex items-center gap-2 px-3 py-2 flex-shrink-0"
         style={{
-          height: 2,
-          background: "var(--color-border)",
-          flexShrink: 0,
-          borderBottom: "1px solid var(--color-border)",
+          borderBottom: contextPercent === undefined ? "1px solid var(--color-border)" : "none",
         }}
-        title={contextTooltip}
-        aria-label={contextTooltip}
-        role="progressbar"
-        aria-valuenow={Math.round(contextPercent)}
-        aria-valuemin={0}
-        aria-valuemax={100}
       >
+        {/* Left: status dot + project name */}
+        <span
+          style={{
+            display: "inline-block",
+            width: 7,
+            height: 7,
+            borderRadius: "50%",
+            background: dotColor,
+            flexShrink: 0,
+          }}
+        />
+        {shortId && (
+          <span
+            className="text-xs font-mono px-1 py-0.5 rounded flex-shrink-0"
+            style={{ background: "var(--color-bg-elevated)", color: "#34A853" }}
+            title={`@${shortId} — mention this session in other chats`}
+          >
+            @{shortId}
+          </span>
+        )}
+        {editing ? (
+          <input
+            ref={inputRef}
+            className="text-sm font-semibold flex-1 bg-transparent outline-none border-b"
+            style={{
+              color: "var(--color-text-primary)",
+              borderColor: "var(--color-border)",
+              minWidth: 0,
+            }}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitRename();
+              if (e.key === "Escape") setEditing(false);
+            }}
+            maxLength={100}
+            placeholder={projectName}
+            aria-label="Session name"
+          />
+        ) : (
+          <span
+            className="text-sm font-semibold truncate flex-1 cursor-pointer"
+            style={{ color: "var(--color-text-primary)" }}
+            title={`${displayName} — double-click to rename`}
+            onDoubleClick={startEditing}
+          >
+            {displayName}
+          </span>
+        )}
+
+        {/* Center: model badge */}
+        <span
+          className="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0"
+          style={{
+            background: "var(--color-bg-elevated)",
+            color: "var(--color-text-muted)",
+            fontFamily: "var(--font-mono)",
+          }}
+        >
+          {modelShort}
+        </span>
+
+        {/* Compact cost display */}
+        {totalCostUsd !== undefined && (
+          <CostBreakdown
+            session={{
+              totalCostUsd,
+              totalInputTokens,
+              totalOutputTokens,
+              cacheCreationTokens,
+              cacheReadTokens,
+            }}
+            compact
+          />
+        )}
+
+        {/* Channel badge */}
+        {channelId && (
+          <span
+            className="flex-shrink-0 p-0.5 rounded"
+            style={{ color: channelColor }}
+            title={channelTopic ? `Linked to: ${channelTopic}` : "Linked to a shared channel"}
+            aria-label={
+              channelTopic ? `Linked to channel: ${channelTopic}` : "Linked to shared channel"
+            }
+          >
+            <LinkSimple size={12} weight="bold" aria-hidden="true" />
+          </span>
+        )}
+
+        {/* Settings gear — only for active sessions */}
+        {isActive && <SessionSettingsButton sessionId={sessionId} />}
+
+        {/* Right: expand + close */}
+        <button
+          onClick={onExpand}
+          className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"
+          style={{ color: "var(--color-text-muted)" }}
+          aria-label="Expand session"
+          title="Expand to full view"
+        >
+          <ArrowsOut size={14} />
+        </button>
+        <button
+          onClick={onClose}
+          className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"
+          style={{ color: "var(--color-text-muted)" }}
+          aria-label="Close session"
+          title="Stop & close session"
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.color = "#EA4335";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.color = "var(--color-text-muted)";
+          }}
+        >
+          <X size={14} weight="bold" />
+        </button>
+      </div>
+
+      {/* Context meter — thin progress bar */}
+      {contextPercent !== undefined && contextBarColor && (
         <div
           style={{
-            height: "100%",
-            width: `${contextPercent}%`,
-            background: contextBarColor,
-            transition: "width 500ms ease, background 500ms ease",
+            height: 2,
+            background: "var(--color-border)",
+            flexShrink: 0,
+            borderBottom: "1px solid var(--color-border)",
           }}
-        />
-      </div>
-    )}
+          title={contextTooltip}
+          aria-label={contextTooltip}
+          role="progressbar"
+          aria-valuenow={Math.round(contextPercent)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div
+            style={{
+              height: "100%",
+              width: `${contextPercent}%`,
+              background: contextBarColor,
+              transition: "width 500ms ease, background 500ms ease",
+            }}
+          />
+        </div>
+      )}
 
-    {/* Compact warning banner */}
-    {contextPercent !== undefined && contextPercent >= 80 && (
-      <div
-        className="flex items-center justify-center px-3 py-0.5 flex-shrink-0 text-xs font-medium"
-        style={{
-          background: "#EA433510",
-          color: "#EA4335",
-          borderBottom: "1px solid var(--color-border)",
-          fontSize: 10,
-        }}
-        role="alert"
-      >
-        Context {Math.round(contextPercent)}% full — consider /compact
-      </div>
-    )}
+      {/* Compact warning banner */}
+      {contextPercent !== undefined && contextPercent >= 80 && (
+        <div
+          className="flex items-center justify-center px-3 py-0.5 flex-shrink-0 text-xs font-medium"
+          style={{
+            background: "#EA433510",
+            color: "#EA4335",
+            borderBottom: "1px solid var(--color-border)",
+            fontSize: 10,
+          }}
+          role="alert"
+        >
+          Context {Math.round(contextPercent)}% full — consider /compact
+        </div>
+      )}
     </>
   );
 }

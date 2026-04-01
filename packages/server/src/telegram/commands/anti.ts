@@ -27,21 +27,26 @@ function escapeHtml(text: string): string {
 
 // ── Subcommand routing table ──────────────────────────────────────────
 
-type SubHandler = (bridge: TelegramBridge, chatId: number, topicId: number, args: string) => Promise<void>;
+type SubHandler = (
+  bridge: TelegramBridge,
+  chatId: number,
+  topicId: number,
+  args: string,
+) => Promise<void>;
 
 const SUBCOMMANDS: Record<string, SubHandler> = {
-  accept:     handleAccept,
-  reject:     handleReject,
-  run:        handleRun,
-  new:        handleNewConversation,
-  ss:         handleScreenshot,
+  accept: handleAccept,
+  reject: handleReject,
+  run: handleRun,
+  new: handleNewConversation,
+  ss: handleScreenshot,
   screenshot: handleScreenshot,
-  tasks:      handleTasks,
-  watch:      handleTaskWatch,
-  pending:    handlePending,
-  sessions:   handleSessions,
-  perm:       handlePerm,
-  status:     handleStatus,
+  tasks: handleTasks,
+  watch: handleTaskWatch,
+  pending: handlePending,
+  sessions: handleSessions,
+  perm: handlePerm,
+  status: handleStatus,
 };
 
 // ── Register /anti command ──────────────────────────────────────────────
@@ -155,7 +160,11 @@ export function registerAntiCommands(bridge: TelegramBridge): void {
 
 // ── Panel ──────────────────────────────────────────────────────────────
 
-async function showAntiPanel(bridge: TelegramBridge, chatId: number, topicId: number): Promise<void> {
+async function showAntiPanel(
+  bridge: TelegramBridge,
+  chatId: number,
+  topicId: number,
+): Promise<void> {
   const available = await antiCdp.isAntiAvailable();
   if (!available) {
     await bridge.sendToChat(
@@ -193,28 +202,50 @@ async function showAntiPanel(bridge: TelegramBridge, chatId: number, topicId: nu
       { text: "🔐 Perms", callback_data: "anti_cmd:perm" },
     ],
     [
-      { text: `${watchIcon} Watch ${isWatcherRunning() ? "Off" : "On"}`, callback_data: `anti_cmd:watch_${isWatcherRunning() ? "off" : "on"}` },
+      {
+        text: `${watchIcon} Watch ${isWatcherRunning() ? "Off" : "On"}`,
+        callback_data: `anti_cmd:watch_${isWatcherRunning() ? "off" : "on"}`,
+      },
       { text: "📊 Status", callback_data: "anti_cmd:status" },
     ],
-    [
-      { text: "🔴 Disconnect", callback_data: "anti_toggle:off" },
-    ],
+    [{ text: "🔴 Disconnect", callback_data: "anti_toggle:off" }],
   ];
 
-  const msgId = await bridge.sendToChatWithKeyboard(chatId, panelText, { inline_keyboard: buttons }, topicId);
+  const msgId = await bridge.sendToChatWithKeyboard(
+    chatId,
+    panelText,
+    { inline_keyboard: buttons },
+    topicId,
+  );
   await bridge.pinMessage(chatId, msgId);
 }
 
 // ── Subcommand handlers ────────────────────────────────────────────────
 
-async function handleAccept(bridge: TelegramBridge, chatId: number, topicId: number): Promise<void> {
+async function handleAccept(
+  bridge: TelegramBridge,
+  chatId: number,
+  topicId: number,
+): Promise<void> {
   const result = await antiCdp.acceptDiffReview();
-  await bridge.sendToChat(chatId, result.success ? `✅ ${result.detail}` : `⚠️ ${result.detail}`, topicId);
+  await bridge.sendToChat(
+    chatId,
+    result.success ? `✅ ${result.detail}` : `⚠️ ${result.detail}`,
+    topicId,
+  );
 }
 
-async function handleReject(bridge: TelegramBridge, chatId: number, topicId: number): Promise<void> {
+async function handleReject(
+  bridge: TelegramBridge,
+  chatId: number,
+  topicId: number,
+): Promise<void> {
   const result = await antiCdp.rejectDiffReview();
-  await bridge.sendToChat(chatId, result.success ? `❌ ${result.detail}` : `⚠️ ${result.detail}`, topicId);
+  await bridge.sendToChat(
+    chatId,
+    result.success ? `❌ ${result.detail}` : `⚠️ ${result.detail}`,
+    topicId,
+  );
 }
 
 async function handleRun(bridge: TelegramBridge, chatId: number, topicId: number): Promise<void> {
@@ -222,12 +253,24 @@ async function handleRun(bridge: TelegramBridge, chatId: number, topicId: number
   await bridge.sendToChat(chatId, result.success ? "▶️ Running" : `⚠️ ${result.detail}`, topicId);
 }
 
-async function handleNewConversation(bridge: TelegramBridge, chatId: number, topicId: number): Promise<void> {
+async function handleNewConversation(
+  bridge: TelegramBridge,
+  chatId: number,
+  topicId: number,
+): Promise<void> {
   const result = await antiCdp.startNewConversation();
-  await bridge.sendToChat(chatId, result.success ? "➕ New conversation started." : `⚠️ ${result.detail}`, topicId);
+  await bridge.sendToChat(
+    chatId,
+    result.success ? "➕ New conversation started." : `⚠️ ${result.detail}`,
+    topicId,
+  );
 }
 
-async function handleScreenshot(bridge: TelegramBridge, chatId: number, topicId: number): Promise<void> {
+async function handleScreenshot(
+  bridge: TelegramBridge,
+  chatId: number,
+  topicId: number,
+): Promise<void> {
   const result = await antiCdp.captureScreenshot();
   if (!result.success || !result.data) {
     await bridge.sendToChat(chatId, `⚠️ ${escapeHtml(result.detail)}`, topicId);
@@ -261,7 +304,7 @@ async function handleTasks(bridge: TelegramBridge, chatId: number, topicId: numb
   }
 
   const lines = result.tasks.map((t) =>
-    t.checked ? `✅ <s>${escapeHtml(t.text)}</s>` : `⬜ ${escapeHtml(t.text)}`
+    t.checked ? `✅ <s>${escapeHtml(t.text)}</s>` : `⬜ ${escapeHtml(t.text)}`,
   );
   const done = result.tasks.filter((t) => t.checked).length;
   await bridge.sendToChat(
@@ -271,7 +314,12 @@ async function handleTasks(bridge: TelegramBridge, chatId: number, topicId: numb
   );
 }
 
-async function handleTaskWatch(bridge: TelegramBridge, chatId: number, topicId: number, args: string): Promise<void> {
+async function handleTaskWatch(
+  bridge: TelegramBridge,
+  chatId: number,
+  topicId: number,
+  args: string,
+): Promise<void> {
   const arg = args.trim().toLowerCase();
 
   if (arg === "on" || (!arg && !isWatcherRunning())) {
@@ -283,7 +331,11 @@ async function handleTaskWatch(bridge: TelegramBridge, chatId: number, topicId: 
   }
 }
 
-async function handlePending(bridge: TelegramBridge, chatId: number, topicId: number): Promise<void> {
+async function handlePending(
+  bridge: TelegramBridge,
+  chatId: number,
+  topicId: number,
+): Promise<void> {
   const result = await antiCdp.getInboxPending();
   if (!result.success) {
     await bridge.sendToChat(chatId, `⚠️ ${escapeHtml(result.detail)}`, topicId);
@@ -296,15 +348,28 @@ async function handlePending(bridge: TelegramBridge, chatId: number, topicId: nu
   }
 
   const lines = result.items.map((item, i) => `${i + 1}. ${escapeHtml(item.title)}`);
-  await bridge.sendToChat(chatId, `📂 <b>Pending</b> (${result.items.length})\n${lines.join("\n")}`, topicId);
+  await bridge.sendToChat(
+    chatId,
+    `📂 <b>Pending</b> (${result.items.length})\n${lines.join("\n")}`,
+    topicId,
+  );
 }
 
-async function handleSessions(bridge: TelegramBridge, chatId: number, topicId: number, args: string): Promise<void> {
+async function handleSessions(
+  bridge: TelegramBridge,
+  chatId: number,
+  topicId: number,
+  args: string,
+): Promise<void> {
   // If args is a number, select that session
   const idx = parseInt(args.trim(), 10);
   if (!isNaN(idx) && idx > 0) {
     const result = await antiCdp.selectAntiSession(idx - 1);
-    await bridge.sendToChat(chatId, result.success ? `✅ ${result.detail}` : `⚠️ ${result.detail}`, topicId);
+    await bridge.sendToChat(
+      chatId,
+      result.success ? `✅ ${result.detail}` : `⚠️ ${result.detail}`,
+      topicId,
+    );
     return;
   }
 
@@ -320,10 +385,12 @@ async function handleSessions(bridge: TelegramBridge, chatId: number, topicId: n
   }
 
   // Build inline keyboard
-  const keyboard = result.sessions.slice(0, 8).map((s) => [{
-    text: s.age ? `${s.title.slice(0, 30)} (${s.age})` : s.title.slice(0, 35),
-    callback_data: `anti_session:${s.index}`,
-  }]);
+  const keyboard = result.sessions.slice(0, 8).map((s) => [
+    {
+      text: s.age ? `${s.title.slice(0, 30)} (${s.age})` : s.title.slice(0, 35),
+      callback_data: `anti_session:${s.index}`,
+    },
+  ]);
 
   await bridge.sendToChatWithKeyboard(
     chatId,
@@ -361,7 +428,11 @@ async function handlePerm(bridge: TelegramBridge, chatId: number, topicId: numbe
   }
 }
 
-async function handleStatus(bridge: TelegramBridge, chatId: number, topicId: number): Promise<void> {
+async function handleStatus(
+  bridge: TelegramBridge,
+  chatId: number,
+  topicId: number,
+): Promise<void> {
   const available = await antiCdp.isAntiAvailable();
   const watcherOn = isWatcherRunning();
   const chatWatcherOn = isChatWatcherRunning();
@@ -378,7 +449,9 @@ async function handleStatus(bridge: TelegramBridge, chatId: number, topicId: num
       const status = await antiCdp.getAntiStatus();
       if (status.model) lines.push(`Model: <code>${escapeHtml(status.model)}</code>`);
       if (status.mode) lines.push(`Mode: <code>${escapeHtml(status.mode)}</code>`);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   await bridge.sendToChat(chatId, lines.join("\n"), topicId);

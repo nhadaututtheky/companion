@@ -62,8 +62,13 @@ function StatCard({
     >
       <span style={{ color }}>{icon}</span>
       <div>
-        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>{label}</p>
-        <p className="text-sm font-semibold font-mono" style={{ color: "var(--color-text-primary)" }}>
+        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+          {label}
+        </p>
+        <p
+          className="text-sm font-semibold font-mono"
+          style={{ color: "var(--color-text-primary)" }}
+        >
           {value}
         </p>
       </div>
@@ -133,13 +138,17 @@ export function SessionDetails({ session }: SessionDetailsProps) {
             className="text-xs px-2 py-0.5 rounded-full font-medium capitalize"
             style={{
               background:
-                session.status === "running" ? "#4285F420" :
-                session.status === "waiting" ? "#FBBC0420" :
-                "var(--color-bg-elevated)",
+                session.status === "running"
+                  ? "#4285F420"
+                  : session.status === "waiting"
+                    ? "#FBBC0420"
+                    : "var(--color-bg-elevated)",
               color:
-                session.status === "running" ? "#4285F4" :
-                session.status === "waiting" ? "#FBBC04" :
-                "var(--color-text-muted)",
+                session.status === "running"
+                  ? "#4285F4"
+                  : session.status === "waiting"
+                    ? "#FBBC04"
+                    : "var(--color-text-muted)",
             }}
           >
             {session.status}
@@ -193,7 +202,10 @@ export function SessionDetails({ session }: SessionDetailsProps) {
       {/* Modified files — clickable to open in viewer */}
       {(s.files_read.length > 0 || s.files_modified.length > 0 || s.files_created.length > 0) && (
         <div className="px-4 pb-4">
-          <p className="text-xs font-semibold mb-2" style={{ color: "var(--color-text-secondary)" }}>
+          <p
+            className="text-xs font-semibold mb-2"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
             Files
           </p>
           <div className="flex flex-col gap-1">
@@ -202,11 +214,20 @@ export function SessionDetails({ session }: SessionDetailsProps) {
                 key={`c-${f}`}
                 className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
                 onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = "transparent";
+                }}
               >
-                <span className="text-xs" style={{ color: "#34A853" }}>+</span>
-                <span className="text-xs font-mono truncate" style={{ color: "var(--color-text-secondary)" }}>
+                <span className="text-xs" style={{ color: "#34A853" }}>
+                  +
+                </span>
+                <span
+                  className="text-xs font-mono truncate"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
                   {f.split("/").pop()}
                 </span>
               </button>
@@ -216,11 +237,20 @@ export function SessionDetails({ session }: SessionDetailsProps) {
                 key={`m-${f}`}
                 className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
                 onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = "transparent";
+                }}
               >
-                <span className="text-xs" style={{ color: "#FBBC04" }}>~</span>
-                <span className="text-xs font-mono truncate" style={{ color: "var(--color-text-secondary)" }}>
+                <span className="text-xs" style={{ color: "#FBBC04" }}>
+                  ~
+                </span>
+                <span
+                  className="text-xs font-mono truncate"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
                   {f.split("/").pop()}
                 </span>
               </button>
@@ -228,19 +258,28 @@ export function SessionDetails({ session }: SessionDetailsProps) {
             {s.files_read
               .filter((f) => !s.files_modified.includes(f) && !s.files_created.includes(f))
               .map((f) => (
-              <button
-                key={`r-${f}`}
-                className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
-                onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-              >
-                <span className="text-xs" style={{ color: "#4285F4" }}>○</span>
-                <span className="text-xs font-mono truncate" style={{ color: "var(--color-text-muted)" }}>
-                  {f.split("/").pop()}
-                </span>
-              </button>
-            ))}
+                <button
+                  key={`r-${f}`}
+                  className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
+                  onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "transparent";
+                  }}
+                >
+                  <span className="text-xs" style={{ color: "#4285F4" }}>
+                    ○
+                  </span>
+                  <span
+                    className="text-xs font-mono truncate"
+                    style={{ color: "var(--color-text-muted)" }}
+                  >
+                    {f.split("/").pop()}
+                  </span>
+                </button>
+              ))}
           </div>
         </div>
       )}
@@ -248,8 +287,16 @@ export function SessionDetails({ session }: SessionDetailsProps) {
       {/* Project file browser */}
       {s.cwd && (
         <div className="px-4 pb-4">
-          <p className="text-xs font-semibold mb-2" style={{ color: "var(--color-text-secondary)" }}>
-            <FolderSimple size={12} weight="bold" className="inline mr-1" style={{ verticalAlign: "middle" }} />
+          <p
+            className="text-xs font-semibold mb-2"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            <FolderSimple
+              size={12}
+              weight="bold"
+              className="inline mr-1"
+              style={{ verticalAlign: "middle" }}
+            />
             Project Files
           </p>
           <FileTree rootPath={s.cwd} onFileSelect={handleFileSelect} />
@@ -284,7 +331,9 @@ function StreamToTelegramButton({ sessionId }: { sessionId: string }) {
   const [streaming, setStreaming] = useState(false);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
-  const [streamConfig, setStreamConfig] = useState<{ chatId: number; topicId?: number } | null>(null);
+  const [streamConfig, setStreamConfig] = useState<{ chatId: number; topicId?: number } | null>(
+    null,
+  );
 
   // Load stream status + saved config on mount
   useEffect(() => {
@@ -345,7 +394,11 @@ function StreamToTelegramButton({ sessionId }: { sessionId: string }) {
     return (
       <div
         className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs"
-        style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)", color: "var(--color-text-muted)" }}
+        style={{
+          background: "var(--color-bg-elevated)",
+          border: "1px solid var(--color-border)",
+          color: "var(--color-text-muted)",
+        }}
       >
         <TelegramLogo size={14} weight="bold" />
         Loading...
@@ -364,7 +417,11 @@ function StreamToTelegramButton({ sessionId }: { sessionId: string }) {
       style={{
         background: streaming ? "#0088cc15" : "var(--color-bg-elevated)",
         border: streaming ? "1px solid #0088cc40" : "1px solid var(--color-border)",
-        color: streaming ? "#0088cc" : notConfigured ? "var(--color-text-muted)" : "var(--color-text-secondary)",
+        color: streaming
+          ? "#0088cc"
+          : notConfigured
+            ? "var(--color-text-muted)"
+            : "var(--color-text-secondary)",
       }}
     >
       <TelegramLogo size={14} weight={streaming ? "fill" : "bold"} />
@@ -389,7 +446,8 @@ function SessionSummaryPanel({ sessionId }: { sessionId: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get<{ data: typeof summary }>(`/api/sessions/${sessionId}/summary`)
+    api
+      .get<{ data: typeof summary }>(`/api/sessions/${sessionId}/summary`)
       .then((res) => setSummary(res.data))
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -423,9 +481,13 @@ function SessionSummaryPanel({ sessionId }: { sessionId: string }) {
           <p>{summary.summary}</p>
           {summary.keyDecisions.length > 0 && (
             <div className="mt-2">
-              <p className="font-semibold" style={{ color: "var(--color-text-primary)" }}>Decisions</p>
+              <p className="font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                Decisions
+              </p>
               <ul className="list-disc pl-4 mt-1">
-                {summary.keyDecisions.map((d, i) => <li key={i}>{d}</li>)}
+                {summary.keyDecisions.map((d, i) => (
+                  <li key={i}>{d}</li>
+                ))}
               </ul>
             </div>
           )}

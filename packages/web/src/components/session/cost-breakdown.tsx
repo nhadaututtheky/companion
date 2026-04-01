@@ -113,10 +113,7 @@ function BreakdownRow({
           }}
           aria-hidden="true"
         />
-        <span
-          className="text-xs truncate"
-          style={{ color: "var(--color-text-muted)" }}
-        >
+        <span className="text-xs truncate" style={{ color: "var(--color-text-muted)" }}>
           {label}
         </span>
       </div>
@@ -133,7 +130,11 @@ function BreakdownRow({
         {note && (
           <span
             className="text-xs"
-            style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-mono)", fontSize: 10 }}
+            style={{
+              color: "var(--color-text-muted)",
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+            }}
           >
             {note}
           </span>
@@ -197,7 +198,12 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
         aria-expanded={expanded}
         aria-label="Toggle cost breakdown"
       >
-        <CurrencyDollar size={16} weight="bold" style={{ color: "#34A853", flexShrink: 0 }} aria-hidden="true" />
+        <CurrencyDollar
+          size={16}
+          weight="bold"
+          style={{ color: "#34A853", flexShrink: 0 }}
+          aria-hidden="true"
+        />
         <span className="text-xs flex-1 text-left" style={{ color: "var(--color-text-muted)" }}>
           Total Cost
         </span>
@@ -214,10 +220,7 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
 
       {/* Expanded detail */}
       {expanded && (
-        <div
-          className="px-3 pb-3"
-          style={{ borderTop: "1px solid var(--color-border)" }}
-        >
+        <div className="px-3 pb-3" style={{ borderTop: "1px solid var(--color-border)" }}>
           {/* Token distribution bar */}
           {totalTokens > 0 && (
             <div className="mt-2 mb-3">
@@ -232,26 +235,12 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
 
           {/* Rows */}
           <div className="flex flex-col">
-            {inputTokens > 0 && (
-              <BreakdownRow
-                label="Input"
-                tokens={inputTokens}
-                color="#4285F4"
-              />
-            )}
+            {inputTokens > 0 && <BreakdownRow label="Input" tokens={inputTokens} color="#4285F4" />}
             {outputTokens > 0 && (
-              <BreakdownRow
-                label="Output"
-                tokens={outputTokens}
-                color="#a855f7"
-              />
+              <BreakdownRow label="Output" tokens={outputTokens} color="#a855f7" />
             )}
             {cacheCreation > 0 && (
-              <BreakdownRow
-                label="Cache Write"
-                tokens={cacheCreation}
-                color="#34A853"
-              />
+              <BreakdownRow label="Cache Write" tokens={cacheCreation} color="#34A853" />
             )}
             {cacheRead > 0 && (
               <BreakdownRow
@@ -276,8 +265,7 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
             >
               <ChartBar size={11} style={{ color: "var(--color-text-muted)" }} aria-hidden="true" />
               <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                Cache saved ~
-                {fmtTokens(cacheRead)} tokens at reduced cost
+                Cache saved ~{fmtTokens(cacheRead)} tokens at reduced cost
               </span>
             </div>
           )}

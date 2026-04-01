@@ -43,11 +43,7 @@ export function listProjects(): ProjectProfile[] {
 export function upsertProject(profile: ProjectProfile): void {
   const db = getDb();
 
-  const existing = db
-    .select()
-    .from(projects)
-    .where(eq(projects.slug, profile.slug))
-    .get();
+  const existing = db.select().from(projects).where(eq(projects.slug, profile.slug)).get();
 
   if (existing) {
     db.update(projects)

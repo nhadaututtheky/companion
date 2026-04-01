@@ -14,12 +14,7 @@ export interface InlineDiffProps {
 
 // ── Inline Diff Component ─────────────────────────────────────────────────────
 
-export function InlineDiff({
-  filePath,
-  oldContent,
-  newContent,
-  defaultExpanded,
-}: InlineDiffProps) {
+export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }: InlineDiffProps) {
   const allLines = computeDiff(oldContent, newContent);
   const displayLines = extractHunks(allLines);
 
@@ -98,22 +93,21 @@ export function InlineDiff({
                 line.type === "add"
                   ? "rgba(52, 168, 83, 0.12)"
                   : line.type === "remove"
-                  ? "rgba(234, 67, 53, 0.12)"
-                  : "transparent";
+                    ? "rgba(234, 67, 53, 0.12)"
+                    : "transparent";
               const borderLeft =
                 line.type === "add"
                   ? "3px solid #34A853"
                   : line.type === "remove"
-                  ? "3px solid #EA4335"
-                  : "3px solid transparent";
-              const prefix =
-                line.type === "add" ? "+" : line.type === "remove" ? "-" : " ";
+                    ? "3px solid #EA4335"
+                    : "3px solid transparent";
+              const prefix = line.type === "add" ? "+" : line.type === "remove" ? "-" : " ";
               const prefixColor =
                 line.type === "add"
                   ? "#34A853"
                   : line.type === "remove"
-                  ? "#EA4335"
-                  : "var(--color-text-muted)";
+                    ? "#EA4335"
+                    : "var(--color-text-muted)";
 
               return (
                 <div

@@ -61,10 +61,7 @@ export function SessionGrid({ sessions, onExpand }: SessionGridProps) {
               overflow: "hidden",
             }}
           >
-            <MiniTerminal
-              sessionId={s.id}
-              onExpand={onExpand}
-            />
+            <MiniTerminal sessionId={s.id} onExpand={onExpand} />
           </div>
         ))}
       </div>

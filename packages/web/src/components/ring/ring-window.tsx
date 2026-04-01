@@ -50,11 +50,14 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   const [startingDebate, setStartingDebate] = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
 
-  const reducedMotion = typeof window !== "undefined"
-    && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reducedMotion =
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   useEffect(() => {
-    if (reducedMotion) { setOpen(true); return; }
+    if (reducedMotion) {
+      setOpen(true);
+      return;
+    }
     requestAnimationFrame(() => setOpen(true));
   }, [reducedMotion]);
 
@@ -85,29 +88,44 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
     setSending(true);
 
     addSharedMessage({
-      id: `user-${Date.now()}`, sessionId: "user", sessionName: "You",
-      sessionColor: "#4285F4", content, timestamp: Date.now(), role: "user",
+      id: `user-${Date.now()}`,
+      sessionId: "user",
+      sessionName: "You",
+      sessionColor: "#4285F4",
+      content,
+      timestamp: Date.now(),
+      role: "user",
     });
 
     try {
-      await Promise.all(linkedSessionIds.map(async (sid) => {
-        await api.sessions.message(sid, content);
-        const session = sessions.find((s) => s.id === sid);
-        addSharedMessage({
-          id: `confirm-${sid}-${Date.now()}`, sessionId: sid,
-          sessionName: session?.projectName ?? sid.slice(0, 8),
-          sessionColor: getSessionColor(sid),
-          content: "Sent — response in terminal.",
-          timestamp: Date.now(), role: "assistant",
-        });
-      }));
+      await Promise.all(
+        linkedSessionIds.map(async (sid) => {
+          await api.sessions.message(sid, content);
+          const session = sessions.find((s) => s.id === sid);
+          addSharedMessage({
+            id: `confirm-${sid}-${Date.now()}`,
+            sessionId: sid,
+            sessionName: session?.projectName ?? sid.slice(0, 8),
+            sessionColor: getSessionColor(sid),
+            content: "Sent — response in terminal.",
+            timestamp: Date.now(),
+            role: "assistant",
+          });
+        }),
+      );
       toast.success(`Broadcasting to ${linkedSessionIds.length} session(s)…`);
-    } catch (err) { toast.error(String(err)); }
-    finally { setSending(false); }
+    } catch (err) {
+      toast.error(String(err));
+    } finally {
+      setSending(false);
+    }
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleSend(); }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      void handleSend();
+    }
   }
 
   async function handleStartDebate() {
@@ -115,13 +133,14 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
     setStartingDebate(true);
     try {
       // Build agent model config (skip "default" entries)
-      const agentModels = debateAgentModels.length > 0
-        ? debateAgentModels.map((m) => ({
-            agentId: m.agentId,
-            model: m.model,
-            label: m.label,
-          }))
-        : undefined;
+      const agentModels =
+        debateAgentModels.length > 0
+          ? debateAgentModels.map((m) => ({
+              agentId: m.agentId,
+              model: m.model,
+              label: m.label,
+            }))
+          : undefined;
 
       const res = await api.post<{ data: { channelId: string } }>("/api/channels/debate", {
         topic: debateTopic.trim(),
@@ -132,9 +151,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
       setMode("debate");
       setDebateTopic("");
       clearDebateAgentModels();
-      const modelInfo = agentModels
-        ? ` (${agentModels.map((m) => m.label).join(" vs ")})`
-        : "";
+      const modelInfo = agentModels ? ` (${agentModels.map((m) => m.label).join(" vs ")})` : "";
       toast.success(`Debate started${modelInfo} — agents are thinking…`);
     } catch (err) {
       toast.error(String(err));
@@ -146,10 +163,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   return (
     <>
       {/* Backdrop */}
-      <div
-        onClick={() => setExpanded(false)}
-        style={{ position: "fixed", inset: 0, zIndex: 41 }}
-      />
+      <div onClick={() => setExpanded(false)} style={{ position: "fixed", inset: 0, zIndex: 41 }} />
 
       {/* Chrome-style color bridge connecting bubbles to ring */}
       <svg
@@ -207,7 +221,9 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
               zIndex: 43,
               transform: open ? "scale(1)" : "scale(0)",
               opacity: open ? 1 : 0,
-              transition: reducedMotion ? "none" : `all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
+              transition: reducedMotion
+                ? "none"
+                : `all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s`,
             }}
           >
             {/* Bubble */}
@@ -229,11 +245,17 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
               }}
             >
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
-              <span style={{
-                fontSize: isHovered ? 8 : 7, fontWeight: 600,
-                color: "var(--color-text-secondary, #555)",
-                maxWidth: size - 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              }}>
+              <span
+                style={{
+                  fontSize: isHovered ? 8 : 7,
+                  fontWeight: 600,
+                  color: "var(--color-text-secondary, #555)",
+                  maxWidth: size - 8,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 {(session?.projectName ?? sid).slice(0, 5)}
               </span>
             </div>
@@ -291,16 +313,33 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
         }}
       >
         {/* Header with mode toggle */}
-        <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", borderBottom: "1px solid var(--color-border, rgba(0,0,0,0.06))", flexShrink: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            padding: "6px 10px",
+            borderBottom: "1px solid var(--color-border, rgba(0,0,0,0.06))",
+            flexShrink: 0,
+          }}
+        >
           {linkedSessionIds.map((sid) => (
-            <div key={sid} style={{ width: 7, height: 7, borderRadius: "50%", background: getSessionColor(sid) }} />
+            <div
+              key={sid}
+              style={{ width: 7, height: 7, borderRadius: "50%", background: getSessionColor(sid) }}
+            />
           ))}
           {/* Mode tabs */}
           <div style={{ flex: 1, display: "flex", gap: 2, marginLeft: 4 }}>
             <button
               onClick={() => setMode("broadcast")}
               style={{
-                fontSize: 10, fontWeight: mode === "broadcast" ? 700 : 500, padding: "2px 6px", borderRadius: 6, border: "none", cursor: "pointer",
+                fontSize: 10,
+                fontWeight: mode === "broadcast" ? 700 : 500,
+                padding: "2px 6px",
+                borderRadius: 6,
+                border: "none",
+                cursor: "pointer",
                 background: mode === "broadcast" ? "var(--color-accent, #4285F4)" : "transparent",
                 color: mode === "broadcast" ? "#fff" : "var(--color-text-muted, #999)",
               }}
@@ -310,26 +349,66 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
             <button
               onClick={() => setMode("debate")}
               style={{
-                fontSize: 10, fontWeight: mode === "debate" ? 700 : 500, padding: "2px 6px", borderRadius: 6, border: "none", cursor: "pointer",
+                fontSize: 10,
+                fontWeight: mode === "debate" ? 700 : 500,
+                padding: "2px 6px",
+                borderRadius: 6,
+                border: "none",
+                cursor: "pointer",
                 background: mode === "debate" ? "#EA4335" : "transparent",
                 color: mode === "debate" ? "#fff" : "var(--color-text-muted, #999)",
-                display: "flex", alignItems: "center", gap: 3,
+                display: "flex",
+                alignItems: "center",
+                gap: 3,
               }}
             >
               <Scales size={10} weight="bold" /> Debate
             </button>
           </div>
-          <button onClick={() => setExpanded(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, color: "var(--color-text-muted, #999)", display: "flex" }} aria-label="Close">
+          <button
+            onClick={() => setExpanded(false)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 2,
+              color: "var(--color-text-muted, #999)",
+              display: "flex",
+            }}
+            aria-label="Close"
+          >
             <X size={12} weight="bold" />
           </button>
         </div>
 
         {/* Content area — switches between broadcast chat and debate */}
-        <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: "6px 10px", display: "flex", flexDirection: "column", gap: 4 }}>
+        <div
+          ref={chatRef}
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "6px 10px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+          }}
+        >
           {/* Debate mode: topic input + start */}
           {mode === "debate" && !debateChannelId && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "center", height: "100%", gap: 6, padding: "0 2px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "stretch",
+                justifyContent: "center",
+                height: "100%",
+                gap: 6,
+                padding: "0 2px",
+              }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}
+              >
                 <Scales size={20} weight="duotone" style={{ color: "#EA4335", opacity: 0.5 }} />
                 <span style={{ fontSize: 11, color: "var(--color-text-muted, #999)" }}>
                   Multi-model debate
@@ -339,12 +418,19 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                 type="text"
                 value={debateTopic}
                 onChange={(e) => setDebateTopic(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") void handleStartDebate(); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void handleStartDebate();
+                }}
                 placeholder="Debate topic…"
                 style={{
-                  width: "100%", padding: "5px 8px", fontSize: 11, borderRadius: 8,
-                  border: "1px solid var(--color-border, rgba(0,0,0,0.08))", outline: "none",
-                  background: "var(--color-bg-elevated, #f8f8f8)", color: "var(--color-text-primary, #333)",
+                  width: "100%",
+                  padding: "5px 8px",
+                  fontSize: 11,
+                  borderRadius: 8,
+                  border: "1px solid var(--color-border, rgba(0,0,0,0.08))",
+                  outline: "none",
+                  background: "var(--color-bg-elevated, #f8f8f8)",
+                  color: "var(--color-text-primary, #333)",
                 }}
               />
               {/* Agent model selectors */}
@@ -355,22 +441,35 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                 ].map(({ agentId, label, color }) => {
                   const selected = debateAgentModels.find((m) => m.agentId === agentId);
                   return (
-                    <div key={agentId} style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-                      <span style={{ fontSize: 9, fontWeight: 600, color, textTransform: "uppercase" }}>
+                    <div
+                      key={agentId}
+                      style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}
+                    >
+                      <span
+                        style={{ fontSize: 9, fontWeight: 600, color, textTransform: "uppercase" }}
+                      >
                         {label}
                       </span>
                       <select
                         value={selected?.model ?? "default"}
                         onChange={(e) => {
                           const preset = MODEL_PRESETS.find((p) => p.id === e.target.value);
-                          setDebateAgentModel(agentId, e.target.value, preset?.label ?? e.target.value);
+                          setDebateAgentModel(
+                            agentId,
+                            e.target.value,
+                            preset?.label ?? e.target.value,
+                          );
                         }}
                         style={{
-                          fontSize: 10, padding: "3px 4px", borderRadius: 6,
+                          fontSize: 10,
+                          padding: "3px 4px",
+                          borderRadius: 6,
                           border: `1px solid ${selected ? color + "60" : "var(--color-border, rgba(0,0,0,0.08))"}`,
                           background: selected ? color + "08" : "var(--color-bg-elevated, #f8f8f8)",
                           color: "var(--color-text-primary, #333)",
-                          outline: "none", cursor: "pointer", width: "100%",
+                          outline: "none",
+                          cursor: "pointer",
+                          width: "100%",
                         }}
                       >
                         {MODEL_PRESETS.map((preset) => (
@@ -387,8 +486,13 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                 onClick={() => void handleStartDebate()}
                 disabled={!debateTopic.trim() || startingDebate}
                 style={{
-                  padding: "5px 16px", fontSize: 11, fontWeight: 600, borderRadius: 8, border: "none",
-                  background: debateTopic.trim() ? "#EA4335" : "#ccc", color: "#fff",
+                  padding: "5px 16px",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  borderRadius: 8,
+                  border: "none",
+                  background: debateTopic.trim() ? "#EA4335" : "#ccc",
+                  color: "#fff",
                   cursor: debateTopic.trim() ? "pointer" : "not-allowed",
                 }}
               >
@@ -399,17 +503,45 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
 
           {/* Debate running */}
           {mode === "debate" && debateChannelId && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 6 }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+                gap: 6,
+              }}
+            >
               <Scales size={28} weight="duotone" style={{ color: "#EA4335" }} />
-              <span style={{ fontSize: 11, fontWeight: 600, color: "var(--color-text-primary, #333)" }}>
+              <span
+                style={{ fontSize: 11, fontWeight: 600, color: "var(--color-text-primary, #333)" }}
+              >
                 Debate in progress
               </span>
-              <span style={{ fontSize: 10, color: "var(--color-text-muted, #999)", textAlign: "center" }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  color: "var(--color-text-muted, #999)",
+                  textAlign: "center",
+                }}
+              >
                 Agents are debating. View results in Telegram or check /channels API.
               </span>
               <button
-                onClick={() => { setDebateChannelId(null); setMode("broadcast"); }}
-                style={{ padding: "4px 12px", fontSize: 10, borderRadius: 6, border: "1px solid var(--color-border)", background: "transparent", cursor: "pointer", color: "var(--color-text-secondary, #666)" }}
+                onClick={() => {
+                  setDebateChannelId(null);
+                  setMode("broadcast");
+                }}
+                style={{
+                  padding: "4px 12px",
+                  fontSize: 10,
+                  borderRadius: 6,
+                  border: "1px solid var(--color-border)",
+                  background: "transparent",
+                  cursor: "pointer",
+                  color: "var(--color-text-secondary, #666)",
+                }}
               >
                 Back to Broadcast
               </button>
@@ -418,43 +550,113 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
 
           {/* Broadcast mode: chat */}
           {mode === "broadcast" && sharedMessages.length === 0 && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 6 }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100%",
+                gap: 6,
+              }}
+            >
               <span style={{ fontSize: 22, opacity: 0.2 }}>✦</span>
-              <span style={{ fontSize: 11, color: "var(--color-text-muted, #999)", textAlign: "center" }}>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "var(--color-text-muted, #999)",
+                  textAlign: "center",
+                }}
+              >
                 Type to broadcast to all linked sessions
               </span>
             </div>
           )}
-          {mode === "broadcast" && sharedMessages.map((msg) => (
-            <div key={msg.id} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start", gap: 1 }}>
-              <span style={{ fontSize: 9, color: "var(--color-text-muted, #999)" }}>{msg.sessionName} · {formatTime(msg.timestamp)}</span>
-              <div style={{
-                fontSize: 12, lineHeight: 1.4, padding: "4px 8px", borderRadius: 8, maxWidth: "85%",
-                background: msg.role === "user" ? "#4285F4" : "var(--color-bg-elevated, #f0f0f0)",
-                color: msg.role === "user" ? "#fff" : "var(--color-text-primary, #333)",
-                borderLeft: msg.role === "assistant" ? `3px solid ${msg.sessionColor}` : undefined,
-              }}>
-                {msg.content}
+          {mode === "broadcast" &&
+            sharedMessages.map((msg) => (
+              <div
+                key={msg.id}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: msg.role === "user" ? "flex-end" : "flex-start",
+                  gap: 1,
+                }}
+              >
+                <span style={{ fontSize: 9, color: "var(--color-text-muted, #999)" }}>
+                  {msg.sessionName} · {formatTime(msg.timestamp)}
+                </span>
+                <div
+                  style={{
+                    fontSize: 12,
+                    lineHeight: 1.4,
+                    padding: "4px 8px",
+                    borderRadius: 8,
+                    maxWidth: "85%",
+                    background:
+                      msg.role === "user" ? "#4285F4" : "var(--color-bg-elevated, #f0f0f0)",
+                    color: msg.role === "user" ? "#fff" : "var(--color-text-primary, #333)",
+                    borderLeft:
+                      msg.role === "assistant" ? `3px solid ${msg.sessionColor}` : undefined,
+                  }}
+                >
+                  {msg.content}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
 
         {/* Input — broadcast mode only */}
-        {mode === "broadcast" && <div style={{ display: "flex", gap: 6, padding: "6px 8px", borderTop: "1px solid var(--color-border, rgba(0,0,0,0.06))", flexShrink: 0 }}>
-          <textarea
-            value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
-            placeholder="Broadcast message…" rows={1}
-            style={{ flex: 1, resize: "none", border: "1px solid var(--color-border, rgba(0,0,0,0.08))", borderRadius: 8, padding: "5px 8px", fontSize: 12, outline: "none", background: "var(--color-bg-elevated, #f8f8f8)", color: "var(--color-text-primary, #333)", minHeight: 20, maxHeight: 60 }}
-          />
-          <button
-            onClick={() => void handleSend()} disabled={sending || !input.trim()}
-            style={{ background: "#4285F4", color: "#fff", border: "none", borderRadius: 8, padding: "0 10px", cursor: input.trim() ? "pointer" : "default", opacity: input.trim() ? 1 : 0.4, display: "flex", alignItems: "center" }}
-            aria-label="Send"
+        {mode === "broadcast" && (
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              padding: "6px 8px",
+              borderTop: "1px solid var(--color-border, rgba(0,0,0,0.06))",
+              flexShrink: 0,
+            }}
           >
-            <PaperPlaneTilt size={13} weight="fill" />
-          </button>
-        </div>}
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Broadcast message…"
+              rows={1}
+              style={{
+                flex: 1,
+                resize: "none",
+                border: "1px solid var(--color-border, rgba(0,0,0,0.08))",
+                borderRadius: 8,
+                padding: "5px 8px",
+                fontSize: 12,
+                outline: "none",
+                background: "var(--color-bg-elevated, #f8f8f8)",
+                color: "var(--color-text-primary, #333)",
+                minHeight: 20,
+                maxHeight: 60,
+              }}
+            />
+            <button
+              onClick={() => void handleSend()}
+              disabled={sending || !input.trim()}
+              style={{
+                background: "#4285F4",
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                padding: "0 10px",
+                cursor: input.trim() ? "pointer" : "default",
+                opacity: input.trim() ? 1 : 0.4,
+                display: "flex",
+                alignItems: "center",
+              }}
+              aria-label="Send"
+            >
+              <PaperPlaneTilt size={13} weight="fill" />
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

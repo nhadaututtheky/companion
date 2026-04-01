@@ -11,17 +11,49 @@ import { sessions } from "../db/schema.js";
 import type { SessionStatus } from "@companion/shared";
 
 const ANIMALS = [
-  "fox", "bear", "owl", "wolf", "hawk",
-  "lynx", "crow", "deer", "hare", "seal",
-  "wren", "pike", "crab", "moth", "wasp",
-  "toad", "newt", "dove", "lark", "mole",
-  "ibis", "kite", "swan", "orca", "puma",
+  "fox",
+  "bear",
+  "owl",
+  "wolf",
+  "hawk",
+  "lynx",
+  "crow",
+  "deer",
+  "hare",
+  "seal",
+  "wren",
+  "pike",
+  "crab",
+  "moth",
+  "wasp",
+  "toad",
+  "newt",
+  "dove",
+  "lark",
+  "mole",
+  "ibis",
+  "kite",
+  "swan",
+  "orca",
+  "puma",
 ] as const;
 
 const ADJECTIVES = [
-  "red", "blue", "swift", "calm", "bold",
-  "dark", "pale", "keen", "warm", "wild",
-  "grey", "iron", "jade", "gold", "sage",
+  "red",
+  "blue",
+  "swift",
+  "calm",
+  "bold",
+  "dark",
+  "pale",
+  "keen",
+  "warm",
+  "wild",
+  "grey",
+  "iron",
+  "jade",
+  "gold",
+  "sage",
 ] as const;
 
 const TERMINAL_STATUSES: readonly SessionStatus[] = ["ended", "error"];
@@ -81,12 +113,7 @@ export function resolveShortId(shortId: string): string | undefined {
   const active = db
     .select({ id: sessions.id })
     .from(sessions)
-    .where(
-      and(
-        eq(sessions.shortId, shortId),
-        notInArray(sessions.status, [...TERMINAL_STATUSES]),
-      ),
-    )
+    .where(and(eq(sessions.shortId, shortId), notInArray(sessions.status, [...TERMINAL_STATUSES])))
     .get();
 
   if (active) return active.id;

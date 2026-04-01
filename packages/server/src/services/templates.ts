@@ -112,7 +112,11 @@ export function getTemplate(idOrSlug: string): Template | null {
   const byId = db.select().from(sessionTemplates).where(eq(sessionTemplates.id, idOrSlug)).get();
   if (byId) return rowToTemplate(byId as Record<string, unknown>);
 
-  const bySlug = db.select().from(sessionTemplates).where(eq(sessionTemplates.slug, idOrSlug)).get();
+  const bySlug = db
+    .select()
+    .from(sessionTemplates)
+    .where(eq(sessionTemplates.slug, idOrSlug))
+    .get();
   if (!bySlug) return null;
   return rowToTemplate(bySlug as Record<string, unknown>);
 }
@@ -216,12 +220,38 @@ export function seedDefaultTemplates(): void {
 
   const defaults: CreateTemplateInput[] = [
     { name: "Quick Fix", icon: "⚡", prompt: "Fix the bug I'm about to describe:", sortOrder: 0 },
-    { name: "Code Review", icon: "🔍", prompt: "Review the recent changes. Check for bugs, security issues, and suggest improvements.", sortOrder: 1 },
-    { name: "Refactor", icon: "🔄", prompt: "Refactor the following code for readability and maintainability:", sortOrder: 2 },
-    { name: "Write Tests", icon: "🧪", prompt: "Write comprehensive tests for the module I'll specify.", sortOrder: 3 },
-    { name: "Explain", icon: "📖", prompt: "Explain this code in detail, including the design decisions:", sortOrder: 4 },
+    {
+      name: "Code Review",
+      icon: "🔍",
+      prompt:
+        "Review the recent changes. Check for bugs, security issues, and suggest improvements.",
+      sortOrder: 1,
+    },
+    {
+      name: "Refactor",
+      icon: "🔄",
+      prompt: "Refactor the following code for readability and maintainability:",
+      sortOrder: 2,
+    },
+    {
+      name: "Write Tests",
+      icon: "🧪",
+      prompt: "Write comprehensive tests for the module I'll specify.",
+      sortOrder: 3,
+    },
+    {
+      name: "Explain",
+      icon: "📖",
+      prompt: "Explain this code in detail, including the design decisions:",
+      sortOrder: 4,
+    },
     { name: "Ship", icon: "🚀", prompt: "/ship", sortOrder: 5 },
-    { name: "Plan", icon: "🏗️", prompt: "Create a plan for the feature I'll describe:", sortOrder: 6 },
+    {
+      name: "Plan",
+      icon: "🏗️",
+      prompt: "Create a plan for the feature I'll describe:",
+      sortOrder: 6,
+    },
   ];
 
   for (const tpl of defaults) {

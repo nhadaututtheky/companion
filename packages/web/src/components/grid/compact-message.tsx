@@ -42,10 +42,7 @@ function CompactBubble({ msg }: { msg: Message }) {
         }}
       >
         <Wrench size={12} weight="bold" style={{ color: "#4285F4", flexShrink: 0 }} />
-        <span
-          className="truncate"
-          style={{ color: "var(--color-text-secondary)", fontSize: 13 }}
-        >
+        <span className="truncate" style={{ color: "var(--color-text-secondary)", fontSize: 13 }}>
           {msg.content.slice(0, 80)}
           {msg.content.length > 80 ? "…" : ""}
         </span>
@@ -54,9 +51,7 @@ function CompactBubble({ msg }: { msg: Message }) {
   }
 
   return (
-    <div
-      className={`flex px-3 py-1 ${isUser ? "justify-end" : "justify-start"}`}
-    >
+    <div className={`flex px-3 py-1 ${isUser ? "justify-end" : "justify-start"}`}>
       <div
         className="px-3 py-2 rounded-2xl leading-relaxed"
         style={{
@@ -99,18 +94,13 @@ export function CompactMessageFeed({ messages, feedRef }: CompactMessageFeedProp
   if (messages.length === 0) {
     return (
       <div className="flex items-center justify-center flex-1">
-        <p style={{ color: "var(--color-text-muted)", fontSize: 13 }}>
-          Send a message to start
-        </p>
+        <p style={{ color: "var(--color-text-muted)", fontSize: 13 }}>Send a message to start</p>
       </div>
     );
   }
 
   return (
-    <div
-      ref={feedRef}
-      className="flex flex-col flex-1 overflow-y-auto py-2 gap-1"
-    >
+    <div ref={feedRef} className="flex flex-col flex-1 overflow-y-auto py-2 gap-1">
       {messages.map((msg) => (
         <CompactBubble key={msg.id} msg={msg} />
       ))}

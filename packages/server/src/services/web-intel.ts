@@ -154,7 +154,7 @@ export async function scrape(url: string, opts?: ScrapeOptions): Promise<ScrapeR
       return null;
     }
 
-    const data = await res.json() as ScrapeResult;
+    const data = (await res.json()) as ScrapeResult;
     const result: ScrapeResult = {
       url: data.url ?? url,
       metadata: data.metadata ?? {},
@@ -219,10 +219,7 @@ export interface BatchOptions {
 /**
  * Scrape multiple URLs concurrently via webclaw batch endpoint.
  */
-export async function batchScrape(
-  urls: string[],
-  opts?: BatchOptions,
-): Promise<ScrapeResult[]> {
+export async function batchScrape(urls: string[], opts?: BatchOptions): Promise<ScrapeResult[]> {
   if (urls.length === 0) return [];
 
   // SSRF protection — validate every URL before sending to webclaw
@@ -258,7 +255,7 @@ export async function batchScrape(
 
     if (!res.ok) return [];
 
-    const data = await res.json() as { results: ScrapeResult[] };
+    const data = (await res.json()) as { results: ScrapeResult[] };
     return data.results ?? [];
   } catch (err) {
     log.warn("webclaw batch scrape error", { error: String(err) });
@@ -278,10 +275,7 @@ export interface SearchResult {
 /**
  * Web search via webclaw. Requires WEBCLAW_API_KEY.
  */
-export async function search(
-  query: string,
-  numResults = 5,
-): Promise<SearchResult[]> {
+export async function search(query: string, numResults = 5): Promise<SearchResult[]> {
   if (!WEBCLAW_API_KEY) {
     log.debug("Web search requires WEBCLAW_API_KEY");
     return [];
@@ -293,7 +287,7 @@ export async function search(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${WEBCLAW_API_KEY}`,
+        Authorization: `Bearer ${WEBCLAW_API_KEY}`,
       },
       body: JSON.stringify({ query, num: numResults }),
       signal: AbortSignal.timeout(SCRAPE_TIMEOUT_MS),
@@ -301,7 +295,7 @@ export async function search(
 
     if (!res.ok) return [];
 
-    const data = await res.json() as { results: SearchResult[] };
+    const data = (await res.json()) as { results: SearchResult[] };
     return data.results ?? [];
   } catch (err) {
     log.warn("webclaw search error", { error: String(err) });
@@ -358,7 +352,7 @@ export async function startCrawl(url: string, opts?: CrawlOptions): Promise<stri
 
     if (!res.ok) return null;
 
-    const data = await res.json() as { id: string };
+    const data = (await res.json()) as { id: string };
     return data.id ?? null;
   } catch (err) {
     log.warn("webclaw crawl start error", { url, error: String(err) });
@@ -385,7 +379,7 @@ export async function getCrawlStatus(jobId: string): Promise<CrawlJob | null> {
 
     if (!res.ok) return null;
 
-    return await res.json() as CrawlJob;
+    return (await res.json()) as CrawlJob;
   } catch {
     return null;
   }
@@ -413,9 +407,7 @@ export async function research(
   const urls = searchResults.map((r) => r.url);
   const scrapeResults = await batchScrape(urls, { formats: ["llm"], concurrency: 3 });
 
-  const validResults = scrapeResults.filter(
-    (r) => !r.error && (r.llm ?? r.markdown ?? r.text),
-  );
+  const validResults = scrapeResults.filter((r) => !r.error && (r.llm ?? r.markdown ?? r.text));
 
   if (validResults.length === 0) return null;
 
@@ -428,9 +420,8 @@ export async function research(
     const result = validResults[i]!;
     const content = result.llm ?? result.markdown ?? result.text ?? "";
     const title = result.metadata?.title ?? `Source ${i + 1}`;
-    const truncated = content.length > maxCharsPerSource
-      ? content.slice(0, maxCharsPerSource) + "..."
-      : content;
+    const truncated =
+      content.length > maxCharsPerSource ? content.slice(0, maxCharsPerSource) + "..." : content;
 
     sections.push(`### ${title}\nSource: ${result.url}\n\n${truncated}`);
     sources.push({ title, url: result.url });

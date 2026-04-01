@@ -128,11 +128,11 @@ function formatTime(ts: number) {
 
 // Rotate through these colors for tag chips
 const TAG_COLORS = [
-  { bg: "#4285F420", text: "#4285F4" },   // blue
-  { bg: "#34A85320", text: "#34A853" },   // green
-  { bg: "#9C27B020", text: "#9C27B0" },   // purple
-  { bg: "#FF980020", text: "#FF9800" },   // orange
-  { bg: "#E91E6320", text: "#E91E63" },   // pink
+  { bg: "#4285F420", text: "#4285F4" }, // blue
+  { bg: "#34A85320", text: "#34A853" }, // green
+  { bg: "#9C27B020", text: "#9C27B0" }, // purple
+  { bg: "#FF980020", text: "#FF9800" }, // orange
+  { bg: "#E91E6320", text: "#E91E63" }, // pink
 ];
 
 function getTagColor(tag: string) {
@@ -182,10 +182,7 @@ function TagInput({ onAdd, onClose }: TagInputProps) {
   };
 
   return (
-    <div
-      className="flex items-center gap-1 mt-1"
-      style={{ position: "relative" }}
-    >
+    <div className="flex items-center gap-1 mt-1" style={{ position: "relative" }}>
       <input
         ref={inputRef}
         type="text"
@@ -266,10 +263,7 @@ function SessionTags({ sessionId, tags }: SessionTagsProps) {
   }
 
   return (
-    <div
-      className="flex flex-wrap items-center gap-1 pl-4"
-      onClick={(e) => e.stopPropagation()}
-    >
+    <div className="flex flex-wrap items-center gap-1 pl-4" onClick={(e) => e.stopPropagation()}>
       {tags.map((tag) => {
         const color = getTagColor(tag);
         return (
@@ -299,12 +293,7 @@ function SessionTags({ sessionId, tags }: SessionTagsProps) {
       >
         <Plus size={10} weight="bold" aria-hidden="true" />
       </button>
-      {showInput && (
-        <TagInput
-          onAdd={handleAddTag}
-          onClose={() => setShowInput(false)}
-        />
-      )}
+      {showInput && <TagInput onAdd={handleAddTag} onClose={() => setShowInput(false)} />}
     </div>
   );
 }
@@ -337,10 +326,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
     [sessions],
   );
 
-  const active = useMemo(
-    () => sessions.filter((s) => ACTIVE_STATUSES.has(s.status)),
-    [sessions],
-  );
+  const active = useMemo(() => sessions.filter((s) => ACTIVE_STATUSES.has(s.status)), [sessions]);
   const ended = useMemo(
     () => sessions.filter((s) => ["ended", "error"].includes(s.status)),
     [sessions],
@@ -407,9 +393,16 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
       <div className="px-3 pb-1.5">
         <div
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg"
-          style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
+          style={{
+            background: "var(--color-bg-elevated)",
+            border: "1px solid var(--color-border)",
+          }}
         >
-          <MagnifyingGlass size={12} style={{ color: "var(--color-text-muted)", flexShrink: 0 }} aria-hidden="true" />
+          <MagnifyingGlass
+            size={12}
+            style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
+            aria-hidden="true"
+          />
           <input
             type="text"
             value={searchRaw}
@@ -438,7 +431,11 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
         role="group"
         aria-label="Sort sessions"
       >
-        <CaretUpDown size={10} style={{ color: "var(--color-text-muted)", flexShrink: 0, marginRight: 2 }} aria-hidden="true" />
+        <CaretUpDown
+          size={10}
+          style={{ color: "var(--color-text-muted)", flexShrink: 0, marginRight: 2 }}
+          aria-hidden="true"
+        />
         {SORT_OPTIONS.map(({ key, label }) => {
           const active = sortKey === key;
           return (
@@ -454,11 +451,12 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
               aria-label={`Sort by ${label} ${active ? (sortDir === "asc" ? "ascending" : "descending") : ""}`}
             >
               {label}
-              {active && (
-                sortDir === "asc"
-                  ? <SortAscending size={10} weight="bold" aria-hidden="true" />
-                  : <SortDescending size={10} weight="bold" aria-hidden="true" />
-              )}
+              {active &&
+                (sortDir === "asc" ? (
+                  <SortAscending size={10} weight="bold" aria-hidden="true" />
+                ) : (
+                  <SortDescending size={10} weight="bold" aria-hidden="true" />
+                ))}
             </button>
           );
         })}
@@ -488,7 +486,10 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
             <button
               onClick={() => setTagFilter(null)}
               className="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-colors"
-              style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-secondary)" }}
+              style={{
+                background: "var(--color-bg-elevated)",
+                color: "var(--color-text-secondary)",
+              }}
               aria-label="Clear tag filter"
             >
               All
@@ -553,11 +554,17 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
                     @{s.shortId}
                   </span>
                 )}
-                <span className="text-sm font-medium truncate flex-1" style={{ color: "var(--color-text-primary)" }}>
+                <span
+                  className="text-sm font-medium truncate flex-1"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
                   {s.projectName}
                 </span>
                 {s.totalCostUsd > 0 && (
-                  <span className="text-xs font-mono shrink-0" style={{ color: "var(--color-text-muted)" }}>
+                  <span
+                    className="text-xs font-mono shrink-0"
+                    style={{ color: "var(--color-text-muted)" }}
+                  >
                     {formatCost(s.totalCostUsd)}
                   </span>
                 )}
@@ -567,14 +574,24 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
                 {/* Model badge: S / O / H */}
                 <span
                   className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0"
-                  style={{ background: badge.bg, color: badge.color, minWidth: 18, textAlign: "center", lineHeight: 1.4 }}
+                  style={{
+                    background: badge.bg,
+                    color: badge.color,
+                    minWidth: 18,
+                    textAlign: "center",
+                    lineHeight: 1.4,
+                  }}
                   title={s.model}
                   aria-label={`Model: ${s.model}`}
                 >
                   {badge.label}
                 </span>
-                <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>{s.numTurns} turns</span>
-                <span className="text-xs ml-auto" style={{ color: "var(--color-text-muted)" }}>{formatTime(s.createdAt)}</span>
+                <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                  {s.numTurns} turns
+                </span>
+                <span className="text-xs ml-auto" style={{ color: "var(--color-text-muted)" }}>
+                  {formatTime(s.createdAt)}
+                </span>
               </div>
               {/* Tags row */}
               <SessionTags sessionId={s.id} tags={s.tags ?? []} />

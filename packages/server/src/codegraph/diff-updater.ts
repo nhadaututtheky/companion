@@ -133,10 +133,7 @@ export async function incrementalRescan(
     const existing = db
       .select({ id: codeFiles.id })
       .from(codeFiles)
-      .where(and(
-        eq(codeFiles.projectSlug, projectSlug),
-        eq(codeFiles.filePath, filePath),
-      ))
+      .where(and(eq(codeFiles.projectSlug, projectSlug), eq(codeFiles.filePath, filePath)))
       .get();
 
     if (existing) {
@@ -157,10 +154,7 @@ export async function incrementalRescan(
       const existing = db
         .select({ id: codeFiles.id })
         .from(codeFiles)
-        .where(and(
-          eq(codeFiles.projectSlug, projectSlug),
-          eq(codeFiles.filePath, relPath),
-        ))
+        .where(and(eq(codeFiles.projectSlug, projectSlug), eq(codeFiles.filePath, relPath)))
         .get();
 
       if (existing) {
@@ -186,10 +180,7 @@ export async function incrementalRescan(
     const existingFile = db
       .select({ id: codeFiles.id, fileHash: codeFiles.fileHash })
       .from(codeFiles)
-      .where(and(
-        eq(codeFiles.projectSlug, projectSlug),
-        eq(codeFiles.filePath, relPath),
-      ))
+      .where(and(eq(codeFiles.projectSlug, projectSlug), eq(codeFiles.filePath, relPath)))
       .get();
 
     if (existingFile && existingFile.fileHash === fileHash) {
@@ -242,7 +233,7 @@ export async function incrementalRescan(
     deleteEdgesForProject(projectSlug);
 
     const allNodes = getProjectNodes(projectSlug);
-    const nodesByName = new Map<string, typeof allNodes[0]>();
+    const nodesByName = new Map<string, (typeof allNodes)[0]>();
     for (const node of allNodes) {
       nodesByName.set(node.symbolName, node);
     }
@@ -271,9 +262,10 @@ export async function incrementalRescan(
       const fileNodes = allNodes.filter((n) => n.filePath === file.filePath);
 
       for (const edge of result.edges) {
-        let sourceNode = edge.sourceSymbol === "__file__"
-          ? fileNodes[0]
-          : fileNodes.find((n) => n.symbolName === edge.sourceSymbol);
+        let sourceNode =
+          edge.sourceSymbol === "__file__"
+            ? fileNodes[0]
+            : fileNodes.find((n) => n.symbolName === edge.sourceSymbol);
 
         if (!sourceNode && fileNodes.length > 0) sourceNode = fileNodes[0];
         if (!sourceNode) continue;

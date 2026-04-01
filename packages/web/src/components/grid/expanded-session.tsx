@@ -37,9 +37,7 @@ function StatusBadge({ status }: { status: string }) {
         weight="fill"
         style={{
           animation:
-            status === "running" || status === "busy"
-              ? "blink 1.2s step-end infinite"
-              : undefined,
+            status === "running" || status === "busy" ? "blink 1.2s step-end infinite" : undefined,
         }}
       />
       {status}
@@ -136,7 +134,8 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
 
   // Fetch channelId from session record
   useEffect(() => {
-    api.sessions.get(sessionId)
+    api.sessions
+      .get(sessionId)
       .then((res) => {
         const record = res.data as { channelId?: string | null };
         setChannelId(record.channelId ?? null);
@@ -154,7 +153,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
   }, [sessionId]);
 
   const handleExport = useCallback(() => {
-    const apiKey = typeof window !== "undefined" ? localStorage.getItem("api_key") ?? "" : "";
+    const apiKey = typeof window !== "undefined" ? (localStorage.getItem("api_key") ?? "") : "";
     const base = process.env.NEXT_PUBLIC_API_URL ?? "";
     const url = `${base}/api/sessions/${sessionId}/export?format=md`;
     // Use anchor click to trigger browser download
@@ -229,8 +228,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             backdropFilter: "blur(16px)",
             WebkitBackdropFilter: "blur(16px)",
             border: "1px solid rgba(255,255,255,0.12)",
-            boxShadow:
-              "0 8px 32px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.08)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.08)",
           }}
           className="dark:bg-glass-dark expanded-session-card"
         >
@@ -348,10 +346,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
 
               {/* Permissions */}
               <div className="flex-shrink-0">
-                <PermissionGate
-                  permissions={pendingPermissions}
-                  onRespond={respondPermission}
-                />
+                <PermissionGate permissions={pendingPermissions} onRespond={respondPermission} />
               </div>
 
               {/* Composer */}
@@ -387,7 +382,8 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                   className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium cursor-pointer transition-colors flex-1 justify-center"
                   style={{
                     color: sidebarTab === "details" ? "#4285F4" : "var(--color-text-muted)",
-                    borderBottom: sidebarTab === "details" ? "2px solid #4285F4" : "2px solid transparent",
+                    borderBottom:
+                      sidebarTab === "details" ? "2px solid #4285F4" : "2px solid transparent",
                     background: "transparent",
                   }}
                 >
@@ -401,7 +397,8 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                   className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium cursor-pointer transition-colors flex-1 justify-center"
                   style={{
                     color: sidebarTab === "context" ? "#4285F4" : "var(--color-text-muted)",
-                    borderBottom: sidebarTab === "context" ? "2px solid #4285F4" : "2px solid transparent",
+                    borderBottom:
+                      sidebarTab === "context" ? "2px solid #4285F4" : "2px solid transparent",
                     background: "transparent",
                   }}
                 >

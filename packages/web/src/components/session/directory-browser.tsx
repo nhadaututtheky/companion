@@ -28,13 +28,7 @@ interface DirectoryBrowserProps {
 
 // ── Breadcrumb bar ──────────────────────────────────────────────────────────
 
-function Breadcrumbs({
-  path,
-  onNavigate,
-}: {
-  path: string;
-  onNavigate: (p: string) => void;
-}) {
+function Breadcrumbs({ path, onNavigate }: { path: string; onNavigate: (p: string) => void }) {
   // Split path by OS separator (both / and \)
   const parts = path.replace(/\\/g, "/").split("/").filter(Boolean);
   // Reconstruct absolute path segments
@@ -56,11 +50,7 @@ function Breadcrumbs({
       {parts.map((part, idx) => (
         <span key={idx} className="flex items-center gap-1 flex-shrink-0">
           {idx > 0 && (
-            <CaretRight
-              size={10}
-              style={{ color: "var(--color-text-muted)" }}
-              aria-hidden="true"
-            />
+            <CaretRight size={10} style={{ color: "var(--color-text-muted)" }} aria-hidden="true" />
           )}
           <button
             onClick={() => onNavigate(getSegPath(idx))}
@@ -90,10 +80,7 @@ function Breadcrumbs({
 
 function SkeletonRow() {
   return (
-    <div
-      className="flex items-center gap-3 px-4 py-2.5"
-      aria-hidden="true"
-    >
+    <div className="flex items-center gap-3 px-4 py-2.5" aria-hidden="true">
       <div
         className="rounded"
         style={{
@@ -214,10 +201,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
   const canGoBack = currentPath !== null;
 
   return (
-    <div
-      className="flex flex-col"
-      style={{ height: 360 }}
-    >
+    <div className="flex flex-col" style={{ height: 360 }}>
       {/* Toolbar */}
       <div
         className="flex items-center gap-2 px-3 py-2 flex-shrink-0 border-b"
@@ -246,12 +230,9 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
           }}
           className="flex items-center justify-center p-1.5 rounded-md transition-colors cursor-pointer"
           style={{
-            background: currentPath === null
-              ? "var(--color-bg-hover)"
-              : "var(--color-bg-elevated)",
-            color: currentPath === null
-              ? "var(--color-text-primary)"
-              : "var(--color-text-secondary)",
+            background: currentPath === null ? "var(--color-bg-hover)" : "var(--color-bg-elevated)",
+            color:
+              currentPath === null ? "var(--color-text-primary)" : "var(--color-text-secondary)",
             border: "1px solid var(--color-border)",
           }}
           aria-label="Go to drives / root folders"
@@ -263,10 +244,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
           {currentPath ? (
             <Breadcrumbs path={currentPath} onNavigate={navigateTo} />
           ) : (
-            <span
-              className="text-xs font-semibold"
-              style={{ color: "var(--color-text-muted)" }}
-            >
+            <span className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
               Select a root folder
             </span>
           )}
@@ -301,19 +279,13 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors cursor-pointer"
                 style={{ background: "transparent" }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background =
-                    "var(--color-bg-hover)";
+                  (e.currentTarget as HTMLButtonElement).style.background = "var(--color-bg-hover)";
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background =
-                    "transparent";
+                  (e.currentTarget as HTMLButtonElement).style.background = "transparent";
                 }}
               >
-                <House
-                  size={16}
-                  style={{ color: "#4285F4", flexShrink: 0 }}
-                  aria-hidden="true"
-                />
+                <House size={16} style={{ color: "#4285F4", flexShrink: 0 }} aria-hidden="true" />
                 <span
                   className="text-sm font-medium flex-1 truncate"
                   style={{ color: "var(--color-text-primary)" }}
@@ -350,12 +322,10 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
                 className="w-full flex items-center gap-3 px-4 py-2 text-left transition-colors cursor-pointer"
                 style={{ background: "transparent" }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background =
-                    "var(--color-bg-hover)";
+                  (e.currentTarget as HTMLButtonElement).style.background = "var(--color-bg-hover)";
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background =
-                    "transparent";
+                  (e.currentTarget as HTMLButtonElement).style.background = "transparent";
                 }}
               >
                 <FolderSimple
@@ -393,10 +363,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
           className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-t"
           style={{ borderColor: "var(--color-border)" }}
         >
-          <span
-            className="text-xs truncate max-w-xs"
-            style={{ color: "var(--color-text-muted)" }}
-          >
+          <span className="text-xs truncate max-w-xs" style={{ color: "var(--color-text-muted)" }}>
             {currentPath}
           </span>
           <button
