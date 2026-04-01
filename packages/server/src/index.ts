@@ -185,7 +185,14 @@ app.use("*", async (c, next) => {
   c.res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
   c.res.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws: wss:; font-src 'self' data:;",
+    [
+      "default-src 'self' http://localhost:* ws://localhost:*",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*",
+      "style-src 'self' 'unsafe-inline' http://localhost:*",
+      "img-src 'self' data: blob: http://localhost:*",
+      "connect-src 'self' ws://localhost:* wss: http://localhost:*",
+      "font-src 'self' data: http://localhost:*",
+    ].join("; ") + ";",
   );
 });
 
@@ -230,7 +237,8 @@ if (WEB_ENABLED) {
     const resolvedBase = resolve(WEB_OUT_DIR);
     for (const candidate of candidates) {
       const resolvedCandidate = resolve(candidate);
-      if (!resolvedCandidate.startsWith(resolvedBase + "/") && resolvedCandidate !== resolvedBase) {
+      const sep = process.platform === "win32" ? "\\" : "/";
+      if (!resolvedCandidate.startsWith(resolvedBase + sep) && resolvedCandidate !== resolvedBase) {
         continue; // path traversal attempt — skip
       }
       if (existsSync(candidate) && statSync(candidate).isFile()) {
