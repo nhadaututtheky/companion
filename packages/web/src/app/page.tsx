@@ -17,6 +17,7 @@ import { SearchPanel } from "@/components/panels/search-panel";
 import { TerminalPanel } from "@/components/panels/terminal-panel";
 import { StatsPanel } from "@/components/panels/stats-panel";
 import { WebIntelPanel } from "@/components/panels/webintel-panel";
+import CodeGraphPanel from "@/components/panels/codegraph-panel";
 import { SessionCompareModal } from "@/components/session/session-compare-modal";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useUiStore } from "@/lib/stores/ui-store";
@@ -702,7 +703,7 @@ export default function DashboardPage() {
             <aside
               className="hidden md:flex flex-col flex-shrink-0 overflow-hidden"
               style={{
-                width: rightPanelMode === "browser" ? 600 : rightPanelMode === "terminal" ? 600 : rightPanelMode === "stats" ? 360 : rightPanelMode === "webintel" ? 400 : 500,
+                width: rightPanelMode === "browser" ? 600 : rightPanelMode === "terminal" ? 600 : rightPanelMode === "stats" ? 360 : rightPanelMode === "webintel" ? 400 : rightPanelMode === "codegraph" ? 380 : 500,
                 borderLeft: "1px solid var(--color-border)",
                 transition: "width 200ms ease",
               }}
@@ -742,6 +743,12 @@ export default function DashboardPage() {
               {rightPanelMode === "webintel" && (
                 <WebIntelPanel
                   onClose={() => setRightPanelMode("none")}
+                />
+              )}
+              {rightPanelMode === "codegraph" && (
+                <CodeGraphPanel
+                  onClose={() => setRightPanelMode("none")}
+                  projectSlug={activeSessionId ? sessions[activeSessionId]?.projectSlug : undefined}
                 />
               )}
             </aside>

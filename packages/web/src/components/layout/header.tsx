@@ -1,6 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import { MagnifyingGlass, Moon, Sun, Gear, Terminal, ListBullets, FolderOpen, Globe, TerminalWindow, List, ChartBar, CloudArrowDown } from "@phosphor-icons/react";
+import { MagnifyingGlass, Moon, Sun, Gear, Terminal, ListBullets, FolderOpen, Globe, TerminalWindow, List, ChartBar, CloudArrowDown, Graph } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { CompanionLogo } from "./companion-logo";
@@ -218,6 +218,18 @@ export function Header({ onMenuToggle }: HeaderProps) {
           title="WebIntel — Web scraping & research"
         >
           <CloudArrowDown size={16} weight={rightPanelMode === "webintel" ? "fill" : "regular"} />
+        </button>
+        <button
+          onClick={() => setRightPanelMode(rightPanelMode === "codegraph" ? "none" : "codegraph")}
+          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
+          style={{
+            color: rightPanelMode === "codegraph" ? "#A855F7" : "var(--color-text-muted)",
+            background: rightPanelMode === "codegraph" ? "#A855F715" : "transparent",
+          }}
+          aria-label="CodeGraph panel"
+          title="CodeGraph — Code intelligence"
+        >
+          <Graph size={16} weight={rightPanelMode === "codegraph" ? "fill" : "regular"} />
         </button>
         <button
           onClick={() => setActivityTerminalOpen(!activityTerminalOpen)}

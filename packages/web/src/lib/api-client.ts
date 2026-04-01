@@ -538,4 +538,84 @@ export const api = {
     clearCache: () =>
       request<{ success: boolean }>("/api/webintel/cache", { method: "DELETE" }),
   },
+
+  codegraph: {
+    status: (project: string) =>
+      request<{
+        success: boolean;
+        data: {
+          ready: boolean;
+          job: {
+            id: number;
+            status: string;
+            totalFiles: number;
+            scannedFiles: number;
+            totalNodes: number;
+            totalEdges: number;
+            errorMessage: string | null;
+            startedAt: string;
+            completedAt: string | null;
+          } | null;
+        };
+      }>(`/api/codegraph/status?project=${encodeURIComponent(project)}`),
+
+    stats: (project: string) =>
+      request<{
+        success: boolean;
+        data: { files: number; nodes: number; edges: number };
+      }>(`/api/codegraph/stats?project=${encodeURIComponent(project)}`),
+
+    scan: (projectSlug: string) =>
+      request<{ success: boolean; data: { jobId: number } }>(
+        "/api/codegraph/scan",
+        { method: "POST", body: JSON.stringify({ projectSlug }) },
+      ),
+
+    rescan: (projectSlug: string, files?: string[]) =>
+      request<{
+        success: boolean;
+        data: { updated: number; added: number; deleted: number };
+      }>("/api/codegraph/rescan", {
+        method: "POST",
+        body: JSON.stringify({ projectSlug, files }),
+      }),
+
+    describe: (projectSlug: string) =>
+      request<{ success: boolean; data: { described: number } }>(
+        "/api/codegraph/describe",
+        { method: "POST", body: JSON.stringify({ projectSlug }) },
+      ),
+
+    cancel: (projectSlug: string) =>
+      request<{ success: boolean; data: { cancelled: boolean } }>(
+        "/api/codegraph/cancel",
+        { method: "POST", body: JSON.stringify({ projectSlug }) },
+      ),
+
+    search: (project: string, query: string) =>
+      request<{ success: boolean; data: unknown[] }>(
+        `/api/codegraph/search?project=${encodeURIComponent(project)}&q=${encodeURIComponent(query)}`,
+      ),
+
+    hotFiles: (project: string, limit = 10) =>
+      request<{
+        success: boolean;
+        data: Array<{
+          filePath: string;
+          incomingEdges: number;
+          outgoingEdges: number;
+          totalTrust: number;
+        }>;
+      }>(`/api/codegraph/hot-files?project=${encodeURIComponent(project)}&limit=${limit}`),
+
+    impact: (project: string, file: string) =>
+      request<{ success: boolean; data: unknown[] }>(
+        `/api/codegraph/impact?project=${encodeURIComponent(project)}&file=${encodeURIComponent(file)}`,
+      ),
+
+    reverseDeps: (project: string, file: string) =>
+      request<{ success: boolean; data: unknown[] }>(
+        `/api/codegraph/reverse-deps?project=${encodeURIComponent(project)}&file=${encodeURIComponent(file)}`,
+      ),
+  },
 };
