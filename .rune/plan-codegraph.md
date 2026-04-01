@@ -8,10 +8,10 @@ CodeGraph builds a weighted directed graph of every symbol in a connected projec
 
 | # | Name | Status | Plan File | Summary |
 |---|------|--------|-----------|---------|
-| 1 | Scanner + Store | ⬚ Pending | plan-codegraph-phase1.md | Drizzle schema, @swc/core scanner, graph store CRUD |
-| 2 | Semantic + Diff | ⬚ Pending | plan-codegraph-phase2.md | Haiku descriptions, incremental diff updater, file watcher |
-| 3 | Agent Interface | ⬚ Pending | plan-codegraph-phase3.md | 4 injection points into ws-bridge.ts message flow |
-| 4 | API + Web UI | ⬚ Pending | plan-codegraph-phase4.md | REST routes, graph visualization panel |
+| 1 | Scanner + Store | ✅ Done | plan-codegraph-phase1.md | Drizzle schema, regex scanner, graph store CRUD |
+| 2 | Semantic + Diff | ✅ Done | plan-codegraph-phase2.md | Haiku descriptions, incremental diff updater |
+| 3 | Agent Interface | ✅ Done | plan-codegraph-phase3.md | 4 injection points into ws-bridge.ts message flow |
+| 4 | API + Web UI | ✅ Done | plan-codegraph-phase4.md | REST routes, graph panel, symbol search |
 
 ## Key Decisions
 
