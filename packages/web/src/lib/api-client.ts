@@ -478,4 +478,64 @@ export const api = {
         method: "DELETE",
       }),
   },
+
+  // WebIntel
+  webintel: {
+    status: () =>
+      request<{
+        success: boolean;
+        data: {
+          available: boolean;
+          cache: { size: number; maxSize: number; hits: number; misses: number };
+        };
+      }>("/api/webintel/status"),
+
+    scrape: (url: string, opts?: { formats?: string[]; skipCache?: boolean }) =>
+      request<{
+        success: boolean;
+        data: {
+          url: string;
+          metadata: Record<string, unknown>;
+          markdown?: string;
+          llm?: string;
+          text?: string;
+        };
+      }>("/api/webintel/scrape", {
+        method: "POST",
+        body: JSON.stringify({ url, ...opts }),
+      }),
+
+    docs: (url: string, maxTokens?: number) =>
+      request<{ success: boolean; data: { url: string; content: string } }>(
+        "/api/webintel/docs",
+        { method: "POST", body: JSON.stringify({ url, maxTokens }) },
+      ),
+
+    research: (query: string, maxTokens?: number) =>
+      request<{
+        success: boolean;
+        data: {
+          content: string;
+          sources: Array<{ title: string; url: string }>;
+        };
+      }>("/api/webintel/research", {
+        method: "POST",
+        body: JSON.stringify({ query, maxTokens }),
+      }),
+
+    crawl: (url: string, opts?: { maxDepth?: number; maxPages?: number }) =>
+      request<{ success: boolean; data: { jobId: string } }>(
+        "/api/webintel/crawl",
+        { method: "POST", body: JSON.stringify({ url, ...opts }) },
+      ),
+
+    jobs: () =>
+      request<{ success: boolean; data: unknown[] }>("/api/webintel/jobs"),
+
+    job: (id: string) =>
+      request<{ success: boolean; data: unknown }>(`/api/webintel/jobs/${id}`),
+
+    clearCache: () =>
+      request<{ success: boolean }>("/api/webintel/cache", { method: "DELETE" }),
+  },
 };

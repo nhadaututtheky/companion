@@ -1,6 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import { MagnifyingGlass, Moon, Sun, Gear, Terminal, ListBullets, FolderOpen, Globe, TerminalWindow, List, ChartBar } from "@phosphor-icons/react";
+import { MagnifyingGlass, Moon, Sun, Gear, Terminal, ListBullets, FolderOpen, Globe, TerminalWindow, List, ChartBar, CloudArrowDown } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { CompanionLogo } from "./companion-logo";
@@ -206,6 +206,18 @@ export function Header({ onMenuToggle }: HeaderProps) {
           title="Activity Stats"
         >
           <ChartBar size={16} weight={rightPanelMode === "stats" ? "fill" : "regular"} />
+        </button>
+        <button
+          onClick={() => setRightPanelMode(rightPanelMode === "webintel" ? "none" : "webintel")}
+          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
+          style={{
+            color: rightPanelMode === "webintel" ? "#FBBC04" : "var(--color-text-muted)",
+            background: rightPanelMode === "webintel" ? "#FBBC0415" : "transparent",
+          }}
+          aria-label="WebIntel panel"
+          title="WebIntel — Web scraping & research"
+        >
+          <CloudArrowDown size={16} weight={rightPanelMode === "webintel" ? "fill" : "regular"} />
         </button>
         <button
           onClick={() => setActivityTerminalOpen(!activityTerminalOpen)}

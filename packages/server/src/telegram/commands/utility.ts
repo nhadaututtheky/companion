@@ -661,5 +661,79 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
     }
   });
 
+  // ── /research <query> — web research via webclaw ─────────────────────────
+
+  bot.command("research", async (ctx) => {
+    const query = ctx.match?.trim();
+    if (!query) {
+      await ctx.reply("Usage: /research <query>\nSearches the web and synthesizes results.");
+      return;
+    }
+
+    await ctx.replyWithChatAction("typing");
+
+    try {
+      const { research } = await import("../../services/web-intel.js");
+      const result = await research(query, 3000);
+
+      if (!result) {
+        await ctx.reply(
+          "Research failed — WEBCLAW_API_KEY may be required for web search.",
+          { message_thread_id: ctx.message?.message_thread_id },
+        );
+        return;
+      }
+
+      const sourceList = result.sources
+        .map((s, i) => `${i + 1}. ${escapeHTML(s.title)}`)
+        .join("\n");
+
+      const header = `<b>🔍 Research:</b> ${escapeHTML(query)}\n<b>Sources:</b> ${result.sources.length}\n\n`;
+
+      if (result.content.length + header.length + sourceList.length < TG_MAX_CHARS - 100) {
+        await ctx.reply(
+          `${header}<pre>${escapeHTML(result.content)}</pre>\n\n${sourceList}`,
+          { parse_mode: "HTML", message_thread_id: ctx.message?.message_thread_id },
+        );
+      } else {
+        const buffer = Buffer.from(`# Research: ${query}\n\n${result.content}\n\n## Sources\n${result.sources.map((s, i) => `${i + 1}. [${s.title}](${s.url})`).join("\n")}`, "utf-8");
+        const inputFile = new InputFile(buffer, `research-${Date.now()}.md`);
+        await ctx.replyWithDocument(inputFile, {
+          caption: `🔍 Research: ${query} (${result.sources.length} sources)`,
+          message_thread_id: ctx.message?.message_thread_id,
+        });
+      }
+    } catch (err) {
+      log.warn("Error in /research command", { query, error: String(err) });
+      await ctx.reply("Error performing research.", { message_thread_id: ctx.message?.message_thread_id });
+    }
+  });
+
+  // ── /webstatus — webclaw health + cache stats ───────────────────────────
+
+  bot.command("webstatus", async (ctx) => {
+    try {
+      const { isAvailable, getCacheStats } = await import("../../services/web-intel.js");
+      const available = await isAvailable();
+      const cache = getCacheStats();
+
+      const status = available ? "✅ Online" : "❌ Offline";
+      const hitRate = cache.hits + cache.misses > 0
+        ? Math.round((cache.hits / (cache.hits + cache.misses)) * 100)
+        : 0;
+
+      await ctx.reply(
+        `<b>🌐 WebIntel Status</b>\n\n` +
+        `webclaw: ${status}\n` +
+        `Cache: ${cache.size}/${cache.maxSize} entries\n` +
+        `Hit rate: ${hitRate}% (${cache.hits} hits, ${cache.misses} misses)`,
+        { parse_mode: "HTML", message_thread_id: ctx.message?.message_thread_id },
+      );
+    } catch (err) {
+      log.warn("Error in /webstatus", { error: String(err) });
+      await ctx.reply("Error checking status.", { message_thread_id: ctx.message?.message_thread_id });
+    }
+  });
+
   log.info("Utility commands registered");
 }
