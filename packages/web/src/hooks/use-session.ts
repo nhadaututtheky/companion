@@ -5,7 +5,7 @@ import { useSessionStore } from "@/lib/stores/session-store";
 import { useActivityStore } from "@/lib/stores/activity-store";
 import { notify } from "./use-notifications";
 import { api } from "@/lib/api-client";
-import type { BrowserIncomingMessage, ContentBlock, SessionState } from "@companion/shared";
+import type { BrowserIncomingMessage, ContentBlock, SessionState, ThinkingMode } from "@companion/shared";
 
 interface Message {
   id: string;
@@ -32,6 +32,7 @@ interface UseSessionReturn {
   sendMessage: (text: string) => void;
   respondPermission: (requestId: string, behavior: "allow" | "deny") => void;
   setModel: (model: string) => void;
+  setThinkingMode: (mode: ThinkingMode) => void;
 }
 
 export function useSession(sessionId: string): UseSessionReturn {
@@ -603,5 +604,12 @@ export function useSession(sessionId: string): UseSessionReturn {
     [send],
   );
 
-  return { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel };
+  const setThinkingMode = useCallback(
+    (mode: ThinkingMode) => {
+      send({ type: "set_thinking_mode", mode });
+    },
+    [send],
+  );
+
+  return { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel, setThinkingMode };
 }

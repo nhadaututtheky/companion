@@ -64,7 +64,9 @@ import {
   SESSION_IDLE_TIMEOUT_MS,
   HEALTH_CHECK_INTERVAL_MS,
   getMaxContextTokens,
+  thinkingModeTobudget,
 } from "@companion/shared";
+import type { ThinkingMode } from "@companion/shared";
 import type { LaunchResult } from "./cli-launcher.js";
 
 const log = createLogger("ws-bridge");
@@ -263,6 +265,8 @@ export class WsBridge {
     autoReinjectOnCompact?: boolean;
     /** Bare mode — minimal output, lower cost. Maps to --bare CLI flag. */
     bare?: boolean;
+    /** Thinking budget in tokens. 0 = off, N = budget, undefined = adaptive. */
+    thinkingBudget?: number;
   }): Promise<string> {
     const sessionId = randomUUID();
 
@@ -293,6 +297,7 @@ export class WsBridge {
       cost_warned: 0,
       compact_mode: (opts.compactMode as SessionState["compact_mode"]) ?? "manual",
       compact_threshold: opts.compactThreshold ?? 75,
+      thinking_mode: opts.thinkingBudget === undefined ? "adaptive" : opts.thinkingBudget === 0 ? "off" : "deep",
     };
 
     // Create in-memory session
@@ -545,6 +550,7 @@ export class WsBridge {
       source?: string;
       envVars?: Record<string, string>;
       bare?: boolean;
+      thinkingBudget?: number;
     },
   ): string {
     // Create plan mode watcher
@@ -578,6 +584,7 @@ export class WsBridge {
         envVars: opts.envVars,
         hooksUrl,
         bare: opts.bare,
+        thinkingBudget: opts.thinkingBudget,
       },
       (ndjsonLine) => this.handleCLIMessage(session, ndjsonLine),
       (exitCode) => {
@@ -1686,6 +1693,14 @@ export class WsBridge {
         log.info("Auto-approve config updated", {
           enabled: msg.config.enabled,
           timeoutSeconds: msg.config.timeoutSeconds,
+        });
+        break;
+      case "set_thinking_mode":
+        session.state = { ...session.state, thinking_mode: msg.mode };
+        log.info("Thinking mode updated", { sessionId: session.state.session_id, mode: msg.mode });
+        this.broadcastToSubscribers(session, {
+          type: "session_update",
+          session: { thinking_mode: msg.mode },
         });
         break;
     }

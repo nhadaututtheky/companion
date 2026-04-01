@@ -455,6 +455,7 @@ export class TelegramBridge {
       initialPrompt?: string;
       model?: string;
       permissionMode?: string;
+      thinkingBudget?: number;
     },
   ): Promise<void> {
     const chatId = ctx.chat!.id;
@@ -488,6 +489,7 @@ export class TelegramBridge {
         source: "telegram",
         resume: opts?.resume,
         cliSessionId: opts?.cliSessionId,
+        thinkingBudget: opts?.thinkingBudget,
       });
 
       const mapping: ChatMapping = {
@@ -600,10 +602,13 @@ export class TelegramBridge {
     const shortId = session?.state.short_id;
     const shortIdStr = shortId ? ` · <code>#${escapeHTML(shortId)}</code>` : "";
 
+    const thinkingMode = session?.state.thinking_mode ?? "adaptive";
+    const thinkingLabel = thinkingMode === "adaptive" ? "⚡Adaptive" : thinkingMode === "off" ? "💤Off" : "🧠Deep";
+
     const text = [
       `<b>${escapeHTML(projectName)}</b> · <code>${escapeHTML(model)}</code> · ${statusEmoji(status)} ${status}${shortIdStr}`,
       `$${cost.toFixed(4)} · ${turns} turns · Updated ${updatedAt}${contextStr}`,
-      `Auto-Approve: <b>${aaLabel}</b> · Timeout: <b>${idleLabel}</b>`,
+      `Auto-Approve: <b>${aaLabel}</b> · Timeout: <b>${idleLabel}</b> · Think: <b>${thinkingLabel}</b>`,
     ].join("\n");
 
     // Build keyboard with styled buttons (Telegram Bot API style field)

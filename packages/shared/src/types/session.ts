@@ -146,7 +146,8 @@ export type BrowserOutgoingMessage =
     }
   | { type: "interrupt" }
   | { type: "set_model"; model: string }
-  | { type: "set_auto_approve"; config: AutoApproveConfig };
+  | { type: "set_auto_approve"; config: AutoApproveConfig }
+  | { type: "set_thinking_mode"; mode: ThinkingMode };
 
 /** Messages the bridge sends TO the browser/client */
 export type BrowserIncomingMessage =
@@ -251,6 +252,8 @@ export interface SessionState {
   compact_mode: CompactMode;
   /** Context % threshold to trigger compact (default 75) */
   compact_threshold: number;
+  /** Thinking mode: adaptive (default), off, or deep */
+  thinking_mode: ThinkingMode;
 }
 
 // ─── Permission Types ────────────────────────────────────────────────────────
@@ -286,6 +289,24 @@ export interface PermissionRequest {
   timestamp: number;
 }
 
+// ─── Thinking Mode ──────────────────────────────────────────────────────────
+
+/** Claude Code thinking modes: adaptive (default), off (no thinking), or a specific token budget */
+export type ThinkingMode = "adaptive" | "off" | "deep";
+
+/** Map ThinkingMode to --thinking-budget CLI value (undefined = omit flag = adaptive) */
+export function thinkingModeTobudget(mode: ThinkingMode): number | undefined {
+  switch (mode) {
+    case "off":
+      return 0;
+    case "deep":
+      return 50000;
+    case "adaptive":
+    default:
+      return undefined; // omit flag = adaptive
+  }
+}
+
 // ─── Auto-Approve Config ─────────────────────────────────────────────────
 
 export interface AutoApproveConfig {
@@ -315,6 +336,8 @@ export interface CreateSessionRequest {
   resume?: boolean;
   /** Bare mode — minimal output, lower cost. Maps to --bare CLI flag. */
   bare?: boolean;
+  /** Thinking mode: adaptive (default), off, or deep (50k tokens) */
+  thinkingMode?: ThinkingMode;
 }
 
 export interface SessionListItem {

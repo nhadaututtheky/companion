@@ -28,6 +28,8 @@ export interface LaunchOptions {
   hooksUrl?: string;
   /** Bare mode — minimal output, no thinking/verbose. For cost-sensitive sessions. */
   bare?: boolean;
+  /** Thinking budget in tokens. 0 = no thinking, undefined = adaptive (omit flag). */
+  thinkingBudget?: number;
 }
 
 export interface LaunchResult {
@@ -230,6 +232,11 @@ export function launchCLI(
   // Bare mode: minimal output for cost-sensitive sessions
   if (opts.bare) {
     args.push("--bare");
+  }
+
+  // Thinking budget: 0 = off, N = token budget, undefined = adaptive (omit flag)
+  if (opts.thinkingBudget !== undefined) {
+    args.push("--thinking-budget", String(opts.thinkingBudget));
   }
 
   if (opts.permissionMode) {

@@ -29,6 +29,14 @@ const MODELS = [
   { label: "Haiku", value: "claude-haiku-4-5" },
 ];
 
+// ─── Thinking mode options ──────────────────────────────────────────────────
+
+const THINKING_MODES = [
+  { label: "⚡ Adaptive", value: "adaptive" },
+  { label: "💤 Off", value: "off" },
+  { label: "🧠 Deep", value: "deep" },
+] as const;
+
 // ─── Register ────────────────────────────────────────────────────────────────
 
 export function registerPanelCommands(bridge: TelegramBridge): void {
@@ -42,15 +50,23 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
 
     const session = bridge.wsBridge.getSession(sessionId);
     const currentModel = session?.state.model ?? "";
+    const currentThinking = session?.state.thinking_mode ?? "adaptive";
 
     const keyboard = new InlineKeyboard();
+    // Model buttons
     for (const m of MODELS) {
       const checkmark = currentModel.includes(m.label.toLowerCase()) ? " ✓" : "";
       keyboard.text(`${m.label}${checkmark}`, `panel:setmodel:${m.value}:${sessionId}`).row();
     }
+    // Thinking mode buttons (same row)
+    for (const t of THINKING_MODES) {
+      const checkmark = currentThinking === t.value ? " ✓" : "";
+      keyboard.text(`${t.label}${checkmark}`, `panel:thinking:${t.value}:${sessionId}`);
+    }
+    keyboard.row();
     keyboard.text("↩ Back", `panel:status:${sessionId}`);
 
-    await ctx.editMessageText("Select model:", { reply_markup: keyboard }).catch(() => {});
+    await ctx.editMessageText("Select model & thinking mode:", { reply_markup: keyboard }).catch(() => {});
   });
 
   bot.callbackQuery(/^panel:setmodel:([^:]+):(.+)$/, async (ctx) => {
@@ -80,6 +96,39 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
         );
       }
     }
+  });
+
+  // ── Thinking mode selector ──────────────────────────────────────────────
+
+  bot.callbackQuery(/^panel:thinking:([^:]+):(.+)$/, async (ctx) => {
+    const mode = ctx.match[1]! as "adaptive" | "off" | "deep";
+    const sessionId = ctx.match[2]!;
+    await ctx.answerCallbackQuery(`Thinking: ${mode}`);
+
+    bridge.wsBridge.handleBrowserMessage(
+      sessionId,
+      JSON.stringify({ type: "set_thinking_mode", mode }),
+    );
+
+    // Refresh model+thinking keyboard
+    const session = bridge.wsBridge.getSession(sessionId);
+    const currentModel = session?.state.model ?? "";
+
+    const keyboard = new InlineKeyboard();
+    for (const m of MODELS) {
+      const checkmark = currentModel.includes(m.label.toLowerCase()) ? " ✓" : "";
+      keyboard.text(`${m.label}${checkmark}`, `panel:setmodel:${m.value}:${sessionId}`).row();
+    }
+    for (const t of THINKING_MODES) {
+      const checkmark = mode === t.value ? " ✓" : "";
+      keyboard.text(`${t.label}${checkmark}`, `panel:thinking:${t.value}:${sessionId}`);
+    }
+    keyboard.row();
+    keyboard.text("↩ Back", `panel:status:${sessionId}`);
+
+    await ctx
+      .editMessageText("Select model & thinking mode:", { reply_markup: keyboard })
+      .catch(() => {});
   });
 
   // ── Status refresh ──────────────────────────────────────────────────────

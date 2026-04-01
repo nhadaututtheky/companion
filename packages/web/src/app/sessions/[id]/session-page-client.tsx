@@ -9,6 +9,7 @@ import { PermissionGate } from "@/components/session/permission-gate";
 import { SessionDetails } from "@/components/session/session-details";
 import { PinnedMessagesDrawer } from "@/components/session/pinned-messages-drawer";
 import { ModelSelector } from "@/components/session/model-selector";
+import { ThinkingModeSelector } from "@/components/session/thinking-mode-selector";
 import { usePinnedMessagesStore } from "@/lib/stores/pinned-messages-store";
 import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
@@ -103,7 +104,7 @@ function ContextStatusBar({
 export function SessionPageClient({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel } =
+  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel, setThinkingMode } =
     useSession(id);
   const session = useSessionStore((s) => s.sessions[id]);
   const [pinnedDrawerOpen, setPinnedDrawerOpen] = useState(false);
@@ -163,13 +164,20 @@ export function SessionPageClient({ params }: PageProps) {
               </span>
             </div>
 
-            {/* Mid-session model selector */}
+            {/* Mid-session model + thinking mode selectors */}
             {session?.status !== "ended" && session?.status !== "error" && (
-              <ModelSelector
-                currentModel={session?.model ?? "claude-sonnet-4-6"}
-                onModelChange={setModel}
-                disabled={session?.status === "starting"}
-              />
+              <>
+                <ModelSelector
+                  currentModel={session?.model ?? "claude-sonnet-4-6"}
+                  onModelChange={setModel}
+                  disabled={session?.status === "starting"}
+                />
+                <ThinkingModeSelector
+                  currentMode={session?.state?.thinking_mode ?? "adaptive"}
+                  onModeChange={setThinkingMode}
+                  disabled={session?.status === "starting"}
+                />
+              </>
             )}
 
             {wsStatus !== "connected" && (

@@ -338,6 +338,7 @@ describe("ActiveSession in-memory management", () => {
       cost_warned: 0,
       compact_mode: "manual" as const,
       compact_threshold: 75,
+      thinking_mode: "adaptive" as const,
     };
 
     const session = createActiveSession("mem-1", state);
@@ -375,6 +376,7 @@ describe("ActiveSession in-memory management", () => {
       cost_warned: 0,
       compact_mode: "manual" as const,
       compact_threshold: 75,
+      thinking_mode: "adaptive" as const,
     };
 
     createActiveSession("mem-2", state);
@@ -410,6 +412,7 @@ describe("ActiveSession in-memory management", () => {
       cost_warned: 0,
       compact_mode: "manual" as const,
       compact_threshold: 75,
+      thinking_mode: "adaptive" as const,
     };
 
     createActiveSession("count-a", { ...baseState, session_id: "count-a" });

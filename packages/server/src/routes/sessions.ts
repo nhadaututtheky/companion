@@ -27,6 +27,7 @@ import { createLogger } from "../logger.js";
 import { getMaxSessions } from "../services/license.js";
 import { getSessionSummary } from "../services/session-summarizer.js";
 import type { ApiResponse } from "@companion/shared";
+import { thinkingModeTobudget } from "@companion/shared";
 
 const log = createLogger("routes:sessions");
 
@@ -53,6 +54,7 @@ const createSessionSchema = z.object({
   idleTimeoutMs: z.number().int().min(0).max(86_400_000).optional(),
   keepAlive: z.boolean().optional(),
   bare: z.boolean().optional(),
+  thinkingMode: z.enum(["adaptive", "off", "deep"]).optional(),
 });
 
 const sendMessageSchema = z.object({
@@ -247,6 +249,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         source: body.source,
         envVars: project?.envVars,
         bare: body.bare,
+        thinkingBudget: body.thinkingMode ? thinkingModeTobudget(body.thinkingMode) : undefined,
       });
 
       // Apply idle timeout / keep-alive settings from the request
