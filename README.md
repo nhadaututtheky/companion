@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Companion-v0.4.0-4285F4?style=for-the-badge" alt="Version" />
+  <img src="https://img.shields.io/badge/Companion-v0.5.0-4285F4?style=for-the-badge" alt="Version" />
   <img src="https://img.shields.io/badge/License-BSL_1.1-EA4335?style=for-the-badge" alt="License" />
   <img src="https://img.shields.io/badge/Bun-1.3+-34A853?style=for-the-badge" alt="Bun" />
   <img src="https://img.shields.io/badge/Next.js-16-FBBC04?style=for-the-badge" alt="Next.js" />
@@ -15,23 +15,33 @@
 
 > **Prerequisites:** Docker Desktop installed and running. A Claude Code subscription (Claude CLI uses `~/.claude/.credentials.json`).
 
+**One-line install (macOS / Linux):**
 ```bash
-# 1. Clone and configure
-git clone https://github.com/user/companion.git
+curl -fsSL https://companion.theio.vn/install | sh
 cd companion
-cp .env.example .env
-
-# 2. Edit .env — set at minimum:
-#    API_KEY=your-secret-password    (protects the web UI)
-
-# 3. Start
-docker compose up -d --build
-
-# 4. Open the web UI
-#    http://localhost:3580
+docker compose up -d
+# Open http://localhost:3579
 ```
 
-**That's it.** The server runs on port 3579 (API + WebSocket), the web UI on port 3580.
+**One-line install (Windows PowerShell):**
+```powershell
+irm https://companion.theio.vn/install.ps1 | iex
+cd companion
+docker compose up -d
+# Open http://localhost:3579
+```
+
+**Manual setup:**
+```bash
+git clone https://github.com/nhadaututtheky/companion.git
+cd companion
+cp .env.example .env
+# Edit .env — set API_KEY (protects the web UI)
+docker compose up -d --build
+# Open http://localhost:3579
+```
+
+The install script auto-generates a random API key and downloads `docker-compose.yml` + `.env`.
 
 ### What gets mounted
 
