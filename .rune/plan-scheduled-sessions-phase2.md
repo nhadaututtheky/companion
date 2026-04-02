@@ -7,16 +7,16 @@ Schedules can specify their own telegram target that auto-attaches on session la
 
 ## Tasks
 
-- [ ] Create `packages/server/src/routes/schedules.ts` — full CRUD routes
-- [ ] Register schedule routes in `packages/server/src/routes/index.ts` at `/api/schedules`
-- [ ] Add Zod validation schemas for schedule create/update
-- [ ] Add `telegramTarget` field to `createSessionSchema` in `packages/server/src/routes/sessions.ts`
-- [ ] Wire telegram auto-attach in scheduler — when schedule has telegram target, call `tgBridge.attachStreamToSession()` after launch
-- [ ] Add `GET /api/schedules/upcoming` — next 20 runs across all schedules (for calendar)
-- [ ] Add `POST /api/schedules/:id/run-now` — manual trigger (bypass schedule time)
-- [ ] Add `PATCH /api/schedules/:id/toggle` — enable/disable shortcut
-- [ ] Add schedule API methods to `packages/web/src/lib/api-client.ts`
-- [ ] Export schedule types from shared package
+- [x] Create `packages/server/src/routes/schedules.ts` — full CRUD routes
+- [x] Register schedule routes in `packages/server/src/routes/index.ts` at `/api/schedules`
+- [x] Add Zod validation schemas for schedule create/update
+- [ ] Add `telegramTarget` field to `createSessionSchema` in `packages/server/src/routes/sessions.ts` (deferred — low priority)
+- [ ] Wire telegram auto-attach in scheduler (deferred — needs bot registry refactor)
+- [x] Add `GET /api/schedules/upcoming` — next 20 runs across all schedules (for calendar)
+- [x] Add `POST /api/schedules/:id/run-now` — manual trigger (bypass schedule time)
+- [x] Add `PATCH /api/schedules/:id/toggle` — enable/disable shortcut
+- [x] Add schedule API methods to `packages/web/src/lib/api-client.ts`
+- [x] Export schedule types from shared package
 
 ## API Endpoints
 

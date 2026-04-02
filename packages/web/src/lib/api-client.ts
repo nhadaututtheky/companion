@@ -1060,4 +1060,55 @@ export const api = {
         method: "DELETE",
       }),
   },
+
+  schedules: {
+    list: () =>
+      request<{ success: boolean; data: import("@companion/shared").Schedule[] }>("/api/schedules"),
+
+    get: (id: string) =>
+      request<{ success: boolean; data: import("@companion/shared").Schedule }>(
+        `/api/schedules/${encodeURIComponent(id)}`,
+      ),
+
+    create: (input: import("@companion/shared").CreateScheduleInput) =>
+      request<{ success: boolean; data: import("@companion/shared").Schedule }>("/api/schedules", {
+        method: "POST",
+        body: JSON.stringify(input),
+      }),
+
+    update: (id: string, input: import("@companion/shared").UpdateScheduleInput) =>
+      request<{ success: boolean; data: import("@companion/shared").Schedule }>(
+        `/api/schedules/${encodeURIComponent(id)}`,
+        { method: "PATCH", body: JSON.stringify(input) },
+      ),
+
+    delete: (id: string) =>
+      request<{ success: boolean }>(`/api/schedules/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      }),
+
+    toggle: (id: string) =>
+      request<{ success: boolean; data: import("@companion/shared").Schedule }>(
+        `/api/schedules/${encodeURIComponent(id)}/toggle`,
+        { method: "PATCH" },
+      ),
+
+    runNow: (id: string) =>
+      request<{ success: boolean; data: { sessionId: string } }>(
+        `/api/schedules/${encodeURIComponent(id)}/run-now`,
+        { method: "POST" },
+      ),
+
+    upcoming: (limit = 20) =>
+      request<{
+        success: boolean;
+        data: Array<{
+          scheduleId: string;
+          name: string;
+          projectSlug: string | null;
+          nextRunAt: number;
+          triggerType: string;
+        }>;
+      }>(`/api/schedules/upcoming?limit=${limit}`),
+  },
 };
