@@ -8,6 +8,7 @@ import {
   Terminal,
   ListBullets,
   FolderOpen,
+  Timer,
   Globe,
   TerminalWindow,
   List,
@@ -268,6 +269,14 @@ export function Header({ onMenuToggle }: HeaderProps) {
           aria-label="Projects"
         >
           <FolderOpen size={16} weight="bold" />
+        </a>
+        <a
+          href="/schedules"
+          className="hidden md:flex p-2 rounded-lg transition-colors"
+          style={{ color: "var(--color-text-secondary)" }}
+          aria-label="Schedules"
+        >
+          <Timer size={16} weight="bold" />
         </a>
         <a
           href="/templates"
