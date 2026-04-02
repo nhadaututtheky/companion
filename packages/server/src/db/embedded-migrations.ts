@@ -11,7 +11,7 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
   },
   {
     name: "0002_session_templates.sql",
-    sql: "CREATE TABLE IF NOT EXISTS `session_templates` (\n  `id` text PRIMARY KEY NOT NULL,\n  `name` text NOT NULL,\n  `slug` text NOT NULL,\n  `project_slug` text REFERENCES `projects`(`slug`),\n  `prompt` text NOT NULL,\n  `model` text,\n  `permission_mode` text,\n  `icon` text NOT NULL DEFAULT '\u00e2\u0161\u00a1',\n  `sort_order` integer NOT NULL DEFAULT 0,\n  `created_at` integer NOT NULL,\n  `updated_at` integer NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS `session_templates_slug_unique` ON `session_templates` (`slug`);\n",
+    sql: "CREATE TABLE IF NOT EXISTS `session_templates` (\n  `id` text PRIMARY KEY NOT NULL,\n  `name` text NOT NULL,\n  `slug` text NOT NULL,\n  `project_slug` text REFERENCES `projects`(`slug`),\n  `prompt` text NOT NULL,\n  `model` text,\n  `permission_mode` text,\n  `icon` text NOT NULL DEFAULT '⚡',\n  `sort_order` integer NOT NULL DEFAULT 0,\n  `created_at` integer NOT NULL,\n  `updated_at` integer NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS `session_templates_slug_unique` ON `session_templates` (`slug`);\n",
   },
   {
     name: "0003_add_allowed_user_ids.sql",
@@ -23,7 +23,7 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
   },
   {
     name: "0005_session_short_ids.sql",
-    sql: "-- Add short_id column for @mention system\nALTER TABLE sessions ADD COLUMN short_id TEXT;\n\n-- Unique index for short_id (partial \u00e2\u20ac\u201d allows multiple NULLs)\nCREATE UNIQUE INDEX idx_sessions_short_id ON sessions(short_id) WHERE short_id IS NOT NULL;\n",
+    sql: "-- Add short_id column for @mention system\nALTER TABLE sessions ADD COLUMN short_id TEXT;\n\n-- Unique index for short_id (partial — allows multiple NULLs)\nCREATE UNIQUE INDEX idx_sessions_short_id ON sessions(short_id) WHERE short_id IS NOT NULL;\n",
   },
   {
     name: "0006_session_management.sql",
@@ -50,8 +50,36 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     sql: "-- Codegraph + session performance indexes\nCREATE INDEX IF NOT EXISTS `idx_sessions_ended_at` ON `sessions` (`ended_at`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_code_files_project` ON `code_files` (`project_slug`);\n--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS `idx_code_files_path` ON `code_files` (`project_slug`, `file_path`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_code_nodes_project` ON `code_nodes` (`project_slug`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_code_nodes_file` ON `code_nodes` (`file_id`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_code_nodes_symbol` ON `code_nodes` (`project_slug`, `symbol_name`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_code_nodes_type` ON `code_nodes` (`project_slug`, `symbol_type`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_code_edges_source` ON `code_edges` (`source_node_id`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_code_edges_target` ON `code_edges` (`target_node_id`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_code_edges_project` ON `code_edges` (`project_slug`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_code_edges_type` ON `code_edges` (`project_slug`, `edge_type`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_webintel_docs_library` ON `web_intel_docs` (`library_name`);\n",
   },
   {
+    name: "0012_session_snapshots.sql",
+    sql: "CREATE TABLE IF NOT EXISTS `session_snapshots` (\n  `id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n  `session_id` text NOT NULL REFERENCES `sessions`(`id`),\n  `content` text NOT NULL,\n  `label` text,\n  `created_at` integer NOT NULL DEFAULT (unixepoch() * 1000)\n);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_snapshots_session` ON `session_snapshots` (`session_id`);\n",
+  },
+  {
+    name: "0013_share_tokens.sql",
+    sql: "-- Share tokens for QR Stream Sharing (Phase 3)\nCREATE TABLE IF NOT EXISTS share_tokens (\n  token TEXT PRIMARY KEY,\n  session_id TEXT NOT NULL REFERENCES sessions(id),\n  permission TEXT NOT NULL DEFAULT 'read-only',\n  created_by TEXT NOT NULL DEFAULT 'owner',\n  expires_at INTEGER NOT NULL,\n  revoked_at INTEGER,\n  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)\n);\n\nCREATE INDEX IF NOT EXISTS idx_share_tokens_session ON share_tokens(session_id);\nCREATE INDEX IF NOT EXISTS idx_share_tokens_expires ON share_tokens(expires_at);\n",
+  },
+  {
+    name: "0014_error_logs.sql",
+    sql: "CREATE TABLE IF NOT EXISTS error_logs (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  source TEXT NOT NULL,\n  level TEXT NOT NULL DEFAULT 'error',\n  message TEXT NOT NULL,\n  stack TEXT,\n  session_id TEXT,\n  context TEXT,\n  timestamp INTEGER NOT NULL DEFAULT (unixepoch() * 1000)\n);\n\nCREATE INDEX IF NOT EXISTS idx_error_logs_timestamp ON error_logs(timestamp);\nCREATE INDEX IF NOT EXISTS idx_error_logs_source ON error_logs(source);\nCREATE INDEX IF NOT EXISTS idx_error_logs_session ON error_logs(session_id);\n",
+  },
+  {
+    name: "0015_db_connections.sql",
+    sql: "CREATE TABLE IF NOT EXISTS db_connections (\n  id TEXT PRIMARY KEY,\n  name TEXT NOT NULL,\n  type TEXT NOT NULL,\n  connection_string TEXT NOT NULL,\n  project_slug TEXT,\n  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)\n);\n",
+  },
+  {
+    name: "0016_workflow_templates.sql",
+    sql: "CREATE TABLE IF NOT EXISTS workflow_templates (\n  id TEXT PRIMARY KEY,\n  name TEXT NOT NULL,\n  slug TEXT NOT NULL UNIQUE,\n  description TEXT NOT NULL DEFAULT '',\n  icon TEXT NOT NULL DEFAULT '🔄',\n  category TEXT NOT NULL DEFAULT 'custom',\n  steps TEXT NOT NULL,\n  is_built_in INTEGER NOT NULL DEFAULT 0,\n  default_cost_cap_usd REAL DEFAULT 1.0,\n  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),\n  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)\n);\n",
+  },
+  {
+    name: "0017_workflow_channels.sql",
+    sql: "ALTER TABLE channels ADD COLUMN workflow_template_id TEXT;\nALTER TABLE channels ADD COLUMN workflow_state TEXT;\n",
+  },
+  {
+    name: "0018_codegraph_config.sql",
+    sql: "CREATE TABLE IF NOT EXISTS codegraph_config (\n  project_slug TEXT PRIMARY KEY,\n  injection_enabled INTEGER NOT NULL DEFAULT 1,\n  project_map_enabled INTEGER NOT NULL DEFAULT 1,\n  message_context_enabled INTEGER NOT NULL DEFAULT 1,\n  plan_review_enabled INTEGER NOT NULL DEFAULT 1,\n  break_check_enabled INTEGER NOT NULL DEFAULT 1,\n  web_docs_enabled INTEGER NOT NULL DEFAULT 1,\n  exclude_patterns TEXT NOT NULL DEFAULT '[]',\n  max_context_tokens INTEGER NOT NULL DEFAULT 800,\n  updated_at TEXT NOT NULL DEFAULT (datetime('now'))\n);\n",
+  },
+  {
     name: "0019_schedules.sql",
-    sql: "-- Schedules table for scheduled/recurring sessions\nCREATE TABLE IF NOT EXISTS `schedules` (\n  `id` text PRIMARY KEY NOT NULL,\n  `name` text NOT NULL,\n  `project_slug` text REFERENCES `projects`(`slug`),\n  `prompt` text,\n  `template_id` text,\n  `template_vars` text DEFAULT '{}',\n  `model` text NOT NULL DEFAULT 'claude-sonnet-4-6',\n  `permission_mode` text NOT NULL DEFAULT 'default',\n  `trigger_type` text NOT NULL DEFAULT 'once',\n  `cron_expression` text,\n  `scheduled_at` integer,\n  `timezone` text NOT NULL DEFAULT 'UTC',\n  `telegram_target` text DEFAULT '{\"mode\":\"off\"}',\n  `auto_stop_rules` text DEFAULT '{}',\n  `enabled` integer NOT NULL DEFAULT 1,\n  `last_run_at` integer,\n  `next_run_at` integer,\n  `run_count` integer NOT NULL DEFAULT 0,\n  `created_at` integer NOT NULL DEFAULT (unixepoch() * 1000),\n  `updated_at` integer NOT NULL DEFAULT (unixepoch() * 1000)\n);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_schedules_enabled_next` ON `schedules` (`enabled`, `next_run_at`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_schedules_project` ON `schedules` (`project_slug`);\n--> statement-breakpoint\nALTER TABLE `sessions` ADD COLUMN `telegram_target` text;\n",
+    sql: "-- Schedules table for scheduled/recurring sessions\nCREATE TABLE IF NOT EXISTS `schedules` (\n  `id` text PRIMARY KEY NOT NULL,\n  `name` text NOT NULL,\n  `project_slug` text REFERENCES `projects`(`slug`),\n  `prompt` text,\n  `template_id` text,\n  `template_vars` text DEFAULT '{}',\n  `model` text NOT NULL DEFAULT 'claude-sonnet-4-6',\n  `permission_mode` text NOT NULL DEFAULT 'default',\n  `trigger_type` text NOT NULL DEFAULT 'once',\n  `cron_expression` text,\n  `scheduled_at` integer,\n  `timezone` text NOT NULL DEFAULT 'UTC',\n  `telegram_target` text DEFAULT '{\"mode\":\"off\"}',\n  `auto_stop_rules` text DEFAULT '{}',\n  `enabled` integer NOT NULL DEFAULT 1,\n  `last_run_at` integer,\n  `next_run_at` integer,\n  `run_count` integer NOT NULL DEFAULT 0,\n  `created_at` integer NOT NULL DEFAULT (unixepoch() * 1000),\n  `updated_at` integer NOT NULL DEFAULT (unixepoch() * 1000)\n);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_schedules_enabled_next` ON `schedules` (`enabled`, `next_run_at`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_schedules_project` ON `schedules` (`project_slug`);\n--> statement-breakpoint\n-- Add telegramTarget column to sessions table\nALTER TABLE `sessions` ADD COLUMN `telegram_target` text;\n",
   },
   {
     name: "0020_schedule_runs.sql",
