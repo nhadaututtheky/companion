@@ -751,5 +751,79 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
     }
   });
 
+  // ── /clear [n] — Clear recent bot messages from chat ────────────────────
+
+  bot.command("clear", async (ctx) => {
+    const chatId = ctx.chat.id;
+    const topicId = ctx.message?.message_thread_id;
+    const arg = ctx.match?.trim();
+    const count = Math.min(Math.max(parseInt(arg || "20", 10) || 20, 1), 100);
+
+    // Delete the /clear command itself
+    try {
+      await ctx.api.deleteMessage(chatId, ctx.message!.message_id);
+    } catch {
+      // May lack permission
+    }
+
+    // Walk backwards from the command message ID and try to delete bot messages
+    const commandMsgId = ctx.message!.message_id;
+    let deleted = 0;
+
+    for (let id = commandMsgId - 1; id > commandMsgId - count * 2 && deleted < count; id--) {
+      try {
+        await ctx.api.deleteMessage(chatId, id);
+        deleted++;
+      } catch {
+        // Not our message or already deleted — skip
+      }
+    }
+
+    if (deleted > 0) {
+      const notice = await ctx.reply(`🗑 Cleared ${deleted} message(s)`, {
+        message_thread_id: topicId,
+      });
+      setTimeout(() => {
+        ctx.api.deleteMessage(chatId, notice.message_id).catch(() => {});
+      }, 3000);
+    }
+  });
+
+  // ── /mcp — List MCP servers for current session ─────────────────────────
+
+  bot.command("mcp", async (ctx) => {
+    const mapping = bridge.getMapping(ctx.chat.id, ctx.message?.message_thread_id);
+    if (!mapping) {
+      await ctx.reply("No active session.");
+      return;
+    }
+
+    const session = bridge.wsBridge.getSession(mapping.sessionId);
+    if (!session) {
+      await ctx.reply("Session ended.");
+      return;
+    }
+
+    const mcpServers = (session.state.mcp_servers ?? []) as Array<{
+      name: string;
+      status?: string;
+    }>;
+
+    if (mcpServers.length === 0) {
+      await ctx.reply("No MCP servers connected to this session.");
+      return;
+    }
+
+    const lines = mcpServers.map((s) => {
+      const statusIcon = s.status === "connected" ? "🟢" : s.status === "error" ? "🔴" : "🟡";
+      return `${statusIcon} <code>${escapeHTML(s.name)}</code> — ${s.status ?? "unknown"}`;
+    });
+
+    await ctx.reply(`<b>🔌 MCP Servers (${mcpServers.length})</b>\n\n${lines.join("\n")}`, {
+      parse_mode: "HTML",
+      message_thread_id: ctx.message?.message_thread_id,
+    });
+  });
+
   log.info("Utility commands registered");
 }

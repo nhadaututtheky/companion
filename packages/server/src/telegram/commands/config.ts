@@ -274,6 +274,75 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
     bridge.clearActiveDebate(chatId, topicId);
   });
 
+  // ── /thinking [on|off] — Toggle thinking mode ─────────────────────────
+
+  bot.command("thinking", async (ctx) => {
+    const mapping = bridge.getMapping(ctx.chat.id, ctx.message?.message_thread_id);
+    if (!mapping) {
+      await ctx.reply("No active session.");
+      return;
+    }
+
+    const session = bridge.wsBridge.getSession(mapping.sessionId);
+    if (!session) {
+      await ctx.reply("Session not found.");
+      return;
+    }
+
+    const arg = ctx.match?.trim().toLowerCase();
+    const currentMode =
+      (session.state as unknown as { thinking_mode?: string })?.thinking_mode ?? "adaptive";
+
+    if (!arg) {
+      // Show current + toggle keyboard
+      const keyboard = new InlineKeyboard()
+        .text("🧠 Deep", `think:${mapping.sessionId}:deep`)
+        .text("⚡ Adaptive", `think:${mapping.sessionId}:adaptive`)
+        .text("🔇 Off", `think:${mapping.sessionId}:off`);
+
+      await ctx.reply(`Thinking: <b>${currentMode}</b>`, {
+        parse_mode: "HTML",
+        reply_markup: keyboard,
+      });
+      return;
+    }
+
+    const modeMap: Record<string, string> = {
+      on: "deep",
+      deep: "deep",
+      off: "off",
+      adaptive: "adaptive",
+      auto: "adaptive",
+    };
+
+    const mode = modeMap[arg];
+    if (!mode) {
+      await ctx.reply("Usage: /thinking [on|off|deep|adaptive]");
+      return;
+    }
+
+    bridge.wsBridge.handleBrowserMessage(
+      mapping.sessionId,
+      JSON.stringify({ type: "set_thinking_mode", mode }),
+    );
+    await ctx.reply(`Thinking: <b>${mode}</b>`, { parse_mode: "HTML" });
+  });
+
+  // ── thinking mode callbacks ──────────────────────────────────────────
+
+  bot.callbackQuery(/^think:(.+):(.+)$/, async (ctx) => {
+    const sessionId = ctx.match[1]!;
+    const mode = ctx.match[2]!;
+
+    bridge.wsBridge.handleBrowserMessage(
+      sessionId,
+      JSON.stringify({ type: "set_thinking_mode", mode }),
+    );
+
+    await ctx.answerCallbackQuery(`Thinking: ${mode}`);
+    await ctx.editMessageText(`Thinking: <b>${mode}</b>`, { parse_mode: "HTML" });
+  });
+
   // ── Auto-approve callbacks ────────────────────────────────────────────
 
   bot.callbackQuery(/^aa:toggle:(.+)$/, async (ctx) => {

@@ -451,6 +451,7 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
       "/allow — Allow pending permission",
       "/deny — Deny pending permission",
       "/model — Change AI model",
+      "/thinking — Toggle thinking mode",
       "/budget — Set cost budget",
       "/compact — Compact context window",
       "/settings — Bot settings",
@@ -461,8 +462,10 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
       "/send — Send file as document",
       "/btw — Inject context (no reply)",
       "/skill — List or invoke a skill",
+      "/mcp — List MCP servers",
       "/stream — Attach to an active session",
       "/detach — Detach from streamed session",
+      "/clear — Clear recent bot messages",
       "",
       "📊 <b>Info</b>",
       "/cost — Cost breakdown",
@@ -554,4 +557,9 @@ const COMMAND_HELP: Record<string, string> = {
   autoapprove:
     "<code>/autoapprove [on|off|seconds]</code>\nToggle auto-approve for permission requests.\nWhen on, permissions are automatically allowed after the timeout.",
   debate: "<code>/debate [topic]</code>\nStart a multi-agent debate session.",
+  thinking:
+    "<code>/thinking</code> — Show picker\n<code>/thinking on</code> — Deep thinking\n<code>/thinking off</code> — Disable\n<code>/thinking adaptive</code> — Auto-select",
+  clear:
+    "<code>/clear [n]</code>\nDelete the last N bot messages (default 20, max 100).\nOnly works for messages the bot can delete.",
+  mcp: "Show MCP servers connected to the current session with their status.",
 };
