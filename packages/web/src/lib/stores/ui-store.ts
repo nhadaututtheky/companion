@@ -5,15 +5,7 @@ interface UiStore {
   commandPaletteOpen: boolean;
   newSessionModalOpen: boolean;
   activityTerminalOpen: boolean;
-  rightPanelMode:
-    | "none"
-    | "files"
-    | "browser"
-    | "search"
-    | "terminal"
-    | "stats"
-    | "webintel"
-    | "codegraph";
+  rightPanelMode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context";
   rightPanelPath: string | null;
   browserPreviewUrl: string | null;
   compareModalOpen: boolean;
@@ -24,7 +16,7 @@ interface UiStore {
   setNewSessionModalOpen: (open: boolean) => void;
   setActivityTerminalOpen: (open: boolean) => void;
   setRightPanelMode: (
-    mode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "webintel" | "codegraph",
+    mode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context",
   ) => void;
   setRightPanelPath: (path: string | null) => void;
   setBrowserPreviewUrl: (url: string | null) => void;

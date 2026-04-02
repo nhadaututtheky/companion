@@ -12,8 +12,7 @@ import {
   TerminalWindow,
   List,
   ChartBar,
-  CloudArrowDown,
-  Graph,
+  Brain,
 } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
@@ -224,28 +223,16 @@ export function Header({ onMenuToggle }: HeaderProps) {
           <ChartBar size={16} weight={rightPanelMode === "stats" ? "fill" : "regular"} />
         </button>
         <button
-          onClick={() => setRightPanelMode(rightPanelMode === "webintel" ? "none" : "webintel")}
+          onClick={() => setRightPanelMode(rightPanelMode === "ai-context" ? "none" : "ai-context")}
           className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
           style={{
-            color: rightPanelMode === "webintel" ? "#FBBC04" : "var(--color-text-muted)",
-            background: rightPanelMode === "webintel" ? "#FBBC0415" : "transparent",
+            color: rightPanelMode === "ai-context" ? "#A855F7" : "var(--color-text-muted)",
+            background: rightPanelMode === "ai-context" ? "#A855F715" : "transparent",
           }}
-          aria-label="WebIntel panel"
-          title="WebIntel — Web scraping & research"
+          aria-label="AI Context panel"
+          title="AI Context — Code intelligence & web docs"
         >
-          <CloudArrowDown size={16} weight={rightPanelMode === "webintel" ? "fill" : "regular"} />
-        </button>
-        <button
-          onClick={() => setRightPanelMode(rightPanelMode === "codegraph" ? "none" : "codegraph")}
-          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
-          style={{
-            color: rightPanelMode === "codegraph" ? "#A855F7" : "var(--color-text-muted)",
-            background: rightPanelMode === "codegraph" ? "#A855F715" : "transparent",
-          }}
-          aria-label="CodeGraph panel"
-          title="CodeGraph — Code intelligence"
-        >
-          <Graph size={16} weight={rightPanelMode === "codegraph" ? "fill" : "regular"} />
+          <Brain size={16} weight={rightPanelMode === "ai-context" ? "fill" : "regular"} />
         </button>
         <button
           onClick={() => setActivityTerminalOpen(!activityTerminalOpen)}
