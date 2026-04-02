@@ -411,10 +411,7 @@ export function SessionPageClient({ params }: PageProps) {
                 flexShrink: 0,
               }}
             >
-              <TerminalPanel
-                defaultCwd={session?.state?.cwd}
-                onClose={toggleTerminal}
-              />
+              <TerminalPanel defaultCwd={session?.state?.cwd} onClose={toggleTerminal} />
             </div>
           )}
 

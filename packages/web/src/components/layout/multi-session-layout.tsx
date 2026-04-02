@@ -181,9 +181,5 @@ export function MultiSessionLayout({
   }
 
   // Multi-pane mode
-  return (
-    <div className="h-full">
-      {renderPanes(mode, panes, gridSessions, handleClosePane)}
-    </div>
-  );
+  return <div className="h-full">{renderPanes(mode, panes, gridSessions, handleClosePane)}</div>;
 }

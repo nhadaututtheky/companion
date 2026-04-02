@@ -39,9 +39,9 @@ export const useLayoutStore = create<LayoutState>()(
           ...state,
           mode,
           // Keep existing panes, trim to new count
-          panes: state.panes.slice(0, getPaneCount(mode)).concat(
-            Array(Math.max(0, getPaneCount(mode) - state.panes.length)).fill(null),
-          ),
+          panes: state.panes
+            .slice(0, getPaneCount(mode))
+            .concat(Array(Math.max(0, getPaneCount(mode) - state.panes.length)).fill(null)),
         })),
 
       pinToPane: (paneIndex, sessionId) =>

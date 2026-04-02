@@ -6,10 +6,10 @@ import { api } from "@/lib/api-client";
 import { MarkdownMessage } from "@/components/chat/markdown-message";
 import { useComposerStore } from "@/lib/stores/composer-store";
 
-const CodeViewer = dynamic(
-  () => import("./code-viewer").then((m) => ({ default: m.CodeViewer })),
-  { ssr: false, loading: () => <CodeViewerFallback /> },
-);
+const CodeViewer = dynamic(() => import("./code-viewer").then((m) => ({ default: m.CodeViewer })), {
+  ssr: false,
+  loading: () => <CodeViewerFallback />,
+});
 
 function CodeViewerFallback() {
   return (

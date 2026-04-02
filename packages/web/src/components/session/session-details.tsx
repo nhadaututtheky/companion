@@ -139,14 +139,15 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
   return (
     <div className="flex flex-col gap-0">
       {/* Tab bar */}
-      <div
-        className="flex border-b shrink-0"
-        style={{ borderColor: "var(--color-border)" }}
-      >
-        {([
-          { id: "overview" as const, label: "Overview", icon: <ChartBar size={13} weight="bold" /> },
+      <div className="flex border-b shrink-0" style={{ borderColor: "var(--color-border)" }}>
+        {[
+          {
+            id: "overview" as const,
+            label: "Overview",
+            icon: <ChartBar size={13} weight="bold" />,
+          },
           { id: "changes" as const, label: "Changes", icon: <GitDiff size={13} weight="bold" /> },
-        ]).map((tab) => (
+        ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -164,217 +165,222 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
       </div>
 
       {/* Changes tab */}
-      {activeTab === "changes" && (
-        <ChangesPanel messages={messages ?? []} />
-      )}
+      {activeTab === "changes" && <ChangesPanel messages={messages ?? []} />}
 
       {/* Overview tab — existing content */}
-      {activeTab === "overview" && <>
-      {/* Session header */}
-      <div className="px-4 py-4 border-b" style={{ borderColor: "var(--color-border)" }}>
-        <p className="text-xs font-medium mb-1" style={{ color: "var(--color-text-muted)" }}>
-          {session.projectName}
-        </p>
-        <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
-          {session.model}
-        </p>
-        <div className="flex items-center gap-2 mt-2">
-          <span
-            className="text-xs px-2 py-0.5 rounded-full font-medium capitalize"
-            style={{
-              background:
-                session.status === "running"
-                  ? "#4285F420"
-                  : session.status === "waiting"
-                    ? "#FBBC0420"
-                    : "var(--color-bg-elevated)",
-              color:
-                session.status === "running"
-                  ? "#4285F4"
-                  : session.status === "waiting"
-                    ? "#FBBC04"
-                    : "var(--color-text-muted)",
-            }}
-          >
-            {session.status}
-          </span>
-          <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-            #{session.id.slice(0, 8)}
-          </span>
-        </div>
-      </div>
-
-      {/* Context meter — use real-time CLI data when available */}
-      <ContextMeter
-        inputTokens={s.total_input_tokens}
-        outputTokens={s.total_output_tokens}
-        maxTokens={session.contextMaxTokens}
-      />
-
-      {/* Stats */}
-      <div className="flex flex-col gap-2 px-4 pb-4">
-        {/* Cost breakdown (expandable) */}
-        <CostBreakdown
-          session={{
-            totalCostUsd: s.total_cost_usd,
-            totalInputTokens: s.total_input_tokens,
-            totalOutputTokens: s.total_output_tokens,
-            cacheCreationTokens: s.cache_creation_tokens,
-            cacheReadTokens: s.cache_read_tokens,
-          }}
-          compact={false}
-        />
-        <StatCard
-          icon={<ArrowsCounterClockwise size={16} weight="bold" />}
-          label="Turns"
-          value={String(s.num_turns)}
-          color="#4285F4"
-        />
-        <StatCard
-          icon={<Clock size={16} weight="bold" />}
-          label="Duration"
-          value={elapsed > 0 ? formatDuration(elapsed) : "—"}
-          color="#FBBC04"
-        />
-        <StatCard
-          icon={<Robot size={16} weight="bold" />}
-          label="Tokens"
-          value={`${formatTokens(s.total_input_tokens + s.total_output_tokens)}`}
-          color="#EA4335"
-        />
-      </div>
-
-      {/* Modified files — clickable to open in viewer */}
-      {(s.files_read.length > 0 || s.files_modified.length > 0 || s.files_created.length > 0) && (
-        <div className="px-4 pb-4">
-          <p
-            className="text-xs font-semibold mb-2"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            Files
-          </p>
-          <div className="flex flex-col gap-1">
-            {s.files_created.map((f) => (
-              <button
-                key={`c-${f}`}
-                className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
-                onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "transparent";
+      {activeTab === "overview" && (
+        <>
+          {/* Session header */}
+          <div className="px-4 py-4 border-b" style={{ borderColor: "var(--color-border)" }}>
+            <p className="text-xs font-medium mb-1" style={{ color: "var(--color-text-muted)" }}>
+              {session.projectName}
+            </p>
+            <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+              {session.model}
+            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <span
+                className="text-xs px-2 py-0.5 rounded-full font-medium capitalize"
+                style={{
+                  background:
+                    session.status === "running"
+                      ? "#4285F420"
+                      : session.status === "waiting"
+                        ? "#FBBC0420"
+                        : "var(--color-bg-elevated)",
+                  color:
+                    session.status === "running"
+                      ? "#4285F4"
+                      : session.status === "waiting"
+                        ? "#FBBC04"
+                        : "var(--color-text-muted)",
                 }}
               >
-                <span className="text-xs" style={{ color: "#34A853" }}>
-                  +
-                </span>
-                <span
-                  className="text-xs font-mono truncate"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  {f.split("/").pop()}
-                </span>
-              </button>
-            ))}
-            {s.files_modified.map((f) => (
-              <button
-                key={`m-${f}`}
-                className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
-                onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "transparent";
-                }}
-              >
-                <span className="text-xs" style={{ color: "#FBBC04" }}>
-                  ~
-                </span>
-                <span
-                  className="text-xs font-mono truncate"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
-                  {f.split("/").pop()}
-                </span>
-              </button>
-            ))}
-            {s.files_read
-              .filter((f) => !s.files_modified.includes(f) && !s.files_created.includes(f))
-              .map((f) => (
-                <button
-                  key={`r-${f}`}
-                  className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
-                  onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = "transparent";
-                  }}
-                >
-                  <span className="text-xs" style={{ color: "#4285F4" }}>
-                    ○
-                  </span>
-                  <span
-                    className="text-xs font-mono truncate"
-                    style={{ color: "var(--color-text-muted)" }}
-                  >
-                    {f.split("/").pop()}
-                  </span>
-                </button>
-              ))}
+                {session.status}
+              </span>
+              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                #{session.id.slice(0, 8)}
+              </span>
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* Project file browser */}
-      {s.cwd && (
-        <div className="px-4 pb-4">
-          <p
-            className="text-xs font-semibold mb-2"
-            style={{ color: "var(--color-text-secondary)" }}
-          >
-            <FolderSimple
-              size={12}
-              weight="bold"
-              className="inline mr-1"
-              style={{ verticalAlign: "middle" }}
+          {/* Context meter — use real-time CLI data when available */}
+          <ContextMeter
+            inputTokens={s.total_input_tokens}
+            outputTokens={s.total_output_tokens}
+            maxTokens={session.contextMaxTokens}
+          />
+
+          {/* Stats */}
+          <div className="flex flex-col gap-2 px-4 pb-4">
+            {/* Cost breakdown (expandable) */}
+            <CostBreakdown
+              session={{
+                totalCostUsd: s.total_cost_usd,
+                totalInputTokens: s.total_input_tokens,
+                totalOutputTokens: s.total_output_tokens,
+                cacheCreationTokens: s.cache_creation_tokens,
+                cacheReadTokens: s.cache_read_tokens,
+              }}
+              compact={false}
             />
-            Project Files
-          </p>
-          <FileTree rootPath={s.cwd} onFileSelect={handleFileSelect} />
-        </div>
+            <StatCard
+              icon={<ArrowsCounterClockwise size={16} weight="bold" />}
+              label="Turns"
+              value={String(s.num_turns)}
+              color="#4285F4"
+            />
+            <StatCard
+              icon={<Clock size={16} weight="bold" />}
+              label="Duration"
+              value={elapsed > 0 ? formatDuration(elapsed) : "—"}
+              color="#FBBC04"
+            />
+            <StatCard
+              icon={<Robot size={16} weight="bold" />}
+              label="Tokens"
+              value={`${formatTokens(s.total_input_tokens + s.total_output_tokens)}`}
+              color="#EA4335"
+            />
+          </div>
+
+          {/* Modified files — clickable to open in viewer */}
+          {(s.files_read.length > 0 ||
+            s.files_modified.length > 0 ||
+            s.files_created.length > 0) && (
+            <div className="px-4 pb-4">
+              <p
+                className="text-xs font-semibold mb-2"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
+                Files
+              </p>
+              <div className="flex flex-col gap-1">
+                {s.files_created.map((f) => (
+                  <button
+                    key={`c-${f}`}
+                    className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
+                    onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.background =
+                        "var(--color-bg-elevated)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = "transparent";
+                    }}
+                  >
+                    <span className="text-xs" style={{ color: "#34A853" }}>
+                      +
+                    </span>
+                    <span
+                      className="text-xs font-mono truncate"
+                      style={{ color: "var(--color-text-secondary)" }}
+                    >
+                      {f.split("/").pop()}
+                    </span>
+                  </button>
+                ))}
+                {s.files_modified.map((f) => (
+                  <button
+                    key={`m-${f}`}
+                    className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
+                    onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.background =
+                        "var(--color-bg-elevated)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = "transparent";
+                    }}
+                  >
+                    <span className="text-xs" style={{ color: "#FBBC04" }}>
+                      ~
+                    </span>
+                    <span
+                      className="text-xs font-mono truncate"
+                      style={{ color: "var(--color-text-secondary)" }}
+                    >
+                      {f.split("/").pop()}
+                    </span>
+                  </button>
+                ))}
+                {s.files_read
+                  .filter((f) => !s.files_modified.includes(f) && !s.files_created.includes(f))
+                  .map((f) => (
+                    <button
+                      key={`r-${f}`}
+                      className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
+                      onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLElement).style.background =
+                          "var(--color-bg-elevated)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLElement).style.background = "transparent";
+                      }}
+                    >
+                      <span className="text-xs" style={{ color: "#4285F4" }}>
+                        ○
+                      </span>
+                      <span
+                        className="text-xs font-mono truncate"
+                        style={{ color: "var(--color-text-muted)" }}
+                      >
+                        {f.split("/").pop()}
+                      </span>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Project file browser */}
+          {s.cwd && (
+            <div className="px-4 pb-4">
+              <p
+                className="text-xs font-semibold mb-2"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
+                <FolderSimple
+                  size={12}
+                  weight="bold"
+                  className="inline mr-1"
+                  style={{ verticalAlign: "middle" }}
+                />
+                Project Files
+              </p>
+              <FileTree rootPath={s.cwd} onFileSelect={handleFileSelect} />
+            </div>
+          )}
+
+          {/* Snapshots */}
+          <SnapshotPanel
+            sessionId={session.id}
+            isActive={session.status !== "ended" && session.status !== "error"}
+          />
+
+          {/* Summary (for ended sessions) */}
+          {session.status === "ended" && <SessionSummaryPanel sessionId={session.id} />}
+
+          {/* Actions */}
+          <div className="px-4 pb-4 flex flex-col gap-2">
+            <StreamToTelegramButton sessionId={session.id} />
+            <a
+              href={`${typeof window !== "undefined" ? localStorage.getItem("api_url") || "" : ""}/api/sessions/${session.id}/export`}
+              download
+              className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+              style={{
+                background: "var(--color-bg-elevated)",
+                border: "1px solid var(--color-border)",
+                color: "var(--color-text-secondary)",
+              }}
+            >
+              <DownloadSimple size={14} weight="bold" />
+              Export as Markdown
+            </a>
+          </div>
+        </>
       )}
-
-      {/* Snapshots */}
-      <SnapshotPanel
-        sessionId={session.id}
-        isActive={session.status !== "ended" && session.status !== "error"}
-      />
-
-      {/* Summary (for ended sessions) */}
-      {session.status === "ended" && <SessionSummaryPanel sessionId={session.id} />}
-
-      {/* Actions */}
-      <div className="px-4 pb-4 flex flex-col gap-2">
-        <StreamToTelegramButton sessionId={session.id} />
-        <a
-          href={`${typeof window !== "undefined" ? localStorage.getItem("api_url") || "" : ""}/api/sessions/${session.id}/export`}
-          download
-          className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-          style={{
-            background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
-            color: "var(--color-text-secondary)",
-          }}
-        >
-          <DownloadSimple size={14} weight="bold" />
-          Export as Markdown
-        </a>
-      </div>
-      </>}
     </div>
   );
 }

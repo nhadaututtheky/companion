@@ -134,11 +134,7 @@ export function ChangesPanel({ messages }: ChangesPanelProps) {
             </span>
           )}
           {totalEdits > 0 && totalCreates > 0 && " · "}
-          {totalCreates > 0 && (
-            <span style={{ color: "#34A853" }}>
-              {totalCreates} new
-            </span>
-          )}
+          {totalCreates > 0 && <span style={{ color: "#34A853" }}>{totalCreates} new</span>}
         </span>
       </div>
 
