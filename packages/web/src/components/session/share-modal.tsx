@@ -214,6 +214,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
         {/* QR Code display */}
         {qrDataUrl && selectedToken && (
           <div className="flex flex-col items-center gap-3 py-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={qrDataUrl}
               alt="QR code for session share link"
