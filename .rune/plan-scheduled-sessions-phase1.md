@@ -7,14 +7,14 @@ pending schedules every 60 seconds, launching sessions when triggers fire.
 
 ## Tasks
 
-- [ ] Add `schedules` table to Drizzle schema — `packages/server/src/db/schema.ts`
-- [ ] Add `telegramTarget` JSON column to `sessions` table (nullable)
-- [ ] Generate + apply Drizzle migration — `packages/server/src/db/migrations/`
-- [ ] Create `packages/server/src/services/scheduler.ts` — tick loop + cron evaluator
-- [ ] Add `cron-parser` dependency to `packages/server/package.json`
-- [ ] Wire scheduler startup in `packages/server/src/index.ts` (start on boot, stop on SIGTERM)
-- [ ] Handle missed runs on boot — check `lastRunAt` vs `nextRunAt` for enabled schedules
-- [ ] Add shared types in `packages/shared/src/types/schedule.ts`
+- [x] Add `schedules` table to Drizzle schema — `packages/server/src/db/schema.ts`
+- [x] Add `telegramTarget` JSON column to `sessions` table (nullable)
+- [x] Generate + apply Drizzle migration — `packages/server/src/db/migrations/0019_schedules.sql`
+- [x] Create `packages/server/src/services/scheduler.ts` — tick loop + cron evaluator
+- [x] Add `cron-parser` dependency to `packages/server/package.json`
+- [x] Wire scheduler startup in `packages/server/src/index.ts` (start on boot, stop on SIGTERM)
+- [x] Handle missed runs on boot — check `lastRunAt` vs `nextRunAt` for enabled schedules
+- [x] Add shared types in `packages/shared/src/types/schedule.ts`
 
 ## Schema: `schedules` Table
 

@@ -70,6 +70,11 @@ export const sessions = sqliteTable(
     /** Session tags for filtering/organization (JSON array of strings) */
     tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
 
+    /** Telegram target for session notifications */
+    telegramTarget: text("telegram_target", { mode: "json" }).$type<
+      import("@companion/shared").TelegramTarget
+    >(),
+
     startedAt: integer("started_at", { mode: "timestamp_ms" })
       .notNull()
       .$defaultFn(() => new Date()),
@@ -452,6 +457,48 @@ export const dbConnections = sqliteTable("db_connections", {
     .notNull()
     .$defaultFn(() => new Date()),
 });
+
+// ─── Schedules ──────────────────────────────────────────────────────────────
+
+export const schedules = sqliteTable(
+  "schedules",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    projectSlug: text("project_slug").references(() => projects.slug),
+    prompt: text("prompt"),
+    templateId: text("template_id"),
+    templateVars: text("template_vars", { mode: "json" })
+      .$type<Record<string, string>>()
+      .default({}),
+    model: text("model").notNull().default("claude-sonnet-4-6"),
+    permissionMode: text("permission_mode").notNull().default("default"),
+    triggerType: text("trigger_type").notNull().default("once"), // 'once' | 'cron'
+    cronExpression: text("cron_expression"),
+    scheduledAt: integer("scheduled_at", { mode: "timestamp_ms" }),
+    timezone: text("timezone").notNull().default("UTC"),
+    telegramTarget: text("telegram_target", { mode: "json" })
+      .$type<import("@companion/shared").TelegramTarget>()
+      .default({ mode: "off" }),
+    autoStopRules: text("auto_stop_rules", { mode: "json" })
+      .$type<import("@companion/shared").AutoStopRules>()
+      .default({}),
+    enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+    lastRunAt: integer("last_run_at", { mode: "timestamp_ms" }),
+    nextRunAt: integer("next_run_at", { mode: "timestamp_ms" }),
+    runCount: integer("run_count").notNull().default(0),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [
+    index("idx_schedules_enabled_next").on(table.enabled, table.nextRunAt),
+    index("idx_schedules_project").on(table.projectSlug),
+  ],
+);
 
 // ─── Error Tracking ─────────────────────────────────────────────────────────
 

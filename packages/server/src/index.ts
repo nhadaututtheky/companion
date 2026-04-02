@@ -18,6 +18,7 @@ import { DEFAULT_PORT, APP_VERSION } from "@companion/shared";
 import { timingSafeEqual } from "node:crypto";
 import { terminalManager } from "./services/terminal-manager.js";
 import * as spectatorBridge from "./services/spectator-bridge.js";
+import { startScheduler, stopScheduler } from "./services/scheduler.js";
 import { validateShareToken } from "./services/share-manager.js";
 import { registerGlobalErrorHandlers, flushErrors } from "./services/error-tracker.js";
 import { join, resolve, dirname } from "node:path";
@@ -464,6 +465,9 @@ log.info(`Companion v${APP_VERSION} running`, {
   url: `http://localhost:${port}`,
 });
 
+// Start scheduler for scheduled/recurring sessions
+startScheduler(bridge);
+
 // ─── Graceful Shutdown ───────────────────────────────────────────────────────
 
 function shutdown() {
@@ -472,6 +476,9 @@ function shutdown() {
   // Flush all pending DB writes before anything else
   flushAllWriters();
   flushErrors();
+
+  // Stop scheduler
+  stopScheduler();
 
   // Stop health check interval
   bridge.stopHealthCheck();
