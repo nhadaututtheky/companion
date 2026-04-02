@@ -100,8 +100,8 @@ function SourceCard({
     <div
       className="rounded-lg p-2.5"
       style={{
-        background: "var(--color-bg-elevated)",
-        border: `1px solid ${online ? color + "30" : "var(--color-border)"}`,
+        background: online ? color + "08" : "var(--color-bg-elevated)",
+        border: `1px solid ${online ? color + "40" : "var(--color-border-strong, var(--color-border))"}`,
       }}
     >
       <div className="flex items-center gap-2 mb-1">
@@ -119,13 +119,13 @@ function SourceCard({
           }}
         />
       </div>
-      <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+      <div className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
         {statusText}
       </div>
       {detail && (
         <div
           className="text-xs mt-0.5 font-mono"
-          style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+          style={{ color: "var(--color-text-secondary)", fontSize: 10 }}
         >
           {detail}
         </div>
@@ -200,7 +200,7 @@ function HotFilesList({ files }: { files: HotFile[] }) {
     <div>
       <h4
         className="text-xs font-medium mb-2 uppercase tracking-wider"
-        style={{ color: "var(--color-text-muted)" }}
+        style={{ color: "var(--color-text-secondary)" }}
       >
         Most coupled files
       </h4>
@@ -212,10 +212,14 @@ function HotFilesList({ files }: { files: HotFile[] }) {
           const dir = f.filePath.split("/").slice(0, -1).join("/");
 
           return (
-            <div key={f.filePath} className="relative">
+            <div
+              key={f.filePath}
+              className="relative rounded"
+              style={{ border: "1px solid #A855F715" }}
+            >
               <div
-                className="absolute inset-0 rounded opacity-10"
-                style={{ width: `${pct}%`, background: "#A855F7" }}
+                className="absolute inset-0 rounded"
+                style={{ width: `${pct}%`, background: "#A855F718" }}
               />
               <div className="relative flex items-center justify-between px-2 py-1.5">
                 <div className="min-w-0">
@@ -227,14 +231,14 @@ function HotFilesList({ files }: { files: HotFile[] }) {
                   </span>
                   <span
                     className="text-xs truncate block"
-                    style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                    style={{ color: "var(--color-text-secondary)", fontSize: 10 }}
                   >
                     {dir}
                   </span>
                 </div>
                 <div
                   className="flex gap-2 text-xs shrink-0"
-                  style={{ color: "var(--color-text-muted)" }}
+                  style={{ color: "var(--color-text-secondary)" }}
                 >
                   <span>{f.incomingEdges} in</span>
                   <span>{f.outgoingEdges} out</span>
@@ -260,7 +264,10 @@ function SymbolResults({ results }: { results: SearchResult[] }) {
         <div
           key={r.id}
           className="rounded-lg overflow-hidden"
-          style={{ background: "var(--color-bg-elevated)" }}
+          style={{
+            background: "var(--color-bg-elevated)",
+            border: "1px solid var(--color-border-strong, var(--color-border))",
+          }}
         >
           <button
             className="w-full flex items-center gap-2 px-3 py-2 text-left cursor-pointer"
@@ -1430,7 +1437,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                       className="w-full pl-8 pr-3 py-1.5 rounded-lg text-sm outline-none"
                       style={{
                         background: "var(--color-bg-elevated)",
-                        border: "1px solid var(--color-border)",
+                        border: "1px solid var(--color-border-strong, var(--color-border))",
                         color: "var(--color-text-primary)",
                       }}
                       aria-label="Search symbols"
@@ -1452,27 +1459,31 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                 {cgStats && (
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { label: "Files", value: cgStats.files, icon: File },
-                      { label: "Symbols", value: cgStats.nodes, icon: TreeStructure },
-                      { label: "Edges", value: cgStats.edges, icon: Lightning },
-                    ].map(({ label, value, icon: Icon }) => (
+                      { label: "Files", value: cgStats.files, icon: File, color: "#4285F4" },
+                      {
+                        label: "Symbols",
+                        value: cgStats.nodes,
+                        icon: TreeStructure,
+                        color: "#A855F7",
+                      },
+                      { label: "Edges", value: cgStats.edges, icon: Lightning, color: "#FBBC04" },
+                    ].map(({ label, value, icon: Icon, color }) => (
                       <div
                         key={label}
                         className="rounded-lg p-2 text-center"
-                        style={{ background: "var(--color-bg-elevated)" }}
+                        style={{
+                          background: color + "0A",
+                          border: `1px solid ${color}25`,
+                        }}
                       >
-                        <Icon
-                          size={14}
-                          className="mx-auto mb-0.5"
-                          style={{ color: "var(--color-text-muted)" }}
-                        />
+                        <Icon size={14} className="mx-auto mb-0.5" style={{ color }} />
                         <div
                           className="text-sm font-mono font-bold"
                           style={{ color: "var(--color-text-primary)" }}
                         >
                           {value.toLocaleString()}
                         </div>
-                        <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                        <div className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
                           {label}
                         </div>
                       </div>
@@ -1486,8 +1497,9 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                   disabled={cgScanning}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer disabled:opacity-50 self-start"
                   style={{
-                    background: "var(--color-bg-elevated)",
-                    color: "var(--color-text-secondary)",
+                    background: "#A855F715",
+                    border: "1px solid #A855F730",
+                    color: "#A855F7",
                   }}
                 >
                   <ArrowClockwise size={14} /> Rescan
