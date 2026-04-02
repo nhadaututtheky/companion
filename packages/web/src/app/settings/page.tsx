@@ -15,6 +15,7 @@ import {
   Eye,
   EyeSlash,
   ArrowsClockwise,
+  Bug,
 } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { api } from "@/lib/api-client";
@@ -625,6 +626,7 @@ function GeneralTab() {
   const [serverUrl, setServerUrl] = useState("");
   const [saved, setSaved] = useState(false);
   const [serverStatus, setServerStatus] = useState<"unknown" | "online" | "offline">("unknown");
+  const [promptScanEnabled, setPromptScanEnabled] = useState(true);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -637,6 +639,10 @@ function GeneralTab() {
       .health()
       .then(() => setServerStatus("online"))
       .catch(() => setServerStatus("offline"));
+    api
+      .get<{ data: { key: string; value: string } }>("/api/settings/security.promptScan")
+      .then((res) => setPromptScanEnabled(res.data.value !== "false"))
+      .catch(() => setPromptScanEnabled(true));
   }, []);
 
   const handleSave = useCallback(() => {
@@ -711,8 +717,83 @@ function GeneralTab() {
         </div>
       </SettingSection>
 
+      {/* Appearance */}
+      <SettingSection title="Appearance" description="Customize colors and theme.">
+        <Link
+          href="/settings/theme"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer"
+          style={{
+            color: "var(--color-text-secondary)",
+            border: "1px solid var(--color-border)",
+            textDecoration: "none",
+          }}
+        >
+          <PaintBrush size={16} />
+          Theme Settings
+        </Link>
+      </SettingSection>
+
       {/* License */}
       <LicenseSection />
+
+      {/* Security */}
+      <SettingSection title="Security" description="Configure prompt scanning and risk detection.">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
+              Prompt Scanner
+            </span>
+            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              Scan user prompts for risky patterns before forwarding to CLI
+            </span>
+          </div>
+          <button
+            onClick={async () => {
+              const next = !promptScanEnabled;
+              setPromptScanEnabled(next);
+              try {
+                await api.put("/api/settings/security.promptScan", {
+                  value: next ? "true" : "false",
+                });
+                toast.success(`Prompt scanning ${next ? "enabled" : "disabled"}`);
+              } catch {
+                setPromptScanEnabled(!next);
+                toast.error("Failed to update setting");
+              }
+            }}
+            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer"
+            style={{
+              background: promptScanEnabled ? "var(--color-accent)" : "var(--color-bg-elevated)",
+              border: "1px solid var(--color-border)",
+            }}
+            role="switch"
+            aria-checked={promptScanEnabled}
+            aria-label="Toggle prompt scanning"
+          >
+            <span
+              className="inline-block h-4 w-4 rounded-full transition-transform"
+              style={{
+                background: "#fff",
+                transform: promptScanEnabled ? "translateX(22px)" : "translateX(4px)",
+              }}
+            />
+          </button>
+        </div>
+
+        <Link
+          href="/settings/errors"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer"
+          style={{
+            color: "var(--color-text-secondary)",
+            border: "1px solid var(--color-border)",
+            textDecoration: "none",
+            marginTop: 12,
+          }}
+        >
+          <Bug size={16} />
+          View Error Log
+        </Link>
+      </SettingSection>
 
       {/* Save button */}
       <button

@@ -8,6 +8,9 @@ import {
   TelegramLogo,
   Notebook,
   FolderSimple,
+  Camera,
+  CaretDown,
+  CaretRight,
 } from "@phosphor-icons/react";
 import { CostBreakdown } from "./cost-breakdown";
 import { api } from "@/lib/api-client";
@@ -303,6 +306,12 @@ export function SessionDetails({ session }: SessionDetailsProps) {
         </div>
       )}
 
+      {/* Snapshots */}
+      <SnapshotPanel
+        sessionId={session.id}
+        isActive={session.status !== "ended" && session.status !== "error"}
+      />
+
       {/* Summary (for ended sessions) */}
       {session.status === "ended" && <SessionSummaryPanel sessionId={session.id} />}
 
@@ -323,6 +332,168 @@ export function SessionDetails({ session }: SessionDetailsProps) {
           Export as Markdown
         </a>
       </div>
+    </div>
+  );
+}
+
+function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: boolean }) {
+  const [snapshots, setSnapshots] = useState<
+    Array<{
+      id: number;
+      label: string | null;
+      contentLength: number;
+      contentPreview: string;
+      createdAt: string;
+    }>
+  >([]);
+  const [expanded, setExpanded] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [viewingContent, setViewingContent] = useState<string | null>(null);
+
+  const loadSnapshots = useCallback(async () => {
+    try {
+      const res = await api.snapshots.list(sessionId);
+      setSnapshots(res.data);
+    } catch (err) {
+      console.error("Failed to load snapshots:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionId]);
+
+  useEffect(() => {
+    void loadSnapshots();
+  }, [loadSnapshots]);
+
+  const handleCapture = async () => {
+    setCapturing(true);
+    try {
+      await api.snapshots.capture(sessionId);
+      toast.success("Snapshot captured");
+      await loadSnapshots();
+    } catch (err) {
+      toast.error(String(err));
+    } finally {
+      setCapturing(false);
+    }
+  };
+
+  const handleView = async (snapshotId: number) => {
+    try {
+      const res = await api.snapshots.get(sessionId, snapshotId);
+      setViewingContent(res.data.content);
+    } catch {
+      toast.error("Failed to load snapshot");
+    }
+  };
+
+  if (viewingContent !== null) {
+    return (
+      <div className="px-4 pb-3">
+        <button
+          onClick={() => setViewingContent(null)}
+          className="text-xs mb-2 cursor-pointer"
+          style={{ color: "var(--color-accent)" }}
+        >
+          &larr; Back to snapshots
+        </button>
+        <pre
+          className="text-xs font-mono whitespace-pre-wrap p-3 rounded-lg max-h-[400px] overflow-y-auto"
+          style={{
+            background: "var(--color-bg-elevated)",
+            border: "1px solid var(--color-border)",
+            color: "var(--color-text-secondary)",
+          }}
+        >
+          {viewingContent}
+        </pre>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 pb-3">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-2 flex-1 text-left cursor-pointer"
+        >
+          <Camera size={14} weight="bold" style={{ color: "var(--color-accent)" }} />
+          <span className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+            Snapshots
+          </span>
+          {snapshots.length > 0 && (
+            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              ({snapshots.length})
+            </span>
+          )}
+          <span className="text-xs ml-auto" style={{ color: "var(--color-text-muted)" }}>
+            {expanded ? <CaretDown size={12} /> : <CaretRight size={12} />}
+          </span>
+        </button>
+        {isActive && (
+          <button
+            onClick={handleCapture}
+            disabled={capturing}
+            className="text-xs px-2 py-1 rounded cursor-pointer transition-colors disabled:opacity-50"
+            style={{
+              background: "var(--color-bg-elevated)",
+              border: "1px solid var(--color-border)",
+              color: "var(--color-text-secondary)",
+            }}
+            title="Capture terminal snapshot"
+            aria-label="Capture snapshot"
+          >
+            {capturing ? "..." : "Capture"}
+          </button>
+        )}
+      </div>
+      {expanded && snapshots.length > 0 && (
+        <div className="mt-2 flex flex-col gap-1">
+          {snapshots.map((snap) => (
+            <button
+              key={snap.id}
+              onClick={() => handleView(snap.id)}
+              className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-2 py-1.5 transition-colors"
+              style={{ background: "var(--color-bg-elevated)" }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "var(--color-bg-card)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
+              }}
+            >
+              <Camera
+                size={12}
+                style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
+                aria-hidden="true"
+              />
+              <div className="flex-1 min-w-0">
+                <p
+                  className="text-xs font-mono truncate"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  {snap.label || new Date(snap.createdAt).toLocaleTimeString()}
+                </p>
+                <p className="text-xs truncate" style={{ color: "var(--color-text-muted)" }}>
+                  {snap.contentPreview.slice(0, 60)}...
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+      {expanded && loading && (
+        <p className="mt-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+          Loading...
+        </p>
+      )}
+      {expanded && !loading && snapshots.length === 0 && (
+        <p className="mt-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+          No snapshots yet. {isActive ? "Click Capture to take one." : ""}
+        </p>
+      )}
     </div>
   );
 }

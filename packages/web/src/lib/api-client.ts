@@ -432,6 +432,281 @@ export const api = {
       request<{ success: boolean }>(`/api/terminal/${id}`, { method: "DELETE" }),
   },
 
+  // Snapshots
+  snapshots: {
+    capture: (sessionId: string, label?: string) =>
+      request<{ success: boolean; data: { id: number; contentLength: number } }>(
+        `/api/sessions/${sessionId}/snapshots`,
+        { method: "POST", body: JSON.stringify({ label }) },
+      ),
+    list: (sessionId: string) =>
+      request<{
+        success: boolean;
+        data: Array<{
+          id: number;
+          label: string | null;
+          contentLength: number;
+          contentPreview: string;
+          createdAt: string;
+        }>;
+      }>(`/api/sessions/${sessionId}/snapshots`),
+    get: (sessionId: string, snapshotId: number) =>
+      request<{
+        success: boolean;
+        data: {
+          id: number;
+          sessionId: string;
+          content: string;
+          label: string | null;
+          createdAt: string;
+        };
+      }>(`/api/sessions/${sessionId}/snapshots/${snapshotId}`),
+  },
+
+  // Share tokens (QR Stream Sharing)
+  share: {
+    create: (
+      sessionId: string,
+      opts?: { permission?: "read-only" | "interactive"; expiresInHours?: number },
+    ) =>
+      request<{
+        success: boolean;
+        data: { token: string; permission: string; expiresAt: string };
+      }>(`/api/sessions/${sessionId}/share`, {
+        method: "POST",
+        body: JSON.stringify(opts ?? {}),
+      }),
+    list: (sessionId: string) =>
+      request<{
+        success: boolean;
+        data: Array<{
+          token: string;
+          permission: string;
+          createdBy: string;
+          expiresAt: string;
+          createdAt: string;
+        }>;
+      }>(`/api/sessions/${sessionId}/shares`),
+    revoke: (token: string) =>
+      request<{ success: boolean }>(`/api/share/${token}`, { method: "DELETE" }),
+    validate: (token: string) =>
+      request<{
+        success: boolean;
+        data: {
+          sessionId: string;
+          sessionName: string | null;
+          permission: string;
+          expiresAt: string;
+        };
+      }>(`/api/share/${token}`),
+  },
+
+  // Workflow templates
+  workflowTemplates: {
+    list: (category?: string) =>
+      request<{
+        success: boolean;
+        data: Array<{
+          id: string;
+          name: string;
+          slug: string;
+          description: string;
+          icon: string;
+          category: string;
+          steps: Array<{
+            role: string;
+            label: string;
+            promptTemplate: string;
+            order: number;
+            model?: string;
+          }>;
+          isBuiltIn: boolean;
+          defaultCostCapUsd: number | null;
+          createdAt: string;
+          updatedAt: string;
+        }>;
+      }>(`/api/workflow-templates${category ? `?category=${category}` : ""}`),
+    get: (id: string) =>
+      request<{ success: boolean; data: unknown }>(`/api/workflow-templates/${id}`),
+    create: (body: {
+      name: string;
+      slug: string;
+      description?: string;
+      icon?: string;
+      category?: string;
+      steps: Array<{ role: string; label: string; promptTemplate: string; order: number }>;
+      defaultCostCapUsd?: number;
+    }) =>
+      request<{ success: boolean; data: { id: string } }>("/api/workflow-templates", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    update: (id: string, body: Record<string, unknown>) =>
+      request<{ success: boolean }>(`/api/workflow-templates/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(body),
+      }),
+    delete: (id: string) =>
+      request<{ success: boolean }>(`/api/workflow-templates/${id}`, { method: "DELETE" }),
+  },
+
+  // Workflows
+  workflows: {
+    start: (body: {
+      templateId: string;
+      topic: string;
+      projectSlug?: string;
+      costCapUsd?: number;
+      cwd?: string;
+    }) =>
+      request<{ success: boolean; data: { channelId: string; sessionId: string } }>(
+        "/api/workflows",
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    list: (opts?: { status?: string; project?: string }) => {
+      const params = new URLSearchParams();
+      if (opts?.status) params.set("status", opts.status);
+      if (opts?.project) params.set("project", opts.project);
+      const qs = params.toString();
+      return request<{
+        success: boolean;
+        data: Array<{
+          channelId: string;
+          topic: string;
+          status: string;
+          projectSlug: string | null;
+          workflowState: unknown;
+          createdAt: string;
+        }>;
+      }>(`/api/workflows${qs ? `?${qs}` : ""}`);
+    },
+    get: (id: string) =>
+      request<{
+        success: boolean;
+        data: {
+          channelId: string;
+          topic: string;
+          status: string;
+          workflowState: unknown;
+          createdAt: string;
+          concludedAt: string | null;
+        };
+      }>(`/api/workflows/${id}`),
+    cancel: (id: string) =>
+      request<{ success: boolean }>(`/api/workflows/${id}/cancel`, { method: "POST" }),
+  },
+
+  // Database browser
+  database: {
+    connections: () =>
+      request<{
+        success: boolean;
+        data: Array<{
+          id: string;
+          name: string;
+          type: string;
+          connectionString: string;
+          projectSlug: string | null;
+          createdAt: string;
+        }>;
+      }>("/api/db/connections"),
+    addConnection: (body: {
+      name: string;
+      type: "sqlite";
+      connectionString: string;
+      projectSlug?: string;
+    }) =>
+      request<{ success: boolean; data: { id: string } }>("/api/db/connections", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    removeConnection: (id: string) =>
+      request<{ success: boolean }>(`/api/db/connections/${id}`, { method: "DELETE" }),
+    tables: (id: string) =>
+      request<{ success: boolean; data: Array<{ name: string; type: string }> }>(
+        `/api/db/tables/${id}`,
+      ),
+    schema: (id: string, table: string) =>
+      request<{
+        success: boolean;
+        data: Array<{
+          cid: number;
+          name: string;
+          type: string;
+          notnull: number;
+          dflt_value: string | null;
+          pk: number;
+        }>;
+      }>(`/api/db/schema/${id}/${encodeURIComponent(table)}`),
+    query: (connectionId: string, query: string, params?: unknown[]) =>
+      request<{
+        success: boolean;
+        data: { columns: string[]; rows: unknown[][]; rowCount: number; truncated: boolean };
+      }>("/api/db/query", {
+        method: "POST",
+        body: JSON.stringify({ connectionId, query, params }),
+      }),
+  },
+
+  // Error logs
+  errors: {
+    list: (opts?: { source?: string; sessionId?: string; limit?: number; offset?: number }) => {
+      const params = new URLSearchParams();
+      if (opts?.source) params.set("source", opts.source);
+      if (opts?.sessionId) params.set("sessionId", opts.sessionId);
+      if (opts?.limit) params.set("limit", String(opts.limit));
+      if (opts?.offset) params.set("offset", String(opts.offset));
+      const qs = params.toString();
+      return request<{
+        success: boolean;
+        data: Array<{
+          id: number;
+          source: string;
+          level: string;
+          message: string;
+          stack: string | null;
+          sessionId: string | null;
+          context: Record<string, unknown> | null;
+          timestamp: string;
+        }>;
+        meta: { total: number; limit: number; offset: number };
+      }>(`/api/errors${qs ? `?${qs}` : ""}`);
+    },
+    clear: () =>
+      request<{ success: boolean; data: { cleared: number } }>("/api/errors", { method: "DELETE" }),
+    exportUrl: () => `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/errors/export`,
+  },
+
+  // Prompt history
+  prompts: {
+    list: (opts?: { sessionId?: string; q?: string; limit?: number; offset?: number }) => {
+      const params = new URLSearchParams();
+      if (opts?.sessionId) params.set("sessionId", opts.sessionId);
+      if (opts?.q) params.set("q", opts.q);
+      if (opts?.limit) params.set("limit", String(opts.limit));
+      if (opts?.offset) params.set("offset", String(opts.offset));
+      const qs = params.toString();
+      return request<{
+        success: boolean;
+        data: Array<{
+          id: string;
+          sessionId: string;
+          sessionName: string | null;
+          projectSlug: string | null;
+          content: string;
+          source: string;
+          createdAt: string;
+        }>;
+        meta: { total: number; limit: number; offset: number };
+      }>(`/api/prompts${qs ? `?${qs}` : ""}`);
+    },
+    resend: (sessionId: string, content: string) =>
+      request<{ success: boolean }>("/api/prompts/resend", {
+        method: "POST",
+        body: JSON.stringify({ sessionId, content }),
+      }),
+  },
+
   // Stats
   stats: {
     get: () =>
@@ -444,7 +719,19 @@ export const api = {
           totalSessions: number;
           modelBreakdown: Array<{ model: string; count: number; tokens: number }>;
           dailyActivity: Array<{ date: string; sessions: number; tokens: number }>;
+          dailyCost: Array<{ date: string; cost: number }>;
           topProjects: Array<{ name: string; sessions: number }>;
+          recentSessions: Array<{
+            id: string;
+            name: string | null;
+            model: string;
+            projectSlug: string | null;
+            cost: number;
+            turns: number;
+            tokens: number;
+            durationMs: number | null;
+          }>;
+          avgDurationMs: number;
         };
       }>("/api/stats"),
   },

@@ -13,6 +13,7 @@ import {
   Lightning,
   GitDiff,
   PushPin,
+  TelegramLogo,
 } from "@phosphor-icons/react";
 import { MarkdownMessage } from "../chat/markdown-message";
 import { useComposerStore } from "@/lib/stores/composer-store";
@@ -47,6 +48,7 @@ export interface Message {
   toolUseBlocks?: ToolBlock[];
   toolResultBlocks?: ToolResultBlock[];
   costUsd?: number;
+  source?: string;
 }
 
 interface MessageFeedProps {
@@ -387,6 +389,51 @@ function PinButton({
   );
 }
 
+// ── Source Badge ─────────────────────────────────────────────────────────────
+
+function SourceBadge({ source }: { source: string }) {
+  if (source === "telegram") {
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ml-1"
+        style={{ background: "#29B6F615", color: "#29B6F6" }}
+      >
+        <TelegramLogo size={10} weight="fill" aria-hidden="true" />
+        via Telegram
+      </span>
+    );
+  }
+  if (source === "api") {
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ml-1"
+        style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-muted)" }}
+      >
+        via API
+      </span>
+    );
+  }
+  if (source === "mention") {
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ml-1"
+        style={{ background: "#a855f715", color: "#a855f7" }}
+      >
+        @mention
+      </span>
+    );
+  }
+  // Fallback for unknown sources (debate, agent, etc.)
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ml-1"
+      style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-muted)" }}
+    >
+      via {source}
+    </span>
+  );
+}
+
 // ── Message Bubble ───────────────────────────────────────────────────────────
 
 function MessageBubble({
@@ -511,7 +558,7 @@ function MessageBubble({
           <ToolUseSection tools={msg.toolUseBlocks} results={msg.toolResultBlocks} />
         )}
 
-        {/* Timestamp + cost + pin */}
+        {/* Timestamp + source badge + cost + pin */}
         <div className="flex items-center gap-1">
           <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
             {new Date(msg.timestamp).toLocaleTimeString([], {
@@ -519,6 +566,7 @@ function MessageBubble({
               minute: "2-digit",
             })}
           </span>
+          {msg.source && msg.source !== "web" && <SourceBadge source={msg.source} />}
           {msg.costUsd !== undefined && msg.costUsd > 0 && <CostBadge costUsd={msg.costUsd} />}
           {/* Pin button — shows on hover or when already pinned */}
           <PinButton sessionId={sessionId} messageIndex={index} visible={hovered} />

@@ -12,6 +12,7 @@
     "lint:fix": "eslint packages/ --fix",
     "format": "prettier --write \"packages/**/*.{ts,tsx,json,css}\"",
     "format:check": "prettier --check \"packages/**/*.{ts,tsx,json,css}\"",
+    "test": "bun run --filter '@companion/server' test",
     "db:generate": "bun run --filter '@companion/server' db:generate",
     "db:migrate": "bun run --filter '@companion/server' db:migrate",
     "db:studio": "bun run --filter '@companion/server' db:studio",
@@ -27,6 +28,7 @@
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.0.1",
     "prettier": "3.8.1",
+    "sharp": "^0.34.5",
     "typescript": "^5.8.2",
     "typescript-eslint": "8.57.1"
   }

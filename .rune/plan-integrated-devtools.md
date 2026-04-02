@@ -45,6 +45,37 @@ Session View (existing)
   └── Diff tab (new — shows changes per turn)
 ```
 
+## Phases (updated)
+
+| # | Name | Status | Summary |
+|---|------|--------|---------|
+| 1 | Terminal panel | Pending | xterm.js component, WebSocket PTY bridge, session tab |
+| 2 | Code viewer | Pending | CodeMirror read-only viewer, replace FileViewer pre, syntax highlight |
+| 3 | Diff viewer | Pending | Show file diffs inline when agent modifies files |
+| 4 | Multi-Session Layout | Pending | Split-pane, grid/columns/tabs presets, keyboard shortcuts |
+
+### Phase 4: Multi-Session Layout (from 1DevTool analysis)
+
+**Goal**: Allow users to view multiple sessions side-by-side with flexible layout options.
+
+**Tasks**:
+- [ ] Install split-pane library (`react-resizable-panels` or `allotment`) — lightweight, React 19 compatible
+- [ ] Create `LayoutManager` component with layout state — `packages/web/src/components/layout/layout-manager.tsx` (new)
+- [ ] Layout presets:
+  - Single (default) — one session full-width
+  - Side-by-side (2-up horizontal)
+  - Stacked (2-up vertical)
+  - Grid (2x2 for 4 sessions)
+  - Tabs (all sessions as tabs, one visible at a time)
+- [ ] Layout selector in toolbar — `packages/web/src/components/layout/layout-selector.tsx` (new)
+- [ ] Keyboard shortcuts: Ctrl+1 single, Ctrl+2 side-by-side, Ctrl+3 stacked, Ctrl+4 grid
+- [ ] Per-pane independent zoom (font size control per session pane)
+- [ ] Drag sessions between panes to reorder
+- [ ] Persist layout preference in settings store
+- [ ] Responsive: collapse to single-pane on mobile/narrow viewports
+
+**Dependencies**: Phases 1-3 should be done first (terminal + code viewer make multi-pane useful).
+
 ## Verdict gate
 
 Phase 1 (terminal): Do sessions need interactive shell? Or just read-only output display?

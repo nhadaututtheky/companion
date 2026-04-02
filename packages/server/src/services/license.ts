@@ -48,13 +48,6 @@ const FREE_FEATURES = [
 
 const STARTER_FEATURES = [...FREE_FEATURES, "shared_context"];
 
-const PRO_FEATURES = [
-  ...STARTER_FEATURES,
-  "web_intel",
-  "codegraph",
-  "scheduled_sessions",
-];
-
 const FREE_LICENSE: LicenseInfo = {
   valid: false,
   tier: "free",

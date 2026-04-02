@@ -9,6 +9,9 @@ import { resolve as pathResolve, normalize } from "node:path";
 import { existsSync, statSync } from "node:fs";
 import type { WsBridge } from "../services/ws-bridge.js";
 import type { BotRegistry } from "../telegram/bot-registry.js";
+import { eq as eqOp, desc as descOp, and as andOp } from "drizzle-orm";
+import { getDb } from "../db/client.js";
+import { sessionSnapshots } from "../db/schema.js";
 import {
   getSessionRecord,
   listSessions,
@@ -676,6 +679,109 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     }
     log.info("Session tags updated", { sessionId, tags });
     return c.json({ success: true, data: { tags } } satisfies ApiResponse);
+  });
+
+  // ── Snapshots ───────────────────────────────────────────────────────────────
+
+  // POST /:id/snapshots — capture current terminal screen
+  const snapshotSchema = z.object({
+    label: z.string().max(100).optional(),
+  });
+  app.post("/:id/snapshots", zValidator("json", snapshotSchema), (c) => {
+    const sessionId = c.req.param("id");
+    const session = bridge.getSession(sessionId);
+    if (!session) {
+      return c.json(
+        { success: false, error: "Session not found or not active" } satisfies ApiResponse,
+        404,
+      );
+    }
+    const { label } = c.req.valid("json");
+    const content = session.virtualScreen.toString();
+    if (!content.trim()) {
+      return c.json({ success: false, error: "Screen buffer is empty" } satisfies ApiResponse, 400);
+    }
+
+    try {
+      const db = getDb();
+      const result = db
+        .insert(sessionSnapshots)
+        .values({
+          sessionId,
+          content,
+          label: label ?? null,
+        })
+        .returning()
+        .get();
+      const id = result.id;
+
+      log.info("Snapshot captured", { sessionId, id, contentLength: content.length });
+      return c.json({
+        success: true,
+        data: { id, contentLength: content.length },
+      } satisfies ApiResponse);
+    } catch (err) {
+      log.error("Failed to save snapshot", { sessionId, error: String(err) });
+      return c.json(
+        { success: false, error: "Failed to save snapshot" } satisfies ApiResponse,
+        500,
+      );
+    }
+  });
+
+  // GET /:id/snapshots — list snapshots for a session
+  app.get("/:id/snapshots", (c) => {
+    const sessionId = c.req.param("id");
+    const record = getSessionRecord(sessionId);
+    if (!record) {
+      return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
+    }
+
+    const db = getDb();
+    const snapshots = db
+      .select()
+      .from(sessionSnapshots)
+      .where(eqOp(sessionSnapshots.sessionId, sessionId))
+      .orderBy(descOp(sessionSnapshots.createdAt))
+      .limit(50)
+      .all();
+
+    return c.json({
+      success: true,
+      data: snapshots.map(
+        (s: { id: number; content: string; label: string | null; createdAt: Date }) => ({
+          id: s.id,
+          label: s.label,
+          contentLength: s.content.length,
+          contentPreview: s.content.slice(0, 200),
+          createdAt: s.createdAt,
+        }),
+      ),
+    } satisfies ApiResponse);
+  });
+
+  // GET /:id/snapshots/:snapshotId — get full snapshot content
+  app.get("/:id/snapshots/:snapshotId", (c) => {
+    const sessionId = c.req.param("id");
+    const snapshotId = parseInt(c.req.param("snapshotId"), 10);
+    if (isNaN(snapshotId)) {
+      return c.json({ success: false, error: "Invalid snapshot ID" } satisfies ApiResponse, 400);
+    }
+
+    const db = getDb();
+    const snapshot = db
+      .select()
+      .from(sessionSnapshots)
+      .where(
+        andOp(eqOp(sessionSnapshots.id, snapshotId), eqOp(sessionSnapshots.sessionId, sessionId)),
+      )
+      .get();
+
+    if (!snapshot) {
+      return c.json({ success: false, error: "Snapshot not found" } satisfies ApiResponse, 404);
+    }
+
+    return c.json({ success: true, data: snapshot } satisfies ApiResponse);
   });
 
   return app;

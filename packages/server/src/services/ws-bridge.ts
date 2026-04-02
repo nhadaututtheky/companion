@@ -27,6 +27,10 @@ import {
   extractFilePaths,
 } from "../codegraph/agent-context-provider.js";
 import { isGraphReady } from "../codegraph/index.js";
+import { VirtualScreen } from "./virtual-screen.js";
+import { scanPrompt, isScanEnabled } from "./prompt-scanner.js";
+import { broadcastToSpectators, disconnectAllSpectators } from "./spectator-bridge.js";
+import { revokeAllForSession } from "./share-manager.js";
 import {
   createActiveSession,
   getActiveSession,
@@ -64,10 +68,10 @@ import {
   SESSION_IDLE_TIMEOUT_MS,
   HEALTH_CHECK_INTERVAL_MS,
   getMaxContextTokens,
-  thinkingModeTobudget,
 } from "@companion/shared";
-import type { ThinkingMode } from "@companion/shared";
 import type { LaunchResult } from "./cli-launcher.js";
+import { IdleDetector } from "./idle-detector.js";
+import { terminalLock } from "./terminal-lock.js";
 
 const log = createLogger("ws-bridge");
 
@@ -135,6 +139,8 @@ export class WsBridge {
   private cleanupTimers = new Map<string, ReturnType<typeof setTimeout>>();
   /** Periodic sweep interval — catches sessions that slipped through per-session timers */
   private cleanupSweepInterval: ReturnType<typeof setInterval> | null = null;
+  /** Idle detector for agent output tracking */
+  private idleDetector: IdleDetector;
 
   /** Delay before removing an ended session from in-memory maps (5 minutes) */
   private static readonly SESSION_CLEANUP_DELAY_MS = 5 * 60 * 1000;
@@ -143,12 +149,31 @@ export class WsBridge {
 
   constructor(opts?: { onStatusChange?: StatusChangeCallback }) {
     this.onStatusChange = opts?.onStatusChange;
+    this.idleDetector = new IdleDetector({
+      onIdle: (sessionId, idleDurationMs) => {
+        const session = getActiveSession(sessionId);
+        if (!session) return;
+        // Broadcast idle event to all connected browsers
+        this.broadcastToAll(session, {
+          type: "session_idle" as never,
+          sessionId,
+          idleDurationMs,
+        } as never);
+        log.debug("Session idle broadcasted", { sessionId, idleDurationMs });
+
+        // Advance workflow if this session belongs to one
+        import("./workflow-engine.js")
+          .then(({ onWorkflowSessionIdle }) => onWorkflowSessionIdle(sessionId))
+          .catch(() => {}); // non-blocking
+      },
+    });
     this.startHealthCheck();
     this.startCleanupSweep();
   }
 
   /** Stop the health check interval (call on server shutdown) */
   stopHealthCheck(): void {
+    this.idleDetector.stopAll();
     if (this.healthCheckInterval !== null) {
       clearInterval(this.healthCheckInterval);
       this.healthCheckInterval = null;
@@ -857,6 +882,9 @@ export class WsBridge {
   // ── CLI message handling ────────────────────────────────────────────────
 
   private handleCLIMessage(session: ActiveSession, line: string): void {
+    // Record output activity for idle detection
+    this.idleDetector.recordOutput(session.id);
+
     let parsed: Record<string, unknown>;
     try {
       parsed = JSON.parse(line);
@@ -999,6 +1027,22 @@ export class WsBridge {
   }
 
   private handleAssistant(session: ActiveSession, msg: CLIAssistantMessage): void {
+    // Feed tool_use summaries into virtual screen for snapshot
+    if (msg.message?.content) {
+      for (const block of msg.message.content) {
+        if (block.type === "tool_use") {
+          const input = block.input as Record<string, string>;
+          const summary = input?.file_path ?? input?.command?.slice(0, 80) ?? "";
+          session.virtualScreen.write(`[tool] ${block.name}${summary ? ` ${summary}` : ""}\n`);
+        } else if (block.type === "tool_result" && typeof block.content === "string") {
+          const preview = VirtualScreen.sanitize(block.content).slice(0, 200);
+          if (preview.trim()) {
+            session.virtualScreen.write(`[result] ${preview}\n`);
+          }
+        }
+      }
+    }
+
     // Track file operations from tool_use blocks
     if (msg.message?.content) {
       for (const block of msg.message.content) {
@@ -1053,9 +1097,22 @@ export class WsBridge {
       }
     }
 
+    // Sanitize tool_result content (strip ANSI codes from bash output etc.)
+    const sanitizedMessage = msg.message
+      ? {
+          ...msg.message,
+          content: msg.message.content?.map((block) => {
+            if (block.type === "tool_result" && typeof block.content === "string") {
+              return { ...block, content: VirtualScreen.sanitize(block.content) };
+            }
+            return block;
+          }),
+        }
+      : msg.message;
+
     const browserMsg: BrowserIncomingMessage = {
       type: "assistant",
-      message: msg.message,
+      message: sanitizedMessage,
       parent_tool_use_id: msg.parent_tool_use_id,
       timestamp: Date.now(),
     };
@@ -1072,6 +1129,9 @@ export class WsBridge {
         .join("\n");
 
       if (textContent) {
+        // Feed readable text into virtual screen for snapshot capture
+        session.virtualScreen.write(`\n[assistant]\n${textContent}\n`);
+
         storeMessage({
           id: msg.message.id ?? randomUUID(),
           sessionId: session.id,
@@ -1587,6 +1647,7 @@ export class WsBridge {
     this.sdkHandles.delete(session.id);
     this.clearIdleTimer(session.id);
     this.clearCompactTimers(session.id);
+    this.idleDetector.stopTracking(session.id);
     this.prevTokens.delete(session.id);
     this.earlyResults.delete(session.id);
 
@@ -1635,6 +1696,8 @@ export class WsBridge {
     this.updateStatus(session, finalStatus);
     endSessionRecord(session.id, finalStatus);
     persistSession(session);
+    disconnectAllSpectators(session.id, "Session ended");
+    revokeAllForSession(session.id);
 
     // Auto-summarize only for sessions that actually ran
     if (hadTurns) {
@@ -1678,7 +1741,7 @@ export class WsBridge {
   private routeBrowserMessage(session: ActiveSession, msg: BrowserOutgoingMessage): void {
     switch (msg.type) {
       case "user_message":
-        this.handleUserMessage(session, msg.content);
+        this.handleUserMessage(session, msg.content, "web");
         break;
       case "permission_response":
         this.handlePermissionResponse(session, msg);
@@ -1953,11 +2016,42 @@ export class WsBridge {
     // Reset idle timer whenever user sends a message
     this.clearIdleTimer(session.id);
 
+    // ── PromptScanner: scan for risky patterns before recording/forwarding ──
+    if (isScanEnabled()) {
+      const scanResult = scanPrompt(content);
+      if (scanResult.risks.length > 0) {
+        this.broadcastToAll(session, {
+          type: "prompt_scan" as const,
+          risks: scanResult.risks.map((r) => ({
+            category: r.category,
+            severity: r.severity,
+            description: r.description,
+            matched: r.matched,
+          })),
+          blocked: !scanResult.safe,
+        });
+        if (!scanResult.safe) {
+          log.warn("Prompt blocked by scanner", {
+            sessionId: session.id,
+            categories: [...new Set(scanResult.risks.map((r) => r.category))],
+            maxSeverity: scanResult.maxSeverity,
+          });
+          return;
+        }
+      }
+    }
+
+    // Feed user message into virtual screen for snapshot
+    session.virtualScreen.write(
+      `\n[user${source && source !== "web" ? ` via ${source}` : ""}]\n${content}\n`,
+    );
+
     // Record in history
     const historyMsg: BrowserIncomingMessage = {
       type: "user_message",
       content,
       timestamp: Date.now(),
+      source: source ?? "web",
     };
     pushMessageHistory(session, historyMsg);
 
@@ -1970,7 +2064,7 @@ export class WsBridge {
       sessionId: session.id,
       role: "user",
       content,
-      source: (source as "telegram" | "web" | "api" | "agent" | "system") ?? "api",
+      source: (source ?? "web") as "telegram" | "web" | "api" | "agent" | "system",
     });
 
     // Route @mentions to target sessions
@@ -2001,16 +2095,29 @@ export class WsBridge {
 
     // ── WebIntel: auto-inject library docs (async, best-effort) ────────
     // Try to enrich with docs before sending to CLI/SDK (timeout 3s)
+    const lockOwner = `${source ?? "web"}-${Date.now()}`;
+
+    const sendWithLock = async (content: string) => {
+      if (!getActiveSession(session.id)) return;
+      try {
+        await terminalLock.acquire(session.id, lockOwner);
+      } catch (err) {
+        log.warn("Lock acquire timeout — sending without lock", {
+          sessionId: session.id,
+          err: String(err),
+        });
+      }
+      try {
+        this.sendToEngine(session, content);
+      } finally {
+        terminalLock.release(session.id, lockOwner);
+        this.broadcastLockStatus(session);
+      }
+    };
+
     this.maybeEnrichWithDocs(session, cgContent)
-      .then((enrichedContent) => {
-        if (!getActiveSession(session.id)) return; // session ended during enrichment
-        this.sendToEngine(session, enrichedContent);
-      })
-      .catch(() => {
-        // Enrichment failed — send CodeGraph-enriched content without WebIntel
-        if (!getActiveSession(session.id)) return;
-        this.sendToEngine(session, cgContent);
-      });
+      .then((enrichedContent) => sendWithLock(enrichedContent))
+      .catch(() => sendWithLock(cgContent));
 
     this.updateStatus(session, "busy");
   }
@@ -2302,6 +2409,19 @@ export class WsBridge {
     session.autoApproveTimers.set(perm.request_id, timer);
   }
 
+  // ── Lock status broadcast ──────────────────────────────────────────────
+
+  private broadcastLockStatus(session: ActiveSession): void {
+    const lockInfo = terminalLock.getLockInfo(session.id);
+    const msg: BrowserIncomingMessage = {
+      type: "lock_status",
+      locked: !!lockInfo,
+      owner: lockInfo?.owner ?? null,
+      queueSize: lockInfo?.queueSize ?? 0,
+    };
+    this.broadcastToAll(session, msg);
+  }
+
   // ── Transport helpers ───────────────────────────────────────────────────
 
   private sendToCLI(session: ActiveSession, ndjson: string): void {
@@ -2333,6 +2453,9 @@ export class WsBridge {
 
     // Send to subscribers (Telegram, etc.)
     this.broadcastToSubscribers(session, msg);
+
+    // Fan-out to spectators (QR Stream Sharing)
+    broadcastToSpectators(session.id, msg);
   }
 
   private broadcastToSubscribers(session: ActiveSession, msg: unknown): void {

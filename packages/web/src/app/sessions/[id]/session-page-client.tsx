@@ -1,6 +1,15 @@
 "use client";
-import { use, useRef, useState } from "react";
-import { ArrowLeft, PushPin } from "@phosphor-icons/react";
+import { use, useEffect, useRef, useState } from "react";
+import {
+  ArrowLeft,
+  PushPin,
+  TelegramLogo,
+  PencilSimple,
+  ShieldWarning,
+  ShareNetwork,
+  Users,
+  ClockCounterClockwise,
+} from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { MessageFeed } from "@/components/session/message-feed";
@@ -8,6 +17,8 @@ import { MessageComposer } from "@/components/session/message-composer";
 import { PermissionGate } from "@/components/session/permission-gate";
 import { SessionDetails } from "@/components/session/session-details";
 import { PinnedMessagesDrawer } from "@/components/session/pinned-messages-drawer";
+import { ShareModal } from "@/components/session/share-modal";
+import { PromptHistoryPanel } from "@/components/panels/prompt-history-panel";
 import { ModelSelector } from "@/components/session/model-selector";
 import { ThinkingModeSelector } from "@/components/session/thinking-mode-selector";
 import { usePinnedMessagesStore } from "@/lib/stores/pinned-messages-store";
@@ -101,6 +112,43 @@ function ContextStatusBar({
   );
 }
 
+function TelegramStreamBadge({ sessionId }: { sessionId: string }) {
+  const [streaming, setStreaming] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const check = () => {
+      api.sessions
+        .streamTelegramStatus(sessionId)
+        .then((res) => {
+          if (!cancelled) setStreaming(res.data.streaming);
+        })
+        .catch(() => {});
+    };
+
+    check();
+    const interval = setInterval(check, 10_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [sessionId]);
+
+  if (!streaming) return null;
+
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+      style={{ background: "#29B6F615", color: "#29B6F6" }}
+      title="Streaming to Telegram"
+    >
+      <TelegramLogo size={12} weight="fill" aria-hidden="true" />
+      Live
+    </span>
+  );
+}
+
 export function SessionPageClient({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
@@ -108,6 +156,9 @@ export function SessionPageClient({ params }: PageProps) {
     messages,
     pendingPermissions,
     wsStatus,
+    lockStatus,
+    lastScanResult,
+    spectatorCount,
     sendMessage,
     respondPermission,
     setModel,
@@ -115,6 +166,8 @@ export function SessionPageClient({ params }: PageProps) {
   } = useSession(id);
   const session = useSessionStore((s) => s.sessions[id]);
   const [pinnedDrawerOpen, setPinnedDrawerOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [promptHistoryOpen, setPromptHistoryOpen] = useState(false);
   const scrollToMessageRef = useRef<((index: number) => void) | null>(null);
   const getPins = usePinnedMessagesStore((s) => s.getPins);
   const pinCount = getPins(id).length;
@@ -169,6 +222,57 @@ export function SessionPageClient({ params }: PageProps) {
               <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
                 #{id.slice(0, 8)}
               </span>
+              <TelegramStreamBadge sessionId={id} />
+              {lockStatus.locked && (
+                <span
+                  className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                  style={{ background: "#FBBC0420", color: "#FBBC04" }}
+                  title={`Writing: ${lockStatus.owner}${lockStatus.queueSize > 0 ? ` (${lockStatus.queueSize} queued)` : ""}`}
+                >
+                  <PencilSimple size={12} weight="bold" aria-hidden="true" />
+                  Writing...
+                </span>
+              )}
+              {lastScanResult && (
+                <span
+                  className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                  style={{
+                    background: lastScanResult.blocked ? "#EF444420" : "#F59E0B20",
+                    color: lastScanResult.blocked ? "#EF4444" : "#F59E0B",
+                  }}
+                  title={lastScanResult.risks
+                    .map((r) => `[${r.severity}] ${r.description}`)
+                    .join("\n")}
+                >
+                  <ShieldWarning size={12} weight="bold" aria-hidden="true" />
+                  {lastScanResult.blocked
+                    ? "Blocked"
+                    : `${lastScanResult.risks.length} risk${lastScanResult.risks.length > 1 ? "s" : ""}`}
+                </span>
+              )}
+              {spectatorCount > 0 && (
+                <span
+                  className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                  style={{ background: "#4285f420", color: "#4285f4" }}
+                  title={`${spectatorCount} spectator${spectatorCount > 1 ? "s" : ""} watching`}
+                >
+                  <Users size={12} weight="bold" aria-hidden="true" />
+                  {spectatorCount}
+                </span>
+              )}
+              <button
+                onClick={() => setShareModalOpen(true)}
+                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
+                style={{
+                  color: "var(--color-text-muted)",
+                  border: "1px solid var(--color-border)",
+                }}
+                aria-label="Share session"
+                title="Share session"
+              >
+                <ShareNetwork size={12} weight="bold" aria-hidden="true" />
+                Share
+              </button>
             </div>
 
             {/* Mid-session model + thinking mode selectors */}
@@ -198,6 +302,23 @@ export function SessionPageClient({ params }: PageProps) {
                 {wsStatus}
               </span>
             )}
+
+            {/* Prompt history toggle */}
+            <button
+              onClick={() => setPromptHistoryOpen(true)}
+              className="p-1.5 rounded-lg transition-colors cursor-pointer"
+              style={{ color: "var(--color-text-muted)" }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "transparent";
+              }}
+              aria-label="Prompt history"
+              title="Prompt history"
+            >
+              <ClockCounterClockwise size={16} weight="bold" />
+            </button>
 
             {/* Pinned messages toggle */}
             <button
@@ -265,6 +386,29 @@ export function SessionPageClient({ params }: PageProps) {
           onJumpTo={handleJumpTo}
           onClose={() => setPinnedDrawerOpen(false)}
         />
+      )}
+      {shareModalOpen && <ShareModal sessionId={id} onClose={() => setShareModalOpen(false)} />}
+      {promptHistoryOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: 400,
+            zIndex: 50,
+            boxShadow: "-4px 0 24px rgba(0,0,0,0.2)",
+          }}
+        >
+          <PromptHistoryPanel
+            sessionId={id}
+            onResend={(content) => {
+              sendMessage(content);
+              setPromptHistoryOpen(false);
+            }}
+            onClose={() => setPromptHistoryOpen(false)}
+          />
+        </div>
       )}
     </div>
   );

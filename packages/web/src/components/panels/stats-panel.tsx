@@ -12,6 +12,7 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
+import Link from "next/link";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -253,6 +254,20 @@ export function StatsPanel({ onClose }: StatsPanelProps) {
                 <TopProjects projects={data.topProjects} />
               </div>
             )}
+
+            {/* Link to full analytics */}
+            <Link
+              href="/analytics"
+              className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+              style={{
+                color: "var(--color-accent)",
+                background: "var(--color-bg-elevated)",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              <ChartBar size={12} weight="bold" aria-hidden="true" />
+              View full analytics
+            </Link>
           </>
         )}
       </div>

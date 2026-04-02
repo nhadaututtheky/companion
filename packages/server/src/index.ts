@@ -9,12 +9,17 @@ import { runMigrations } from "./db/migrate.js";
 import { WsBridge } from "./services/ws-bridge.js";
 import { BotRegistry } from "./telegram/bot-registry.js";
 import { createLogger } from "./logger.js";
-import { bulkEndSessions } from "./services/session-store.js";
+import { bulkEndSessions, flushAllWriters } from "./services/session-store.js";
+import { terminalLock } from "./services/terminal-lock.js";
 import { verifyLicense, checkOrActivateTrial } from "./services/license.js";
 import { seedDefaultTemplates } from "./services/templates.js";
+import { seedWorkflowTemplates } from "./services/workflow-templates.js";
 import { DEFAULT_PORT, APP_VERSION } from "@companion/shared";
 import { timingSafeEqual } from "node:crypto";
 import { terminalManager } from "./services/terminal-manager.js";
+import * as spectatorBridge from "./services/spectator-bridge.js";
+import { validateShareToken } from "./services/share-manager.js";
+import { registerGlobalErrorHandlers, flushErrors } from "./services/error-tracker.js";
 import { join, resolve, dirname } from "node:path";
 import { existsSync, statSync } from "node:fs";
 
@@ -48,8 +53,12 @@ if (!process.env.API_KEY) {
 getDb();
 runMigrations();
 
-// Seed default session templates
+// Seed default session templates + workflow templates
 seedDefaultTemplates();
+seedWorkflowTemplates();
+
+// Register global error handlers for tracking
+registerGlobalErrorHandlers();
 
 // On startup, mark all non-terminal sessions as ended (server restarted, all in-memory state gone)
 const startupCleaned = bulkEndSessions();
@@ -152,6 +161,20 @@ botRegistry.autoStart().catch((err) => {
   log.error("Failed to auto-start Telegram bots", { error: String(err) });
 });
 
+// Wire spectator count changes → broadcast to session browsers
+spectatorBridge.onSpectatorCountChange((sessionId, count) => {
+  const session = bridge.getSession(sessionId);
+  if (session) {
+    for (const ws of session.browserSockets) {
+      try {
+        ws.send(JSON.stringify({ type: "spectator_count", count }));
+      } catch {
+        /* socket error */
+      }
+    }
+  }
+});
+
 // ─── Hono App ────────────────────────────────────────────────────────────────
 
 const app = new Hono();
@@ -208,7 +231,7 @@ app.route("/", routes);
 
 // Resolve web UI: try next to executable (compiled), then source tree (dev)
 const WEB_OUT_CANDIDATES = [
-  join(dirname(process.execPath), "web"),          // compiled: <install>/web/
+  join(dirname(process.execPath), "web"), // compiled: <install>/web/
   join(import.meta.dir, "../../../packages/web/out"), // dev: source tree
 ];
 const WEB_OUT_DIR = WEB_OUT_CANDIDATES.find((d) => existsSync(d)) ?? WEB_OUT_CANDIDATES[1];
@@ -264,8 +287,10 @@ if (WEB_ENABLED) {
 
 interface SocketData {
   sessionId: string;
-  type: "session" | "terminal";
+  type: "session" | "terminal" | "spectator";
   terminalId?: string;
+  shareToken?: string;
+  sharePermission?: "read-only" | "interactive";
 }
 
 // ─── Bun.serve with WebSocket upgrade ────────────────────────────────────────
@@ -294,6 +319,31 @@ const server = Bun.serve<SocketData>({
 
       const upgraded = server.upgrade(req, {
         data: { sessionId: "", type: "terminal" as const, terminalId },
+      });
+
+      if (upgraded) return undefined;
+      return new Response("WebSocket upgrade failed", { status: 500 });
+    }
+
+    // Spectator WebSocket: /ws/spectate/:token — no auth, token IS the auth
+    if (url.pathname.startsWith("/ws/spectate/")) {
+      const token = url.pathname.split("/ws/spectate/")[1];
+      if (!token) {
+        return new Response("Missing share token", { status: 400 });
+      }
+
+      const shareData = validateShareToken(token);
+      if (!shareData) {
+        return new Response("Invalid or expired share token", { status: 403 });
+      }
+
+      const upgraded = server.upgrade(req, {
+        data: {
+          sessionId: shareData.sessionId,
+          type: "spectator" as const,
+          shareToken: token,
+          sharePermission: shareData.permission,
+        },
       });
 
       if (upgraded) return undefined;
@@ -338,6 +388,15 @@ const server = Bun.serve<SocketData>({
         }
         return;
       }
+      if (ws.data.type === "spectator") {
+        spectatorBridge.addSpectator(
+          ws.data.sessionId,
+          ws,
+          ws.data.shareToken!,
+          ws.data.sharePermission as "read-only" | "interactive",
+        );
+        return;
+      }
       const { sessionId } = ws.data;
       log.debug("WebSocket connected", { sessionId });
       bridge.addBrowser(sessionId, ws);
@@ -361,6 +420,21 @@ const server = Bun.serve<SocketData>({
         }
         return;
       }
+      if (ws.data.type === "spectator") {
+        // Interactive spectators can send messages
+        if (ws.data.sharePermission !== "interactive") return;
+        const msg = String(message);
+        if (msg.length > 10_000) return; // Spectator messages limited
+        try {
+          const parsed = JSON.parse(msg) as { type: string; content?: string };
+          if (parsed.type === "user_message" && parsed.content) {
+            bridge.sendUserMessage(ws.data.sessionId, parsed.content, "spectator");
+          }
+        } catch {
+          // Malformed — ignore
+        }
+        return;
+      }
       const { sessionId } = ws.data;
       const msg = String(message);
       if (msg.length > 100_000) {
@@ -372,6 +446,10 @@ const server = Bun.serve<SocketData>({
     close(ws) {
       if (ws.data.type === "terminal" && ws.data.terminalId) {
         terminalManager.unsubscribe(ws.data.terminalId, ws);
+        return;
+      }
+      if (ws.data.type === "spectator") {
+        spectatorBridge.removeSpectator(ws.data.sessionId, ws);
         return;
       }
       const { sessionId } = ws.data;
@@ -391,6 +469,10 @@ log.info(`Companion v${APP_VERSION} running`, {
 function shutdown() {
   log.info("Shutting down...");
 
+  // Flush all pending DB writes before anything else
+  flushAllWriters();
+  flushErrors();
+
   // Stop health check interval
   bridge.stopHealthCheck();
 
@@ -404,6 +486,9 @@ function shutdown() {
 
   // Kill all active terminal processes
   terminalManager.killAll();
+
+  // Release all terminal locks
+  terminalLock.releaseAll();
 
   server.stop();
   closeDb();

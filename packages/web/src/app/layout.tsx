@@ -4,6 +4,7 @@ import "./globals.css";
 import { CommandPaletteProvider } from "@/components/layout/command-palette-provider";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { AuthGuard } from "@/components/auth/auth-guard";
+import { ThemeSync } from "@/components/layout/theme-sync";
 
 export const metadata: Metadata = {
   title: "Companion",
@@ -24,6 +25,10 @@ const themeScript = `
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     }
+    var tid = localStorage.getItem('companion_theme_id');
+    if (tid && tid !== 'default') {
+      document.documentElement.dataset.themeId = tid;
+    }
   } catch(e) {}
 })();
 `;
@@ -38,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ErrorBoundary>
           <AuthGuard>
             <CommandPaletteProvider />
+            <ThemeSync />
             {children}
           </AuthGuard>
         </ErrorBoundary>

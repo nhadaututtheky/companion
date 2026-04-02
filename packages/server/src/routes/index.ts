@@ -13,6 +13,13 @@ import { statsRoutes } from "./stats.js";
 import { webintelRoutes } from "./webintel.js";
 import { codegraphRoutes } from "./codegraph.js";
 import { hookRoutes } from "./hooks.js";
+import { shareRoutes, publicShareRoutes } from "./share.js";
+import { promptRoutes } from "./prompts.js";
+import { errorRoutes } from "./errors.js";
+import { databaseRoutes } from "./database.js";
+import { workflowTemplateRoutes } from "./workflow-templates.js";
+import { workflowRoutes } from "./workflows.js";
+import { initWorkflowEngine } from "../services/workflow-engine.js";
 import { apiKeyAuth } from "../middleware/auth.js";
 import { createRateLimit } from "../middleware/rate-limit.js";
 import { getLicense } from "../services/license.js";
@@ -52,6 +59,9 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   // Hook receiver — no auth (Claude Code CLI posts directly)
   api.route("/api/hooks", hookRoutes(bridge));
 
+  // Public share validation (no auth — spectators use this)
+  api.route("/api", publicShareRoutes);
+
   // License info (public — so web can check before auth)
   const licenseRoute = new Hono();
   licenseRoute.get("/license", (c) => {
@@ -78,6 +88,15 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   protectedApi.route("/stats", statsRoutes);
   protectedApi.route("/webintel", webintelRoutes);
   protectedApi.route("/codegraph", codegraphRoutes);
+  protectedApi.route("/", shareRoutes);
+  protectedApi.route("/prompts", promptRoutes(bridge));
+  protectedApi.route("/errors", errorRoutes);
+  protectedApi.route("/db", databaseRoutes);
+  protectedApi.route("/workflow-templates", workflowTemplateRoutes);
+  protectedApi.route("/workflows", workflowRoutes(bridge));
+
+  // Initialize workflow engine with bridge reference
+  initWorkflowEngine(bridge);
 
   // Anti IDE CDP status
   protectedApi.get("/anti/status", async (c) => {

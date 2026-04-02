@@ -177,7 +177,7 @@ export type BrowserIncomingMessage =
   | { type: "error"; message: string }
   | { type: "cli_disconnected"; exitCode?: number; reason?: string }
   | { type: "cli_connected" }
-  | { type: "user_message"; content: string; timestamp: number }
+  | { type: "user_message"; content: string; timestamp: number; source?: string }
   | { type: "message_history"; messages: BrowserIncomingMessage[] }
   | { type: "context_update"; contextUsedPercent: number; totalTokens: number; maxTokens: number }
   | {
@@ -199,7 +199,15 @@ export type BrowserIncomingMessage =
       toolError?: boolean;
       message?: string;
       timestamp: number;
-    };
+    }
+  | { type: "lock_status"; locked: boolean; owner: string | null; queueSize: number }
+  | { type: "session_idle"; sessionId: string; idleDurationMs: number }
+  | {
+      type: "prompt_scan";
+      risks: Array<{ category: string; severity: string; description: string; matched: string }>;
+      blocked: boolean;
+    }
+  | { type: "spectator_count"; count: number };
 
 // ─── Session State ───────────────────────────────────────────────────────────
 

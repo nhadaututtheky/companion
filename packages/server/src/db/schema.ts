@@ -174,13 +174,17 @@ export const settings = sqliteTable("settings", {
 export const channels = sqliteTable("channels", {
   id: text("id").primaryKey(),
   projectSlug: text("project_slug").references(() => projects.slug),
-  type: text("type").notNull().default("debate"), // 'debate' | 'review' | 'red_team' | 'brainstorm'
+  type: text("type").notNull().default("debate"), // 'debate' | 'review' | 'red_team' | 'brainstorm' | 'workflow'
   topic: text("topic").notNull(),
   format: text("format", { mode: "json" }),
   status: text("status").notNull().default("active"), // 'active' | 'concluding' | 'concluded'
   maxRounds: integer("max_rounds").notNull().default(5),
   currentRound: integer("current_round").notNull().default(0),
   verdict: text("verdict", { mode: "json" }),
+  workflowTemplateId: text("workflow_template_id"),
+  workflowState: text("workflow_state", { mode: "json" }).$type<
+    import("@companion/shared").WorkflowState
+  >(),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => new Date()),
@@ -271,6 +275,48 @@ export const webIntelDocs = sqliteTable(
       .$defaultFn(() => new Date()),
   },
   (table) => [index("idx_webintel_docs_library").on(table.libraryName)],
+);
+
+// ─── Session Snapshots ──────────────────────────────────────────────────────
+
+export const sessionSnapshots = sqliteTable(
+  "session_snapshots",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => sessions.id),
+    content: text("content").notNull(),
+    label: text("label"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [index("idx_snapshots_session").on(table.sessionId)],
+);
+
+// ─── Share Tokens (QR Stream Sharing) ────────────────────────────────────────
+
+export const shareTokens = sqliteTable(
+  "share_tokens",
+  {
+    token: text("token").primaryKey(),
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => sessions.id),
+    /** 'read-only' = view stream, 'interactive' = can type in chat */
+    permission: text("permission").notNull().default("read-only"),
+    createdBy: text("created_by").notNull().default("owner"),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    revokedAt: integer("revoked_at", { mode: "timestamp_ms" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [
+    index("idx_share_tokens_session").on(table.sessionId),
+    index("idx_share_tokens_expires").on(table.expiresAt),
+  ],
 );
 
 // ─── CodeGraph: Files ─────────────────────────────────────────────────────────
@@ -365,3 +411,67 @@ export const codeScanJobs = sqliteTable("code_scan_jobs", {
     .$defaultFn(() => new Date()),
   completedAt: integer("completed_at", { mode: "timestamp_ms" }),
 });
+
+// ─── Workflow Templates ─────────────────────────────────────────────────────
+
+export const workflowTemplates = sqliteTable("workflow_templates", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description").notNull().default(""),
+  icon: text("icon").notNull().default("🔄"),
+  category: text("category").notNull().default("custom"), // review | build | test | deploy | custom
+  steps: text("steps", { mode: "json" }).notNull().$type<
+    Array<{
+      role: string;
+      label: string;
+      promptTemplate: string;
+      order: number;
+      model?: string;
+    }>
+  >(),
+  isBuiltIn: integer("is_built_in", { mode: "boolean" }).notNull().default(false),
+  defaultCostCapUsd: real("default_cost_cap_usd").default(1.0),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+// ─── Database Browser Connections ────────────────────────────────────────────
+
+export const dbConnections = sqliteTable("db_connections", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // 'sqlite'
+  connectionString: text("connection_string").notNull(), // file path for SQLite
+  projectSlug: text("project_slug"),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+// ─── Error Tracking ─────────────────────────────────────────────────────────
+
+export const errorLogs = sqliteTable(
+  "error_logs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    source: text("source").notNull(), // 'server' | 'cli' | 'ws' | 'api'
+    level: text("level").notNull().default("error"), // 'error' | 'fatal'
+    message: text("message").notNull(),
+    stack: text("stack"),
+    sessionId: text("session_id"),
+    context: text("context", { mode: "json" }).$type<Record<string, unknown>>(),
+    timestamp: integer("timestamp", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [
+    index("idx_error_logs_timestamp").on(table.timestamp),
+    index("idx_error_logs_source").on(table.source),
+    index("idx_error_logs_session").on(table.sessionId),
+  ],
+);

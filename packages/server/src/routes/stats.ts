@@ -46,6 +46,7 @@ statsRoutes.get("/", (c) => {
       totalInputTokens: sessions.totalInputTokens,
       totalOutputTokens: sessions.totalOutputTokens,
       startedAt: sessions.startedAt,
+      endedAt: sessions.endedAt,
     })
     .from(sessions)
     .where(gte(sessions.startedAt, thirtyDaysAgo))
@@ -198,6 +199,71 @@ statsRoutes.get("/", (c) => {
     .sort((a, b) => b.sessions - a.sessions)
     .slice(0, 10);
 
+  // ── Daily cost trend (last 30 days) ────────────────────────────────────
+  const dailyCostMap = new Map<string, number>();
+  for (let i = 0; i < 30; i++) {
+    dailyCostMap.set(toDateStr(daysAgo(29 - i)), 0);
+  }
+  for (const s of recentSessions) {
+    const startedAt = s.startedAt instanceof Date ? s.startedAt : new Date(s.startedAt as number);
+    const dateKey = toDateStr(startedAt);
+    const prev = dailyCostMap.get(dateKey);
+    if (prev !== undefined) {
+      dailyCostMap.set(dateKey, prev + (s.totalCostUsd ?? 0));
+    }
+  }
+  const dailyCost = Array.from(dailyCostMap.entries()).map(([date, cost]) => ({
+    date,
+    cost: Math.round(cost * 10000) / 10000,
+  }));
+
+  // ── Recent sessions detail (last 20) ─────────────────────────────────
+  const recentDetail = db
+    .select({
+      id: sessions.id,
+      name: sessions.name,
+      model: sessions.model,
+      projectSlug: sessions.projectSlug,
+      totalCostUsd: sessions.totalCostUsd,
+      numTurns: sessions.numTurns,
+      totalInputTokens: sessions.totalInputTokens,
+      totalOutputTokens: sessions.totalOutputTokens,
+      startedAt: sessions.startedAt,
+      endedAt: sessions.endedAt,
+    })
+    .from(sessions)
+    .orderBy(desc(sessions.startedAt))
+    .limit(20)
+    .all()
+    .map((s) => {
+      const start = s.startedAt instanceof Date ? s.startedAt.getTime() : (s.startedAt as number);
+      const end = s.endedAt instanceof Date ? s.endedAt.getTime() : (s.endedAt as number | null);
+      return {
+        id: s.id,
+        name: s.name,
+        model: s.model,
+        projectSlug: s.projectSlug,
+        cost: Math.round((s.totalCostUsd ?? 0) * 10000) / 10000,
+        turns: s.numTurns ?? 0,
+        tokens: (s.totalInputTokens ?? 0) + (s.totalOutputTokens ?? 0),
+        durationMs: end ? end - start : null,
+      };
+    });
+
+  // ── Average session duration (last 30 days, ended only) ──────────────
+  const endedRecent = recentSessions.filter((s) => s.endedAt != null);
+
+  let avgDurationMs = 0;
+  if (endedRecent.length > 0) {
+    const totalDuration = endedRecent.reduce((sum, s) => {
+      const start = s.startedAt instanceof Date ? s.startedAt.getTime() : (s.startedAt as number);
+      const end =
+        s.endedAt instanceof Date ? s.endedAt!.getTime() : (s.endedAt as unknown as number);
+      return sum + (end - start);
+    }, 0);
+    avgDurationMs = Math.round(totalDuration / endedRecent.length);
+  }
+
   // ── Response ──────────────────────────────────────────────────────────────
   return c.json({
     success: true,
@@ -216,7 +282,10 @@ statsRoutes.get("/", (c) => {
       totalSessions,
       modelBreakdown,
       dailyActivity,
+      dailyCost,
       topProjects,
+      recentSessions: recentDetail,
+      avgDurationMs,
     },
   } satisfies ApiResponse);
 });

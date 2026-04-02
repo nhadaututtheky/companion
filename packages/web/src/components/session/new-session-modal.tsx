@@ -19,6 +19,7 @@ import { DirectoryBrowser } from "./directory-browser";
 import { api } from "@/lib/api-client";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { TemplateVariablesForm, type TemplateVariable } from "./template-variables-form";
+import { COMMAND_PRESETS } from "@companion/shared";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -884,6 +885,46 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   onChange={setTemplateVars}
                 />
               )}
+
+              {/* Command Presets */}
+              <div>
+                <label
+                  className="block text-xs font-semibold mb-1.5"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
+                  QUICK START{" "}
+                  <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>
+                    (click to set as prompt)
+                  </span>
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {COMMAND_PRESETS.flatMap((cat) =>
+                    cat.presets.slice(0, 3).map((p) => (
+                      <button
+                        key={p.command}
+                        type="button"
+                        onClick={() => setInitialPrompt(p.command)}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
+                        style={{
+                          background:
+                            initialPrompt === p.command
+                              ? "var(--color-accent)" + "20"
+                              : "var(--color-bg-card)",
+                          border: `1px solid ${initialPrompt === p.command ? "var(--color-accent)" : "var(--color-border)"}`,
+                          color:
+                            initialPrompt === p.command
+                              ? "var(--color-accent)"
+                              : "var(--color-text-muted)",
+                        }}
+                        title={`${cat.name}: ${p.command}`}
+                      >
+                        <span>{p.icon}</span>
+                        {p.label}
+                      </button>
+                    )),
+                  )}
+                </div>
+              </div>
 
               {/* Initial prompt */}
               <div>

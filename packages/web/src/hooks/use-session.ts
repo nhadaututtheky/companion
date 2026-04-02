@@ -22,6 +22,7 @@ interface Message {
   toolUseBlocks?: Array<{ id: string; name: string; input: Record<string, unknown> }>;
   toolResultBlocks?: Array<{ toolUseId: string; content: string; isError?: boolean }>;
   costUsd?: number;
+  source?: string;
 }
 
 interface PermissionRequest {
@@ -30,10 +31,24 @@ interface PermissionRequest {
   description?: string;
 }
 
+interface LockStatus {
+  locked: boolean;
+  owner: string | null;
+  queueSize: number;
+}
+
+export interface ScanResultState {
+  risks: Array<{ category: string; severity: string; description: string; matched: string }>;
+  blocked: boolean;
+}
+
 interface UseSessionReturn {
   messages: Message[];
   pendingPermissions: PermissionRequest[];
   wsStatus: "connecting" | "connected" | "disconnected";
+  lockStatus: LockStatus;
+  lastScanResult: ScanResultState | null;
+  spectatorCount: number;
   sendMessage: (text: string) => void;
   respondPermission: (requestId: string, behavior: "allow" | "deny") => void;
   setModel: (model: string) => void;
@@ -46,6 +61,13 @@ export function useSession(sessionId: string): UseSessionReturn {
   const [wsStatus, setWsStatus] = useState<"connecting" | "connected" | "disconnected">(
     "disconnected",
   );
+  const [lockStatus, setLockStatus] = useState<LockStatus>({
+    locked: false,
+    owner: null,
+    queueSize: 0,
+  });
+  const [lastScanResult, setLastScanResult] = useState<ScanResultState | null>(null);
+  const [spectatorCount, setSpectatorCount] = useState(0);
   const setSession = useSessionStore((s) => s.setSession);
   const addLog = useActivityStore((s) => s.addLog);
   // Track whether WS message_history replay populated messages
@@ -112,6 +134,7 @@ export function useSession(sessionId: string): UseSessionReturn {
             role: m.role as "user" | "assistant",
             content: m.content,
             timestamp: m.timestamp,
+            source: m.source,
           }))
           .filter((m) => m.content.length > 0);
         if (loaded.length > 0) {
@@ -326,6 +349,41 @@ export function useSession(sessionId: string): UseSessionReturn {
           break;
         }
 
+        case "user_message": {
+          // User message from another source (e.g. Telegram) — show in feed
+          const umMsg = msg as {
+            type: "user_message";
+            content: string;
+            timestamp: number;
+            source?: string;
+          };
+          // Skip if this is a message we sent locally from the web UI
+          if (umMsg.source && umMsg.source !== "web") {
+            const msgId = `${umMsg.timestamp}-user-${umMsg.source}`;
+            setMessages((prev) => {
+              // Dedup: skip if a message with same timestamp+content already exists (e.g. reconnect replay)
+              const isDuplicate = prev.some(
+                (m) =>
+                  m.role === "user" &&
+                  m.timestamp === umMsg.timestamp &&
+                  m.content === umMsg.content,
+              );
+              if (isDuplicate) return prev;
+              return [
+                ...prev,
+                {
+                  id: msgId,
+                  role: "user" as const,
+                  content: umMsg.content,
+                  timestamp: umMsg.timestamp,
+                  source: umMsg.source,
+                },
+              ];
+            });
+          }
+          break;
+        }
+
         case "permission_request": {
           const req = msg.request as {
             request_id: string;
@@ -402,6 +460,7 @@ export function useSession(sessionId: string): UseSessionReturn {
                     role: "user" as const,
                     content: m.content,
                     timestamp: m.timestamp ?? Date.now(),
+                    source: "source" in m ? (m.source as string | undefined) : undefined,
                   };
                 }
                 // assistant message
@@ -568,6 +627,61 @@ export function useSession(sessionId: string): UseSessionReturn {
           });
           break;
         }
+
+        case "lock_status": {
+          const ls = msg as {
+            type: "lock_status";
+            locked: boolean;
+            owner: string | null;
+            queueSize: number;
+          };
+          setLockStatus({ locked: ls.locked, owner: ls.owner, queueSize: ls.queueSize });
+          break;
+        }
+
+        case "session_idle": {
+          import("sonner").then(({ toast }) => {
+            toast.info(`Session idle: ${getSessionName()}`, {
+              description: "Agent appears to have finished processing.",
+              duration: 5000,
+            });
+          });
+          break;
+        }
+
+        case "prompt_scan": {
+          const scan = msg as {
+            type: "prompt_scan";
+            risks: Array<{
+              category: string;
+              severity: string;
+              description: string;
+              matched: string;
+            }>;
+            blocked: boolean;
+          };
+          import("sonner").then(({ toast }) => {
+            if (scan.blocked) {
+              toast.error("Prompt blocked by security scanner", {
+                description: scan.risks.map((r) => r.description).join(", "),
+                duration: 8000,
+              });
+            } else {
+              toast.warning("Security scan detected potential risks", {
+                description: scan.risks.map((r) => `[${r.severity}] ${r.description}`).join(", "),
+                duration: 6000,
+              });
+            }
+          });
+          setLastScanResult(scan);
+          break;
+        }
+
+        case "spectator_count": {
+          const sc = msg as { type: "spectator_count"; count: number };
+          setSpectatorCount(sc.count);
+          break;
+        }
       }
     },
     [sessionId, setSession, addLog, getSessionName, flushStreamBuffer],
@@ -581,6 +695,7 @@ export function useSession(sessionId: string): UseSessionReturn {
 
   const sendMessage = useCallback(
     (text: string) => {
+      setLastScanResult(null); // Clear previous scan result
       const msg: Message = {
         id: `${Date.now()}-user`,
         role: "user",
@@ -620,6 +735,9 @@ export function useSession(sessionId: string): UseSessionReturn {
     messages,
     pendingPermissions,
     wsStatus,
+    lockStatus,
+    lastScanResult,
+    spectatorCount,
     sendMessage,
     respondPermission,
     setModel,

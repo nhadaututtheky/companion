@@ -8,6 +8,8 @@ import { getDb } from "../db/client.js";
 import { sessions, sessionMessages, telegramSessionMappings, dailyCosts } from "../db/schema.js";
 import { createLogger } from "../logger.js";
 import { generateShortId } from "./short-id.js";
+import { DebouncedWriter } from "./debounced-writer.js";
+import { VirtualScreen } from "./virtual-screen.js";
 import type {
   SessionState,
   SessionStatus,
@@ -61,6 +63,8 @@ export interface ActiveSession {
   webIntelInjected?: Set<string>;
   /** Pending CodeGraph context hint to prepend to next user message */
   pendingCodeGraphHint?: string;
+  /** Virtual screen for terminal output reconstruction */
+  virtualScreen: VirtualScreen;
 }
 
 /** Max number of messages to keep in memory per session (FIFO eviction) */
@@ -104,6 +108,7 @@ export function createActiveSession(id: string, initialState: SessionState): Act
     pid: null,
     cliSessionId: null,
     extensionSend: null,
+    virtualScreen: new VirtualScreen(),
   };
 
   activeSessions.set(id, session);
@@ -132,35 +137,17 @@ export function removeActiveSession(id: string): void {
 // ─── Database operations ────────────────────────────────────────────────────
 
 export function persistSession(activeSession: ActiveSession): void {
-  const db = getDb();
-  const { state, id, pid } = activeSession;
+  sessionWriter.push({ id: activeSession.id, session: activeSession });
+}
 
-  try {
-    db.update(sessions)
-      .set({
-        model: state.model,
-        status: state.status,
-        cwd: state.cwd,
-        pid,
-        permissionMode: state.permissionMode,
-        claudeCodeVersion: state.claude_code_version || undefined,
-        totalCostUsd: state.total_cost_usd,
-        numTurns: state.num_turns,
-        totalInputTokens: state.total_input_tokens,
-        totalOutputTokens: state.total_output_tokens,
-        cacheCreationTokens: state.cache_creation_tokens,
-        cacheReadTokens: state.cache_read_tokens,
-        totalLinesAdded: state.total_lines_added,
-        totalLinesRemoved: state.total_lines_removed,
-        filesRead: state.files_read,
-        filesModified: state.files_modified,
-        filesCreated: state.files_created,
-      })
-      .where(eq(sessions.id, id))
-      .run();
-  } catch (err) {
-    log.error("Failed to persist session", { id, error: String(err) });
-  }
+/**
+ * Force-flush all pending writes (messages + sessions).
+ * Called on graceful shutdown to prevent data loss.
+ */
+export function flushAllWriters(): void {
+  messageWriter.flush();
+  sessionWriter.flush();
+  log.info("All writers flushed");
 }
 
 export function createSessionRecord(opts: {
@@ -666,7 +653,83 @@ export function updateSessionCostWarned(sessionId: string, level: number): void 
   }
 }
 
-// ─── Message storage ────────────────────────────────────────────────────────
+// ─── Message storage (debounced batch insert) ──────────────────────────────
+
+interface PendingMessage {
+  id: string;
+  sessionId: string;
+  role: string;
+  content: string;
+  source: string;
+  sourceId?: string;
+  agentRole?: string;
+  timestamp: Date;
+}
+
+const messageWriter = new DebouncedWriter<PendingMessage>({
+  label: "message-writer",
+  delayMs: 500,
+  maxBatchSize: 50,
+  flushFn: (items) => {
+    const db = getDb();
+    try {
+      db.insert(sessionMessages).values(items).run();
+    } catch (err) {
+      log.error("Batch message insert failed", { count: items.length, error: String(err) });
+      // Fallback: insert one by one
+      for (const item of items) {
+        try {
+          db.insert(sessionMessages).values(item).run();
+        } catch (innerErr) {
+          log.error("Single message insert failed", { id: item.id, error: String(innerErr) });
+        }
+      }
+    }
+  },
+});
+
+const sessionWriter = new DebouncedWriter<{ id: string; session: ActiveSession }>({
+  label: "session-writer",
+  delayMs: 1000,
+  maxBatchSize: 20,
+  flushFn: (items) => {
+    const db = getDb();
+    // Deduplicate: keep only the latest update per session ID
+    const latest = new Map<string, ActiveSession>();
+    for (const item of items) {
+      latest.set(item.id, item.session);
+    }
+    for (const [id, session] of latest) {
+      try {
+        const { state } = session;
+        db.update(sessions)
+          .set({
+            model: state.model,
+            status: state.status,
+            cwd: state.cwd,
+            pid: session.pid,
+            permissionMode: state.permissionMode,
+            claudeCodeVersion: state.claude_code_version || undefined,
+            totalCostUsd: state.total_cost_usd,
+            numTurns: state.num_turns,
+            totalInputTokens: state.total_input_tokens,
+            totalOutputTokens: state.total_output_tokens,
+            cacheCreationTokens: state.cache_creation_tokens,
+            cacheReadTokens: state.cache_read_tokens,
+            totalLinesAdded: state.total_lines_added,
+            totalLinesRemoved: state.total_lines_removed,
+            filesRead: state.files_read,
+            filesModified: state.files_modified,
+            filesCreated: state.files_created,
+          })
+          .where(eq(sessions.id, id))
+          .run();
+      } catch (err) {
+        log.error("Failed to persist session in batch", { id, error: String(err) });
+      }
+    }
+  },
+});
 
 export function storeMessage(msg: {
   id: string;
@@ -677,24 +740,16 @@ export function storeMessage(msg: {
   sourceId?: string;
   agentRole?: string;
 }): void {
-  const db = getDb();
-
-  try {
-    db.insert(sessionMessages)
-      .values({
-        id: msg.id,
-        sessionId: msg.sessionId,
-        role: msg.role,
-        content: msg.content,
-        source: msg.source ?? "api",
-        sourceId: msg.sourceId,
-        agentRole: msg.agentRole,
-        timestamp: new Date(),
-      })
-      .run();
-  } catch (err) {
-    log.error("Failed to store message", { sessionId: msg.sessionId, error: String(err) });
-  }
+  messageWriter.push({
+    id: msg.id,
+    sessionId: msg.sessionId,
+    role: msg.role,
+    content: msg.content,
+    source: msg.source ?? "api",
+    sourceId: msg.sourceId,
+    agentRole: msg.agentRole,
+    timestamp: new Date(),
+  });
 }
 
 export function getSessionMessages(
