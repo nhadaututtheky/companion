@@ -30,7 +30,7 @@ export default function LoginPage() {
       e.preventDefault();
       const trimmed = apiKey.trim();
       if (!trimmed) {
-        setError("Please enter your API key.");
+        setError("Please enter the access code.");
         return;
       }
 
@@ -43,7 +43,7 @@ export default function LoginPage() {
           localStorage.setItem("api_key", trimmed);
           router.replace("/");
         } else {
-          setError("Invalid API key. Please check and try again.");
+          setError("Invalid access code. Please check and try again.");
         }
       } catch {
         setError("Could not reach the server. Make sure Companion is running.");
@@ -72,7 +72,7 @@ export default function LoginPage() {
         <div className="flex flex-col items-center gap-2 text-center">
           <CompanionLogo size="lg" />
           <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
-            Enter your API key to access the dashboard
+            Enter the server access code to continue
           </p>
         </div>
 
@@ -85,7 +85,7 @@ export default function LoginPage() {
               className="text-xs font-semibold"
               style={{ color: "var(--color-text-secondary)" }}
             >
-              API Key
+              Access Code
             </label>
             <div className="relative flex items-center">
               <span
@@ -102,7 +102,7 @@ export default function LoginPage() {
                   setApiKey(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="your-api-key"
+                placeholder="your-access-code"
                 autoComplete="current-password"
                 spellCheck={false}
                 className="w-full rounded-lg pl-9 pr-10 py-2.5 text-sm outline-none transition-colors"
@@ -165,7 +165,7 @@ export default function LoginPage() {
 
         {/* Footer hint */}
         <p className="text-center text-xs" style={{ color: "var(--color-text-muted)" }}>
-          The API key is set in your Companion server config.
+          The access code is set via <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem" }}>API_KEY</code> in your server config.
         </p>
       </div>
     </div>

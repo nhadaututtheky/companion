@@ -5,15 +5,15 @@
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 async function request<T>(path: string, opts?: RequestInit): Promise<T> {
-  const apiKey = typeof window !== "undefined" ? (localStorage.getItem("api_key") ?? "") : "";
+  const storedKey = typeof window !== "undefined" ? (localStorage.getItem("api_key") ?? "") : "";
+  const apiKey = storedKey === "__no_auth__" ? "" : storedKey;
+
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (apiKey) headers["X-API-Key"] = apiKey;
 
   const res = await fetch(`${BASE}${path}`, {
     ...opts,
-    headers: {
-      "Content-Type": "application/json",
-      "X-API-Key": apiKey,
-      ...opts?.headers,
-    },
+    headers: { ...headers, ...(opts?.headers as Record<string, string>) },
   });
 
   if (!res.ok) {
