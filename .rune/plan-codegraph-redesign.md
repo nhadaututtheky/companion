@@ -22,13 +22,13 @@ Both features already 95% implemented — this is a UI unification, not a rebuil
 | WebIntel injection | ✅ Done | auto-detect lib mentions → fetch docs → inject (ws-bridge L2118-2188) |
 | CodeGraph panel UI | ✅ Done (to delete) | Standalone panel, no project selector |
 | WebIntel panel UI | ✅ Done (to delete) | Standalone panel, dead when webclaw offline |
-| **Unified panel UI** | ⬚ Phase 1 | Merge both into "AI Context" |
+| **Unified panel UI** | ✅ Done | Merged into ai-context-panel.tsx |
 
 ## Phases
 
 | # | Name | Status | Plan File | Summary |
 |---|------|--------|-----------|---------|
-| 1 | Unified Panel | ⬚ Active | plan-codegraph-redesign-phase1.md | Merge panels, project selector, source cards, explore tab |
+| 1 | Unified Panel | ✅ Done | plan-codegraph-redesign-phase1.md | Merge panels, project selector, source cards, explore tab |
 | 2 | Live Context Feed | ⬚ Pending | plan-codegraph-redesign-phase2.md | Real-time injection events (WS `context:injection` events) |
 | 3 | User Controls | ⬚ Pending | plan-codegraph-redesign-phase3.md | Toggle sources, exclude paths, token budgets |
 | 4 | WebIntel Setup Flow | ⬚ Pending | plan-codegraph-redesign-phase4.md | Guided webclaw Docker setup, auto-start |
