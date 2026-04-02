@@ -825,5 +825,64 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
     });
   });
 
+  // ── /forum [list|reset] — Manage forum topics per project ──────────────
+
+  bot.command("forum", async (ctx) => {
+    const chatId = ctx.chat.id;
+    const arg = ctx.match?.trim().toLowerCase();
+
+    if (chatId >= 0) {
+      await ctx.reply("Forum topics only work in group chats.");
+      return;
+    }
+
+    if (arg === "reset") {
+      const topics = bridge.listForumTopics(chatId);
+      if (topics.length === 0) {
+        await ctx.reply("No forum topic mappings to reset.");
+        return;
+      }
+      for (const t of topics) {
+        bridge.deleteForumTopicMapping(chatId, t.projectSlug);
+      }
+      await ctx.reply(
+        `🗑 Cleared <b>${topics.length}</b> forum topic mapping(s).\nNew sessions will create fresh topics.`,
+        { parse_mode: "HTML" },
+      );
+      return;
+    }
+
+    // Default: list existing forum topics
+    const topics = bridge.listForumTopics(chatId);
+    if (topics.length === 0) {
+      await ctx.reply(
+        [
+          "📋 <b>Forum Topics</b>",
+          "",
+          "No forum topics created yet.",
+          "Start a session with /new — a topic will be auto-created for each project.",
+          "",
+          "<code>/forum reset</code> — clear all topic mappings",
+        ].join("\n"),
+        { parse_mode: "HTML" },
+      );
+      return;
+    }
+
+    const lines = topics.map(
+      (t) => `📂 <b>${escapeHTML(t.topicName)}</b> → <code>${escapeHTML(t.projectSlug)}</code>`,
+    );
+    await ctx.reply(
+      [
+        `📋 <b>Forum Topics (${topics.length})</b>`,
+        "",
+        ...lines,
+        "",
+        "<code>/forum reset</code> — clear all topic mappings",
+      ].join("\n"),
+      { parse_mode: "HTML" },
+    );
+  });
+
   log.info("Utility commands registered");
 }

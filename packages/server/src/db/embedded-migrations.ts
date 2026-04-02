@@ -85,4 +85,8 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0020_schedule_runs.sql",
     sql: "-- Schedule runs audit trail\nCREATE TABLE IF NOT EXISTS `schedule_runs` (\n  `id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n  `schedule_id` text NOT NULL REFERENCES `schedules`(`id`) ON DELETE CASCADE,\n  `session_id` text,\n  `status` text NOT NULL,\n  `reason` text,\n  `started_at` integer NOT NULL DEFAULT (unixepoch() * 1000)\n);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_schedule_runs_schedule` ON `schedule_runs` (`schedule_id`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_schedule_runs_started_at` ON `schedule_runs` (`started_at`);\n",
   },
+  {
+    name: "0021_forum_topics.sql",
+    sql: "CREATE TABLE IF NOT EXISTS telegram_forum_topics (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  chat_id INTEGER NOT NULL,\n  project_slug TEXT NOT NULL REFERENCES projects(slug),\n  topic_id INTEGER NOT NULL,\n  topic_name TEXT NOT NULL,\n  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS idx_forum_chat_project ON telegram_forum_topics(chat_id, project_slug);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS idx_forum_chat ON telegram_forum_topics(chat_id);\n",
+  },
 ];

@@ -153,6 +153,28 @@ export const telegramSessionMappings = sqliteTable("telegram_session_mappings", 
     .$defaultFn(() => new Date()),
 });
 
+// ─── Telegram Forum Topics (1 project = 1 forum topic per group) ────────────
+
+export const telegramForumTopics = sqliteTable(
+  "telegram_forum_topics",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    chatId: integer("chat_id").notNull(),
+    projectSlug: text("project_slug")
+      .notNull()
+      .references(() => projects.slug),
+    topicId: integer("topic_id").notNull(),
+    topicName: text("topic_name").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex("idx_forum_chat_project").on(table.chatId, table.projectSlug),
+    index("idx_forum_chat").on(table.chatId),
+  ],
+);
+
 // ─── Daily Costs ─────────────────────────────────────────────────────────────
 
 export const dailyCosts = sqliteTable("daily_costs", {

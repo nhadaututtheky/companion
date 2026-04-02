@@ -484,6 +484,7 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
       "/note — Save a note",
       "/panel — Settings panel",
       "/autoapprove — Auto-approve toggle",
+      "/forum — Forum topic mappings (groups)",
       "",
       "<i>Use /help &lt;command&gt; for details on any command.</i>",
       "<i>Or just type a message to chat with Claude!</i>",
@@ -562,4 +563,6 @@ const COMMAND_HELP: Record<string, string> = {
   clear:
     "<code>/clear [n]</code>\nDelete the last N bot messages (default 20, max 100).\nOnly works for messages the bot can delete.",
   mcp: "Show MCP servers connected to the current session with their status.",
+  forum:
+    "<code>/forum</code> — List forum topic mappings\n<code>/forum reset</code> — Clear all mappings\n\nIn groups with forum topics enabled, each project auto-creates its own topic when you start a session.",
 };

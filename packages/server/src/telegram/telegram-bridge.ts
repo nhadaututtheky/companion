@@ -6,7 +6,7 @@
 import { type Bot, type Context } from "grammy";
 import { eq, and, isNull } from "drizzle-orm";
 import { getDb } from "../db/client.js";
-import { telegramSessionMappings } from "../db/schema.js";
+import { telegramSessionMappings, telegramForumTopics } from "../db/schema.js";
 import { createBot, registerCommands, type BotConfig } from "./bot-factory.js";
 import { StreamHandler } from "./stream-handler.js";
 import {
@@ -471,8 +471,18 @@ export class TelegramBridge {
       return;
     }
 
+    // Auto-route to forum topic: if in a group and not already in a topic,
+    // try to get or create a forum topic for this project
+    let effectiveTopicId = topicId;
+    if (chatId < 0 && !topicId) {
+      const forumTopicId = await this.getOrCreateForumTopic(chatId, projectSlug, project.name);
+      if (forumTopicId) {
+        effectiveTopicId = forumTopicId;
+      }
+    }
+
     // Kill existing session if any
-    const existing = this.getMapping(chatId, topicId);
+    const existing = this.getMapping(chatId, effectiveTopicId);
     if (existing) {
       this.killSession(existing.sessionId);
     }
@@ -498,13 +508,13 @@ export class TelegramBridge {
         model: effectiveModel,
       };
 
-      this.setMapping(chatId, topicId, mapping);
-      this.subscribeToSession(sessionId, chatId, topicId);
+      this.setMapping(chatId, effectiveTopicId, mapping);
+      this.subscribeToSession(sessionId, chatId, effectiveTopicId);
 
       // Send settings panel (includes status + inline keyboard)
       const panelMsg = await this.sendSettingsPanel(
         chatId,
-        topicId,
+        effectiveTopicId,
         sessionId,
         project.name,
         effectiveModel,
@@ -515,7 +525,7 @@ export class TelegramBridge {
 
       // Send quick action buttons (disappear after use or template prompt)
       if (!opts?.initialPrompt) {
-        this.sendQuickActions(chatId, topicId, sessionId).catch(() => {});
+        this.sendQuickActions(chatId, effectiveTopicId, sessionId).catch(() => {});
       }
 
       // Send initial prompt from template once session is ready
@@ -527,7 +537,11 @@ export class TelegramBridge {
           } else {
             log.warn("Session not ready in time for initial prompt", { sessionId });
             this.bot.api
-              .sendMessage(chatId, "⚠️ Session took too long to start. Send your prompt manually.")
+              .sendMessage(
+                chatId,
+                "⚠️ Session took too long to start. Send your prompt manually.",
+                effectiveTopicId ? { message_thread_id: effectiveTopicId } : {},
+              )
               .catch(() => {});
           }
         });
@@ -535,7 +549,7 @@ export class TelegramBridge {
 
       log.info("Session started from Telegram", {
         chatId,
-        topicId,
+        topicId: effectiveTopicId,
         sessionId,
         project: project.slug,
         resume: opts?.resume ?? false,
@@ -969,6 +983,104 @@ export class TelegramBridge {
 
   clearActiveDebate(chatId: number, topicId: number | undefined): void {
     this.activeDebateChannels.delete(this.mapKey(chatId, topicId));
+  }
+
+  // ── Forum topic management (1 project = 1 forum topic per group) ────
+
+  /**
+   * Get or create a forum topic for a project in a group chat.
+   * Returns the topic ID, or undefined if forum topics are not supported.
+   */
+  async getOrCreateForumTopic(
+    chatId: number,
+    projectSlug: string,
+    projectName: string,
+  ): Promise<number | undefined> {
+    // Only works in group chats (negative chatId)
+    if (chatId >= 0) return undefined;
+
+    const db = getDb();
+
+    // Check if we already have a topic for this project in this group
+    const existing = db
+      .select()
+      .from(telegramForumTopics)
+      .where(
+        and(
+          eq(telegramForumTopics.chatId, chatId),
+          eq(telegramForumTopics.projectSlug, projectSlug),
+        ),
+      )
+      .get();
+
+    if (existing) {
+      return existing.topicId;
+    }
+
+    // Try to create a new forum topic
+    try {
+      const topicName = `📂 ${projectName}`;
+      const forumTopic = await this.bot.api.createForumTopic(chatId, topicName);
+      const topicId = forumTopic.message_thread_id;
+
+      db.insert(telegramForumTopics)
+        .values({
+          chatId,
+          projectSlug,
+          topicId,
+          topicName,
+        })
+        .run();
+
+      log.info("Created forum topic", { chatId, projectSlug, topicId, topicName });
+      return topicId;
+    } catch {
+      // Forum topics not enabled in this group — that's fine
+      return undefined;
+    }
+  }
+
+  /** Get the stored forum topic for a project (no creation). */
+  getForumTopicId(chatId: number, projectSlug: string): number | undefined {
+    const db = getDb();
+    const row = db
+      .select({ topicId: telegramForumTopics.topicId })
+      .from(telegramForumTopics)
+      .where(
+        and(
+          eq(telegramForumTopics.chatId, chatId),
+          eq(telegramForumTopics.projectSlug, projectSlug),
+        ),
+      )
+      .get();
+    return row?.topicId;
+  }
+
+  /** List all forum topics for a group chat. */
+  listForumTopics(chatId: number): Array<{ projectSlug: string; topicId: number; topicName: string }> {
+    const db = getDb();
+    return db
+      .select({
+        projectSlug: telegramForumTopics.projectSlug,
+        topicId: telegramForumTopics.topicId,
+        topicName: telegramForumTopics.topicName,
+      })
+      .from(telegramForumTopics)
+      .where(eq(telegramForumTopics.chatId, chatId))
+      .all();
+  }
+
+  /** Delete a forum topic mapping (does NOT delete the Telegram topic itself). */
+  deleteForumTopicMapping(chatId: number, projectSlug: string): void {
+    const db = getDb();
+    db.delete(telegramForumTopics)
+      .where(
+        and(
+          eq(telegramForumTopics.chatId, chatId),
+          eq(telegramForumTopics.projectSlug, projectSlug),
+        ),
+      )
+      .run();
   }
 
   /** Reverse lookup: find the stream subscriber info for a given sessionId */
