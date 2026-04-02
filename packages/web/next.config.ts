@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const isProd = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {
+  // Transpile workspace packages so Next.js can resolve their TS sources
+  transpilePackages: ["@companion/shared"],
+
   // Static export for production — served by Hono
   ...(isProd && {
     output: "export",

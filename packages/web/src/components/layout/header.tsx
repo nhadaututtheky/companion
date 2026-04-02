@@ -17,6 +17,7 @@ import {
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { CompanionLogo } from "./companion-logo";
+import { LayoutSelector } from "./layout-selector";
 
 function HeaderStats() {
   const sessions = useSessionStore((s) => s.sessions);
@@ -234,6 +235,10 @@ export function Header({ onMenuToggle }: HeaderProps) {
         >
           <Brain size={16} weight={rightPanelMode === "ai-context" ? "fill" : "regular"} />
         </button>
+        {/* Layout selector — switch between single, split, grid */}
+        <div className="hidden md:flex">
+          <LayoutSelector />
+        </div>
         <button
           onClick={() => setActivityTerminalOpen(!activityTerminalOpen)}
           className="hidden md:flex p-2 rounded-lg transition-colors cursor-pointer"

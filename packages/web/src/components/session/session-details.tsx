@@ -11,6 +11,8 @@ import {
   Camera,
   CaretDown,
   CaretRight,
+  GitDiff,
+  ChartBar,
 } from "@phosphor-icons/react";
 import { CostBreakdown } from "./cost-breakdown";
 import { api } from "@/lib/api-client";
@@ -18,6 +20,9 @@ import { toast } from "sonner";
 import { ContextMeter } from "./context-meter";
 import { FileTree } from "./file-tree";
 import { FileViewer } from "./file-viewer";
+import { ChangesPanel } from "./changes-panel";
+
+type SidebarTab = "overview" | "changes";
 
 interface SessionDetailsProps {
   session: {
@@ -41,6 +46,10 @@ interface SessionDetailsProps {
     contextTokens?: number;
     contextMaxTokens?: number;
   } | null;
+  messages?: Array<{
+    id: string;
+    toolUseBlocks?: Array<{ id: string; name: string; input: Record<string, unknown> }>;
+  }>;
 }
 
 function StatCard({
@@ -93,8 +102,9 @@ function formatTokens(n: number) {
   return String(n);
 }
 
-export function SessionDetails({ session }: SessionDetailsProps) {
+export function SessionDetails({ session, messages }: SessionDetailsProps) {
   const [viewingFile, setViewingFile] = useState<{ path: string; name: string } | null>(null);
+  const [activeTab, setActiveTab] = useState<SidebarTab>("overview");
 
   const handleFileSelect = useCallback((path: string, name: string) => {
     setViewingFile({ path, name });
@@ -128,6 +138,38 @@ export function SessionDetails({ session }: SessionDetailsProps) {
 
   return (
     <div className="flex flex-col gap-0">
+      {/* Tab bar */}
+      <div
+        className="flex border-b shrink-0"
+        style={{ borderColor: "var(--color-border)" }}
+      >
+        {([
+          { id: "overview" as const, label: "Overview", icon: <ChartBar size={13} weight="bold" /> },
+          { id: "changes" as const, label: "Changes", icon: <GitDiff size={13} weight="bold" /> },
+        ]).map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold cursor-pointer transition-colors flex-1 justify-center"
+            style={{
+              color: activeTab === tab.id ? "#4285F4" : "var(--color-text-muted)",
+              borderBottom: activeTab === tab.id ? "2px solid #4285F4" : "2px solid transparent",
+              background: "transparent",
+            }}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Changes tab */}
+      {activeTab === "changes" && (
+        <ChangesPanel messages={messages ?? []} />
+      )}
+
+      {/* Overview tab — existing content */}
+      {activeTab === "overview" && <>
       {/* Session header */}
       <div className="px-4 py-4 border-b" style={{ borderColor: "var(--color-border)" }}>
         <p className="text-xs font-medium mb-1" style={{ color: "var(--color-text-muted)" }}>
@@ -332,6 +374,7 @@ export function SessionDetails({ session }: SessionDetailsProps) {
           Export as Markdown
         </a>
       </div>
+      </>}
     </div>
   );
 }

@@ -18,6 +18,8 @@ interface MessageComposerProps {
   isRunning?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  /** Compact mode for split-pane layouts */
+  compact?: boolean;
 }
 
 export function MessageComposer({

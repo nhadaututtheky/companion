@@ -1,5 +1,6 @@
 "use client";
-import { use, useEffect, useRef, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   ArrowLeft,
   PushPin,
@@ -9,6 +10,7 @@ import {
   ShareNetwork,
   Users,
   ClockCounterClockwise,
+  TerminalWindow,
 } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
@@ -26,6 +28,11 @@ import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
+
+const TerminalPanel = dynamic(
+  () => import("@/components/panels/terminal-panel").then((m) => ({ default: m.TerminalPanel })),
+  { ssr: false },
+);
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -168,9 +175,24 @@ export function SessionPageClient({ params }: PageProps) {
   const [pinnedDrawerOpen, setPinnedDrawerOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [promptHistoryOpen, setPromptHistoryOpen] = useState(false);
+  const [terminalOpen, setTerminalOpen] = useState(false);
   const scrollToMessageRef = useRef<((index: number) => void) | null>(null);
   const getPins = usePinnedMessagesStore((s) => s.getPins);
   const pinCount = getPins(id).length;
+
+  const toggleTerminal = useCallback(() => setTerminalOpen((v) => !v), []);
+
+  // Ctrl+` keyboard shortcut for terminal toggle
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "`") {
+        e.preventDefault();
+        toggleTerminal();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [toggleTerminal]);
 
   const handleStop = async () => {
     try {
@@ -303,6 +325,28 @@ export function SessionPageClient({ params }: PageProps) {
               </span>
             )}
 
+            {/* Terminal toggle */}
+            <button
+              onClick={toggleTerminal}
+              className="p-1.5 rounded-lg transition-colors cursor-pointer"
+              style={{
+                color: terminalOpen ? "#34A853" : "var(--color-text-muted)",
+                background: terminalOpen ? "#34A85310" : "transparent",
+              }}
+              onMouseEnter={(e) => {
+                if (!terminalOpen)
+                  (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
+              }}
+              onMouseLeave={(e) => {
+                if (!terminalOpen)
+                  (e.currentTarget as HTMLElement).style.background = "transparent";
+              }}
+              aria-label="Toggle terminal (Ctrl+`)"
+              title="Toggle terminal (Ctrl+`)"
+            >
+              <TerminalWindow size={16} weight={terminalOpen ? "fill" : "bold"} />
+            </button>
+
             {/* Prompt history toggle */}
             <button
               onClick={() => setPromptHistoryOpen(true)}
@@ -356,6 +400,24 @@ export function SessionPageClient({ params }: PageProps) {
 
           {/* Messages */}
           <MessageFeed messages={messages} sessionId={id} onScrollToRef={handleScrollToRef} />
+
+          {/* Terminal panel — collapsible bottom section */}
+          {terminalOpen && (
+            <div
+              style={{
+                height: 240,
+                minHeight: 120,
+                borderTop: "1px solid var(--color-border)",
+                flexShrink: 0,
+              }}
+            >
+              <TerminalPanel
+                defaultCwd={session?.state?.cwd}
+                onClose={toggleTerminal}
+              />
+            </div>
+          )}
+
           <PermissionGate permissions={pendingPermissions} onRespond={respondPermission} />
           <MessageComposer
             onSend={sendMessage}
@@ -374,7 +436,7 @@ export function SessionPageClient({ params }: PageProps) {
           }}
         >
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <SessionDetails session={session as any} />
+          <SessionDetails session={session as any} messages={messages as any} />
         </aside>
       </div>
 

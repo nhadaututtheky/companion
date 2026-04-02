@@ -1,9 +1,25 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { X, Copy, Check, PaperPlaneTilt } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { MarkdownMessage } from "@/components/chat/markdown-message";
 import { useComposerStore } from "@/lib/stores/composer-store";
+
+const CodeViewer = dynamic(
+  () => import("./code-viewer").then((m) => ({ default: m.CodeViewer })),
+  { ssr: false, loading: () => <CodeViewerFallback /> },
+);
+
+function CodeViewerFallback() {
+  return (
+    <div className="flex items-center justify-center h-32">
+      <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        Loading editor...
+      </span>
+    </div>
+  );
+}
 
 interface FileViewerProps {
   filePath: string;
@@ -147,17 +163,7 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
           (isMarkdown ? (
             <MarkdownMessage content={content} compact />
           ) : (
-            <pre
-              className="overflow-auto m-0 whitespace-pre-wrap"
-              style={{
-                fontSize: 12,
-                lineHeight: 1.5,
-                fontFamily: "var(--font-mono)",
-                color: "var(--color-text-secondary)",
-              }}
-            >
-              {content}
-            </pre>
+            <CodeViewer content={content} fileName={fileName} />
           ))}
       </div>
 

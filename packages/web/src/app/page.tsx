@@ -5,8 +5,10 @@ import { ArrowCounterClockwise, X, TelegramLogo, Globe, Trash } from "@phosphor-
 import { Header } from "@/components/layout/header";
 import { SessionList } from "@/components/session/session-list";
 // StatsGrid moved to Header
-import { SessionGrid } from "@/components/grid/session-grid";
 import { ExpandedSession } from "@/components/grid/expanded-session";
+import { MultiSessionLayout } from "@/components/layout/multi-session-layout";
+import { LayoutSelector } from "@/components/layout/layout-selector";
+import { useLayoutStore } from "@/lib/stores/layout-store";
 import { NewSessionModal } from "@/components/session/new-session-modal";
 import { CompanionLogo } from "@/components/layout/companion-logo";
 import { ActivityTerminal } from "@/components/activity/activity-terminal";
@@ -696,11 +698,11 @@ export default function DashboardPage() {
                 onDismiss={() => setResumeBannerDismissed(true)}
               />
             )}
-            {gridSessions.length === 0 ? (
-              <EmptyCenter />
-            ) : (
-              <SessionGrid sessions={gridSessions} onExpand={handleExpand} />
-            )}
+            <MultiSessionLayout
+              gridSessions={gridSessions}
+              onExpand={handleExpand}
+              emptyState={<EmptyCenter />}
+            />
           </main>
 
           {/* Right panel — File Explorer, Browser Preview, or Search (desktop only, hidden on mobile to save space) */}
