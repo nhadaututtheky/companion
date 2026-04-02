@@ -1438,6 +1438,39 @@ code {
 }
 
 /* ── Intelligence Layer ────────────────────────────────────────────────── */
+/* Intel metrics banner */
+.intel-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.intel-metric {
+  text-align: center;
+  padding: 20px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.intel-metric-value {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.intel-metric-label {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
 .intel-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1855,6 +1888,10 @@ code {
     margin-right: auto;
   }
 
+  .intel-metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .intel-grid {
     grid-template-columns: 1fr;
   }
@@ -1926,6 +1963,19 @@ code {
 
   .section {
     padding: 64px 0;
+  }
+
+  .intel-metrics {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .intel-metric {
+    padding: 14px 8px;
+  }
+
+  .intel-metric-value {
+    font-size: 1.375rem;
   }
 }
 
