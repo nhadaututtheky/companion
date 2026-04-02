@@ -533,9 +533,17 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
         {displayed.map((s) => {
           const badge = modelBadge(s.model);
           return (
-            <button
+            <div
               key={s.id}
               onClick={() => onSelect(s.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelect(s.id);
+                }
+              }}
+              role="button"
+              tabIndex={0}
               className="group w-full flex flex-col gap-1 px-4 py-2.5 text-left transition-all cursor-pointer rounded-lg mx-2"
               style={{
                 background: activeSessionId === s.id ? "var(--color-bg-hover)" : "transparent",
@@ -595,7 +603,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
               </div>
               {/* Tags row */}
               <SessionTags sessionId={s.id} tags={s.tags ?? []} />
-            </button>
+            </div>
           );
         })}
       </div>
