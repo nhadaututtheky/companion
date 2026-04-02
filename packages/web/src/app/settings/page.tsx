@@ -16,6 +16,7 @@ import {
   EyeSlash,
   ArrowsClockwise,
   Bug,
+  Plugs,
 } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { api } from "@/lib/api-client";
@@ -26,6 +27,7 @@ import { TelegramStreaming } from "@/components/settings/telegram-streaming";
 import { TelegramStatus } from "@/components/settings/telegram-status";
 import { TelegramPreview } from "@/components/settings/telegram-preview";
 import { TelegramAntiSettings } from "@/components/settings/telegram-anti-settings";
+import { McpSettings } from "@/components/settings/mcp-settings";
 
 // ── Shared primitives ─────────────────────────────────────────────────────────
 
@@ -95,13 +97,14 @@ function InputField({
 
 // ── Tab types ────────────────────────────────────────────────────────────────
 
-type Tab = "general" | "domain" | "telegram" | "ai" | "appearance";
+type Tab = "general" | "domain" | "telegram" | "ai" | "mcp" | "appearance";
 
 const TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
   { id: "general", label: "General", icon: <Gear size={15} weight="bold" /> },
   { id: "domain", label: "Domain", icon: <Globe size={15} weight="bold" /> },
   { id: "ai", label: "AI Provider", icon: <Robot size={15} weight="bold" /> },
   { id: "telegram", label: "Telegram", icon: <TelegramLogo size={15} weight="fill" /> },
+  { id: "mcp", label: "MCP", icon: <Plugs size={15} weight="bold" /> },
   { id: "appearance", label: "Appearance", icon: <PaintBrush size={15} weight="bold" /> },
 ];
 
@@ -1912,6 +1915,7 @@ export default function SettingsPage() {
           {activeTab === "domain" && <DomainTab />}
           {activeTab === "ai" && <AIProviderTab />}
           {activeTab === "telegram" && <TelegramTab />}
+          {activeTab === "mcp" && <McpSettings />}
           {activeTab === "appearance" && <AppearanceTab />}
         </div>
       </div>

@@ -1012,4 +1012,52 @@ export const api = {
         body: JSON.stringify(config),
       }),
   },
+
+  mcpConfig: {
+    list: () =>
+      request<{
+        success: boolean;
+        data: Array<{
+          id: string;
+          name: string;
+          type: "stdio" | "streamableHttp" | "sse";
+          command?: string;
+          args?: string[];
+          url?: string;
+          env?: Record<string, string>;
+          headers?: Record<string, string>;
+          enabled: boolean;
+          description?: string;
+        }>;
+      }>("/api/mcp-config/servers"),
+
+    get: (id: string) =>
+      request<{ success: boolean; data: unknown }>(
+        `/api/mcp-config/servers/${encodeURIComponent(id)}`,
+      ),
+
+    save: (
+      id: string,
+      config: {
+        name: string;
+        type: "stdio" | "streamableHttp" | "sse";
+        command?: string;
+        args?: string[];
+        url?: string;
+        env?: Record<string, string>;
+        headers?: Record<string, string>;
+        enabled?: boolean;
+        description?: string;
+      },
+    ) =>
+      request<{ success: boolean; data: { id: string } }>(
+        `/api/mcp-config/servers/${encodeURIComponent(id)}`,
+        { method: "PUT", body: JSON.stringify(config) },
+      ),
+
+    delete: (id: string) =>
+      request<{ success: boolean }>(`/api/mcp-config/servers/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      }),
+  },
 };

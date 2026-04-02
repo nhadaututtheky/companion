@@ -19,6 +19,7 @@ import { errorRoutes } from "./errors.js";
 import { databaseRoutes } from "./database.js";
 import { workflowTemplateRoutes } from "./workflow-templates.js";
 import { workflowRoutes } from "./workflows.js";
+import { mcpConfigRoutes } from "./mcp-config.js";
 import { initWorkflowEngine } from "../services/workflow-engine.js";
 import { apiKeyAuth } from "../middleware/auth.js";
 import { createRateLimit } from "../middleware/rate-limit.js";
@@ -94,6 +95,7 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   protectedApi.route("/db", databaseRoutes);
   protectedApi.route("/workflow-templates", workflowTemplateRoutes);
   protectedApi.route("/workflows", workflowRoutes(bridge));
+  protectedApi.route("/mcp-config", mcpConfigRoutes);
 
   // Initialize workflow engine with bridge reference
   initWorkflowEngine(bridge);
