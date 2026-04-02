@@ -1110,5 +1110,18 @@ export const api = {
           triggerType: string;
         }>;
       }>(`/api/schedules/upcoming?limit=${limit}`),
+
+    runs: (id: string, limit = 50) =>
+      request<{
+        success: boolean;
+        data: Array<{
+          id: number;
+          scheduleId: string;
+          sessionId: string | null;
+          status: string;
+          reason: string | null;
+          startedAt: number;
+        }>;
+      }>(`/api/schedules/${encodeURIComponent(id)}/runs?limit=${limit}`),
   },
 };

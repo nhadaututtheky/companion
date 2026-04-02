@@ -18,7 +18,7 @@ import { randomUUID } from "node:crypto";
 import { eq, desc } from "drizzle-orm";
 import { CronExpressionParser } from "cron-parser";
 import { getDb } from "../db/client.js";
-import { schedules, projects } from "../db/schema.js";
+import { schedules, projects, scheduleRuns } from "../db/schema.js";
 import { computeAndSetNextRun } from "../services/scheduler.js";
 import type { WsBridge } from "../services/ws-bridge.js";
 import type { ApiResponse } from "@companion/shared";
@@ -293,10 +293,27 @@ export function scheduleRoutes(bridge: WsBridge): Hono {
     return c.json({ success: true, data: row } satisfies ApiResponse);
   });
 
-  // Delete schedule
+  // Run history for a schedule
+  router.get("/:id/runs", (c) => {
+    const id = c.req.param("id");
+    const limit = Math.min(Number(c.req.query("limit") ?? 50), 200);
+    const db = getDb();
+    const rows = db
+      .select()
+      .from(scheduleRuns)
+      .where(eq(scheduleRuns.scheduleId, id))
+      .orderBy(desc(scheduleRuns.startedAt))
+      .limit(limit)
+      .all();
+    return c.json({ success: true, data: rows } satisfies ApiResponse);
+  });
+
+  // Delete schedule (schedule_runs cascade-deleted via FK)
   router.delete("/:id", (c) => {
     const id = c.req.param("id");
     const db = getDb();
+    // Manually delete runs first (SQLite FK cascade needs PRAGMA foreign_keys=ON)
+    db.delete(scheduleRuns).where(eq(scheduleRuns.scheduleId, id)).run();
     db.delete(schedules).where(eq(schedules.id, id)).run();
     return c.json({ success: true } satisfies ApiResponse);
   });

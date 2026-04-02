@@ -500,6 +500,28 @@ export const schedules = sqliteTable(
   ],
 );
 
+// ─── Schedule Runs (audit trail) ────────────────────────────────────────────
+
+export const scheduleRuns = sqliteTable(
+  "schedule_runs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    scheduleId: text("schedule_id")
+      .notNull()
+      .references(() => schedules.id, { onDelete: "cascade" }),
+    sessionId: text("session_id"),
+    status: text("status").notNull(), // 'success' | 'failed' | 'skipped'
+    reason: text("reason"),
+    startedAt: integer("started_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [
+    index("idx_schedule_runs_schedule").on(table.scheduleId),
+    index("idx_schedule_runs_started_at").on(table.startedAt),
+  ],
+);
+
 // ─── Error Tracking ─────────────────────────────────────────────────────────
 
 // ─── CodeGraph Config ──────────────────────────────────────────────────────

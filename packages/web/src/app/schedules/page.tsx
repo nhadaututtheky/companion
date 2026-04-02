@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ScheduleList } from "@/components/schedule/schedule-list";
 import { ScheduleCalendar } from "@/components/schedule/schedule-calendar";
 import { ScheduleForm } from "@/components/schedule/schedule-form";
+import { ScheduleRuns } from "@/components/schedule/schedule-runs";
 import type { Schedule } from "@companion/shared";
 
 export default function SchedulesPage() {
@@ -17,6 +18,7 @@ export default function SchedulesPage() {
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
+  const [runsSchedule, setRunsSchedule] = useState<Schedule | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -162,6 +164,7 @@ export default function SchedulesPage() {
               onToggle={handleToggle}
               onRunNow={handleRunNow}
               onDelete={handleDelete}
+              onViewRuns={setRunsSchedule}
             />
 
             {/* Right: Calendar */}
@@ -225,6 +228,15 @@ export default function SchedulesPage() {
           schedule={editingSchedule}
           onClose={handleFormClose}
           onSaved={handleFormSaved}
+        />
+      )}
+
+      {/* Runs history modal */}
+      {runsSchedule && (
+        <ScheduleRuns
+          scheduleId={runsSchedule.id}
+          scheduleName={runsSchedule.name}
+          onClose={() => setRunsSchedule(null)}
         />
       )}
     </div>

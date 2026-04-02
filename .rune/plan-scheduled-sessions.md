@@ -12,8 +12,8 @@ and a visual calendar showing upcoming runs.
 |---|------|--------|-----------|---------|
 | 1 | DB Schema + Scheduler Service | ✅ Done | plan-scheduled-sessions-phase1.md | New `schedules` table, cron evaluator, tick loop |
 | 2 | REST API + Telegram Target | ✅ Done | plan-scheduled-sessions-phase2.md | CRUD routes, per-session telegram target field |
-| 3 | Web UI | ⬚ Pending | plan-scheduled-sessions-phase3.md | Calendar view, config popover, schedule CRUD forms |
-| 4 | Polish + Tests | ⬚ Pending | plan-scheduled-sessions-phase4.md | Error handling, edge cases, unit/integration tests |
+| 3 | Web UI | ✅ Done | plan-scheduled-sessions-phase3.md | Calendar view, schedule CRUD forms, header nav link |
+| 4 | Polish + Tests | ✅ Done | plan-scheduled-sessions-phase4.md | Run history, overlap prevention, tick mutex, recovery |
 
 ## Key Decisions
 

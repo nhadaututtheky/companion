@@ -1,6 +1,14 @@
 "use client";
 
-import { Clock, ArrowsClockwise, Play, Trash, Pencil, Timer } from "@phosphor-icons/react";
+import {
+  Clock,
+  ArrowsClockwise,
+  Play,
+  Trash,
+  Pencil,
+  Timer,
+  ClockCounterClockwise,
+} from "@phosphor-icons/react";
 import type { Schedule } from "@companion/shared";
 
 interface ScheduleListProps {
@@ -9,6 +17,7 @@ interface ScheduleListProps {
   onToggle: (id: string) => void;
   onRunNow: (id: string) => void;
   onDelete: (id: string) => void;
+  onViewRuns: (schedule: Schedule) => void;
 }
 
 function formatNextRun(ts: number | null): string {
@@ -35,6 +44,7 @@ export function ScheduleList({
   onToggle,
   onRunNow,
   onDelete,
+  onViewRuns,
 }: ScheduleListProps) {
   if (schedules.length === 0) {
     return (
@@ -184,6 +194,15 @@ export function ScheduleList({
                       title="Run now"
                     >
                       <Play size={12} weight="fill" />
+                    </button>
+                    <button
+                      onClick={() => onViewRuns(s)}
+                      className="p-1 rounded cursor-pointer"
+                      style={{ color: "#4285F4" }}
+                      aria-label="Run history"
+                      title="Run history"
+                    >
+                      <ClockCounterClockwise size={12} />
                     </button>
                     <button
                       onClick={() => onEdit(s)}

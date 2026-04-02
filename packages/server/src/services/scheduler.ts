@@ -5,12 +5,15 @@
  * - One-time schedules auto-disable after execution
  * - Missed runs (e.g. server was down) executed on boot
  * - Respects max session limits
+ * - Overlap prevention: skips if previous run from same schedule is still active
+ * - Concurrent tick protection via mutex flag
+ * - All runs logged to `schedule_runs` table for audit trail
  */
 
 import { CronExpressionParser } from "cron-parser";
-import { eq, and, lte } from "drizzle-orm";
+import { eq, and, lte, desc } from "drizzle-orm";
 import { getDb } from "../db/client.js";
-import { schedules, projects, sessionTemplates } from "../db/schema.js";
+import { schedules, projects, sessionTemplates, scheduleRuns, sessions } from "../db/schema.js";
 import { createLogger } from "../logger.js";
 import type { WsBridge } from "./ws-bridge.js";
 import type { Schedule } from "@companion/shared";
@@ -21,6 +24,7 @@ const TICK_INTERVAL_MS = 60_000; // 60 seconds
 
 let tickInterval: ReturnType<typeof setInterval> | null = null;
 let bridgeRef: WsBridge | null = null;
+let tickInProgress = false; // Concurrent tick protection
 
 // ── Cron Helpers ──────────────────────────────────────────────────────
 
@@ -37,9 +41,79 @@ function computeNextRun(cronExpr: string, timezone: string): Date | null {
   }
 }
 
+// ── Run Logging ─────────────────────────────────────────────────────
+
+function logRun(
+  scheduleId: string,
+  status: "success" | "failed" | "skipped",
+  sessionId?: string,
+  reason?: string,
+) {
+  try {
+    const db = getDb();
+    db.insert(scheduleRuns)
+      .values({
+        scheduleId,
+        sessionId: sessionId ?? null,
+        status,
+        reason: reason ?? null,
+        startedAt: new Date(),
+      })
+      .run();
+  } catch (err) {
+    log.error("Failed to log schedule run", { scheduleId, error: String(err) });
+  }
+}
+
+// ── Overlap Detection ───────────────────────────────────────────────
+
+function hasActiveSession(scheduleId: string): boolean {
+  const db = getDb();
+
+  // Check if the last run for this schedule resulted in a still-active session
+  const lastRun = db
+    .select()
+    .from(scheduleRuns)
+    .where(and(eq(scheduleRuns.scheduleId, scheduleId), eq(scheduleRuns.status, "success")))
+    .orderBy(desc(scheduleRuns.startedAt))
+    .limit(1)
+    .get();
+
+  if (!lastRun?.sessionId) return false;
+
+  // Check if that session is still running
+  const session = db
+    .select({ status: sessions.status })
+    .from(sessions)
+    .where(eq(sessions.id, lastRun.sessionId))
+    .get();
+
+  if (!session) return false;
+
+  const activeStatuses = ["starting", "running", "waiting", "idle", "busy"];
+  return activeStatuses.includes(session.status);
+}
+
 // ── Core Tick ─────────────────────────────────────────────────────────
 
 async function tick() {
+  if (!bridgeRef) return;
+
+  // Concurrent tick protection
+  if (tickInProgress) {
+    log.debug("Tick already in progress — skipping");
+    return;
+  }
+
+  tickInProgress = true;
+  try {
+    await tickInner();
+  } finally {
+    tickInProgress = false;
+  }
+}
+
+async function tickInner() {
   if (!bridgeRef) return;
 
   const db = getDb();
@@ -64,6 +138,7 @@ async function tick() {
         scheduleId: schedule.id,
         error: String(err),
       });
+      logRun(schedule.id, "failed", undefined, String(err));
     }
   }
 }
@@ -72,6 +147,27 @@ async function executeSchedule(schedule: Schedule) {
   if (!bridgeRef) return;
 
   const db = getDb();
+
+  // Overlap prevention: skip if previous run is still active
+  if (hasActiveSession(schedule.id)) {
+    log.info("Skipping schedule — previous run still active", {
+      scheduleId: schedule.id,
+      name: schedule.name,
+    });
+    logRun(schedule.id, "skipped", undefined, "Previous run still active");
+
+    // Still compute next run for cron schedules so they don't fire again immediately
+    if (schedule.triggerType === "cron" && schedule.cronExpression) {
+      const nextRun = computeNextRun(schedule.cronExpression, schedule.timezone);
+      if (nextRun) {
+        db.update(schedules)
+          .set({ nextRunAt: nextRun, updatedAt: new Date() })
+          .where(eq(schedules.id, schedule.id))
+          .run();
+      }
+    }
+    return;
+  }
 
   // Resolve project directory
   let cwd = ".";
@@ -90,7 +186,6 @@ async function executeSchedule(schedule: Schedule) {
   // Resolve prompt — either direct or from template
   let prompt = schedule.prompt ?? "";
   if (schedule.templateId && !prompt) {
-    // Template resolution — look up template and substitute vars
     try {
       const tmpl = db
         .select()
@@ -100,7 +195,6 @@ async function executeSchedule(schedule: Schedule) {
 
       if (tmpl) {
         prompt = tmpl.prompt;
-        // Substitute template variables
         if (schedule.templateVars) {
           for (const [key, value] of Object.entries(schedule.templateVars)) {
             prompt = prompt.replaceAll(`{{${key}}}`, value);
@@ -114,6 +208,7 @@ async function executeSchedule(schedule: Schedule) {
 
   if (!prompt) {
     log.warn("Schedule has no prompt — skipping", { scheduleId: schedule.id });
+    logRun(schedule.id, "skipped", undefined, "No prompt configured");
     return;
   }
 
@@ -124,8 +219,9 @@ async function executeSchedule(schedule: Schedule) {
   });
 
   // Launch session via bridge
+  let sessionId: string | undefined;
   try {
-    await bridgeRef.startSession({
+    sessionId = await bridgeRef.startSession({
       projectSlug: schedule.projectSlug ?? undefined,
       cwd,
       model: schedule.model,
@@ -139,8 +235,13 @@ async function executeSchedule(schedule: Schedule) {
       scheduleId: schedule.id,
       error: String(err),
     });
+    logRun(schedule.id, "failed", undefined, `Launch failed: ${String(err)}`);
+    // Don't disable the schedule on launch failure — it may be transient
     return;
   }
+
+  // Log successful run
+  logRun(schedule.id, "success", sessionId);
 
   // Update schedule state
   const now = Date.now();
@@ -191,11 +292,12 @@ function checkMissedRuns() {
     .all();
 
   if (missed.length > 0) {
-    log.info("Found missed one-time schedules", { count: missed.length });
-    // These will be picked up by the next tick
+    log.info("Found missed one-time schedules — will fire on next tick", {
+      count: missed.length,
+    });
   }
 
-  // For cron schedules that are overdue, recompute nextRunAt to now (they'll fire on next tick)
+  // For cron schedules that are overdue, recompute nextRunAt fresh
   const overdueCron = db
     .select()
     .from(schedules)
@@ -216,6 +318,10 @@ function checkMissedRuns() {
           .set({ nextRunAt: nextRun, updatedAt: new Date(now) })
           .where(eq(schedules.id, s.id))
           .run();
+        log.debug("Recomputed nextRunAt for overdue cron", {
+          scheduleId: s.id,
+          nextRunAt: nextRun.toISOString(),
+        });
       }
     }
   }
@@ -256,6 +362,7 @@ export function stopScheduler() {
     tickInterval = null;
   }
   bridgeRef = null;
+  tickInProgress = false;
   log.info("Scheduler stopped");
 }
 
