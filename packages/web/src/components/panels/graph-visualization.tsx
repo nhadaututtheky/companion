@@ -145,7 +145,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
   // Load graph data
   useEffect(() => {
     if (!projectSlug) return;
-    setLoading(true);
+    setLoading(true); // eslint-disable-line react-hooks/set-state-in-effect
     setError(null);
 
     (async () => {

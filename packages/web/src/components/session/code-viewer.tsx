@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import CodeMirror, { type ReactCodeMirrorProps } from "@uiw/react-codemirror";
+import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import { rust } from "@codemirror/lang-rust";

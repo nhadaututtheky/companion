@@ -7,8 +7,6 @@ import { SessionList } from "@/components/session/session-list";
 // StatsGrid moved to Header
 import { ExpandedSession } from "@/components/grid/expanded-session";
 import { MultiSessionLayout } from "@/components/layout/multi-session-layout";
-import { LayoutSelector } from "@/components/layout/layout-selector";
-import { useLayoutStore } from "@/lib/stores/layout-store";
 import { NewSessionModal } from "@/components/session/new-session-modal";
 import { CompanionLogo } from "@/components/layout/companion-logo";
 import { ActivityTerminal } from "@/components/activity/activity-terminal";

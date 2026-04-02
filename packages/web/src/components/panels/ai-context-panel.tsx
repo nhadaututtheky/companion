@@ -22,7 +22,6 @@ import {
   Plus,
   MinusCircle,
   Play,
-  Stop,
   Package,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
@@ -1156,7 +1155,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
   // Sync external projectSlug changes
   useEffect(() => {
     if (initialSlug && initialSlug !== selectedSlug) {
-      setSelectedSlug(initialSlug);
+      setSelectedSlug(initialSlug); // eslint-disable-line react-hooks/set-state-in-effect
     }
   }, [initialSlug]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1207,7 +1206,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
 
   // ── Polling
   useEffect(() => {
-    loadCgStatus();
+    loadCgStatus(); // eslint-disable-line react-hooks/set-state-in-effect
     loadCgStats();
     loadHotFiles();
     loadWiStatus();

@@ -265,7 +265,7 @@ webintelRoutes.get("/docker-status", async (c) => {
     const proc = Bun.spawnSync(["docker", "info"], { stdout: "pipe", stderr: "pipe" });
     dockerAvailable = proc.exitCode === 0;
   } catch {
-    dockerAvailable = false;
+    // dockerAvailable stays false
   }
 
   if (dockerAvailable) {
