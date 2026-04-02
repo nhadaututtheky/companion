@@ -165,7 +165,9 @@ export default function LoginPage() {
 
         {/* Footer hint */}
         <p className="text-center text-xs" style={{ color: "var(--color-text-muted)" }}>
-          The access code is set via <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem" }}>API_KEY</code> in your server config.
+          The access code is set via{" "}
+          <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem" }}>API_KEY</code> in
+          your server config.
         </p>
       </div>
     </div>
