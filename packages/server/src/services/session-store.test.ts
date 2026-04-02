@@ -37,6 +37,7 @@ import {
   removeActiveSession,
   getAllActiveSessions,
   countActiveSessions,
+  flushAllWriters,
 } from "./session-store.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -104,6 +105,7 @@ describe("storeMessage and getSessionMessages", () => {
       content: "Hello world",
       source: "api",
     });
+    flushAllWriters();
 
     const result = getSessionMessages(sessionId);
     expect(result.total).toBe(1);
@@ -118,6 +120,7 @@ describe("storeMessage and getSessionMessages", () => {
     storeMessage({ id: "msg-a", sessionId, role: "user", content: "First" });
     storeMessage({ id: "msg-b", sessionId, role: "assistant", content: "Second" });
     storeMessage({ id: "msg-c", sessionId, role: "user", content: "Third" });
+    flushAllWriters();
 
     const result = getSessionMessages(sessionId);
     expect(result.total).toBe(3);
@@ -130,6 +133,7 @@ describe("storeMessage and getSessionMessages", () => {
 
     storeMessage({ id: "msg-s1", sessionId: s1, role: "user", content: "For s1" });
     storeMessage({ id: "msg-s2", sessionId: s2, role: "user", content: "For s2" });
+    flushAllWriters();
 
     const result = getSessionMessages(s1);
     expect(result.total).toBe(1);
@@ -148,6 +152,7 @@ describe("storeMessage and getSessionMessages", () => {
     for (let i = 0; i < 5; i++) {
       storeMessage({ id: `msg-${i}`, sessionId, role: "user", content: `Message ${i}` });
     }
+    flushAllWriters();
 
     const page1 = getSessionMessages(sessionId, { limit: 2, offset: 0 });
     expect(page1.items).toHaveLength(2);
@@ -170,6 +175,7 @@ describe("storeMessage and getSessionMessages", () => {
       source: "telegram",
       sourceId: "tg-12345",
     });
+    flushAllWriters();
 
     const result = getSessionMessages(sessionId);
     expect(result.items[0]!.source).toBe("telegram");

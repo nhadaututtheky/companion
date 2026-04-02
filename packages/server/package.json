@@ -6,7 +6,7 @@
     "dev": "bun run --hot src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target bun",
     "check": "tsc --noEmit",
-    "test": "bun test src/__tests__/ && bun test src/tests/",
+    "test": "bun test src/__tests__/ && bun test src/tests/ && bun test src/services/",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
