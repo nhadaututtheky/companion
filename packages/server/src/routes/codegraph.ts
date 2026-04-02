@@ -3,6 +3,7 @@
  */
 
 import { Hono } from "hono";
+import { eq } from "drizzle-orm";
 import {
   scanProject,
   getScanStatus,
@@ -12,7 +13,7 @@ import {
 } from "../codegraph/index.js";
 import { describeNodes } from "../codegraph/semantic-describer.js";
 import { incrementalRescan } from "../codegraph/diff-updater.js";
-import { getNodeEdges } from "../codegraph/graph-store.js";
+import { getNodeEdges, getProjectNodes, getProjectEdges } from "../codegraph/graph-store.js";
 import {
   getImpactRadius,
   getReverseDependencies,
@@ -20,6 +21,8 @@ import {
   getHotFiles,
 } from "../codegraph/query-engine.js";
 import { getExternalPackages, getPackageUsageCounts } from "../codegraph/webintel-bridge.js";
+import { getDb } from "../db/client.js";
+import { codegraphConfig } from "../db/schema.js";
 import type { ApiResponse } from "@companion/shared";
 
 export const codegraphRoutes = new Hono();
@@ -223,4 +226,149 @@ codegraphRoutes.get("/packages", (c) => {
   }));
 
   return c.json({ success: true, data } satisfies ApiResponse);
+});
+
+// ─── Graph Data (for visualization) ────────────────────────────────────
+
+/** GET /codegraph/graph?project=slug — full graph nodes + edges for visualization */
+codegraphRoutes.get("/graph", (c) => {
+  const project = c.req.query("project");
+  if (!project) {
+    return c.json(
+      { success: false, error: "project query param required" } satisfies ApiResponse,
+      400,
+    );
+  }
+
+  const nodes = getProjectNodes(project);
+  const edges = getProjectEdges(project);
+
+  // Limit for performance — warn if too large
+  const MAX_NODES = 500;
+  if (nodes.length > MAX_NODES) {
+    return c.json({
+      success: true,
+      data: {
+        nodes: nodes.slice(0, MAX_NODES),
+        edges: edges.filter(
+          (e) =>
+            nodes.slice(0, MAX_NODES).some((n) => n.id === e.sourceNodeId) &&
+            nodes.slice(0, MAX_NODES).some((n) => n.id === e.targetNodeId),
+        ),
+        truncated: true,
+        totalNodes: nodes.length,
+      },
+    } satisfies ApiResponse);
+  }
+
+  return c.json({
+    success: true,
+    data: { nodes, edges, truncated: false, totalNodes: nodes.length },
+  } satisfies ApiResponse);
+});
+
+// ─── Config ────────────────────────────────────────────────────────────
+
+/** GET /codegraph/config?project=slug — get injection config */
+codegraphRoutes.get("/config", (c) => {
+  const project = c.req.query("project");
+  if (!project) {
+    return c.json(
+      { success: false, error: "project query param required" } satisfies ApiResponse,
+      400,
+    );
+  }
+
+  const db = getDb();
+  const row = db
+    .select()
+    .from(codegraphConfig)
+    .where(eq(codegraphConfig.projectSlug, project))
+    .get();
+
+  // Return defaults if no config exists
+  const config = row ?? {
+    projectSlug: project,
+    injectionEnabled: true,
+    projectMapEnabled: true,
+    messageContextEnabled: true,
+    planReviewEnabled: true,
+    breakCheckEnabled: true,
+    webDocsEnabled: true,
+    excludePatterns: [],
+    maxContextTokens: 800,
+    updatedAt: new Date().toISOString(),
+  };
+
+  return c.json({ success: true, data: config } satisfies ApiResponse);
+});
+
+/** PUT /codegraph/config — update injection config */
+codegraphRoutes.put("/config", async (c) => {
+  const body = await c.req.json<{
+    projectSlug?: string;
+    injectionEnabled?: boolean;
+    projectMapEnabled?: boolean;
+    messageContextEnabled?: boolean;
+    planReviewEnabled?: boolean;
+    breakCheckEnabled?: boolean;
+    webDocsEnabled?: boolean;
+    excludePatterns?: string[];
+    maxContextTokens?: number;
+  }>();
+
+  if (!body.projectSlug) {
+    return c.json({ success: false, error: "projectSlug is required" } satisfies ApiResponse, 400);
+  }
+
+  const db = getDb();
+  const existing = db
+    .select()
+    .from(codegraphConfig)
+    .where(eq(codegraphConfig.projectSlug, body.projectSlug))
+    .get();
+
+  const now = new Date().toISOString();
+
+  if (existing) {
+    db.update(codegraphConfig)
+      .set({
+        ...(body.injectionEnabled !== undefined && { injectionEnabled: body.injectionEnabled }),
+        ...(body.projectMapEnabled !== undefined && { projectMapEnabled: body.projectMapEnabled }),
+        ...(body.messageContextEnabled !== undefined && {
+          messageContextEnabled: body.messageContextEnabled,
+        }),
+        ...(body.planReviewEnabled !== undefined && { planReviewEnabled: body.planReviewEnabled }),
+        ...(body.breakCheckEnabled !== undefined && { breakCheckEnabled: body.breakCheckEnabled }),
+        ...(body.webDocsEnabled !== undefined && { webDocsEnabled: body.webDocsEnabled }),
+        ...(body.excludePatterns !== undefined && { excludePatterns: body.excludePatterns }),
+        ...(body.maxContextTokens !== undefined && { maxContextTokens: body.maxContextTokens }),
+        updatedAt: now,
+      })
+      .where(eq(codegraphConfig.projectSlug, body.projectSlug))
+      .run();
+  } else {
+    db.insert(codegraphConfig)
+      .values({
+        projectSlug: body.projectSlug,
+        injectionEnabled: body.injectionEnabled ?? true,
+        projectMapEnabled: body.projectMapEnabled ?? true,
+        messageContextEnabled: body.messageContextEnabled ?? true,
+        planReviewEnabled: body.planReviewEnabled ?? true,
+        breakCheckEnabled: body.breakCheckEnabled ?? true,
+        webDocsEnabled: body.webDocsEnabled ?? true,
+        excludePatterns: body.excludePatterns ?? [],
+        maxContextTokens: body.maxContextTokens ?? 800,
+        updatedAt: now,
+      })
+      .run();
+  }
+
+  const updated = db
+    .select()
+    .from(codegraphConfig)
+    .where(eq(codegraphConfig.projectSlug, body.projectSlug))
+    .get();
+
+  return c.json({ success: true, data: updated } satisfies ApiResponse);
 });

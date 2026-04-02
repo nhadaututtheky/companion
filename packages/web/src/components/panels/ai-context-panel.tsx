@@ -18,8 +18,17 @@ import {
   Trash,
   Link as LinkIcon,
   Key,
+  Gear,
+  Plus,
+  MinusCircle,
+  Play,
+  Stop,
+  Package,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
+import { useContextFeedStore } from "@/lib/stores/context-feed-store";
+import { GraphVisualization } from "./graph-visualization";
+import type { ContextInjectionEvent } from "@/lib/stores/context-feed-store";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -555,13 +564,564 @@ function QuickResearch() {
   );
 }
 
+// ── Injection Type Helpers ─────────────────────────────────────────────
+
+const INJECTION_META: Record<
+  ContextInjectionEvent["injectionType"],
+  { label: string; color: string; icon: React.ElementType }
+> = {
+  project_map: { label: "Project Map", color: "#A855F7", icon: TreeStructure },
+  message_context: { label: "Code Context", color: "#6366F1", icon: Lightning },
+  plan_review: { label: "Plan Review", color: "#F59E0B", icon: File },
+  break_check: { label: "Break Check", color: "#EA4335", icon: WarningCircle },
+  web_docs: { label: "Library Docs", color: "#4285F4", icon: Globe },
+};
+
+function formatTimeAgo(ts: number): string {
+  const diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 5) return "just now";
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  return `${Math.floor(diff / 3600)}h ago`;
+}
+
+// ── Feed Tab ──────────────────────────────────────────────────────────
+
+function FeedTab({ filterSessionId }: { filterSessionId?: string }) {
+  const events = useContextFeedStore((s) => s.events);
+  const totalCount = useContextFeedStore((s) => s.totalCount);
+  const clear = useContextFeedStore((s) => s.clear);
+
+  const filtered = filterSessionId ? events.filter((e) => e.sessionId === filterSessionId) : events;
+
+  return (
+    <div className="flex flex-col gap-2">
+      {/* Header with counter */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium" style={{ color: "var(--color-text-muted)" }}>
+          {totalCount} injection{totalCount !== 1 ? "s" : ""} total
+        </span>
+        {events.length > 0 && (
+          <button
+            onClick={clear}
+            className="text-xs px-2 py-0.5 rounded cursor-pointer"
+            style={{ color: "var(--color-text-muted)", background: "var(--color-bg-elevated)" }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/* Event list */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-8" style={{ color: "var(--color-text-muted)" }}>
+          <Brain size={32} weight="light" className="mx-auto mb-2" style={{ opacity: 0.3 }} />
+          <p className="text-sm">No injections yet</p>
+          <p className="text-xs mt-1">Context events appear here as you chat with Claude</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1">
+          {filtered.map((evt) => {
+            const meta = INJECTION_META[evt.injectionType];
+            const Icon = meta.icon;
+            return (
+              <div
+                key={evt.id}
+                className="flex items-start gap-2.5 px-2.5 py-2 rounded-lg"
+                style={{ background: "var(--color-bg-elevated)" }}
+              >
+                <div className="mt-0.5 rounded p-1" style={{ background: meta.color + "15" }}>
+                  <Icon size={12} weight="bold" style={{ color: meta.color }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-semibold" style={{ color: meta.color }}>
+                      {meta.label}
+                    </span>
+                    <span
+                      className="text-xs font-mono"
+                      style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                    >
+                      ~{evt.tokenEstimate} tokens
+                    </span>
+                  </div>
+                  <div
+                    className="text-xs mt-0.5 truncate"
+                    style={{ color: "var(--color-text-secondary)" }}
+                  >
+                    {evt.summary}
+                  </div>
+                  <div
+                    className="text-xs mt-0.5"
+                    style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                  >
+                    {evt.sessionId.slice(0, 8)}... · {formatTimeAgo(evt.timestamp)}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Toggle Row ────────────────────────────────────────────────────────
+
+function ToggleRow({
+  label,
+  checked,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <label
+      className="flex items-center justify-between py-1.5 cursor-pointer"
+      style={{ opacity: disabled ? 0.4 : 1 }}
+    >
+      <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+        {label}
+      </span>
+      <button
+        role="switch"
+        aria-checked={checked}
+        onClick={() => !disabled && onChange(!checked)}
+        disabled={disabled}
+        className="relative rounded-full transition-colors cursor-pointer"
+        style={{
+          width: 32,
+          height: 18,
+          background: checked ? "#A855F7" : "var(--color-border)",
+        }}
+      >
+        <span
+          className="absolute top-0.5 rounded-full bg-white transition-transform"
+          style={{
+            width: 14,
+            height: 14,
+            left: 2,
+            transform: checked ? "translateX(14px)" : "translateX(0)",
+          }}
+        />
+      </button>
+    </label>
+  );
+}
+
+// ── Settings Tab ──────────────────────────────────────────────────────
+
+interface CodeGraphConfigState {
+  injectionEnabled: boolean;
+  projectMapEnabled: boolean;
+  messageContextEnabled: boolean;
+  planReviewEnabled: boolean;
+  breakCheckEnabled: boolean;
+  webDocsEnabled: boolean;
+  excludePatterns: string[];
+  maxContextTokens: number;
+}
+
+function SettingsTab({ projectSlug }: { projectSlug: string }) {
+  const [config, setConfig] = useState<CodeGraphConfigState | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [newPattern, setNewPattern] = useState("");
+
+  // Load config
+  useEffect(() => {
+    if (!projectSlug) return;
+    (async () => {
+      try {
+        const res = await api.codegraph.getConfig(projectSlug);
+        if (res.success) setConfig(res.data);
+      } catch {
+        /* ignore */
+      }
+    })();
+  }, [projectSlug]);
+
+  const save = useCallback(
+    async (patch: Partial<CodeGraphConfigState>) => {
+      if (!projectSlug) return;
+      setSaving(true);
+      try {
+        await api.codegraph.updateConfig({ projectSlug, ...patch });
+        setConfig((prev) => (prev ? { ...prev, ...patch } : prev));
+      } catch {
+        /* ignore */
+      }
+      setSaving(false);
+    },
+    [projectSlug],
+  );
+
+  if (!projectSlug) {
+    return (
+      <div className="text-center py-6 text-sm" style={{ color: "var(--color-text-muted)" }}>
+        Select a project to configure
+      </div>
+    );
+  }
+
+  if (!config) {
+    return (
+      <div className="flex justify-center py-6">
+        <CircleNotch
+          size={20}
+          className="animate-spin"
+          style={{ color: "var(--color-text-muted)" }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Master toggle */}
+      <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
+        <div className="flex items-center gap-2 mb-2">
+          <Gear size={14} weight="bold" style={{ color: "#A855F7" }} />
+          <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            Context Injection
+          </span>
+          {saving && (
+            <CircleNotch
+              size={10}
+              className="animate-spin ml-auto"
+              style={{ color: "var(--color-text-muted)" }}
+            />
+          )}
+        </div>
+        <ToggleRow
+          label="Enable all context injection"
+          checked={config.injectionEnabled}
+          onChange={(v) => save({ injectionEnabled: v })}
+        />
+      </div>
+
+      {/* Per-type toggles */}
+      <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
+        <span
+          className="text-xs font-semibold block mb-2"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          Injection Types
+        </span>
+        <div className="flex flex-col">
+          <ToggleRow
+            label="Project map (session start)"
+            checked={config.projectMapEnabled}
+            onChange={(v) => save({ projectMapEnabled: v })}
+            disabled={!config.injectionEnabled}
+          />
+          <ToggleRow
+            label="Code context (per message)"
+            checked={config.messageContextEnabled}
+            onChange={(v) => save({ messageContextEnabled: v })}
+            disabled={!config.injectionEnabled}
+          />
+          <ToggleRow
+            label="Plan review (plan detection)"
+            checked={config.planReviewEnabled}
+            onChange={(v) => save({ planReviewEnabled: v })}
+            disabled={!config.injectionEnabled}
+          />
+          <ToggleRow
+            label="Break check (after edits)"
+            checked={config.breakCheckEnabled}
+            onChange={(v) => save({ breakCheckEnabled: v })}
+            disabled={!config.injectionEnabled}
+          />
+          <ToggleRow
+            label="Library docs (web scraping)"
+            checked={config.webDocsEnabled}
+            onChange={(v) => save({ webDocsEnabled: v })}
+            disabled={!config.injectionEnabled}
+          />
+        </div>
+      </div>
+
+      {/* Token budget */}
+      <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
+        <span
+          className="text-xs font-semibold block mb-2"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          Token Budget (per message context)
+        </span>
+        <div className="flex items-center gap-3">
+          <input
+            type="range"
+            min={200}
+            max={2000}
+            step={100}
+            value={config.maxContextTokens}
+            onChange={(e) => {
+              const v = parseInt(e.target.value, 10);
+              setConfig((prev) => (prev ? { ...prev, maxContextTokens: v } : prev));
+            }}
+            onMouseUp={() => save({ maxContextTokens: config.maxContextTokens })}
+            onTouchEnd={() => save({ maxContextTokens: config.maxContextTokens })}
+            className="flex-1"
+            style={{ accentColor: "#A855F7" }}
+            aria-label="Max context tokens"
+          />
+          <span
+            className="text-xs font-mono w-14 text-right"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            {config.maxContextTokens}
+          </span>
+        </div>
+        <div
+          className="flex justify-between text-xs mt-1"
+          style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+        >
+          <span>200</span>
+          <span>2000</span>
+        </div>
+      </div>
+
+      {/* Exclude patterns */}
+      <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
+        <span
+          className="text-xs font-semibold block mb-2"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          Exclude Patterns
+        </span>
+        <div className="flex gap-1.5 mb-2">
+          <input
+            type="text"
+            value={newPattern}
+            onChange={(e) => setNewPattern(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && newPattern.trim()) {
+                const updated = [...config.excludePatterns, newPattern.trim()];
+                setNewPattern("");
+                save({ excludePatterns: updated });
+              }
+            }}
+            placeholder="**/test/** or **/*.spec.ts"
+            className="flex-1 text-xs px-2.5 py-1.5 rounded-md outline-none"
+            style={{
+              background: "var(--color-bg-base)",
+              color: "var(--color-text-primary)",
+              border: "1px solid var(--color-border)",
+            }}
+            aria-label="Add exclude pattern"
+          />
+          <button
+            onClick={() => {
+              if (newPattern.trim()) {
+                const updated = [...config.excludePatterns, newPattern.trim()];
+                setNewPattern("");
+                save({ excludePatterns: updated });
+              }
+            }}
+            disabled={!newPattern.trim()}
+            className="p-1.5 rounded-md cursor-pointer disabled:opacity-40"
+            style={{ background: "#A855F720", color: "#A855F7" }}
+            aria-label="Add pattern"
+          >
+            <Plus size={12} weight="bold" />
+          </button>
+        </div>
+        {config.excludePatterns.length === 0 ? (
+          <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            No exclude patterns set
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1">
+            {config.excludePatterns.map((pattern, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between px-2 py-1 rounded"
+                style={{ background: "var(--color-bg-base)" }}
+              >
+                <span
+                  className="text-xs font-mono truncate"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  {pattern}
+                </span>
+                <button
+                  onClick={() => {
+                    const updated = config.excludePatterns.filter((_, i) => i !== idx);
+                    save({ excludePatterns: updated });
+                  }}
+                  className="p-0.5 cursor-pointer shrink-0"
+                  style={{ color: "#EA4335" }}
+                  aria-label={`Remove pattern ${pattern}`}
+                >
+                  <MinusCircle size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Webclaw Setup Wizard ──────────────────────────────────────────────
+
+function WebclawSetup({ onStarted }: { onStarted: () => void }) {
+  const [dockerStatus, setDockerStatus] = useState<{
+    dockerAvailable: boolean;
+    webclawRunning: boolean;
+    webclawHealthy: boolean;
+  } | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [apiKey, setApiKey] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [showManual, setShowManual] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.webintel.dockerStatus();
+        if (res.success) setDockerStatus(res.data);
+      } catch {
+        /* ignore */
+      }
+    })();
+  }, []);
+
+  const handleStart = async () => {
+    setStarting(true);
+    setError(null);
+    try {
+      const res = await api.webintel.startWebclaw(apiKey || undefined);
+      if (res.success) {
+        // Wait a moment for container to start, then refresh
+        setTimeout(onStarted, 3000);
+      } else {
+        setError("Failed to start webclaw");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to start webclaw");
+    }
+    setStarting(false);
+  };
+
+  return (
+    <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
+      <div className="flex items-center gap-2 mb-2">
+        <Package size={14} weight="bold" style={{ color: "#4285F4" }} />
+        <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          Docs Engine Setup
+        </span>
+      </div>
+
+      <p className="text-xs mb-3" style={{ color: "var(--color-text-muted)" }}>
+        Webclaw powers library docs auto-injection. Scraping works without an API key; web search
+        requires one.
+      </p>
+
+      {dockerStatus === null ? (
+        <div className="flex justify-center py-2">
+          <CircleNotch
+            size={16}
+            className="animate-spin"
+            style={{ color: "var(--color-text-muted)" }}
+          />
+        </div>
+      ) : dockerStatus.dockerAvailable ? (
+        <div className="flex flex-col gap-2">
+          {/* API key (optional) */}
+          <div>
+            <span className="text-xs block mb-1" style={{ color: "var(--color-text-muted)" }}>
+              API Key (optional — for web search)
+            </span>
+            <input
+              type="text"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="WEBCLAW_API_KEY"
+              className="w-full text-xs px-2.5 py-1.5 rounded-md outline-none"
+              style={{
+                background: "var(--color-bg-base)",
+                color: "var(--color-text-primary)",
+                border: "1px solid var(--color-border)",
+              }}
+              aria-label="Webclaw API key"
+            />
+          </div>
+
+          {/* Start button */}
+          <button
+            onClick={handleStart}
+            disabled={starting}
+            className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50"
+            style={{ background: "#4285F4", color: "#fff" }}
+          >
+            {starting ? (
+              <CircleNotch size={14} className="animate-spin" />
+            ) : (
+              <Play size={14} weight="fill" />
+            )}
+            {starting ? "Starting..." : "Start Docs Engine"}
+          </button>
+
+          {error && (
+            <div className="flex items-center gap-1.5 text-xs" style={{ color: "#EA4335" }}>
+              <WarningCircle size={12} /> {error}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <div
+            className="flex items-center gap-1.5 text-xs px-2 py-1.5 rounded"
+            style={{ background: "#FBBC0415", color: "#FBBC04" }}
+          >
+            <WarningCircle size={12} /> Docker not detected
+          </div>
+          <button
+            onClick={() => setShowManual(!showManual)}
+            className="text-xs cursor-pointer text-left"
+            style={{ color: "#4285F4" }}
+          >
+            {showManual ? "Hide" : "Show"} manual setup instructions
+          </button>
+          {showManual && (
+            <pre
+              className="text-xs p-2 rounded overflow-auto"
+              style={{
+                background: "var(--color-bg-base)",
+                color: "var(--color-text-primary)",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {`# Install Docker: https://docs.docker.com/get-docker/
+
+# Then run:
+docker run -d -p 3100:3000 \\
+  --name companion-webclaw \\
+  ghcr.io/0xmassi/webclaw:latest`}
+            </pre>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main Panel ──────────────────────────────────────────────────────────
 
 export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextPanelProps) {
   // ── Project selector state
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedSlug, setSelectedSlug] = useState(initialSlug ?? "");
-  const [tab, setTab] = useState<"explore" | "feed">("explore");
+  const injectionCount = useContextFeedStore((s) => s.totalCount);
+  const [tab, setTab] = useState<"explore" | "feed" | "settings">("explore");
 
   // ── CodeGraph state
   const [cgReady, setCgReady] = useState(false);
@@ -722,6 +1282,14 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
           <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
             AI Context
           </span>
+          {injectionCount > 0 && (
+            <span
+              className="text-xs font-mono px-1.5 py-0.5 rounded-full"
+              style={{ background: "#A855F720", color: "#A855F7", fontSize: 10 }}
+            >
+              {injectionCount}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -811,7 +1379,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
 
         {/* Tabs */}
         <div className="flex gap-1" style={{ borderBottom: "1px solid var(--color-border)" }}>
-          {(["explore", "feed"] as const).map((t) => (
+          {(["explore", "feed", "settings"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -826,7 +1394,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                 borderBottomColor: tab === t ? "#A855F7" : "transparent",
               }}
             >
-              {t === "explore" ? "Explore" : "Feed"}
+              {t === "explore" ? "Explore" : t === "feed" ? "Feed" : "Settings"}
             </button>
           ))}
         </div>
@@ -933,6 +1501,9 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                     Last scan: {new Date(cgJob.completedAt).toLocaleString()}
                   </div>
                 )}
+
+                {/* Graph Visualization */}
+                <GraphVisualization projectSlug={slug} />
               </>
             )}
 
@@ -973,31 +1544,15 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
               </>
             )}
 
-            {!wiAvailable && (
-              <div
-                className="text-xs text-center py-3 rounded-lg"
-                style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-muted)" }}
-              >
-                Docs engine offline — start webclaw sidecar:
-                <pre
-                  className="mt-1 p-2 rounded text-left text-xs"
-                  style={{ background: "var(--color-bg-base)" }}
-                >
-                  docker run -d -p 3100:3000 ghcr.io/0xmassi/webclaw
-                </pre>
-              </div>
-            )}
+            {!wiAvailable && <WebclawSetup onStarted={loadWiStatus} />}
           </div>
         )}
 
-        {/* Feed Tab (placeholder) */}
-        {tab === "feed" && (
-          <div className="text-center py-8" style={{ color: "var(--color-text-muted)" }}>
-            <Brain size={32} weight="light" className="mx-auto mb-2" style={{ opacity: 0.3 }} />
-            <p className="text-sm">Live context feed coming soon</p>
-            <p className="text-xs mt-1">See what AI context gets injected into each message</p>
-          </div>
-        )}
+        {/* Feed Tab */}
+        {tab === "feed" && <FeedTab />}
+
+        {/* Settings Tab */}
+        {tab === "settings" && <SettingsTab projectSlug={slug} />}
       </div>
     </div>
   );

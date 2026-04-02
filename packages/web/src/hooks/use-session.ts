@@ -3,6 +3,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useWebSocket } from "./use-websocket";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useActivityStore } from "@/lib/stores/activity-store";
+import { useContextFeedStore } from "@/lib/stores/context-feed-store";
 import { notify } from "./use-notifications";
 import { api } from "@/lib/api-client";
 import type {
@@ -682,6 +683,24 @@ export function useSession(sessionId: string): UseSessionReturn {
           setSpectatorCount(sc.count);
           break;
         }
+      }
+
+      // Handle context injection events (outside typed switch — custom event)
+      const rawMsg = raw as { type: string; [key: string]: unknown };
+      if (rawMsg.type === "context:injection") {
+        useContextFeedStore.getState().pushEvent({
+          sessionId: rawMsg.sessionId as string,
+          injectionType: rawMsg.injectionType as
+            | "project_map"
+            | "message_context"
+            | "plan_review"
+            | "break_check"
+            | "web_docs",
+          summary: rawMsg.summary as string,
+          charCount: rawMsg.charCount as number,
+          tokenEstimate: rawMsg.tokenEstimate as number,
+          timestamp: rawMsg.timestamp as number,
+        });
       }
     },
     [sessionId, setSession, addLog, getSessionName, flushStreamBuffer],

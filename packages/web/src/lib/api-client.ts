@@ -847,6 +847,31 @@ export const api = {
     job: (id: string) => request<{ success: boolean; data: unknown }>(`/api/webintel/jobs/${id}`),
 
     clearCache: () => request<{ success: boolean }>("/api/webintel/cache", { method: "DELETE" }),
+
+    dockerStatus: () =>
+      request<{
+        success: boolean;
+        data: {
+          dockerAvailable: boolean;
+          webclawRunning: boolean;
+          webclawContainerId: string | null;
+          webclawHealthy: boolean;
+        };
+      }>("/api/webintel/docker-status"),
+
+    startWebclaw: (apiKey?: string) =>
+      request<{
+        success: boolean;
+        data: { status: string; containerId?: string };
+      }>("/api/webintel/start-webclaw", {
+        method: "POST",
+        body: JSON.stringify({ apiKey }),
+      }),
+
+    stopWebclaw: () =>
+      request<{ success: boolean; data: { status: string } }>("/api/webintel/stop-webclaw", {
+        method: "POST",
+      }),
   },
 
   codegraph: {
@@ -927,5 +952,64 @@ export const api = {
       request<{ success: boolean; data: unknown[] }>(
         `/api/codegraph/reverse-deps?project=${encodeURIComponent(project)}&file=${encodeURIComponent(file)}`,
       ),
+
+    graph: (project: string) =>
+      request<{
+        success: boolean;
+        data: {
+          nodes: Array<{
+            id: number;
+            projectSlug: string;
+            fileId: number;
+            filePath: string;
+            symbolName: string;
+            symbolType: string;
+            isExported: boolean;
+            lineStart: number;
+            lineEnd: number;
+          }>;
+          edges: Array<{
+            id: number;
+            sourceNodeId: number;
+            targetNodeId: number;
+            edgeType: string;
+            trustWeight: number;
+          }>;
+          truncated: boolean;
+          totalNodes: number;
+        };
+      }>(`/api/codegraph/graph?project=${encodeURIComponent(project)}`),
+
+    getConfig: (project: string) =>
+      request<{
+        success: boolean;
+        data: {
+          projectSlug: string;
+          injectionEnabled: boolean;
+          projectMapEnabled: boolean;
+          messageContextEnabled: boolean;
+          planReviewEnabled: boolean;
+          breakCheckEnabled: boolean;
+          webDocsEnabled: boolean;
+          excludePatterns: string[];
+          maxContextTokens: number;
+        };
+      }>(`/api/codegraph/config?project=${encodeURIComponent(project)}`),
+
+    updateConfig: (config: {
+      projectSlug: string;
+      injectionEnabled?: boolean;
+      projectMapEnabled?: boolean;
+      messageContextEnabled?: boolean;
+      planReviewEnabled?: boolean;
+      breakCheckEnabled?: boolean;
+      webDocsEnabled?: boolean;
+      excludePatterns?: string[];
+      maxContextTokens?: number;
+    }) =>
+      request<{ success: boolean; data: unknown }>("/api/codegraph/config", {
+        method: "PUT",
+        body: JSON.stringify(config),
+      }),
   },
 };

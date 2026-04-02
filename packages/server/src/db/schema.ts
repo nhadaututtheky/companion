@@ -455,6 +455,30 @@ export const dbConnections = sqliteTable("db_connections", {
 
 // ─── Error Tracking ─────────────────────────────────────────────────────────
 
+// ─── CodeGraph Config ──────────────────────────────────────────────────────
+
+export const codegraphConfig = sqliteTable("codegraph_config", {
+  projectSlug: text("project_slug").primaryKey(),
+  injectionEnabled: integer("injection_enabled", { mode: "boolean" }).notNull().default(true),
+  projectMapEnabled: integer("project_map_enabled", { mode: "boolean" }).notNull().default(true),
+  messageContextEnabled: integer("message_context_enabled", { mode: "boolean" })
+    .notNull()
+    .default(true),
+  planReviewEnabled: integer("plan_review_enabled", { mode: "boolean" }).notNull().default(true),
+  breakCheckEnabled: integer("break_check_enabled", { mode: "boolean" }).notNull().default(true),
+  webDocsEnabled: integer("web_docs_enabled", { mode: "boolean" }).notNull().default(true),
+  excludePatterns: text("exclude_patterns", { mode: "json" })
+    .$type<string[]>()
+    .notNull()
+    .default([]),
+  maxContextTokens: integer("max_context_tokens").notNull().default(800),
+  updatedAt: text("updated_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+});
+
+// ─── Error Logs ───────────────────────────────────────────────────────────
+
 export const errorLogs = sqliteTable(
   "error_logs",
   {

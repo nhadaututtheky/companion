@@ -2,6 +2,7 @@
  * CodeGraph agent context provider — 4 injection points for enriching agent messages.
  */
 
+import { eq } from "drizzle-orm";
 import { createLogger } from "../logger.js";
 import { isGraphReady, getProjectStats } from "./index.js";
 import { getLatestScanJob } from "./graph-store.js";
@@ -13,8 +14,59 @@ import {
   type CodeNodeWithEdges as _CodeNodeWithEdges,
 } from "./query-engine.js";
 import { getPackageUsageCounts } from "./webintel-bridge.js";
+import { getDb } from "../db/client.js";
+import { codegraphConfig } from "../db/schema.js";
 
 const log = createLogger("codegraph-context");
+
+// ─── Config ─────────────────────────────────────────────────────────────
+
+export interface CodeGraphConfig {
+  injectionEnabled: boolean;
+  projectMapEnabled: boolean;
+  messageContextEnabled: boolean;
+  planReviewEnabled: boolean;
+  breakCheckEnabled: boolean;
+  webDocsEnabled: boolean;
+  excludePatterns: string[];
+  maxContextTokens: number;
+}
+
+const DEFAULT_CONFIG: CodeGraphConfig = {
+  injectionEnabled: true,
+  projectMapEnabled: true,
+  messageContextEnabled: true,
+  planReviewEnabled: true,
+  breakCheckEnabled: true,
+  webDocsEnabled: true,
+  excludePatterns: [],
+  maxContextTokens: 800,
+};
+
+/** Get codegraph injection config for a project. Returns defaults if none set. */
+export function getCodeGraphConfig(projectSlug: string): CodeGraphConfig {
+  try {
+    const db = getDb();
+    const row = db
+      .select()
+      .from(codegraphConfig)
+      .where(eq(codegraphConfig.projectSlug, projectSlug))
+      .get();
+    if (!row) return DEFAULT_CONFIG;
+    return {
+      injectionEnabled: row.injectionEnabled,
+      projectMapEnabled: row.projectMapEnabled,
+      messageContextEnabled: row.messageContextEnabled,
+      planReviewEnabled: row.planReviewEnabled,
+      breakCheckEnabled: row.breakCheckEnabled,
+      webDocsEnabled: row.webDocsEnabled,
+      excludePatterns: (row.excludePatterns as string[]) ?? [],
+      maxContextTokens: row.maxContextTokens,
+    };
+  } catch {
+    return DEFAULT_CONFIG;
+  }
+}
 
 // ─── Keyword Extraction ─────────────────────────────────────────────────
 

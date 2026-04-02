@@ -29,14 +29,14 @@ Both features already 95% implemented — this is a UI unification, not a rebuil
 | # | Name | Status | Plan File | Summary |
 |---|------|--------|-----------|---------|
 | 1 | Unified Panel | ✅ Done | plan-codegraph-redesign-phase1.md | Merge panels, project selector, source cards, explore tab |
-| 2 | Live Context Feed | ⬚ Pending | plan-codegraph-redesign-phase2.md | Real-time injection events (WS `context:injection` events) |
-| 3 | User Controls | ⬚ Pending | plan-codegraph-redesign-phase3.md | Toggle sources, exclude paths, token budgets |
-| 4 | WebIntel Setup Flow | ⬚ Pending | plan-codegraph-redesign-phase4.md | Guided webclaw Docker setup, auto-start |
-| 5 | Visual Graph | ⬚ Stretch | plan-codegraph-redesign-phase5.md | Interactive dependency visualization |
+| 2 | Live Context Feed | ✅ Done | plan-codegraph-redesign-phase2.md | Real-time injection events (WS `context:injection` events) |
+| 3 | User Controls | ✅ Done | plan-codegraph-redesign-phase3.md | Toggle sources, exclude paths, token budgets |
+| 4 | WebIntel Setup Flow | ✅ Done | plan-codegraph-redesign-phase4.md | Guided webclaw Docker setup, auto-start |
+| 5 | Visual Graph | ✅ Done | plan-codegraph-redesign-phase5.md | Interactive dependency visualization |
 
 ## Key Decisions
 
-- Only Phase 1 planned for now — phases 2-5 deferred
+- All 5 phases complete
 - Zero backend changes in Phase 1 — pure UI refactor
 - Keep `codegraph` and `webintel` as internal/API names
 - Panel works WITHOUT active session — standalone project selector

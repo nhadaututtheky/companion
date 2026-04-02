@@ -252,3 +252,179 @@ webintelRoutes.delete("/cache", (c) => {
   webIntel.clearCache();
   return c.json({ success: true, data: { cleared: true } } satisfies ApiResponse);
 });
+
+// ─── Docker / Webclaw Setup ─────────────────────────────────────────────
+
+/** GET /webintel/docker-status — check if Docker is available + webclaw running */
+webintelRoutes.get("/docker-status", async (c) => {
+  let dockerAvailable = false;
+  let webclawRunning = false;
+  let webclawContainerId: string | null = null;
+
+  try {
+    const proc = Bun.spawnSync(["docker", "info"], { stdout: "pipe", stderr: "pipe" });
+    dockerAvailable = proc.exitCode === 0;
+  } catch {
+    dockerAvailable = false;
+  }
+
+  if (dockerAvailable) {
+    try {
+      const proc = Bun.spawnSync(
+        ["docker", "ps", "--filter", "ancestor=ghcr.io/0xmassi/webclaw", "--format", "{{.ID}}"],
+        { stdout: "pipe", stderr: "pipe" },
+      );
+      const output = proc.stdout.toString().trim();
+      if (output) {
+        webclawRunning = true;
+        webclawContainerId = output.split("\n")[0] ?? null;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const webclawHealthy = await webIntel.isAvailable();
+
+  return c.json({
+    success: true,
+    data: { dockerAvailable, webclawRunning, webclawContainerId, webclawHealthy },
+  } satisfies ApiResponse);
+});
+
+/** POST /webintel/start-webclaw — start webclaw Docker container */
+webintelRoutes.post("/start-webclaw", async (c) => {
+  const body = await c.req.json<{ apiKey?: string }>().catch(() => ({ apiKey: undefined }));
+
+  // Check Docker first
+  try {
+    const check = Bun.spawnSync(["docker", "info"], { stdout: "pipe", stderr: "pipe" });
+    if (check.exitCode !== 0) {
+      return c.json(
+        { success: false, error: "Docker is not available" } satisfies ApiResponse,
+        400,
+      );
+    }
+  } catch {
+    return c.json({ success: false, error: "Docker is not installed" } satisfies ApiResponse, 400);
+  }
+
+  // Check if already running
+  try {
+    const existing = Bun.spawnSync(
+      ["docker", "ps", "--filter", "ancestor=ghcr.io/0xmassi/webclaw", "--format", "{{.ID}}"],
+      { stdout: "pipe", stderr: "pipe" },
+    );
+    if (existing.stdout.toString().trim()) {
+      return c.json({
+        success: true,
+        data: {
+          status: "already_running",
+          containerId: existing.stdout.toString().trim().split("\n")[0],
+        },
+      } satisfies ApiResponse);
+    }
+  } catch {
+    /* continue */
+  }
+
+  // Start webclaw
+  const env: string[] = [
+    "-e",
+    "WEBCLAW_PORT=3000",
+    "-e",
+    "WEBCLAW_HOST=0.0.0.0",
+    "-e",
+    "WEBCLAW_MAX_CONCURRENCY=10",
+  ];
+  if (body.apiKey) {
+    env.push("-e", `WEBCLAW_API_KEY=${body.apiKey}`);
+  }
+
+  try {
+    const proc = Bun.spawnSync(
+      [
+        "docker",
+        "run",
+        "-d",
+        "--name",
+        "companion-webclaw",
+        "-p",
+        "3100:3000",
+        ...env,
+        "ghcr.io/0xmassi/webclaw:latest",
+      ],
+      { stdout: "pipe", stderr: "pipe" },
+    );
+
+    if (proc.exitCode !== 0) {
+      const stderr = proc.stderr.toString().trim();
+      // Container name conflict — try removing and retrying
+      if (stderr.includes("already in use")) {
+        Bun.spawnSync(["docker", "rm", "-f", "companion-webclaw"], {
+          stdout: "pipe",
+          stderr: "pipe",
+        });
+        const retry = Bun.spawnSync(
+          [
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            "companion-webclaw",
+            "-p",
+            "3100:3000",
+            ...env,
+            "ghcr.io/0xmassi/webclaw:latest",
+          ],
+          { stdout: "pipe", stderr: "pipe" },
+        );
+        if (retry.exitCode !== 0) {
+          return c.json(
+            {
+              success: false,
+              error: retry.stderr.toString().trim() || "Failed to start webclaw",
+            } satisfies ApiResponse,
+            500,
+          );
+        }
+        const containerId = retry.stdout.toString().trim().slice(0, 12);
+        webIntel.resetHealthCache();
+        return c.json({
+          success: true,
+          data: { status: "started", containerId },
+        } satisfies ApiResponse);
+      }
+      return c.json(
+        { success: false, error: stderr || "Failed to start webclaw" } satisfies ApiResponse,
+        500,
+      );
+    }
+
+    const containerId = proc.stdout.toString().trim().slice(0, 12);
+    webIntel.resetHealthCache();
+    return c.json({
+      success: true,
+      data: { status: "started", containerId },
+    } satisfies ApiResponse);
+  } catch (err) {
+    return c.json(
+      {
+        success: false,
+        error: err instanceof Error ? err.message : "Failed to start webclaw",
+      } satisfies ApiResponse,
+      500,
+    );
+  }
+});
+
+/** POST /webintel/stop-webclaw — stop webclaw Docker container */
+webintelRoutes.post("/stop-webclaw", async (c) => {
+  try {
+    Bun.spawnSync(["docker", "rm", "-f", "companion-webclaw"], { stdout: "pipe", stderr: "pipe" });
+    webIntel.resetHealthCache();
+    return c.json({ success: true, data: { status: "stopped" } } satisfies ApiResponse);
+  } catch {
+    return c.json({ success: false, error: "Failed to stop webclaw" } satisfies ApiResponse, 500);
+  }
+});

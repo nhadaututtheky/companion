@@ -190,6 +190,12 @@ export function getProjectNodes(projectSlug: string) {
   return db.select().from(codeNodes).where(eq(codeNodes.projectSlug, projectSlug)).all();
 }
 
+/** Get all edges for a project. */
+export function getProjectEdges(projectSlug: string) {
+  const db = getDb();
+  return db.select().from(codeEdges).where(eq(codeEdges.projectSlug, projectSlug)).all();
+}
+
 /** Find nodes by symbol name (case-insensitive LIKE). */
 export function findNodesByName(projectSlug: string, symbolName: string) {
   const db = getDb();

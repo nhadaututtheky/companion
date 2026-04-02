@@ -25,6 +25,7 @@ import {
   checkBreaks,
   hasPlanIndicators,
   extractFilePaths,
+  getCodeGraphConfig,
 } from "../codegraph/agent-context-provider.js";
 import { isGraphReady } from "../codegraph/index.js";
 import { VirtualScreen } from "./virtual-screen.js";
@@ -405,13 +406,24 @@ export class WsBridge {
         cwd: opts.cwd,
         source: opts.source ?? "sdk",
       });
-      // CodeGraph: inject project map if graph is ready
+      // CodeGraph: inject project map if graph is ready (respects config)
       let codeGraphMap = "";
       if (opts.projectSlug && isGraphReady(opts.projectSlug)) {
-        try {
-          codeGraphMap = buildProjectMap(opts.projectSlug) ?? "";
-        } catch {
-          /* skip */
+        const cgConfig = getCodeGraphConfig(opts.projectSlug);
+        if (cgConfig.injectionEnabled && cgConfig.projectMapEnabled) {
+          try {
+            codeGraphMap = buildProjectMap(opts.projectSlug) ?? "";
+            if (codeGraphMap) {
+              this.emitContextInjection(
+                session,
+                "project_map",
+                `Project map for ${opts.projectSlug}`,
+                codeGraphMap.length,
+              );
+            }
+          } catch {
+            /* skip */
+          }
         }
       }
       fullPrompt = `${fullPrompt}${summaryContext ?? ""}${sessionContext}${codeGraphMap}`;
@@ -641,13 +653,24 @@ export class WsBridge {
         cwd: opts.cwd,
         source: opts.source ?? "cli",
       });
-      // CodeGraph: inject project map if graph is ready
+      // CodeGraph: inject project map if graph is ready (respects config)
       let codeGraphMapCli = "";
       if (opts.projectSlug && isGraphReady(opts.projectSlug)) {
-        try {
-          codeGraphMapCli = buildProjectMap(opts.projectSlug) ?? "";
-        } catch {
-          /* skip */
+        const cgCliConfig = getCodeGraphConfig(opts.projectSlug);
+        if (cgCliConfig.injectionEnabled && cgCliConfig.projectMapEnabled) {
+          try {
+            codeGraphMapCli = buildProjectMap(opts.projectSlug) ?? "";
+            if (codeGraphMapCli) {
+              this.emitContextInjection(
+                session,
+                "project_map",
+                `Project map for ${opts.projectSlug}`,
+                codeGraphMapCli.length,
+              );
+            }
+          } catch {
+            /* skip */
+          }
         }
       }
       const fullPrompt = `${opts.prompt}${summaryContext ?? ""}${sessionContext}${codeGraphMapCli}`;
@@ -1140,24 +1163,51 @@ export class WsBridge {
           source: "api",
         });
 
-        // ── CodeGraph: plan review (non-blocking) ──
+        // ── CodeGraph: plan review (non-blocking, respects config) ──
         const cgRecord = getSessionRecord(session.id);
         const cgPlanSlug = cgRecord?.projectSlug;
         if (cgPlanSlug && isGraphReady(cgPlanSlug) && hasPlanIndicators(textContent)) {
-          const files = extractFilePaths(textContent);
-          if (files.length > 0) {
-            try {
-              const hint = reviewPlan(cgPlanSlug, files);
-              if (hint) {
-                session.pendingCodeGraphHint = hint;
+          const cgPlanConfig = getCodeGraphConfig(cgPlanSlug);
+          if (cgPlanConfig.injectionEnabled && cgPlanConfig.planReviewEnabled) {
+            const files = extractFilePaths(textContent);
+            if (files.length > 0) {
+              try {
+                const hint = reviewPlan(cgPlanSlug, files);
+                if (hint) {
+                  session.pendingCodeGraphHint = hint;
+                  this.emitContextInjection(
+                    session,
+                    "plan_review",
+                    `Plan review: ${files.length} files analyzed`,
+                    hint.length,
+                  );
+                }
+              } catch {
+                /* skip */
               }
-            } catch {
-              /* skip */
             }
           }
         }
       }
     }
+  }
+
+  /** Emit a context:injection event to all connected browsers for this session */
+  private emitContextInjection(
+    session: ActiveSession,
+    injectionType: "project_map" | "message_context" | "plan_review" | "break_check" | "web_docs",
+    summary: string,
+    charCount: number,
+  ): void {
+    this.broadcastToAll(session, {
+      type: "context:injection",
+      sessionId: session.id,
+      injectionType,
+      summary,
+      charCount,
+      tokenEstimate: Math.ceil(charCount / 4),
+      timestamp: Date.now(),
+    } as unknown as BrowserIncomingMessage);
   }
 
   /** Max context tokens by model name — delegates to shared constant */
@@ -1303,18 +1353,27 @@ export class WsBridge {
     this.updateStatus(session, "idle");
     persistSession(session);
 
-    // ── CodeGraph: break check if files were modified (non-blocking) ──
+    // ── CodeGraph: break check if files were modified (non-blocking, respects config) ──
     if (session.state.files_modified.length > 0) {
       const cgResultRecord = getSessionRecord(session.id);
       const cgBreakSlug = cgResultRecord?.projectSlug;
       if (cgBreakSlug && isGraphReady(cgBreakSlug)) {
-        try {
-          const hint = checkBreaks(cgBreakSlug, session.state.files_modified);
-          if (hint) {
-            session.pendingCodeGraphHint = hint;
+        const cgBreakConfig = getCodeGraphConfig(cgBreakSlug);
+        if (cgBreakConfig.injectionEnabled && cgBreakConfig.breakCheckEnabled) {
+          try {
+            const hint = checkBreaks(cgBreakSlug, session.state.files_modified);
+            if (hint) {
+              session.pendingCodeGraphHint = hint;
+              this.emitContextInjection(
+                session,
+                "break_check",
+                `Break check: ${session.state.files_modified.length} files modified`,
+                hint.length,
+              );
+            }
+          } catch {
+            /* skip */
           }
-        } catch {
-          /* skip */
         }
       }
     }
@@ -2081,20 +2140,36 @@ export class WsBridge {
       session.pendingCodeGraphHint = undefined;
     }
 
-    // ── CodeGraph: inject relevant code context (sync, <200ms) ──
+    // ── CodeGraph: inject relevant code context (sync, <200ms, respects config) ──
     const record = getSessionRecord(session.id);
     const cgSlug = record?.projectSlug;
-    if (cgSlug && isGraphReady(cgSlug)) {
+    const cgMsgConfig = cgSlug ? getCodeGraphConfig(cgSlug) : null;
+    if (
+      cgSlug &&
+      isGraphReady(cgSlug) &&
+      cgMsgConfig?.injectionEnabled &&
+      cgMsgConfig.messageContextEnabled
+    ) {
       try {
         const ctx = buildMessageContext(cgSlug, content);
-        if (ctx) cgContent = `${cgContent}${ctx}`;
+        if (ctx) {
+          cgContent = `${cgContent}${ctx}`;
+          this.emitContextInjection(
+            session,
+            "message_context",
+            `Code context for message`,
+            ctx.length,
+          );
+        }
       } catch {
         /* skip */
       }
     }
 
-    // ── WebIntel: auto-inject library docs (async, best-effort) ────────
+    // ── WebIntel: auto-inject library docs (async, best-effort, respects config) ────────
     // Try to enrich with docs before sending to CLI/SDK (timeout 3s)
+    const webDocsDisabled =
+      cgMsgConfig && (!cgMsgConfig.injectionEnabled || !cgMsgConfig.webDocsEnabled);
     const lockOwner = `${source ?? "web"}-${Date.now()}`;
 
     const sendWithLock = async (content: string) => {
@@ -2115,9 +2190,13 @@ export class WsBridge {
       }
     };
 
-    this.maybeEnrichWithDocs(session, cgContent)
-      .then((enrichedContent) => sendWithLock(enrichedContent))
-      .catch(() => sendWithLock(cgContent));
+    if (webDocsDisabled) {
+      sendWithLock(cgContent);
+    } else {
+      this.maybeEnrichWithDocs(session, cgContent)
+        .then((enrichedContent) => sendWithLock(enrichedContent))
+        .catch(() => sendWithLock(cgContent));
+    }
 
     this.updateStatus(session, "busy");
   }
@@ -2184,7 +2263,14 @@ export class WsBridge {
 
     if (docsBlocks.length === 0) return content;
 
-    return `${content}\n\n${docsBlocks.join("\n\n")}`;
+    const joined = docsBlocks.join("\n\n");
+    this.emitContextInjection(
+      session,
+      "web_docs",
+      `Library docs: ${newMentions.filter((m) => session.webIntelInjected!.has(m)).join(", ")}`,
+      joined.length,
+    );
+    return `${content}\n\n${joined}`;
   }
 
   /**
