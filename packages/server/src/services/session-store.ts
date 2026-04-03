@@ -105,7 +105,7 @@ export function createActiveSession(id: string, initialState: SessionState): Act
       timeoutSeconds: 30,
       allowBash: false,
     },
-    hookSecret: randomUUID().replace(/-/g, "").slice(0, 16),
+    hookSecret: randomUUID().replace(/-/g, ""),
     bypassDisabled: false,
     pendingMessages: [],
     messageHistory: [],

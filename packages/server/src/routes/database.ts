@@ -19,12 +19,11 @@ import { randomUUID } from "node:crypto";
 import { resolve, normalize } from "node:path";
 import { existsSync } from "node:fs";
 
-/** Validate that a connection string points to an allowed path */
+/** Validate that a connection string points to an allowed path.
+ *  Allow-list check runs BEFORE existence check to prevent path oracle probing. */
 function validateDbPath(connStr: string): { ok: true } | { ok: false; error: string } {
   const resolved = resolve(normalize(connStr));
-  if (!existsSync(resolved)) {
-    return { ok: false, error: "Database file not found" };
-  }
+  // Check allow-list FIRST to prevent path existence oracle
   const allowedRoots = process.env.ALLOWED_BROWSE_ROOTS;
   if (allowedRoots) {
     const roots = allowedRoots.split(";").map((r) => resolve(normalize(r)));
@@ -35,6 +34,9 @@ function validateDbPath(connStr: string): { ok: true } | { ok: false; error: str
     if (!allowed) {
       return { ok: false, error: "Path outside allowed roots" };
     }
+  }
+  if (!existsSync(resolved)) {
+    return { ok: false, error: "Database file not found" };
   }
   return { ok: true };
 }

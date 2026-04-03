@@ -8,6 +8,8 @@
  * Prevents spectators from injecting fake hook events via session ID alone.
  */
 
+import { timingSafeEqual } from "node:crypto";
+
 import { Hono } from "hono";
 import { createLogger } from "../logger.js";
 import { getActiveSession } from "../services/session-store.js";
@@ -35,9 +37,14 @@ export function hookRoutes(bridge: WsBridge): Hono {
     const sessionId = c.req.param("sessionId");
     const hookSecret = c.req.param("hookSecret");
 
-    // Verify hook secret matches the session's secret
+    // Verify hook secret matches the session's secret (timing-safe comparison)
     const session = getActiveSession(sessionId);
-    if (!session || session.hookSecret !== hookSecret) {
+    if (!session) {
+      return c.json({ ok: false, error: "Unauthorized" }, 403);
+    }
+    const expected = Buffer.from(session.hookSecret, "utf-8");
+    const received = Buffer.from(hookSecret, "utf-8");
+    if (expected.length !== received.length || !timingSafeEqual(expected, received)) {
       return c.json({ ok: false, error: "Unauthorized" }, 403);
     }
 
