@@ -19,22 +19,33 @@ export interface RTKConfig {
 
 const VALID_LEVELS: RTKLevel[] = ["aggressive", "balanced", "minimal", "unlimited"];
 
+/** Default config when DB is unavailable */
+const DEFAULT_CONFIG: RTKConfig = {
+  enabled: true,
+  level: "balanced",
+  disabledStrategies: new Set(),
+};
+
 /**
  * Load RTK configuration from DB settings.
- * Falls back to sensible defaults if not configured.
+ * Falls back to sensible defaults if not configured or DB unavailable.
  */
 export function getRTKConfig(): RTKConfig {
-  const enabled = getSetting("rtk.enabled");
-  const level = getSetting("rtk.level") as RTKLevel | undefined;
-  const disabled = getSetting("rtk.disabled");
+  try {
+    const enabled = getSetting("rtk.enabled");
+    const level = getSetting("rtk.level") as RTKLevel | undefined;
+    const disabled = getSetting("rtk.disabled");
 
-  return {
-    enabled: enabled !== "false", // default true
-    level: level && VALID_LEVELS.includes(level) ? level : "balanced",
-    disabledStrategies: disabled
-      ? new Set(disabled.split(",").map((s) => s.trim()).filter(Boolean))
-      : new Set(),
-  };
+    return {
+      enabled: enabled !== "false", // default true
+      level: level && VALID_LEVELS.includes(level) ? level : "balanced",
+      disabledStrategies: disabled
+        ? new Set(disabled.split(",").map((s) => s.trim()).filter(Boolean))
+        : new Set(),
+    };
+  } catch {
+    return DEFAULT_CONFIG;
+  }
 }
 
 /** All valid RTK levels for settings UI */

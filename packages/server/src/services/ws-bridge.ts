@@ -188,8 +188,17 @@ export class WsBridge {
     return pipeline;
   }
 
-  /** Reload RTK config from DB (call after settings change) */
+  /** Last RTK config reload timestamp */
+  private rtkConfigLastReload = 0;
+  /** RTK config reload interval: 30 seconds */
+  private static readonly RTK_CONFIG_RELOAD_MS = 30_000;
+
+  /** Reload RTK config from DB (throttled to avoid excessive DB reads) */
   reloadRTKConfig(): void {
+    const now = Date.now();
+    if (now - this.rtkConfigLastReload < WsBridge.RTK_CONFIG_RELOAD_MS) return;
+    this.rtkConfigLastReload = now;
+
     const config = getRTKConfig();
     this.rtkPipeline.setBudgetLevel(config.level);
     this.rtkPipeline.setDisabledStrategies(config.disabledStrategies);
@@ -226,6 +235,7 @@ export class WsBridge {
         if (!isTerminal) continue;
         // If no cleanup timer is pending, this session slipped through — remove it now
         if (!this.cleanupTimers.has(session.id)) {
+          this.rtkPipeline.clearSessionCache(session.id);
           removeActiveSession(session.id);
           log.debug("Sweep: removed stale ended session from memory", { sessionId: session.id });
         }
@@ -242,6 +252,7 @@ export class WsBridge {
       this.cleanupTimers.delete(sessionId);
       const s = getActiveSession(sessionId);
       if (s && (s.state.status === "ended" || s.state.status === "error")) {
+        this.rtkPipeline.clearSessionCache(sessionId);
         removeActiveSession(sessionId);
         log.debug("Removed ended session from memory", { sessionId });
       }
@@ -1144,6 +1155,9 @@ export class WsBridge {
         }
       }
     }
+
+    // Reload RTK config periodically (picks up settings changes without restart)
+    this.reloadRTKConfig();
 
     // RTK: Compress tool_result content (ANSI strip, dedup, truncation)
     // Full output goes to browser; compressed version tracked for token savings
