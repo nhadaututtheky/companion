@@ -154,7 +154,6 @@ const READABLE_EXTENSIONS = new Set([
   ".html",
   ".svg",
   ".xml",
-  ".env",
   ".env.example",
   ".gitignore",
   ".dockerignore",

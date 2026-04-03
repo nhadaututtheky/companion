@@ -16,6 +16,28 @@ import { getDb } from "../db/client.js";
 import { dbConnections } from "../db/schema.js";
 import { listTables, getTableSchema, executeQuery } from "../services/db-browser.js";
 import { randomUUID } from "node:crypto";
+import { resolve, normalize } from "node:path";
+import { existsSync } from "node:fs";
+
+/** Validate that a connection string points to an allowed path */
+function validateDbPath(connStr: string): { ok: true } | { ok: false; error: string } {
+  const resolved = resolve(normalize(connStr));
+  if (!existsSync(resolved)) {
+    return { ok: false, error: "Database file not found" };
+  }
+  const allowedRoots = process.env.ALLOWED_BROWSE_ROOTS;
+  if (allowedRoots) {
+    const roots = allowedRoots.split(";").map((r) => resolve(normalize(r)));
+    const allowed = roots.some(
+      (root) =>
+        resolved === root || resolved.startsWith(root + "/") || resolved.startsWith(root + "\\"),
+    );
+    if (!allowed) {
+      return { ok: false, error: "Path outside allowed roots" };
+    }
+  }
+  return { ok: true };
+}
 
 export const databaseRoutes = new Hono();
 
@@ -49,6 +71,13 @@ const addConnectionSchema = z.object({
 // Add connection
 databaseRoutes.post("/connections", zValidator("json", addConnectionSchema), (c) => {
   const body = c.req.valid("json");
+
+  // Validate path is within allowed roots
+  const pathCheck = validateDbPath(body.connectionString);
+  if (!pathCheck.ok) {
+    return c.json({ success: false, error: pathCheck.error }, 403);
+  }
+
   const db = getDb();
   const id = randomUUID();
   db.insert(dbConnections)

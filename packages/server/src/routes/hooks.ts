@@ -1,15 +1,16 @@
 /**
  * HTTP Hook receiver — Claude Code POSTs lifecycle events here.
  *
- * Route: POST /api/hooks/:sessionId
+ * Route: POST /api/hooks/:sessionId/:hookSecret
  *
- * NOTE: This endpoint does NOT require API key auth because Claude Code
- * CLI sends hooks without auth headers. Security is via session ID (UUID)
- * which is unguessable + only valid for active sessions.
+ * Security: Hook secret is a per-session random token embedded in the URL.
+ * Generated at session creation, injected into Claude Code settings.
+ * Prevents spectators from injecting fake hook events via session ID alone.
  */
 
 import { Hono } from "hono";
 import { createLogger } from "../logger.js";
+import { getActiveSession } from "../services/session-store.js";
 import type { WsBridge } from "../services/ws-bridge.js";
 import type {
   HookEvent,
@@ -30,8 +31,15 @@ const VALID_HOOK_TYPES = new Set<HookEventType>([
 export function hookRoutes(bridge: WsBridge): Hono {
   const app = new Hono();
 
-  app.post("/:sessionId", async (c) => {
+  app.post("/:sessionId/:hookSecret", async (c) => {
     const sessionId = c.req.param("sessionId");
+    const hookSecret = c.req.param("hookSecret");
+
+    // Verify hook secret matches the session's secret
+    const session = getActiveSession(sessionId);
+    if (!session || session.hookSecret !== hookSecret) {
+      return c.json({ ok: false, error: "Unauthorized" }, 403);
+    }
 
     let body: HookEvent;
     try {

@@ -3,6 +3,7 @@
  * Replaces old file-based JSON store with proper DB operations.
  */
 
+import { randomUUID } from "node:crypto";
 import { eq, desc, and, count, notInArray, isNotNull, sql, lt } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { sessions, sessionMessages, telegramSessionMappings, dailyCosts } from "../db/schema.js";
@@ -47,6 +48,8 @@ export interface ActiveSession {
   pendingMessages: string[];
   /** Message history for browser replay */
   messageHistory: unknown[];
+  /** Secret token for hook endpoint auth */
+  hookSecret: string;
   /** CLI process PID */
   pid: number | null;
   /** CLI internal session ID (from system:init) — used for --resume */
@@ -102,6 +105,7 @@ export function createActiveSession(id: string, initialState: SessionState): Act
       timeoutSeconds: 30,
       allowBash: false,
     },
+    hookSecret: randomUUID().replace(/-/g, "").slice(0, 16),
     bypassDisabled: false,
     pendingMessages: [],
     messageHistory: [],

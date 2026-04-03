@@ -390,8 +390,8 @@ describe("multiple risks", () => {
 
   test("result includes matched text (truncated at 100 chars)", () => {
     const result = scanPrompt("rm -rf /");
-    expect(result.risks[0].matched).toBeTruthy();
-    expect(result.risks[0].matched.length).toBeLessThanOrEqual(100);
+    expect(result.risks[0]?.matched).toBeTruthy();
+    expect(result.risks[0]?.matched.length).toBeLessThanOrEqual(100);
   });
 
   test("result includes category, pattern, description on each risk", () => {

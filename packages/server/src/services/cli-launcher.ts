@@ -26,6 +26,8 @@ export interface LaunchOptions {
   envVars?: Record<string, string>;
   /** Companion hook endpoint URL — injected into project settings for CLI */
   hooksUrl?: string;
+  /** Per-session hook secret for auth */
+  hookSecret?: string;
   /** Bare mode — minimal output, no thinking/verbose. For cost-sensitive sessions. */
   bare?: boolean;
   /** Thinking budget in tokens. 0 = no thinking, undefined = adaptive (omit flag). */
@@ -138,7 +140,7 @@ function buildCleanEnv(extra?: Record<string, string>): Record<string, string> {
  * Claude Code reads this file for project-specific overrides.
  * Returns a cleanup function that removes the injected hooks on session exit.
  */
-function injectHooksConfig(cwd: string, hooksUrl: string, sessionId: string): () => void {
+function injectHooksConfig(cwd: string, hooksUrl: string, sessionId: string, hookSecret: string): () => void {
   const claudeDir = join(cwd, ".claude");
   const settingsPath = join(claudeDir, "settings.local.json");
 
@@ -156,7 +158,7 @@ function injectHooksConfig(cwd: string, hooksUrl: string, sessionId: string): ()
   const originalHooks = existing.hooks as Record<string, unknown> | undefined;
 
   // Build hooks config pointing to Companion's hook receiver
-  const hookUrl = `${hooksUrl}/${sessionId}`;
+  const hookUrl = `${hooksUrl}/${sessionId}/${hookSecret}`;
   const companionHook = { type: "http" as const, url: hookUrl };
   const hooks: HooksSettings = {
     PreToolUse: [companionHook],
@@ -254,7 +256,7 @@ export function launchCLI(
   // Inject hooks config into project-level settings if hooksUrl is provided
   let hooksCleanup: (() => void) | undefined;
   if (opts.hooksUrl) {
-    hooksCleanup = injectHooksConfig(opts.cwd, opts.hooksUrl, opts.sessionId);
+    hooksCleanup = injectHooksConfig(opts.cwd, opts.hooksUrl, opts.sessionId, opts.hookSecret ?? "");
   }
 
   log.info("Launching CLI", {

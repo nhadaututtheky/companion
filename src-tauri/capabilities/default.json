@@ -16,9 +16,6 @@
     "core:window:allow-set-title",
     "core:webview:default",
     "shell:default",
-    "shell:allow-execute",
-    "shell:allow-spawn",
-    "shell:allow-kill",
     {
       "identifier": "shell:allow-spawn",
       "allow": [
@@ -29,6 +26,7 @@
         }
       ]
     },
+    "shell:allow-kill",
     "notification:default",
     "updater:default"
   ]

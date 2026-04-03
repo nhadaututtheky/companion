@@ -80,7 +80,9 @@ describe("channel-manager", () => {
       const messages = getChannelMessages(channelId);
       // Should be chronological (oldest first after reverse)
       for (let i = 1; i < messages.length; i++) {
-        expect(messages[i]!.timestamp >= messages[i - 1]!.timestamp).toBe(true);
+        const currTs = Number(messages[i]!.timestamp ?? 0);
+        const prevTs = Number(messages[i - 1]!.timestamp ?? 0);
+        expect(currTs).toBeGreaterThanOrEqual(prevTs);
       }
     });
   });

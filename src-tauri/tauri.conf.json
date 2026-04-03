@@ -35,9 +35,9 @@
       "tooltip": "Companion"
     },
     "security": {
-      "csp": null,
-      "dangerousDisableAssetCspModification": true,
-      "freezePrototype": false
+      "csp": "default-src 'self'; connect-src 'self' http://localhost:3579 ws://localhost:3579; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:",
+      "dangerousDisableAssetCspModification": false,
+      "freezePrototype": true
     }
   },
   "plugins": {

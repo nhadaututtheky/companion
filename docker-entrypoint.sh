@@ -62,4 +62,8 @@ fi
 
 echo "[startup] Starting Companion server..."
 
-exec su -s /bin/bash companion -c "HOME=$CLAUDE_HOME bun run --hot packages/server/src/index.ts"
+if [ "${NODE_ENV}" = "development" ]; then
+  exec su -s /bin/bash companion -c "HOME=$CLAUDE_HOME bun run --hot packages/server/src/index.ts"
+else
+  exec su -s /bin/bash companion -c "HOME=$CLAUDE_HOME bun run packages/server/src/index.ts"
+fi

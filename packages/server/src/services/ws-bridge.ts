@@ -656,6 +656,7 @@ export class WsBridge {
         cliSessionId: opts.cliSessionId,
         envVars: opts.envVars,
         hooksUrl,
+        hookSecret: session.hookSecret,
         bare: opts.bare,
         thinkingBudget: opts.thinkingBudget,
       },

@@ -1,433 +1,342 @@
-# Audit Report: Companion
+# Audit Report: Companion (Non-Web Subsystems Focus)
 
-**Date:** 2026-03-22
+**Date:** 2026-04-03
 **Auditor:** Rune Audit (claude-opus-4-6)
-**Scope:** Full 8-phase + 4-perspective audit (User, Developer, Designer, Business)
+**Scope:** Full 8-phase audit with deep focus on Desktop, Telegram, Infrastructure, Shared Package, and Project Health
 
----
-
-- **Verdict**: ⚠️ WARNING
-- **Overall Health**: **5.4/10**
-- **Total Findings**: 42 (CRITICAL: 7, HIGH: 12, MEDIUM: 13, LOW: 6, INFO: 4)
-- **Framework Checks Applied**: React 19, Next.js 16, Node.js/Hono, Bun, Docker, Zustand
+- **Verdict**: WARNING
+- **Overall Health**: 6.8/10
+- **Total Findings**: 28 (CRITICAL: 2, HIGH: 7, MEDIUM: 12, LOW: 5, INFO: 2)
+- **Framework Checks Applied**: React/Next.js, Node.js/Hono, Rust/Tauri v2
 
 ---
 
 ## Health Score
 
-| Dimension        | Score  | Notes                                                    |
-|------------------|:------:|----------------------------------------------------------|
-| Security         | 4/10   | 2 critical vulns, 5 high — path traversal, IP spoofing   |
-| Code Quality     | 4/10   | 5 modules critical (CC>100), 44/100 autopsy score        |
-| Architecture     | 7/10   | Clean layers, no circular deps, but oversized modules    |
-| Performance      | 5/10   | Sequential awaits in hot paths, no code splitting        |
-| Dependencies     | 7.5/10 | 1 moderate CVE (dev-only), zod v3→v4 migration overdue   |
-| Infrastructure   | 5/10   | CI builds but doesn't test/lint, no monitoring           |
-| Documentation    | 6/10   | README good, missing API docs + deployment guide         |
-| UI/UX Design     | 5/10   | 100+ inline styles, partial dark mode, no error boundary |
-| Mesh Analytics   | 2/10   | No skill tracking data — all sessions show 0 invocations |
-| **Overall**      | **5.4/10** | **WARNING — ship-blocking issues exist**            |
+| Dimension      | Score | Notes |
+|----------------|:-----:|-------|
+| Security       | 6/10  | CSP disabled in Tauri, shell:allow-execute too broad, hardcoded port |
+| Code Quality   | 7/10  | Low `any` count, good logger, but duplicate types and version drift |
+| Architecture   | 7/10  | Clean layered structure, good separation, minor coupling issues |
+| Performance    | 7/10  | Good async patterns, streaming well-designed, minor watchdog gaps |
+| Dependencies   | 7/10  | Modern stack, workspace refs clean, but `@types/bun: latest` is fragile |
+| Infrastructure | 6/10  | Docker solid, but `--hot` in production, landing workflow conflict |
+| Documentation  | 7/10  | README comprehensive, CHANGELOG maintained, some inline gaps |
+| Mesh Analytics | N/A   | Metrics collected but no skill invocations tracked yet |
+| **Overall**    | **6.8/10** | **WARNING** |
+
+### Composite Score
+
+- **Formula**: (Security x 0.25) + (Code Quality x 0.20) + (Architecture x 0.15) + (Dependencies x 0.15) + (Performance x 0.10) + (Infrastructure x 0.08) + (Documentation x 0.07)
+- **Weighted Score**: (6 x 0.25) + (7 x 0.20) + (7 x 0.15) + (7 x 0.15) + (7 x 0.10) + (6 x 0.08) + (7 x 0.07) = 1.50 + 1.40 + 1.05 + 1.05 + 0.70 + 0.48 + 0.49 = **6.67 / 10** -> Grade: **Fair (WARNING)**
 
 ---
 
 ## Phase Breakdown
 
-| Phase            | Issues |
-|------------------|--------|
-| Dependencies     | 4      |
-| Security         | 17     |
-| Code Quality     | 8      |
-| Architecture     | 5      |
-| Performance      | 6      |
-| Infrastructure   | 5      |
-| Documentation    | 3      |
-| UI/UX Design     | 8      |
-| Mesh Analytics   | 1      |
+| Phase | Issues |
+|-------|--------|
+| Dependencies | 3 |
+| Security | 5 |
+| Code Quality | 5 |
+| Architecture | 4 |
+| Performance | 3 |
+| Infrastructure | 5 |
+| Documentation | 2 |
+| Mesh Analytics | 1 |
 
 ---
 
-## 🔴 CRITICAL Findings (Fix Immediately)
+## 1. Desktop App (src-tauri/) Findings
 
-### C-1: Path traversal — `startsWith` check bypassable
-**Files:** `packages/server/src/routes/filesystem.ts:61,186` | `packages/server/src/routes/sessions.ts:136`
-
-`resolved.startsWith(root)` passes for `/mnt/c_evil/secret` when root is `/mnt/c`. Classic path prefix confusion.
-
-**Fix:**
-```typescript
-const allowed = roots.some((root) =>
-  resolved === root || resolved.startsWith(root + "/") || resolved.startsWith(root + "\\")
-);
+### CRITICAL-01: CSP Disabled + Prototype Freeze Off
+**Severity**: CRITICAL
+**File**: `src-tauri/tauri.conf.json:38-40`
+```json
+"security": {
+  "csp": null,
+  "dangerousDisableAssetCspModification": true,
+  "freezePrototype": false
+}
 ```
+CSP is completely disabled (`null`) and the dangerous override flag is `true`. Combined with `freezePrototype: false`, this exposes the webview to XSS attacks. The app loads from `http://localhost:3579` which is an HTTP origin -- any local network attacker could inject content. Since Companion manages Claude Code sessions that can execute arbitrary commands, this is a high-impact attack surface.
+
+**Fix**: Set a restrictive CSP allowing only `localhost:3579`, disable `dangerousDisableAssetCspModification`, and enable `freezePrototype`.
+
+### HIGH-01: Shell Capabilities Too Broad
+**Severity**: HIGH
+**File**: `src-tauri/capabilities/default.json:18-19`
+```json
+"shell:default",
+"shell:allow-execute",
+```
+`shell:allow-execute` and `shell:default` grant unrestricted shell execution capabilities to the webview. The sidecar-specific allowlist on lines 22-30 is correct but redundant -- the broader permissions above already grant everything. Only the scoped sidecar permission should remain.
+
+**Fix**: Remove `shell:default` and `shell:allow-execute`, keep only the scoped `shell:allow-spawn` with the `bun-server` sidecar allowlist.
+
+### HIGH-02: Sidecar Kill Race Condition on Exit
+**Severity**: HIGH
+**File**: `src-tauri/src/main.rs:152-181`
+The `RunEvent::Exit` handler spawns an async task to kill the sidecar, but the process may exit before the task completes. On Windows, orphaned `bun-server` processes would survive with port 3579 locked, causing startup failures on next launch.
+
+**Fix**: Use `tokio::runtime::Handle::try_current()` with `.block_on()` instead of `.spawn()` for the kill operation, or add a synchronous fallback kill path.
+
+### MEDIUM-01: `.unwrap()` in Production Rust Code
+**Severity**: MEDIUM
+**File**: `src-tauri/src/tray.rs:18`
+```rust
+.icon(app.default_window_icon().cloned().unwrap())
+```
+If no default icon is set, this panics and crashes the app. Use `.unwrap_or_else()` with a fallback or return an error.
+
+### MEDIUM-02: Hardcoded Port 3579 Everywhere
+**Severity**: MEDIUM
+**Files**: `src-tauri/src/main.rs:54`, `src-tauri/src/server.rs:36`
+Port 3579 is hardcoded in the sidecar environment and health check URL. If the port is occupied, the app fails with a generic error. Should be configurable or auto-discover a free port.
+
+### MEDIUM-03: `new_session` Tray Action Uses Raw URL Navigation
+**Severity**: MEDIUM
+**File**: `src-tauri/src/tray.rs:61-63`
+```rust
+window.eval("window.location.href = 'http://localhost:3579';")
+```
+This is a raw `eval()` of a hardcoded localhost URL. If the server hasn't started yet, this shows a connection error page. Should use a Tauri event instead.
+
+### LOW-01: Updater Does Not Verify Download Integrity Beyond Signature
+**Severity**: LOW
+**File**: `src-tauri/tauri.conf.json:47-53`
+The updater configuration is sound (pubkey + endpoint), but the `publish-update.sh` script generates only Windows manifests. macOS and Linux users get no update notifications.
 
 ---
 
-### C-2: Rate limiter IP spoofing bypass
-**File:** `packages/server/src/middleware/rate-limiter.ts:53-55`
+## 2. Telegram Bot (packages/server/src/telegram/) Findings
 
-Reads `x-real-ip` header without proxy trust verification. Attacker sets `x-real-ip: 127.0.0.1` → bypasses ALL rate limits (localhost check returns true).
+### HIGH-03: Auth Bypass When Both Whitelists Empty
+**Severity**: HIGH
+**File**: `packages/server/src/telegram/bot-factory.ts:42-62`
+When `allowedChatIds` is empty AND `allowedUserIds` is empty, the auth middleware passes all requests through. From the code:
+```typescript
+if (config.allowedChatIds.length > 0 && !config.allowedChatIds.includes(chatId) && !isAdmin) {
+```
+Both conditions short-circuit when the arrays are empty, meaning ANY Telegram user can interact with the bot. The `env` bot loads empty arrays by default when env vars are not set (lines 111-118 in `bot-registry.ts`).
 
-**Fix:** Only trust `x-real-ip` from known proxy IPs. Use socket address as fallback.
+**Fix**: If both whitelists are empty and `NODE_ENV=production`, refuse to start the bot or log a prominent warning.
 
----
+### HIGH-04: Bot Token Stored in Plain Text in SQLite
+**Severity**: HIGH
+**File**: `packages/server/src/telegram/bot-registry.ts:329`
+Bot tokens from `saveBotConfig()` are stored as plain text in the `telegramBots` table. Anyone with filesystem access to `companion.db` gets full bot control. Should be encrypted at rest.
 
-### C-3: Docker runs as root with full host filesystem access
-**File:** `Dockerfile:51-69` | `docker-compose.yml:19-21`
+### MEDIUM-04: Duplicate `DeadSessionInfo` Interface
+**Severity**: MEDIUM
+**Files**: `packages/shared/src/types/telegram.ts:30`, `packages/server/src/telegram/telegram-bridge.ts:104`
+Two independent definitions of `DeadSessionInfo` with identical fields but different imports. The shared one should be the single source of truth.
 
-No `USER` directive in Dockerfile. Drive mounts `C:/` and `D:/` are read-write. Root container = unrestricted host filesystem write access.
+### MEDIUM-05: Forum Topic Integration Has No Error Recovery
+**Severity**: MEDIUM
+**File**: `packages/server/src/telegram/telegram-bridge.ts` (various)
+Forum topic creation errors are caught but the session continues without a topic. If topic creation fails mid-flow, messages go to the main chat rather than the expected topic, causing confusion.
 
-**Fix:** Add `USER companion` before CMD. Make drive mounts `:ro` unless write needed.
-
----
-
-### C-4: `anti-cdp.ts` — 2,470 LOC, CC~513, 50+ silent catch blocks
-**File:** `packages/server/src/services/anti-cdp.ts`
-
-Cyclomatic complexity 513, nesting depth 15 at line 977. 50+ `catch(e) {}` blocks silently swallow errors throughout. Highest-risk file in codebase (score: 12/100).
-
-**Fix:** Split into `cdp-transport.ts` / `dom-scraper.ts` / `message-extractor.ts`. Replace silent catches with proper error handling.
-
----
-
-### C-5: `ws-bridge.ts` — 1,391 LOC danger zone with zero tests
-**File:** `packages/server/src/services/ws-bridge.ts`
-
-CC~135, max nesting 9. 6 git changes (high churn). 11 downstream dependents. Zero test coverage on the file that manages ALL session lifecycles.
-
-**Fix:** Extract `SessionLifecycleManager` + `MessageRouter`. Add integration tests immediately.
-
----
-
-### C-6: Settings API exposes secrets in plaintext
-**Files:** `packages/server/src/routes/settings.ts:24-37` | `packages/server/src/services/ai-client.ts:58`
-
-`GET /api/settings` returns ALL settings including `ai.apiKey`, `ai.openrouterApiKey`, Telegram bot tokens. Any authenticated client can exfiltrate all credentials.
-
-**Fix:** Mask sensitive keys (`*.apiKey`, `*.token`, `*.secret`) in GET responses. Return `"***"` for values.
+### LOW-02: Command Registration Limited to 10 Commands
+**Severity**: LOW
+**File**: `packages/server/src/telegram/bot-factory.ts:86-97`
+Telegram's `setMyCommands` shows only 10 commands in the menu. The comment acknowledges this, but new users may miss `/thinking`, `/clear`, `/mcp` etc. Consider grouping commands by scope.
 
 ---
 
-### C-7: Test coverage catastrophically low (<5%)
-**Files:** 4 test files for ~85 TS files across project
+## 3. Infrastructure & DevOps Findings
 
-Server: ~5% coverage (4 test files). Web: 0% (no test files). The 3 highest-churn files (`ring-window.tsx` ×13, `ring-selector.tsx` ×13, `sessions.ts` ×9) have zero coverage. CI doesn't run tests.
+### CRITICAL-02: Production Docker Entrypoint Uses `--hot` Flag
+**Severity**: CRITICAL
+**File**: `docker-entrypoint.sh:65`
+```bash
+exec su -s /bin/bash companion -c "HOME=$CLAUDE_HOME bun run --hot packages/server/src/index.ts"
+```
+`--hot` enables Bun's hot-reload module watcher in production. This:
+1. Increases memory usage (watches all source files for changes)
+2. Creates a potential DoS vector (writing to mounted source files triggers reload)
+3. Adds unpredictable restart behavior in production
 
-**Fix:** Add tests for danger zone files first. Add `bun test` to CI workflow.
+**Fix**: Replace with `bun run packages/server/src/index.ts` (no `--hot`). Or use the compiled binary from `bun build`.
 
----
+### HIGH-05: Landing Page Deploy Workflow Contradicts Actual Deploy Method
+**Severity**: HIGH
+**File**: `.github/workflows/landing-page.yml`
+The workflow deploys to GitHub Pages (`actions/deploy-pages@v4`), but the comment on line 5 says "Landing deploys via Cloudflare Pages (wrangler CLI), not GitHub Pages". The `publish-update.sh` script also deploys via `wrangler pages deploy`. This creates two competing deploy targets -- one could overwrite the other or serve stale content.
 
-## 🟠 HIGH Findings (Fix Before Production)
+**Fix**: Remove the GitHub Pages workflow entirely, or convert it to use Cloudflare Pages deployment.
 
-### H-1: No HTTP security headers
-**File:** `packages/server/src/index.ts:108-113`
+### HIGH-06: `bun.lock` in `.gitignore` But Relied On by CI
+**Severity**: HIGH
+**File**: `.gitignore:18`
+```
+bun.lock
+```
+The lockfile is gitignored, but CI uses `bun install --frozen-lockfile` which REQUIRES `bun.lock` to exist. Either the CI step fails silently, or there's a checked-in copy that the gitignore doesn't match (the file exists at root with 194KB). Verify this is working correctly -- if the lockfile is NOT committed, `--frozen-lockfile` would fail.
 
-Missing: `X-Content-Type-Options`, `X-Frame-Options`, `Strict-Transport-Security`, `Content-Security-Policy`, `Referrer-Policy`.
+**Correction**: The file is 194KB and exists in the working directory, and `git status` doesn't show it as untracked, so it IS tracked despite the gitignore entry. The gitignore entry has no effect on an already-tracked file. This is confusing but not broken. Reduce severity to MEDIUM.
 
-**Fix:** `app.use("*", secureHeaders())` from `hono/secure-headers`.
+### MEDIUM-06: Docker Non-Root User Permission Issues
+**Severity**: MEDIUM
+**Files**: `Dockerfile:48-49`, `docker-entrypoint.sh:46-57`
+The Dockerfile creates a `companion` user, but the entrypoint uses `chown -R` with `2>/dev/null` suppressing failures. Comments in CLAUDE.md note "Docker non-root user reverted (volume permission issues)". The current setup runs the entrypoint as root, then `su` to companion, but the volume mounts from the host may have incompatible UID/GID.
 
----
+### MEDIUM-07: `.env` File Contains Real Secret
+**Severity**: MEDIUM
+**File**: `.env:1`
+```
+COMPANION_API_KEY=companion-dev-2026
+```
+While `.env` is gitignored, it contains a real (dev) API key. The `.env.example` correctly uses placeholder values. No action needed if the repo is private, but worth noting.
 
-### H-2: MCP `permissionMode` accepts arbitrary strings
-**File:** `packages/server/src/mcp/tools.ts:57`
-
-REST API uses `z.enum()` validation, but MCP path accepts `z.string()` — inconsistent security boundary.
-
-**Fix:** Apply same enum validation: `z.enum(["default", "acceptEdits", "bypassPermissions", "plan"])`.
-
----
-
-### H-3: Sequential `await` in debate engine — N× slower
-**File:** `packages/server/src/services/debate-engine.ts:376-411`
-
-Each debate agent waits for previous agent's AI call. 3 agents = 3× latency.
-
-**Fix:** `Promise.all(state.agents.map(agent => callDebateAI(...)))`.
-
----
-
-### H-4: Sequential broadcast in Ring — blocks UI
-**File:** `packages/web/src/components/ring/ring-window.tsx:93-103`
-
-Broadcasting to N sessions sequentially. 3 sessions = 300ms+ delay.
-
-**Fix:** `Promise.all(linkedSessionIds.map(sid => api.sessions.message(sid, content)))`.
-
----
-
-### H-5: No React error boundaries anywhere
-**File:** `packages/web/src/app/layout.tsx`
-
-No error boundary in layout or any page. Unhandled render error = white screen for user.
-
-**Fix:** Add `<ErrorBoundary>` wrapper in root layout with fallback UI.
+### LOW-03: `.dockerignore` Missing Coverage
+**Severity**: LOW
+**File**: `.dockerignore`
+Missing: `landing/`, `video/`, `scripts/`, `*.md`, `src-tauri/`, `.playwright-mcp/`. These get copied into the Docker build context unnecessarily, slowing builds.
 
 ---
 
-### H-6: 10 components exceed 300 LOC limit
-| Component | LOC |
-|-----------|-----|
-| `settings/page.tsx` | 1,312 |
-| `new-session-modal.tsx` | 1,107 |
-| `channel-panel.tsx` | 687 |
-| `telegram-preview.tsx` | 514 |
-| `telegram-bot-card.tsx` | 479 |
-| `message-feed.tsx` | 465 |
-| `ring-window.tsx` | 461 |
-| `expanded-session.tsx` | 449 |
-| `directory-browser.tsx` | 421 |
-| `activity-terminal.tsx` | 383 |
+## 4. Shared Package (packages/shared/) Findings
+
+### HIGH-07: Version Constants Severely Out of Sync
+**Severity**: HIGH
+**Files**: Multiple
+| Location | Version |
+|----------|---------|
+| `packages/shared/src/constants.ts` (`APP_VERSION`) | 0.5.3 |
+| `packages/server/src/services/license.ts` (User-Agent) | 0.5.1 |
+| `src-tauri/tauri.conf.json` | 0.7.0 |
+| `src-tauri/Cargo.toml` | 0.7.0 |
+| `packages/server/package.json` | 0.7.0 |
+| `packages/shared/package.json` | 0.7.0 |
+| `packages/web/package.json` | 0.7.0 |
+| `landing/install.sh` (banner) | 0.7.0 |
+
+`APP_VERSION` in shared constants reports 0.5.3 but the actual package versions are 0.7.0. The license verification User-Agent sends 0.5.1. This means the health endpoint, MCP server, and license API all report incorrect versions.
+
+**Fix**: Update `APP_VERSION` to `0.7.0` and the User-Agent strings to match. Consider deriving version from package.json at build time.
+
+### MEDIUM-08: `TelegramConfig.allowedChatIds` Uses `Set<number>` But DB Uses `number[]`
+**Severity**: MEDIUM
+**Files**: `packages/shared/src/types/telegram.ts:9`, `packages/server/src/telegram/bot-factory.ts:6`
+The shared type uses `Set<number>` for `allowedChatIds`, but the bot-factory and bot-registry use `number[]`. The shared type is never actually used by the implementation.
+
+### MEDIUM-09: No Zod Schemas for Shared Types
+**Severity**: MEDIUM
+**File**: `packages/shared/src/types/`
+All shared types are pure TypeScript interfaces with no runtime validation. The server uses Zod for API route validation (e.g., `licenseActivateRoute`), but WebSocket messages (`BrowserOutgoingMessage`) are not validated at the boundary. Malformed WS messages could crash the bridge.
+
+### LOW-04: Shared Package Has No Build Step or Tests
+**Severity**: LOW
+**File**: `packages/shared/package.json`
+The shared package exports raw `.ts` files via `"./src/index.ts"`. This works with Bun and Next.js but would break with any consumer that doesn't support TypeScript imports directly. No tests exist for utility functions like `thinkingModeTobudget` (note: typo in function name -- lowercase 'b').
+
+### LOW-05: Typo in Exported Function Name
+**Severity**: LOW
+**File**: `packages/shared/src/types/session.ts:314`
+```typescript
+export function thinkingModeTobudget(mode: ThinkingMode): number | undefined {
+```
+Should be `thinkingModeToBudget` (capital B). This is a public API from the shared package.
 
 ---
 
-### H-7: 100+ inline styles across web package
-Most inline `style={{}}` use hardcoded colors (`#4285F4`, `#EA4335`, etc.) instead of CSS variables/Tailwind classes. Breaks theme consistency and dark mode.
+## 5. Code Quality (Phase 3)
+
+### MEDIUM-10: `console.log` in Production Logger
+**Severity**: MEDIUM
+**File**: `packages/server/src/logger.ts:77`
+The structured logger itself uses `console.log` for info/debug output (with an eslint-disable comment). This is intentional for the logger module but means `console.log` detection rules will always flag it. Consider using `process.stdout.write` consistently.
+
+### MEDIUM-11: `: any` Types in Production Code
+**Severity**: MEDIUM
+**Files**: `packages/server/src/services/anti-cdp.ts` (3 occurrences), `packages/server/src/rtk/strategies/stack-trace.ts` (1 occurrence)
+4 total `any` types in server production code. Low count but should be replaced with proper types.
+
+### MEDIUM-12: `safeCompare` Function Duplicated
+**Severity**: MEDIUM
+**Files**: `packages/server/src/index.ts:30-37`, `packages/server/src/middleware/auth.ts:13-20`
+Identical timing-safe comparison function defined in two places. The middleware version should be the single source.
 
 ---
 
-### H-8: CI/CD doesn't run tests or linting
-**File:** `.github/workflows/docker-publish.yml`
+## 6. Performance (Phase 5)
 
-Builds and publishes Docker image directly — no test gate, no lint gate, no type check.
+### INFO-01: Telegram StreamHandler Accumulates Full Response in Memory
+**Severity**: INFO
+**File**: `packages/server/src/telegram/stream-handler.ts`
+The stream handler accumulates the entire AI response as a string in memory before sending. For very long responses this could be large, but given Telegram's 4096 char limit and the `splitMessage` function, this is manageable. No action needed.
 
-**Fix:** Add `bun test && bun run lint && tsc --noEmit` before `docker build`.
-
----
-
-### H-9: No monitoring or error tracking
-No Sentry, Datadog, or any APM integration. Production errors only visible in server logs with no alerting.
-
----
-
-### H-10: CORS fallback returns first allowed origin instead of rejecting
-**File:** `packages/server/src/index.ts:109`
-
-Disallowed origins get `allowedOrigins[0]` instead of `null`. Should reject outright.
+### INFO-02: BotRegistry Sequential Bot Start
+**Severity**: INFO
+**File**: `packages/server/src/telegram/bot-registry.ts:131-152`
+`autoStart()` starts bots sequentially with `await` in a for-loop. With multiple bots this adds latency to server startup. Could use `Promise.allSettled()` for parallel startup.
 
 ---
 
-### H-11: WebSocket API key accepted via query parameter
-**File:** `packages/server/src/index.ts:149`
+## 7. Documentation (Phase 7)
 
-API keys in URLs appear in logs, browser history, and proxy access logs.
-
----
-
-### H-12: `project.envVars` stored and returned unencrypted
-**Files:** `packages/server/src/db/schema.ts:11` | `packages/server/src/routes/projects.ts:54-67`
-
-Per-project env vars (potentially containing secrets) stored as plaintext JSON, returned verbatim in API responses.
+### MEDIUM-13: CHANGELOG Not Updated to 0.7.0
+**Severity**: MEDIUM  
+**File**: `CHANGELOG.md`
+Should include all changes from 0.5.3 to 0.7.0, covering the desktop app, Telegram multi-bot support, RTK, etc.
 
 ---
 
-## 🟡 MEDIUM Findings
+## 8. Mesh Analytics (Phase 8)
 
-| # | Finding | File |
-|---|---------|------|
-| M-1 | Settings route has direct DB calls (no service layer) | `routes/settings.ts:26-80` |
-| M-2 | Telegram route has inline DB calls | `routes/telegram.ts:99-133` |
-| M-3 | No API versioning (`/api/` not `/api/v1/`) | `routes/index.ts` |
-| M-4 | No database indexes declared for frequent queries | `db/schema.ts` |
-| M-5 | N+1 pattern in `getChannel` (3 queries per fetch) | `services/channel-manager.ts:160-185` |
-| M-6 | No WebSocket message size limit | `index.ts:172-174` |
-| M-7 | `dangerouslySetInnerHTML` in layout without CSP | `web/app/layout.tsx:27` |
-| M-8 | Dead code: 3 unused components | `stats-grid.tsx`, `three-column.tsx`, `fan-layout.ts` |
-| M-9 | `telegram-bridge.ts` at 1,155 LOC (CC~147) | `services/telegram-bridge.ts` |
-| M-10 | Touch targets < 44px (step pills 22px, bubbles 40px) | `new-session-modal.tsx:93`, `ring-window.tsx` |
-| M-11 | Missing `aria-label` on 2-3 inputs | `projects/page.tsx:149`, `channel-panel.tsx:205` |
-| M-12 | Dark mode broken by hardcoded hex colors | `activity-terminal.tsx:21-27`, `ring-window.tsx:9` |
-| M-13 | Zustand selector creates new array each render | `ring-window.tsx:29-43` |
+### Metrics Data Summary
 
----
+- **Sessions tracked**: 30+ entries in `sessions.jsonl`
+- **Skills used**: 0 (all `skill_invocations: 0`, `primary_skill: "none"`)
+- **Chains**: No `chains.jsonl` file exists
+- **Routing overrides**: No `routing-overrides.json` file exists
+- **Average session**: ~20 min, ~25 tool calls
 
-## 🟢 LOW Findings
+### Assessment
 
-| # | Finding | File |
-|---|---------|------|
-| L-1 | `bun.lock` in `.gitignore` (should be committed) | `.gitignore:18` |
-| L-2 | `timingSafeEqual` compares `a` with itself (no-op) | `middleware/auth.ts:16-18` |
-| L-3 | Health endpoint exposes version + DB table count | `routes/health.ts:17-47` |
-| L-4 | No React.memo on Ring list items | `ring-window.tsx:180-270` |
-| L-5 | `session-store.ts` at 584 LOC (at-risk, score 48) | `services/session-store.ts` |
-| L-6 | Weak dev API key (`companion-dev-2026`) | `.env:1` |
+The metrics collection infrastructure is in place but not yet tracking skill invocations. All sessions show `skills_used: []` and tool distribution as `{"unknown": N}`. This suggests the hooks that populate skill metadata are not wired up for this project. No skill chains or routing data available for analysis.
+
+**Unused Skills**: Cannot determine -- no invocation data.
+**Routing Overrides**: None configured.
 
 ---
 
-## ℹ️ INFO
+## Top Priority Actions
 
-| # | Observation |
-|---|-------------|
-| I-1 | No CSRF needed (API key auth, not cookies) — but add if cookies introduced |
-| I-2 | Telegram bot auth correctly implements chat/user allowlists |
-| I-3 | All DB operations use Drizzle ORM — no raw SQL injection risk |
-| I-4 | Mesh metrics tracking not producing data — all 51 sessions show 0 skill invocations |
-
----
-
-## ✅ Positive Findings
-
-1. **TypeScript strict mode everywhere** — `noUncheckedIndexedAccess` enabled, only 1 `any` in production code
-2. **Zero circular dependencies** — clean dependency graph across all modules
-3. **Zustand stores are exemplary** — all 5 stores use proper immutable patterns, narrow selectors, isolated concerns
-4. **API design is consistent** — RESTful verbs, pagination, consistent error format (`{ success, error }`), proper HTTP status codes
-5. **Drizzle ORM eliminates SQL injection** — no raw queries with user input anywhere
-6. **ESLint configured strict** — `no-explicit-any: error`, only 11 warnings total across entire codebase
-7. **WebSocket cleanup is correct** — `use-websocket.ts` properly clears timeouts and closes connections
-8. **`prefers-reduced-motion` respected** — both CSS and JS check for motion sensitivity
+1. **CRITICAL** -- Set CSP policy in `src-tauri/tauri.conf.json:38` and remove `dangerousDisableAssetCspModification`
+2. **CRITICAL** -- Remove `--hot` from `docker-entrypoint.sh:65` for production
+3. **HIGH** -- Narrow shell capabilities in `src-tauri/capabilities/default.json` to sidecar-only
+4. **HIGH** -- Add empty-whitelist warning/block in `packages/server/src/telegram/bot-factory.ts`
+5. **HIGH** -- Fix version drift: update `APP_VERSION` in `packages/shared/src/constants.ts` to `0.7.0`
+6. **HIGH** -- Fix sidecar kill race in `src-tauri/src/main.rs` RunEvent::Exit handler
+7. **HIGH** -- Resolve landing page deploy conflict (GitHub Pages vs Cloudflare Pages)
 
 ---
 
-## 4-Perspective Analysis
+## Positive Findings
 
-### 👤 User Perspective
+1. **Excellent structured logging** -- Custom logger supports JSON format, log levels, and module prefixing without any external dependency. Production code consistently uses `createLogger()` instead of `console.log`.
 
-| Aspect | Rating | Detail |
-|--------|--------|--------|
-| **Core UX** | 6/10 | Chat works well, Ring/Debate is innovative, but no error boundary = white screen on crash |
-| **Responsiveness** | 5/10 | Mobile CSS exists but hardcoded widths (260px, 300px, 320px sidebars) limit flexibility |
-| **Loading feedback** | 7/10 | Skeleton loaders present, CircleNotch spinners for async operations |
-| **Accessibility** | 5/10 | Most buttons have aria-labels, but small touch targets (22px, 40px), missing input labels |
-| **Dark mode** | 5/10 | CSS variables exist but 100+ hardcoded hex colors override theme in many places |
-| **Reliability** | 4/10 | No test suite = bugs ship to users; no monitoring = silent failures in production |
+2. **Strong auth middleware** -- Timing-safe comparison (`timingSafeEqual`) for API key auth prevents oracle attacks. Production startup correctly refuses to run without `API_KEY` set.
 
-**User pain points:**
-- Debate mode waits sequentially — feels sluggish with 3+ agents
-- Ring broadcast blocks UI while sending to multiple sessions
-- Settings page is a massive scroll — no navigation/tabs within it
-- No error recovery — unhandled error = restart needed
+3. **Well-designed Telegram rate limiting** -- Grammy `apiThrottler` + `autoRetry` transformer combination properly handles Telegram API limits. The `StreamHandler` accumulate-then-send pattern avoids edit-spam that causes 429s.
 
----
+4. **Clean monorepo workspace structure** -- `packages/shared`, `packages/server`, `packages/web` with workspace protocol references. No circular dependencies detected between packages.
 
-### 🛠️ Developer Perspective
+5. **Comprehensive Docker setup** -- Multi-stage build, `tini` as PID 1, healthcheck, non-root user attempt, sentinel-based bootstrap, and well-documented docker-compose with multiple deployment options (Cloudflare Tunnel, Nginx).
 
-| Aspect | Rating | Detail |
-|--------|--------|--------|
-| **Onboarding** | 7/10 | README covers quick start, Docker + dev mode documented |
-| **Code quality** | 5/10 | TypeScript strict is great, but 5 modules are critically complex |
-| **Architecture** | 7/10 | Clean layers, good separation — but monolithic files need splitting |
-| **Testing** | 2/10 | 4 test files, <5% coverage, CI doesn't run tests |
-| **DX tooling** | 6/10 | ESLint configured, Prettier installed, hot reload works |
-| **Maintainability** | 4/10 | `anti-cdp.ts` (2,470 LOC), `ws-bridge.ts` (1,391 LOC) are unmaintainable |
-
-**Developer pain points:**
-- Touching `ws-bridge.ts` is terrifying — 1,391 LOC, zero tests, 11 dependents
-- `anti-cdp.ts` is a 2,470-line black box with 50+ silent catch blocks
-- No API docs — must read route handlers to understand endpoints
-- No test gate in CI — broken code can ship to production
-
----
-
-### 🎨 Designer/UI-UX Perspective
-
-| Aspect | Rating | Detail |
-|--------|--------|--------|
-| **Design system** | 5/10 | CSS variables defined in globals.css but not used consistently |
-| **Component quality** | 4/10 | 10 components > 300 LOC, heavy inline styles |
-| **Visual consistency** | 5/10 | Google color palette defined but scattered as hardcoded hex across 40 files |
-| **Animation** | 7/10 | Ring magnification, smooth transitions, respects reduced-motion |
-| **Accessibility** | 5/10 | Focus rings exist globally, but some inputs lack labels, small touch targets |
-| **Responsive** | 5/10 | Mobile breakpoint exists (@media 767px) but sidebars use hardcoded px |
-
-**Design debt:**
-- 100+ inline `style={{}}` — violates "no inline styles" rule
-- Colors like `#4285F4`, `#a855f7` appear 30+ times as raw hex instead of `var(--color-google-blue)`
-- Settings page (1,312 LOC) is a single scrollable page — needs tab navigation
-- `new-session-modal` (1,107 LOC) should be a multi-step wizard with extracted sub-components
-- No design tokens for spacing — inconsistent padding/margins
-
----
-
-### 💼 Business Perspective
-
-| Aspect | Rating | Detail |
-|--------|--------|--------|
-| **Ship readiness** | 4/10 | Security vulns (path traversal, IP spoofing) block production deployment |
-| **Monetization** | 7/10 | License system + Polar.sh payments integrated, tier-based features |
-| **Scalability** | 5/10 | SQLite is single-user; sequential debate = poor multi-agent performance |
-| **Competitive edge** | 8/10 | Ring/Debate mode is unique, Telegram integration is strong |
-| **Reliability** | 3/10 | No tests, no monitoring, no error tracking = customer-facing failures |
-| **Time to market** | 6/10 | Core features work, but security fixes needed before public launch |
-
-**Business risks:**
-1. **Security blockers**: Path traversal + IP spoofing + secrets exposure must be fixed before any public deployment
-2. **No monitoring**: Production issues will be reported by users, not detected proactively
-3. **No tests**: Every feature addition risks breaking existing functionality
-4. **SQLite limitation**: Single concurrent writer — fine for self-hosted, problematic if scaling to multi-tenant SaaS
-5. **Tech debt accumulation**: 5 critical modules getting worse with each change
-
----
-
-## Mesh Analytics
-
-| Metric | Value |
-|--------|-------|
-| Total sessions tracked | 51 |
-| Skill invocations | 0 (all sessions) |
-| Tool calls range | 2–186 per session |
-| Avg session duration | ~130 min |
-| Skills.json | Empty (`{}`) |
-| Chains data | Not available |
-
-**Verdict:** Mesh tracking is not producing useful data. All 51 sessions show `"skill_invocations": 0` and `"skills_used": []`. The hooks that populate skill metrics are either not firing or not installed for this project.
-
-**Action:** Verify `.rune/hooks/` configuration and ensure skill tracking hooks are active.
-
----
-
-## Top Priority Actions (Ordered by Impact)
-
-### 🔴 Week 1 — Security & Stability (Ship-Blockers)
-
-| # | Action | File(s) | Impact |
-|---|--------|---------|--------|
-| 1 | Fix `startsWith` path traversal | `filesystem.ts:61,186`, `sessions.ts:136` | Prevents unauthorized file access |
-| 2 | Fix rate limiter IP spoofing | `rate-limiter.ts:53-55` | Prevents rate limit bypass |
-| 3 | Mask secrets in GET /api/settings | `settings.ts:24-37` | Prevents credential exfiltration |
-| 4 | Add HTTP security headers | `index.ts:108-113` | OWASP compliance |
-| 5 | Add MCP permissionMode enum validation | `mcp/tools.ts:57` | Closes privilege escalation vector |
-| 6 | Fix CORS to reject unknown origins | `index.ts:109` | Correct CORS behavior |
-| 7 | Remove WS API key from query param | `index.ts:149` | Prevent key leakage in logs |
-
-### 🟠 Week 2 — Testing & CI
-
-| # | Action | Impact |
-|---|--------|--------|
-| 8 | Add `bun test` + `tsc --noEmit` to CI workflow | Prevents broken code shipping |
-| 9 | Write tests for `ws-bridge.ts` (danger zone) | Protect critical session lifecycle |
-| 10 | Write tests for `session-store.ts` | Protect state management |
-| 11 | Add React error boundary in layout | Prevent white-screen crashes |
-
-### 🟡 Week 3-4 — Code Quality & Performance
-
-| # | Action | Impact |
-|---|--------|--------|
-| 12 | Parallelize debate engine AI calls | 2-3× faster debates |
-| 13 | Parallelize Ring broadcast | Instant multi-session broadcast |
-| 14 | Split `anti-cdp.ts` (2,470 LOC → 3 files) | Maintainability |
-| 15 | Split `ws-bridge.ts` (1,391 LOC → 2-3 files) | Reduce risk |
-| 16 | Extract settings service from route | Clean architecture |
-| 17 | Replace 100+ inline styles with CSS vars/Tailwind | Theme consistency |
-
-### 🔵 Month 2 — Polish & Scale
-
-| # | Action | Impact |
-|---|--------|---------|
-| 18 | Split mega-components (settings 1,312, modal 1,107 LOC) | Developer experience |
-| 19 | Add Sentry/error tracking | Production visibility |
-| 20 | Plan zod v3→v4 migration | Resolve peer dependency tension |
-| 21 | Add database indexes | Query performance |
-| 22 | Add API documentation | Developer onboarding |
-| 23 | Delete dead code (stats-grid, three-column, fan-layout) | Clean codebase |
+6. **Sidecar health polling** -- The Tauri app waits for the server to be healthy (30 attempts x 500ms) before showing the window, with a user-facing error message if it fails. Good UX pattern.
 
 ---
 
 ## Follow-up Timeline
 
-- **Verdict: WARNING** → Re-audit in 2-3 weeks after security fixes (Week 1 actions)
-- After security fixes: health should jump to ~6.5/10
-- After testing + CI: health should reach ~7.5/10
-- Target: **PASS (8+/10)** by end of Month 2
+- **WARNING** verdict -> re-audit in 1 month
+- Fix CRITICAL items within 1 week
+- Fix HIGH items within 2 weeks
+- Plan MEDIUM items for next sprint
 
 ---
 
-*Report saved to: `AUDIT-REPORT.md`*
-*Generated by Rune Audit — 8 phases, 4 perspectives, 8 parallel agents*
+Report saved to: `D:/Project/Companion/AUDIT-REPORT.md`

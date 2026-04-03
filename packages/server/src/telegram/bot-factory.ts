@@ -39,10 +39,21 @@ export function createBot(config: BotConfig): Bot {
 
   // ── Auth middleware: restrict to allowed chats + users ────────────────
 
+  // Warn if no whitelist is configured — bot will deny all messages by default
+  if (config.allowedChatIds.length === 0 && config.allowedUserIds.length === 0) {
+    log.warn("No allowedChatIds or allowedUserIds configured — bot will deny all messages. Add your chat/user ID in Settings → Telegram.", { botId: config.botId });
+  }
+
   bot.use(async (ctx, next) => {
     const chatId = ctx.chat?.id;
     const userId = ctx.from?.id;
     if (!chatId) return;
+
+    // Default deny: if no whitelist is configured, reject all messages
+    if (config.allowedChatIds.length === 0 && config.allowedUserIds.length === 0) {
+      log.debug("Denied (no whitelist configured)", { chatId, userId, botId: config.botId });
+      return;
+    }
 
     // Admin users can DM the bot directly (bypass chat ID check)
     const isAdmin = userId && config.allowedUserIds.includes(userId);
