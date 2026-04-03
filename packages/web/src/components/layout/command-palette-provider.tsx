@@ -2,7 +2,12 @@
 
 import { useEffect } from "react";
 import { useUiStore } from "@/lib/stores/ui-store";
-import { CommandPalette } from "./command-palette";
+import dynamic from "next/dynamic";
+
+const CommandPalette = dynamic(
+  () => import("./command-palette").then((m) => ({ default: m.CommandPalette })),
+  { ssr: false },
+);
 
 /**
  * Mounts the CommandPalette and registers the global Ctrl+K / Cmd+K shortcut.

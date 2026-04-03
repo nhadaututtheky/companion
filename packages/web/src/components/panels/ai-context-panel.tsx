@@ -26,7 +26,12 @@ import {
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { useContextFeedStore } from "@/lib/stores/context-feed-store";
-import { GraphVisualization } from "./graph-visualization";
+import dynamic from "next/dynamic";
+
+const GraphVisualization = dynamic(
+  () => import("./graph-visualization").then((m) => ({ default: m.GraphVisualization })),
+  { ssr: false, loading: () => <div className="flex items-center justify-center h-64 text-text-muted text-sm">Loading graph...</div> },
+);
 import type { ContextInjectionEvent } from "@/lib/stores/context-feed-store";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -106,7 +111,7 @@ function SourceCard({
     >
       <div className="flex items-center gap-2 mb-1">
         <Icon size={14} weight="bold" style={{ color }} />
-        <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+        <span className="text-xs font-semibold">
           {label}
         </span>
         <div
@@ -119,7 +124,7 @@ function SourceCard({
           }}
         />
       </div>
-      <div className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+      <div className="text-xs">
         {statusText}
       </div>
       {detail && (
@@ -151,15 +156,15 @@ function ScanProgress({ job }: { job: ScanJob }) {
   const pct = job.totalFiles > 0 ? Math.round((job.scannedFiles / job.totalFiles) * 100) : 0;
 
   return (
-    <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
+    <div className="rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+        <span className="text-xs font-medium">
           {job.status === "scanning" && "Scanning files..."}
           {job.status === "describing" && "Generating descriptions..."}
           {job.status === "done" && "Scan complete"}
           {job.status === "error" && "Scan failed"}
         </span>
-        <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs">
           {pct}%
         </span>
       </div>
@@ -174,7 +179,7 @@ function ScanProgress({ job }: { job: ScanJob }) {
       </div>
       <div
         className="flex justify-between mt-1.5 text-xs"
-        style={{ color: "var(--color-text-muted)" }}
+       
       >
         <span>
           {job.scannedFiles}/{job.totalFiles} files
@@ -200,7 +205,7 @@ function HotFilesList({ files }: { files: HotFile[] }) {
     <div>
       <h4
         className="text-xs font-medium mb-2 uppercase tracking-wider"
-        style={{ color: "var(--color-text-secondary)" }}
+       
       >
         Most coupled files
       </h4>
@@ -225,7 +230,7 @@ function HotFilesList({ files }: { files: HotFile[] }) {
                 <div className="min-w-0">
                   <span
                     className="text-xs font-medium truncate block"
-                    style={{ color: "var(--color-text-primary)" }}
+                   
                   >
                     {name}
                   </span>
@@ -238,7 +243,7 @@ function HotFilesList({ files }: { files: HotFile[] }) {
                 </div>
                 <div
                   className="flex gap-2 text-xs shrink-0"
-                  style={{ color: "var(--color-text-secondary)" }}
+                 
                 >
                   <span>{f.incomingEdges} in</span>
                   <span>{f.outgoingEdges} out</span>
@@ -282,39 +287,39 @@ function SymbolResults({ results }: { results: SearchResult[] }) {
             </span>
             <span
               className="text-sm font-medium truncate"
-              style={{ color: "var(--color-text-primary)" }}
+             
             >
               {r.symbolName}
             </span>
             {r.isExported && (
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-xs">
                 exported
               </span>
             )}
           </button>
           {expanded === r.id && (
             <div className="px-3 pb-2 space-y-1.5">
-              <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <div className="text-xs">
                 {r.filePath}
               </div>
               {r.description && (
-                <div className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                <div className="text-xs">
                   {r.description}
                 </div>
               )}
               {r.signature && (
                 <div
                   className="text-xs font-mono truncate"
-                  style={{ color: "var(--color-text-muted)" }}
+                 
                 >
                   {r.signature}
                 </div>
               )}
               {r.incoming.length > 0 && (
                 <div className="text-xs">
-                  <span style={{ color: "var(--color-text-muted)" }}>Used by: </span>
+                  <span>Used by: </span>
                   {r.incoming.map((e, i) => (
-                    <span key={i} style={{ color: "var(--color-text-secondary)" }}>
+                    <span key={i}>
                       {e.symbolName}
                       {i < r.incoming.length - 1 ? ", " : ""}
                     </span>
@@ -323,9 +328,9 @@ function SymbolResults({ results }: { results: SearchResult[] }) {
               )}
               {r.outgoing.length > 0 && (
                 <div className="text-xs">
-                  <span style={{ color: "var(--color-text-muted)" }}>Uses: </span>
+                  <span>Uses: </span>
                   {r.outgoing.map((e, i) => (
-                    <span key={i} style={{ color: "var(--color-text-secondary)" }}>
+                    <span key={i}>
                       {e.symbolName} ({e.edgeType}){i < r.outgoing.length - 1 ? ", " : ""}
                     </span>
                   ))}
@@ -374,10 +379,10 @@ function QuickScrape() {
   const wordCount = content ? content.split(/\s+/).length : 0;
 
   return (
-    <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
+    <div className="rounded-lg p-3">
       <span
         className="text-xs font-semibold block mb-2"
-        style={{ color: "var(--color-text-secondary)" }}
+       
       >
         Quick Scrape
       </span>
@@ -388,7 +393,7 @@ function QuickScrape() {
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleScrape()}
           placeholder="https://docs.example.com"
-          className="flex-1 text-xs px-2.5 py-1.5 rounded-md outline-none"
+          className="flex-1 text-xs px-2.5 py-1.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
           style={{
             background: "var(--color-bg-base)",
             color: "var(--color-text-primary)",
@@ -417,7 +422,7 @@ function QuickScrape() {
           <button
             onClick={() => setExpanded(!expanded)}
             className="flex items-center gap-1.5 text-xs font-medium cursor-pointer w-full"
-            style={{ color: "var(--color-text-secondary)" }}
+           
             aria-expanded={expanded}
           >
             {expanded ? <CaretDown size={10} /> : <CaretRight size={10} />}
@@ -479,10 +484,10 @@ function QuickResearch() {
   }, [query]);
 
   return (
-    <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
+    <div className="rounded-lg p-3">
       <span
         className="text-xs font-semibold block mb-2"
-        style={{ color: "var(--color-text-secondary)" }}
+       
       >
         Web Research
       </span>
@@ -493,7 +498,7 @@ function QuickResearch() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleResearch()}
           placeholder="Search query..."
-          className="flex-1 text-xs px-2.5 py-1.5 rounded-md outline-none"
+          className="flex-1 text-xs px-2.5 py-1.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
           style={{
             background: "var(--color-bg-base)",
             color: "var(--color-text-primary)",
@@ -526,7 +531,7 @@ function QuickResearch() {
           <button
             onClick={() => setExpanded(!expanded)}
             className="flex items-center gap-1.5 text-xs font-medium cursor-pointer w-full"
-            style={{ color: "var(--color-text-secondary)" }}
+           
             aria-expanded={expanded}
           >
             {expanded ? <CaretDown size={10} /> : <CaretRight size={10} />}
@@ -604,7 +609,7 @@ function FeedTab({ filterSessionId }: { filterSessionId?: string }) {
     <div className="flex flex-col gap-2">
       {/* Header with counter */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs font-medium">
           {totalCount} injection{totalCount !== 1 ? "s" : ""} total
         </span>
         {events.length > 0 && (
@@ -620,7 +625,7 @@ function FeedTab({ filterSessionId }: { filterSessionId?: string }) {
 
       {/* Event list */}
       {filtered.length === 0 ? (
-        <div className="text-center py-8" style={{ color: "var(--color-text-muted)" }}>
+        <div className="text-center py-8">
           <Brain size={32} weight="light" className="mx-auto mb-2" style={{ opacity: 0.3 }} />
           <p className="text-sm">No injections yet</p>
           <p className="text-xs mt-1">Context events appear here as you chat with Claude</p>
@@ -634,7 +639,7 @@ function FeedTab({ filterSessionId }: { filterSessionId?: string }) {
               <div
                 key={evt.id}
                 className="flex items-start gap-2.5 px-2.5 py-2 rounded-lg"
-                style={{ background: "var(--color-bg-elevated)" }}
+               
               >
                 <div className="mt-0.5 rounded p-1" style={{ background: meta.color + "15" }}>
                   <Icon size={12} weight="bold" style={{ color: meta.color }} />
@@ -653,7 +658,7 @@ function FeedTab({ filterSessionId }: { filterSessionId?: string }) {
                   </div>
                   <div
                     className="text-xs mt-0.5 truncate"
-                    style={{ color: "var(--color-text-secondary)" }}
+                   
                   >
                     {evt.summary}
                   </div>
@@ -691,7 +696,7 @@ function ToggleRow({
       className="flex items-center justify-between py-1.5 cursor-pointer"
       style={{ opacity: disabled ? 0.4 : 1 }}
     >
-      <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+      <span className="text-xs">
         {label}
       </span>
       <button
@@ -768,7 +773,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
 
   if (!projectSlug) {
     return (
-      <div className="text-center py-6 text-sm" style={{ color: "var(--color-text-muted)" }}>
+      <div className="text-center py-6 text-sm">
         Select a project to configure
       </div>
     );
@@ -780,7 +785,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
         <CircleNotch
           size={20}
           className="animate-spin"
-          style={{ color: "var(--color-text-muted)" }}
+         
         />
       </div>
     );
@@ -789,17 +794,17 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
   return (
     <div className="flex flex-col gap-3">
       {/* Master toggle */}
-      <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
+      <div className="rounded-lg p-3">
         <div className="flex items-center gap-2 mb-2">
           <Gear size={14} weight="bold" style={{ color: "#A855F7" }} />
-          <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <span className="text-xs font-semibold">
             Context Injection
           </span>
           {saving && (
             <CircleNotch
               size={10}
               className="animate-spin ml-auto"
-              style={{ color: "var(--color-text-muted)" }}
+             
             />
           )}
         </div>
@@ -811,10 +816,10 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
       </div>
 
       {/* Per-type toggles */}
-      <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
+      <div className="rounded-lg p-3">
         <span
           className="text-xs font-semibold block mb-2"
-          style={{ color: "var(--color-text-secondary)" }}
+         
         >
           Injection Types
         </span>
@@ -853,10 +858,10 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
       </div>
 
       {/* Token budget */}
-      <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
+      <div className="rounded-lg p-3">
         <span
           className="text-xs font-semibold block mb-2"
-          style={{ color: "var(--color-text-secondary)" }}
+         
         >
           Token Budget (per message context)
         </span>
@@ -879,7 +884,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
           />
           <span
             className="text-xs font-mono w-14 text-right"
-            style={{ color: "var(--color-text-primary)" }}
+           
           >
             {config.maxContextTokens}
           </span>
@@ -894,10 +899,10 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
       </div>
 
       {/* Exclude patterns */}
-      <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
+      <div className="rounded-lg p-3">
         <span
           className="text-xs font-semibold block mb-2"
-          style={{ color: "var(--color-text-secondary)" }}
+         
         >
           Exclude Patterns
         </span>
@@ -914,7 +919,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
               }
             }}
             placeholder="**/test/** or **/*.spec.ts"
-            className="flex-1 text-xs px-2.5 py-1.5 rounded-md outline-none"
+            className="flex-1 text-xs px-2.5 py-1.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
             style={{
               background: "var(--color-bg-base)",
               color: "var(--color-text-primary)",
@@ -939,7 +944,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
           </button>
         </div>
         {config.excludePatterns.length === 0 ? (
-          <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+          <div className="text-xs">
             No exclude patterns set
           </div>
         ) : (
@@ -948,11 +953,11 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
               <div
                 key={idx}
                 className="flex items-center justify-between px-2 py-1 rounded"
-                style={{ background: "var(--color-bg-base)" }}
+               
               >
                 <span
                   className="text-xs font-mono truncate"
-                  style={{ color: "var(--color-text-primary)" }}
+                 
                 >
                   {pattern}
                 </span>
@@ -1018,15 +1023,15 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
   };
 
   return (
-    <div className="rounded-lg p-3" style={{ background: "var(--color-bg-elevated)" }}>
+    <div className="rounded-lg p-3">
       <div className="flex items-center gap-2 mb-2">
         <Package size={14} weight="bold" style={{ color: "#4285F4" }} />
-        <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+        <span className="text-xs font-semibold">
           Docs Engine Setup
         </span>
       </div>
 
-      <p className="text-xs mb-3" style={{ color: "var(--color-text-muted)" }}>
+      <p className="text-xs mb-3">
         Webclaw powers library docs auto-injection. Scraping works without an API key; web search
         requires one.
       </p>
@@ -1036,14 +1041,14 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
           <CircleNotch
             size={16}
             className="animate-spin"
-            style={{ color: "var(--color-text-muted)" }}
+           
           />
         </div>
       ) : dockerStatus.dockerAvailable ? (
         <div className="flex flex-col gap-2">
           {/* API key (optional) */}
           <div>
-            <span className="text-xs block mb-1" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs block mb-1">
               API Key (optional — for web search)
             </span>
             <input
@@ -1051,7 +1056,7 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="WEBCLAW_API_KEY"
-              className="w-full text-xs px-2.5 py-1.5 rounded-md outline-none"
+              className="w-full text-xs px-2.5 py-1.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
               style={{
                 background: "var(--color-bg-base)",
                 color: "var(--color-text-primary)",
@@ -1285,7 +1290,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
       >
         <div className="flex items-center gap-2">
           <Brain size={18} weight="bold" style={{ color: "#A855F7" }} />
-          <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <span className="text-sm font-semibold">
             AI Context
           </span>
           {injectionCount > 0 && (
@@ -1306,7 +1311,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
               loadWiStatus();
             }}
             className="p-1.5 rounded cursor-pointer"
-            style={{ color: "var(--color-text-muted)" }}
+           
             aria-label="Refresh"
           >
             <ArrowClockwise size={14} weight="bold" />
@@ -1314,7 +1319,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
           <button
             onClick={onClose}
             className="p-1.5 rounded cursor-pointer"
-            style={{ color: "var(--color-text-muted)" }}
+           
             aria-label="Close panel"
           >
             <X size={14} weight="bold" />
@@ -1330,7 +1335,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
         <select
           value={selectedSlug}
           onChange={(e) => setSelectedSlug(e.target.value)}
-          className="w-full text-xs py-1.5 px-2 rounded-md outline-none cursor-pointer"
+          className="w-full text-xs py-1.5 px-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
           style={{
             background: "var(--color-bg-elevated)",
             color: "var(--color-text-primary)",
@@ -1412,7 +1417,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
             {!slug && (
               <div
                 className="text-center py-6 text-sm"
-                style={{ color: "var(--color-text-muted)" }}
+               
               >
                 Select a project above to explore code and docs
               </div>
@@ -1426,7 +1431,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                     <MagnifyingGlass
                       size={14}
                       className="absolute left-2.5 top-1/2 -translate-y-1/2"
-                      style={{ color: "var(--color-text-muted)" }}
+                     
                     />
                     <input
                       type="text"
@@ -1434,7 +1439,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                       placeholder="Search symbols..."
-                      className="w-full pl-8 pr-3 py-1.5 rounded-lg text-sm outline-none"
+                      className="w-full pl-8 pr-3 py-1.5 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
                       style={{
                         background: "var(--color-bg-elevated)",
                         border: "1px solid var(--color-border-strong, var(--color-border))",
@@ -1479,11 +1484,11 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                         <Icon size={14} className="mx-auto mb-0.5" style={{ color }} />
                         <div
                           className="text-sm font-mono font-bold"
-                          style={{ color: "var(--color-text-primary)" }}
+                         
                         >
                           {value.toLocaleString()}
                         </div>
-                        <div className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                        <div className="text-xs">
                           {label}
                         </div>
                       </div>
@@ -1508,7 +1513,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                 {hotFiles.length > 0 && <HotFilesList files={hotFiles} />}
 
                 {cgJob?.completedAt && (
-                  <div className="text-xs text-center" style={{ color: "var(--color-text-muted)" }}>
+                  <div className="text-xs text-center">
                     Last scan: {new Date(cgJob.completedAt).toLocaleString()}
                   </div>
                 )}
@@ -1530,7 +1535,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                   <div className="flex items-center justify-between">
                     <span
                       className="text-xs font-semibold"
-                      style={{ color: "var(--color-text-secondary)" }}
+                     
                     >
                       Docs Cache: {wiCache.size} entries
                     </span>

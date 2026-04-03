@@ -192,7 +192,7 @@ function TagInput({ onAdd, onClose }: TagInputProps) {
         onBlur={onClose}
         placeholder="Tag name…"
         maxLength={50}
-        className="text-xs px-2 py-0.5 rounded outline-none w-24"
+        className="text-xs px-2 py-0.5 rounded outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent w-24"
         style={{
           background: "var(--color-bg-elevated)",
           border: "1px solid var(--color-border)",
@@ -368,7 +368,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+        <span className="text-sm font-semibold">
           Sessions
           {active.length > 0 && (
             <span
@@ -408,8 +408,8 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
             value={searchRaw}
             onChange={(e) => setSearchRaw(e.target.value)}
             placeholder="Search sessions..."
-            className="flex-1 text-xs bg-transparent outline-none"
-            style={{ color: "var(--color-text-primary)" }}
+            className="flex-1 text-xs bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+           
             aria-label="Search sessions"
           />
           {searchRaw && (
@@ -523,8 +523,8 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
       <div className="flex-1 overflow-y-auto py-1">
         {displayed.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 gap-2">
-            <FolderOpen size={28} style={{ color: "var(--color-text-muted)" }} />
-            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <FolderOpen size={28} />
+            <p className="text-xs">
               {filter === "active" ? "No active sessions" : "No sessions"}
             </p>
           </div>
@@ -564,14 +564,14 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
                 )}
                 <span
                   className="text-sm font-medium truncate flex-1"
-                  style={{ color: "var(--color-text-primary)" }}
+                 
                 >
                   {s.projectName}
                 </span>
                 {s.totalCostUsd > 0 && (
                   <span
                     className="text-xs font-mono shrink-0"
-                    style={{ color: "var(--color-text-muted)" }}
+                   
                   >
                     {formatCost(s.totalCostUsd)}
                   </span>
@@ -594,10 +594,10 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
                 >
                   {badge.label}
                 </span>
-                <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                <span className="text-xs">
                   {s.numTurns} turns
                 </span>
-                <span className="text-xs ml-auto" style={{ color: "var(--color-text-muted)" }}>
+                <span className="text-xs ml-auto">
                   {formatTime(s.createdAt)}
                 </span>
               </div>

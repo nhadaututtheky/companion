@@ -218,10 +218,10 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
           <TerminalWindow
             size={14}
             weight="bold"
-            style={{ color: "var(--color-text-secondary)" }}
+           
             aria-hidden="true"
           />
-          <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <span className="text-xs font-semibold">
             Terminal
           </span>
           <span

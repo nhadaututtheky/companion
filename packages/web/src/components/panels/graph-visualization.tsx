@@ -183,7 +183,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
         <CircleNotch
           size={24}
           className="animate-spin"
-          style={{ color: "var(--color-text-muted)" }}
+         
         />
       </div>
     );
@@ -193,7 +193,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
     return (
       <div className="text-center py-8">
         <WarningCircle size={24} className="mx-auto mb-2" style={{ color: "#EA4335" }} />
-        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <p className="text-xs">
           {error}
         </p>
       </div>
@@ -206,10 +206,10 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <TreeStructure size={14} weight="bold" style={{ color: "#A855F7" }} />
-          <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <span className="text-xs font-semibold">
             Dependency Graph
           </span>
-          <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-xs">
             {rawData?.nodes.length ?? 0} nodes · {rawData?.edges.length ?? 0} edges
           </span>
         </div>
@@ -272,7 +272,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
       {selectedData && (
         <div
           className="rounded-lg p-2.5 text-xs"
-          style={{ background: "var(--color-bg-elevated)" }}
+         
         >
           <div className="flex items-center gap-2">
             <span
@@ -285,14 +285,14 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
             >
               {selectedData.symbolType}
             </span>
-            <span className="font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            <span className="font-semibold">
               {selectedData.symbolName}
             </span>
             {selectedData.isExported && (
-              <span style={{ color: "var(--color-text-muted)" }}>exported</span>
+              <span>exported</span>
             )}
           </div>
-          <div className="mt-1" style={{ color: "var(--color-text-muted)" }}>
+          <div className="mt-1">
             {selectedData.filePath}
           </div>
         </div>

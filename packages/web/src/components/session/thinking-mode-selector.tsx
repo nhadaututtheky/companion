@@ -111,7 +111,7 @@ export function ThinkingModeSelector({
                 {m.value === "adaptive" && (
                   <span
                     className="ml-auto text-[10px]"
-                    style={{ color: "var(--color-text-muted)" }}
+                   
                   >
                     default
                   </span>
@@ -119,7 +119,7 @@ export function ThinkingModeSelector({
                 {m.value === "deep" && (
                   <span
                     className="ml-auto text-[10px]"
-                    style={{ color: "var(--color-text-muted)" }}
+                   
                   >
                     50k tokens
                   </span>

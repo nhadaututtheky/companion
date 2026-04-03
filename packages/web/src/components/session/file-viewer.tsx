@@ -14,7 +14,7 @@ const CodeViewer = dynamic(() => import("./code-viewer").then((m) => ({ default:
 function CodeViewerFallback() {
   return (
     <div className="flex items-center justify-center h-32">
-      <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+      <span className="text-xs">
         Loading editor...
       </span>
     </div>
@@ -88,7 +88,7 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
         <div className="flex items-center gap-2 min-w-0">
           <span
             className="text-xs font-mono font-semibold truncate"
-            style={{ color: "var(--color-text-primary)" }}
+           
             title={filePath}
           >
             {fileName}
@@ -129,7 +129,7 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
           <button
             onClick={onClose}
             className="p-1 rounded cursor-pointer transition-colors"
-            style={{ color: "var(--color-text-muted)" }}
+           
             aria-label="Close file viewer"
           >
             <X size={14} weight="bold" />
@@ -141,7 +141,7 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
       <div className="flex-1 overflow-auto px-3 py-3">
         {loading && (
           <div className="flex items-center justify-center h-full">
-            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs">
               Loading...
             </span>
           </div>

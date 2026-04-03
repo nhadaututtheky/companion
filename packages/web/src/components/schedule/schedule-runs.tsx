@@ -88,7 +88,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
         >
           <div className="flex items-center gap-2">
             <ClockCounterClockwise size={14} style={{ color: "#4285F4" }} />
-            <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            <span className="text-sm font-semibold">
               Run History
             </span>
             <span
@@ -104,7 +104,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
           <button
             onClick={loadRuns}
             className="p-1 rounded cursor-pointer"
-            style={{ color: "var(--color-text-muted)" }}
+           
             aria-label="Refresh"
             title="Refresh"
           >
@@ -128,8 +128,8 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
             </div>
           ) : runs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 gap-1">
-              <ClockCounterClockwise size={24} style={{ color: "var(--color-text-muted)" }} />
-              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <ClockCounterClockwise size={24} />
+              <p className="text-xs">
                 No runs yet
               </p>
             </div>
@@ -153,7 +153,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
                       <div className="flex items-center gap-2">
                         <span
                           className="text-xs font-medium"
-                          style={{ color: "var(--color-text-primary)" }}
+                         
                         >
                           {cfg.label}
                         </span>
@@ -207,7 +207,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
           <button
             onClick={onClose}
             className="px-3 py-1.5 rounded-lg text-xs cursor-pointer"
-            style={{ color: "var(--color-text-muted)" }}
+           
           >
             Close
           </button>

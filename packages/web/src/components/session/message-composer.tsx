@@ -214,7 +214,7 @@ export function MessageComposer({
                   : placeholder
             }
             rows={1}
-            className="flex-1 resize-none bg-transparent outline-none text-sm leading-relaxed"
+            className="flex-1 resize-none bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent text-sm leading-relaxed"
             style={{
               color: "var(--color-text-primary)",
               maxHeight: 200,
@@ -269,7 +269,7 @@ export function MessageComposer({
         </div>
       </div>
 
-      <p className="text-center mt-1.5 text-xs" style={{ color: "var(--color-text-muted)" }}>
+      <p className="text-center mt-1.5 text-xs">
         {listening ? (
           <span style={{ color: "#EA4335" }}>Recording... click mic to stop</span>
         ) : (

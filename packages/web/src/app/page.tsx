@@ -16,7 +16,6 @@ import { BrowserPreviewPanel } from "@/components/panels/browser-preview-panel";
 import { SearchPanel } from "@/components/panels/search-panel";
 import { TerminalPanel } from "@/components/panels/terminal-panel";
 import { StatsPanel } from "@/components/panels/stats-panel";
-import { AiContextPanel } from "@/components/panels/ai-context-panel";
 import { SessionCompareModal } from "@/components/session/session-compare-modal";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useUiStore } from "@/lib/stores/ui-store";
@@ -24,7 +23,16 @@ import { useNotificationPermission } from "@/hooks/use-notifications";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { ApiKeyIndicator } from "@/components/auth/api-key-indicator";
-import { OnboardingWizard } from "@/components/onboarding-wizard";
+import dynamic from "next/dynamic";
+
+const AiContextPanel = dynamic(
+  () => import("@/components/panels/ai-context-panel").then((m) => ({ default: m.AiContextPanel })),
+  { ssr: false },
+);
+const OnboardingWizard = dynamic(
+  () => import("@/components/onboarding-wizard").then((m) => ({ default: m.OnboardingWizard })),
+  { ssr: false },
+);
 
 // ── Empty center state ─────────────────────────────────────────────────────
 

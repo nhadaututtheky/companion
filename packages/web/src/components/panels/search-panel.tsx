@@ -145,14 +145,14 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
         />
         <span
           className="text-sm font-semibold flex-1"
-          style={{ color: "var(--color-text-primary)" }}
+         
         >
           Search Files
         </span>
         <button
           onClick={onClose}
           className="p-1 rounded transition-colors cursor-pointer"
-          style={{ color: "var(--color-text-muted)" }}
+         
           aria-label="Close search panel"
         >
           <X size={15} weight="bold" aria-hidden="true" />
@@ -197,7 +197,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
             <button
               onClick={() => setQuery("")}
               className="absolute right-2 cursor-pointer"
-              style={{ color: "var(--color-text-muted)" }}
+             
               aria-label="Clear query"
             >
               <X size={13} aria-hidden="true" />
@@ -229,7 +229,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
         {loading && (
           <div
             className="flex items-center justify-center gap-2 py-8"
-            style={{ color: "var(--color-text-muted)" }}
+           
           >
             <CircleNotch size={16} className="animate-spin" aria-hidden="true" />
             <span className="text-sm">Searching...</span>
@@ -240,7 +240,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
         {!loading && error && (
           <div
             className="flex flex-col items-center justify-center gap-2 py-8 px-4 text-center"
-            style={{ color: "var(--color-text-muted)" }}
+           
           >
             <WarningCircle size={24} weight="regular" aria-hidden="true" />
             <span className="text-sm">{error}</span>
@@ -251,7 +251,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
         {!loading && !error && hasSearched && matches.length === 0 && (
           <div
             className="flex flex-col items-center justify-center gap-2 py-8"
-            style={{ color: "var(--color-text-muted)" }}
+           
           >
             <MagnifyingGlass size={24} weight="regular" aria-hidden="true" />
             <span className="text-sm">No results found</span>
@@ -295,14 +295,14 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
                       />
                       <span
                         className="text-xs font-semibold truncate"
-                        style={{ color: "var(--color-accent)" }}
+                       
                         title={fileRelative(match.file, searchRoot)}
                       >
                         {fileRelative(match.file, searchRoot)}
                       </span>
                       <span
                         className="text-xs flex-shrink-0 font-mono"
-                        style={{ color: "var(--color-text-muted)" }}
+                       
                       >
                         :{match.line}
                       </span>
@@ -311,7 +311,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
                     {/* Matching line text */}
                     <div
                       className="text-xs font-mono truncate"
-                      style={{ color: "var(--color-text-secondary)" }}
+                     
                       title={match.text.trim()}
                     >
                       <HighlightedText text={match.text.trim()} query={query} />

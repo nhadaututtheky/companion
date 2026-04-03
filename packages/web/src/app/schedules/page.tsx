@@ -109,7 +109,7 @@ export default function SchedulesPage() {
           <a
             href="/"
             className="p-1.5 rounded-lg transition-colors"
-            style={{ color: "var(--color-text-muted)" }}
+           
             aria-label="Back to dashboard"
           >
             <ArrowLeft size={16} weight="bold" />
@@ -184,7 +184,7 @@ export default function SchedulesPage() {
                     <CalendarBlank size={12} style={{ color: "#4285F4" }} />
                     <span
                       className="text-xs font-semibold"
-                      style={{ color: "var(--color-text-primary)" }}
+                     
                     >
                       Upcoming
                     </span>
@@ -197,7 +197,7 @@ export default function SchedulesPage() {
                       >
                         <span
                           className="text-xs truncate max-w-32"
-                          style={{ color: "var(--color-text-secondary)" }}
+                         
                         >
                           {run.name}
                         </span>

@@ -83,7 +83,7 @@ function ThinkingSection({ blocks }: { blocks: ThinkingBlock[] }) {
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-2 w-full px-3 py-2 text-xs cursor-pointer"
-        style={{ color: "var(--color-text-secondary)" }}
+       
         aria-expanded={expanded}
       >
         <Brain size={14} weight="bold" style={{ color: "#a855f7" }} />
@@ -153,13 +153,13 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
             <button
               onClick={() => toggle(tool.id)}
               className="flex items-center gap-2 w-full px-3 py-2 text-xs cursor-pointer"
-              style={{ color: "var(--color-text-secondary)" }}
+             
               aria-expanded={expanded}
             >
               <Wrench size={14} weight="bold" style={{ color: "#4285F4" }} />
               <code
                 className="font-mono font-semibold"
-                style={{ color: "var(--color-text-primary)" }}
+               
               >
                 {tool.name}
               </code>
@@ -192,7 +192,7 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
                 <div className="px-3 py-2">
                   <div
                     className="text-xs font-semibold mb-1"
-                    style={{ color: "var(--color-text-muted)" }}
+                   
                   >
                     Input
                   </div>
@@ -241,7 +241,7 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
                               });
                             }}
                             className="p-0.5 rounded cursor-pointer transition-colors hover:brightness-125"
-                            style={{ color: "var(--color-text-muted)" }}
+                           
                             title="Send to AI"
                             aria-label="Send output to AI"
                           >
@@ -252,7 +252,7 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
                     </div>
                     <pre
                       className="text-xs font-mono whitespace-pre-wrap max-h-[300px] overflow-y-auto m-0"
-                      style={{ color: "var(--color-text-secondary)" }}
+                     
                     >
                       {result.content.slice(0, 5000)}
                       {result.content.length > 5000 && "\n... (truncated)"}
@@ -303,7 +303,7 @@ function ToolInput({ input }: { input: Record<string, unknown> }) {
         {input.command != null && (
           <pre
             className="text-xs font-mono whitespace-pre-wrap m-0"
-            style={{ color: "var(--color-text-secondary)" }}
+           
           >
             {String(input.command).slice(0, 2000)}
           </pre>
@@ -317,7 +317,7 @@ function ToolInput({ input }: { input: Record<string, unknown> }) {
     return (
       <pre
         className="text-xs font-mono whitespace-pre-wrap m-0"
-        style={{ color: "var(--color-text-secondary)" }}
+       
       >
         $ {String(input.command).slice(0, 2000)}
       </pre>
@@ -329,7 +329,7 @@ function ToolInput({ input }: { input: Record<string, unknown> }) {
   return (
     <pre
       className="text-xs font-mono whitespace-pre-wrap m-0 max-h-[200px] overflow-y-auto"
-      style={{ color: "var(--color-text-secondary)" }}
+     
     >
       {str.slice(0, 3000)}
     </pre>
@@ -482,7 +482,7 @@ function MessageBubble({
         <Wrench size={14} weight="bold" style={{ color: "#4285F4", flexShrink: 0, marginTop: 2 }} />
         <pre
           className="text-xs font-mono m-0 whitespace-pre-wrap"
-          style={{ color: "var(--color-text-secondary)" }}
+         
         >
           {msg.content}
         </pre>
@@ -560,7 +560,7 @@ function MessageBubble({
 
         {/* Timestamp + source badge + cost + pin */}
         <div className="flex items-center gap-1">
-          <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-xs">
             {new Date(msg.timestamp).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
@@ -631,8 +631,8 @@ export function MessageFeed({ messages, sessionId = "", onScrollToRef }: Message
   if (messages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center flex-1 gap-3">
-        <Robot size={36} style={{ color: "var(--color-text-muted)" }} />
-        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+        <Robot size={36} />
+        <p className="text-sm">
           Send a message to start the session
         </p>
       </div>

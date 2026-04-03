@@ -194,14 +194,14 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
       >
         <span
           className="text-xs font-semibold uppercase"
-          style={{ color: "var(--color-text-muted)" }}
+         
         >
           Session Settings
         </span>
         <button
           onClick={onClose}
           className="p-0.5 rounded cursor-pointer"
-          style={{ color: "var(--color-text-muted)" }}
+         
           aria-label="Close settings"
         >
           <X size={12} weight="bold" aria-hidden="true" />
@@ -209,7 +209,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
       </div>
 
       {loading ? (
-        <div className="px-3 py-4 text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <div className="px-3 py-4 text-xs">
           Loading...
         </div>
       ) : (
@@ -217,15 +217,15 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
           {/* Idle Timeout */}
           <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--color-border)" }}>
             <div className="flex items-center gap-1.5 mb-2">
-              <Timer size={12} style={{ color: "var(--color-text-muted)" }} aria-hidden="true" />
+              <Timer size={12} aria-hidden="true" />
               <span
                 className="text-xs font-semibold"
-                style={{ color: "var(--color-text-secondary)" }}
+               
               >
                 Idle Timeout
               </span>
               {saving && (
-                <span className="ml-auto text-xs" style={{ color: "var(--color-text-muted)" }}>
+                <span className="ml-auto text-xs">
                   Saving...
                 </span>
               )}
@@ -264,11 +264,11 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
               <div className="flex flex-col gap-0.5">
                 <span
                   className="text-xs font-semibold"
-                  style={{ color: "var(--color-text-primary)" }}
+                 
                 >
                   Stream to Telegram
                 </span>
-                <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                <span className="text-xs">
                   Use <code style={{ fontFamily: "var(--font-mono)" }}>/stream</code> in Telegram to
                   attach to this session and see messages in real time.
                 </span>
@@ -300,11 +300,11 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
               <div className="flex flex-col">
                 <span
                   className="text-xs font-semibold"
-                  style={{ color: "var(--color-text-primary)" }}
+                 
                 >
                   Keep Alive
                 </span>
-                <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                <span className="text-xs">
                   Prevents auto-kill on idle
                 </span>
               </div>
@@ -316,12 +316,12 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
             <div className="flex items-center gap-1.5 mb-2">
               <ArrowsClockwise
                 size={12}
-                style={{ color: "var(--color-text-muted)" }}
+               
                 aria-hidden="true"
               />
               <span
                 className="text-xs font-semibold"
-                style={{ color: "var(--color-text-secondary)" }}
+               
               >
                 Auto-Compact
               </span>
@@ -351,7 +351,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
                 );
               })}
             </div>
-            <span className="text-xs mt-1 block" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs mt-1 block">
               {config.compactMode === "manual" && "Warn only, you run /compact"}
               {config.compactMode === "smart" &&
                 `Handoff at idle when >${config.compactThreshold}%`}
@@ -365,18 +365,18 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
             <div className="flex items-center gap-1.5 mb-2">
               <CurrencyDollar
                 size={12}
-                style={{ color: "var(--color-text-muted)" }}
+               
                 aria-hidden="true"
               />
               <span
                 className="text-xs font-semibold"
-                style={{ color: "var(--color-text-secondary)" }}
+               
               >
                 Cost Budget
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-xs">
                 $
               </span>
               <input
@@ -390,7 +390,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
                   if (e.key === "Enter") handleBudgetSubmit();
                 }}
                 placeholder="No limit"
-                className="flex-1 text-xs px-2 py-1 rounded bg-transparent outline-none"
+                className="flex-1 text-xs px-2 py-1 rounded bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
                 style={{
                   border: "1px solid var(--color-border)",
                   color: "var(--color-text-primary)",
@@ -399,7 +399,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
                 aria-label="Cost budget in USD"
               />
             </div>
-            <span className="text-xs mt-1 block" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs mt-1 block">
               {config.costBudgetUsd
                 ? `Warn at $${(config.costBudgetUsd * 0.8).toFixed(2)} and $${config.costBudgetUsd.toFixed(2)}`
                 : "No budget set — no warnings"}

@@ -324,7 +324,7 @@ export function SpectatePageClient({ params }: { params: Promise<{ token: string
               }
             }}
             placeholder="Type a message..."
-            className="flex-1 text-sm px-3 py-2 rounded-xl outline-none"
+            className="flex-1 text-sm px-3 py-2 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
             style={{
               background: "#1a2332",
               color: "#fff",

@@ -49,11 +49,11 @@ export function ScheduleList({
   if (schedules.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-2">
-        <Timer size={32} style={{ color: "var(--color-text-muted)" }} />
-        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+        <Timer size={32} />
+        <p className="text-sm">
           No schedules yet
         </p>
-        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <p className="text-xs">
           Create a schedule to run sessions automatically
         </p>
       </div>
@@ -130,7 +130,7 @@ export function ScheduleList({
                     )}
                     <span
                       className="text-xs font-mono"
-                      style={{ color: "var(--color-text-secondary)" }}
+                     
                     >
                       {s.triggerType === "cron" ? (s.cronExpression ?? "—") : "once"}
                     </span>
@@ -139,14 +139,14 @@ export function ScheduleList({
 
                 {/* Next run */}
                 <td className="px-3 py-2.5">
-                  <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                  <span className="text-xs">
                     {s.enabled ? formatNextRun(nextRunTs) : "Disabled"}
                   </span>
                 </td>
 
                 {/* Run count */}
                 <td className="px-3 py-2.5">
-                  <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
+                  <span className="text-xs font-mono">
                     {s.runCount}
                   </span>
                 </td>
@@ -207,7 +207,7 @@ export function ScheduleList({
                     <button
                       onClick={() => onEdit(s)}
                       className="p-1 rounded cursor-pointer"
-                      style={{ color: "var(--color-text-muted)" }}
+                     
                       aria-label="Edit"
                       title="Edit"
                     >

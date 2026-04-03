@@ -49,11 +49,11 @@ function SettingSection({
         border: "1px solid var(--color-border)",
       }}
     >
-      <h2 className="text-sm font-semibold mb-1" style={{ color: "var(--color-text-primary)" }}>
+      <h2 className="text-sm font-semibold mb-1">
         {title}
       </h2>
       {description && (
-        <p className="text-xs mb-4" style={{ color: "var(--color-text-muted)" }}>
+        <p className="text-xs mb-4">
           {description}
         </p>
       )}
@@ -77,7 +77,7 @@ function InputField({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+      <label className="text-xs font-medium">
         {label}
       </label>
       <input
@@ -85,7 +85,7 @@ function InputField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="px-3 py-2 rounded-lg text-sm outline-none transition-colors"
+        className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent transition-colors"
         style={{
           background: "var(--color-bg-elevated)",
           border: "1px solid var(--color-border)",
@@ -214,10 +214,10 @@ function LicenseSection() {
               className="w-2 h-2 rounded-full"
               style={{ background: tierColors[license.tier] ?? "var(--color-text-muted)" }}
             />
-            <span className="font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            <span className="font-semibold">
               {license.tier.toUpperCase()}
             </span>
-            <span style={{ color: "var(--color-text-muted)" }}>
+            <span>
               {license.tier === "pro"
                 ? `${license.maxSessions} sessions`
                 : license.tier === "trial"
@@ -226,7 +226,7 @@ function LicenseSection() {
             </span>
           </div>
           {license.expiresAt && (
-            <span style={{ color: "var(--color-text-muted)" }}>
+            <span>
               Expires {license.expiresAt.split("T")[0]}
             </span>
           )}
@@ -240,7 +240,7 @@ function LicenseSection() {
           value={licenseKey}
           onChange={(e) => setLicenseKey(e.target.value)}
           placeholder="cmp_pro_XXXX_XXXX_XXXX"
-          className="flex-1 px-3 py-2 rounded-lg text-sm outline-none"
+          className="flex-1 px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
           style={{
             background: "var(--color-bg-elevated)",
             border: "1px solid var(--color-border)",
@@ -264,13 +264,13 @@ function LicenseSection() {
         </button>
       </div>
 
-      <p className="text-xs mt-2" style={{ color: "var(--color-text-muted)" }}>
+      <p className="text-xs mt-2">
         Get a key at{" "}
         <a
           href="https://companion.theio.vn"
           target="_blank"
           rel="noopener"
-          style={{ color: "var(--color-accent)" }}
+         
         >
           companion.theio.vn
         </a>
@@ -397,7 +397,7 @@ function AIProviderTab() {
 
   if (loading)
     return (
-      <div className="text-xs py-8 text-center" style={{ color: "var(--color-text-muted)" }}>
+      <div className="text-xs py-8 text-center">
         Loading...
       </div>
     );
@@ -414,7 +414,7 @@ function AIProviderTab() {
         <div className="flex flex-col gap-4">
           {/* Preset selector */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+            <label className="text-xs font-medium">
               Provider Preset
             </label>
             <div className="flex flex-wrap gap-2">
@@ -448,7 +448,7 @@ function AIProviderTab() {
 
           {/* API Key */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+            <label className="text-xs font-medium">
               API Key
             </label>
             <div className="relative">
@@ -457,7 +457,7 @@ function AIProviderTab() {
                 value={apiKeyVal}
                 onChange={(e) => setApiKeyVal(e.target.value)}
                 placeholder="sk-..."
-                className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none font-mono"
+                className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
                 style={{
                   background: "var(--color-bg-elevated)",
                   border: "1px solid var(--color-border)",
@@ -468,7 +468,7 @@ function AIProviderTab() {
                 type="button"
                 onClick={() => setShowKey(!showKey)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-pointer"
-                style={{ color: "var(--color-text-muted)" }}
+               
                 aria-label={showKey ? "Hide" : "Show"}
               >
                 {showKey ? <EyeSlash size={14} /> : <Eye size={14} />}
@@ -478,7 +478,7 @@ function AIProviderTab() {
 
           {/* Model */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+            <label className="text-xs font-medium">
               Default Model
             </label>
             {suggestedModels.length > 0 ? (
@@ -489,7 +489,7 @@ function AIProviderTab() {
                   if (!modelFast) setModelFast(e.target.value);
                   if (!modelStrong) setModelStrong(e.target.value);
                 }}
-                className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
+                className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
                 style={{
                   background: "var(--color-bg-elevated)",
                   border: "1px solid var(--color-border)",
@@ -509,7 +509,7 @@ function AIProviderTab() {
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 placeholder="model-name"
-                className="px-3 py-2 rounded-lg text-sm outline-none font-mono"
+                className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
                 style={{
                   background: "var(--color-bg-elevated)",
                   border: "1px solid var(--color-border)",
@@ -550,10 +550,10 @@ function AIProviderTab() {
         <div className="flex flex-col gap-3">
           <label className="flex items-center justify-between cursor-pointer">
             <div>
-              <p className="text-xs font-medium" style={{ color: "var(--color-text-primary)" }}>
+              <p className="text-xs font-medium">
                 Auto-Summary
               </p>
-              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <p className="text-xs">
                 Generate session summary when session ends
               </p>
             </div>
@@ -581,10 +581,10 @@ function AIProviderTab() {
 
           <label className="flex items-center justify-between cursor-pointer">
             <div>
-              <p className="text-xs font-medium" style={{ color: "var(--color-text-primary)" }}>
+              <p className="text-xs font-medium">
                 Inject Previous Summaries
               </p>
-              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <p className="text-xs">
                 Prepend last 3 session summaries to new sessions in same project
               </p>
             </div>
@@ -672,8 +672,8 @@ function GeneralTab() {
       >
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
-            <Globe size={14} weight="bold" style={{ color: "var(--color-text-muted)" }} />
-            <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+            <Globe size={14} weight="bold" />
+            <span className="text-xs">
               Status:
             </span>
             <span
@@ -750,10 +750,10 @@ function GeneralTab() {
       <SettingSection title="Security" description="Configure prompt scanning and risk detection.">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
+            <span className="text-sm font-medium">
               Prompt Scanner
             </span>
-            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs">
               Scan user prompts for risky patterns before forwarding to CLI
             </span>
           </div>
@@ -840,10 +840,10 @@ function AppearanceTab() {
       <SettingSection title="Appearance">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
+            <span className="text-sm font-medium">
               Theme
             </span>
-            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs">
               Switch between light and dark mode
             </span>
           </div>
@@ -967,7 +967,7 @@ function TelegramTab() {
                   <select
                     value={expandedBotId ?? configs[0]?.id ?? ""}
                     onChange={(e) => setExpandedBotId(e.target.value)}
-                    className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
+                    className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
                     style={{
                       background: "var(--color-bg-elevated)",
                       border: "1px solid var(--color-border)",
@@ -1038,7 +1038,7 @@ function TelegramTab() {
                 >
                   <h3
                     className="text-xs font-semibold"
-                    style={{ color: "var(--color-text-primary)" }}
+                   
                   >
                     New Bot
                   </h3>
@@ -1046,7 +1046,7 @@ function TelegramTab() {
                   <div className="flex flex-col gap-1.5">
                     <label
                       className="text-xs font-medium"
-                      style={{ color: "var(--color-text-secondary)" }}
+                     
                     >
                       Label
                     </label>
@@ -1055,7 +1055,7 @@ function TelegramTab() {
                       value={newLabel}
                       onChange={(e) => setNewLabel(e.target.value)}
                       placeholder="My Claude Bot"
-                      className="px-3 py-2 rounded-lg text-sm outline-none"
+                      className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
                       style={{
                         background: "var(--color-bg-card)",
                         border: "1px solid var(--color-border)",
@@ -1067,14 +1067,14 @@ function TelegramTab() {
                   <div className="flex flex-col gap-1.5">
                     <label
                       className="text-xs font-medium"
-                      style={{ color: "var(--color-text-secondary)" }}
+                     
                     >
                       Role
                     </label>
                     <select
                       value={newRole}
                       onChange={(e) => setNewRole(e.target.value as "claude" | "anti" | "general")}
-                      className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
+                      className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
                       style={{
                         background: "var(--color-bg-card)",
                         border: "1px solid var(--color-border)",
@@ -1090,7 +1090,7 @@ function TelegramTab() {
                   <div className="flex flex-col gap-1.5">
                     <label
                       className="text-xs font-medium"
-                      style={{ color: "var(--color-text-secondary)" }}
+                     
                     >
                       Bot Token
                     </label>
@@ -1100,7 +1100,7 @@ function TelegramTab() {
                         value={newToken}
                         onChange={(e) => setNewToken(e.target.value)}
                         placeholder="1234567890:ABCdefGHI..."
-                        className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none font-mono"
+                        className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
                         style={{
                           background: "var(--color-bg-card)",
                           border: "1px solid var(--color-border)",
@@ -1111,7 +1111,7 @@ function TelegramTab() {
                         type="button"
                         onClick={() => setShowNewToken(!showNewToken)}
                         className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-pointer"
-                        style={{ color: "var(--color-text-muted)" }}
+                       
                         aria-label={showNewToken ? "Hide token" : "Show token"}
                       >
                         {showNewToken ? <EyeSlash size={14} /> : <Eye size={14} />}
@@ -1122,10 +1122,10 @@ function TelegramTab() {
                   <div className="flex flex-col gap-1.5">
                     <label
                       className="text-xs font-medium"
-                      style={{ color: "var(--color-text-secondary)" }}
+                     
                     >
                       Allowed Chat IDs{" "}
-                      <span style={{ color: "var(--color-text-muted)" }}>
+                      <span>
                         (comma-separated, optional)
                       </span>
                     </label>
@@ -1134,7 +1134,7 @@ function TelegramTab() {
                       value={newChatIds}
                       onChange={(e) => setNewChatIds(e.target.value)}
                       placeholder="-100123456789"
-                      className="px-3 py-2 rounded-lg text-sm outline-none font-mono"
+                      className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
                       style={{
                         background: "var(--color-bg-card)",
                         border: "1px solid var(--color-border)",
@@ -1146,10 +1146,10 @@ function TelegramTab() {
                   <div className="flex flex-col gap-1.5">
                     <label
                       className="text-xs font-medium"
-                      style={{ color: "var(--color-text-secondary)" }}
+                     
                     >
                       Admin User IDs{" "}
-                      <span style={{ color: "var(--color-text-muted)" }}>
+                      <span>
                         (comma-separated, only these users can use bot)
                       </span>
                     </label>
@@ -1158,14 +1158,14 @@ function TelegramTab() {
                       value={newUserIds}
                       onChange={(e) => setNewUserIds(e.target.value)}
                       placeholder="123456789"
-                      className="px-3 py-2 rounded-lg text-sm outline-none font-mono"
+                      className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
                       style={{
                         background: "var(--color-bg-card)",
                         border: "1px solid var(--color-border)",
                         color: "var(--color-text-primary)",
                       }}
                     />
-                    <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                    <span className="text-xs">
                       Get your ID: send /start to @userinfobot on Telegram
                     </span>
                   </div>
@@ -1200,13 +1200,13 @@ function TelegramTab() {
               {loading ? (
                 <div
                   className="flex items-center gap-2 py-3"
-                  style={{ color: "var(--color-text-muted)" }}
+                 
                 >
                   <ArrowsClockwise size={14} className="animate-spin" aria-hidden="true" />
                   <span className="text-xs">Loading bots...</span>
                 </div>
               ) : configs.length === 0 ? (
-                <p className="text-xs py-2" style={{ color: "var(--color-text-muted)" }}>
+                <p className="text-xs py-2">
                   No bots configured. Add one above.
                 </p>
               ) : (
@@ -1355,14 +1355,14 @@ function TelegramBotsTab() {
               <div className="flex flex-col gap-1.5">
                 <label
                   className="text-xs font-medium"
-                  style={{ color: "var(--color-text-secondary)" }}
+                 
                 >
                   Role
                 </label>
                 <select
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value as "claude" | "anti" | "general")}
-                  className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
+                  className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
                   style={{
                     background: "var(--color-bg-card)",
                     border: "1px solid var(--color-border)",
@@ -1377,7 +1377,7 @@ function TelegramBotsTab() {
               <div className="flex flex-col gap-1.5">
                 <label
                   className="text-xs font-medium"
-                  style={{ color: "var(--color-text-secondary)" }}
+                 
                 >
                   Bot Token
                 </label>
@@ -1387,7 +1387,7 @@ function TelegramBotsTab() {
                     value={newToken}
                     onChange={(e) => setNewToken(e.target.value)}
                     placeholder="1234567890:ABCdefGHI..."
-                    className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none font-mono"
+                    className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
                     style={{
                       background: "var(--color-bg-card)",
                       border: "1px solid var(--color-border)",
@@ -1398,7 +1398,7 @@ function TelegramBotsTab() {
                     type="button"
                     onClick={() => setShowNewToken(!showNewToken)}
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-pointer"
-                    style={{ color: "var(--color-text-muted)" }}
+                   
                     aria-label={showNewToken ? "Hide" : "Show"}
                   >
                     {showNewToken ? <EyeSlash size={14} /> : <Eye size={14} />}
@@ -1418,7 +1418,7 @@ function TelegramBotsTab() {
                   onChange={setNewUserIds}
                   placeholder="123456789"
                 />
-                <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                <span className="text-xs">
                   Get your ID: send /start to @userinfobot
                 </span>
               </div>
@@ -1449,13 +1449,13 @@ function TelegramBotsTab() {
           {loading ? (
             <div
               className="flex items-center gap-2 py-3"
-              style={{ color: "var(--color-text-muted)" }}
+             
             >
               <ArrowsClockwise size={14} className="animate-spin" />{" "}
               <span className="text-xs">Loading...</span>
             </div>
           ) : configs.length === 0 ? (
-            <p className="text-xs py-2" style={{ color: "var(--color-text-muted)" }}>
+            <p className="text-xs py-2">
               No bots configured.
             </p>
           ) : (
@@ -1497,13 +1497,13 @@ function TelegramStreamingTab() {
 
   if (loading)
     return (
-      <div className="py-4 text-xs" style={{ color: "var(--color-text-muted)" }}>
+      <div className="py-4 text-xs">
         Loading...
       </div>
     );
   if (configs.length === 0)
     return (
-      <p className="text-xs py-4" style={{ color: "var(--color-text-muted)" }}>
+      <p className="text-xs py-4">
         Add a bot first in Bot Management.
       </p>
     );
@@ -1518,13 +1518,13 @@ function TelegramStreamingTab() {
       <div className="flex flex-col gap-4">
         {configs.length > 1 && (
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+            <label className="text-xs font-medium">
               Bot
             </label>
             <select
               value={selectedBotId ?? ""}
               onChange={(e) => setSelectedBotId(e.target.value)}
-              className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
+              className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
               style={{
                 background: "var(--color-bg-elevated)",
                 border: "1px solid var(--color-border)",
@@ -1629,7 +1629,7 @@ function DomainTab() {
 
   if (loading)
     return (
-      <div className="text-xs py-8 text-center" style={{ color: "var(--color-text-muted)" }}>
+      <div className="text-xs py-8 text-center">
         Loading...
       </div>
     );
@@ -1644,7 +1644,7 @@ function DomainTab() {
         <div className="flex flex-col gap-4">
           {/* Mode buttons */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+            <label className="text-xs font-medium">
               Mode
             </label>
             <div className="flex gap-2">
@@ -1680,7 +1680,7 @@ function DomainTab() {
                 <div className="flex flex-col gap-1.5">
                   <label
                     className="text-xs font-medium"
-                    style={{ color: "var(--color-text-secondary)" }}
+                   
                   >
                     Tunnel Token
                   </label>
@@ -1690,7 +1690,7 @@ function DomainTab() {
                       value={tunnelToken}
                       onChange={(e) => setTunnelToken(e.target.value)}
                       placeholder="eyJhIjoiN..."
-                      className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none font-mono"
+                      className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
                       style={{
                         background: "var(--color-bg-elevated)",
                         border: "1px solid var(--color-border)",
@@ -1701,13 +1701,13 @@ function DomainTab() {
                       type="button"
                       onClick={() => setShowToken(!showToken)}
                       className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-pointer"
-                      style={{ color: "var(--color-text-muted)" }}
+                     
                       aria-label={showToken ? "Hide" : "Show"}
                     >
                       {showToken ? <EyeSlash size={14} /> : <Eye size={14} />}
                     </button>
                   </div>
-                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                  <p className="text-xs">
                     Cloudflare Dashboard → Zero Trust → Tunnels → Create → copy token
                   </p>
                 </div>
@@ -1723,11 +1723,11 @@ function DomainTab() {
                   }}
                 >
                   Place SSL certificates in{" "}
-                  <code style={{ color: "var(--color-text-secondary)" }}>
+                  <code>
                     nginx/certs/origin.pem
                   </code>{" "}
                   and{" "}
-                  <code style={{ color: "var(--color-text-secondary)" }}>
+                  <code>
                     nginx/certs/origin.key
                   </code>
                   <br />
@@ -1757,7 +1757,7 @@ function DomainTab() {
                             : "#FBBC04",
                     }}
                   />
-                  <span style={{ color: "var(--color-text-secondary)" }}>
+                  <span>
                     Gateway: {status.gateway}
                   </span>
                 </div>
@@ -1769,7 +1769,7 @@ function DomainTab() {
                         background: status.tunnel === "configured" ? "#34A853" : "#FBBC04",
                       }}
                     />
-                    <span style={{ color: "var(--color-text-secondary)" }}>
+                    <span>
                       Tunnel: {status.tunnel}
                     </span>
                   </div>
@@ -1802,7 +1802,7 @@ function DomainTab() {
               </button>
             </div>
 
-            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <p className="text-xs">
               After saving, run this command on the host to start the gateway
               {mode === "tunnel" ? " and tunnel" : ""}.
             </p>
@@ -1856,7 +1856,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>("general");
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: "var(--color-bg-base)" }}>
+    <div className="flex flex-col min-h-screen">
       {/* Header */}
       <header
         className="flex items-center gap-3 px-5 py-3 border-b"
@@ -1869,7 +1869,7 @@ export default function SettingsPage() {
         <Link
           href="/"
           className="p-1.5 rounded-lg transition-colors cursor-pointer"
-          style={{ color: "var(--color-text-secondary)" }}
+         
           aria-label="Back to dashboard"
         >
           <ArrowLeft size={18} weight="bold" />

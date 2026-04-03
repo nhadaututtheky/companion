@@ -211,12 +211,12 @@ function TemplateCard({
           <div className="min-w-0">
             <h3
               className="text-sm font-semibold truncate"
-              style={{ color: "var(--color-text-primary)" }}
+             
             >
               {template.name}
             </h3>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-xs font-mono">
                 {template.slug}
               </span>
               {template.projectSlug && (
@@ -253,7 +253,7 @@ function TemplateCard({
           <button
             onClick={onEdit}
             className="p-1.5 rounded-md cursor-pointer transition-colors"
-            style={{ color: "var(--color-text-secondary)" }}
+           
             aria-label={`Edit ${template.name}`}
           >
             <PencilSimple size={14} />
@@ -270,7 +270,7 @@ function TemplateCard({
         </div>
       </div>
 
-      <p className="text-xs mt-2 line-clamp-2" style={{ color: "var(--color-text-secondary)" }}>
+      <p className="text-xs mt-2 line-clamp-2">
         {template.prompt}
       </p>
     </div>
@@ -354,7 +354,7 @@ export default function TemplatesPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--color-bg-base)" }}>
+    <div className="min-h-screen">
       {/* Header */}
       <div
         className="sticky top-0 z-10 px-6 py-4 flex items-center justify-between"
@@ -367,17 +367,17 @@ export default function TemplatesPage() {
           <Link
             href="/"
             className="p-2 rounded-lg transition-colors"
-            style={{ color: "var(--color-text-secondary)" }}
+           
             aria-label="Back"
           >
             <ArrowLeft size={18} />
           </Link>
           <div>
-            <h1 className="text-lg font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            <h1 className="text-lg font-semibold">
               <Lightning size={20} className="inline mr-1" weight="fill" />
               Templates
             </h1>
-            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <p className="text-xs">
               Saved prompts for quick session starts
             </p>
           </div>
@@ -412,7 +412,7 @@ export default function TemplatesPage() {
           >
             <h2
               className="text-sm font-semibold mb-3"
-              style={{ color: "var(--color-text-primary)" }}
+             
             >
               {editingTemplate ? "Edit Template" : "New Template"}
             </h2>
@@ -429,11 +429,11 @@ export default function TemplatesPage() {
 
         {/* Template List */}
         {loading ? (
-          <div className="text-center py-12" style={{ color: "var(--color-text-muted)" }}>
+          <div className="text-center py-12">
             Loading templates...
           </div>
         ) : templates.length === 0 ? (
-          <div className="text-center py-12" style={{ color: "var(--color-text-muted)" }}>
+          <div className="text-center py-12">
             <Lightning size={32} className="mx-auto mb-3 opacity-50" />
             <p>No templates yet</p>
             <p className="text-xs mt-1">Create one above or use /template save in Telegram</p>

@@ -45,12 +45,12 @@ function Breadcrumbs({ path, onNavigate }: { path: string; onNavigate: (p: strin
   return (
     <div
       className="flex items-center gap-1 flex-wrap text-xs overflow-x-auto"
-      style={{ color: "var(--color-text-secondary)" }}
+     
     >
       {parts.map((part, idx) => (
         <span key={idx} className="flex items-center gap-1 flex-shrink-0">
           {idx > 0 && (
-            <CaretRight size={10} style={{ color: "var(--color-text-muted)" }} aria-hidden="true" />
+            <CaretRight size={10} aria-hidden="true" />
           )}
           <button
             onClick={() => onNavigate(getSegPath(idx))}
@@ -205,7 +205,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
       {/* Toolbar */}
       <div
         className="flex items-center gap-2 px-3 py-2 flex-shrink-0 border-b"
-        style={{ borderColor: "var(--color-border)" }}
+       
       >
         {canGoBack && (
           <button
@@ -244,7 +244,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
           {currentPath ? (
             <Breadcrumbs path={currentPath} onNavigate={navigateTo} />
           ) : (
-            <span className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs font-semibold">
               Select a root folder
             </span>
           )}
@@ -288,13 +288,13 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
                 <House size={16} style={{ color: "#4285F4", flexShrink: 0 }} aria-hidden="true" />
                 <span
                   className="text-sm font-medium flex-1 truncate"
-                  style={{ color: "var(--color-text-primary)" }}
+                 
                 >
                   {root.label}
                 </span>
                 <span
                   className="text-xs font-mono truncate max-w-36"
-                  style={{ color: "var(--color-text-muted)" }}
+                 
                 >
                   {root.path}
                 </span>
@@ -306,7 +306,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
         {!loading && !error && currentPath !== null && entries.length === 0 && (
           <div
             className="flex flex-col items-center justify-center h-full gap-2"
-            style={{ color: "var(--color-text-muted)" }}
+           
           >
             <FolderSimple size={28} aria-hidden="true" />
             <p className="text-sm">Empty folder</p>
@@ -335,7 +335,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
                 />
                 <span
                   className="text-sm flex-1 truncate"
-                  style={{ color: "var(--color-text-primary)" }}
+                 
                 >
                   {entry.name}
                 </span>
@@ -361,9 +361,9 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
       {currentPath !== null && !loading && (
         <div
           className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-t"
-          style={{ borderColor: "var(--color-border)" }}
+         
         >
-          <span className="text-xs truncate max-w-xs" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-xs truncate max-w-xs">
             {currentPath}
           </span>
           <button

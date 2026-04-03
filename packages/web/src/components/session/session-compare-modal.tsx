@@ -105,7 +105,7 @@ function CompareMessage({ msg }: { msg: Message }) {
           </span>
         )}
       </div>
-      <div className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+      <div className="text-sm">
         {msg.role === "assistant" || msg.role === "user" ? (
           <MarkdownMessage content={displayContent} />
         ) : (
@@ -125,7 +125,7 @@ function CompareMessage({ msg }: { msg: Message }) {
         <button
           onClick={() => setCollapsed((v) => !v)}
           className="mt-1 text-xs cursor-pointer"
-          style={{ color: "var(--color-accent)" }}
+         
         >
           {collapsed ? "Show more" : "Show less"}
         </button>
@@ -182,7 +182,7 @@ function SessionColumn({ sessionId, sessions, side, onSelect }: SessionColumnPro
         <label
           htmlFor={`compare-select-${side}`}
           className="text-xs font-semibold flex-shrink-0"
-          style={{ color: "var(--color-text-muted)" }}
+         
         >
           {side === "left" ? "Session A" : "Session B"}
         </label>
@@ -218,7 +218,7 @@ function SessionColumn({ sessionId, sessions, side, onSelect }: SessionColumnPro
         >
           <span
             className="flex items-center gap-1.5 text-xs"
-            style={{ color: "var(--color-text-muted)" }}
+           
           >
             <span
               style={{
@@ -247,7 +247,7 @@ function SessionColumn({ sessionId, sessions, side, onSelect }: SessionColumnPro
           </span>
           {session.state && (
             <>
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-xs">
                 {session.state.num_turns ?? 0} turns
               </span>
               <span
@@ -275,13 +275,13 @@ function SessionColumn({ sessionId, sessions, side, onSelect }: SessionColumnPro
             style={{ color: "var(--color-text-muted)", opacity: 0.4 }}
             aria-hidden="true"
           />
-          <p className="text-sm text-center" style={{ color: "var(--color-text-muted)" }}>
+          <p className="text-sm text-center">
             Select a session to compare
           </p>
         </div>
       ) : messages.length === 0 ? (
         <div className="flex flex-col items-center justify-center flex-1 gap-2 px-6">
-          <p className="text-sm text-center" style={{ color: "var(--color-text-muted)" }}>
+          <p className="text-sm text-center">
             No messages yet
           </p>
         </div>
@@ -374,17 +374,17 @@ function SessionCompareModalInner({
             background: "var(--color-bg-card)",
           }}
         >
-          <ArrowsLeftRight size={18} style={{ color: "var(--color-accent)" }} aria-hidden="true" />
-          <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <ArrowsLeftRight size={18} aria-hidden="true" />
+          <span className="text-sm font-semibold">
             Compare Sessions
           </span>
-          <span className="text-xs flex-1" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-xs flex-1">
             Side-by-side message history
           </span>
           <button
             onClick={onClose}
             className="p-1.5 rounded-md transition-colors cursor-pointer"
-            style={{ color: "var(--color-text-muted)" }}
+           
             aria-label="Close compare modal"
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.color = "#EA4335";

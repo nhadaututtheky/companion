@@ -115,7 +115,7 @@ function TreeItem({
         ) : (
           <>
             <span style={{ width: 12 }} />
-            <span style={{ color: "var(--color-text-muted)" }}>{getFileIcon(node.name)}</span>
+            <span>{getFileIcon(node.name)}</span>
           </>
         )}
         <span className="truncate font-mono" style={{ fontSize: 11 }}>

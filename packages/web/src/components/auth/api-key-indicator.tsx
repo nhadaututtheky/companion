@@ -41,7 +41,7 @@ export function ApiKeyIndicator() {
       />
       <span
         className="text-xs font-mono flex-1 truncate"
-        style={{ color: "var(--color-text-muted)" }}
+       
         title="Connected — API key active"
       >
         {keyHint}
@@ -50,7 +50,7 @@ export function ApiKeyIndicator() {
       <button
         onClick={handleLogout}
         className="flex items-center justify-center p-1 rounded cursor-pointer transition-colors"
-        style={{ color: "var(--color-text-muted)" }}
+       
         aria-label="Logout — clear API key"
         title="Logout"
       >

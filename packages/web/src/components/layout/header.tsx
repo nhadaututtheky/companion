@@ -48,10 +48,10 @@ function HeaderStats() {
             display: "inline-block",
           }}
         />
-        <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+        <span className="text-xs font-semibold">
           {activeCount}
         </span>
-        <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs">
           active
         </span>
       </div>
@@ -64,7 +64,7 @@ function HeaderStats() {
         <span className="text-xs font-semibold font-mono" style={{ color: "#4285F4" }}>
           ${totalCost < 0.01 && totalCost > 0 ? "<0.01" : totalCost.toFixed(2)}
         </span>
-        <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs">
           cost
         </span>
       </div>
@@ -74,10 +74,10 @@ function HeaderStats() {
 
       {/* Turns */}
       <div className="flex items-center gap-1.5">
-        <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+        <span className="text-xs font-semibold">
           {totalTurns}
         </span>
-        <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs">
           turns
         </span>
       </div>
@@ -112,7 +112,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
       {/* Hamburger — mobile only */}
       <button
         className="md:hidden p-2 rounded-lg cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center -ml-1"
-        style={{ color: "var(--color-text-secondary)" }}
+       
         onClick={onMenuToggle}
         aria-label="Open sidebar menu"
       >
@@ -256,7 +256,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <button
           onClick={toggleTheme}
           className="p-2 rounded-lg transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
-          style={{ color: "var(--color-text-secondary)" }}
+         
           aria-label="Toggle theme"
         >
           {theme === "dark" ? <Sun size={16} weight="bold" /> : <Moon size={16} weight="bold" />}
@@ -265,7 +265,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <a
           href="/projects"
           className="hidden md:flex p-2 rounded-lg transition-colors"
-          style={{ color: "var(--color-text-secondary)" }}
+         
           aria-label="Projects"
         >
           <FolderOpen size={16} weight="bold" />
@@ -273,7 +273,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <a
           href="/schedules"
           className="hidden md:flex p-2 rounded-lg transition-colors"
-          style={{ color: "var(--color-text-secondary)" }}
+         
           aria-label="Schedules"
         >
           <Timer size={16} weight="bold" />
@@ -281,7 +281,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <a
           href="/templates"
           className="hidden md:flex p-2 rounded-lg transition-colors"
-          style={{ color: "var(--color-text-secondary)" }}
+         
           aria-label="Templates"
         >
           <ListBullets size={16} weight="bold" />
@@ -289,7 +289,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <a
           href="/settings"
           className="p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-          style={{ color: "var(--color-text-secondary)" }}
+         
           aria-label="Settings"
         >
           <Gear size={16} weight="bold" />

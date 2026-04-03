@@ -90,7 +90,7 @@ export function RTKSettings() {
     return (
       <div
         className="text-xs py-8 text-center"
-        style={{ color: "var(--color-text-muted)" }}
+       
       >
         Loading...
       </div>
@@ -111,7 +111,7 @@ export function RTKSettings() {
           <div>
             <h2
               className="text-sm font-semibold flex items-center gap-2"
-              style={{ color: "var(--color-text-primary)" }}
+             
             >
               Runtime Token Keeper (RTK)
               {!isPro && (
@@ -125,7 +125,7 @@ export function RTKSettings() {
             </h2>
             <p
               className="text-xs mt-1"
-              style={{ color: "var(--color-text-muted)" }}
+             
             >
               Compresses tool outputs to save LLM context tokens.
               {!isPro && " Upgrade to Pro for smart compressors, cache, and budget control."}
@@ -162,13 +162,13 @@ export function RTKSettings() {
         >
           <h2
             className="text-sm font-semibold mb-1"
-            style={{ color: "var(--color-text-primary)" }}
+           
           >
             Compression Level
           </h2>
           <p
             className="text-xs mb-4"
-            style={{ color: "var(--color-text-muted)" }}
+           
           >
             Controls the maximum token budget per tool output.
           </p>
@@ -199,13 +199,13 @@ export function RTKSettings() {
                 <div>
                   <span
                     className="text-sm font-medium"
-                    style={{ color: "var(--color-text-primary)" }}
+                   
                   >
                     {l.label}
                   </span>
                   <p
                     className="text-xs mt-0.5"
-                    style={{ color: "var(--color-text-muted)" }}
+                   
                   >
                     {l.desc}
                   </p>
@@ -227,13 +227,13 @@ export function RTKSettings() {
         >
           <h2
             className="text-sm font-semibold mb-1"
-            style={{ color: "var(--color-text-primary)" }}
+           
           >
             Compression Strategies
           </h2>
           <p
             className="text-xs mb-4"
-            style={{ color: "var(--color-text-muted)" }}
+           
           >
             Enable or disable individual compression strategies. All are enabled
             by default.
@@ -271,7 +271,7 @@ export function RTKSettings() {
                   <div className="flex-1">
                     <span
                       className="text-sm font-mono flex items-center gap-1.5"
-                      style={{ color: "var(--color-text-primary)" }}
+                     
                     >
                       {s.label}
                       {isLocked && (
@@ -284,7 +284,7 @@ export function RTKSettings() {
                     </span>
                     <p
                       className="text-xs"
-                      style={{ color: "var(--color-text-muted)" }}
+                     
                     >
                       {s.desc}
                       {isLocked && " (Pro)"}

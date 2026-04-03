@@ -49,7 +49,7 @@ function fileIcon(ext: string, size = 14) {
     case "md":
       return <File {...iconProps} style={{ color: "#4285F4" }} />;
     default:
-      return <File {...iconProps} style={{ color: "var(--color-text-muted)" }} />;
+      return <File {...iconProps} />;
   }
 }
 
@@ -89,7 +89,7 @@ function CodeViewer({ content, ext }: { content: string; ext: string }) {
       {/* Code content */}
       <pre
         className="flex-1 m-0 py-2 pl-3 whitespace-pre overflow-x-auto"
-        style={{ color: "var(--color-text-secondary)" }}
+       
       >
         {lines.map((line, i) => (
           <div key={i}>
@@ -309,7 +309,7 @@ function TreeNode({
             />
           ))}
           {children.length === 0 && (
-            <div className="text-xs pl-8 py-0.5" style={{ color: "var(--color-text-muted)" }}>
+            <div className="text-xs pl-8 py-0.5">
               (empty)
             </div>
           )}
@@ -457,7 +457,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
   }, [currentRoot]);
 
   return (
-    <div className="flex flex-col h-full" style={{ background: "var(--color-bg-base)" }}>
+    <div className="flex flex-col h-full">
       {/* Top bar */}
       <div
         className="flex items-center gap-2 px-3 py-2 shrink-0"
@@ -492,7 +492,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
         <div className="flex items-center gap-0.5 flex-1 min-w-0 overflow-hidden text-xs">
           {breadcrumbs.slice(-3).map((bc, i) => (
             <span key={bc.path} className="flex items-center gap-0.5">
-              {i > 0 && <span style={{ color: "var(--color-text-muted)" }}>/</span>}
+              {i > 0 && <span>/</span>}
               <button
                 onClick={() => {
                   setCurrentRoot(bc.path);
@@ -529,7 +529,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Filter..."
-            className="text-xs pl-6 pr-2 py-1 rounded outline-none"
+            className="text-xs pl-6 pr-2 py-1 rounded outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
             style={{
               width: 120,
               background: "var(--color-bg-elevated)",
@@ -543,7 +543,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
         <button
           onClick={onClose}
           className="p-1 rounded cursor-pointer"
-          style={{ color: "var(--color-text-muted)" }}
+         
           aria-label="Close file explorer"
         >
           <X size={14} weight="bold" />
@@ -571,7 +571,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
             />
           ))}
           {filteredEntries.length === 0 && (
-            <div className="text-xs text-center py-8" style={{ color: "var(--color-text-muted)" }}>
+            <div className="text-xs text-center py-8">
               {filter ? "No matches" : "Empty directory"}
             </div>
           )}
@@ -601,7 +601,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
                   {fileIcon(activeTab.ext)}
                   <span
                     className="text-xs font-mono font-semibold truncate"
-                    style={{ color: "var(--color-text-primary)" }}
+                   
                   >
                     {activeTab.name}
                   </span>
@@ -633,7 +633,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
               <div className="flex-1 overflow-auto">
                 {fileLoading && (
                   <div className="flex items-center justify-center h-full">
-                    <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                    <span className="text-xs">
                       Loading...
                     </span>
                   </div>
@@ -669,7 +669,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
             </>
           ) : (
             <div className="flex items-center justify-center h-full">
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-xs">
                 Select a file to view
               </span>
             </div>

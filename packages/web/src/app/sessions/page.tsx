@@ -96,7 +96,7 @@ export default function SessionsPage() {
           <button
             onClick={load}
             className="p-2 rounded-lg transition-colors cursor-pointer"
-            style={{ color: "var(--color-text-secondary)" }}
+           
             aria-label="Refresh"
           >
             <ArrowClockwise size={16} weight="bold" />
@@ -148,8 +148,8 @@ export default function SessionsPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <FolderOpen size={40} style={{ color: "var(--color-text-muted)" }} />
-            <p style={{ color: "var(--color-text-muted)" }}>No sessions found</p>
+            <FolderOpen size={40} />
+            <p>No sessions found</p>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
@@ -168,14 +168,14 @@ export default function SessionsPage() {
                     <StatusBadge status={s.status} />
                     <span
                       className="text-sm font-semibold truncate"
-                      style={{ color: "var(--color-text-primary)" }}
+                     
                     >
                       {s.projectSlug}
                     </span>
                   </div>
                   <div
                     className="flex items-center gap-4 text-xs"
-                    style={{ color: "var(--color-text-muted)" }}
+                   
                   >
                     <span>{s.model}</span>
                     <span>{s.numTurns} turns</span>

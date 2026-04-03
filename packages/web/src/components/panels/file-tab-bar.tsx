@@ -37,7 +37,7 @@ function fileTabIcon(ext: string) {
     case "md":
       return <File {...props} style={{ color: "#4285F4" }} />;
     default:
-      return <File {...props} style={{ color: "var(--color-text-muted)" }} />;
+      return <File {...props} />;
   }
 }
 

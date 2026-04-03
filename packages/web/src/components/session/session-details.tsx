@@ -77,12 +77,12 @@ function StatCard({
     >
       <span style={{ color }}>{icon}</span>
       <div>
-        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <p className="text-xs">
           {label}
         </p>
         <p
           className="text-sm font-semibold font-mono"
-          style={{ color: "var(--color-text-primary)" }}
+         
         >
           {value}
         </p>
@@ -130,14 +130,14 @@ function RTKSavingsCard({
         <span style={{ color: "#34A853", fontSize: 14 }}>⚡</span>
         <span
           className="text-xs font-semibold"
-          style={{ color: "var(--color-text-secondary)" }}
+         
         >
           RTK Savings
         </span>
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div>
-          <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+          <p className="text-xs">
             Tokens
           </p>
           <p
@@ -148,7 +148,7 @@ function RTKSavingsCard({
           </p>
         </div>
         <div>
-          <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+          <p className="text-xs">
             Est. Saved
           </p>
           <p
@@ -159,18 +159,18 @@ function RTKSavingsCard({
           </p>
         </div>
         <div>
-          <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+          <p className="text-xs">
             Compressed
           </p>
           <p
             className="text-sm font-semibold font-mono"
-            style={{ color: "var(--color-text-primary)" }}
+           
           >
             {compressions}
             {cacheHits > 0 && (
               <span
                 className="text-xs ml-1"
-                style={{ color: "var(--color-text-muted)" }}
+               
               >
                 ({cacheHits} cached)
               </span>
@@ -193,8 +193,8 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
   if (!session) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 px-4">
-        <Robot size={36} style={{ color: "var(--color-text-muted)" }} />
-        <p className="text-sm text-center" style={{ color: "var(--color-text-muted)" }}>
+        <Robot size={36} />
+        <p className="text-sm text-center">
           Select a session to view details
         </p>
       </div>
@@ -219,7 +219,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
   return (
     <div className="flex flex-col gap-0">
       {/* Tab bar */}
-      <div className="flex border-b shrink-0" style={{ borderColor: "var(--color-border)" }}>
+      <div className="flex border-b shrink-0">
         {[
           {
             id: "overview" as const,
@@ -251,11 +251,11 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
       {activeTab === "overview" && (
         <>
           {/* Session header */}
-          <div className="px-4 py-4 border-b" style={{ borderColor: "var(--color-border)" }}>
-            <p className="text-xs font-medium mb-1" style={{ color: "var(--color-text-muted)" }}>
+          <div className="px-4 py-4 border-b">
+            <p className="text-xs font-medium mb-1">
               {session.projectName}
             </p>
-            <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            <p className="text-sm font-semibold">
               {session.model}
             </p>
             <div className="flex items-center gap-2 mt-2">
@@ -278,7 +278,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
               >
                 {session.status}
               </span>
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-xs">
                 #{session.id.slice(0, 8)}
               </span>
             </div>
@@ -338,7 +338,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
             <div className="px-4 pb-4">
               <p
                 className="text-xs font-semibold mb-2"
-                style={{ color: "var(--color-text-secondary)" }}
+               
               >
                 Files
               </p>
@@ -361,7 +361,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
                     </span>
                     <span
                       className="text-xs font-mono truncate"
-                      style={{ color: "var(--color-text-secondary)" }}
+                     
                     >
                       {f.split("/").pop()}
                     </span>
@@ -385,7 +385,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
                     </span>
                     <span
                       className="text-xs font-mono truncate"
-                      style={{ color: "var(--color-text-secondary)" }}
+                     
                     >
                       {f.split("/").pop()}
                     </span>
@@ -411,7 +411,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
                       </span>
                       <span
                         className="text-xs font-mono truncate"
-                        style={{ color: "var(--color-text-muted)" }}
+                       
                       >
                         {f.split("/").pop()}
                       </span>
@@ -426,7 +426,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
             <div className="px-4 pb-4">
               <p
                 className="text-xs font-semibold mb-2"
-                style={{ color: "var(--color-text-secondary)" }}
+               
               >
                 <FolderSimple
                   size={12}
@@ -530,7 +530,7 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
         <button
           onClick={() => setViewingContent(null)}
           className="text-xs mb-2 cursor-pointer"
-          style={{ color: "var(--color-accent)" }}
+         
         >
           &larr; Back to snapshots
         </button>
@@ -555,16 +555,16 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
           onClick={() => setExpanded(!expanded)}
           className="flex items-center gap-2 flex-1 text-left cursor-pointer"
         >
-          <Camera size={14} weight="bold" style={{ color: "var(--color-accent)" }} />
-          <span className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+          <Camera size={14} weight="bold" />
+          <span className="text-xs font-semibold">
             Snapshots
           </span>
           {snapshots.length > 0 && (
-            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs">
               ({snapshots.length})
             </span>
           )}
-          <span className="text-xs ml-auto" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-xs ml-auto">
             {expanded ? <CaretDown size={12} /> : <CaretRight size={12} />}
           </span>
         </button>
@@ -592,7 +592,7 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
               key={snap.id}
               onClick={() => handleView(snap.id)}
               className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-2 py-1.5 transition-colors"
-              style={{ background: "var(--color-bg-elevated)" }}
+             
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.background = "var(--color-bg-card)";
               }}
@@ -608,11 +608,11 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
               <div className="flex-1 min-w-0">
                 <p
                   className="text-xs font-mono truncate"
-                  style={{ color: "var(--color-text-secondary)" }}
+                 
                 >
                   {snap.label || new Date(snap.createdAt).toLocaleTimeString()}
                 </p>
-                <p className="text-xs truncate" style={{ color: "var(--color-text-muted)" }}>
+                <p className="text-xs truncate">
                   {snap.contentPreview.slice(0, 60)}...
                 </p>
               </div>
@@ -621,12 +621,12 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
         </div>
       )}
       {expanded && loading && (
-        <p className="mt-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <p className="mt-2 text-xs">
           Loading...
         </p>
       )}
       {expanded && !loading && snapshots.length === 0 && (
-        <p className="mt-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <p className="mt-2 text-xs">
           No snapshots yet. {isActive ? "Click Capture to take one." : ""}
         </p>
       )}
@@ -768,11 +768,11 @@ function SessionSummaryPanel({ sessionId }: { sessionId: string }) {
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-2 w-full text-left cursor-pointer"
       >
-        <Notebook size={14} weight="bold" style={{ color: "var(--color-accent)" }} />
-        <span className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+        <Notebook size={14} weight="bold" />
+        <span className="text-xs font-semibold">
           Summary
         </span>
-        <span className="text-xs ml-auto" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs ml-auto">
           {expanded ? "▲" : "▼"}
         </span>
       </button>
@@ -788,7 +788,7 @@ function SessionSummaryPanel({ sessionId }: { sessionId: string }) {
           <p>{summary.summary}</p>
           {summary.keyDecisions.length > 0 && (
             <div className="mt-2">
-              <p className="font-semibold" style={{ color: "var(--color-text-primary)" }}>
+              <p className="font-semibold">
                 Decisions
               </p>
               <ul className="list-disc pl-4 mt-1">

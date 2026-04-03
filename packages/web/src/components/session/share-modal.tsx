@@ -128,17 +128,17 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
             <QrCode
               size={18}
               weight="bold"
-              style={{ color: "var(--color-accent)" }}
+             
               aria-hidden="true"
             />
-            <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            <span className="text-sm font-semibold">
               Share Session
             </span>
           </div>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
-            style={{ color: "var(--color-text-muted)" }}
+           
             aria-label="Close share modal"
           >
             <X size={14} weight="bold" />
@@ -155,7 +155,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
         >
           <span
             className="text-xs font-semibold uppercase tracking-wide"
-            style={{ color: "var(--color-text-muted)" }}
+           
           >
             New Share Link
           </span>
@@ -250,7 +250,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
                 )}
               </button>
             </div>
-            <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-[10px]">
               Scan QR or share the link — no login required
             </span>
           </div>
@@ -260,7 +260,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
         {loading ? (
           <div
             className="flex items-center justify-center py-4 gap-2"
-            style={{ color: "var(--color-text-muted)" }}
+           
           >
             <CircleNotch size={14} className="animate-spin" />
             <span className="text-xs">Loading shares...</span>
@@ -269,7 +269,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
           <div className="flex flex-col gap-1.5">
             <span
               className="text-xs font-semibold uppercase tracking-wide"
-              style={{ color: "var(--color-text-muted)" }}
+             
             >
               Active Shares ({shares.length})
             </span>
@@ -299,7 +299,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
                 >
                   {s.token.slice(0, 12)}...
                 </span>
-                <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+                <span className="text-[10px]">
                   {new Date(s.expiresAt) > new Date()
                     ? `${Math.round((new Date(s.expiresAt).getTime() - Date.now()) / 3600000)}h left`
                     : "Expired"}
@@ -307,7 +307,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
                 <button
                   onClick={() => generateQR(s.token)}
                   className="p-1 rounded cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
-                  style={{ color: "var(--color-text-muted)" }}
+                 
                   aria-label="Show QR code"
                   title="Show QR code"
                 >

@@ -31,7 +31,7 @@ export function TemplateVariablesForm({ variables, values, onChange }: TemplateV
 
   return (
     <div>
-      <p className="text-xs font-semibold mb-2" style={{ color: "var(--color-text-secondary)" }}>
+      <p className="text-xs font-semibold mb-2">
         TEMPLATE VARIABLES
       </p>
       <div className={useGrid ? "grid grid-cols-2 gap-3" : "flex flex-col gap-3"}>
@@ -40,7 +40,7 @@ export function TemplateVariablesForm({ variables, values, onChange }: TemplateV
             <label
               htmlFor={`tvar-${variable.key}`}
               className="block text-xs font-medium mb-1"
-              style={{ color: "var(--color-text-muted)" }}
+             
             >
               {variable.label}
               {variable.required && (
@@ -58,7 +58,7 @@ export function TemplateVariablesForm({ variables, values, onChange }: TemplateV
               }
               placeholder={`{{${variable.key}}}`}
               required={variable.required}
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+              className="w-full px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
               style={{
                 background: "var(--color-bg-elevated)",
                 border: "1px solid var(--color-border)",

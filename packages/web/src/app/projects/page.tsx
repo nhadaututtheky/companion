@@ -85,18 +85,18 @@ function ProjectCard({
         <div className="min-w-0">
           <h3
             className="text-sm font-semibold mb-0.5 truncate"
-            style={{ color: "var(--color-text-primary)" }}
+           
           >
             {project.name}
           </h3>
           <div className="flex items-center gap-1 mb-2 group">
-            <p className="text-xs font-mono truncate" style={{ color: "var(--color-text-muted)" }}>
+            <p className="text-xs font-mono truncate">
               {project.dir}
             </p>
             <button
               onClick={copyDir}
               className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 cursor-pointer"
-              style={{ color: "var(--color-text-muted)" }}
+             
               aria-label="Copy directory path"
             >
               {copied ? <Check size={12} /> : <Copy size={12} />}
@@ -129,7 +129,7 @@ function ProjectCard({
         <button
           onClick={() => onEdit(project)}
           className="p-2 rounded-lg transition-colors cursor-pointer hover:bg-[var(--color-bg-elevated)]"
-          style={{ color: "var(--color-text-muted)" }}
+         
           aria-label="Edit project"
         >
           <PencilSimple size={14} weight="bold" />
@@ -137,7 +137,7 @@ function ProjectCard({
         <button
           onClick={onDelete}
           className="p-2 rounded-lg transition-colors cursor-pointer hover:bg-[var(--color-bg-elevated)]"
-          style={{ color: "var(--color-text-muted)" }}
+         
           aria-label="Delete project"
         >
           <Trash size={14} weight="bold" />
@@ -209,7 +209,7 @@ function ProjectDialog({
           <button
             type="button"
             onClick={onClose}
-            style={{ color: "var(--color-text-muted)" }}
+           
             className="cursor-pointer"
           >
             <X size={18} />
@@ -218,7 +218,7 @@ function ProjectDialog({
 
         {/* Name */}
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+          <span className="text-xs font-medium">
             Name <span style={{ color: "#ef4444" }}>*</span>
           </span>
           <input
@@ -226,7 +226,7 @@ function ProjectDialog({
             value={form.name ?? ""}
             onChange={(e) => updateField("name", e.target.value)}
             placeholder="My Awesome Project"
-            className="px-3 py-2 rounded-lg text-sm outline-none"
+            className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
             style={{
               background: "var(--color-bg-elevated)",
               border: "1px solid var(--color-border)",
@@ -238,10 +238,10 @@ function ProjectDialog({
 
         {/* Slug */}
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+          <span className="text-xs font-medium">
             Slug
             {autoSlug && (
-              <span className="ml-1 text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+              <span className="ml-1 text-[10px]">
                 (auto from name)
               </span>
             )}
@@ -255,7 +255,7 @@ function ProjectDialog({
             }}
             placeholder="my-awesome-project"
             disabled={isEdit}
-            className="px-3 py-2 rounded-lg text-sm outline-none font-mono disabled:opacity-50"
+            className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono disabled:opacity-50"
             style={{
               background: "var(--color-bg-elevated)",
               border: "1px solid var(--color-border)",
@@ -266,7 +266,7 @@ function ProjectDialog({
 
         {/* Directory */}
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+          <span className="text-xs font-medium">
             Project Directory <span style={{ color: "#ef4444" }}>*</span>
           </span>
           <input
@@ -274,27 +274,27 @@ function ProjectDialog({
             value={form.dir ?? ""}
             onChange={(e) => updateField("dir", e.target.value)}
             placeholder="/home/user/projects/my-project"
-            className="px-3 py-2 rounded-lg text-sm outline-none font-mono"
+            className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
             style={{
               background: "var(--color-bg-elevated)",
               border: "1px solid var(--color-border)",
               color: "var(--color-text-primary)",
             }}
           />
-          <span className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-[11px]">
             Absolute path to the project folder on this machine
           </span>
         </label>
 
         {/* Model */}
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+          <span className="text-xs font-medium">
             Default Model
           </span>
           <select
             value={form.defaultModel ?? "claude-sonnet-4-6"}
             onChange={(e) => updateField("defaultModel", e.target.value)}
-            className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
+            className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
             style={{
               background: "var(--color-bg-elevated)",
               border: "1px solid var(--color-border)",
@@ -311,13 +311,13 @@ function ProjectDialog({
 
         {/* Permission Mode */}
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+          <span className="text-xs font-medium">
             Permission Mode
           </span>
           <select
             value={form.permissionMode ?? "default"}
             onChange={(e) => updateField("permissionMode", e.target.value)}
-            className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
+            className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
             style={{
               background: "var(--color-bg-elevated)",
               border: "1px solid var(--color-border)",
@@ -392,16 +392,16 @@ function DeleteConfirmDialog({
             <Warning size={20} style={{ color: "#ef4444" }} weight="fill" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            <h3 className="text-sm font-semibold">
               Delete project
             </h3>
-            <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+            <p className="text-xs mt-0.5">
               This will also remove it from Telegram.
             </p>
           </div>
         </div>
 
-        <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
+        <p className="text-sm">
           Are you sure you want to delete <strong>{projectName}</strong>?
         </p>
 
@@ -496,7 +496,7 @@ export default function ProjectsPage() {
             <button
               onClick={load}
               className="p-2 rounded-lg transition-colors cursor-pointer hover:bg-[var(--color-bg-elevated)]"
-              style={{ color: "var(--color-text-secondary)" }}
+             
               aria-label="Refresh"
             >
               <ArrowClockwise size={16} weight="bold" />
@@ -524,7 +524,7 @@ export default function ProjectsPage() {
             weight="fill"
             style={{ color: "#29B6F6", flexShrink: 0, marginTop: 1 }}
           />
-          <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+          <p className="text-xs leading-relaxed">
             Projects you add here will automatically appear in your Telegram bot&apos;s{" "}
             <code
               className="px-1 py-0.5 rounded text-[11px]"
@@ -560,11 +560,11 @@ export default function ProjectsPage() {
             <div className="text-center">
               <p
                 className="text-sm font-semibold mb-1"
-                style={{ color: "var(--color-text-primary)" }}
+               
               >
                 No projects yet
               </p>
-              <p className="text-xs max-w-xs" style={{ color: "var(--color-text-muted)" }}>
+              <p className="text-xs max-w-xs">
                 Add your project folders to start Claude Code sessions from both the web UI and
                 Telegram.
               </p>

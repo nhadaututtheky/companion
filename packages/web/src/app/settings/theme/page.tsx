@@ -208,13 +208,13 @@ export default function ThemeSettingsPage() {
           <Link
             href="/settings"
             className="p-1.5 rounded-lg cursor-pointer"
-            style={{ color: "var(--color-text-secondary)" }}
+           
             aria-label="Back to settings"
           >
             <ArrowLeft size={18} weight="bold" />
           </Link>
-          <PaintBrush size={22} weight="bold" style={{ color: "var(--color-text-secondary)" }} />
-          <h1 className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+          <PaintBrush size={22} weight="bold" />
+          <h1 className="text-lg font-bold">
             Themes
           </h1>
         </div>
@@ -254,10 +254,10 @@ export default function ThemeSettingsPage() {
           className="rounded-xl p-4"
           style={{ border: "1px solid var(--color-border)", background: "var(--color-bg-card)" }}
         >
-          <h2 className="text-sm font-semibold mb-2" style={{ color: "var(--color-text-primary)" }}>
+          <h2 className="text-sm font-semibold mb-2">
             Import VS Code Theme
           </h2>
-          <p className="text-xs mb-3" style={{ color: "var(--color-text-muted)" }}>
+          <p className="text-xs mb-3">
             Upload a VS Code theme JSON file (.json) to extract colors. The theme&apos;s
             &quot;colors&quot; key will be mapped to Companion&apos;s CSS variables.
           </p>

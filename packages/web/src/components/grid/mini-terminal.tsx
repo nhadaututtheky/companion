@@ -41,7 +41,7 @@ function CompactPermissionGate({
       <Lock size={11} weight="bold" style={{ color: "#FBBC04", flexShrink: 0 }} />
       <span
         className="text-xs font-medium truncate flex-1"
-        style={{ color: "var(--color-text-primary)" }}
+       
       >
         {req.toolName}
       </span>
@@ -66,7 +66,7 @@ function CompactPermissionGate({
         <XCircle size={10} weight="bold" /> Deny
       </button>
       {permissions.length > 1 && (
-        <span className="text-xs flex-shrink-0" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs flex-shrink-0">
           +{permissions.length - 1}
         </span>
       )}
@@ -129,7 +129,7 @@ function CompactComposer({
           disabled={isRunning}
           placeholder={isRunning ? "Claude is thinking…" : "Message…"}
           rows={1}
-          className="flex-1 resize-none bg-transparent outline-none leading-snug"
+          className="flex-1 resize-none bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent leading-snug"
           style={{
             fontSize: 12,
             color: "var(--color-text-primary)",

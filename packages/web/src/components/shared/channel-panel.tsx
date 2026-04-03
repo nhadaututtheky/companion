@@ -89,7 +89,7 @@ function ChannelFeed({ messages }: { messages: ChannelMessage[] }) {
     return (
       <div
         className="flex flex-col items-center justify-center py-8 gap-2"
-        style={{ color: "var(--color-text-muted)" }}
+       
       >
         <ChatTeardropDots size={28} />
         <p className="text-xs text-center">No messages yet. Post the first one.</p>
@@ -123,11 +123,11 @@ function ChannelFeed({ messages }: { messages: ChannelMessage[] }) {
               </span>
               <span
                 className="text-xs font-mono truncate flex-1"
-                style={{ color: "var(--color-text-muted)" }}
+               
               >
                 {msg.agentId}
               </span>
-              <span className="text-xs flex-shrink-0" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-xs flex-shrink-0">
                 {formatRelativeTime(msg.timestamp)}
               </span>
             </div>
@@ -190,7 +190,7 @@ function MessageComposer({ channelId, onPosted }: { channelId: string; onPosted:
         disabled={posting}
         placeholder="Post to channel… (Enter to send)"
         rows={2}
-        className="flex-1 resize-none rounded-lg px-2 py-1.5 text-xs outline-none"
+        className="flex-1 resize-none rounded-lg px-2 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
         style={{
           background: "var(--color-bg-card)",
           border: "1px solid var(--color-border)",
@@ -259,7 +259,7 @@ function CreateChannelForm({
 
   return (
     <div className="flex flex-col gap-3 p-3">
-      <p className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+      <p className="text-xs font-semibold">
         New Shared Context
       </p>
 
@@ -267,7 +267,7 @@ function CreateChannelForm({
       <div className="flex flex-col gap-1">
         <label
           className="text-xs"
-          style={{ color: "var(--color-text-muted)" }}
+         
           htmlFor="channel-topic"
         >
           Topic
@@ -278,7 +278,7 @@ function CreateChannelForm({
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
           placeholder="e.g. Review auth implementation"
-          className="rounded-lg px-2 py-1.5 text-xs outline-none"
+          className="rounded-lg px-2 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
           style={{
             background: "var(--color-bg-card)",
             border: "1px solid var(--color-border)",
@@ -296,7 +296,7 @@ function CreateChannelForm({
       <div className="flex flex-col gap-1">
         <label
           className="text-xs"
-          style={{ color: "var(--color-text-muted)" }}
+         
           htmlFor="channel-type"
         >
           Type
@@ -308,7 +308,7 @@ function CreateChannelForm({
             onChange={(e) =>
               setType(e.target.value as "debate" | "review" | "red_team" | "brainstorm")
             }
-            className="w-full appearance-none rounded-lg px-2 py-1.5 text-xs outline-none cursor-pointer"
+            className="w-full appearance-none rounded-lg px-2 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
             style={{
               background: "var(--color-bg-card)",
               border: "1px solid var(--color-border)",
@@ -324,7 +324,7 @@ function CreateChannelForm({
           <CaretDown
             size={12}
             className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2"
-            style={{ color: "var(--color-text-muted)" }}
+           
           />
         </div>
       </div>
@@ -416,7 +416,7 @@ function LinkSessionSelector({ channelId, alreadyLinked, onLinked }: LinkSession
         <select
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
-          className="w-full appearance-none rounded-lg px-2 py-1.5 text-xs outline-none cursor-pointer"
+          className="w-full appearance-none rounded-lg px-2 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
           style={{
             background: "var(--color-bg-card)",
             border: "1px solid var(--color-border)",
@@ -435,7 +435,7 @@ function LinkSessionSelector({ channelId, alreadyLinked, onLinked }: LinkSession
         <CaretDown
           size={12}
           className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2"
-          style={{ color: "var(--color-text-muted)" }}
+         
         />
       </div>
       <button
@@ -538,10 +538,10 @@ export function ChannelPanel({
       <div className="flex flex-col items-center justify-center gap-3 p-4">
         <ChatTeardropDots
           size={28}
-          style={{ color: "var(--color-text-muted)" }}
+         
           aria-hidden="true"
         />
-        <p className="text-xs text-center" style={{ color: "var(--color-text-muted)" }}>
+        <p className="text-xs text-center">
           No shared context channel linked to this session.
         </p>
         <button
@@ -560,7 +560,7 @@ export function ChannelPanel({
     return (
       <div
         className="flex items-center justify-center py-8"
-        style={{ color: "var(--color-text-muted)" }}
+       
       >
         <p className="text-xs">Loading channel…</p>
       </div>
@@ -571,7 +571,7 @@ export function ChannelPanel({
     return (
       <div
         className="flex items-center justify-center py-8"
-        style={{ color: "var(--color-text-muted)" }}
+       
       >
         <p className="text-xs">Channel not found.</p>
       </div>
@@ -592,7 +592,7 @@ export function ChannelPanel({
           <LinkSimple size={13} style={{ color: statusColor, flexShrink: 0 }} aria-hidden="true" />
           <span
             className="text-xs font-semibold flex-1 truncate"
-            style={{ color: "var(--color-text-primary)" }}
+           
             title={channel.topic}
           >
             {channel.topic}
@@ -610,7 +610,7 @@ export function ChannelPanel({
           <button
             onClick={() => void handleUnlinkSelf()}
             className="flex-shrink-0 p-1 rounded transition-all cursor-pointer"
-            style={{ color: "var(--color-text-muted)" }}
+           
             aria-label="Unlink session from channel"
             title="Unlink this session"
           >

@@ -113,7 +113,7 @@ function BreakdownRow({
           }}
           aria-hidden="true"
         />
-        <span className="text-xs truncate" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs truncate">
           {label}
         </span>
       </div>
@@ -163,7 +163,7 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
       <button
         onClick={() => setExpanded((v) => !v)}
         className="flex items-center gap-1 cursor-pointer rounded transition-colors"
-        style={{ color: "var(--color-text-muted)" }}
+       
         aria-label={`Cost: ${fmtCost(totalCost)}. Click to expand breakdown`}
         aria-expanded={expanded}
       >
@@ -194,7 +194,7 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
       <button
         onClick={() => setExpanded((v) => !v)}
         className="flex items-center gap-2 w-full px-3 py-2.5 cursor-pointer transition-colors"
-        style={{ color: "var(--color-text-primary)" }}
+       
         aria-expanded={expanded}
         aria-label="Toggle cost breakdown"
       >
@@ -204,7 +204,7 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
           style={{ color: "#34A853", flexShrink: 0 }}
           aria-hidden="true"
         />
-        <span className="text-xs flex-1 text-left" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs flex-1 text-left">
           Total Cost
         </span>
         <span
@@ -213,7 +213,7 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
         >
           {fmtCost(totalCost)}
         </span>
-        <span className="text-xs ml-1" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs ml-1">
           {expanded ? "▲" : "▼"}
         </span>
       </button>
@@ -251,7 +251,7 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
               />
             )}
             {totalTokens === 0 && (
-              <p className="text-xs py-1" style={{ color: "var(--color-text-muted)" }}>
+              <p className="text-xs py-1">
                 No token data yet
               </p>
             )}
@@ -263,8 +263,8 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
               className="flex items-center gap-1 mt-2 pt-2"
               style={{ borderTop: "1px solid var(--color-border)" }}
             >
-              <ChartBar size={11} style={{ color: "var(--color-text-muted)" }} aria-hidden="true" />
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <ChartBar size={11} aria-hidden="true" />
+              <span className="text-xs">
                 Cache saved ~{fmtTokens(cacheRead)} tokens at reduced cost
               </span>
             </div>

@@ -39,7 +39,7 @@ export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }
       <button
         onClick={() => setExpanded((v) => !v)}
         className="flex items-center gap-2 w-full px-3 py-2 text-xs cursor-pointer"
-        style={{ color: "var(--color-text-secondary)" }}
+       
         aria-expanded={expanded}
         aria-label={`Toggle diff for ${fileName}`}
       >
@@ -83,7 +83,7 @@ export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }
           {displayLines.length === 0 ? (
             <div
               className="px-3 py-2 text-xs font-mono"
-              style={{ color: "var(--color-text-muted)" }}
+             
             >
               No changes
             </div>
@@ -143,7 +143,7 @@ export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }
                   </span>
                   <span
                     className="whitespace-pre-wrap break-all pr-2"
-                    style={{ color: "var(--color-text-secondary)" }}
+                   
                   >
                     {line.content}
                   </span>

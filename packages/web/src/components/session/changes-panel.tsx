@@ -105,8 +105,8 @@ export function ChangesPanel({ messages }: ChangesPanelProps) {
   if (changes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 gap-2">
-        <GitDiff size={28} style={{ color: "var(--color-text-muted)" }} />
-        <p className="text-xs text-center" style={{ color: "var(--color-text-muted)" }}>
+        <GitDiff size={28} />
+        <p className="text-xs text-center">
           No file changes yet
         </p>
       </div>
@@ -121,13 +121,13 @@ export function ChangesPanel({ messages }: ChangesPanelProps) {
       {/* Summary header */}
       <div
         className="px-4 py-3 border-b flex items-center gap-3"
-        style={{ borderColor: "var(--color-border)" }}
+       
       >
         <GitDiff size={14} weight="bold" style={{ color: "#4285F4" }} />
-        <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+        <span className="text-xs font-semibold">
           {grouped.size} file{grouped.size !== 1 ? "s" : ""} changed
         </span>
-        <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs font-mono">
           {totalEdits > 0 && (
             <span style={{ color: "#FBBC04" }}>
               {totalEdits} edit{totalEdits !== 1 ? "s" : ""}
@@ -162,9 +162,9 @@ export function ChangesPanel({ messages }: ChangesPanelProps) {
                 aria-expanded={expanded}
               >
                 {expanded ? (
-                  <CaretDown size={10} style={{ color: "var(--color-text-muted)" }} />
+                  <CaretDown size={10} />
                 ) : (
-                  <CaretRight size={10} style={{ color: "var(--color-text-muted)" }} />
+                  <CaretRight size={10} />
                 )}
                 {hasCreate ? (
                   <FilePlus size={13} weight="bold" style={{ color: "#34A853" }} />
@@ -173,14 +173,14 @@ export function ChangesPanel({ messages }: ChangesPanelProps) {
                 )}
                 <span
                   className="text-xs font-mono truncate flex-1"
-                  style={{ color: "var(--color-text-secondary)" }}
+                 
                   title={filePath}
                 >
                   {fileName}
                 </span>
                 <span
                   className="text-xs font-mono shrink-0"
-                  style={{ color: "var(--color-text-muted)" }}
+                 
                 >
                   {editCount > 0 ? `${editCount}×` : "new"}
                 </span>
@@ -190,7 +190,7 @@ export function ChangesPanel({ messages }: ChangesPanelProps) {
               {expanded && (
                 <div
                   className="px-2 py-2 flex flex-col gap-2"
-                  style={{ background: "var(--color-bg-base)" }}
+                 
                 >
                   {fileChanges.map((change, i) => (
                     <InlineDiff

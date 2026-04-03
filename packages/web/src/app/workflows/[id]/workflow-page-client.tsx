@@ -23,7 +23,7 @@ interface PageProps {
 }
 
 const STEP_STATUS_ICON: Record<string, React.ReactNode> = {
-  pending: <Clock size={16} weight="bold" style={{ color: "var(--color-text-muted)" }} />,
+  pending: <Clock size={16} weight="bold" />,
   running: (
     <Spinner
       size={16}
@@ -115,11 +115,11 @@ export function WorkflowPageClient({ params }: PageProps) {
         <Header />
         <div
           className="flex flex-col items-center justify-center flex-1 gap-3"
-          style={{ color: "var(--color-text-muted)" }}
+         
         >
           <XCircle size={32} weight="light" />
           <p>Workflow not found</p>
-          <Link href="/workflows" className="text-sm" style={{ color: "var(--color-accent)" }}>
+          <Link href="/workflows" className="text-sm">
             Back to workflows
           </Link>
         </div>
@@ -142,17 +142,17 @@ export function WorkflowPageClient({ params }: PageProps) {
           <Link
             href="/workflows"
             className="p-1.5 rounded-lg cursor-pointer"
-            style={{ color: "var(--color-text-secondary)" }}
+           
             aria-label="Back"
           >
             <ArrowLeft size={18} weight="bold" />
           </Link>
-          <Lightning size={20} weight="bold" style={{ color: "var(--color-accent)" }} />
+          <Lightning size={20} weight="bold" />
           <div className="flex-1">
-            <h1 className="text-base font-bold" style={{ color: "var(--color-text-primary)" }}>
+            <h1 className="text-base font-bold">
               {state.templateName}
             </h1>
-            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <p className="text-xs">
               {state.topic.length > 100 ? state.topic.slice(0, 100) + "..." : state.topic}
             </p>
           </div>
@@ -207,7 +207,7 @@ export function WorkflowPageClient({ params }: PageProps) {
                   </div>
                   <span
                     className="text-xs font-semibold"
-                    style={{ color: "var(--color-text-primary)" }}
+                   
                   >
                     {step.role}
                   </span>
@@ -253,7 +253,7 @@ export function WorkflowPageClient({ params }: PageProps) {
                 {STEP_STATUS_ICON[step.status]}
                 <span
                   className="text-sm font-semibold"
-                  style={{ color: "var(--color-text-primary)" }}
+                 
                 >
                   Step {i + 1}: {step.role}
                 </span>
@@ -268,7 +268,7 @@ export function WorkflowPageClient({ params }: PageProps) {
                 )}
               </div>
               {step.startedAt && (
-                <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                <div className="text-xs">
                   Started: {new Date(step.startedAt).toLocaleTimeString()}
                   {step.completedAt &&
                     ` — Completed: ${new Date(step.completedAt).toLocaleTimeString()}`}
@@ -300,7 +300,7 @@ export function WorkflowPageClient({ params }: PageProps) {
         >
           <div
             className="flex items-center gap-4 text-xs"
-            style={{ color: "var(--color-text-muted)" }}
+           
           >
             <span>
               Cost: <strong className="font-mono">${state.totalCostUsd.toFixed(3)}</strong> / $

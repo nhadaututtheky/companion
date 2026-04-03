@@ -88,7 +88,7 @@ function KpiCard({ label, value, sub, icon, accent = "#4285f4" }: KpiCardProps) 
       }}
     >
       <div className="flex items-center justify-between gap-1">
-        <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs">
           {label}
         </span>
         <span style={{ color: accent, opacity: 0.7 }}>{icon}</span>
@@ -103,7 +103,7 @@ function KpiCard({ label, value, sub, icon, accent = "#4285f4" }: KpiCardProps) 
         {value}
       </span>
       {sub && (
-        <span className="text-xs truncate" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs truncate">
           {sub}
         </span>
       )}
@@ -117,7 +117,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <span
       className="text-xs font-semibold uppercase tracking-wide"
-      style={{ color: "var(--color-text-muted)" }}
+     
     >
       {children}
     </span>
@@ -165,7 +165,7 @@ export function StatsPanel({ onClose }: StatsPanelProps) {
         <button
           onClick={onClose}
           className="p-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
-          style={{ color: "var(--color-text-muted)" }}
+         
           aria-label="Close stats panel"
         >
           <X size={14} weight="bold" aria-hidden="true" />
@@ -177,7 +177,7 @@ export function StatsPanel({ onClose }: StatsPanelProps) {
         {loading && (
           <div
             className="flex items-center justify-center py-12 gap-2"
-            style={{ color: "var(--color-text-muted)" }}
+           
           >
             <CircleNotch size={18} className="animate-spin" aria-hidden="true" />
             <span className="text-sm">Loading stats…</span>
@@ -314,7 +314,7 @@ function ActivityHeatmap({ data }: { data: StatsData["dailyActivity"] }) {
       </div>
       {/* Legend */}
       <div className="flex items-center justify-end gap-2 mt-2">
-        <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs">
           Less
         </span>
         {[0, 1, 3, 5, 7].map((n) => (
@@ -331,7 +331,7 @@ function ActivityHeatmap({ data }: { data: StatsData["dailyActivity"] }) {
             aria-hidden="true"
           />
         ))}
-        <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs">
           More
         </span>
       </div>
@@ -365,7 +365,7 @@ function ModelBreakdown({ breakdown }: { breakdown: StatsData["modelBreakdown"] 
               >
                 {modelLabel(m.model)}
               </span>
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-xs">
                 {m.count} sessions · {pct}%
               </span>
             </div>

@@ -57,7 +57,7 @@ export default function LoginPage() {
   return (
     <div
       className="flex min-h-screen items-center justify-center px-4"
-      style={{ background: "var(--color-bg-base)" }}
+     
     >
       {/* Card */}
       <div
@@ -71,7 +71,7 @@ export default function LoginPage() {
         {/* Logo + title */}
         <div className="flex flex-col items-center gap-2 text-center">
           <CompanionLogo size="lg" />
-          <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+          <p className="text-sm leading-relaxed">
             Enter the server access code to continue
           </p>
         </div>
@@ -83,7 +83,7 @@ export default function LoginPage() {
             <label
               htmlFor="api-key"
               className="text-xs font-semibold"
-              style={{ color: "var(--color-text-secondary)" }}
+             
             >
               Access Code
             </label>
@@ -92,7 +92,7 @@ export default function LoginPage() {
                 className="absolute left-3 flex items-center pointer-events-none"
                 aria-hidden="true"
               >
-                <Key size={15} style={{ color: "var(--color-text-muted)" }} />
+                <Key size={15} />
               </span>
               <input
                 id="api-key"
@@ -105,7 +105,7 @@ export default function LoginPage() {
                 placeholder="your-access-code"
                 autoComplete="current-password"
                 spellCheck={false}
-                className="w-full rounded-lg pl-9 pr-10 py-2.5 text-sm outline-none transition-colors"
+                className="w-full rounded-lg pl-9 pr-10 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent transition-colors"
                 style={{
                   background: "var(--color-bg-elevated)",
                   border: `1px solid ${error ? "var(--color-danger)" : "var(--color-border)"}`,
@@ -119,7 +119,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={() => setShowKey((v) => !v)}
                 className="absolute right-3 flex items-center cursor-pointer rounded p-0.5"
-                style={{ color: "var(--color-text-muted)" }}
+               
                 aria-label={showKey ? "Hide API key" : "Show API key"}
               >
                 {showKey ? <EyeSlash size={15} /> : <Eye size={15} />}
@@ -164,7 +164,7 @@ export default function LoginPage() {
         </form>
 
         {/* Footer hint */}
-        <p className="text-center text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <p className="text-center text-xs">
           The access code is set via{" "}
           <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem" }}>API_KEY</code> in
           your server config.

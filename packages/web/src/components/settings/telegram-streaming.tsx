@@ -121,7 +121,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-4" style={{ color: "var(--color-text-muted)" }}>
+      <div className="flex items-center gap-2 py-4">
         <ArrowsClockwise size={14} className="animate-spin" aria-hidden="true" />
         <span className="text-xs">Loading streaming config...</span>
       </div>
@@ -140,7 +140,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
         }}
       >
         <span className="flex items-center gap-2">
-          <span className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
+          <span className="text-sm font-medium">
             {botLabel}
           </span>
           {streamEnabled && (
@@ -152,7 +152,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
             </span>
           )}
         </span>
-        <span className="text-sm font-medium px-2" style={{ color: "var(--color-text-secondary)" }}>
+        <span className="text-sm font-medium px-2">
           {collapsed ? "Configure ▸" : "▾ Close"}
         </span>
       </button>
@@ -173,7 +173,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
               <div className="flex flex-col gap-1.5">
                 <label
                   className="text-xs font-medium"
-                  style={{ color: "var(--color-text-secondary)" }}
+                 
                 >
                   Target Chat ID
                 </label>
@@ -182,7 +182,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
                   value={targetChatId}
                   onChange={(e) => setTargetChatId(e.target.value)}
                   placeholder="-100123456789"
-                  className="px-3 py-2 rounded-lg text-sm outline-none font-mono"
+                  className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
                   style={{
                     background: "var(--color-bg-elevated)",
                     border: "1px solid var(--color-border)",
@@ -195,10 +195,10 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
               <div className="flex flex-col gap-1.5">
                 <label
                   className="text-xs font-medium"
-                  style={{ color: "var(--color-text-secondary)" }}
+                 
                 >
                   Topic / Thread ID{" "}
-                  <span style={{ color: "var(--color-text-muted)" }}>
+                  <span>
                     (optional, for forum groups)
                   </span>
                 </label>
@@ -207,7 +207,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
                   value={targetTopicId}
                   onChange={(e) => setTargetTopicId(e.target.value)}
                   placeholder="12345"
-                  className="px-3 py-2 rounded-lg text-sm outline-none font-mono"
+                  className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
                   style={{
                     background: "var(--color-bg-elevated)",
                     border: "1px solid var(--color-border)",
@@ -220,7 +220,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
               <div className="flex flex-col gap-1.5">
                 <label
                   className="text-xs font-medium"
-                  style={{ color: "var(--color-text-secondary)" }}
+                 
                 >
                   Message Format
                 </label>
@@ -229,7 +229,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
                   onChange={(e) =>
                     setMessageFormat(e.target.value as "compact" | "full" | "code_only")
                   }
-                  className="px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
+                  className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
                   style={{
                     background: "var(--color-bg-elevated)",
                     border: "1px solid var(--color-border)",
@@ -246,7 +246,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
               <div className="flex flex-col gap-2">
                 <label
                   className="text-xs font-medium"
-                  style={{ color: "var(--color-text-secondary)" }}
+                 
                 >
                   Events to Stream
                 </label>
@@ -334,11 +334,11 @@ function ToggleRow({
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex flex-col gap-0.5">
-        <span className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
+        <span className="text-sm font-medium">
           {label}
         </span>
         {description && (
-          <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-xs">
             {description}
           </span>
         )}

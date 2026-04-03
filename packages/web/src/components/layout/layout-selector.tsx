@@ -138,7 +138,7 @@ export function LayoutSelector() {
         <ModeIcon size={14} weight={activePresetId ? "fill" : "regular"} />
         <span
           className="text-xs font-medium hidden lg:inline"
-          style={{ color: "var(--color-text-secondary)" }}
+         
         >
           {activePreset?.name ?? "Custom"}
         </span>
@@ -234,7 +234,7 @@ export function LayoutSelector() {
                         deleteCustomPreset(preset.id);
                       }}
                       className="opacity-0 group-hover:opacity-100 p-0.5 rounded cursor-pointer transition-opacity"
-                      style={{ color: "var(--color-text-muted)" }}
+                     
                       aria-label={`Delete ${preset.name}`}
                     >
                       <Trash size={12} />
@@ -262,7 +262,7 @@ export function LayoutSelector() {
                   value={saveName}
                   onChange={(e) => setSaveName(e.target.value)}
                   placeholder="Preset name..."
-                  className="flex-1 text-xs px-2 py-1 rounded-md outline-none"
+                  className="flex-1 text-xs px-2 py-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
                   style={{
                     background: "var(--color-bg-elevated)",
                     border: "1px solid var(--color-border)",
@@ -292,7 +292,7 @@ export function LayoutSelector() {
             <button
               onClick={() => setSaving(true)}
               className="flex items-center gap-2 w-full px-3 py-2 cursor-pointer transition-colors text-left"
-              style={{ color: "var(--color-text-muted)" }}
+             
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "var(--color-bg-elevated)";
               }}

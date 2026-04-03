@@ -268,7 +268,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             {/* Cost — hidden on mobile */}
             <span
               className="hidden sm:inline text-xs font-mono font-semibold flex-shrink-0"
-              style={{ color: "var(--color-text-secondary)" }}
+             
             >
               ${cost.toFixed(4)}
             </span>

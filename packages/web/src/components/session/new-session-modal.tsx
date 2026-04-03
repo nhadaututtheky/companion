@@ -463,7 +463,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
               >
                 New Session
               </h2>
-              <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+              <p className="text-xs mt-0.5">
                 {atLimit
                   ? "Maximum 6 sessions active — stop one to continue"
                   : "Launch a Claude Code session in a project"}
@@ -520,7 +520,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   value={projectSearch}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setProjectSearch(e.target.value)}
                   placeholder="Search projects..."
-                  className="flex-1 bg-transparent outline-none text-sm"
+                  className="flex-1 bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent text-sm"
                   style={{
                     color: "var(--color-text-primary)",
                     fontFamily: "var(--font-body)",
@@ -537,7 +537,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                     <CircleNotch
                       size={20}
                       className="animate-spin"
-                      style={{ color: "var(--color-text-muted)" }}
+                     
                       aria-hidden="true"
                     />
                   </div>
@@ -546,7 +546,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                 {!projectsLoading && filteredProjects.length === 0 && (
                   <div
                     className="flex flex-col items-center justify-center py-8 gap-2"
-                    style={{ color: "var(--color-text-muted)" }}
+                   
                   >
                     <FolderOpen size={28} aria-hidden="true" />
                     <p className="text-sm">
@@ -581,20 +581,20 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                             />
                             <span
                               className="text-sm font-semibold truncate"
-                              style={{ color: "var(--color-text-primary)" }}
+                             
                             >
                               {p.name}
                             </span>
                             <span
                               className="ml-auto text-xs font-mono flex-shrink-0"
-                              style={{ color: "var(--color-text-muted)" }}
+                             
                             >
                               {p.defaultModel?.split("-")[1] ?? "sonnet"}
                             </span>
                           </div>
                           <span
                             className="text-xs truncate pl-5"
-                            style={{ color: "var(--color-text-muted)" }}
+                           
                           >
                             {p.dir}
                           </span>
@@ -681,7 +681,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                       value={githubUrl}
                       onChange={(e: ChangeEvent<HTMLInputElement>) => setGithubUrl(e.target.value)}
                       placeholder="https://github.com/owner/repo"
-                      className="flex-1 px-2.5 py-1.5 rounded-md text-sm outline-none"
+                      className="flex-1 px-2.5 py-1.5 rounded-md text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
                       style={{
                         background: "var(--color-bg-card)",
                         border: "1px solid var(--color-border)",
@@ -726,7 +726,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
               <div>
                 <label
                   className="block text-xs font-semibold mb-1.5"
-                  style={{ color: "var(--color-text-secondary)" }}
+                 
                   htmlFor="project-name-input"
                 >
                   PROJECT NAME
@@ -737,7 +737,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   value={projectName}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setProjectName(e.target.value)}
                   placeholder="my-project"
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
                   style={{
                     background: "var(--color-bg-elevated)",
                     border: "1px solid var(--color-border)",
@@ -752,7 +752,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
               <div>
                 <label
                   className="block text-xs font-semibold mb-1.5"
-                  style={{ color: "var(--color-text-secondary)" }}
+                 
                   htmlFor="model-select"
                 >
                   MODEL
@@ -761,7 +761,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   id="model-select"
                   value={model}
                   onChange={(e: ChangeEvent<HTMLSelectElement>) => setModel(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none cursor-pointer"
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
                   style={{
                     background: "var(--color-bg-elevated)",
                     border: "1px solid var(--color-border)",
@@ -781,7 +781,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
               <div>
                 <p
                   className="text-xs font-semibold mb-2"
-                  style={{ color: "var(--color-text-secondary)" }}
+                 
                 >
                   PERMISSION MODE
                 </p>
@@ -812,13 +812,13 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                         <div>
                           <p
                             className="text-sm font-semibold capitalize"
-                            style={{ color: "var(--color-text-primary)" }}
+                           
                           >
                             {mode}
                           </p>
                           <p
                             className="text-xs mt-0.5"
-                            style={{ color: "var(--color-text-muted)" }}
+                           
                           >
                             {desc}
                           </p>
@@ -834,10 +834,10 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                 <div>
                   <p
                     className="text-xs font-semibold mb-2"
-                    style={{ color: "var(--color-text-secondary)" }}
+                   
                   >
                     TEMPLATE
-                    <span className="ml-1 font-normal" style={{ color: "var(--color-text-muted)" }}>
+                    <span className="ml-1 font-normal">
                       (optional)
                     </span>
                   </p>
@@ -890,10 +890,10 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
               <div>
                 <label
                   className="block text-xs font-semibold mb-1.5"
-                  style={{ color: "var(--color-text-secondary)" }}
+                 
                 >
                   QUICK START{" "}
-                  <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>
+                  <span className="font-normal">
                     (click to set as prompt)
                   </span>
                 </label>
@@ -930,11 +930,11 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
               <div>
                 <label
                   className="block text-xs font-semibold mb-1.5"
-                  style={{ color: "var(--color-text-secondary)" }}
+                 
                   htmlFor="initial-prompt"
                 >
                   INITIAL PROMPT{" "}
-                  <span className="font-normal" style={{ color: "var(--color-text-muted)" }}>
+                  <span className="font-normal">
                     (optional)
                   </span>
                 </label>
@@ -946,7 +946,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   }
                   placeholder="Start with a specific task..."
                   rows={3}
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none resize-none"
+                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent resize-none"
                   style={{
                     background: "var(--color-bg-elevated)",
                     border: "1px solid var(--color-border)",
@@ -960,7 +960,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
               <div className="flex flex-col gap-1.5">
                 <p
                   className="text-xs font-semibold tracking-wider"
-                  style={{ color: "var(--color-text-muted)" }}
+                 
                 >
                   IDLE TIMEOUT
                 </p>
@@ -1009,11 +1009,11 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                 <div>
                   <p
                     className="text-sm font-semibold"
-                    style={{ color: "var(--color-text-primary)" }}
+                   
                   >
                     Resume previous session
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                  <p className="text-xs mt-0.5">
                     Continue from last conversation in this project
                   </p>
                 </div>
@@ -1072,13 +1072,13 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   <div className="flex items-start gap-2">
                     <span
                       className="w-24 flex-shrink-0 text-xs font-semibold uppercase"
-                      style={{ color: "var(--color-text-muted)" }}
+                     
                     >
                       Directory
                     </span>
                     <span
                       className="text-xs font-mono truncate"
-                      style={{ color: "var(--color-text-secondary)" }}
+                     
                     >
                       {selectedDir}
                     </span>
@@ -1086,13 +1086,13 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   <div className="flex items-center gap-2">
                     <span
                       className="w-24 flex-shrink-0 text-xs font-semibold uppercase"
-                      style={{ color: "var(--color-text-muted)" }}
+                     
                     >
                       Model
                     </span>
                     <span
                       className="text-xs font-mono"
-                      style={{ color: "var(--color-text-secondary)" }}
+                     
                     >
                       {MODEL_OPTIONS.find((m) => m.value === model)?.label ?? model}
                     </span>
@@ -1100,13 +1100,13 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   <div className="flex items-center gap-2">
                     <span
                       className="w-24 flex-shrink-0 text-xs font-semibold uppercase"
-                      style={{ color: "var(--color-text-muted)" }}
+                     
                     >
                       Permissions
                     </span>
                     <span
                       className="text-xs capitalize"
-                      style={{ color: "var(--color-text-secondary)" }}
+                     
                     >
                       {permissionMode}
                     </span>
@@ -1115,7 +1115,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                     <div className="flex items-center gap-2">
                       <span
                         className="w-24 flex-shrink-0 text-xs font-semibold uppercase"
-                        style={{ color: "var(--color-text-muted)" }}
+                       
                       >
                         Resume
                       </span>
@@ -1128,11 +1128,11 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                     <div className="flex items-start gap-2">
                       <span
                         className="w-24 flex-shrink-0 text-xs font-semibold uppercase"
-                        style={{ color: "var(--color-text-muted)" }}
+                       
                       >
                         Prompt
                       </span>
-                      <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                      <span className="text-xs">
                         {initialPrompt.length > 120
                           ? `${initialPrompt.slice(0, 120)}…`
                           : initialPrompt}

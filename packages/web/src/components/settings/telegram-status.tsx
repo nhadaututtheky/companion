@@ -45,12 +45,12 @@ export function TelegramStatus() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {status && (
-            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs">
               {status.runningBots}/{status.totalBots} bots running
             </span>
           )}
           {lastUpdated && (
-            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs">
               &middot; Updated {lastUpdated.toLocaleTimeString()}
             </span>
           )}
@@ -78,7 +78,7 @@ export function TelegramStatus() {
 
       {/* Bot list */}
       {loading && !status ? (
-        <div className="flex items-center gap-2 py-2" style={{ color: "var(--color-text-muted)" }}>
+        <div className="flex items-center gap-2 py-2">
           <ArrowsClockwise size={14} className="animate-spin" aria-hidden="true" />
           <span className="text-xs">Loading status...</span>
         </div>
@@ -102,11 +102,11 @@ export function TelegramStatus() {
               <div className="flex-1 min-w-0">
                 <div
                   className="text-xs font-semibold truncate"
-                  style={{ color: "var(--color-text-primary)" }}
+                 
                 >
                   {bot.label}
                 </div>
-                <div className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                <div className="text-xs">
                   {bot.role} &middot; {bot.botId}
                 </div>
               </div>
@@ -122,7 +122,7 @@ export function TelegramStatus() {
                   <XCircle
                     size={16}
                     weight="fill"
-                    style={{ color: "var(--color-text-muted)" }}
+                   
                     aria-label="Stopped"
                   />
                 )}
@@ -141,7 +141,7 @@ export function TelegramStatus() {
       ) : (
         <div
           className="flex items-center gap-2 py-4 text-xs justify-center"
-          style={{ color: "var(--color-text-muted)" }}
+         
         >
           <Clock size={14} aria-hidden="true" />
           No bots running

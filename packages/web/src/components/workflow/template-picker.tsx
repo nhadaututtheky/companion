@@ -121,8 +121,8 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
           className="flex items-center gap-3 px-5 py-4"
           style={{ borderBottom: "1px solid var(--color-border)" }}
         >
-          <Lightning size={20} weight="bold" style={{ color: "var(--color-accent)" }} />
-          <h2 className="text-base font-bold flex-1" style={{ color: "var(--color-text-primary)" }}>
+          <Lightning size={20} weight="bold" />
+          <h2 className="text-base font-bold flex-1">
             {selected ? "Configure Workflow" : "Start Workflow"}
           </h2>
           <button
@@ -154,7 +154,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
                 <div key={category} className="mb-5">
                   <h3
                     className="text-xs font-bold uppercase tracking-wider mb-2"
-                    style={{ color: "var(--color-text-muted)" }}
+                   
                   >
                     {CATEGORY_LABELS[category] ?? category}
                   </h3>
@@ -187,7 +187,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
                           <span style={{ fontSize: 18 }}>{t.icon}</span>
                           <span
                             className="text-sm font-semibold"
-                            style={{ color: "var(--color-text-primary)" }}
+                           
                           >
                             {t.name}
                           </span>
@@ -199,8 +199,8 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
                           {t.description}
                         </span>
                         <div className="flex items-center gap-1 mt-2">
-                          <ListBullets size={11} style={{ color: "var(--color-text-muted)" }} />
-                          <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                          <ListBullets size={11} />
+                          <span className="text-xs">
                             {t.steps.length} steps: {t.steps.map((s) => s.label).join(" → ")}
                           </span>
                         </div>
@@ -224,10 +224,10 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
               <div className="flex items-center gap-2 mb-4">
                 <span style={{ fontSize: 24 }}>{selected.icon}</span>
                 <div>
-                  <h3 className="text-sm font-bold" style={{ color: "var(--color-text-primary)" }}>
+                  <h3 className="text-sm font-bold">
                     {selected.name}
                   </h3>
-                  <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                  <p className="text-xs">
                     {selected.description}
                   </p>
                 </div>
@@ -256,7 +256,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
               {/* Topic */}
               <label
                 className="block mb-1 text-xs font-medium"
-                style={{ color: "var(--color-text-secondary)" }}
+               
               >
                 Topic / Description *
               </label>
@@ -282,7 +282,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
               {/* Cost cap */}
               <label
                 className="block mb-1 text-xs font-medium"
-                style={{ color: "var(--color-text-secondary)" }}
+               
               >
                 Cost Cap: ${costCap.toFixed(2)}
               </label>

@@ -109,10 +109,10 @@ function ContextStatusBar({
       <span className="text-xs font-mono" style={{ color }}>
         {pct.toFixed(0)}%
       </span>
-      <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
+      <span className="text-xs font-mono">
         {formatK(totalTokens)} / {formatK(maxTokens)}
       </span>
-      <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+      <span className="text-xs">
         · {formatK(remaining)} remaining
       </span>
     </div>
@@ -229,7 +229,7 @@ export function SessionPageClient({ params }: PageProps) {
             <button
               onClick={() => router.back()}
               className="p-1.5 rounded-lg transition-colors cursor-pointer"
-              style={{ color: "var(--color-text-secondary)" }}
+             
               aria-label="Back"
             >
               <ArrowLeft size={16} weight="bold" />
@@ -237,11 +237,11 @@ export function SessionPageClient({ params }: PageProps) {
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <span
                 className="text-sm font-semibold truncate"
-                style={{ color: "var(--color-text-primary)" }}
+               
               >
                 {session?.projectName ?? id.slice(0, 8)}
               </span>
-              <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-xs font-mono">
                 #{id.slice(0, 8)}
               </span>
               <TelegramStreamBadge sessionId={id} />
@@ -351,7 +351,7 @@ export function SessionPageClient({ params }: PageProps) {
             <button
               onClick={() => setPromptHistoryOpen(true)}
               className="p-1.5 rounded-lg transition-colors cursor-pointer"
-              style={{ color: "var(--color-text-muted)" }}
+             
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
               }}

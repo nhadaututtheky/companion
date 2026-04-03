@@ -51,7 +51,7 @@ function PermissionCard({
     >
       <div className="flex items-center gap-2">
         <Lock size={14} weight="bold" style={{ color: "#FBBC04", flexShrink: 0 }} />
-        <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+        <span className="text-sm font-semibold">
           {req.toolName}
         </span>
         {autoApproveSeconds && countdown > 0 && (
@@ -65,7 +65,7 @@ function PermissionCard({
       </div>
 
       {req.description && (
-        <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+        <p className="text-xs leading-relaxed">
           {req.description}
         </p>
       )}

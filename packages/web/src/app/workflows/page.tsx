@@ -71,8 +71,8 @@ export default function WorkflowsPage() {
       >
         {/* Title */}
         <div className="flex items-center gap-3 mb-6">
-          <Lightning size={22} weight="bold" style={{ color: "var(--color-accent)" }} />
-          <h1 className="text-lg font-bold flex-1" style={{ color: "var(--color-text-primary)" }}>
+          <Lightning size={22} weight="bold" />
+          <h1 className="text-lg font-bold flex-1">
             Workflows
           </h1>
           <button
@@ -129,7 +129,7 @@ export default function WorkflowsPage() {
               weight="light"
               style={{ color: "var(--color-text-muted)", margin: "0 auto 8px" }}
             />
-            <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+            <p className="text-sm">
               No workflows yet. Start one from a template.
             </p>
           </div>
@@ -154,16 +154,16 @@ export default function WorkflowsPage() {
                   }}
                 >
                   {STATUS_ICONS[w.status] ?? (
-                    <Clock size={14} style={{ color: "var(--color-text-muted)" }} />
+                    <Clock size={14} />
                   )}
                   <div className="flex-1 min-w-0">
                     <div
                       className="text-sm font-medium truncate"
-                      style={{ color: "var(--color-text-primary)" }}
+                     
                     >
                       {state?.templateName ?? "Workflow"}
                     </div>
-                    <div className="text-xs truncate" style={{ color: "var(--color-text-muted)" }}>
+                    <div className="text-xs truncate">
                       {w.topic}
                     </div>
                   </div>

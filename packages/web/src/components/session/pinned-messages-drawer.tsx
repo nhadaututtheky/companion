@@ -79,7 +79,7 @@ export function PinnedMessagesDrawer({
         >
           <div className="flex items-center gap-2">
             <PushPin size={15} weight="fill" style={{ color: "#FBBC04" }} />
-            <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            <span className="text-sm font-semibold">
               Pinned Messages
             </span>
             {pinnedMessages.length > 0 && (
@@ -97,7 +97,7 @@ export function PinnedMessagesDrawer({
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg cursor-pointer transition-colors"
-            style={{ color: "var(--color-text-muted)" }}
+           
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
             }}
@@ -115,7 +115,7 @@ export function PinnedMessagesDrawer({
           {pinnedMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-3 px-6">
               <PushPin size={32} style={{ color: "var(--color-text-muted)", opacity: 0.4 }} />
-              <p className="text-sm text-center" style={{ color: "var(--color-text-muted)" }}>
+              <p className="text-sm text-center">
                 No pinned messages
               </p>
               <p
@@ -176,7 +176,7 @@ export function PinnedMessagesDrawer({
                     {/* Preview */}
                     <p
                       className="text-xs leading-relaxed"
-                      style={{ color: "var(--color-text-secondary)" }}
+                     
                     >
                       {truncate(msg.content)}
                     </p>

@@ -62,9 +62,9 @@ function EmptyPane({
   return (
     <div
       className="flex flex-col items-center justify-center h-full gap-3 px-4"
-      style={{ background: "var(--color-bg-base)" }}
+     
     >
-      <p className="text-xs text-center" style={{ color: "var(--color-text-muted)" }}>
+      <p className="text-xs text-center">
         Click a session to pin it here
       </p>
       {sessions.length > 0 && (

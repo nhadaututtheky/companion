@@ -128,7 +128,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
   const currentViewport = VIEWPORTS.find((v) => v.id === viewport)!;
 
   return (
-    <div className="flex flex-col h-full" style={{ background: "var(--color-bg-base)" }}>
+    <div className="flex flex-col h-full">
       {/* Navigation bar */}
       <div
         className="flex items-center gap-2 px-3 py-2 shrink-0"
@@ -182,11 +182,11 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
               value={inputUrl}
               onChange={(e) => setInputUrl(e.target.value)}
               placeholder="http://localhost:3000"
-              className="flex-1 text-xs outline-none bg-transparent font-mono"
-              style={{ color: "var(--color-text-primary)" }}
+              className="flex-1 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent bg-transparent font-mono"
+             
             />
             {loading && (
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-xs">
                 ...
               </span>
             )}
@@ -291,7 +291,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
             />
           ) : (
             <div className="flex items-center justify-center h-full">
-              <span className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-sm">
                 Enter a URL to preview
               </span>
             </div>

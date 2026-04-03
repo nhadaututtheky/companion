@@ -173,18 +173,18 @@ export default function DatabasePage() {
           {/* Connections header */}
           <div
             className="flex items-center gap-2 px-3 py-2 border-b"
-            style={{ borderColor: "var(--color-border)" }}
+           
           >
             <Link
               href="/"
               className="p-1 rounded cursor-pointer"
-              style={{ color: "var(--color-text-secondary)" }}
+             
               aria-label="Back"
             >
               <ArrowLeft size={14} weight="bold" />
             </Link>
-            <Database size={14} weight="bold" style={{ color: "var(--color-text-secondary)" }} />
-            <span className="text-xs font-bold" style={{ color: "var(--color-text-primary)" }}>
+            <Database size={14} weight="bold" />
+            <span className="text-xs font-bold">
               Databases
             </span>
             <button
@@ -199,7 +199,7 @@ export default function DatabasePage() {
 
           {/* Add form */}
           {showAddForm && (
-            <div className="px-3 py-2 border-b" style={{ borderColor: "var(--color-border)" }}>
+            <div className="px-3 py-2 border-b">
               <input
                 placeholder="Connection name"
                 value={addName}
@@ -315,7 +315,7 @@ export default function DatabasePage() {
           {connections.length === 0 && !showAddForm && (
             <div
               className="px-3 py-6 text-center text-xs"
-              style={{ color: "var(--color-text-muted)" }}
+             
             >
               No connections yet.
               <br />
@@ -336,14 +336,14 @@ export default function DatabasePage() {
                 flexShrink: 0,
               }}
             >
-              <span className="text-xs font-bold" style={{ color: "var(--color-text-secondary)" }}>
+              <span className="text-xs font-bold">
                 {selectedTable}
               </span>
               {tableSchema.map((col) => (
                 <span
                   key={col.cid}
                   className="text-xs whitespace-nowrap"
-                  style={{ color: "var(--color-text-muted)" }}
+                 
                 >
                   <span
                     style={{
@@ -446,7 +446,7 @@ export default function DatabasePage() {
             {!selectedConn ? (
               <div
                 className="flex flex-col items-center justify-center h-full gap-3"
-                style={{ color: "var(--color-text-muted)" }}
+               
               >
                 <Database size={40} weight="light" />
                 <p className="text-sm">Select or add a database connection to get started</p>
@@ -526,14 +526,14 @@ export default function DatabasePage() {
                     ))}
                   </tbody>
                 </table>
-                <div className="px-4 py-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+                <div className="px-4 py-2 text-xs">
                   {result.rowCount} row{result.rowCount !== 1 ? "s" : ""}
                 </div>
               </div>
             ) : selectedConn && !loading ? (
               <div
                 className="flex flex-col items-center justify-center h-full gap-2"
-                style={{ color: "var(--color-text-muted)" }}
+               
               >
                 <Play size={24} weight="light" />
                 <p className="text-xs">Run a query to see results</p>

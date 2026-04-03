@@ -121,18 +121,18 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
         <button
           onClick={prevMonth}
           className="p-1 rounded-lg cursor-pointer transition-colors"
-          style={{ color: "var(--color-text-muted)" }}
+         
           aria-label="Previous month"
         >
           <CaretLeft size={14} weight="bold" />
         </button>
-        <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+        <span className="text-sm font-semibold">
           {MONTHS[month]} {year}
         </span>
         <button
           onClick={nextMonth}
           className="p-1 rounded-lg cursor-pointer transition-colors"
-          style={{ color: "var(--color-text-muted)" }}
+         
           aria-label="Next month"
         >
           <CaretRight size={14} weight="bold" />

@@ -106,7 +106,7 @@ function KpiCard({
       }}
     >
       <div className="flex items-center justify-between gap-1">
-        <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs">
           {label}
         </span>
         <span style={{ color: accent, opacity: 0.7 }}>{icon}</span>
@@ -121,7 +121,7 @@ function KpiCard({
         {value}
       </span>
       {sub && (
-        <span className="text-xs truncate" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs truncate">
           {sub}
         </span>
       )}
@@ -204,40 +204,40 @@ function SessionTable({ sessions }: { sessions: StatsData["recentSessions"] }) {
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
-            <tr style={{ background: "var(--color-bg-elevated)" }}>
+            <tr>
               <th
                 className="text-left px-3 py-2 font-semibold"
-                style={{ color: "var(--color-text-muted)" }}
+               
               >
                 Session
               </th>
               <th
                 className="text-left px-3 py-2 font-semibold"
-                style={{ color: "var(--color-text-muted)" }}
+               
               >
                 Model
               </th>
               <th
                 className="text-right px-3 py-2 font-semibold"
-                style={{ color: "var(--color-text-muted)" }}
+               
               >
                 Turns
               </th>
               <th
                 className="text-right px-3 py-2 font-semibold"
-                style={{ color: "var(--color-text-muted)" }}
+               
               >
                 Tokens
               </th>
               <th
                 className="text-right px-3 py-2 font-semibold"
-                style={{ color: "var(--color-text-muted)" }}
+               
               >
                 Cost
               </th>
               <th
                 className="text-right px-3 py-2 font-semibold"
-                style={{ color: "var(--color-text-muted)" }}
+               
               >
                 Duration
               </th>
@@ -250,18 +250,18 @@ function SessionTable({ sessions }: { sessions: StatsData["recentSessions"] }) {
                 className="transition-colors"
                 style={{ borderTop: "1px solid var(--color-border)" }}
               >
-                <td className="px-3 py-2" style={{ color: "var(--color-text-primary)" }}>
+                <td className="px-3 py-2">
                   <Link
                     href={`/sessions/${s.id}`}
                     className="hover:underline"
-                    style={{ color: "var(--color-accent)" }}
+                   
                   >
                     {s.name ?? s.id.slice(0, 8)}
                   </Link>
                   {s.projectSlug && (
                     <span
                       className="ml-1.5 text-[10px]"
-                      style={{ color: "var(--color-text-muted)" }}
+                     
                     >
                       {s.projectSlug}
                     </span>
@@ -361,7 +361,7 @@ export default function AnalyticsPage() {
         <Link
           href="/"
           className="p-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
-          style={{ color: "var(--color-text-muted)" }}
+         
           aria-label="Back to home"
         >
           <ArrowLeft size={16} weight="bold" />
@@ -375,7 +375,7 @@ export default function AnalyticsPage() {
         {loading && (
           <div
             className="flex items-center justify-center py-20 gap-2"
-            style={{ color: "var(--color-text-muted)" }}
+           
           >
             <CircleNotch size={20} className="animate-spin" aria-hidden="true" />
             <span className="text-sm">Loading analytics...</span>
@@ -438,7 +438,7 @@ export default function AnalyticsPage() {
               <div className="flex flex-col gap-2">
                 <span
                   className="text-xs font-semibold uppercase tracking-wide"
-                  style={{ color: "var(--color-text-muted)" }}
+                 
                 >
                   Daily Sessions (30d)
                 </span>
@@ -452,7 +452,7 @@ export default function AnalyticsPage() {
               <div className="flex flex-col gap-2">
                 <span
                   className="text-xs font-semibold uppercase tracking-wide"
-                  style={{ color: "var(--color-text-muted)" }}
+                 
                 >
                   Daily Cost (30d)
                 </span>
@@ -471,7 +471,7 @@ export default function AnalyticsPage() {
                 <div className="flex flex-col gap-2">
                   <span
                     className="text-xs font-semibold uppercase tracking-wide"
-                    style={{ color: "var(--color-text-muted)" }}
+                   
                   >
                     Model Usage (30d)
                   </span>
@@ -494,7 +494,7 @@ export default function AnalyticsPage() {
                             >
                               {modelLabel(m.model)}
                             </span>
-                            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                            <span className="text-xs">
                               {m.count} sessions · {fmtTokens(m.tokens)} tok · {pct}%
                             </span>
                           </div>
@@ -524,7 +524,7 @@ export default function AnalyticsPage() {
                 <div className="flex flex-col gap-2">
                   <span
                     className="text-xs font-semibold uppercase tracking-wide"
-                    style={{ color: "var(--color-text-muted)" }}
+                   
                   >
                     Top Projects (30d)
                   </span>
@@ -542,7 +542,7 @@ export default function AnalyticsPage() {
                         <div key={p.name} className="flex items-center gap-3">
                           <span
                             className="text-xs truncate flex-1"
-                            style={{ color: "var(--color-text-secondary)" }}
+                           
                             title={p.name}
                           >
                             {p.name}
@@ -585,7 +585,7 @@ export default function AnalyticsPage() {
               <div className="flex flex-col gap-2">
                 <span
                   className="text-xs font-semibold uppercase tracking-wide"
-                  style={{ color: "var(--color-text-muted)" }}
+                 
                 >
                   Recent Sessions
                 </span>

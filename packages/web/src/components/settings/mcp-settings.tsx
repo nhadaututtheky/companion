@@ -149,10 +149,10 @@ export function McpSettings() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <h3 className="text-sm font-semibold">
             MCP Servers
           </h3>
-          <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+          <p className="text-xs mt-0.5">
             Manage Model Context Protocol servers for your AI sessions
           </p>
         </div>
@@ -160,7 +160,7 @@ export function McpSettings() {
           <button
             onClick={loadServers}
             className="p-1.5 rounded-lg cursor-pointer transition-colors"
-            style={{ color: "var(--color-text-muted)" }}
+           
             aria-label="Refresh"
           >
             <ArrowsClockwise size={14} />
@@ -189,14 +189,14 @@ export function McpSettings() {
           {loading ? (
             <div
               className="flex items-center justify-center py-8 text-xs"
-              style={{ color: "var(--color-text-muted)" }}
+             
             >
               Loading...
             </div>
           ) : servers.length === 0 && !isNew ? (
             <div className="flex flex-col items-center justify-center py-8 gap-2 px-4">
-              <Plugs size={24} style={{ color: "var(--color-text-muted)" }} />
-              <p className="text-xs text-center" style={{ color: "var(--color-text-muted)" }}>
+              <Plugs size={24} />
+              <p className="text-xs text-center">
                 No MCP servers configured yet
               </p>
             </div>
@@ -280,7 +280,7 @@ export function McpSettings() {
           ) : (
             <div
               className="flex items-center justify-center h-full text-xs"
-              style={{ color: "var(--color-text-muted)" }}
+             
             >
               Select a server to edit
             </div>
@@ -350,7 +350,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
             value={server.name}
             onChange={(e) => update({ name: e.target.value })}
             placeholder="e.g. My MCP Server"
-            className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+            className="w-full px-3 py-2 rounded-lg text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
             style={{
               background: "var(--color-bg-elevated)",
               border: "1px solid var(--color-border)",
@@ -393,7 +393,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 value={server.command ?? ""}
                 onChange={(e) => update({ command: e.target.value })}
                 placeholder="e.g. bun, node, npx"
-                className="w-full px-3 py-2 rounded-lg text-xs font-mono outline-none"
+                className="w-full px-3 py-2 rounded-lg text-xs font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
                 style={{
                   background: "var(--color-bg-elevated)",
                   border: "1px solid var(--color-border)",
@@ -411,7 +411,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 }
                 placeholder={"run\npath/to/server.ts"}
                 rows={3}
-                className="w-full px-3 py-2 rounded-lg text-xs font-mono outline-none resize-none"
+                className="w-full px-3 py-2 rounded-lg text-xs font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent resize-none"
                 style={{
                   background: "var(--color-bg-elevated)",
                   border: "1px solid var(--color-border)",
@@ -430,7 +430,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
               value={server.url ?? ""}
               onChange={(e) => update({ url: e.target.value })}
               placeholder="https://example.com/mcp"
-              className="w-full px-3 py-2 rounded-lg text-xs font-mono outline-none"
+              className="w-full px-3 py-2 rounded-lg text-xs font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
               style={{
                 background: "var(--color-bg-elevated)",
                 border: "1px solid var(--color-border)",
@@ -447,7 +447,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
             value={server.description ?? ""}
             onChange={(e) => update({ description: e.target.value })}
             placeholder="What this server does..."
-            className="w-full px-3 py-2 rounded-lg text-xs outline-none"
+            className="w-full px-3 py-2 rounded-lg text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
             style={{
               background: "var(--color-bg-elevated)",
               border: "1px solid var(--color-border)",
@@ -477,14 +477,14 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
               </span>
               <span
                 className="text-xs font-mono flex-1 truncate"
-                style={{ color: "var(--color-text-muted)" }}
+               
               >
                 {val}
               </span>
               <button
                 onClick={() => removeEnvVar(key)}
                 className="p-0.5 rounded cursor-pointer"
-                style={{ color: "var(--color-text-muted)" }}
+               
                 aria-label={`Remove ${key}`}
               >
                 <Trash size={12} />
@@ -497,7 +497,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
               value={newEnvKey}
               onChange={(e) => setNewEnvKey(e.target.value)}
               placeholder="KEY"
-              className="px-2 py-1 rounded text-xs font-mono outline-none"
+              className="px-2 py-1 rounded text-xs font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
               style={{
                 background: "var(--color-bg-base)",
                 border: "1px solid var(--color-border)",
@@ -510,7 +510,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
               value={newEnvVal}
               onChange={(e) => setNewEnvVal(e.target.value)}
               placeholder="value"
-              className="flex-1 px-2 py-1 rounded text-xs font-mono outline-none"
+              className="flex-1 px-2 py-1 rounded text-xs font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
               style={{
                 background: "var(--color-bg-base)",
                 border: "1px solid var(--color-border)",
@@ -553,14 +553,14 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 </span>
                 <span
                   className="text-xs font-mono flex-1 truncate"
-                  style={{ color: "var(--color-text-muted)" }}
+                 
                 >
                   {val}
                 </span>
                 <button
                   onClick={() => removeHeader(key)}
                   className="p-0.5 rounded cursor-pointer"
-                  style={{ color: "var(--color-text-muted)" }}
+                 
                   aria-label={`Remove ${key}`}
                 >
                   <Trash size={12} />
@@ -573,7 +573,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 value={newHeaderKey}
                 onChange={(e) => setNewHeaderKey(e.target.value)}
                 placeholder="Header-Name"
-                className="px-2 py-1 rounded text-xs font-mono outline-none"
+                className="px-2 py-1 rounded text-xs font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
                 style={{
                   background: "var(--color-bg-base)",
                   border: "1px solid var(--color-border)",
@@ -586,7 +586,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 value={newHeaderVal}
                 onChange={(e) => setNewHeaderVal(e.target.value)}
                 placeholder="value"
-                className="flex-1 px-2 py-1 rounded text-xs font-mono outline-none"
+                className="flex-1 px-2 py-1 rounded text-xs font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
                 style={{
                   background: "var(--color-bg-base)",
                   border: "1px solid var(--color-border)",
@@ -610,7 +610,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
 
         {/* Enabled toggle */}
         <div className="flex items-center justify-between py-1">
-          <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+          <span className="text-xs">
             Enabled
           </span>
           <button
@@ -687,7 +687,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
 function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+      <label className="text-xs font-medium">
         {label}
       </label>
       {children}
@@ -713,7 +713,7 @@ function CollapsibleSection({
       <button
         onClick={onToggle}
         className="flex items-center gap-1.5 w-full text-left cursor-pointer py-1"
-        style={{ color: "var(--color-text-secondary)" }}
+       
       >
         {open ? <CaretDown size={10} /> : <CaretRight size={10} />}
         <span className="text-xs font-medium">{title}</span>

@@ -30,7 +30,7 @@ interface ErrorEntry {
 const PAGE_SIZE = 30;
 
 const SOURCE_COLORS: Record<string, string> = {
-  server: "#6366f1",
+  server: "#4285f4",
   cli: "#10b981",
   ws: "#f59e0b",
   api: "#3b82f6",
@@ -113,16 +113,16 @@ export default function ErrorsPage() {
           <Link
             href="/settings"
             className="p-1.5 rounded-lg transition-colors cursor-pointer"
-            style={{ color: "var(--color-text-secondary)" }}
+           
             aria-label="Back to settings"
           >
             <ArrowLeft size={18} weight="bold" />
           </Link>
-          <Bug size={22} weight="bold" style={{ color: "var(--color-text-secondary)" }} />
-          <h1 className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+          <Bug size={22} weight="bold" />
+          <h1 className="text-lg font-bold">
             Error Log
           </h1>
-          <span className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-sm">
             {total} errors tracked
           </span>
         </div>
@@ -130,7 +130,7 @@ export default function ErrorsPage() {
         {/* Toolbar */}
         <div className="flex items-center gap-3 mb-4">
           <div className="flex items-center gap-2" style={{ flex: 1 }}>
-            <Funnel size={14} style={{ color: "var(--color-text-secondary)" }} />
+            <Funnel size={14} />
             <select
               value={sourceFilter}
               onChange={(e) => {
@@ -205,7 +205,7 @@ export default function ErrorsPage() {
               weight="light"
               style={{ color: "var(--color-text-muted)", margin: "0 auto 8px" }}
             />
-            <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+            <p className="text-sm">
               No errors recorded
             </p>
           </div>
@@ -257,7 +257,7 @@ export default function ErrorsPage() {
                   </span>
                   <span
                     className="text-xs whitespace-nowrap"
-                    style={{ color: "var(--color-text-muted)" }}
+                   
                   >
                     {new Date(err.timestamp).toLocaleString(undefined, {
                       month: "short",

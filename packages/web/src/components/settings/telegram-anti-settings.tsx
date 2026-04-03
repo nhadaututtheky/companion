@@ -122,7 +122,7 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-3" style={{ color: "var(--color-text-muted)" }}>
+      <div className="flex items-center gap-2 py-3">
         <ArrowsClockwise size={14} className="animate-spin" aria-hidden="true" />
         <span className="text-xs">Loading anti settings...</span>
       </div>
@@ -137,10 +137,10 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
           <Plugs
             size={14}
             weight="bold"
-            style={{ color: "var(--color-accent)" }}
+           
             aria-hidden="true"
           />
-          <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <span className="text-xs font-semibold">
             CDP Connection
           </span>
           <StatusDot status={cdpStatus} />
@@ -190,10 +190,10 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
           <ChatCircleText
             size={14}
             weight="bold"
-            style={{ color: "var(--color-accent)" }}
+           
             aria-hidden="true"
           />
-          <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <span className="text-xs font-semibold">
             Chat Watcher
           </span>
         </div>
@@ -218,10 +218,10 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
           <ListChecks
             size={14}
             weight="bold"
-            style={{ color: "var(--color-accent)" }}
+           
             aria-hidden="true"
           />
-          <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <span className="text-xs font-semibold">
             Task Watcher
           </span>
         </div>
@@ -246,10 +246,10 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
           <Timer
             size={14}
             weight="bold"
-            style={{ color: "var(--color-accent)" }}
+           
             aria-hidden="true"
           />
-          <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <span className="text-xs font-semibold">
             Auto-approve
           </span>
         </div>
@@ -316,7 +316,7 @@ function FieldInput({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+      <label className="text-xs">
         {label}
       </label>
       <input
@@ -324,7 +324,7 @@ function FieldInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="px-3 py-1.5 rounded-lg text-xs outline-none font-mono"
+        className="px-3 py-1.5 rounded-lg text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
         style={{
           background: "var(--color-bg-elevated)",
           border: "1px solid var(--color-border)",
@@ -353,7 +353,7 @@ function ToggleRow({
         className="cursor-pointer"
         style={{ accentColor: "var(--color-accent)" }}
       />
-      <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+      <span className="text-xs">
         {label}
       </span>
     </label>

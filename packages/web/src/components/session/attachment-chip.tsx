@@ -45,7 +45,7 @@ export function AttachmentChip({ attachment, onRemove }: AttachmentChipProps) {
         className="p-0.5 rounded hover:bg-[rgba(0,0,0,0.1)] transition-colors cursor-pointer flex-shrink-0"
         aria-label={`Remove ${attachment.label}`}
       >
-        <X size={10} weight="bold" style={{ color: "var(--color-text-muted)" }} />
+        <X size={10} weight="bold" />
       </button>
     </div>
   );

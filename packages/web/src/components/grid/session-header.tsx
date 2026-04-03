@@ -134,7 +134,7 @@ export function SessionHeader({
         {editing ? (
           <input
             ref={inputRef}
-            className="text-sm font-semibold flex-1 bg-transparent outline-none border-b"
+            className="text-sm font-semibold flex-1 bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent border-b"
             style={{
               color: "var(--color-text-primary)",
               borderColor: "var(--color-border)",
@@ -154,7 +154,7 @@ export function SessionHeader({
         ) : (
           <span
             className="text-sm font-semibold truncate flex-1 cursor-pointer"
-            style={{ color: "var(--color-text-primary)" }}
+           
             title={`${displayName} — double-click to rename`}
             onDoubleClick={startEditing}
           >
@@ -209,7 +209,7 @@ export function SessionHeader({
         <button
           onClick={onExpand}
           className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"
-          style={{ color: "var(--color-text-muted)" }}
+         
           aria-label="Expand session"
           title="Expand to full view"
         >
@@ -218,7 +218,7 @@ export function SessionHeader({
         <button
           onClick={onClose}
           className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"
-          style={{ color: "var(--color-text-muted)" }}
+         
           aria-label="Close session"
           title="Stop & close session"
           onMouseEnter={(e) => {
