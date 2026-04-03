@@ -12,13 +12,17 @@ import { summarizeSession, buildSummaryInjection } from "./session-summarizer.js
 import { buildSessionContext } from "./session-context.js";
 import { handleMentions } from "./mention-router.js";
 import {
-  scrapeForContext,
-  isAvailable as isWebIntelAvailable,
-  research as webResearch,
-  startCrawl,
-} from "./web-intel.js";
-import { detectLibraryMentions, resolveDocsUrl } from "./web-intel-detector.js";
-import { registerJob, pollCrawlJob } from "./web-intel-jobs.js";
+  handleDocsCommand as handleDocsCmd,
+  handleResearchCommand as handleResearchCmd,
+  handleCrawlCommand as handleCrawlCmd,
+  maybeEnrichWithDocs as enrichWithDocs,
+  type WebIntelBridge,
+} from "./web-intel-handler.js";
+import {
+  checkSmartCompact as checkCompact,
+  clearCompactTimers,
+  type CompactBridge,
+} from "./compact-manager.js";
 import {
   buildProjectMap,
   buildMessageContext,
@@ -1534,93 +1538,18 @@ export class WsBridge {
    * - smart: set compactPending flag, trigger handoff when idle
    * - aggressive: compact immediately when threshold crossed
    */
+  /** Bridge interface for compact-manager.ts */
+  private get compactBridge(): CompactBridge {
+    return {
+      broadcastToAll: this.broadcastToAll.bind(this),
+      sendToCLI: this.sendToCLI.bind(this),
+    };
+  }
+
   private checkSmartCompact(session: ActiveSession): void {
-    const { compact_mode, compact_threshold } = session.state;
-    if (compact_mode === "manual") return;
-
-    // Use per-turn context estimate (same formula as broadcastContextUpdate)
     const prev = this.prevTokens.get(session.id) ?? { input: 0, output: 0 };
-    const lastTurnInput = session.state.total_input_tokens - prev.input;
-    const lastTurnOutput = session.state.total_output_tokens - prev.output;
-    const contextTokens = lastTurnInput + lastTurnOutput;
-    const maxTokens = WsBridge.getMaxContextTokens(session.state.model);
-    const contextPct = (contextTokens / maxTokens) * 100;
-
-    if (contextPct < compact_threshold) {
-      session.compactPending = false;
-      return;
-    }
-
-    // Already pending or already compacting
-    if (session.compactPending || session.state.status === "compacting") return;
-
-    if (compact_mode === "aggressive") {
-      // Guard against double-compact
-      session.compactPending = true;
-      log.info("Aggressive compact triggered", {
-        session: session.id,
-        contextPct: Math.round(contextPct),
-      });
-      this.sendCompactCommand(session);
-      return;
-    }
-
-    // Smart mode: session just went idle in handleResult → trigger handoff now
-    if (session.state.status === "idle") {
-      session.compactPending = true;
-      log.info("Smart compact handoff triggered at idle", {
-        session: session.id,
-        contextPct: Math.round(contextPct),
-      });
-      this.triggerSmartCompactHandoff(session);
-    }
+    checkCompact(this.compactBridge, session, prev);
   }
-
-  /**
-   * Smart compact handoff flow:
-   * 1. Ask Claude to summarize current progress
-   * 2. Wait for response (it will come through handleResult)
-   * 3. Save snapshot to session state
-   * 4. Send /compact
-   * 5. After compact, inject handoff context
-   */
-  private triggerSmartCompactHandoff(session: ActiveSession): void {
-    // Notify subscribers
-    this.broadcastToAll(session, {
-      type: "compact_handoff",
-      stage: "summarizing",
-      message: "Smart compact: asking Claude to summarize before compacting...",
-    } as BrowserIncomingMessage);
-
-    // Send handoff request to Claude
-    const handoffPrompt = [
-      "Before context compaction, briefly summarize in 3-5 sentences:",
-      "1. What you just completed",
-      "2. What tasks remain (if any)",
-      "3. Your planned next step",
-      "Keep it concise — this will be injected after compaction to restore context.",
-    ].join("\n");
-
-    this.sendToCLI(
-      session,
-      JSON.stringify({
-        type: "user",
-        content: `[SYSTEM: Context at ${session.state.compact_threshold}% — auto-compact handoff]\n\n${handoffPrompt}`,
-      }),
-    );
-
-    // The response will come through normal handleResult flow.
-    // We detect completion by watching for the next idle transition
-    // after compactPending=true. At that point, send /compact.
-    // For now, we mark a delayed compact trigger.
-    this.schedulePostHandoffCompact(session);
-  }
-
-  /** Compact handoff timers keyed by session ID — cleared on session removal */
-  private compactTimers = new Map<
-    string,
-    { interval: ReturnType<typeof setInterval>; timeout: ReturnType<typeof setTimeout> }
-  >();
 
   /**
    * EarlyResults buffer — stores result messages that arrived before a subscriber
@@ -1629,78 +1558,9 @@ export class WsBridge {
    */
   private earlyResults = new Map<string, EarlyResultEntry>();
 
-  /** After handoff summary is received, trigger the actual /compact. */
-  private schedulePostHandoffCompact(session: ActiveSession): void {
-    // Clear any existing timers for this session
-    this.clearCompactTimers(session.id);
-
-    // Track whether we've seen a busy→idle transition (not the initial idle)
-    let seenBusy = false;
-
-    // Wait for Claude to respond (poll status transitions)
-    const checkInterval = setInterval(() => {
-      // Session ended or compact cancelled
-      if (
-        !session.compactPending ||
-        session.state.status === "ended" ||
-        session.state.status === "error"
-      ) {
-        this.clearCompactTimers(session.id);
-        session.compactPending = false;
-        return;
-      }
-
-      // Track busy state — handoff prompt should make Claude go busy
-      if (session.state.status === "busy") {
-        seenBusy = true;
-      }
-
-      // Session went idle again AFTER being busy = Claude finished the handoff summary
-      if (seenBusy && session.state.status === "idle") {
-        this.clearCompactTimers(session.id);
-
-        this.broadcastToAll(session, {
-          type: "compact_handoff",
-          stage: "compacting",
-          message: "Handoff summary received. Running /compact...",
-        } as BrowserIncomingMessage);
-
-        log.info("Post-handoff compact executing", { session: session.id });
-        this.sendCompactCommand(session);
-      }
-    }, 2000);
-
-    // Safety timeout: cancel after 60s if Claude never responds
-    const safetyTimeout = setTimeout(() => {
-      this.clearCompactTimers(session.id);
-      if (session.compactPending) {
-        log.warn("Smart compact handoff timed out", { session: session.id });
-        session.compactPending = false;
-      }
-    }, 60_000);
-
-    this.compactTimers.set(session.id, { interval: checkInterval, timeout: safetyTimeout });
-  }
-
-  /** Clear compact handoff timers for a session */
+  /** Clear compact handoff timers for a session (delegates to compact-manager) */
   private clearCompactTimers(sessionId: string): void {
-    const timers = this.compactTimers.get(sessionId);
-    if (timers) {
-      clearInterval(timers.interval);
-      clearTimeout(timers.timeout);
-      this.compactTimers.delete(sessionId);
-    }
-  }
-
-  /** Send /compact slash command to CLI. */
-  private sendCompactCommand(session: ActiveSession): void {
-    this.sendToCLI(
-      session,
-      JSON.stringify({
-        type: "user",
-        content: "/compact",
-      }),
-    );
+    clearCompactTimers(sessionId);
   }
 
   private handleStreamEvent(session: ActiveSession, msg: CLIStreamEventMessage): void {
@@ -1966,9 +1826,15 @@ export class WsBridge {
     this.handleUserMessageInternal(session, content, source);
   }
 
-  /**
-   * Handle /docs <url> command — fetch web content and inject into the user message.
-   */
+  /** Bridge interface for web-intel-handler.ts */
+  private get webIntelBridge(): WebIntelBridge {
+    return {
+      broadcastToAll: this.broadcastToAll.bind(this),
+      handleUserMessageInternal: this.handleUserMessageInternal.bind(this),
+      emitContextInjection: this.emitContextInjection.bind(this),
+    };
+  }
+
   private handleDocsCommand(
     session: ActiveSession,
     originalContent: string,
@@ -1976,92 +1842,13 @@ export class WsBridge {
     refresh: boolean,
     source?: string,
   ): void {
-    // Async: fetch docs, then send enriched message through normal flow
-    scrapeForContext(url, 4000, { skipCache: refresh })
-      .then((docsContent) => {
-        // Guard: session may have ended during async fetch
-        if (!getActiveSession(session.id)) {
-          log.warn("/docs fetch completed but session is gone", { sessionId: session.id });
-          return;
-        }
-
-        let enrichedContent: string;
-
-        if (docsContent) {
-          // Replace /docs command with the fetched content
-          const userText = originalContent
-            .replace(/^\/docs\s+https?:\/\/\S+(\s+--refresh)?/i, "")
-            .trim();
-
-          enrichedContent = userText
-            ? `${userText}\n\n<web-docs url="${url}" auto-injected="true">\n${docsContent}\n</web-docs>`
-            : `Here are the docs I fetched:\n\n<web-docs url="${url}" auto-injected="true">\n${docsContent}\n</web-docs>`;
-
-          log.info("Injected web docs into message", {
-            sessionId: session.id,
-            url,
-            contentLength: docsContent.length,
-          });
-        } else {
-          // webclaw unavailable or failed — pass original message with note
-          enrichedContent = originalContent.replace(
-            /^\/docs\s+/i,
-            "[Note: webclaw unavailable — could not fetch docs] ",
-          );
-          log.debug("webclaw unavailable for /docs", { sessionId: session.id, url });
-        }
-
-        // Send through normal message flow (skip /docs detection on re-entry)
-        this.handleUserMessageInternal(session, enrichedContent, source);
-      })
-      .catch((err) => {
-        log.warn("Error fetching docs", { sessionId: session.id, url, error: String(err) });
-        this.handleUserMessageInternal(session, originalContent, source);
-      });
+    handleDocsCmd(this.webIntelBridge, session, originalContent, url, refresh, source);
   }
 
-  /**
-   * Internal message handler — called after /docs processing to avoid re-detection loop.
-   */
-  /**
-   * Handle /research <query> — search + scrape + synthesize.
-   */
   private handleResearchCommand(session: ActiveSession, query: string, source?: string): void {
-    webResearch(query, 3000)
-      .then((result) => {
-        if (!getActiveSession(session.id)) return;
-
-        let enrichedContent: string;
-
-        if (result) {
-          const sourceList = result.sources
-            .map((s, i) => `${i + 1}. [${s.title}](${s.url})`)
-            .join("\n");
-
-          enrichedContent = `Here is research on: ${query}\n\n<web-research query="${query}" sources="${result.sources.length}">\n${result.content}\n\nSources:\n${sourceList}\n</web-research>`;
-
-          log.info("Research completed", {
-            sessionId: session.id,
-            query,
-            sources: result.sources.length,
-          });
-        } else {
-          enrichedContent = `[Research failed — WEBCLAW_API_KEY may be required for search] ${query}`;
-        }
-
-        this.handleUserMessageInternal(session, enrichedContent, source);
-      })
-      .catch((err) => {
-        log.warn("Research error", { sessionId: session.id, query, error: String(err) });
-        if (getActiveSession(session.id)) {
-          this.handleUserMessageInternal(session, `[Research failed] ${query}`, source);
-        }
-      });
+    handleResearchCmd(this.webIntelBridge, session, query, source);
   }
 
-  /**
-   * Handle /crawl <url> — start async crawl job.
-   */
   private handleCrawlCommand(
     session: ActiveSession,
     url: string,
@@ -2069,89 +1856,7 @@ export class WsBridge {
     maxPages: number,
     source?: string,
   ): void {
-    startCrawl(url, { maxDepth: depth, maxPages })
-      .then((jobId) => {
-        if (!getActiveSession(session.id)) return;
-
-        if (!jobId) {
-          this.handleUserMessageInternal(
-            session,
-            `[Crawl failed to start — webclaw may be unavailable] ${url}`,
-            source,
-          );
-          return;
-        }
-
-        // Register job for tracking
-        const registered = registerJob({
-          id: jobId,
-          type: "crawl",
-          sessionId: session.id,
-          url,
-        });
-
-        if (!registered) {
-          this.handleUserMessageInternal(
-            session,
-            `[Crawl job limit reached — wait for current crawl to finish] ${url}`,
-            source,
-          );
-          return;
-        }
-
-        // Notify user that crawl started
-        this.broadcastToAll(session, {
-          type: "system_message",
-          content: `🌐 Crawl started: ${url} (depth: ${depth}, max: ${maxPages} pages). Job ID: ${jobId}`,
-          timestamp: Date.now(),
-        } as unknown as BrowserIncomingMessage);
-
-        // Poll until complete (every 3s, max 100 polls = ~5 min safety net)
-        let pollCount = 0;
-        const pollInterval = setInterval(async () => {
-          pollCount++;
-          // Safety: stop polling if session ended or exceeded max polls
-          if (!getActiveSession(session.id) || pollCount > 100) {
-            clearInterval(pollInterval);
-            return;
-          }
-          const job = await pollCrawlJob(jobId);
-          if (!job || job.status !== "running") {
-            clearInterval(pollInterval);
-
-            if (!getActiveSession(session.id)) return;
-
-            if (job?.status === "completed" && job.result) {
-              const pages = job.result as Array<{ url: string; llm?: string; markdown?: string }>;
-              const summary = pages
-                .slice(0, 10) // max 10 pages in context
-                .map((p) => {
-                  const content = (p.llm ?? p.markdown ?? "").slice(0, 2000);
-                  return `## ${p.url}\n${content}`;
-                })
-                .join("\n\n---\n\n");
-
-              this.handleUserMessageInternal(
-                session,
-                `Crawl completed for ${url}\n\n<web-crawl url="${url}" pages="${pages.length}" depth="${depth}">\n${summary}\n</web-crawl>`,
-                source,
-              );
-            } else {
-              this.handleUserMessageInternal(
-                session,
-                `[Crawl failed: ${job?.error ?? "unknown error"}] ${url}`,
-                source,
-              );
-            }
-          }
-        }, 3000);
-      })
-      .catch((err) => {
-        log.warn("Crawl start error", { sessionId: session.id, url, error: String(err) });
-        if (getActiveSession(session.id)) {
-          this.handleUserMessageInternal(session, `[Crawl failed] ${url}`, source);
-        }
-      });
+    handleCrawlCmd(this.webIntelBridge, session, url, depth, maxPages, source);
   }
 
   private handleUserMessageInternal(
@@ -2288,76 +1993,8 @@ export class WsBridge {
     this.updateStatus(session, "busy");
   }
 
-  /**
-   * Auto-detect library mentions and inject documentation.
-   * Returns enriched content or original if no docs found.
-   * Times out after 3 seconds to avoid blocking.
-   */
   private async maybeEnrichWithDocs(session: ActiveSession, content: string): Promise<string> {
-    // Skip if webclaw unavailable
-    if (!(await isWebIntelAvailable())) return content;
-
-    // Track already-injected libraries per session to avoid re-injection
-    if (!session.webIntelInjected) {
-      session.webIntelInjected = new Set<string>();
-    }
-
-    const mentions = detectLibraryMentions(content);
-    const newMentions = mentions.filter((m) => !session.webIntelInjected!.has(m));
-
-    if (newMentions.length === 0) return content;
-
-    // Resolve docs for first 2 new mentions (token budget)
-    const docsBlocks: string[] = [];
-    let totalChars = 0;
-    const MAX_TOTAL_CHARS = 16_000; // ~4000 tokens total
-
-    for (const lib of newMentions.slice(0, 2)) {
-      try {
-        const docsUrl = await Promise.race([
-          resolveDocsUrl(lib),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)),
-        ]);
-
-        if (!docsUrl) continue;
-
-        const maxTokens = Math.floor((MAX_TOTAL_CHARS - totalChars) / 4);
-        if (maxTokens < 500) break; // not enough budget left
-
-        const docsContent = await Promise.race([
-          scrapeForContext(docsUrl, maxTokens),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
-        ]);
-
-        if (docsContent) {
-          docsBlocks.push(
-            `<web-docs library="${lib}" url="${docsUrl}" auto-injected="true">\n${docsContent}\n</web-docs>`,
-          );
-          totalChars += docsContent.length;
-          session.webIntelInjected!.add(lib);
-
-          log.info("Auto-injected library docs", {
-            sessionId: session.id,
-            library: lib,
-            url: docsUrl,
-            chars: docsContent.length,
-          });
-        }
-      } catch {
-        // Skip this library silently
-      }
-    }
-
-    if (docsBlocks.length === 0) return content;
-
-    const joined = docsBlocks.join("\n\n");
-    this.emitContextInjection(
-      session,
-      "web_docs",
-      `Library docs: ${newMentions.filter((m) => session.webIntelInjected!.has(m)).join(", ")}`,
-      joined.length,
-    );
-    return `${content}\n\n${joined}`;
+    return enrichWithDocs(this.webIntelBridge, session, content);
   }
 
   /**

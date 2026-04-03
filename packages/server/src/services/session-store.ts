@@ -4,7 +4,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { eq, desc, and, count, notInArray, isNotNull, sql, lt } from "drizzle-orm";
+import { eq, desc, and, count, notInArray, isNotNull, sql, lt, like, or } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { sessions, sessionMessages, telegramSessionMappings, dailyCosts } from "../db/schema.js";
 import { createLogger } from "../logger.js";
@@ -299,40 +299,34 @@ export function findDeadSessionForChat(opts: {
   const db = getDb();
   const { chatId, projectSlug } = opts;
 
-  // Look in telegramSessionMappings for a dead session that had a cliSessionId
+  // Single JOIN query instead of N+1 per-row lookups
   try {
-    const mappingRow = db
-      .select()
+    const row = db
+      .select({
+        sessionId: telegramSessionMappings.sessionId,
+        cliSessionId: sessions.cliSessionId,
+        model: sessions.model,
+      })
       .from(telegramSessionMappings)
+      .innerJoin(sessions, eq(sessions.id, telegramSessionMappings.sessionId))
       .where(
         and(
           eq(telegramSessionMappings.chatId, chatId),
           eq(telegramSessionMappings.projectSlug, projectSlug),
+          eq(sessions.status, "ended"),
+          isNotNull(sessions.cliSessionId),
         ),
       )
       .orderBy(desc(telegramSessionMappings.createdAt))
-      .limit(5)
-      .all();
+      .limit(1)
+      .get();
 
-    for (const row of mappingRow) {
-      // Check that the corresponding session is ended and has a cliSessionId
-      const sessionRow = db
-        .select({
-          status: sessions.status,
-          cliSessionId: sessions.cliSessionId,
-          model: sessions.model,
-        })
-        .from(sessions)
-        .where(eq(sessions.id, row.sessionId))
-        .get();
-
-      if (sessionRow && sessionRow.status === "ended" && sessionRow.cliSessionId) {
-        return {
-          sessionId: row.sessionId,
-          cliSessionId: sessionRow.cliSessionId,
-          model: sessionRow.model,
-        };
-      }
+    if (row && row.cliSessionId) {
+      return {
+        sessionId: row.sessionId,
+        cliSessionId: row.cliSessionId,
+        model: row.model,
+      };
     }
   } catch (err) {
     log.error("Failed to find dead session", { chatId, projectSlug, error: String(err) });
@@ -493,7 +487,19 @@ export function listResumableSessions(opts?: {
       conditions.push(eq(sessions.projectSlug, opts.projectSlug));
     }
 
-    const query = db
+    // Server-side search filter via SQL LIKE (replaces client-side filtering)
+    if (opts?.search) {
+      const pattern = `%${opts.search}%`;
+      conditions.push(
+        or(
+          like(sessions.name, pattern),
+          like(sessions.projectSlug, pattern),
+          like(sessions.cwd, pattern),
+        )!,
+      );
+    }
+
+    const rows = db
       .select({
         id: sessions.id,
         name: sessions.name,
@@ -508,25 +514,10 @@ export function listResumableSessions(opts?: {
       .where(and(...conditions))
       .orderBy(desc(sessions.endedAt))
       .limit(limit)
-      .offset(offset);
+      .offset(offset)
+      .all();
 
-    const rows = query.all();
-
-    // Client-side search filter (name or project slug)
-    const filtered = opts?.search
-      ? rows.filter((r) => {
-          const q = opts.search!.toLowerCase();
-          return (
-            r.name?.toLowerCase().includes(q) ||
-            r.projectSlug?.toLowerCase().includes(q) ||
-            r.cwd?.toLowerCase().includes(q)
-          );
-        })
-      : rows;
-
-    return filtered
-      .filter((r) => r.cliSessionId !== null)
-      .map((r) => ({
+    return rows.map((r) => ({
         id: r.id,
         name: r.name ?? undefined,
         projectSlug: r.projectSlug,

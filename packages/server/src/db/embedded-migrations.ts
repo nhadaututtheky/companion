@@ -89,4 +89,8 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0021_forum_topics.sql",
     sql: "CREATE TABLE IF NOT EXISTS telegram_forum_topics (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  chat_id INTEGER NOT NULL,\n  project_slug TEXT NOT NULL REFERENCES projects(slug),\n  topic_id INTEGER NOT NULL,\n  topic_name TEXT NOT NULL,\n  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS idx_forum_chat_project ON telegram_forum_topics(chat_id, project_slug);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS idx_forum_chat ON telegram_forum_topics(chat_id);\n",
   },
+  {
+    name: "0022_add_performance_indexes.sql",
+    sql: "-- Composite index for ordered message queries by session\nCREATE INDEX IF NOT EXISTS idx_session_messages_session_ts ON session_messages(session_id, timestamp);\n--> statement-breakpoint\n-- Composite index for daily cost lookups by date + project\nCREATE UNIQUE INDEX IF NOT EXISTS idx_daily_costs_date_project ON daily_costs(date, project_slug);\n--> statement-breakpoint\n-- Composite index for telegram mapping lookups by chat + project\nCREATE INDEX IF NOT EXISTS idx_telegram_mappings_chat_project ON telegram_session_mappings(chat_id, project_slug);\n--> statement-breakpoint\n-- Index for session status + ended_at (resumable session queries)\nCREATE INDEX IF NOT EXISTS idx_sessions_status_ended ON sessions(status, ended_at);\n",
+  },
 ];

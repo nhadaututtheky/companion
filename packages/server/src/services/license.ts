@@ -8,6 +8,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { hostname as getHostname } from "node:os";
+import { APP_VERSION } from "@companion/shared";
 
 const log = createLogger("license");
 
@@ -132,7 +133,7 @@ export async function verifyLicense(
     const res = await fetch(
       `${VERIFY_URL}?key=${encodeURIComponent(key)}&mid=${encodeURIComponent(mid)}`,
       {
-        headers: { "User-Agent": "Companion/0.5.1" },
+        headers: { "User-Agent": `Companion/${APP_VERSION}` },
         signal: AbortSignal.timeout(10000),
       },
     );
@@ -207,7 +208,7 @@ export async function checkOrActivateTrial(): Promise<LicenseInfo> {
 
   try {
     const res = await fetch(`${TRIAL_URL}?mid=${encodeURIComponent(machineId)}`, {
-      headers: { "User-Agent": "Companion/0.5.1" },
+      headers: { "User-Agent": `Companion/${APP_VERSION}` },
       signal: AbortSignal.timeout(10000),
     });
 
