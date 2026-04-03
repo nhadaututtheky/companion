@@ -105,6 +105,96 @@ function formatTokens(n: number) {
   return String(n);
 }
 
+function CompactModeControl({ sessionId }: { sessionId: string }) {
+  const [mode, setMode] = useState<"manual" | "smart" | "aggressive">("manual");
+  const [threshold, setThreshold] = useState(75);
+  const [expanded, setExpanded] = useState(false);
+
+  const updateConfig = useCallback(
+    async (updates: { compactMode?: string; compactThreshold?: number }) => {
+      try {
+        const base = typeof window !== "undefined" ? window.location.origin : "";
+        await fetch(`${base}/api/sessions/${sessionId}/config`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        });
+      } catch {
+        toast.error("Failed to update compact settings");
+      }
+    },
+    [sessionId],
+  );
+
+  return (
+    <div className="px-4 pb-2">
+      <button
+        className="flex items-center gap-2 w-full text-left cursor-pointer"
+        onClick={() => setExpanded(!expanded)}
+      >
+        {expanded ? <CaretDown size={10} weight="bold" /> : <CaretRight size={10} weight="bold" />}
+        <span className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+          Auto-Compact
+        </span>
+        <span
+          className="text-xs ml-auto font-mono"
+          style={{ color: mode === "manual" ? "var(--color-text-muted)" : "var(--color-accent)" }}
+        >
+          {mode}
+        </span>
+      </button>
+      {expanded && (
+        <div
+          className="mt-2 p-3 rounded-lg flex flex-col gap-2"
+          style={{ background: "var(--color-bg-card)", border: "1px solid var(--color-border)" }}
+        >
+          <div className="flex gap-1">
+            {(["manual", "smart", "aggressive"] as const).map((m) => (
+              <button
+                key={m}
+                className="flex-1 text-xs py-1 rounded cursor-pointer transition-colors capitalize"
+                style={{
+                  background: mode === m ? "var(--color-accent)" : "var(--color-bg-elevated)",
+                  color: mode === m ? "#fff" : "var(--color-text-secondary)",
+                }}
+                onClick={() => {
+                  setMode(m);
+                  updateConfig({ compactMode: m });
+                }}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+          {mode !== "manual" && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                Threshold
+              </span>
+              <input
+                type="range"
+                min={50}
+                max={95}
+                step={5}
+                value={threshold}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10);
+                  setThreshold(val);
+                  updateConfig({ compactThreshold: val });
+                }}
+                className="flex-1"
+              />
+              <span className="text-xs font-mono w-8 text-right" style={{ color: "var(--color-text-primary)" }}>
+                {threshold}%
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RTKSavingsCard({
   tokensSaved,
   compressions,
@@ -114,6 +204,26 @@ function RTKSavingsCard({
   compressions: number;
   cacheHits: number;
 }) {
+  if (tokensSaved === 0 && compressions === 0) {
+    return (
+      <div
+        className="p-3 rounded-xl"
+        style={{
+          background: "var(--color-bg-card)",
+          border: "1px solid var(--color-border)",
+          borderLeft: "3px solid var(--color-border-strong)",
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <span style={{ color: "var(--color-text-muted)", fontSize: 14 }}>⚡</span>
+          <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            RTK compression stats will appear here
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   // Rough cost estimate: ~$3/M input tokens (Sonnet pricing)
   const costSaved = (tokensSaved / 1_000_000) * 3;
 
@@ -291,6 +401,9 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
             maxTokens={session.contextMaxTokens}
           />
 
+          {/* Compact mode control */}
+          <CompactModeControl sessionId={session.id} />
+
           {/* Stats */}
           <div className="flex flex-col gap-2 px-4 pb-4">
             {/* Cost breakdown (expandable) */}
@@ -322,13 +435,11 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
               value={`${formatTokens(s.total_input_tokens + s.total_output_tokens)}`}
               color="#EA4335"
             />
-            {(s.rtk_tokens_saved ?? 0) > 0 && (
-              <RTKSavingsCard
-                tokensSaved={s.rtk_tokens_saved ?? 0}
-                compressions={s.rtk_compressions ?? 0}
-                cacheHits={s.rtk_cache_hits ?? 0}
-              />
-            )}
+            <RTKSavingsCard
+              tokensSaved={s.rtk_tokens_saved ?? 0}
+              compressions={s.rtk_compressions ?? 0}
+              cacheHits={s.rtk_cache_hits ?? 0}
+            />
           </div>
 
           {/* Modified files — clickable to open in viewer */}

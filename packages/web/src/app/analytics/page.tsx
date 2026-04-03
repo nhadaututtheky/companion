@@ -392,7 +392,16 @@ export default function AnalyticsPage() {
           </div>
         )}
 
-        {data && (
+        {data && data.totalSessions === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <ChartBar size={40} weight="light" style={{ color: "var(--color-text-muted)" }} />
+            <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+              No sessions yet — start a session to see cost analytics
+            </p>
+          </div>
+        )}
+
+        {data && data.totalSessions > 0 && (
           <div className="flex flex-col gap-6">
             {/* KPI row */}
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">

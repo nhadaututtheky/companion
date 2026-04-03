@@ -22,17 +22,14 @@ interface CacheEntry {
   inputLength: number;
 }
 
+import { createHash } from "crypto";
+
 /**
- * Simple FNV-1a hash for fast string hashing.
- * Not cryptographic — just for cache keys.
+ * SHA-256 truncated to 64 bits (16 hex chars) for cache keys.
+ * Much lower collision risk than FNV-1a 32-bit while still fast for cache use.
  */
-function fnv1aHash(str: string): string {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < str.length; i++) {
-    hash ^= str.charCodeAt(i);
-    hash = (hash * 0x01000193) >>> 0;
-  }
-  return hash.toString(36);
+function contentHash(str: string): string {
+  return createHash("sha256").update(str).digest("hex").slice(0, 16);
 }
 
 export class RTKCache {
@@ -55,7 +52,7 @@ export class RTKCache {
       return undefined;
     }
 
-    const hash = fnv1aHash(input);
+    const hash = contentHash(input);
     const entry = sessionCache.get(hash);
 
     if (!entry) {
@@ -104,7 +101,7 @@ export class RTKCache {
       }
     }
 
-    const hash = fnv1aHash(input);
+    const hash = contentHash(input);
     sessionCache.set(hash, {
       compressed,
       tokensSaved,
