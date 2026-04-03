@@ -164,10 +164,10 @@ export default function LoginPage() {
         </form>
 
         {/* Footer hint */}
-        <p className="text-center text-xs">
+        <p className="text-center text-xs" style={{ color: "var(--color-text-muted)" }}>
           The access code is set via{" "}
           <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem" }}>API_KEY</code> in
-          your server config.
+          your server config. Remove it to skip authentication.
         </p>
       </div>
     </div>
