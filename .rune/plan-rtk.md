@@ -2,7 +2,7 @@
 
 > Goal: CLI output proxy that compresses tool outputs before LLM context, saving 30-60% tokens
 > Priority: P1 — unique competitive advantage, direct cost savings for users
-> Status: 🔄 Phase 1 Active
+> Status: ✅ Phase 2 Done
 
 ## Architecture
 
@@ -19,7 +19,7 @@ RTK transforms `tool_result` blocks, tracks savings, shows metrics.
 | # | Name | Status | Plan File | Summary |
 |---|------|--------|-----------|---------|
 | 1 | Core Pipeline + Quick Wins | ✅ Done | plan-rtk-phase1.md | RTK service, ANSI strip, dedup, truncation |
-| 2 | Smart Compressors | ⬚ Pending | plan-rtk-phase2.md | Stack trace, error aggregation, test summary, diff summary |
+| 2 | Smart Compressors | ✅ Done | plan-rtk-phase2.md | Stack trace, error aggregation, test summary, diff summary, JSON limiter, boilerplate |
 | 3 | Intelligence Layer | ⬚ Pending | plan-rtk-phase3.md | Cross-turn cache, token budget, progressive disclosure |
 | 4 | Metrics + UI | ⬚ Pending | plan-rtk-phase4.md | Dashboard widget, per-session savings, cost estimation |
 

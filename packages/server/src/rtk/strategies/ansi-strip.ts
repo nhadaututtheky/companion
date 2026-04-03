@@ -24,11 +24,11 @@ const CTRL_RE = /[\x00-\x08\x0b\x0c\x0e-\x1f]/g;
 /** Carriage return overwrites: text\roverwrite → keep overwrite */
 const CR_OVERWRITE_RE = /^.*\r(?!\n)/gm;
 
-/** Progress bar patterns: [====>     ] 45% or ████░░░░ */
-const PROGRESS_RE = /^.*[▏▎▍▌▋▊▉█░▒▓■□●○◐◑◒◓⣾⣽⣻⢿⡿⣟⣯⣷⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏|/\\-]{3,}.*$/gm;
+/** Progress bar patterns: ████░░░░ or [====>     ] — only Unicode block/braille chars, not |/-\ */
+const PROGRESS_RE = /^.*[▏▎▍▌▋▊▉█░▒▓■□●○◐◑◒◓⣾⣽⣻⢿⡿⣟⣯⣷⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏]{3,}.*$/gm;
 
-/** Spinner lines that get overwritten */
-const SPINNER_RE = /^[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏◐◑◒◓|/\\-] .{0,80}$/gm;
+/** Spinner lines: only Unicode spinner chars at start of line (not |/-\ which appear in normal output) */
+const SPINNER_RE = /^[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏◐◑◒◓] .{0,80}$/gm;
 
 export class AnsiStripStrategy implements RTKStrategy {
   readonly name = "ansi-strip";

@@ -36,7 +36,7 @@ export class TruncateStrategy implements RTKStrategy {
 
     const headCount = isError ? HEAD_LINES_ERROR : HEAD_LINES_NORMAL;
     const tailCount = isError ? TAIL_LINES_ERROR : TAIL_LINES_NORMAL;
-    const omitted = lines.length - headCount - tailCount;
+    const omitted = Math.max(0, lines.length - headCount - tailCount);
 
     const head = lines.slice(0, headCount);
     const tail = lines.slice(-tailCount);

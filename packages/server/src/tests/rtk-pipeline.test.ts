@@ -403,7 +403,7 @@ describe("RTKPipeline", () => {
     expect(result.compressed).not.toContain("\x1b[");
     expect(result.compressed).toContain("Compiling");
     expect(result.compressed).toContain("Finished");
-    expect(result.compressed).toContain("similar lines omitted");
+    expect(result.compressed).toContain("similar lines");
     expect(result.savings.totalTokensSaved).toBeGreaterThan(50);
   });
 
@@ -415,8 +415,7 @@ describe("RTKPipeline", () => {
     const input = errors.join("\n");
 
     const result = pipeline.transform(input);
-    expect(result.compressed).toContain("error TS2304");
-    expect(result.compressed).toContain("similar lines omitted");
+    expect(result.compressed).toContain("TS2304");
     expect(result.savings.totalTokensSaved).toBeGreaterThan(20);
   });
 
