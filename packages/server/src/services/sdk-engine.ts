@@ -145,6 +145,10 @@ export function startSdkSession(
   };
 
   // Build SDK options
+  const env = opts.envVars
+    ? { ...process.env, ...opts.envVars }
+    : undefined;
+
   const sdkQuery = query({
     prompt: opts.prompt,
     options: {
@@ -158,6 +162,7 @@ export function startSdkSession(
       maxBudgetUsd: opts.maxBudgetUsd ?? DEFAULT_MAX_BUDGET_USD,
       ...(opts.resume ? { resume: opts.resume } : {}),
       ...(opts.forkSession ? { forkSession: true } : {}),
+      ...(env ? { env } : {}),
     },
   });
 

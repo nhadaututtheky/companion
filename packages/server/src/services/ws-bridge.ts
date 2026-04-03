@@ -439,6 +439,7 @@ export class WsBridge {
         resume: opts.resume ? opts.cliSessionId : undefined,
         maxTurns: 200,
         maxBudgetUsd: 10,
+        envVars: opts.envVars,
       },
       {
         onSystemInit: (msg) => {
@@ -2415,11 +2416,22 @@ export class WsBridge {
 
   private handleSetModel(session: ActiveSession, model: string): void {
     const cliModel = WsBridge.MODEL_MAP[model] ?? model;
-    const ndjson = JSON.stringify({
-      type: "control_request",
-      request: { subtype: "set_model", model: cliModel },
-    });
-    this.sendToCLI(session, ndjson);
+
+    // SDK path: use typed setModel() API
+    const sdkHandle = this.sdkHandles.get(session.id);
+    if (sdkHandle) {
+      sdkHandle.query.setModel(cliModel).catch((err) => {
+        log.warn("SDK setModel failed", { sessionId: session.id, error: String(err) });
+      });
+    } else {
+      // CLI path: send NDJSON to stdin
+      const ndjson = JSON.stringify({
+        type: "control_request",
+        request: { subtype: "set_model", model: cliModel },
+      });
+      this.sendToCLI(session, ndjson);
+    }
+
     session.state = { ...session.state, model };
 
     this.broadcastToAll(session, {
