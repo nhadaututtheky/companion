@@ -5,6 +5,7 @@
 
 import { randomUUID } from "crypto";
 import { createLogger } from "../logger.js";
+import { createDefaultPipeline, type RTKPipeline } from "../rtk/index.js";
 import { launchCLI, createPlanModeWatcher } from "./cli-launcher.js";
 import { startSdkSession, type SdkSessionHandle } from "./sdk-engine.js";
 import { summarizeSession, buildSummaryInjection } from "./session-summarizer.js";
@@ -129,6 +130,8 @@ export class WsBridge {
     }) => void
   >();
   private planWatchers = new Map<string, ReturnType<typeof createPlanModeWatcher>>();
+  /** RTK compression pipeline for tool outputs */
+  private rtkPipeline: RTKPipeline = createDefaultPipeline();
   private onStatusChange?: StatusChangeCallback;
   /** Idle timers keyed by session ID — only for non-Telegram sessions */
   private idleTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -1121,18 +1124,46 @@ export class WsBridge {
       }
     }
 
-    // Sanitize tool_result content (strip ANSI codes from bash output etc.)
+    // RTK: Compress tool_result content (ANSI strip, dedup, truncation)
+    // Full output goes to browser; compressed version tracked for token savings
+    let rtkSessionSaved = 0;
+    let rtkSessionCompressions = 0;
+
     const sanitizedMessage = msg.message
       ? {
           ...msg.message,
           content: msg.message.content?.map((block) => {
             if (block.type === "tool_result" && typeof block.content === "string") {
-              return { ...block, content: VirtualScreen.sanitize(block.content) };
+              const rtkResult = this.rtkPipeline.transform(block.content, {
+                sessionId: session.id,
+                isError: block.is_error,
+              });
+              if (rtkResult.savings.totalTokensSaved > 0) {
+                rtkSessionSaved += rtkResult.savings.totalTokensSaved;
+                rtkSessionCompressions++;
+                log.debug("RTK compressed tool output", {
+                  sessionId: session.id,
+                  strategies: rtkResult.savings.strategiesApplied,
+                  ratio: rtkResult.savings.ratio.toFixed(2),
+                  tokensSaved: rtkResult.savings.totalTokensSaved,
+                });
+              }
+              // Send compressed to browser (cleaner display)
+              return { ...block, content: rtkResult.compressed };
             }
             return block;
           }),
         }
       : msg.message;
+
+    // Track RTK savings in session state
+    if (rtkSessionSaved > 0) {
+      session.state = {
+        ...session.state,
+        rtk_tokens_saved: (session.state.rtk_tokens_saved ?? 0) + rtkSessionSaved,
+        rtk_compressions: (session.state.rtk_compressions ?? 0) + rtkSessionCompressions,
+      };
+    }
 
     const browserMsg: BrowserIncomingMessage = {
       type: "assistant",

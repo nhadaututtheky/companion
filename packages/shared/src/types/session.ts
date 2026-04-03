@@ -262,6 +262,12 @@ export interface SessionState {
   compact_threshold: number;
   /** Thinking mode: adaptive (default), off, or deep */
   thinking_mode: ThinkingMode;
+
+  // RTK (Runtime Token Keeper) metrics
+  /** Estimated tokens saved by RTK compression this session */
+  rtk_tokens_saved?: number;
+  /** Number of tool outputs compressed by RTK */
+  rtk_compressions?: number;
 }
 
 // ─── Permission Types ────────────────────────────────────────────────────────
