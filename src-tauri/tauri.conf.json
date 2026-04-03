@@ -62,7 +62,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": {"web": "./"},
+    "resources": {"web": "./web"},
     "externalBin": [
       "bun-server"
     ],

@@ -296,8 +296,19 @@ if (WEB_ENABLED) {
     });
   });
 } else {
-  // Dev mode fallback: redirect to Next.js dev server hint
-  app.get("/", (c) => c.redirect("/api/health"));
+  // Dev mode fallback: show helpful message instead of raw JSON redirect
+  app.get("/", (c) => {
+    return c.html(`<!DOCTYPE html><html><head><title>Companion</title>
+<style>body{font-family:system-ui;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#0f172a;color:#f8fafc}
+.box{text-align:center;max-width:400px;padding:2rem}.title{font-size:1.5rem;font-weight:700;margin-bottom:1rem}
+code{background:#1e293b;padding:2px 8px;border-radius:4px;font-size:0.9rem}
+a{color:#60a5fa}</style></head>
+<body><div class="box"><div class="title">Companion Server Running</div>
+<p>Web UI not found. In dev mode, start the web app separately:</p>
+<p><code>bun run dev:web</code></p>
+<p style="margin-top:1rem"><a href="/api/health">API Health Check</a></p>
+</div></body></html>`);
+  });
 }
 
 // ─── WebSocket data attached to each connection ──────────────────────────────

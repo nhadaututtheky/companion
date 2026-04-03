@@ -7,6 +7,7 @@ import { countActiveSessions } from "../services/session-store.js";
 import { getLicense, verifyLicense } from "../services/license.js";
 import { createLogger } from "../logger.js";
 import type { HealthResponse } from "@companion/shared";
+import { APP_VERSION } from "@companion/shared";
 
 const log = createLogger("routes:license");
 
@@ -66,6 +67,7 @@ healthRoutes.get("/setup-status", (c) => {
     hasApiKey,
     hasProjects,
     hasSessions,
+    version: APP_VERSION,
   });
 });
 
