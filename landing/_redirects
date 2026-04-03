@@ -1,7 +1,7 @@
 # Desktop download redirects — points to latest GitHub release assets
-/download/macos https://github.com/nhadaututtheky/companion/releases/latest/download/Companion_aarch64.dmg 302
-/download/windows https://github.com/nhadaututtheky/companion/releases/latest/download/Companion_x64-setup.msi 302
-/download/linux https://github.com/nhadaututtheky/companion/releases/latest/download/Companion_amd64.AppImage 302
+/download/macos https://github.com/nhadaututtheky/companion-release/releases/latest/download/Companion_aarch64.dmg 302
+/download/windows https://github.com/nhadaututtheky/companion-release/releases/latest/download/Companion_x64-setup.msi 302
+/download/linux https://github.com/nhadaututtheky/companion-release/releases/latest/download/Companion_amd64.AppImage 302
 
 # Install scripts — served directly from landing
 /install /install.sh 200
