@@ -19,7 +19,7 @@ const upsertSchema = z.object({
 });
 
 // Keys containing these patterns are masked in GET responses to prevent secret leakage
-const SENSITIVE_KEY_PATTERNS = ["apikey", "token", "secret", "password", "bottoken"];
+const SENSITIVE_KEY_PATTERNS = ["apikey", "token", "secret", "password", "bottoken", "access_pin"];
 
 function isSensitiveKey(key: string): boolean {
   const lower = key.toLowerCase().replace(/[._-]/g, "");

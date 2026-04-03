@@ -1,18 +1,20 @@
 /**
- * Auth middleware — API key based authentication.
+ * Auth middleware — PIN-based or legacy API_KEY authentication.
  * Uses timing-safe comparison to prevent oracle attacks.
+ *
+ * Priority: DB access_pin > env API_KEY. If neither set, all requests allowed.
  */
 
 import { createMiddleware } from "hono/factory";
 import { timingSafeEqual } from "crypto";
 import { createLogger } from "../logger.js";
+import { getSetting } from "../services/settings-helpers.js";
 
 const log = createLogger("auth");
 
 /** Constant-time string comparison to prevent timing oracle attacks. */
 function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) {
-    // Constant-time dummy comparison to avoid length-based oracle
     const padded = Buffer.alloc(b.length);
     timingSafeEqual(Buffer.from(a.padEnd(b.length, "\0")), padded);
     return false;
@@ -20,11 +22,16 @@ function safeEqual(a: string, b: string): boolean {
   return timingSafeEqual(Buffer.from(a), Buffer.from(b));
 }
 
+/** Get the configured access credential — PIN from DB, or fallback to env API_KEY */
+export function getAccessCredential(): string | undefined {
+  return getSetting("access_pin") || process.env.API_KEY || undefined;
+}
+
 export const apiKeyAuth = () =>
   createMiddleware(async (c, next) => {
-    const configuredKey = process.env.API_KEY;
+    const configuredKey = getAccessCredential();
 
-    // Dev mode: no key configured = allow all (warned at startup)
+    // No PIN or API_KEY configured = allow all (local-only access)
     if (!configuredKey) {
       await next();
       return;
@@ -39,7 +46,7 @@ export const apiKeyAuth = () =>
       }
     }
 
-    // Check X-API-Key header
+    // Check X-API-Key header (also used for PIN)
     const apiKeyHeader = c.req.header("X-API-Key") ?? "";
     if (apiKeyHeader && safeEqual(apiKeyHeader, configuredKey)) {
       await next();

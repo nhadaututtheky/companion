@@ -8,6 +8,7 @@ import { getLicense, verifyLicense } from "../services/license.js";
 import { createLogger } from "../logger.js";
 import type { HealthResponse } from "@companion/shared";
 import { APP_VERSION } from "@companion/shared";
+import { getAccessCredential } from "../middleware/auth.js";
 
 const log = createLogger("routes:license");
 
@@ -44,7 +45,7 @@ healthRoutes.get("/health", (c) => {
 
 // Setup status endpoint — public, used by onboarding wizard before auth
 healthRoutes.get("/setup-status", (c) => {
-  const hasApiKey = !!process.env.API_KEY;
+  const hasPin = !!getAccessCredential();
 
   let hasProjects = false;
   let hasSessions = false;
@@ -64,7 +65,7 @@ healthRoutes.get("/setup-status", (c) => {
   }
 
   return c.json({
-    hasApiKey,
+    hasPin,
     hasProjects,
     hasSessions,
     version: APP_VERSION,

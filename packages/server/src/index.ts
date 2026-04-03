@@ -16,6 +16,7 @@ import { seedDefaultTemplates } from "./services/templates.js";
 import { seedWorkflowTemplates } from "./services/workflow-templates.js";
 import { DEFAULT_PORT, APP_VERSION } from "@companion/shared";
 import { timingSafeEqual } from "node:crypto";
+import { getAccessCredential } from "./middleware/auth.js";
 import { terminalManager } from "./services/terminal-manager.js";
 import * as spectatorBridge from "./services/spectator-bridge.js";
 import { startScheduler, stopScheduler } from "./services/scheduler.js";
@@ -41,13 +42,12 @@ function safeCompare(a: string, b: string): boolean {
 const port = parseInt(process.env.PORT ?? String(DEFAULT_PORT), 10);
 
 // ── Startup validation ────────────────────────────────────────────────────────
-if (!process.env.API_KEY) {
-  if (process.env.NODE_ENV === "production") {
-    log.error("API_KEY is not set — refusing to start in production without authentication");
-    process.exit(1);
-  } else {
-    log.warn("⚠️  API_KEY is not set — all requests will be allowed (dev mode only)");
-  }
+// API_KEY is optional — only needed when exposing server to network.
+// License system (Free/Trial/Pro) handles feature gating.
+if (process.env.API_KEY) {
+  log.info("API_KEY is set — HTTP/WS endpoints require authentication");
+} else {
+  log.info("No API_KEY configured — all requests allowed (local-only access)");
 }
 
 // Initialize DB and run pending migrations
@@ -335,7 +335,7 @@ const server = Bun.serve<SocketData>({
         return new Response("Missing terminal ID", { status: 400 });
       }
 
-      const configuredKey = process.env.API_KEY;
+      const configuredKey = getAccessCredential();
       if (configuredKey) {
         const wsKey =
           req.headers.get("Sec-WebSocket-Protocol") ??
@@ -386,7 +386,7 @@ const server = Bun.serve<SocketData>({
       }
 
       // Authenticate WebSocket — check Sec-WebSocket-Protocol, Authorization header, or query param (fallback)
-      const configuredKey = process.env.API_KEY;
+      const configuredKey = getAccessCredential();
       if (configuredKey) {
         const wsKey =
           req.headers.get("Sec-WebSocket-Protocol") ??

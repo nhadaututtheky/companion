@@ -21,7 +21,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         const res = await fetch(`${BASE}/api/setup-status`);
         if (res.ok) {
           const data = await res.json();
-          serverNeedsKey = data.hasApiKey === true;
+          serverNeedsKey = data.hasPin === true;
         }
       } catch {
         // Server unreachable — fall through to login

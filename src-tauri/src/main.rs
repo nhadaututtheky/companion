@@ -28,8 +28,6 @@ async fn main() {
                 .expect("DB path must be valid UTF-8")
                 .to_owned();
 
-            let api_key = std::env::var("COMPANION_API_KEY").unwrap_or_default();
-
             log::info!("DB path: {}", db_path_str);
 
             // ── 3. Resolve bundled web UI path ───────────────────────────────
@@ -51,7 +49,6 @@ async fn main() {
                 })?
                 .env("DB_PATH", &db_path_str)
                 .env("PORT", "3579")
-                .env("API_KEY", &api_key)
                 .env("NODE_ENV", "production")
                 .env("WEB_PATH", &web_path);
 
