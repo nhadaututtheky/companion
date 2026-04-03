@@ -28,6 +28,7 @@ import { TelegramStatus } from "@/components/settings/telegram-status";
 import { TelegramPreview } from "@/components/settings/telegram-preview";
 import { TelegramAntiSettings } from "@/components/settings/telegram-anti-settings";
 import { McpSettings } from "@/components/settings/mcp-settings";
+import { RTKSettings } from "@/components/settings/rtk-settings";
 
 // ── Shared primitives ─────────────────────────────────────────────────────────
 
@@ -97,7 +98,7 @@ function InputField({
 
 // ── Tab types ────────────────────────────────────────────────────────────────
 
-type Tab = "general" | "domain" | "telegram" | "ai" | "mcp" | "appearance";
+type Tab = "general" | "domain" | "telegram" | "ai" | "mcp" | "rtk" | "appearance";
 
 const TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
   { id: "general", label: "General", icon: <Gear size={15} weight="bold" /> },
@@ -105,6 +106,7 @@ const TABS: Array<{ id: Tab; label: string; icon: React.ReactNode }> = [
   { id: "ai", label: "AI Provider", icon: <Robot size={15} weight="bold" /> },
   { id: "telegram", label: "Telegram", icon: <TelegramLogo size={15} weight="fill" /> },
   { id: "mcp", label: "MCP", icon: <Plugs size={15} weight="bold" /> },
+  { id: "rtk", label: "RTK", icon: <Bug size={15} weight="bold" /> },
   { id: "appearance", label: "Appearance", icon: <PaintBrush size={15} weight="bold" /> },
 ];
 
@@ -291,14 +293,19 @@ const PRESET_PROVIDERS = [
     models: ["anthropic/claude-sonnet-4", "google/gemini-2.5-flash", "deepseek/deepseek-chat-v3"],
   },
   {
+    name: "Google AI Studio",
+    baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
+    models: ["gemma-4-27b-it", "gemma-4-12b-it", "gemini-2.5-flash", "gemini-2.5-pro"],
+  },
+  {
     name: "Groq",
     baseUrl: "https://api.groq.com/openai/v1",
-    models: ["llama-3.3-70b-versatile", "gemma2-9b-it"],
+    models: ["llama-3.3-70b-versatile", "gemma2-9b-it", "gemma-4-12b-it"],
   },
   {
     name: "Ollama (local)",
     baseUrl: "http://localhost:11434/v1",
-    models: ["qwen3:8b", "llama3.2:latest", "codellama:latest"],
+    models: ["gemma4:27b", "gemma4:12b", "qwen3:8b", "llama3.2:latest", "codellama:latest"],
   },
   {
     name: "Custom",
@@ -1916,6 +1923,7 @@ export default function SettingsPage() {
           {activeTab === "ai" && <AIProviderTab />}
           {activeTab === "telegram" && <TelegramTab />}
           {activeTab === "mcp" && <McpSettings />}
+          {activeTab === "rtk" && <RTKSettings />}
           {activeTab === "appearance" && <AppearanceTab />}
         </div>
       </div>

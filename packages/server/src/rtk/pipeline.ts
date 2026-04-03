@@ -7,6 +7,8 @@
  */
 
 import { createLogger } from "../logger.js";
+import { RTKCache } from "./cache.js";
+import { applyBudget, type RTKLevel } from "./budget.js";
 
 const log = createLogger("rtk");
 
@@ -49,6 +51,10 @@ export interface RTKSavings {
   compressedChars: number;
   /** Compression ratio (0-1, lower = more compressed) */
   ratio: number;
+  /** Whether result was served from cache */
+  cached?: boolean;
+  /** Whether budget truncation was applied after strategies */
+  budgetTruncated?: boolean;
 }
 
 export interface RTKTransformResult {
@@ -67,9 +73,22 @@ const MIN_INPUT_LENGTH = 100;
 
 export class RTKPipeline {
   private readonly strategies: RTKStrategy[];
+  private readonly cache = new RTKCache();
+  private budgetLevel: RTKLevel = "balanced";
+  private disabledStrategies = new Set<string>();
 
   constructor(strategies: RTKStrategy[]) {
     this.strategies = strategies;
+  }
+
+  /** Update compression level (from settings) */
+  setBudgetLevel(level: RTKLevel): void {
+    this.budgetLevel = level;
+  }
+
+  /** Update disabled strategies (from settings) */
+  setDisabledStrategies(disabled: Set<string>): void {
+    this.disabledStrategies = disabled;
   }
 
   /**
@@ -90,8 +109,29 @@ export class RTKPipeline {
           originalChars,
           compressedChars: originalChars,
           ratio: 1,
+          cached: false,
+          budgetTruncated: false,
         },
       };
+    }
+
+    // Check cache first
+    if (context?.sessionId) {
+      const cached = this.cache.get(context.sessionId, input);
+      if (cached) {
+        return {
+          compressed: cached.compressed,
+          original: input,
+          savings: {
+            totalTokensSaved: cached.tokensSaved,
+            strategiesApplied: cached.strategiesApplied,
+            originalChars,
+            compressedChars: cached.compressed.length,
+            ratio: originalChars > 0 ? cached.compressed.length / originalChars : 1,
+            cached: true,
+          },
+        };
+      }
     }
 
     let current = input;
@@ -99,6 +139,9 @@ export class RTKPipeline {
     const strategiesApplied: string[] = [];
 
     for (const strategy of this.strategies) {
+      // Skip disabled strategies
+      if (this.disabledStrategies.has(strategy.name)) continue;
+
       try {
         const result = strategy.transform(current, context);
         if (result !== null) {
@@ -115,7 +158,25 @@ export class RTKPipeline {
       }
     }
 
+    // Apply token budget
+    let budgetTruncated = false;
+    if (this.budgetLevel !== "unlimited") {
+      const budgetResult = applyBudget(current, this.budgetLevel);
+      if (budgetResult.budgetTruncated) {
+        const extraSaved = Math.max(0, estimateTokens(current) - budgetResult.tokensAfterBudget);
+        totalTokensSaved += extraSaved;
+        current = budgetResult.output;
+        budgetTruncated = true;
+        strategiesApplied.push("budget");
+      }
+    }
+
     const compressedChars = current.length;
+
+    // Cache the result
+    if (context?.sessionId) {
+      this.cache.set(context.sessionId, input, current, totalTokensSaved, strategiesApplied);
+    }
 
     return {
       compressed: current,
@@ -126,6 +187,8 @@ export class RTKPipeline {
         originalChars,
         compressedChars,
         ratio: originalChars > 0 ? compressedChars / originalChars : 1,
+        cached: false,
+        budgetTruncated,
       },
     };
   }
@@ -133,6 +196,16 @@ export class RTKPipeline {
   /** Get the list of registered strategy names */
   getStrategyNames(): string[] {
     return this.strategies.map((s) => s.name);
+  }
+
+  /** Clear cache for a session */
+  clearSessionCache(sessionId: string): void {
+    this.cache.clearSession(sessionId);
+  }
+
+  /** Get cache statistics */
+  getCacheStats() {
+    return this.cache.getStats();
   }
 }
 

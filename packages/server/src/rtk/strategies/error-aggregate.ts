@@ -125,31 +125,34 @@ export class ErrorAggregateStrategy implements RTKStrategy {
     const hasAggregatable = [...groups.values()].some((g) => g.count >= AGGREGATE_THRESHOLD);
     if (!hasAggregatable) return null;
 
-    // Build output: non-error lines preserved, error groups summarized
+    // Build output: interleave non-error lines at original positions,
+    // replace first occurrence of each error group with aggregated summary
     const outputLines: string[] = [];
+    const emittedGroups = new Set<string>();
 
-    // Add non-error lines that appear before first error
-    for (const { line } of nonErrorLines) {
-      outputLines.push(line);
-    }
-
-    // Add aggregated error groups
-    if (outputLines.length > 0 && outputLines[outputLines.length - 1] !== "") {
-      outputLines.push("");
-    }
-
-    const sortedGroups = [...groups.entries()].sort((a, b) => b[1].count - a[1].count);
-
-    for (const [code, group] of sortedGroups) {
-      if (group.count >= AGGREGATE_THRESHOLD) {
-        const filesInfo =
-          group.files.size > 0 ? ` — in ${group.files.size} file(s)` : "";
-        outputLines.push(`[${group.count}x] ${group.match.message}${filesInfo}`);
+    for (let i = 0; i < lines.length; i++) {
+      const match = matchError(lines[i]!);
+      if (!match) {
+        // Non-error line — keep at original position
+        outputLines.push(lines[i]!);
       } else {
-        // Below threshold — keep original lines
-        outputLines.push(`${group.match.line}`);
-        if (group.count > 1) {
-          outputLines.push(`  (+ ${group.count - 1} more)`);
+        const group = groups.get(match.code)!;
+        if (emittedGroups.has(match.code)) {
+          // Already emitted this group's summary — skip duplicate
+          continue;
+        }
+        emittedGroups.add(match.code);
+
+        if (group.count >= AGGREGATE_THRESHOLD) {
+          const filesInfo =
+            group.files.size > 0 ? ` — in ${group.files.size} file(s)` : "";
+          outputLines.push(`[${group.count}x] ${group.match.message}${filesInfo}`);
+        } else {
+          // Below threshold — keep original line(s)
+          outputLines.push(group.match.line);
+          if (group.count > 1) {
+            outputLines.push(`  (+ ${group.count - 1} more)`);
+          }
         }
       }
     }

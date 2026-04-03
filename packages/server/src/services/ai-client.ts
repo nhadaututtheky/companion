@@ -7,8 +7,9 @@
  * 3. ANTHROPIC_API_KEY fallback
  *
  * Supports:
- * - OpenAI-compatible (DashScope Qwen, Groq, Together, Ollama, OpenRouter)
+ * - OpenAI-compatible (DashScope Qwen, Groq, Together, Ollama, OpenRouter, Google AI Studio)
  * - Anthropic (claude-haiku, claude-sonnet)
+ * - Local models via Ollama (Gemma 4, Qwen3, LLaMA, CodeLLaMA)
  */
 
 import { createLogger } from "../logger.js";

@@ -5,7 +5,7 @@
 
 import { randomUUID } from "crypto";
 import { createLogger } from "../logger.js";
-import { createDefaultPipeline, type RTKPipeline } from "../rtk/index.js";
+import { createDefaultPipeline, getRTKConfig, type RTKPipeline } from "../rtk/index.js";
 import { launchCLI, createPlanModeWatcher } from "./cli-launcher.js";
 import { startSdkSession, type SdkSessionHandle } from "./sdk-engine.js";
 import { summarizeSession, buildSummaryInjection } from "./session-summarizer.js";
@@ -131,7 +131,7 @@ export class WsBridge {
   >();
   private planWatchers = new Map<string, ReturnType<typeof createPlanModeWatcher>>();
   /** RTK compression pipeline for tool outputs */
-  private rtkPipeline: RTKPipeline = createDefaultPipeline();
+  private rtkPipeline: RTKPipeline = this.initRTKPipeline();
   private onStatusChange?: StatusChangeCallback;
   /** Idle timers keyed by session ID — only for non-Telegram sessions */
   private idleTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -173,6 +173,26 @@ export class WsBridge {
     });
     this.startHealthCheck();
     this.startCleanupSweep();
+  }
+
+  /** Initialize RTK pipeline with settings from DB */
+  private initRTKPipeline(): RTKPipeline {
+    const pipeline = createDefaultPipeline();
+    try {
+      const config = getRTKConfig();
+      pipeline.setBudgetLevel(config.level);
+      pipeline.setDisabledStrategies(config.disabledStrategies);
+    } catch {
+      // Settings DB not ready yet — use defaults
+    }
+    return pipeline;
+  }
+
+  /** Reload RTK config from DB (call after settings change) */
+  reloadRTKConfig(): void {
+    const config = getRTKConfig();
+    this.rtkPipeline.setBudgetLevel(config.level);
+    this.rtkPipeline.setDisabledStrategies(config.disabledStrategies);
   }
 
   /** Stop the health check interval (call on server shutdown) */
@@ -734,6 +754,7 @@ export class WsBridge {
       this.updateStatus(session, "ended");
       persistSession(session);
       removeActiveSession(sessionId);
+      this.rtkPipeline.clearSessionCache(sessionId);
     }
 
     // Always update DB regardless of in-memory state
@@ -1128,6 +1149,20 @@ export class WsBridge {
     // Full output goes to browser; compressed version tracked for token savings
     let rtkSessionSaved = 0;
     let rtkSessionCompressions = 0;
+    let rtkCacheHits = 0;
+
+    // Build toolName lookup: tool_use_id → tool name
+    // NOTE: tool_use and tool_result may be in the same assistant message
+    // (Claude SDK batches them). For cross-message correlation, we'd need
+    // session-level tracking of tool_use_id → name. This covers the common case.
+    const toolNameMap = new Map<string, string>();
+    if (msg.message?.content) {
+      for (const b of msg.message.content) {
+        if (b.type === "tool_use" && b.id && b.name) {
+          toolNameMap.set(b.id, b.name);
+        }
+      }
+    }
 
     const sanitizedMessage = msg.message
       ? {
@@ -1137,15 +1172,19 @@ export class WsBridge {
               const rtkResult = this.rtkPipeline.transform(block.content, {
                 sessionId: session.id,
                 isError: block.is_error,
+                toolName: toolNameMap.get(block.tool_use_id) ?? undefined,
               });
               if (rtkResult.savings.totalTokensSaved > 0) {
                 rtkSessionSaved += rtkResult.savings.totalTokensSaved;
                 rtkSessionCompressions++;
+                if (rtkResult.savings.cached) rtkCacheHits++;
                 log.debug("RTK compressed tool output", {
                   sessionId: session.id,
                   strategies: rtkResult.savings.strategiesApplied,
                   ratio: rtkResult.savings.ratio.toFixed(2),
                   tokensSaved: rtkResult.savings.totalTokensSaved,
+                  cached: rtkResult.savings.cached,
+                  budgetTruncated: rtkResult.savings.budgetTruncated,
                 });
               }
               // Send compressed to browser (cleaner display)
@@ -1162,6 +1201,7 @@ export class WsBridge {
         ...session.state,
         rtk_tokens_saved: (session.state.rtk_tokens_saved ?? 0) + rtkSessionSaved,
         rtk_compressions: (session.state.rtk_compressions ?? 0) + rtkSessionCompressions,
+        rtk_cache_hits: (session.state.rtk_cache_hits ?? 0) + rtkCacheHits,
       };
     }
 

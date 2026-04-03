@@ -131,8 +131,6 @@ export class TestSummaryStrategy implements RTKStrategy {
             // Outside fail block — keep if not indented (likely a section header)
             if (!line.startsWith("  ") && !line.startsWith("\t")) {
               outputLines.push(line);
-            } else if (inFailBlock) {
-              outputLines.push(line);
             }
             // Skip indented lines outside fail blocks (pass test details)
           }

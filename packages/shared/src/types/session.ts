@@ -268,6 +268,8 @@ export interface SessionState {
   rtk_tokens_saved?: number;
   /** Number of tool outputs compressed by RTK */
   rtk_compressions?: number;
+  /** Number of cache hits (re-used compressed outputs) */
+  rtk_cache_hits?: number;
 }
 
 // ─── Permission Types ────────────────────────────────────────────────────────

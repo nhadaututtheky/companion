@@ -29,9 +29,6 @@ interface DiffFile {
   functions: string[];
 }
 
-/** Detect unified diff file header */
-const FILE_HEADER_RE = /^(?:diff --git a\/.+ b\/(.+)|--- a\/(.+)|\+\+\+ b\/(.+))$/;
-
 /** Hunk header: @@ -10,5 +10,8 @@ function name */
 const HUNK_HEADER_RE = /^@@\s+[^@]+\s+@@\s*(.*)$/;
 

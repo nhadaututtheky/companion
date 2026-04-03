@@ -16,6 +16,13 @@ export type {
   RTKTransformResult,
 } from "./pipeline.js";
 
+// Phase 3: Intelligence
+export { RTKCache } from "./cache.js";
+export { applyBudget, getBudgetConfig } from "./budget.js";
+export type { RTKLevel } from "./budget.js";
+export { getRTKConfig, RTK_LEVELS, RTK_STRATEGY_NAMES } from "./config.js";
+export type { RTKConfig } from "./config.js";
+
 // Phase 1: Core strategies
 export { AnsiStripStrategy } from "./strategies/ansi-strip.js";
 export { BlankCollapseStrategy } from "./strategies/blank-collapse.js";

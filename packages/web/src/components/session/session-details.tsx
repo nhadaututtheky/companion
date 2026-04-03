@@ -42,6 +42,9 @@ interface SessionDetailsProps {
       files_created: string[];
       started_at: number;
       cwd?: string;
+      rtk_tokens_saved?: number;
+      rtk_compressions?: number;
+      rtk_cache_hits?: number;
     };
     contextTokens?: number;
     contextMaxTokens?: number;
@@ -100,6 +103,83 @@ function formatTokens(n: number) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
+}
+
+function RTKSavingsCard({
+  tokensSaved,
+  compressions,
+  cacheHits,
+}: {
+  tokensSaved: number;
+  compressions: number;
+  cacheHits: number;
+}) {
+  // Rough cost estimate: ~$3/M input tokens (Sonnet pricing)
+  const costSaved = (tokensSaved / 1_000_000) * 3;
+
+  return (
+    <div
+      className="p-3 rounded-xl"
+      style={{
+        background: "var(--color-bg-card)",
+        border: "1px solid var(--color-border)",
+        borderLeft: "3px solid #34A853",
+      }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <span style={{ color: "#34A853", fontSize: 14 }}>⚡</span>
+        <span
+          className="text-xs font-semibold"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          RTK Savings
+        </span>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <div>
+          <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            Tokens
+          </p>
+          <p
+            className="text-sm font-semibold font-mono"
+            style={{ color: "#34A853" }}
+          >
+            {formatTokens(tokensSaved)}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            Est. Saved
+          </p>
+          <p
+            className="text-sm font-semibold font-mono"
+            style={{ color: "#34A853" }}
+          >
+            ${costSaved < 0.01 ? "<0.01" : costSaved.toFixed(2)}
+          </p>
+        </div>
+        <div>
+          <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            Compressed
+          </p>
+          <p
+            className="text-sm font-semibold font-mono"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            {compressions}
+            {cacheHits > 0 && (
+              <span
+                className="text-xs ml-1"
+                style={{ color: "var(--color-text-muted)" }}
+              >
+                ({cacheHits} cached)
+              </span>
+            )}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function SessionDetails({ session, messages }: SessionDetailsProps) {
@@ -242,6 +322,13 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
               value={`${formatTokens(s.total_input_tokens + s.total_output_tokens)}`}
               color="#EA4335"
             />
+            {(s.rtk_tokens_saved ?? 0) > 0 && (
+              <RTKSavingsCard
+                tokensSaved={s.rtk_tokens_saved ?? 0}
+                compressions={s.rtk_compressions ?? 0}
+                cacheHits={s.rtk_cache_hits ?? 0}
+              />
+            )}
           </div>
 
           {/* Modified files — clickable to open in viewer */}

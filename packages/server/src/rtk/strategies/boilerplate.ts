@@ -64,8 +64,9 @@ export class BoilerplateStrategy implements RTKStrategy {
     const lines = input.split("\n");
     if (lines.length < MIN_LINES) return null;
 
-    // Mark lines for removal
+    // Mark lines for removal and track replacements (avoid mutating input array)
     const keep = new Array(lines.length).fill(true) as boolean[];
+    const replacements = new Map<number, string>();
     let anyRemoved = false;
 
     for (const rule of RULES) {
@@ -75,7 +76,8 @@ export class BoilerplateStrategy implements RTKStrategy {
 
       for (let i = 0; i <= lines.length; i++) {
         const line = i < lines.length ? lines[i]! : "";
-        const isBoilerplate = i < lines.length && rule.match.test(line);
+        // Test against original line (not a replacement from a previous rule)
+        const isBoilerplate = i < lines.length && !replacements.has(i) && rule.match.test(line);
         const isKept = rule.keep ? rule.keep.test(line) : false;
 
         if (isBoilerplate && !isKept) {
@@ -89,9 +91,9 @@ export class BoilerplateStrategy implements RTKStrategy {
               keep[j] = false;
               anyRemoved = true;
             }
-            // Replace middle with count
+            // Replace middle with count summary
             if (groupCount > 2) {
-              lines[groupStart + 1] = `  ... (${groupCount - 2} similar lines)`;
+              replacements.set(groupStart + 1, `  ... (${groupCount - 2} similar lines)`);
               keep[groupStart + 1] = true;
             }
           }
@@ -103,7 +105,9 @@ export class BoilerplateStrategy implements RTKStrategy {
 
     if (!anyRemoved) return null;
 
-    const outputLines = lines.filter((_, i) => keep[i]);
+    const outputLines = lines
+      .map((line, i) => (replacements.has(i) ? replacements.get(i)! : line))
+      .filter((_, i) => keep[i]);
     const output = outputLines.join("\n");
 
     if (output.length >= input.length) return null;
