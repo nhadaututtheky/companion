@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
-import { FloppyDisk, Check } from "@phosphor-icons/react";
+import { FloppyDisk, Check, Lock } from "@phosphor-icons/react";
 
 const RTK_LEVELS = [
   { value: "aggressive", label: "Aggressive", desc: "~2K tokens max per output — maximum savings" },
@@ -25,21 +25,29 @@ const RTK_STRATEGIES = [
   { name: "truncate", label: "Truncate", desc: "Final length cap on very long outputs" },
 ];
 
+/** Strategies included in Free tier (rtk_basic) */
+const FREE_STRATEGIES = new Set(["ansi-strip", "blank-collapse", "dedup", "truncate"]);
+
 export function RTKSettings() {
   const [enabled, setEnabled] = useState(true);
   const [level, setLevel] = useState("balanced");
   const [disabledStrategies, setDisabledStrategies] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isPro, setIsPro] = useState(false);
 
   useEffect(() => {
     async function load() {
       try {
-        const res = await api.settings.list("rtk.");
-        setEnabled(res.data["rtk.enabled"] !== "false");
-        setLevel(res.data["rtk.level"] ?? "balanced");
-        const disabled = res.data["rtk.disabled"] ?? "";
+        const [settingsRes, licenseRes] = await Promise.all([
+          api.settings.list("rtk."),
+          api.license(),
+        ]);
+        setEnabled(settingsRes.data["rtk.enabled"] !== "false");
+        setLevel(settingsRes.data["rtk.level"] ?? "balanced");
+        const disabled = settingsRes.data["rtk.disabled"] ?? "";
         setDisabledStrategies(new Set(disabled.split(",").filter(Boolean)));
+        setIsPro(licenseRes.data.features.includes("rtk_pro"));
       } catch {
         // First time — defaults
       } finally {
@@ -102,17 +110,25 @@ export function RTKSettings() {
         <div className="flex items-center justify-between">
           <div>
             <h2
-              className="text-sm font-semibold"
+              className="text-sm font-semibold flex items-center gap-2"
               style={{ color: "var(--color-text-primary)" }}
             >
               Runtime Token Keeper (RTK)
+              {!isPro && (
+                <span
+                  className="text-[10px] px-1.5 py-0.5 rounded font-bold"
+                  style={{ background: "#FBBC0420", color: "#FBBC04" }}
+                >
+                  Basic
+                </span>
+              )}
             </h2>
             <p
               className="text-xs mt-1"
               style={{ color: "var(--color-text-muted)" }}
             >
-              Compresses tool outputs to save LLM context tokens. Reduces cost
-              and prevents context overflow.
+              Compresses tool outputs to save LLM context tokens.
+              {!isPro && " Upgrade to Pro for smart compressors, cache, and budget control."}
             </p>
           </div>
           <button
@@ -135,8 +151,8 @@ export function RTKSettings() {
         </div>
       </div>
 
-      {/* Compression Level */}
-      {enabled && (
+      {/* Compression Level — Pro only */}
+      {enabled && isPro && (
         <div
           className="p-5 rounded-xl"
           style={{
@@ -224,17 +240,21 @@ export function RTKSettings() {
           </p>
           <div className="flex flex-col gap-1">
             {RTK_STRATEGIES.map((s) => {
-              const isEnabled = !disabledStrategies.has(s.name);
+              const isFreeStrategy = FREE_STRATEGIES.has(s.name);
+              const isLocked = !isPro && !isFreeStrategy;
+              const isEnabled = !disabledStrategies.has(s.name) && !isLocked;
               return (
                 <label
                   key={s.name}
-                  className="flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-colors"
+                  className="flex items-center gap-3 p-2.5 rounded-lg transition-colors"
                   style={{
-                    opacity: isEnabled ? 1 : 0.5,
+                    opacity: isEnabled ? 1 : 0.4,
+                    cursor: isLocked ? "not-allowed" : "pointer",
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background =
-                      "var(--color-bg-elevated)";
+                    if (!isLocked)
+                      (e.currentTarget as HTMLElement).style.background =
+                        "var(--color-bg-elevated)";
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLElement).style.background =
@@ -244,21 +264,30 @@ export function RTKSettings() {
                   <input
                     type="checkbox"
                     checked={isEnabled}
-                    onChange={() => toggleStrategy(s.name)}
+                    onChange={() => !isLocked && toggleStrategy(s.name)}
+                    disabled={isLocked}
                     className="rounded"
                   />
                   <div className="flex-1">
                     <span
-                      className="text-sm font-mono"
+                      className="text-sm font-mono flex items-center gap-1.5"
                       style={{ color: "var(--color-text-primary)" }}
                     >
                       {s.label}
+                      {isLocked && (
+                        <Lock
+                          size={12}
+                          weight="bold"
+                          style={{ color: "#FBBC04" }}
+                        />
+                      )}
                     </span>
                     <p
                       className="text-xs"
                       style={{ color: "var(--color-text-muted)" }}
                     >
                       {s.desc}
+                      {isLocked && " (Pro)"}
                     </p>
                   </div>
                 </label>

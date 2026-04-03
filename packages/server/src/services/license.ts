@@ -44,9 +44,10 @@ const FREE_FEATURES = [
   "debate_mode",
   "desktop_app",
   "thinking_mode",
+  "rtk_basic",
 ];
 
-const STARTER_FEATURES = [...FREE_FEATURES, "shared_context"];
+const STARTER_FEATURES = [...FREE_FEATURES, "shared_context", "rtk_pro"];
 
 const FREE_LICENSE: LicenseInfo = {
   valid: false,

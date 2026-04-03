@@ -9,7 +9,11 @@ import { TestSummaryStrategy } from "../rtk/strategies/test-summary.js";
 import { DiffSummaryStrategy } from "../rtk/strategies/diff-summary.js";
 import { JsonLimiterStrategy } from "../rtk/strategies/json-limiter.js";
 import { BoilerplateStrategy } from "../rtk/strategies/boilerplate.js";
-import { createDefaultPipeline } from "../rtk/index.js";
+import { RTKPipeline } from "../rtk/pipeline.js";
+import { AnsiStripStrategy } from "../rtk/strategies/ansi-strip.js";
+import { BlankCollapseStrategy } from "../rtk/strategies/blank-collapse.js";
+import { DedupStrategy } from "../rtk/strategies/dedup.js";
+import { TruncateStrategy } from "../rtk/strategies/truncate.js";
 
 // ─── StackTraceStrategy ─────────────────────────────────────────────────────
 
@@ -468,9 +472,25 @@ describe("BoilerplateStrategy", () => {
 
 // ─── Full Pipeline Integration ──────────────────────────────────────────────
 
+/** Helper: build full pipeline with all 10 strategies (bypasses license gate) */
+function buildFullPipeline(): RTKPipeline {
+  return new RTKPipeline([
+    new AnsiStripStrategy(),
+    new BoilerplateStrategy(),
+    new StackTraceStrategy(),
+    new ErrorAggregateStrategy(),
+    new TestSummaryStrategy(),
+    new DiffSummaryStrategy(),
+    new JsonLimiterStrategy(),
+    new BlankCollapseStrategy(),
+    new DedupStrategy(),
+    new TruncateStrategy(),
+  ]);
+}
+
 describe("Full Pipeline (Phase 1+2)", () => {
   it("handles real-world cargo build + test output", () => {
-    const pipeline = createDefaultPipeline();
+    const pipeline = buildFullPipeline();
     const input = [
       "\x1b[1m\x1b[32m  Downloading\x1b[0m crates ...",
       ...Array.from({ length: 20 }, (_, i) =>
@@ -508,7 +528,7 @@ describe("Full Pipeline (Phase 1+2)", () => {
   });
 
   it("handles TypeScript errors + npm warnings together", () => {
-    const pipeline = createDefaultPipeline();
+    const pipeline = buildFullPipeline();
     const input = [
       "\x1b[33mnpm warn\x1b[0m deprecated pkg1@1.0.0: use pkg1@2.0.0",
       "\x1b[33mnpm warn\x1b[0m deprecated pkg2@1.0.0: use pkg2@2.0.0",
@@ -530,7 +550,19 @@ describe("Full Pipeline (Phase 1+2)", () => {
   });
 
   it("reports all applied strategies", () => {
-    const pipeline = createDefaultPipeline();
+    // Build pipeline with all strategies directly (createDefaultPipeline is license-gated)
+    const pipeline = new RTKPipeline([
+      new AnsiStripStrategy(),
+      new BoilerplateStrategy(),
+      new StackTraceStrategy(),
+      new ErrorAggregateStrategy(),
+      new TestSummaryStrategy(),
+      new DiffSummaryStrategy(),
+      new JsonLimiterStrategy(),
+      new BlankCollapseStrategy(),
+      new DedupStrategy(),
+      new TruncateStrategy(),
+    ]);
     expect(pipeline.getStrategyNames()).toHaveLength(10);
     expect(pipeline.getStrategyNames()).toContain("stack-trace");
     expect(pipeline.getStrategyNames()).toContain("error-aggregate");
