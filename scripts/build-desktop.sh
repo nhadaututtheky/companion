@@ -19,11 +19,11 @@ WEB_DIR="$ROOT_DIR/packages/web"
 TAURI_DIR="$ROOT_DIR/src-tauri"
 
 BUILD_MODE="release"
-CARGO_FLAGS="--release"
+CARGO_FLAGS=""
 
 if [[ "${1:-}" == "--debug" ]]; then
     BUILD_MODE="debug"
-    CARGO_FLAGS=""
+    CARGO_FLAGS="--debug"
 fi
 
 echo "==> Building Companion desktop ($BUILD_MODE)"
@@ -34,16 +34,10 @@ cd "$ROOT_DIR"
 bun install --frozen-lockfile
 
 # ── 2. Build Next.js as a static export ──────────────────────────────────────
-# Note: Tauri production mode points the webview at localhost:3579 (the Bun
-# sidecar), so a Next.js static export is only needed if you want to serve
-# the UI from the Tauri binary itself (future option).
-# For the sidecar architecture the web build step can be skipped.
-# Uncomment below if/when you add a static export target:
-#
-# echo "==> Building Next.js..."
-# cd "$WEB_DIR"
-# npx next build
-# cd "$ROOT_DIR"
+echo "==> Building Next.js static export..."
+cd "$WEB_DIR"
+bun run build
+cd "$ROOT_DIR"
 
 # ── 3. Package the Bun server binary as a sidecar ────────────────────────────
 echo "==> Bundling Bun server sidecar..."
@@ -72,7 +66,14 @@ bun build packages/server/src/index.ts \
     --target bun \
     --outfile "$SIDECAR_DIR/$SIDECAR_NAME"
 
-# ── 4. Build the Tauri app ────────────────────────────────────────────────────
+# ── 4. Copy web static export into Tauri resource dir ─────────────────────────
+# Tauri bundles "resources" entries into $INSTDIR alongside the sidecar.
+# The sidecar receives the resolved path via WEB_PATH env var from main.rs.
+echo "==> Copying web UI into Tauri resources..."
+rm -rf "$TAURI_DIR/web"
+cp -r "$WEB_DIR/out" "$TAURI_DIR/web"
+
+# ── 5. Build the Tauri app ────────────────────────────────────────────────────
 echo "==> Building Tauri app..."
 cd "$TAURI_DIR"
 cargo tauri build $CARGO_FLAGS

@@ -31,7 +31,16 @@ async fn main() {
 
             log::info!("DB path: {}", db_path_str);
 
-            // ── 3. Spawn the Bun sidecar ──────────────────────────────────────
+            // ── 3. Resolve bundled web UI path ───────────────────────────────
+            let web_path = app
+                .path()
+                .resolve("web", tauri::path::BaseDirectory::Resource)
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_default();
+
+            log::info!("Web UI path: {}", web_path);
+
+            // ── 4. Spawn the Bun sidecar ──────────────────────────────────────
             let sidecar_cmd = app
                 .shell()
                 .sidecar("bun-server")
@@ -42,7 +51,8 @@ async fn main() {
                 .env("DB_PATH", &db_path_str)
                 .env("PORT", "3579")
                 .env("API_KEY", &api_key)
-                .env("NODE_ENV", "production");
+                .env("NODE_ENV", "production")
+                .env("WEB_PATH", &web_path);
 
             let (mut _rx, sidecar_child) = sidecar_cmd.spawn().map_err(|e| {
                 log::error!("Failed to spawn sidecar: {}", e);

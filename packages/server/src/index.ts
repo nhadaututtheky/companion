@@ -230,12 +230,13 @@ app.route("/", routes);
 // Serve the pre-built Next.js static export from packages/web/out/.
 // In dev mode the Next.js dev server runs separately on port 3580.
 
-// Resolve web UI: try next to executable (compiled), then source tree (dev)
+// Resolve web UI: WEB_PATH env (Tauri), next to executable, or source tree
 const WEB_OUT_CANDIDATES = [
+  process.env.WEB_PATH, // Tauri desktop: resolved resource path
   join(dirname(process.execPath), "web"), // compiled: <install>/web/
   join(import.meta.dir, "../../../packages/web/out"), // dev: source tree
-];
-const WEB_OUT_DIR = WEB_OUT_CANDIDATES.find((d) => existsSync(d)) ?? WEB_OUT_CANDIDATES[1];
+].filter(Boolean) as string[];
+const WEB_OUT_DIR = WEB_OUT_CANDIDATES.find((d) => existsSync(d)) ?? WEB_OUT_CANDIDATES[WEB_OUT_CANDIDATES.length - 1];
 const WEB_ENABLED = existsSync(WEB_OUT_DIR);
 
 if (WEB_ENABLED) {
