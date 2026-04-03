@@ -1,0 +1,7 @@
+{
+  "version": "0.7.0",
+  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.7.0/Companion_0.7.0_x64-setup.exe",
+  "signature": "untrusted comment: signature from minisign secret key\nRUR3rj77zL9RoYA6x/mWJZeGz2aVyjkfeIvoqf7PRT77SJsbw7vFhFVSn781QTp7ThMHQS2tyhCWClNl+pOP1giOLjuTFpljow0=\ntrusted comment: timestamp:1775220526\t4F/mdGj47++lxk+J4mBgbHHhGDvTYI4TUTCC/6knePGfCpu7xSlY4Ol/ZaUxQSQOJzsl4Udmc1ooLd4yZU7SAg==",
+  "notes": "## What's New in v0.7.0\n\n- RTK (Runtime Token Keeper) — CLI output compression with 10 strategies\n- Pro license gating — Free gets basic RTK, Pro gets full suite\n- Local AI Providers — Google AI Studio, Gemma 4\n- Bug fixes for ANSI strip, error aggregate, boilerplate strategies",
+  "pub_date": "2026-04-03T12:00:00Z"
+}

@@ -45,11 +45,11 @@
       "open": false
     },
     "updater": {
-      "pubkey": "",
+      "pubkey": "RWR3rj77zL9Roej/FcsyQ0xpETKcI3KCyxR2d/QPwAWHFWc1BzBbH7+Z",
       "endpoints": [
-        "https://companion.theio.vn/updates/{{target}}/{{arch}}/{{current_version}}"
+        "https://companion.theio.vn/updates/{{target}}.json"
       ],
-      "active": false
+      "active": true
     }
   },
   "bundle": {

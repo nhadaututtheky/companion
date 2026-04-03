@@ -5,8 +5,9 @@ mod server;
 mod tray;
 
 use std::sync::Arc;
-use tauri::{Manager, RunEvent};
+use tauri::{Manager, RunEvent, Emitter};
 use tauri_plugin_shell::ShellExt;
+use tauri_plugin_updater::UpdaterExt;
 
 #[tokio::main]
 async fn main() {
@@ -63,7 +64,7 @@ async fn main() {
             let child_arc = Arc::new(tokio::sync::Mutex::new(Some(sidecar_child)));
             app.manage(child_arc.clone());
 
-            // ── 4. Wait for server to be healthy, then show window ────────────
+            // ── 5. Wait for server to be healthy, then show window ────────────
             let app_handle = app.handle().clone();
             tokio::spawn(async move {
                 const MAX_ATTEMPTS: u32 = 30;
@@ -78,6 +79,41 @@ async fn main() {
                             .set_focus()
                             .unwrap_or_else(|e| log::warn!("Failed to focus window: {}", e));
                     }
+
+                    // ── 6. Check for updates in background ──────────────────
+                    let update_handle = app_handle.clone();
+                    tokio::spawn(async move {
+                        // Small delay so the UI loads first
+                        tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+                        let updater = match update_handle.updater() {
+                            Ok(u) => u,
+                            Err(e) => {
+                                log::warn!("Failed to create updater: {}", e);
+                                return;
+                            }
+                        };
+                        match updater.check().await {
+                            Ok(Some(update)) => {
+                                log::info!(
+                                    "Update available: v{} → v{}",
+                                    update.current_version,
+                                    update.version
+                                );
+                                // Emit event to frontend so it can show an update banner
+                                let _ = update_handle.emit("update-available", serde_json::json!({
+                                    "current": update.current_version,
+                                    "version": update.version,
+                                    "body": update.body.unwrap_or_default(),
+                                }));
+                            }
+                            Ok(None) => {
+                                log::info!("App is up to date");
+                            }
+                            Err(e) => {
+                                log::warn!("Update check failed: {}", e);
+                            }
+                        }
+                    });
                 } else {
                     log::error!("Bun server failed to start — showing error and quitting");
                     // Surface the error to the user via the webview before quitting
