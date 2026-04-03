@@ -63,7 +63,8 @@ jobs:
             librsvg2-dev \
             patchelf \
             libssl-dev \
-            libgtk-3-dev
+            libgtk-3-dev \
+            libfuse2
 
       # ── Rust ─────────────────────────────────────────────────────────────────
       - name: Setup Rust (stable)
