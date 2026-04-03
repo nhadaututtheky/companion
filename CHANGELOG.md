@@ -2,6 +2,22 @@
 
 All notable changes to Companion are documented here.
 
+## [0.7.0] - 2026-04-03
+
+### Added
+- **RTK (Runtime Token Keeper)** — CLI output compression pipeline with 10 strategies: ANSI strip, boilerplate removal, stack trace compression, error aggregation, test summary, diff summary, JSON depth limiter, blank collapse, deduplication, and truncation. Saves 30-60% tokens on tool outputs.
+- **RTK Intelligence Layer** — Cross-turn output cache (FNV-1a hashing), token budget allocator (aggressive/balanced/minimal/unlimited), per-strategy enable/disable from settings.
+- **RTK Dashboard** — Token savings card in session details showing tokens saved, estimated cost savings, and compression count with cache hit stats.
+- **RTK Settings Panel** — New "RTK" tab in Settings page with compression level selector and individual strategy toggles.
+- **Local AI Providers** — Google AI Studio preset (Gemma 4 27B/12B, Gemini models), Gemma 4 added to Ollama and Groq presets.
+
+### Fixed
+- ANSI strip: removed `|/-\` from progress/spinner regex to prevent false-positive deletion of markdown tables and log lines
+- Error aggregate: preserved line ordering (interleave non-error lines at original positions)
+- Boilerplate: use replacements map instead of mutating input array mid-loop
+- RTK config: internal try/catch so DB errors don't crash server startup
+- Cache cleanup on all session exit paths (sweep, scheduled timer, kill)
+
 ## [0.6.0] - 2026-04-03
 
 ### Added
