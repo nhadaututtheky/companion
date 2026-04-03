@@ -221,6 +221,35 @@ export type SessionStatus =
   | "ended"
   | "error";
 
+// ─── Session State Machine ────────────────────────────────────────────────
+
+/** Valid transitions map — defines which status transitions are allowed */
+export const VALID_TRANSITIONS: Record<SessionStatus, SessionStatus[]> = {
+  starting: ["connected", "ended", "error"],
+  connected: ["idle", "ended", "error"],
+  idle: ["busy", "compacting", "plan_mode", "ended", "error"],
+  busy: ["idle", "compacting", "plan_mode", "ended", "error"],
+  compacting: ["idle", "busy", "ended", "error"],
+  plan_mode: ["idle", "busy", "ended", "error"],
+  ended: [], // terminal state
+  error: ["starting", "ended"], // can retry or finalize
+};
+
+/** Guard: can this session accept a new user message? */
+export function canAcceptUserMessage(status: SessionStatus): boolean {
+  return status === "idle" || status === "plan_mode";
+}
+
+/** Guard: is the session in a terminal state? */
+export function isTerminal(status: SessionStatus): boolean {
+  return status === "ended" || status === "error";
+}
+
+/** Guard: is the session idle (not processing anything)? */
+export function isIdle(status: SessionStatus): boolean {
+  return status === "idle" || status === "plan_mode";
+}
+
 export type CompactMode = "manual" | "smart" | "aggressive";
 
 export interface SessionState {

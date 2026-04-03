@@ -37,6 +37,7 @@ import { VirtualScreen } from "./virtual-screen.js";
 import { scanPrompt, isScanEnabled } from "./prompt-scanner.js";
 import { broadcastToSpectators, disconnectAllSpectators } from "./spectator-bridge.js";
 import { revokeAllForSession } from "./share-manager.js";
+import { eventBus } from "./event-bus.js";
 import {
   createActiveSession,
   getActiveSession,
@@ -69,6 +70,7 @@ import type {
   PermissionRequest,
   HookEvent,
   PreToolUseResponse,
+  isTerminal as isTerminalStatus,
 } from "@companion/shared";
 import {
   SESSION_IDLE_TIMEOUT_MS,
@@ -367,6 +369,12 @@ export class WsBridge {
 
     // Create in-memory session
     const session = createActiveSession(sessionId, initialState);
+
+    // Emit session created event
+    eventBus.emit("session:created", {
+      sessionId,
+      projectSlug: opts.projectSlug,
+    });
 
     // Store identity prompt on session if provided
     if (opts.identityPrompt) {
@@ -1705,6 +1713,13 @@ export class WsBridge {
     disconnectAllSpectators(session.id, "Session ended");
     revokeAllForSession(session.id);
 
+    // Emit session ended event
+    eventBus.emit("session:ended", {
+      sessionId: session.id,
+      exitCode,
+      reason,
+    });
+
     // Auto-summarize only for sessions that actually ran
     if (hadTurns) {
       void summarizeSession(session.id);
@@ -2291,6 +2306,18 @@ export class WsBridge {
 
   private updateStatus(session: ActiveSession, status: SessionStatus): void {
     if (session.state.status === status) return;
+
+    const from = session.state.status;
+    const valid = session.machine.transition(status);
+    if (!valid) {
+      // State machine rejected — still force-apply for backward compat but log warning
+      log.warn("Forced invalid status transition", {
+        sessionId: session.id,
+        from,
+        to: status,
+      });
+    }
+
     session.state = { ...session.state, status };
 
     this.broadcastToAll(session, {
@@ -2299,6 +2326,13 @@ export class WsBridge {
     });
 
     this.onStatusChange?.(session.id, status);
+
+    // Emit event for decoupled listeners
+    eventBus.emit("session:phase-changed", {
+      sessionId: session.id,
+      from,
+      to: status,
+    });
   }
 
   /** Get the base URL for the hook receiver endpoint */

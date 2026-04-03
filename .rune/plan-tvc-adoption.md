@@ -8,7 +8,7 @@ grouped into 5 phases ordered by dependency chain and effort.
 
 | # | Name | Status | Plan File | Summary |
 |---|------|--------|-----------|---------|
-| 1 | Foundation: State Machine + Event Bus | ⬚ Pending | plan-tvc-adoption-phase1.md | Formal session phases, typed event bus |
+| 1 | Foundation: State Machine + Event Bus | ✅ Done | plan-tvc-adoption-phase1.md | Formal session phases, typed event bus |
 | 2 | Quick Wins: Names + Prompts | ⬚ Pending | plan-tvc-adoption-phase2.md | Auto session names, saved prompt templates |
 | 3 | Safety: Permission Pre-filter | ⬚ Pending | plan-tvc-adoption-phase3.md | Auto-approve safe tools, auto-deny dangerous |
 | 4 | Git: Worktrees + PR Panel | ⬚ Pending | plan-tvc-adoption-phase4.md | Isolated worktrees, GitHub PR status |
