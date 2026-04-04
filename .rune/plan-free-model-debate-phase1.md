@@ -4,11 +4,11 @@
 Server-side registry of AI providers with pre-configured free endpoints. Dynamic model list API for the web UI.
 
 ## Tasks
-- [ ] Create `provider-registry.ts` — catalog of known providers with metadata
-- [ ] Add free provider configs (no API key needed): Gemini free, Groq free, HuggingFace free
-- [ ] Add `/api/models` endpoint — returns available models grouped by provider (free vs configured)
-- [ ] Add `/api/models/health` endpoint — check which free endpoints are reachable
-- [ ] Extend settings schema for multi-provider config (base URL, API key, enabled flag per provider)
+- [x] Create `provider-registry.ts` — catalog of known providers with metadata
+- [x] Add free provider configs (no API key needed): Gemini free, Groq free, HuggingFace free
+- [x] Add `/api/models` endpoint — returns available models grouped by provider (free vs configured)
+- [x] Add `/api/models/health` endpoint — check which free endpoints are reachable
+- [x] Extend settings schema for multi-provider config (base URL, API key, enabled flag per provider)
 
 ## Provider Catalog Schema
 ```typescript
@@ -46,11 +46,11 @@ interface ModelEntry {
 | HuggingFace | api-inference.huggingface.co/v1 | various open models | 1000 req/day |
 
 ## Acceptance Criteria
-- [ ] `/api/models` returns list of free + configured models
-- [ ] Free providers work without any API key configuration
-- [ ] Health check detects unreachable providers
-- [ ] Settings page can enable/disable providers
-- [ ] ai-client.ts routes to correct provider based on model ID
+- [x] `/api/models` returns list of free + configured models
+- [x] Free providers work without any API key configuration
+- [x] Health check detects unreachable providers
+- [x] Settings page can enable/disable providers (toggle endpoint ready)
+- [x] ai-client.ts routes to correct provider based on model ID (via resolveModelProvider)
 
 ## Files Touched
 - `packages/server/src/services/provider-registry.ts` — new (~200 LOC)

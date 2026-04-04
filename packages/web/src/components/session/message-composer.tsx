@@ -11,6 +11,7 @@ import type { QuickAction } from "@/lib/stores/composer-store";
 import { AttachmentChip } from "./attachment-chip";
 import { QuickActions } from "./quick-actions";
 import { SavedPromptsPicker } from "./saved-prompts-picker";
+import { ModelBar, type ModelInfo } from "./model-bar";
 import { api } from "@/lib/api-client";
 
 interface MessageComposerProps {
@@ -23,6 +24,14 @@ interface MessageComposerProps {
   projectSlug?: string;
   /** Compact mode for split-pane layouts */
   compact?: boolean;
+  /** Current session model for model bar */
+  sessionModel?: string;
+  /** Debate participants */
+  debateParticipants?: ModelInfo[];
+  /** Add model to debate */
+  onAddDebateParticipant?: (model: ModelInfo) => void;
+  /** Remove model from debate */
+  onRemoveDebateParticipant?: (modelId: string) => void;
 }
 
 export function MessageComposer({
@@ -32,6 +41,10 @@ export function MessageComposer({
   disabled = false,
   placeholder = "Message Claude...",
   projectSlug,
+  sessionModel,
+  debateParticipants = [],
+  onAddDebateParticipant,
+  onRemoveDebateParticipant,
 }: MessageComposerProps) {
   const [text, setText] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
@@ -289,11 +302,20 @@ export function MessageComposer({
             });
           }}
         />
-        <p className="flex-1 text-center text-xs">
+        {sessionModel && onAddDebateParticipant && onRemoveDebateParticipant && (
+          <ModelBar
+            mainModel={sessionModel}
+            debateParticipants={debateParticipants}
+            onAddParticipant={onAddDebateParticipant}
+            onRemoveParticipant={onRemoveDebateParticipant}
+            disabled={disabled}
+          />
+        )}
+        <p className="flex-1 text-center text-xs" style={{ color: "var(--color-text-muted)" }}>
           {listening ? (
             <span style={{ color: "#EA4335" }}>Recording... click mic to stop</span>
           ) : (
-            <>Enter or Ctrl+Enter to send · Shift+Enter for newline</>
+            <>Enter · Shift+Enter newline</>
           )}
         </p>
       </div>

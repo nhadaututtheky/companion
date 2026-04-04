@@ -1,5 +1,9 @@
 # Companion
 
+## Feature Registry
+
+See `FEATURE_REGISTRY.md` — single source of truth for all ~100 features, key files, relationships, and domain boundaries. **Check before building** to avoid overlap or scattered logic.
+
 ---
 
 ## XLabs — Autonomous Agent Platform

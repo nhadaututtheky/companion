@@ -14,6 +14,7 @@
 
 import { createLogger } from "../logger.js";
 import { getSetting } from "./settings-helpers.js";
+import { resolveModelProvider } from "./provider-registry.js";
 
 const log = createLogger("ai-client");
 
@@ -248,7 +249,28 @@ export async function callAIWithModel(opts: {
     return callOpenAICompatible(config, opts.model, opts);
   }
 
-  // No override — use global config with explicit model
+  // Try provider registry — resolves free providers (Gemini, Groq, HuggingFace)
+  const resolved = resolveModelProvider(opts.model);
+  if (resolved) {
+    const config: AIConfig = {
+      provider: resolved.provider.format === "anthropic" ? "anthropic" : "openai-compatible",
+      baseUrl: resolved.provider.baseUrl,
+      apiKey: resolved.provider.apiKey ?? "",
+      defaultModel: opts.model,
+      fastModel: opts.model,
+      strongModel: opts.model,
+    };
+    if (config.provider === "anthropic") {
+      return callAnthropic(config, opts.model, opts);
+    }
+    return callOpenAICompatible(config, opts.model, opts);
+  }
+
+  // Fallback — use global config with explicit model
+  // Warn: the model may not be compatible with the global provider
+  log.warn("Model not found in provider registry, falling back to global config", {
+    model: opts.model,
+  });
   const config = getConfig();
   if (config.provider === "anthropic") {
     return callAnthropic(config, opts.model, opts);

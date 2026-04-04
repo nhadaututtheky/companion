@@ -1074,6 +1074,49 @@ export const api = {
   },
 
   // Saved Prompts (reusable prompt templates)
+  models: {
+    list: () =>
+      request<{
+        success: boolean;
+        data: {
+          free: Array<{
+            provider: { id: string; name: string; type: string; enabled: boolean; healthStatus?: string };
+            models: Array<{
+              id: string;
+              name: string;
+              provider: string;
+              contextWindow: number;
+              free: boolean;
+              capabilities: { toolUse: boolean; streaming: boolean; vision: boolean; reasoning: boolean };
+            }>;
+          }>;
+          configured: Array<{
+            provider: { id: string; name: string; type: string; enabled: boolean; healthStatus?: string };
+            models: Array<{
+              id: string;
+              name: string;
+              provider: string;
+              contextWindow: number;
+              free: boolean;
+              capabilities: { toolUse: boolean; streaming: boolean; vision: boolean; reasoning: boolean };
+            }>;
+          }>;
+        };
+      }>("/api/models"),
+
+    health: () =>
+      request<{
+        success: boolean;
+        data: Array<{ id: string; status: string; latencyMs: number }>;
+      }>("/api/models/health"),
+
+    toggleProvider: (id: string, enabled: boolean) =>
+      request<{ success: boolean }>(`/api/models/providers/${encodeURIComponent(id)}/toggle`, {
+        method: "POST",
+        body: JSON.stringify({ enabled }),
+      }),
+  },
+
   savedPrompts: {
     list: (project?: string) =>
       request<{

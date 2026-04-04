@@ -4,11 +4,11 @@
 Compact bottom bar below chat composer showing current model + free model picker for debate tag-in.
 
 ## Tasks
-- [ ] Create `ModelBar` component — bottom bar below MessageComposer
-- [ ] Create `ModelDropdown` component — shows free + configured models grouped by provider
-- [ ] Add "tag into debate" action — click free model → starts/joins debate with that model
-- [ ] Add active debate participants indicator (show tagged models as chips)
-- [ ] Wire `/api/models` endpoint to populate dropdown dynamically
+- [x] Create `ModelBar` component — bottom bar below MessageComposer
+- [x] Create `ModelDropdown` component — shows free + configured models grouped by provider
+- [x] Add "tag into debate" action — click free model → starts/joins debate with that model
+- [x] Add active debate participants indicator (show tagged models as chips)
+- [x] Wire `/api/models` endpoint to populate dropdown dynamically
 - [ ] Add model switching for main session (if non-Claude provider configured)
 
 ## UI Layout
@@ -46,11 +46,11 @@ SessionView
 ```
 
 ## Acceptance Criteria
-- [ ] Bottom bar shows current session model
-- [ ] Dropdown shows available free models with "Free" badge
-- [ ] Clicking a free model tags it as debate participant (chip appears)
-- [ ] Clicking X on chip removes model from debate
-- [ ] Dropdown groups models by provider with section headers
+- [x] Bottom bar shows current session model
+- [x] Dropdown shows available free models with "Free" badge
+- [x] Clicking a free model tags it as debate participant (chip appears)
+- [x] Clicking X on chip removes model from debate
+- [x] Dropdown groups models by provider with section headers
 - [ ] "Connect provider" link navigates to Provider settings page
 - [ ] Works on mobile (dropdown is responsive)
 

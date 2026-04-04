@@ -26,6 +26,7 @@ import { ThinkingModeSelector } from "@/components/session/thinking-mode-selecto
 import { usePinnedMessagesStore } from "@/lib/stores/pinned-messages-store";
 import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
+import { useDebateStore } from "@/lib/stores/debate-store";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 
@@ -172,6 +173,9 @@ export function SessionPageClient({ params }: PageProps) {
     setThinkingMode,
   } = useSession(id);
   const session = useSessionStore((s) => s.sessions[id]);
+  const debateParticipants = useDebateStore((s) => s.getParticipants(id));
+  const addDebateParticipant = useDebateStore((s) => s.addParticipant);
+  const removeDebateParticipant = useDebateStore((s) => s.removeParticipant);
   const [pinnedDrawerOpen, setPinnedDrawerOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [promptHistoryOpen, setPromptHistoryOpen] = useState(false);
@@ -421,6 +425,10 @@ export function SessionPageClient({ params }: PageProps) {
             onStop={handleStop}
             isRunning={session?.status === "running"}
             projectSlug={session?.projectSlug ?? undefined}
+            sessionModel={session?.model}
+            debateParticipants={debateParticipants}
+            onAddDebateParticipant={(model) => addDebateParticipant(id, model)}
+            onRemoveDebateParticipant={(modelId) => removeDebateParticipant(id, modelId)}
           />
         </div>
 
