@@ -45,7 +45,7 @@
       "open": false
     },
     "updater": {
-      "pubkey": "RWR3rj77zL9Roej/FcsyQ0xpETKcI3KCyxR2d/QPwAWHFWc1BzBbH7+Z",
+      "pubkey": "RWRm07SGSW/Heg1YwqCw3bbdBnHELge0TlwqfpmUU1VGeMXgaN53j6hP",
       "endpoints": [
         "https://companion.theio.vn/updates/{{target}}.json"
       ],
@@ -55,7 +55,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "createUpdaterArtifacts": false,
+    "createUpdaterArtifacts": "v1Compatible",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
