@@ -23,6 +23,8 @@ import { useRouter } from "next/navigation";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { api } from "@/lib/api-client";
+import { BUILTIN_THEMES } from "@companion/shared";
+import { applyTheme, clearThemeOverrides, getStoredThemeId } from "@/lib/theme-provider";
 
 // ── Recent actions helpers ────────────────────────────────────────────────────
 
@@ -128,6 +130,15 @@ export function CommandPalette() {
     toggleTheme();
   };
 
+  const handleSelectTheme = (themeId: string, themeName: string) => {
+    if (themeId === "default") {
+      clearThemeOverrides();
+    } else {
+      applyTheme(themeId, theme === "dark");
+    }
+    close(`Theme: ${themeName}`);
+  };
+
   const handleGoSettings = () => {
     close("Go to Settings");
     router.push("/settings");
@@ -170,6 +181,9 @@ export function CommandPalette() {
     "Stop All Sessions": handleStopAllSessions,
     "Toggle Theme (→ Dark)": handleToggleTheme,
     "Toggle Theme (→ Light)": handleToggleTheme,
+    ...Object.fromEntries(
+      BUILTIN_THEMES.map((t) => [`Theme: ${t.name}`, () => handleSelectTheme(t.id, t.name)]),
+    ),
     "Go to Settings": handleGoSettings,
     "Go to Dashboard": handleGoDashboard,
     "Go to Projects": handleGoProjects,
@@ -468,8 +482,8 @@ export function CommandPalette() {
               </Command.Item>
             </Command.Group>
 
-            {/* Actions group */}
-            <Command.Group heading="Actions" style={groupHeadingStyle}>
+            {/* Theme group */}
+            <Command.Group heading="Theme" style={groupHeadingStyle}>
               <Command.Item
                 value="toggle theme dark light mode appearance"
                 onSelect={handleToggleTheme}
@@ -482,11 +496,58 @@ export function CommandPalette() {
                     <Sun size={14} aria-hidden="true" />
                   )}
                   <span style={labelStyle}>
-                    Toggle Theme — currently {theme === "light" ? "Light" : "Dark"}
+                    {theme === "light" ? "Switch to Dark" : "Switch to Light"}
                   </span>
                 </div>
               </Command.Item>
 
+              {BUILTIN_THEMES.map((t) => {
+                const colors = theme === "dark" ? t.dark : t.light;
+                const isActive = getStoredThemeId() === t.id;
+                return (
+                  <Command.Item
+                    key={t.id}
+                    value={`theme ${t.name} ${t.id} ${t.author ?? ""} color scheme`}
+                    onSelect={() => handleSelectTheme(t.id, t.name)}
+                    style={commandItemStyle(isActive)}
+                  >
+                    <div style={itemInnerStyle}>
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          display: "flex",
+                          gap: "2px",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {[colors.bgBase, colors.accent, colors.success, colors.danger].map(
+                          (c, i) => (
+                            <span
+                              key={i}
+                              style={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: "50%",
+                                background: c,
+                                border: "1px solid var(--color-border)",
+                              }}
+                            />
+                          ),
+                        )}
+                      </span>
+                      <span style={labelStyle}>{t.name}</span>
+                      {t.author && (
+                        <span style={{ ...metaStyle, marginLeft: 4 }}>{t.author}</span>
+                      )}
+                    </div>
+                    {isActive && <ActiveBadge active />}
+                  </Command.Item>
+                );
+              })}
+            </Command.Group>
+
+            {/* Actions group */}
+            <Command.Group heading="Actions" style={groupHeadingStyle}>
               <Command.Item
                 value="search in files find text"
                 onSelect={() => handleTogglePanel("search", "Toggle Search")}
