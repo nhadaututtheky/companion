@@ -697,9 +697,16 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       );
     }
     const { label } = c.req.valid("json");
-    const content = session.virtualScreen.toString();
+    // Build snapshot content from message history
+    const content = session.messageHistory
+      .map((m) => {
+        const msg = m as { type?: string; content?: string };
+        const role = msg.type === "user_message" ? "user" : "assistant";
+        return `[${role}]\n${msg.content ?? ""}`;
+      })
+      .join("\n\n");
     if (!content.trim()) {
-      return c.json({ success: false, error: "Screen buffer is empty" } satisfies ApiResponse, 400);
+      return c.json({ success: false, error: "No messages to snapshot" } satisfies ApiResponse, 400);
     }
 
     try {

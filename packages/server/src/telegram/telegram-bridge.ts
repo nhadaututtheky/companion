@@ -23,7 +23,6 @@ import { registerConfigCommands } from "./commands/config.js";
 import { registerPanelCommands } from "./commands/panel.js";
 import { registerUtilityCommands } from "./commands/utility.js";
 import { registerTemplateCommands } from "./commands/template.js";
-import { registerAntiCommands } from "./commands/anti.js";
 import { createLogger } from "../logger.js";
 import { storeMessage } from "../services/session-store.js";
 import { getProject, listProjects } from "../services/project-profiles.js";
@@ -199,8 +198,6 @@ export class TelegramBridge {
     registerPanelCommands(this);
     registerUtilityCommands(this);
     registerTemplateCommands(this);
-    registerAntiCommands(this);
-
     // Handle text messages (not commands)
     this.bot.on("message:text", async (ctx) => {
       if (ctx.message.text.startsWith("/")) return; // Skip unregistered commands
@@ -777,27 +774,7 @@ export class TelegramBridge {
     }
   }
 
-  // ── Anti mode state ──────────────────────────────────────────────────
-
-  private antiModeKeys = new Set<string>();
-
-  /** Check if anti mode is active for this chat+topic */
-  isAntiMode(chatId: number, topicId: number): boolean {
-    return this.antiModeKeys.has(`${chatId}:${topicId}`);
-  }
-
-  /** Toggle anti mode for this chat+topic */
-  toggleAntiMode(chatId: number, topicId: number): boolean {
-    const key = `${chatId}:${topicId}`;
-    if (this.antiModeKeys.has(key)) {
-      this.antiModeKeys.delete(key);
-      return false;
-    }
-    this.antiModeKeys.add(key);
-    return true;
-  }
-
-  // ── Convenience messaging (used by watchers + anti commands) ────────
+  // ── Convenience messaging ───────────────────────────────────────────
 
   /** Send HTML message to a chat (with optional topic). Returns message ID. */
   async sendToChat(chatId: number, text: string, topicId?: number): Promise<number> {
@@ -1256,30 +1233,6 @@ export class TelegramBridge {
 
     if (!text.trim()) return;
 
-    // Anti mode: route messages to IDE via CDP (anti-role bots always, or when anti mode is toggled)
-    if (this.config.role === "anti" || this.isAntiMode(chatId, topicId ?? 0)) {
-      const antiCdp = await import("../services/anti-cdp.js");
-      const { startChatWatcher, isChatWatcherRunning } =
-        await import("../services/anti-chat-watcher.js");
-
-      // Auto-start chat watcher so IDE responses come back to Telegram
-      if (!isChatWatcherRunning()) {
-        startChatWatcher(this, chatId, topicId ?? 0);
-      }
-
-      const result = await antiCdp.sendChatMessage(text);
-      if (result.success) {
-        // React with 👀 then ✅ on success
-        try {
-          await ctx.react("👍");
-        } catch {
-          /* ignore */
-        }
-      } else {
-        await this.sendToChat(chatId, `⚠️ ${result.detail}`, topicId);
-      }
-      return;
-    }
 
     const mapping = this.getMapping(chatId, topicId);
 

@@ -596,58 +596,6 @@ export const api = {
       request<{ success: boolean }>(`/api/workflows/${id}/cancel`, { method: "POST" }),
   },
 
-  // Database browser
-  database: {
-    connections: () =>
-      request<{
-        success: boolean;
-        data: Array<{
-          id: string;
-          name: string;
-          type: string;
-          connectionString: string;
-          projectSlug: string | null;
-          createdAt: string;
-        }>;
-      }>("/api/db/connections"),
-    addConnection: (body: {
-      name: string;
-      type: "sqlite";
-      connectionString: string;
-      projectSlug?: string;
-    }) =>
-      request<{ success: boolean; data: { id: string } }>("/api/db/connections", {
-        method: "POST",
-        body: JSON.stringify(body),
-      }),
-    removeConnection: (id: string) =>
-      request<{ success: boolean }>(`/api/db/connections/${id}`, { method: "DELETE" }),
-    tables: (id: string) =>
-      request<{ success: boolean; data: Array<{ name: string; type: string }> }>(
-        `/api/db/tables/${id}`,
-      ),
-    schema: (id: string, table: string) =>
-      request<{
-        success: boolean;
-        data: Array<{
-          cid: number;
-          name: string;
-          type: string;
-          notnull: number;
-          dflt_value: string | null;
-          pk: number;
-        }>;
-      }>(`/api/db/schema/${id}/${encodeURIComponent(table)}`),
-    query: (connectionId: string, query: string, params?: unknown[]) =>
-      request<{
-        success: boolean;
-        data: { columns: string[]; rows: unknown[][]; rowCount: number; truncated: boolean };
-      }>("/api/db/query", {
-        method: "POST",
-        body: JSON.stringify({ connectionId, query, params }),
-      }),
-  },
-
   // Error logs
   errors: {
     list: (opts?: { source?: string; sessionId?: string; limit?: number; offset?: number }) => {
@@ -1123,5 +1071,51 @@ export const api = {
           startedAt: number;
         }>;
       }>(`/api/schedules/${encodeURIComponent(id)}/runs?limit=${limit}`),
+  },
+
+  // Saved Prompts (reusable prompt templates)
+  savedPrompts: {
+    list: (project?: string) =>
+      request<{
+        success: boolean;
+        data: Array<{
+          id: string;
+          name: string;
+          content: string;
+          projectSlug: string | null;
+          tags: string[];
+          sortOrder: number;
+          createdAt: string;
+          updatedAt: string;
+        }>;
+      }>(`/api/saved-prompts${project ? `?project=${encodeURIComponent(project)}` : ""}`),
+
+    create: (body: {
+      name: string;
+      content: string;
+      projectSlug?: string | null;
+      tags?: string[];
+    }) =>
+      request<{ success: boolean; data: { id: string } }>("/api/saved-prompts", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+
+    update: (id: string, body: {
+      name?: string;
+      content?: string;
+      projectSlug?: string | null;
+      tags?: string[];
+      sortOrder?: number;
+    }) =>
+      request<{ success: boolean }>(`/api/saved-prompts/${encodeURIComponent(id)}`, {
+        method: "PUT",
+        body: JSON.stringify(body),
+      }),
+
+    delete: (id: string) =>
+      request<{ success: boolean }>(`/api/saved-prompts/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      }),
   },
 };

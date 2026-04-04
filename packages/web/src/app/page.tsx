@@ -16,7 +16,6 @@ import { BrowserPreviewPanel } from "@/components/panels/browser-preview-panel";
 import { SearchPanel } from "@/components/panels/search-panel";
 import { TerminalPanel } from "@/components/panels/terminal-panel";
 import { StatsPanel } from "@/components/panels/stats-panel";
-import { SessionCompareModal } from "@/components/session/session-compare-modal";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useNotificationPermission } from "@/hooks/use-notifications";
@@ -311,9 +310,6 @@ export default function DashboardPage() {
   const browserPreviewUrl = useUiStore((s) => s.browserPreviewUrl);
   const setRightPanelMode = useUiStore((s) => s.setRightPanelMode);
   const setRightPanelPath = useUiStore((s) => s.setRightPanelPath);
-  const compareModalOpen = useUiStore((s) => s.compareModalOpen);
-  const compareSessionIds = useUiStore((s) => s.compareSessionIds);
-  const setCompareModalOpen = useUiStore((s) => s.setCompareModalOpen);
   const [resumableSessions, setResumableSessions] = useState<ResumableSession[]>([]);
   const [resumeBannerDismissed, setResumeBannerDismissed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -567,16 +563,6 @@ export default function DashboardPage() {
 
       {/* New Session modal (Phase 4) */}
       <NewSessionModal open={newSessionOpen} onClose={handleCloseNewSession} />
-
-      {/* Session Compare modal */}
-      {compareModalOpen && (
-        <SessionCompareModal
-          sessions={sessions}
-          initialLeft={compareSessionIds[0] ?? undefined}
-          initialRight={compareSessionIds[1] ?? undefined}
-          onClose={() => setCompareModalOpen(false)}
-        />
-      )}
 
       <Header onMenuToggle={() => setMobileSidebarOpen(true)} />
 

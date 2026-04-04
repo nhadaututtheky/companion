@@ -93,4 +93,8 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0022_add_performance_indexes.sql",
     sql: "-- Composite index for ordered message queries by session\nCREATE INDEX IF NOT EXISTS idx_session_messages_session_ts ON session_messages(session_id, timestamp);\n--> statement-breakpoint\n-- Composite index for daily cost lookups by date + project\nCREATE UNIQUE INDEX IF NOT EXISTS idx_daily_costs_date_project ON daily_costs(date, project_slug);\n--> statement-breakpoint\n-- Composite index for telegram mapping lookups by chat + project\nCREATE INDEX IF NOT EXISTS idx_telegram_mappings_chat_project ON telegram_session_mappings(chat_id, project_slug);\n--> statement-breakpoint\n-- Index for session status + ended_at (resumable session queries)\nCREATE INDEX IF NOT EXISTS idx_sessions_status_ended ON sessions(status, ended_at);\n",
   },
+  {
+    name: "0023_saved_prompts.sql",
+    sql: "-- Saved prompts: reusable prompt templates (global or project-scoped)\nCREATE TABLE IF NOT EXISTS saved_prompts (\n  id TEXT PRIMARY KEY,\n  name TEXT NOT NULL,\n  content TEXT NOT NULL,\n  project_slug TEXT,\n  tags TEXT DEFAULT '[]',\n  sort_order INTEGER DEFAULT 0,\n  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),\n  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)\n);\n\nCREATE INDEX IF NOT EXISTS idx_saved_prompts_project ON saved_prompts(project_slug);\n",
+  },
 ];

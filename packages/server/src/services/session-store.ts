@@ -10,7 +10,6 @@ import { sessions, sessionMessages, telegramSessionMappings, dailyCosts } from "
 import { createLogger } from "../logger.js";
 import { generateShortId } from "./short-id.js";
 import { DebouncedWriter } from "./debounced-writer.js";
-import { VirtualScreen } from "./virtual-screen.js";
 import { SessionStateMachine } from "./session-state-machine.js";
 import type {
   SessionState,
@@ -67,10 +66,10 @@ export interface ActiveSession {
   webIntelInjected?: Set<string>;
   /** Pending CodeGraph context hint to prepend to next user message */
   pendingCodeGraphHint?: string;
-  /** Virtual screen for terminal output reconstruction */
-  virtualScreen: VirtualScreen;
   /** State machine for validated status transitions */
   machine: SessionStateMachine;
+  /** Whether auto session name has been generated (prevent re-triggering) */
+  nameGenerated?: boolean;
 }
 
 /** Max number of messages to keep in memory per session (FIFO eviction) */
@@ -115,7 +114,6 @@ export function createActiveSession(id: string, initialState: SessionState): Act
     pid: null,
     cliSessionId: null,
     extensionSend: null,
-    virtualScreen: new VirtualScreen(),
     machine: new SessionStateMachine(id, initialState.status),
   };
 

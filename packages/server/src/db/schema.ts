@@ -467,19 +467,6 @@ export const workflowTemplates = sqliteTable("workflow_templates", {
     .$defaultFn(() => new Date()),
 });
 
-// ─── Database Browser Connections ────────────────────────────────────────────
-
-export const dbConnections = sqliteTable("db_connections", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  type: text("type").notNull(), // 'sqlite'
-  connectionString: text("connection_string").notNull(), // file path for SQLite
-  projectSlug: text("project_slug"),
-  createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .notNull()
-    .$defaultFn(() => new Date()),
-});
-
 // ─── Schedules ──────────────────────────────────────────────────────────────
 
 export const schedules = sqliteTable(
@@ -589,4 +576,25 @@ export const errorLogs = sqliteTable(
     index("idx_error_logs_source").on(table.source),
     index("idx_error_logs_session").on(table.sessionId),
   ],
+);
+
+// ── Saved Prompts ──────────────────────────────────────────────────────────
+
+export const savedPrompts = sqliteTable(
+  "saved_prompts",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    content: text("content").notNull(),
+    projectSlug: text("project_slug"),
+    tags: text("tags", { mode: "json" }).$type<string[]>().default([]),
+    sortOrder: integer("sort_order").default(0),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [index("idx_saved_prompts_project").on(table.projectSlug)],
 );

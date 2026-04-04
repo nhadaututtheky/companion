@@ -33,11 +33,11 @@ import {
   getCodeGraphConfig,
 } from "../codegraph/agent-context-provider.js";
 import { isGraphReady } from "../codegraph/index.js";
-import { VirtualScreen } from "./virtual-screen.js";
 import { scanPrompt, isScanEnabled } from "./prompt-scanner.js";
 import { broadcastToSpectators, disconnectAllSpectators } from "./spectator-bridge.js";
 import { revokeAllForSession } from "./share-manager.js";
 import { eventBus } from "./event-bus.js";
+import { generateSessionName } from "./session-namer.js";
 import {
   createActiveSession,
   getActiveSession,
@@ -1099,22 +1099,6 @@ export class WsBridge {
   }
 
   private handleAssistant(session: ActiveSession, msg: CLIAssistantMessage): void {
-    // Feed tool_use summaries into virtual screen for snapshot
-    if (msg.message?.content) {
-      for (const block of msg.message.content) {
-        if (block.type === "tool_use") {
-          const input = block.input as Record<string, string>;
-          const summary = input?.file_path ?? input?.command?.slice(0, 80) ?? "";
-          session.virtualScreen.write(`[tool] ${block.name}${summary ? ` ${summary}` : ""}\n`);
-        } else if (block.type === "tool_result" && typeof block.content === "string") {
-          const preview = VirtualScreen.sanitize(block.content).slice(0, 200);
-          if (preview.trim()) {
-            session.virtualScreen.write(`[result] ${preview}\n`);
-          }
-        }
-      }
-    }
-
     // Track file operations from tool_use blocks
     if (msg.message?.content) {
       for (const block of msg.message.content) {
@@ -1251,9 +1235,6 @@ export class WsBridge {
         .join("\n");
 
       if (textContent) {
-        // Feed readable text into virtual screen for snapshot capture
-        session.virtualScreen.write(`\n[assistant]\n${textContent}\n`);
-
         storeMessage({
           id: msg.message.id ?? randomUUID(),
           sessionId: session.id,
@@ -1907,11 +1888,6 @@ export class WsBridge {
       }
     }
 
-    // Feed user message into virtual screen for snapshot
-    session.virtualScreen.write(
-      `\n[user${source && source !== "web" ? ` via ${source}` : ""}]\n${content}\n`,
-    );
-
     // Record in history
     const historyMsg: BrowserIncomingMessage = {
       type: "user_message",
@@ -1932,6 +1908,19 @@ export class WsBridge {
       content,
       source: (source ?? "web") as "telegram" | "web" | "api" | "agent" | "system",
     });
+
+    // Auto-generate session name from first user message
+    if (!session.state.name && !session.nameGenerated) {
+      session.nameGenerated = true;
+      void generateSessionName(content).then((name) => {
+        session.state = { ...session.state, name };
+        persistSession(session);
+        this.broadcastToSubscribers(session, {
+          type: "session_update",
+          session: { name },
+        });
+      });
+    }
 
     // Route @mentions to target sessions
     if (session.state.short_id && source !== "mention" && source !== "debate") {

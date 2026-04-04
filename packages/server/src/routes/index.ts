@@ -16,11 +16,11 @@ import { hookRoutes } from "./hooks.js";
 import { shareRoutes, publicShareRoutes } from "./share.js";
 import { promptRoutes } from "./prompts.js";
 import { errorRoutes } from "./errors.js";
-import { databaseRoutes } from "./database.js";
 import { workflowTemplateRoutes } from "./workflow-templates.js";
 import { workflowRoutes } from "./workflows.js";
 import { mcpConfigRoutes } from "./mcp-config.js";
 import { scheduleRoutes } from "./schedules.js";
+import { savedPromptRoutes } from "./saved-prompts.js";
 import { initWorkflowEngine } from "../services/workflow-engine.js";
 import { apiKeyAuth } from "../middleware/auth.js";
 import { createRateLimit } from "../middleware/rate-limit.js";
@@ -93,25 +93,14 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   protectedApi.route("/", shareRoutes);
   protectedApi.route("/prompts", promptRoutes(bridge));
   protectedApi.route("/errors", errorRoutes);
-  protectedApi.route("/db", databaseRoutes);
   protectedApi.route("/workflow-templates", workflowTemplateRoutes);
   protectedApi.route("/workflows", workflowRoutes(bridge));
   protectedApi.route("/mcp-config", mcpConfigRoutes);
   protectedApi.route("/schedules", scheduleRoutes(bridge));
+  protectedApi.route("/saved-prompts", savedPromptRoutes);
 
   // Initialize workflow engine with bridge reference
   initWorkflowEngine(bridge);
-
-  // Anti IDE CDP status
-  protectedApi.get("/anti/status", async (c) => {
-    try {
-      const antiCdp = await import("../services/anti-cdp.js");
-      const available = await antiCdp.isAntiAvailable();
-      return c.json({ available });
-    } catch {
-      return c.json({ available: false });
-    }
-  });
 
   // License activation (protected — only authenticated users can activate)
   protectedApi.route("/license", licenseActivateRoute);

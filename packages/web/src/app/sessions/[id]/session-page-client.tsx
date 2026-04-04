@@ -420,6 +420,7 @@ export function SessionPageClient({ params }: PageProps) {
             onSend={sendMessage}
             onStop={handleStop}
             isRunning={session?.status === "running"}
+            projectSlug={session?.projectSlug ?? undefined}
           />
         </div>
 

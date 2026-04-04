@@ -120,6 +120,7 @@ export function SessionPane({ sessionId, onClose }: SessionPaneProps) {
         onSend={sendMessage}
         onStop={handleStop}
         isRunning={session?.status === "running"}
+        projectSlug={session?.projectSlug ?? undefined}
         compact
       />
     </div>

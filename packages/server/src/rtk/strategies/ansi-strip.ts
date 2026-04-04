@@ -3,7 +3,7 @@
  *
  * Removes ANSI escape sequences, OSC sequences, control characters,
  * progress bar artifacts, and carriage return overwrites.
- * Extends VirtualScreen.sanitize() with additional patterns.
+ * Strips additional patterns beyond basic ANSI removal.
  */
 
 import type { RTKStrategy, RTKContext, RTKResult } from "../pipeline.js";

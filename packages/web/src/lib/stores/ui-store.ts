@@ -8,8 +8,6 @@ interface UiStore {
   rightPanelMode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context";
   rightPanelPath: string | null;
   browserPreviewUrl: string | null;
-  compareModalOpen: boolean;
-  compareSessionIds: [string | null, string | null];
   setTheme: (t: "light" | "dark") => void;
   toggleTheme: () => void;
   setCommandPaletteOpen: (open: boolean) => void;
@@ -20,8 +18,6 @@ interface UiStore {
   ) => void;
   setRightPanelPath: (path: string | null) => void;
   setBrowserPreviewUrl: (url: string | null) => void;
-  setCompareModalOpen: (open: boolean) => void;
-  setCompareSessionIds: (ids: [string | null, string | null]) => void;
 }
 
 // Read persisted theme on store creation (runs once)
@@ -42,8 +38,6 @@ export const useUiStore = create<UiStore>((set) => ({
   rightPanelMode: "none",
   rightPanelPath: null,
   browserPreviewUrl: null,
-  compareModalOpen: false,
-  compareSessionIds: [null, null],
 
   setTheme: (theme) => {
     set({ theme });
@@ -74,8 +68,4 @@ export const useUiStore = create<UiStore>((set) => ({
   setRightPanelPath: (path) => set({ rightPanelPath: path }),
 
   setBrowserPreviewUrl: (url) => set({ browserPreviewUrl: url }),
-
-  setCompareModalOpen: (open) => set({ compareModalOpen: open }),
-
-  setCompareSessionIds: (ids) => set({ compareSessionIds: ids }),
 }));

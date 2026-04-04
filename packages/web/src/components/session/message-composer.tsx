@@ -10,6 +10,7 @@ import {
 import type { QuickAction } from "@/lib/stores/composer-store";
 import { AttachmentChip } from "./attachment-chip";
 import { QuickActions } from "./quick-actions";
+import { SavedPromptsPicker } from "./saved-prompts-picker";
 import { api } from "@/lib/api-client";
 
 interface MessageComposerProps {
@@ -18,6 +19,8 @@ interface MessageComposerProps {
   isRunning?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  /** Current project slug for scoping saved prompts */
+  projectSlug?: string;
   /** Compact mode for split-pane layouts */
   compact?: boolean;
 }
@@ -28,6 +31,7 @@ export function MessageComposer({
   isRunning = false,
   disabled = false,
   placeholder = "Message Claude...",
+  projectSlug,
 }: MessageComposerProps) {
   const [text, setText] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
@@ -269,13 +273,29 @@ export function MessageComposer({
         </div>
       </div>
 
-      <p className="text-center mt-1.5 text-xs">
-        {listening ? (
-          <span style={{ color: "#EA4335" }}>Recording... click mic to stop</span>
-        ) : (
-          <>Enter or Ctrl+Enter to send · Shift+Enter for newline</>
-        )}
-      </p>
+      <div className="flex items-center gap-1.5 mt-1.5">
+        <SavedPromptsPicker
+          projectSlug={projectSlug}
+          onSelect={(content) => {
+            setText(content);
+            requestAnimationFrame(() => {
+              const el = textareaRef.current;
+              if (el) {
+                el.style.height = "auto";
+                el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+                el.focus();
+              }
+            });
+          }}
+        />
+        <p className="flex-1 text-center text-xs">
+          {listening ? (
+            <span style={{ color: "#EA4335" }}>Recording... click mic to stop</span>
+          ) : (
+            <>Enter or Ctrl+Enter to send · Shift+Enter for newline</>
+          )}
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 /**
  * Shared helpers for reading settings from DB.
- * Used by anti-cdp, anti-chat-watcher, anti-task-watcher, ai-client, etc.
+ * Used by ai-client, license, session-namer, etc.
  */
 
 import { eq } from "drizzle-orm";

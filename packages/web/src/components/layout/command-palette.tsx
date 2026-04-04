@@ -10,7 +10,6 @@ import {
   Moon,
   Gear,
   ArrowRight,
-  ArrowsLeftRight,
   FolderOpen,
   MagnifyingGlass,
   TerminalWindow,
@@ -57,7 +56,6 @@ export function CommandPalette() {
   const toggleTheme = useUiStore((s) => s.toggleTheme);
   const theme = useUiStore((s) => s.theme);
   const setNewSessionModalOpen = useUiStore((s) => s.setNewSessionModalOpen);
-  const setCompareModalOpen = useUiStore((s) => s.setCompareModalOpen);
   const rightPanelMode = useUiStore((s) => s.rightPanelMode);
   const setRightPanelMode = useUiStore((s) => s.setRightPanelMode);
   const activityTerminalOpen = useUiStore((s) => s.activityTerminalOpen);
@@ -118,11 +116,6 @@ export function CommandPalette() {
     setNewSessionModalOpen(true);
   };
 
-  const handleCompareSessions = () => {
-    close("Compare Sessions");
-    setCompareModalOpen(true);
-  };
-
   const handleStopAllSessions = async () => {
     close("Stop All Sessions");
     const running = sessions.filter((s) => ["running", "waiting", "idle"].includes(s.status));
@@ -174,7 +167,6 @@ export function CommandPalette() {
   // ── All registered actions for lookup ──────────────────────────────────────
   const ACTION_HANDLERS: Record<string, () => void> = {
     "New Session": handleNewSession,
-    "Compare Sessions": handleCompareSessions,
     "Stop All Sessions": handleStopAllSessions,
     "Toggle Theme (→ Dark)": handleToggleTheme,
     "Toggle Theme (→ Light)": handleToggleTheme,
@@ -478,17 +470,6 @@ export function CommandPalette() {
 
             {/* Actions group */}
             <Command.Group heading="Actions" style={groupHeadingStyle}>
-              <Command.Item
-                value="compare sessions side by side diff"
-                onSelect={handleCompareSessions}
-                style={commandItemStyle(false)}
-              >
-                <div style={itemInnerStyle}>
-                  <ArrowsLeftRight size={14} aria-hidden="true" />
-                  <span style={labelStyle}>Compare Sessions</span>
-                </div>
-              </Command.Item>
-
               <Command.Item
                 value="toggle theme dark light mode appearance"
                 onSelect={handleToggleTheme}
