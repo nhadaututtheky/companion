@@ -26,7 +26,7 @@ try { docker info 2>$null | Out-Null } catch {
 
 Write-Host ""
 Write-Host "  +======================================+" -ForegroundColor Green
-Write-Host "  |       Companion Installer v0.8.0     |" -ForegroundColor Green
+Write-Host "  |       Companion Installer v0.8.1     |" -ForegroundColor Green
 Write-Host "  |  Multi-session UI for Claude Code    |" -ForegroundColor Green
 Write-Host "  +======================================+" -ForegroundColor Green
 Write-Host ""

@@ -1,7 +1,7 @@
 {
-  "version": "0.8.0",
-  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.8.0/Companion_0.8.0_x64-setup.exe",
-  "signature": "untrusted comment: signature from minisign secret key\nRUR3rj77zL9RoYA6x/mWJZeGz2aVyjkfeIvoqf7PRT77SJsbw7vFhFVSn781QTp7ThMHQS2tyhCWClNl+pOP1giOLjuTFpljow0=\ntrusted comment: timestamp:1775220526\t4F/mdGj47++lxk+J4mBgbHHhGDvTYI4TUTCC/6knePGfCpu7xSlY4Ol/ZaUxQSQOJzsl4Udmc1ooLd4yZU7SAg==",
-  "notes": "## What's New in v0.8.0\n\n- Security hardening — timing-safe hook auth, path validation, CSP headers\n- Architecture cleanup — DB indexes, ws-bridge split, N+1 query fix\n- UI/UX — accessibility fixes, lazy loading, brand color consistency\n- Compact mode UI, RTK skeleton states, empty state improvements",
-  "pub_date": "2026-04-03T12:00:00Z"
+  "version": "0.8.1",
+  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.8.1/Companion_0.8.1_x64-setup.exe",
+  "signature": "",
+  "notes": "## What's New in v0.8.1\n\n- Auto session names via AI\n- Saved prompts picker in message composer\n- PIN auth replaces API key gate\n- Removed 5,500 LOC of unused features\n- Auto-trigger desktop build on tag push",
+  "pub_date": "2026-04-04T12:00:00Z"
 }
