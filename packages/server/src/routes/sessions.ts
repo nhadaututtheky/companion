@@ -84,6 +84,9 @@ const paginationSchema = z.object({
 export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
   const app = new Hono();
 
+  /** In-memory debate participants per session — cleaned up on session delete */
+  const sessionDebateParticipants = new Map<string, Array<{ modelId: string; provider: string; name: string }>>();
+
   app.get("/", (c) => {
     const projectSlug = c.req.query("project");
     const status = c.req.query("status");
@@ -339,6 +342,8 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
   app.delete("/:id", (c) => {
     const id = c.req.param("id");
     bridge.killSession(id);
+    // Clean up debate participants to prevent memory leak
+    sessionDebateParticipants.delete(id);
     return c.json({ success: true } satisfies ApiResponse);
   });
 
@@ -795,9 +800,6 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
 
   // ── Session Debate Participants ──────────────────────────────────────────
 
-  /** In-memory debate participants per session (not persisted — ephemeral UI state) */
-  const sessionDebateParticipants = new Map<string, Array<{ modelId: string; provider: string; name: string }>>();
-
   /** POST /sessions/:id/debate/participants — add model to session debate */
   app.post("/:id/debate/participants", async (c) => {
     const sessionId = c.req.param("id");
@@ -886,8 +888,12 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       return c.json({ success: false, error: "No debate participants tagged" } satisfies ApiResponse, 400);
     }
 
-    const topic = body?.topic ?? "General discussion";
-    const format = (body?.format ?? "brainstorm") as "pro_con" | "red_team" | "review" | "brainstorm";
+    const topic = (body?.topic ?? "General discussion").slice(0, 1000);
+    const validFormats = ["pro_con", "red_team", "review", "brainstorm"] as const;
+    const rawFormat = body?.format ?? "brainstorm";
+    const format = validFormats.includes(rawFormat as typeof validFormats[number])
+      ? (rawFormat as typeof validFormats[number])
+      : "brainstorm";
 
     // Map participants to agent model configs
     const agentModels = participants.slice(0, 2).map((p, i) => ({
@@ -904,7 +910,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
           agentModels,
         },
         // Broadcast debate messages to session browsers
-        (channelId, agent, content, round) => {
+        (channelId, agent, content, round, costUsd) => {
           const session = bridge.getSession(sessionId);
           if (!session) return;
           const msg = JSON.stringify({
@@ -919,7 +925,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
             },
             content,
             round,
-            costUsd: 0, // free models
+            costUsd,
           });
           for (const ws of session.browserSockets) {
             try { ws.send(msg); } catch { /* socket error */ }

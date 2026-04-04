@@ -173,46 +173,68 @@ async function callAnthropic(
   model: string,
   opts: { systemPrompt: string; messages: ChatMessage[]; maxTokens?: number },
 ): Promise<AIResponse> {
-  const res = await fetch(`${config.baseUrl}/v1/messages`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": config.apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: opts.maxTokens ?? 1024,
-      system: opts.systemPrompt,
-      messages: opts.messages.filter((m) => m.role !== "system"),
-    }),
-  });
+  const MAX_RETRIES = 3;
+  let lastError = "";
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Anthropic ${res.status}: ${text}`);
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch(`${config.baseUrl}/v1/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": config.apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: opts.maxTokens ?? 1024,
+        system: opts.systemPrompt,
+        messages: opts.messages.filter((m) => m.role !== "system"),
+      }),
+    });
+
+    if (res.status === 429 && attempt < MAX_RETRIES) {
+      const retryAfter = parseInt(res.headers.get("retry-after") ?? "0", 10);
+      const backoffMs = retryAfter > 0
+        ? retryAfter * 1000
+        : Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 15000);
+      log.warn("Anthropic rate limited, retrying", { model, attempt: attempt + 1, backoffMs: Math.round(backoffMs) });
+      await delay(backoffMs);
+      continue;
+    }
+
+    if (!res.ok) {
+      lastError = await res.text().catch(() => "");
+      if (attempt < MAX_RETRIES && res.status >= 500) {
+        await delay(1000 * Math.pow(2, attempt));
+        continue;
+      }
+      throw new Error(`Anthropic ${res.status}: ${lastError}`);
+    }
+
+    const data = (await res.json()) as {
+      content: Array<{ text: string }>;
+      usage: { input_tokens: number; output_tokens: number };
+    };
+
+    const inputTokens = data.usage?.input_tokens ?? 0;
+    const outputTokens = data.usage?.output_tokens ?? 0;
+
+    // Cost rates: Haiku $1/$5, Sonnet $3/$15, Opus $15/$75
+    const isHaiku = model.includes("haiku");
+    const isOpus = model.includes("opus");
+    const inputRate = isHaiku ? 1 : isOpus ? 15 : 3;
+    const outputRate = isHaiku ? 5 : isOpus ? 75 : 15;
+    const costUsd = (inputTokens / 1_000_000) * inputRate + (outputTokens / 1_000_000) * outputRate;
+
+    return {
+      text: data.content?.[0]?.text ?? "",
+      costUsd,
+      inputTokens,
+      outputTokens,
+    };
   }
 
-  const data = (await res.json()) as {
-    content: Array<{ text: string }>;
-    usage: { input_tokens: number; output_tokens: number };
-  };
-
-  const inputTokens = data.usage?.input_tokens ?? 0;
-  const outputTokens = data.usage?.output_tokens ?? 0;
-
-  // Rough cost (Sonnet: $3/$15 per M; Haiku: $0.25/$1.25 per M)
-  const isHaiku = model.includes("haiku");
-  const inputRate = isHaiku ? 0.25 : 3;
-  const outputRate = isHaiku ? 1.25 : 15;
-  const costUsd = (inputTokens / 1_000_000) * inputRate + (outputTokens / 1_000_000) * outputRate;
-
-  return {
-    text: data.content?.[0]?.text ?? "",
-    costUsd,
-    inputTokens,
-    outputTokens,
-  };
+  throw new Error(`Anthropic failed after ${MAX_RETRIES} retries: ${lastError}`);
 }
 
 // ── OpenAI-compatible ──────────────────────────────────────────────────────

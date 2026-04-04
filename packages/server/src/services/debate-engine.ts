@@ -286,7 +286,7 @@ async function callDebateAI(
  */
 export async function startDebate(
   config: DebateConfig,
-  onMessage?: (channelId: string, agent: DebateAgent, content: string, round: number) => void,
+  onMessage?: (channelId: string, agent: DebateAgent, content: string, round: number, costUsd: number) => void,
 ): Promise<DebateState> {
   const agents = getAgentsForFormat(config.format, config.topic);
 
@@ -382,7 +382,7 @@ export async function startDebate(
  */
 async function runDebateLoop(
   state: DebateState,
-  onMessage?: (channelId: string, agent: DebateAgent, content: string, round: number) => void,
+  onMessage?: (channelId: string, agent: DebateAgent, content: string, round: number, costUsd: number) => void,
 ): Promise<void> {
   try {
     while (state.status === "active" && state.currentRound < state.maxRounds) {
@@ -432,7 +432,7 @@ async function runDebateLoop(
           round: state.currentRound,
         });
 
-        onMessage?.(state.channelId, agent, text, state.currentRound);
+        onMessage?.(state.channelId, agent, text, state.currentRound, costUsd);
 
         if (state.totalCostUsd >= state.maxCostUsd) {
           log.info("Debate cost limit reached", {
@@ -617,7 +617,7 @@ Rules:
  */
 export async function concludeDebate(
   channelId: string,
-  onMessage?: (channelId: string, agent: DebateAgent, content: string, round: number) => void,
+  onMessage?: (channelId: string, agent: DebateAgent, content: string, round: number, costUsd: number) => void,
 ): Promise<Verdict | null> {
   const state = activeDebates.get(channelId);
   if (!state) return null;
@@ -658,7 +658,7 @@ export async function concludeDebate(
       emoji: "⚖️",
       systemPrompt: "",
     };
-    onMessage?.(channelId, judgeAgent, verdictText, state.currentRound + 1);
+    onMessage?.(channelId, judgeAgent, verdictText, state.currentRound + 1, 0);
 
     state.status = "concluded";
     activeDebates.delete(channelId);
