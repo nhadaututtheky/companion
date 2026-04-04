@@ -8,7 +8,7 @@ import type { ApiResponse } from "@companion/shared";
 export const terminalRoutes = new Hono();
 
 const spawnSchema = z.object({
-  cwd: z.string().min(1),
+  cwd: z.string().default(""),
 });
 
 /** Validate cwd is a real directory within allowed roots */
@@ -42,7 +42,8 @@ terminalRoutes.post("/", async (c) => {
     );
   }
 
-  const cwdCheck = validateCwd(parsed.data.cwd);
+  const homedir = process.env.HOME ?? process.env.USERPROFILE ?? "/";
+  const cwdCheck = validateCwd(parsed.data.cwd || homedir);
   if (!cwdCheck.ok) {
     return c.json({ success: false, error: cwdCheck.error } satisfies ApiResponse, 403);
   }

@@ -155,12 +155,13 @@ export function MessageComposer({
       }}
     >
       <div
-        className="flex flex-col rounded-2xl px-4 py-2.5"
+        className="flex flex-col rounded-xl px-4 py-2.5"
         style={{
           position: "relative",
-          background: "var(--color-bg-card)",
-          border: isDragOver ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
+          background: "var(--color-bg-elevated)",
+          border: isDragOver ? "1.5px solid var(--color-accent)" : "1px solid transparent",
           boxShadow: "var(--shadow-sm)",
+          transition: "border-color 150ms ease, box-shadow 150ms ease",
         }}
       >
         {isDragOver && (
@@ -218,7 +219,7 @@ export function MessageComposer({
                   : placeholder
             }
             rows={1}
-            className="flex-1 resize-none bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent text-sm leading-relaxed"
+            className="flex-1 resize-none bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent text-sm leading-relaxed"
             style={{
               color: "var(--color-text-primary)",
               maxHeight: 200,

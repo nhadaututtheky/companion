@@ -43,8 +43,7 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
     setConnecting(true);
 
     try {
-      const cwd = defaultCwd ?? "/";
-      const res = await api.terminal.spawn(cwd);
+      const res = await api.terminal.spawn(defaultCwd || "");
       const id = res.data.terminalId;
       setTerminalId(id);
 
