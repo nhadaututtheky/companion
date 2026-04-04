@@ -28,6 +28,8 @@ import { getProject, upsertProject } from "../services/project-profiles.js";
 import { getTemplate, resolveTemplateVariables } from "../services/templates.js";
 import { createLogger } from "../logger.js";
 import { getMaxSessions } from "../services/license.js";
+import { startDebate, getActiveDebate, concludeDebate } from "../services/debate-engine.js";
+import { resolveModelProvider } from "../services/provider-registry.js";
 import { getSessionSummary } from "../services/session-summarizer.js";
 import type { ApiResponse } from "@companion/shared";
 import { thinkingModeTobudget } from "@companion/shared";
@@ -791,5 +793,170 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     return c.json({ success: true, data: snapshot } satisfies ApiResponse);
   });
 
+  // ── Session Debate Participants ──────────────────────────────────────────
+
+  /** In-memory debate participants per session (not persisted — ephemeral UI state) */
+  const sessionDebateParticipants = new Map<string, Array<{ modelId: string; provider: string; name: string }>>();
+
+  /** POST /sessions/:id/debate/participants — add model to session debate */
+  app.post("/:id/debate/participants", async (c) => {
+    const sessionId = c.req.param("id");
+    const body = await c.req.json<{ model: string; provider?: string }>().catch(() => null);
+
+    if (!body?.model) {
+      return c.json({ success: false, error: "Body must include { model: string }" } satisfies ApiResponse, 400);
+    }
+
+    // Resolve model via registry
+    const resolved = resolveModelProvider(body.model);
+    if (!resolved) {
+      return c.json({ success: false, error: `Model "${body.model}" not found in provider registry` } satisfies ApiResponse, 404);
+    }
+
+    const participants = sessionDebateParticipants.get(sessionId) ?? [];
+    if (participants.some((p) => p.modelId === body.model)) {
+      return c.json({ success: false, error: "Model already in debate" } satisfies ApiResponse, 409);
+    }
+
+    participants.push({
+      modelId: resolved.model.id,
+      provider: resolved.provider.id,
+      name: resolved.model.name,
+    });
+    sessionDebateParticipants.set(sessionId, participants);
+
+    // Broadcast to session browsers
+    const session = bridge.getSession(sessionId);
+    if (session) {
+      const msg = JSON.stringify({
+        type: "debate_participant_added",
+        model: { id: resolved.model.id, name: resolved.model.name, provider: resolved.provider.id },
+      });
+      for (const ws of session.browserSockets) {
+        try { ws.send(msg); } catch { /* socket error */ }
+      }
+    }
+
+    return c.json({
+      success: true,
+      data: { modelId: resolved.model.id, name: resolved.model.name, provider: resolved.provider.id },
+    } satisfies ApiResponse, 201);
+  });
+
+  /** DELETE /sessions/:id/debate/participants/:modelId — remove model from debate */
+  app.delete("/:id/debate/participants/:modelId", (c) => {
+    const sessionId = c.req.param("id");
+    const modelId = decodeURIComponent(c.req.param("modelId"));
+
+    const participants = sessionDebateParticipants.get(sessionId) ?? [];
+    const filtered = participants.filter((p) => p.modelId !== modelId);
+
+    if (filtered.length === participants.length) {
+      return c.json({ success: false, error: "Model not in debate" } satisfies ApiResponse, 404);
+    }
+
+    sessionDebateParticipants.set(sessionId, filtered);
+
+    // Broadcast removal
+    const session = bridge.getSession(sessionId);
+    if (session) {
+      const msg = JSON.stringify({ type: "debate_participant_removed", modelId });
+      for (const ws of session.browserSockets) {
+        try { ws.send(msg); } catch { /* socket error */ }
+      }
+    }
+
+    return c.json({ success: true } satisfies ApiResponse);
+  });
+
+  /** GET /sessions/:id/debate/participants — list active debate participants */
+  app.get("/:id/debate/participants", (c) => {
+    const sessionId = c.req.param("id");
+    const participants = sessionDebateParticipants.get(sessionId) ?? [];
+    return c.json({ success: true, data: participants } satisfies ApiResponse);
+  });
+
+  /** POST /sessions/:id/debate/round — trigger a debate round with tagged models */
+  app.post("/:id/debate/round", async (c) => {
+    const sessionId = c.req.param("id");
+    const body = await c.req.json<{ topic: string; format?: string }>().catch(() => null);
+
+    const participants = sessionDebateParticipants.get(sessionId) ?? [];
+    if (participants.length === 0) {
+      return c.json({ success: false, error: "No debate participants tagged" } satisfies ApiResponse, 400);
+    }
+
+    const topic = body?.topic ?? "General discussion";
+    const format = (body?.format ?? "brainstorm") as "pro_con" | "red_team" | "review" | "brainstorm";
+
+    // Map participants to agent model configs
+    const agentModels = participants.slice(0, 2).map((p, i) => ({
+      agentId: i === 0 ? getAgentSlot(format, 0) : getAgentSlot(format, 1),
+      model: p.modelId,
+      label: p.name,
+    }));
+
+    try {
+      const state = await startDebate(
+        {
+          topic,
+          format,
+          agentModels,
+        },
+        // Broadcast debate messages to session browsers
+        (channelId, agent, content, round) => {
+          const session = bridge.getSession(sessionId);
+          if (!session) return;
+          const msg = JSON.stringify({
+            type: "debate_response",
+            channelId,
+            agent: {
+              id: agent.id,
+              label: agent.label,
+              emoji: agent.emoji,
+              model: agent.model,
+              modelLabel: agent.modelLabel,
+            },
+            content,
+            round,
+            costUsd: 0, // free models
+          });
+          for (const ws of session.browserSockets) {
+            try { ws.send(msg); } catch { /* socket error */ }
+          }
+        },
+      );
+
+      return c.json({
+        success: true,
+        data: {
+          channelId: state.channelId,
+          topic: state.topic,
+          format: state.format,
+          agents: state.agents.map((a) => ({
+            id: a.id,
+            label: a.label,
+            model: a.model,
+            modelLabel: a.modelLabel,
+          })),
+        },
+      } satisfies ApiResponse, 201);
+    } catch (err) {
+      log.error("Failed to start session debate round", { sessionId, error: String(err) });
+      return c.json({ success: false, error: "Failed to start debate" } satisfies ApiResponse, 500);
+    }
+  });
+
   return app;
+}
+
+/** Get agent slot ID for a debate format */
+function getAgentSlot(format: string, index: number): string {
+  const slots: Record<string, string[]> = {
+    pro_con: ["advocate", "challenger"],
+    red_team: ["builder", "attacker"],
+    review: ["author", "reviewer"],
+    brainstorm: ["creative", "practical"],
+  };
+  return (slots[format] ?? slots.brainstorm)?.[index] ?? (index === 0 ? "advocate" : "challenger");
 }

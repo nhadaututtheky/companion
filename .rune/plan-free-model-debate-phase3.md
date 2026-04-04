@@ -4,12 +4,12 @@
 Extend debate-engine to route agent calls through free providers with format translation. Multi-model debates where Claude + free models collaborate in real-time.
 
 ## Tasks
-- [ ] Extend `debate-engine.ts` — resolve agent model → provider via registry
+- [x] Extend `debate-engine.ts` — resolve agent model → provider via registry
 - [ ] Add format translation layer for debate agents (OpenAI ↔ Anthropic message format)
-- [ ] Add rate limit handling — detect 429, queue/retry with backoff per provider
-- [ ] Add debate participant from web UI — API endpoint to add/remove model mid-session
-- [ ] Add cost tracking — free models = $0, paid models track via existing cost system
-- [ ] Wire debate results back to chat UI with model identity (which model said what)
+- [x] Add rate limit handling — detect 429, queue/retry with backoff per provider
+- [x] Add debate participant from web UI — API endpoint to add/remove model mid-session
+- [x] Add cost tracking — free models = $0, paid models track via existing cost system
+- [x] Wire debate results back to chat UI with model identity (which model said what)
 
 ## Format Translation
 ```typescript
@@ -53,11 +53,11 @@ POST   /api/sessions/:id/debate/round          — trigger debate round manually
 ```
 
 ## Acceptance Criteria
-- [ ] Free model participates in debate alongside Claude session
-- [ ] Each response clearly shows which model generated it
-- [ ] Rate limit 429 → graceful retry, not crash
-- [ ] Adding/removing participants works mid-conversation
-- [ ] Cost display shows $0.00 for free model responses
+- [x] Free model participates in debate alongside Claude session
+- [x] Each response clearly shows which model generated it
+- [x] Rate limit 429 → graceful retry, not crash
+- [x] Adding/removing participants works mid-conversation
+- [x] Cost display shows $0.00 for free model responses
 - [ ] Format translation handles tool_use, system messages, streaming
 
 ## Files Touched

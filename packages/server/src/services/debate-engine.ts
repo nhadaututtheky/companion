@@ -18,6 +18,7 @@ import { getDb } from "../db/client.js";
 import { channels } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import { callAI, callAIWithModel, getOpenRouterConfig, type ModelTier } from "./ai-client.js";
+import { resolveModelProvider, getProviderOverride } from "./provider-registry.js";
 import { createLogger } from "../logger.js";
 
 const log = createLogger("debate-engine");
@@ -291,28 +292,50 @@ export async function startDebate(
 
   // Apply per-agent model overrides (immutable)
   if (config.agentModels && config.agentModels.length > 0) {
-    // Resolve OpenRouter config once for all agents that need it
+    // Resolve OpenRouter config once for agents that use "/" format
     const openRouterCfg = getOpenRouterConfig();
 
     for (let i = 0; i < agents.length; i++) {
       const modelCfg = config.agentModels.find((m) => m.agentId === agents[i]!.id);
       if (!modelCfg) continue;
 
-      // Determine provider: models with "/" prefix are OpenRouter format
-      const needsOpenRouter = modelCfg.model.includes("/");
-      if (needsOpenRouter && !openRouterCfg) {
-        log.warn("Agent model requires OpenRouter but no config found, using default", {
-          agentId: modelCfg.agentId,
+      // Priority 1: Try provider registry (free providers, configured providers)
+      const resolved = resolveModelProvider(modelCfg.model);
+      if (resolved) {
+        const override = getProviderOverride(resolved.provider.id);
+        agents[i] = {
+          ...agents[i]!,
           model: modelCfg.model,
-        });
+          modelLabel: modelCfg.label ?? resolved.model.name,
+          providerOverride: override,
+        };
         continue;
       }
 
+      // Priority 2: OpenRouter for "org/model" format
+      const needsOpenRouter = modelCfg.model.includes("/");
+      if (needsOpenRouter) {
+        if (!openRouterCfg) {
+          log.warn("Agent model requires OpenRouter but no config found, using default", {
+            agentId: modelCfg.agentId,
+            model: modelCfg.model,
+          });
+          continue;
+        }
+        agents[i] = {
+          ...agents[i]!,
+          model: modelCfg.model,
+          modelLabel: modelCfg.label,
+          providerOverride: openRouterCfg,
+        };
+        continue;
+      }
+
+      // Priority 3: No provider found — use model directly (global config fallback)
       agents[i] = {
         ...agents[i]!,
         model: modelCfg.model,
         modelLabel: modelCfg.label,
-        providerOverride: needsOpenRouter ? openRouterCfg : undefined,
       };
     }
   }

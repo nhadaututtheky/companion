@@ -188,6 +188,27 @@ export const api = {
         method: "PATCH",
         body: JSON.stringify({ tags }),
       }),
+    debate: {
+      addParticipant: (id: string, model: string) =>
+        request<{ success: boolean; data: { modelId: string; name: string; provider: string } }>(
+          `/api/sessions/${id}/debate/participants`,
+          { method: "POST", body: JSON.stringify({ model }) },
+        ),
+      removeParticipant: (id: string, modelId: string) =>
+        request<{ success: boolean }>(
+          `/api/sessions/${id}/debate/participants/${encodeURIComponent(modelId)}`,
+          { method: "DELETE" },
+        ),
+      listParticipants: (id: string) =>
+        request<{ success: boolean; data: Array<{ modelId: string; provider: string; name: string }> }>(
+          `/api/sessions/${id}/debate/participants`,
+        ),
+      startRound: (id: string, topic: string, format?: string) =>
+        request<{ success: boolean; data: { channelId: string } }>(
+          `/api/sessions/${id}/debate/round`,
+          { method: "POST", body: JSON.stringify({ topic, format }) },
+        ),
+    },
   },
 
   // Projects

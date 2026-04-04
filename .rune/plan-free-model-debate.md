@@ -7,8 +7,8 @@ Extend Companion's debate mode to support free AI models (Gemini, Groq, Qwen, et
 | # | Name | Status | Plan File | Summary |
 |---|------|--------|-----------|---------|
 | 1 | Provider Registry & Free Models | ✅ Done | plan-free-model-debate-phase1.md | Server-side provider registry, free endpoint catalog, health checks |
-| 2 | Model Picker UI | 🔄 Active | plan-free-model-debate-phase2.md | Bottom bar below composer, model dropdown, debate tag-in |
-| 3 | Cross-Provider Debate | ⬚ Pending | plan-free-model-debate-phase3.md | Format translation, multi-model debate via free providers |
+| 2 | Model Picker UI | ✅ Done | plan-free-model-debate-phase2.md | Bottom bar below composer, model dropdown, debate tag-in |
+| 3 | Cross-Provider Debate | ✅ Done | plan-free-model-debate-phase3.md | Provider routing, rate limit retry, debate participant API |
 
 ## Key Decisions
 - Reuse existing `ai-client.ts` OpenAI-compatible pathway (already supports Groq, Together, Ollama, OpenRouter)

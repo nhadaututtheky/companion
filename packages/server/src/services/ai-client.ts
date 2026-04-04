@@ -299,6 +299,11 @@ export async function translateViToEn(text: string): Promise<string | null> {
   }
 }
 
+/** Delay helper for rate limit backoff */
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function callOpenAICompatible(
   config: AIConfig,
   model: string,
@@ -310,41 +315,66 @@ async function callOpenAICompatible(
     ...opts.messages,
   ];
 
-  const res = await fetch(`${config.baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-      max_tokens: opts.maxTokens ?? 1024,
-    }),
-  });
+  const MAX_RETRIES = 3;
+  let lastError = "";
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`AI API ${res.status}: ${text}`);
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch(`${config.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        max_tokens: opts.maxTokens ?? 1024,
+      }),
+    });
+
+    if (res.status === 429 && attempt < MAX_RETRIES) {
+      // Rate limited — exponential backoff with jitter
+      const retryAfter = parseInt(res.headers.get("retry-after") ?? "0", 10);
+      const backoffMs = retryAfter > 0
+        ? retryAfter * 1000
+        : Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 15000);
+      log.warn("Rate limited, retrying", { model, attempt: attempt + 1, backoffMs: Math.round(backoffMs) });
+      await delay(backoffMs);
+      continue;
+    }
+
+    if (!res.ok) {
+      lastError = await res.text().catch(() => "");
+      if (attempt < MAX_RETRIES && res.status >= 500) {
+        // Server error — retry with backoff
+        await delay(1000 * Math.pow(2, attempt));
+        continue;
+      }
+      throw new Error(`AI API ${res.status}: ${lastError}`);
+    }
+
+    const data = (await res.json()) as {
+      choices: Array<{ message: { content: string } }>;
+      usage?: { prompt_tokens: number; completion_tokens: number };
+    };
+
+    const inputTokens = data.usage?.prompt_tokens ?? 0;
+    const outputTokens = data.usage?.completion_tokens ?? 0;
+
+    // Free models = $0, paid = generic estimate ($1/$2 per M tokens)
+    const isFree = !config.apiKey;
+    const costUsd = isFree ? 0 : (inputTokens / 1_000_000) * 1 + (outputTokens / 1_000_000) * 2;
+
+    log.debug("AI call complete", { model, inputTokens, outputTokens, cost: costUsd.toFixed(4) });
+
+    return {
+      text: data.choices?.[0]?.message?.content ?? "",
+      costUsd,
+      inputTokens,
+      outputTokens,
+    };
   }
 
-  const data = (await res.json()) as {
-    choices: Array<{ message: { content: string } }>;
-    usage?: { prompt_tokens: number; completion_tokens: number };
-  };
-
-  const inputTokens = data.usage?.prompt_tokens ?? 0;
-  const outputTokens = data.usage?.completion_tokens ?? 0;
-
-  // Generic cost estimate ($1/$2 per M tokens — conservative)
-  const costUsd = (inputTokens / 1_000_000) * 1 + (outputTokens / 1_000_000) * 2;
-
-  log.debug("AI call complete", { model, inputTokens, outputTokens, cost: costUsd.toFixed(4) });
-
-  return {
-    text: data.choices?.[0]?.message?.content ?? "",
-    costUsd,
-    inputTokens,
-    outputTokens,
-  };
+  // All retries exhausted
+  throw new Error(`AI API failed after ${MAX_RETRIES} retries: ${lastError}`);
 }
