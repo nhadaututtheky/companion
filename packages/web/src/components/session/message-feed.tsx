@@ -11,14 +11,13 @@ import {
   CurrencyDollar,
   PaperPlaneTilt,
   Lightning,
-  GitDiff,
   PushPin,
   TelegramLogo,
 } from "@phosphor-icons/react";
 import { MarkdownMessage } from "../chat/markdown-message";
 import { useComposerStore } from "@/lib/stores/composer-store";
 import { usePinnedMessagesStore } from "@/lib/stores/pinned-messages-store";
-import { InlineDiff } from "./inline-diff";
+import { getToolMeta, ToolInputRenderer, ToolOutputRenderer } from "./tool-renderers";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -138,8 +137,8 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
       {tools.map((tool) => {
         const result = results?.find((r) => r.toolUseId === tool.id);
         const expanded = expandedIds.has(tool.id);
-        const inputStr = JSON.stringify(tool.input, null, 2);
-        const isShort = inputStr.length < 120;
+        const meta = getToolMeta(tool.name);
+        const summary = meta.summary(tool.input);
 
         return (
           <div
@@ -153,22 +152,20 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
             <button
               onClick={() => toggle(tool.id)}
               className="flex items-center gap-2 w-full px-3 py-2 text-xs cursor-pointer"
-             
               aria-expanded={expanded}
             >
-              <Wrench size={14} weight="bold" style={{ color: "#4285F4" }} />
-              <code
-                className="font-mono font-semibold"
-               
-              >
+              <span style={{ color: meta.color }} aria-hidden="true">
+                {meta.icon}
+              </span>
+              <code className="font-mono font-semibold" style={{ color: meta.color }}>
                 {tool.name}
               </code>
-              {isShort && !expanded && (
-                <span className="truncate opacity-60 ml-1 font-mono" style={{ maxWidth: 300 }}>
-                  {Object.entries(tool.input)
-                    .slice(0, 2)
-                    .map(([k, v]) => `${k}=${JSON.stringify(v).slice(0, 40)}`)
-                    .join(", ")}
+              {!expanded && summary && (
+                <span
+                  className="truncate opacity-60 ml-1 font-mono"
+                  style={{ maxWidth: 400, color: "var(--color-text-secondary)" }}
+                >
+                  {summary}
                 </span>
               )}
               {result?.isError && (
@@ -180,9 +177,9 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
                 </span>
               )}
               {expanded ? (
-                <CaretDown size={12} className="ml-auto" />
+                <CaretDown size={12} className="ml-auto flex-shrink-0" />
               ) : (
-                <CaretRight size={12} className="ml-auto" />
+                <CaretRight size={12} className="ml-auto flex-shrink-0" />
               )}
             </button>
 
@@ -190,13 +187,7 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
               <div style={{ borderTop: "1px solid var(--color-border)" }}>
                 {/* Input */}
                 <div className="px-3 py-2">
-                  <div
-                    className="text-xs font-semibold mb-1"
-                   
-                  >
-                    Input
-                  </div>
-                  <ToolInput input={tool.input} />
+                  <ToolInputRenderer toolName={tool.name} input={tool.input} />
                 </div>
 
                 {/* Result */}
@@ -241,7 +232,6 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
                               });
                             }}
                             className="p-0.5 rounded cursor-pointer transition-colors hover:brightness-125"
-                           
                             title="Send to AI"
                             aria-label="Send output to AI"
                           >
@@ -250,13 +240,11 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
                         )}
                       </div>
                     </div>
-                    <pre
-                      className="text-xs font-mono whitespace-pre-wrap max-h-[300px] overflow-y-auto m-0"
-                     
-                    >
-                      {result.content.slice(0, 5000)}
-                      {result.content.length > 5000 && "\n... (truncated)"}
-                    </pre>
+                    <ToolOutputRenderer
+                      toolName={tool.name}
+                      content={result.content}
+                      isError={result.isError}
+                    />
                   </div>
                 )}
               </div>
@@ -268,73 +256,7 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
   );
 }
 
-// ── Tool Input Renderer ──────────────────────────────────────────────────────
-
-/** Render tool input — special cases for common tools */
-function ToolInput({ input }: { input: Record<string, unknown> }) {
-  // Edit tool — inline diff view
-  if (input.file_path && input.old_string !== undefined && input.new_string !== undefined) {
-    return (
-      <InlineDiff
-        filePath={String(input.file_path)}
-        oldContent={String(input.old_string)}
-        newContent={String(input.new_string)}
-      />
-    );
-  }
-
-  // Write tool — show as "new file" diff (all additions)
-  if ((input.file_path || input.path) && input.content !== undefined) {
-    const path = String(input.file_path ?? input.path);
-    return <InlineDiff filePath={path} oldContent="" newContent={String(input.content)} />;
-  }
-
-  // Write/file tool with path but no content
-  if (input.file_path || input.path) {
-    const path = String(input.file_path ?? input.path);
-    return (
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <GitDiff size={12} weight="bold" style={{ color: "#4285F4" }} />
-          <code className="text-xs font-mono block" style={{ color: "#4285F4" }}>
-            {path}
-          </code>
-        </div>
-        {input.command != null && (
-          <pre
-            className="text-xs font-mono whitespace-pre-wrap m-0"
-           
-          >
-            {String(input.command).slice(0, 2000)}
-          </pre>
-        )}
-      </div>
-    );
-  }
-
-  // Bash command
-  if (input.command) {
-    return (
-      <pre
-        className="text-xs font-mono whitespace-pre-wrap m-0"
-       
-      >
-        $ {String(input.command).slice(0, 2000)}
-      </pre>
-    );
-  }
-
-  // Generic JSON
-  const str = JSON.stringify(input, null, 2);
-  return (
-    <pre
-      className="text-xs font-mono whitespace-pre-wrap m-0 max-h-[200px] overflow-y-auto"
-     
-    >
-      {str.slice(0, 3000)}
-    </pre>
-  );
-}
+// ── Tool Input/Output — see tool-renderers.tsx ──────────────────────────────
 
 // ── Cost Badge ───────────────────────────────────────────────────────────────
 
