@@ -159,7 +159,7 @@ export function MessageComposer({
         style={{
           position: "relative",
           background: "var(--color-bg-elevated)",
-          border: isDragOver ? "1.5px solid var(--color-accent)" : "1px solid transparent",
+          border: isDragOver ? "1.5px solid var(--color-accent)" : "1.5px solid transparent",
           boxShadow: "var(--shadow-sm)",
           transition: "border-color 150ms ease, box-shadow 150ms ease",
         }}

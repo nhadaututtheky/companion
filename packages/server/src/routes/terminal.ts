@@ -37,7 +37,7 @@ terminalRoutes.post("/", async (c) => {
   const parsed = spawnSchema.safeParse(body);
   if (!parsed.success) {
     return c.json(
-      { success: false, error: "Invalid body: cwd is required" } satisfies ApiResponse,
+      { success: false, error: "Invalid body" } satisfies ApiResponse,
       400,
     );
   }

@@ -15,6 +15,7 @@ interface TerminalPanelProps {
 
 export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
   const [terminalId, setTerminalId] = useState<string | null>(null);
+  const terminalIdRef = useRef<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const termRef = useRef<HTMLDivElement>(null);
@@ -46,6 +47,7 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
       const res = await api.terminal.spawn(defaultCwd || "");
       const id = res.data.terminalId;
       setTerminalId(id);
+      terminalIdRef.current = id;
 
       const [{ Terminal }, { FitAddon }, { WebLinksAddon }] = await Promise.all([
         import("@xterm/xterm"),
@@ -176,7 +178,7 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
     return () => {
       cleanupTerminal();
       // Kill the terminal process on the server when the panel unmounts
-      const id = terminalId;
+      const id = terminalIdRef.current;
       if (id) {
         api.terminal.kill(id).catch(() => {});
       }
@@ -190,6 +192,7 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
     api.terminal.kill(terminalId).catch(() => {});
     cleanupTerminal();
     setTerminalId(null);
+    terminalIdRef.current = null;
     setConnected(false);
     spawnedRef.current = false;
   }, [terminalId, cleanupTerminal]);
