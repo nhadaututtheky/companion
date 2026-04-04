@@ -1,0 +1,7 @@
+{
+  "version": "0.8.1",
+  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.8.1/Companion_amd64.deb",
+  "signature": "",
+  "notes": "## What's New in v0.8.1\n\n- Auto session names via AI\n- Saved prompts picker in message composer\n- PIN auth replaces API key gate\n- Removed 5,500 LOC of unused features\n- Auto-trigger desktop build on tag push",
+  "pub_date": "2026-04-04T12:00:00Z"
+}
