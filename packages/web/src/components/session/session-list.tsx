@@ -8,7 +8,7 @@ import {
   X,
   SortAscending,
   SortDescending,
-  CaretUpDown,
+  FunnelSimple,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { useSessionStore } from "@/lib/stores/session-store";
@@ -192,7 +192,7 @@ function TagInput({ onAdd, onClose }: TagInputProps) {
         onBlur={onClose}
         placeholder="Tag name…"
         maxLength={50}
-        className="text-xs px-2 py-0.5 rounded outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent w-24"
+        className="text-xs px-2 py-0.5 rounded outline-none focus-visible:ring-2 focus-visible:ring-accent w-24"
         style={{
           background: "var(--color-bg-elevated)",
           border: "1px solid var(--color-border)",
@@ -306,6 +306,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [showFilters, setShowFilters] = useState(false);
 
   const search = useDebounce(searchRaw, 300);
 
@@ -357,6 +358,8 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
     });
   }, [filtered, tagFilter, q, sortKey, sortDir]);
 
+  const hasFilters = filter !== "active" || sortKey !== "date" || tagFilter !== null;
+
   return (
     <div className="flex flex-col h-full">
       {/* Keyframe for pulsing dot — injected once */}
@@ -366,33 +369,10 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
         }
       `}</style>
 
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <span className="text-sm font-semibold">
-          Sessions
-          {active.length > 0 && (
-            <span
-              className="ml-2 text-xs px-1.5 py-0.5 rounded-full font-medium"
-              style={{ background: "#4285F420", color: "#4285F4" }}
-            >
-              {active.length}
-            </span>
-          )}
-        </span>
-        <button
-          onClick={onNew}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer"
-          style={{ background: "#34A853", color: "#fff" }}
-          aria-label="New session"
-        >
-          <Plus size={12} weight="bold" /> New
-        </button>
-      </div>
-
-      {/* Search */}
-      <div className="px-3 pb-1.5">
+      {/* Header row: search + filter toggle + new */}
+      <div className="flex items-center gap-1.5 px-3 pt-3 pb-2">
         <div
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg"
+          className="flex items-center gap-1.5 flex-1 px-2 py-1.5 rounded-lg"
           style={{
             background: "var(--color-bg-elevated)",
             border: "1px solid var(--color-border)",
@@ -407,115 +387,125 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
             type="text"
             value={searchRaw}
             onChange={(e) => setSearchRaw(e.target.value)}
-            placeholder="Search sessions..."
-            className="flex-1 text-xs bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
-           
+            placeholder="Search..."
+            className="flex-1 text-xs bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            style={{ color: "var(--color-text-primary)", minWidth: 0 }}
             aria-label="Search sessions"
           />
           {searchRaw && (
             <button
               onClick={() => setSearchRaw("")}
-              className="cursor-pointer transition-opacity hover:opacity-100 opacity-60"
+              className="cursor-pointer opacity-60 hover:opacity-100"
               style={{ color: "var(--color-text-muted)", lineHeight: 1 }}
               aria-label="Clear search"
             >
-              <X size={11} weight="bold" aria-hidden="true" />
+              <X size={10} weight="bold" aria-hidden="true" />
             </button>
           )}
         </div>
+        <button
+          onClick={() => setShowFilters((v) => !v)}
+          className="p-1.5 rounded-lg cursor-pointer transition-colors"
+          style={{
+            background: showFilters || hasFilters ? "var(--color-bg-elevated)" : "transparent",
+            color: hasFilters ? "var(--color-accent)" : "var(--color-text-muted)",
+            border: "1px solid transparent",
+          }}
+          aria-label="Toggle filters"
+          title="Sort & filter"
+        >
+          <FunnelSimple size={14} weight={hasFilters ? "fill" : "regular"} />
+        </button>
+        <button
+          onClick={onNew}
+          className="p-1.5 rounded-lg cursor-pointer transition-colors"
+          style={{ background: "#34A853", color: "#fff" }}
+          aria-label="New session"
+          title="New session"
+        >
+          <Plus size={14} weight="bold" />
+        </button>
       </div>
 
-      {/* Sort controls */}
-      <div
-        className="flex items-center gap-0.5 px-3 pb-1.5"
-        role="group"
-        aria-label="Sort sessions"
-      >
-        <CaretUpDown
-          size={10}
-          style={{ color: "var(--color-text-muted)", flexShrink: 0, marginRight: 2 }}
-          aria-hidden="true"
-        />
-        {SORT_OPTIONS.map(({ key, label }) => {
-          const active = sortKey === key;
-          return (
-            <button
-              key={key}
-              onClick={() => handleSortClick(key)}
-              className="flex items-center gap-0.5 px-2 py-0.5 rounded text-xs font-medium cursor-pointer transition-colors"
-              style={{
-                background: active ? "var(--color-bg-elevated)" : "transparent",
-                color: active ? "var(--color-text-primary)" : "var(--color-text-muted)",
-              }}
-              aria-pressed={active}
-              aria-label={`Sort by ${label} ${active ? (sortDir === "asc" ? "ascending" : "descending") : ""}`}
-            >
-              {label}
-              {active &&
-                (sortDir === "asc" ? (
-                  <SortAscending size={10} weight="bold" aria-hidden="true" />
-                ) : (
-                  <SortDescending size={10} weight="bold" aria-hidden="true" />
-                ))}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Filter tabs */}
-      <div className="flex gap-1 px-3 py-1 mb-1">
-        {(["active", "all", "ended"] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className="px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer capitalize"
-            style={{
-              background: filter === f ? "var(--color-bg-elevated)" : "transparent",
-              color: filter === f ? "var(--color-text-primary)" : "var(--color-text-muted)",
-            }}
-          >
-            {f}
-          </button>
-        ))}
-      </div>
-
-      {/* Tag filters */}
-      {allTags.length > 0 && (
-        <div className="flex flex-wrap gap-1 px-3 pb-2">
-          {tagFilter !== null && (
-            <button
-              onClick={() => setTagFilter(null)}
-              className="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-colors"
-              style={{
-                background: "var(--color-bg-elevated)",
-                color: "var(--color-text-secondary)",
-              }}
-              aria-label="Clear tag filter"
-            >
-              All
-            </button>
-          )}
-          {allTags.map((tag) => {
-            const color = getTagColor(tag);
-            const isActive = tagFilter === tag;
-            return (
+      {/* Collapsible filter/sort controls */}
+      {showFilters && (
+        <div className="px-3 pb-2 space-y-1.5">
+          {/* Filter tabs + sort in one row */}
+          <div className="flex items-center gap-1">
+            {(["active", "all", "ended"] as const).map((f) => (
               <button
-                key={tag}
-                onClick={() => setTagFilter(isActive ? null : tag)}
-                className="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-all"
+                key={f}
+                onClick={() => setFilter(f)}
+                className="px-2 py-0.5 rounded text-xs font-medium cursor-pointer capitalize transition-colors"
                 style={{
-                  background: isActive ? color.text : color.bg,
-                  color: isActive ? "#fff" : color.text,
-                  outline: isActive ? `2px solid ${color.text}` : "none",
+                  background: filter === f ? "var(--color-bg-elevated)" : "transparent",
+                  color: filter === f ? "var(--color-text-primary)" : "var(--color-text-muted)",
                 }}
-                aria-pressed={isActive}
-                aria-label={`Filter by tag: ${tag}`}
               >
-                <Tag size={9} aria-hidden="true" />
-                {tag}
+                {f}
               </button>
-            );
-          })}
+            ))}
+            <span className="flex-1" />
+            {SORT_OPTIONS.map(({ key, label }) => {
+              const isActive = sortKey === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => handleSortClick(key)}
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs cursor-pointer transition-colors"
+                  style={{
+                    color: isActive ? "var(--color-text-primary)" : "var(--color-text-muted)",
+                    fontWeight: isActive ? 600 : 400,
+                  }}
+                  aria-label={`Sort by ${label}`}
+                >
+                  {label}
+                  {isActive &&
+                    (sortDir === "asc" ? (
+                      <SortAscending size={9} weight="bold" aria-hidden="true" />
+                    ) : (
+                      <SortDescending size={9} weight="bold" aria-hidden="true" />
+                    ))}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tag filters */}
+          {allTags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {tagFilter !== null && (
+                <button
+                  onClick={() => setTagFilter(null)}
+                  className="px-1.5 py-0.5 rounded-full text-xs font-medium cursor-pointer"
+                  style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-secondary)" }}
+                  aria-label="Clear tag filter"
+                >
+                  All
+                </button>
+              )}
+              {allTags.map((tag) => {
+                const color = getTagColor(tag);
+                const isActive = tagFilter === tag;
+                return (
+                  <button
+                    key={tag}
+                    onClick={() => setTagFilter(isActive ? null : tag)}
+                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium cursor-pointer"
+                    style={{
+                      background: isActive ? color.text : color.bg,
+                      color: isActive ? "#fff" : color.text,
+                    }}
+                    aria-pressed={isActive}
+                    aria-label={`Filter by tag: ${tag}`}
+                  >
+                    <Tag size={8} aria-hidden="true" />
+                    {tag}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

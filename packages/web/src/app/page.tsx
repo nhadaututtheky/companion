@@ -107,35 +107,30 @@ function SessionManagementBar() {
   if (endedIds.length === 0 && activeIds.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-1.5 px-4 py-2">
+    <div className="flex items-center justify-center gap-3 px-3 py-1">
       {endedIds.length > 0 && (
         <button
           onClick={handleClearEnded}
           disabled={clearing}
-          className="flex-1 text-xs py-1 px-2 rounded cursor-pointer transition-colors font-medium"
-          style={{
-            background: "var(--color-bg-elevated)",
-            color: "var(--color-text-secondary)",
-            opacity: clearing ? 0.6 : 1,
-          }}
+          className="text-xs cursor-pointer transition-opacity hover:opacity-100"
+          style={{ color: "var(--color-text-muted)", opacity: 0.7, background: "none", border: "none" }}
           aria-label={`Clear ${endedIds.length} ended session(s)`}
         >
           {clearing ? "Clearing..." : `Clear ${endedIds.length} ended`}
         </button>
       )}
+      {endedIds.length > 0 && activeIds.length > 0 && (
+        <span style={{ color: "var(--color-border)" }}>·</span>
+      )}
       {activeIds.length > 0 && (
         <button
           onClick={handleKillAll}
           disabled={killing}
-          className="flex-1 text-xs py-1 px-2 rounded cursor-pointer transition-colors font-medium"
-          style={{
-            background: killing ? "#EA433520" : "#EA433515",
-            color: "#EA4335",
-            opacity: killing ? 0.7 : 1,
-          }}
+          className="text-xs cursor-pointer transition-opacity hover:opacity-100"
+          style={{ color: "#EA4335", opacity: 0.7, background: "none", border: "none" }}
           aria-label={`Stop all ${activeIds.length} active session(s)`}
         >
-          {killing ? "Stopping..." : `Kill all (${activeIds.length})`}
+          {killing ? "Stopping..." : `Stop all (${activeIds.length})`}
         </button>
       )}
     </div>
