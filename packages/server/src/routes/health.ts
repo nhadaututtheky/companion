@@ -124,6 +124,6 @@ licenseActivateRoute.post("/activate", zValidator("json", activateSchema), async
     features: license.features,
     expiresAt: license.expiresAt,
     daysLeft: license.daysLeft,
-    message: `Pro activated! ${license.maxSessions} sessions, expires ${license.expiresAt?.split("T")[0]}`,
+    message: `Pro activated! ${license.maxSessions < 0 ? "unlimited" : license.maxSessions} sessions, expires ${license.expiresAt?.split("T")[0]}`,
   });
 });

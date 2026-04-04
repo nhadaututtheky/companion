@@ -314,9 +314,10 @@ export function hasFeature(feature: string): boolean {
   return license.features.includes(feature);
 }
 
-/** Get max allowed sessions based on license */
+/** Get max allowed sessions based on license (-1 = unlimited) */
 export function getMaxSessions(): number {
-  return getLicense().maxSessions;
+  const max = getLicense().maxSessions;
+  return max < 0 ? Infinity : max;
 }
 
 /** Check if current plan is at least the given tier */
