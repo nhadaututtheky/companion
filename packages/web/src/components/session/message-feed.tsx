@@ -18,6 +18,7 @@ import { MarkdownMessage } from "../chat/markdown-message";
 import { useComposerStore } from "@/lib/stores/composer-store";
 import { usePinnedMessagesStore } from "@/lib/stores/pinned-messages-store";
 import { getToolMeta, ToolInputRenderer, ToolOutputRenderer } from "./tool-renderers";
+import { DiffSummaryBlock } from "./diff-summary-block";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -132,9 +133,22 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
     });
   };
 
+  // Separate file-change tools (Edit/Write) from other tools
+  const fileChangeTools = tools.filter(
+    (t) =>
+      (t.name === "Edit" && t.input.file_path && t.input.old_string !== undefined && t.input.new_string !== undefined) ||
+      (t.name === "Write" && (t.input.file_path || t.input.path) && t.input.content !== undefined && t.input.old_string === undefined),
+  );
+  const otherTools = tools.filter((t) => !fileChangeTools.includes(t));
+
   return (
     <div className="my-2 space-y-1.5">
-      {tools.map((tool) => {
+      {/* Aggregated diff summary for Edit/Write tools */}
+      {fileChangeTools.length > 0 && (
+        <DiffSummaryBlock tools={fileChangeTools} />
+      )}
+
+      {otherTools.map((tool) => {
         const result = results?.find((r) => r.toolUseId === tool.id);
         const expanded = expandedIds.has(tool.id);
         const meta = getToolMeta(tool.name);
