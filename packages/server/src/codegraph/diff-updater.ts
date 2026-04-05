@@ -27,6 +27,9 @@ import { describeNodes } from "./semantic-describer.js";
 
 const log = createLogger("codegraph-diff");
 
+// Per-project mutex to prevent concurrent rescans corrupting edge state
+const rescanLocks = new Map<string, Promise<unknown>>();
+
 // ─── Types ───────────────────────────────────────────────────────────────
 
 export interface DiffResult {
@@ -82,8 +85,22 @@ export function getGitDiff(projectDir: string, since = "HEAD~1"): DiffResult {
 /**
  * Incrementally rescan changed files in a project.
  * If changedFiles is provided, use those. Otherwise, detect via git diff.
+ * Serialized per-project to prevent concurrent rescans corrupting edge state.
  */
 export async function incrementalRescan(
+  projectSlug: string,
+  changedFiles?: string[],
+): Promise<{ updated: number; added: number; deleted: number }> {
+  // Serialize: wait for any in-flight rescan on the same project
+  const pending = rescanLocks.get(projectSlug);
+  const task = (pending ?? Promise.resolve()).then(() =>
+    doIncrementalRescan(projectSlug, changedFiles),
+  );
+  rescanLocks.set(projectSlug, task.catch(() => {})); // swallow to not block next
+  return task;
+}
+
+async function doIncrementalRescan(
   projectSlug: string,
   changedFiles?: string[],
 ): Promise<{ updated: number; added: number; deleted: number }> {
@@ -235,6 +252,27 @@ export async function incrementalRescan(
 
   // 3. Incremental edge resolution — only re-resolve edges for changed + dependent files
   if (rescannedFileIds.length > 0) {
+    const rescannedSet = new Set(rescannedFileIds);
+
+    // Step 1: Collect dependent files BEFORE deleting edges (edges are needed for lookup)
+    const dependentFileIds = new Set<number>();
+    for (const fileId of rescannedFileIds) {
+      const deps = getReverseDependentFileIds(projectSlug, fileId);
+      for (const depId of deps) {
+        if (!rescannedSet.has(depId)) {
+          dependentFileIds.add(depId);
+        }
+      }
+    }
+
+    // Step 2: Delete edges for changed files + dependent files
+    for (const fileId of rescannedFileIds) {
+      deleteEdgesForFile(projectSlug, fileId);
+    }
+    for (const depFileId of dependentFileIds) {
+      deleteEdgesForFile(projectSlug, depFileId);
+    }
+
     // Build full node index (needed for target resolution)
     const allNodes = getProjectNodes(projectSlug);
     const nodesByName = new Map<string, (typeof allNodes)[0]>();
@@ -244,27 +282,6 @@ export async function incrementalRescan(
       const arr = nodesByFile.get(node.filePath);
       if (arr) arr.push(node);
       else nodesByFile.set(node.filePath, [node]);
-    }
-
-    // Step 1: Delete edges for changed files only
-    for (const fileId of rescannedFileIds) {
-      deleteEdgesForFile(projectSlug, fileId);
-    }
-
-    // Step 2: Collect dependent files (who imports/calls the changed files)
-    const dependentFileIds = new Set<number>();
-    for (const fileId of rescannedFileIds) {
-      const deps = getReverseDependentFileIds(projectSlug, fileId);
-      for (const depId of deps) {
-        if (!rescannedFileIds.includes(depId)) {
-          dependentFileIds.add(depId);
-        }
-      }
-    }
-
-    // Step 3: Delete edges for dependent files too (their targets may have changed)
-    for (const depFileId of dependentFileIds) {
-      deleteEdgesForFile(projectSlug, depFileId);
     }
 
     // Step 4: Re-resolve edges for changed files + dependents only
