@@ -245,6 +245,17 @@ export function extractKeywords(text: string): string[] {
 
 // ─── File Stats ──────────────────────────────────────────────────────────
 
+/** Max file size to scan (1MB) — skip larger files to avoid memory pressure */
+export const MAX_SCAN_FILE_SIZE = 1_048_576;
+
+/**
+ * Get a preview of the body starting at a given line.
+ */
+export function getBodyPreview(code: string, startLine: number, maxLines = 10): string {
+  const lines = code.split("\n");
+  return lines.slice(startLine - 1, startLine - 1 + maxLines).join("\n");
+}
+
 /**
  * Count lines in a file content string.
  */

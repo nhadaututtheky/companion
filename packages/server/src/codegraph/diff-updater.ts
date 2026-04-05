@@ -9,7 +9,7 @@ import { createLogger } from "../logger.js";
 import { getDb } from "../db/client.js";
 import { projects, codeFiles } from "../db/schema.js";
 import { eq, and } from "drizzle-orm";
-import { hashFile, detectLanguage, countLines } from "./utils.js";
+import { hashFile, detectLanguage, countLines, MAX_SCAN_FILE_SIZE } from "./utils.js";
 import { scanFileAsync } from "./scanner.js";
 import { calculateTrustWeight, type EdgeType } from "./trust-calculator.js";
 import {
@@ -175,6 +175,12 @@ export async function incrementalRescan(
       continue;
     }
 
+    // Skip oversized files (bundled JS, generated code, etc.)
+    if (code.length > MAX_SCAN_FILE_SIZE) {
+      log.debug("Skipping oversized file", { filePath: relPath, size: code.length });
+      continue;
+    }
+
     const lines = countLines(code);
 
     // Check if the file already exists with same hash
@@ -283,6 +289,7 @@ export async function incrementalRescan(
       } catch {
         continue;
       }
+      if (code.length > MAX_SCAN_FILE_SIZE) continue;
 
       const result = await scanFileAsync(code, file.filePath, file.language);
       const fileNodes = nodesByFile.get(file.filePath) ?? [];

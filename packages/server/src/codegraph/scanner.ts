@@ -9,6 +9,7 @@ import { createLogger } from "../logger.js";
 import type { EdgeType } from "./trust-calculator.js";
 import { parseCode, hasGrammar } from "./tree-sitter-engine.js";
 import { extractTypeScript, extractPython, extractGeneric } from "./ts-extractors.js";
+import { getBodyPreview } from "./utils.js";
 
 const log = createLogger("codegraph-scanner");
 
@@ -57,11 +58,6 @@ function lineAt(code: string, charIndex: number): number {
     if (code[i] === "\n") line++;
   }
   return line;
-}
-
-function getBodyPreview(code: string, startLine: number, maxLines = 10): string {
-  const lines = code.split("\n");
-  return lines.slice(startLine - 1, startLine - 1 + maxLines).join("\n");
 }
 
 function estimateEndLine(code: string, startLine: number): number {

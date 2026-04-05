@@ -9,15 +9,11 @@ import { createLogger } from "../logger.js";
 import type { TSTree, TSNode } from "./tree-sitter-engine.js";
 import type { ScannedNode, ScannedEdge, ScanResult } from "./scanner.js";
 import type { EdgeType } from "./trust-calculator.js";
+import { getBodyPreview } from "./utils.js";
 
 const log = createLogger("ts-extractors");
 
 // ─── Helpers ────────────────────────────────────────────────────────────
-
-function getBodyPreview(code: string, startLine: number, maxLines = 10): string {
-  const lines = code.split("\n");
-  return lines.slice(startLine - 1, startLine - 1 + maxLines).join("\n");
-}
 
 /** Find a direct child of the given type */
 function childOfType(node: TSNode, type: string): TSNode | null {
@@ -468,7 +464,8 @@ export function extractTypeScript(tree: TSTree, code: string, filePath: string):
       while (parent) {
         if (
           parent.type === "function_declaration" ||
-          parent.type === "arrow_function"
+          parent.type === "arrow_function" ||
+          parent.type === "function_expression"
         ) {
           const funcName =
             childOfType(parent, "identifier")?.text ??
@@ -672,8 +669,15 @@ export function extractPython(tree: TSTree, code: string, _filePath: string): Sc
     const params = func.childForFieldName("parameters");
     const isMethod = func.parent?.type === "block" && func.parent?.parent?.type === "class_definition";
 
+    // Qualify method names with class name to avoid collisions
+    let symbolName = name;
+    if (isMethod) {
+      const className = func.parent?.parent?.childForFieldName("name")?.text;
+      if (className) symbolName = `${className}.${name}`;
+    }
+
     nodes.push({
-      symbolName: name,
+      symbolName,
       symbolType: isMethod ? "method" : "function",
       signature: params?.text ?? null,
       isExported: !name.startsWith("_"),
@@ -690,7 +694,8 @@ export function extractPython(tree: TSTree, code: string, _filePath: string): Sc
     if (!nameNode) continue;
 
     const name = nameNode.text;
-    const superclasses = cls.childForFieldName("superclasses");
+    // tree-sitter-python: base classes are in `superclasses` or `argument_list` field
+    const superclasses = cls.childForFieldName("superclasses") ?? cls.childForFieldName("argument_list");
     let extendsName: string | null = null;
 
     if (superclasses) {
@@ -801,7 +806,8 @@ export function extractGeneric(tree: TSTree, code: string, _filePath: string, la
   switch (language) {
     case "rust":
       funcTypes.add("function_item");
-      classTypes.add("struct_item").add("enum_item").add("impl_item");
+      // impl_item excluded: its name extraction grabs trait name, not struct name
+      classTypes.add("struct_item").add("enum_item");
       importTypes.add("use_declaration");
       break;
     case "go":
@@ -878,8 +884,11 @@ export function extractGeneric(tree: TSTree, code: string, _filePath: string, la
   const importDecls = collectNodes(root, importTypes);
   for (const imp of importDecls) {
     // Best effort: grab any string or path-like child
+    // C/C++ #include uses string_literal ("foo.h") or system_lib_string (<foo.h>)
     const pathNode =
       imp.descendantsOfType("string_fragment")[0] ??
+      imp.descendantsOfType("string_literal")[0] ??
+      imp.descendantsOfType("system_lib_string")[0] ??
       imp.descendantsOfType("scoped_identifier")[0] ??
       imp.descendantsOfType("identifier")[0];
 
