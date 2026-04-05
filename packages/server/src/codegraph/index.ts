@@ -10,7 +10,7 @@ import { getDb } from "../db/client.js";
 import { projects, codeFiles as codeFilesTable } from "../db/schema.js";
 import { eq, and } from "drizzle-orm";
 import { discoverFiles, hashFile, detectLanguage, countLines } from "./utils.js";
-import { scanFile, type ScannedEdge } from "./scanner.js";
+import { scanFile, scanFileAsync, type ScannedEdge } from "./scanner.js";
 import { calculateTrustWeight, type EdgeType } from "./trust-calculator.js";
 import {
   upsertFile,
@@ -210,8 +210,8 @@ async function runScan(
         // Delete old nodes for this file (will re-insert)
         deleteNodesForFile(fileId);
 
-        // Scan
-        const result = scanFile(code, relPath, language);
+        // Scan (prefer Tree-sitter, fall back to regex)
+        const result = await scanFileAsync(code, relPath, language);
 
         // Insert nodes
         if (result.nodes.length > 0) {
@@ -249,15 +249,24 @@ async function runScan(
 
     const allNodes = getProjectNodes(projectSlug);
     const nodesByName = new Map<string, (typeof allNodes)[0]>();
+    const nodesByFile = new Map<string, (typeof allNodes)>();
     for (const node of allNodes) {
       nodesByName.set(node.symbolName, node);
+      const arr = nodesByFile.get(node.filePath);
+      if (arr) arr.push(node);
+      else nodesByFile.set(node.filePath, [node]);
     }
 
     const resolvedEdges: EdgeRecord[] = [];
 
     for (const { filePath, edges } of allEdges) {
       // Get the file's nodes (source candidates)
-      const fileNodes = allNodes.filter((n) => n.filePath === filePath);
+      const fileNodes = nodesByFile.get(filePath) ?? [];
+
+      if (fileNodes.length === 0 && edges.length > 0) {
+        log.debug("Skipping edges for node-less file", { filePath });
+        continue;
+      }
 
       for (const edge of edges) {
         // Find source node
@@ -303,6 +312,18 @@ async function runScan(
     // Deduplicate edges (same source → target → type)
     const edgeKey = (e: EdgeRecord) => `${e.sourceNodeId}-${e.targetNodeId}-${e.edgeType}`;
     const uniqueEdges = [...new Map(resolvedEdges.map((e) => [edgeKey(e), e])).values()];
+
+    // Upgrade import trust when import + call coexist for same source node
+    for (const e of uniqueEdges) {
+      if (e.edgeType === "imports" && e.trustWeight < 0.9) {
+        const hasCall = uniqueEdges.some(
+          (c) => c.edgeType === "calls" && c.sourceNodeId === e.sourceNodeId,
+        );
+        if (hasCall) {
+          e.trustWeight = calculateTrustWeight("imports", { hasCall: true });
+        }
+      }
+    }
 
     insertEdges(uniqueEdges);
     const totalEdges = uniqueEdges.length;

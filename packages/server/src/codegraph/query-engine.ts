@@ -254,13 +254,36 @@ export function getRelatedNodes(
     }
   }
 
-  // Prioritize exported nodes, then sort by name relevance
-  const sorted = [...matchedNodes.values()]
-    .sort((a, b) => {
-      if (a.isExported !== b.isExported) return a.isExported ? -1 : 1;
-      return a.symbolName.length - b.symbolName.length;
-    })
-    .slice(0, limit);
+  // Weighted relevance scoring
+  const scored = [...matchedNodes.values()].map((node) => {
+    let score = 0;
+    const nameLower = node.symbolName.toLowerCase();
+
+    for (const kw of keywords) {
+      const kwLower = kw.toLowerCase();
+      if (nameLower === kwLower) {
+        score += 1.0; // exact match
+      } else if (nameLower.startsWith(kwLower)) {
+        score += 0.8; // prefix match
+      } else if (nameLower.includes(kwLower)) {
+        score += 0.5; // contains match
+      } else if (node.description?.toLowerCase().includes(kwLower)) {
+        score += 0.3; // description match
+      }
+    }
+
+    // Bonus for exported symbols
+    if (node.isExported) score *= 1.3;
+    // Penalty for very short names (likely noise)
+    if (node.symbolName.length <= 2) score *= 0.5;
+
+    return { node, score };
+  });
+
+  const sorted = scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((s) => s.node);
 
   // Enrich with edges
   return sorted.map((node) => {

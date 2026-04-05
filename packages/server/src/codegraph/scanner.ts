@@ -1,12 +1,14 @@
 /**
  * CodeGraph scanner — extracts symbols (nodes) and relationships (edges) from source files.
  *
- * Uses regex-based extraction for reliability across all environments.
- * Handles TypeScript/JavaScript deeply, other languages with basic patterns.
+ * Primary: Tree-sitter WASM (accurate AST parsing, exact line numbers).
+ * Fallback: Regex-based extraction (when grammar not available).
  */
 
 import { createLogger } from "../logger.js";
 import type { EdgeType } from "./trust-calculator.js";
+import { parseCode, hasGrammar } from "./tree-sitter-engine.js";
+import { extractTypeScript, extractPython, extractGeneric } from "./ts-extractors.js";
 
 const log = createLogger("codegraph-scanner");
 
@@ -526,7 +528,7 @@ function scanGeneric(code: string, _filePath: string): ScanResult {
 // ─── Public API ──────────────────────────────────────────────────────────
 
 /**
- * Scan a source file and extract symbols + relationships.
+ * Scan a source file using regex (sync). Kept as fallback.
  */
 export function scanFile(code: string, filePath: string, language: string): ScanResult {
   try {
@@ -554,4 +556,52 @@ export function scanFile(code: string, filePath: string, language: string): Scan
     log.warn("Scanner error, returning empty result", { filePath, language, error: String(err) });
     return { nodes: [], edges: [] };
   }
+}
+
+/**
+ * Scan a source file using Tree-sitter WASM (async, preferred).
+ * Falls back to regex scanner if grammar not available or parse fails.
+ */
+export async function scanFileAsync(
+  code: string,
+  filePath: string,
+  language: string,
+): Promise<ScanResult> {
+  // Try Tree-sitter first
+  if (hasGrammar(language)) {
+    let tree: Awaited<ReturnType<typeof parseCode>> | null = null;
+    try {
+      tree = await parseCode(code, language);
+      if (tree) {
+        let result: ScanResult;
+
+        switch (language) {
+          case "typescript":
+          case "tsx":
+          case "javascript":
+            result = extractTypeScript(tree, code, filePath);
+            break;
+          case "python":
+            result = extractPython(tree, code, filePath);
+            break;
+          default:
+            result = extractGeneric(tree, code, filePath, language);
+            break;
+        }
+
+        return result;
+      }
+    } catch (err) {
+      log.warn("Tree-sitter scan failed, falling back to regex", {
+        filePath,
+        language,
+        error: String(err),
+      });
+    } finally {
+      tree?.delete(); // free WASM memory even on extractor exception
+    }
+  }
+
+  // Fallback to regex
+  return scanFile(code, filePath, language);
 }

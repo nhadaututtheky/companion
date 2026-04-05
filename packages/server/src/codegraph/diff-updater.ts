@@ -10,13 +10,14 @@ import { getDb } from "../db/client.js";
 import { projects, codeFiles } from "../db/schema.js";
 import { eq, and } from "drizzle-orm";
 import { hashFile, detectLanguage, countLines } from "./utils.js";
-import { scanFile } from "./scanner.js";
+import { scanFileAsync } from "./scanner.js";
 import { calculateTrustWeight, type EdgeType } from "./trust-calculator.js";
 import {
   upsertFile,
   deleteNodesForFile,
   insertNodes,
-  deleteEdgesForProject,
+  deleteEdgesForFile,
+  getReverseDependentFileIds,
   insertEdges,
   getProjectNodes,
   type NodeRecord,
@@ -198,8 +199,8 @@ export async function incrementalRescan(
     // Delete old nodes for this file
     deleteNodesForFile(fileId);
 
-    // Scan
-    const result = scanFile(code, relPath, language);
+    // Scan (prefer Tree-sitter, fall back to regex)
+    const result = await scanFileAsync(code, relPath, language);
 
     if (result.nodes.length > 0) {
       const nodeRecords: NodeRecord[] = result.nodes.map((n) => ({
@@ -226,28 +227,53 @@ export async function incrementalRescan(
     }
   }
 
-  // 3. Re-resolve edges if any files were rescanned
+  // 3. Incremental edge resolution — only re-resolve edges for changed + dependent files
   if (rescannedFileIds.length > 0) {
-    // Simple approach: delete all edges for the project and rebuild
-    // This is acceptable because edge resolution needs the full node set anyway
-    deleteEdgesForProject(projectSlug);
-
+    // Build full node index (needed for target resolution)
     const allNodes = getProjectNodes(projectSlug);
     const nodesByName = new Map<string, (typeof allNodes)[0]>();
+    const nodesByFile = new Map<string, (typeof allNodes)>();
     for (const node of allNodes) {
       nodesByName.set(node.symbolName, node);
+      const arr = nodesByFile.get(node.filePath);
+      if (arr) arr.push(node);
+      else nodesByFile.set(node.filePath, [node]);
     }
 
-    // Re-scan all files for edge extraction (only edges, not nodes)
-    const allFiles = db
+    // Step 1: Delete edges for changed files only
+    for (const fileId of rescannedFileIds) {
+      deleteEdgesForFile(projectSlug, fileId);
+    }
+
+    // Step 2: Collect dependent files (who imports/calls the changed files)
+    const dependentFileIds = new Set<number>();
+    for (const fileId of rescannedFileIds) {
+      const deps = getReverseDependentFileIds(projectSlug, fileId);
+      for (const depId of deps) {
+        if (!rescannedFileIds.includes(depId)) {
+          dependentFileIds.add(depId);
+        }
+      }
+    }
+
+    // Step 3: Delete edges for dependent files too (their targets may have changed)
+    for (const depFileId of dependentFileIds) {
+      deleteEdgesForFile(projectSlug, depFileId);
+    }
+
+    // Step 4: Re-resolve edges for changed files + dependents only
+    const filesToResolve = new Set([...rescannedFileIds, ...dependentFileIds]);
+
+    const filesToScan = db
       .select({ id: codeFiles.id, filePath: codeFiles.filePath, language: codeFiles.language })
       .from(codeFiles)
       .where(eq(codeFiles.projectSlug, projectSlug))
-      .all();
+      .all()
+      .filter((f) => filesToResolve.has(f.id));
 
     const resolvedEdges: EdgeRecord[] = [];
 
-    for (const file of allFiles) {
+    for (const file of filesToScan) {
       const absPath = join(projectDir, file.filePath);
       if (!existsSync(absPath)) continue;
 
@@ -258,8 +284,13 @@ export async function incrementalRescan(
         continue;
       }
 
-      const result = scanFile(code, file.filePath, file.language);
-      const fileNodes = allNodes.filter((n) => n.filePath === file.filePath);
+      const result = await scanFileAsync(code, file.filePath, file.language);
+      const fileNodes = nodesByFile.get(file.filePath) ?? [];
+
+      if (fileNodes.length === 0 && result.edges.length > 0) {
+        log.debug("Skipping edges for node-less file", { filePath: file.filePath });
+        continue;
+      }
 
       for (const edge of result.edges) {
         let sourceNode =
@@ -287,7 +318,27 @@ export async function incrementalRescan(
     // Deduplicate
     const edgeKey = (e: EdgeRecord) => `${e.sourceNodeId}-${e.targetNodeId}-${e.edgeType}`;
     const uniqueEdges = [...new Map(resolvedEdges.map((e) => [edgeKey(e), e])).values()];
+
+    // Upgrade import trust when import + call coexist for same source node
+    for (const e of uniqueEdges) {
+      if (e.edgeType === "imports" && e.trustWeight < 0.9) {
+        const hasCall = uniqueEdges.some(
+          (c) => c.edgeType === "calls" && c.sourceNodeId === e.sourceNodeId,
+        );
+        if (hasCall) {
+          e.trustWeight = calculateTrustWeight("imports", { hasCall: true });
+        }
+      }
+    }
+
     insertEdges(uniqueEdges);
+
+    log.info("Incremental edge resolution", {
+      projectSlug,
+      changedFiles: rescannedFileIds.length,
+      dependentFiles: dependentFileIds.size,
+      totalEdges: uniqueEdges.length,
+    });
   }
 
   // 4. Re-describe changed nodes (non-blocking)

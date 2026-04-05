@@ -19,13 +19,13 @@
     "@grammyjs/transformer-throttler": "^1.2.1",
     "@hono/zod-validator": "^0.4.3",
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "@repomix/tree-sitter-wasms": "^0.1.16",
     "cron-parser": "^5.5.0",
     "drizzle-orm": "^0.39.3",
     "grammy": "^1.41.1",
     "hono": "^4.12.8",
     "ignore": "^7.0.5",
-    "tree-sitter-wasms": "^0.1.13",
-    "web-tree-sitter": "^0.26.8",
+    "web-tree-sitter": "0.25.10",
     "zod": "^3.24.2"
   },
   "devDependencies": {

@@ -162,6 +162,88 @@ export function deleteEdgesForProject(projectSlug: string): void {
   db.delete(codeEdges).where(eq(codeEdges.projectSlug, projectSlug)).run();
 }
 
+/**
+ * Delete edges connected to a specific file's nodes (outgoing + incoming).
+ * Used by incremental rescan to surgically remove only the affected file's edges.
+ */
+export function deleteEdgesForFile(projectSlug: string, fileId: number): number {
+  const db = getDb();
+
+  // Get node IDs for this file
+  const fileNodeIds = db
+    .select({ id: codeNodes.id })
+    .from(codeNodes)
+    .where(and(eq(codeNodes.projectSlug, projectSlug), eq(codeNodes.fileId, fileId)))
+    .all()
+    .map((n) => n.id);
+
+  if (fileNodeIds.length === 0) return 0;
+
+  // Delete edges where source OR target is one of this file's nodes
+  let deleted = 0;
+
+  // Outgoing edges (from this file's nodes)
+  const outgoing = db
+    .delete(codeEdges)
+    .where(
+      and(eq(codeEdges.projectSlug, projectSlug), inArray(codeEdges.sourceNodeId, fileNodeIds)),
+    )
+    .returning({ id: codeEdges.id })
+    .all();
+  deleted += outgoing.length;
+
+  // Incoming edges (to this file's nodes)
+  const incoming = db
+    .delete(codeEdges)
+    .where(
+      and(eq(codeEdges.projectSlug, projectSlug), inArray(codeEdges.targetNodeId, fileNodeIds)),
+    )
+    .returning({ id: codeEdges.id })
+    .all();
+  deleted += incoming.length;
+
+  return deleted;
+}
+
+/**
+ * Get all file IDs that have edges pointing TO the given file's nodes.
+ * Returns the reverse-dependent file IDs (who imports/calls this file).
+ */
+export function getReverseDependentFileIds(projectSlug: string, fileId: number): number[] {
+  const db = getDb();
+
+  // Get this file's node IDs
+  const fileNodeIds = db
+    .select({ id: codeNodes.id })
+    .from(codeNodes)
+    .where(and(eq(codeNodes.projectSlug, projectSlug), eq(codeNodes.fileId, fileId)))
+    .all()
+    .map((n) => n.id);
+
+  if (fileNodeIds.length === 0) return [];
+
+  // Find source nodes that point TO this file's nodes
+  const edges = db
+    .select({ sourceNodeId: codeEdges.sourceNodeId })
+    .from(codeEdges)
+    .where(
+      and(eq(codeEdges.projectSlug, projectSlug), inArray(codeEdges.targetNodeId, fileNodeIds)),
+    )
+    .all();
+
+  // Get unique file IDs for those source nodes
+  const sourceNodeIds = [...new Set(edges.map((e) => e.sourceNodeId))];
+  if (sourceNodeIds.length === 0) return [];
+
+  const sourceFiles = db
+    .select({ fileId: codeNodes.fileId })
+    .from(codeNodes)
+    .where(inArray(codeNodes.id, sourceNodeIds))
+    .all();
+
+  return [...new Set(sourceFiles.map((f) => f.fileId).filter((id) => id !== fileId))];
+}
+
 /** Bulk insert edges. */
 export function insertEdges(edges: EdgeRecord[]): void {
   if (edges.length === 0) return;

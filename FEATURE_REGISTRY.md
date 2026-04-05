@@ -108,17 +108,17 @@ Multi-agent debates + cross-session communication. **Unique to Companion.**
 
 ## 4. DEVTOOLS
 
-Terminal, file explorer, CodeGraph, WebIntel — developer productivity tools.
+Terminal, file explorer, CodeGraph (Tree-sitter WASM AST), WebIntel — developer productivity tools.
 
 | Feature | Key File(s) | Connects To |
 |---------|------------|-------------|
 | Terminal manager (PTY via Bun.spawn) | `terminal-manager.ts`, `terminal-lock.ts` | terminal API |
 | Filesystem API (safe read-only) | `routes/filesystem.ts` | OS fs |
-| CodeGraph scanner (AST-free symbols) | `codegraph/scanner.ts` | graph-store |
+| CodeGraph scanner (Tree-sitter WASM + regex fallback) | `codegraph/scanner.ts`, `tree-sitter-engine.ts`, `ts-extractors.ts` | graph-store |
 | CodeGraph semantic describer (AI summaries) | `codegraph/semantic-describer.ts` | ai-client |
-| CodeGraph diff updater (incremental) | `codegraph/diff-updater.ts` | scanner |
+| CodeGraph diff updater (incremental O(k×d)) | `codegraph/diff-updater.ts` | scanner, graph-store |
 | CodeGraph AI context provider | `codegraph/agent-context-provider.ts` | ws-bridge |
-| CodeGraph query engine (impact radius) | `codegraph/query-engine.ts` | graph-store |
+| CodeGraph query engine (impact radius, weighted search) | `codegraph/query-engine.ts` | graph-store |
 | WebIntel (web research via webclaw sidecar) | `web-intel.ts` | webclaw Docker |
 | WebIntel library detector | `web-intel-detector.ts` | web-intel |
 | WebIntel commands (/docs, /research) | `web-intel-handler.ts` | ws-bridge |
