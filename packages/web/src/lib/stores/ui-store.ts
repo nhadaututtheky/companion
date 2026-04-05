@@ -1,9 +1,12 @@
 import { create } from "zustand";
+import type { SettingsTab } from "@/types/settings";
 
 interface UiStore {
   theme: "light" | "dark";
   commandPaletteOpen: boolean;
   newSessionModalOpen: boolean;
+  settingsModalOpen: boolean;
+  settingsActiveTab: SettingsTab;
   activityTerminalOpen: boolean;
   rightPanelMode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context";
   rightPanelPath: string | null;
@@ -14,6 +17,8 @@ interface UiStore {
   toggleTheme: () => void;
   setCommandPaletteOpen: (open: boolean) => void;
   setNewSessionModalOpen: (open: boolean) => void;
+  setSettingsModalOpen: (open: boolean) => void;
+  setSettingsActiveTab: (tab: SettingsTab) => void;
   setActivityTerminalOpen: (open: boolean) => void;
   setRightPanelMode: (
     mode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context",
@@ -39,6 +44,8 @@ export const useUiStore = create<UiStore>((set) => ({
   theme: getInitialTheme(),
   commandPaletteOpen: false,
   newSessionModalOpen: false,
+  settingsModalOpen: false,
+  settingsActiveTab: "general",
   activityTerminalOpen: false,
   rightPanelMode: "none",
   rightPanelPath: null,
@@ -67,6 +74,10 @@ export const useUiStore = create<UiStore>((set) => ({
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
 
   setNewSessionModalOpen: (open) => set({ newSessionModalOpen: open }),
+
+  setSettingsModalOpen: (open) => set({ settingsModalOpen: open }),
+
+  setSettingsActiveTab: (tab) => set({ settingsActiveTab: tab }),
 
   setActivityTerminalOpen: (open) => set({ activityTerminalOpen: open }),
 

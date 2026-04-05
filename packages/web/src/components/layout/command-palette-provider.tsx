@@ -27,6 +27,13 @@ export function CommandPaletteProvider() {
         setOpen(true);
       }
 
+      // Ctrl+, / Cmd+, — toggle settings modal
+      if (modifier && e.key === ",") {
+        e.preventDefault();
+        const store = useUiStore.getState();
+        store.setSettingsModalOpen(!store.settingsModalOpen);
+      }
+
       // Ctrl+Shift+F / Cmd+Shift+F — toggle file search panel
       if (modifier && e.shiftKey && e.key === "F") {
         e.preventDefault();

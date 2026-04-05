@@ -177,7 +177,7 @@ export function McpSettings() {
       </div>
 
       {/* Two-column layout */}
-      <div className="grid gap-3" style={{ gridTemplateColumns: "280px 1fr", minHeight: 320 }}>
+      <div className="grid gap-3" style={{ gridTemplateColumns: "minmax(200px, 280px) 1fr", minHeight: 320 }}>
         {/* Left: Server list */}
         <div
           className="rounded-xl overflow-hidden"

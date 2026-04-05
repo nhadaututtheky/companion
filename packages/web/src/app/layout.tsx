@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { CommandPaletteProvider } from "@/components/layout/command-palette-provider";
+import { SettingsModalProvider } from "@/components/settings/settings-modal-provider";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ThemeSync } from "@/components/layout/theme-sync";
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ErrorBoundary>
           <AuthGuard>
             <CommandPaletteProvider />
+            <SettingsModalProvider />
             <ThemeSync />
             {children}
             <MagicRingMount />

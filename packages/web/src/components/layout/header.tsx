@@ -251,14 +251,14 @@ export function Header({ onMenuToggle }: HeaderProps) {
         </button>
         {/* Quick start from template */}
         <TemplateQuickPicker />
-        <a
-          href="/settings"
-          className="p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-         
+        <button
+          onClick={() => useUiStore.getState().setSettingsModalOpen(true)}
+          className="p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
           aria-label="Settings"
+          title={typeof navigator !== "undefined" && /Mac/.test(navigator.platform) ? "Settings (⌘,)" : "Settings (Ctrl+,)"}
         >
           <Gear size={16} weight="bold" />
-        </a>
+        </button>
       </div>
     </header>
   );
