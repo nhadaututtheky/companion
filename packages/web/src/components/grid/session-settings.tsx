@@ -390,9 +390,8 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
                   if (e.key === "Enter") handleBudgetSubmit();
                 }}
                 placeholder="No limit"
-                className="flex-1 text-xs px-2 py-1 rounded bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+                className="flex-1 text-xs px-2 py-1 rounded bg-transparent input-bordered"
                 style={{
-                  border: "1px solid var(--color-border)",
                   color: "var(--color-text-primary)",
                   fontFamily: "var(--font-mono)",
                 }}

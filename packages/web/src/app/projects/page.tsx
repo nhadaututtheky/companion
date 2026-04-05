@@ -226,10 +226,9 @@ function ProjectDialog({
             value={form.name ?? ""}
             onChange={(e) => updateField("name", e.target.value)}
             placeholder="My Awesome Project"
-            className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+            className="px-3 py-2 rounded-lg text-sm input-bordered"
             style={{
               background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
               color: "var(--color-text-primary)",
             }}
             autoFocus
@@ -255,10 +254,9 @@ function ProjectDialog({
             }}
             placeholder="my-awesome-project"
             disabled={isEdit}
-            className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono disabled:opacity-50"
+            className="px-3 py-2 rounded-lg text-sm input-bordered font-mono disabled:opacity-50"
             style={{
               background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
               color: "var(--color-text-primary)",
             }}
           />
@@ -274,10 +272,9 @@ function ProjectDialog({
             value={form.dir ?? ""}
             onChange={(e) => updateField("dir", e.target.value)}
             placeholder="/home/user/projects/my-project"
-            className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
+            className="px-3 py-2 rounded-lg text-sm input-bordered font-mono"
             style={{
               background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
               color: "var(--color-text-primary)",
             }}
           />
@@ -294,10 +291,9 @@ function ProjectDialog({
           <select
             value={form.defaultModel ?? "claude-sonnet-4-6"}
             onChange={(e) => updateField("defaultModel", e.target.value)}
-            className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+            className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
             style={{
               background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
               color: "var(--color-text-primary)",
             }}
           >
@@ -317,10 +313,9 @@ function ProjectDialog({
           <select
             value={form.permissionMode ?? "default"}
             onChange={(e) => updateField("permissionMode", e.target.value)}
-            className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+            className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
             style={{
               background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
               color: "var(--color-text-primary)",
             }}
           >

@@ -39,9 +39,10 @@ export function createBot(config: BotConfig): Bot {
 
   // ── Auth middleware: restrict to allowed chats + users ────────────────
 
-  // Warn if no whitelist is configured — bot will deny all messages by default
-  if (config.allowedChatIds.length === 0 && config.allowedUserIds.length === 0) {
-    log.warn("No allowedChatIds or allowedUserIds configured — bot will deny all messages. Add your chat/user ID in Settings → Telegram.", { botId: config.botId });
+  // Self-hosted: when no whitelist is configured, allow all (open access)
+  const openAccess = config.allowedChatIds.length === 0 && config.allowedUserIds.length === 0;
+  if (openAccess) {
+    log.info("No allowedChatIds or allowedUserIds configured — bot accepts all messages (self-hosted mode). Restrict in Settings → Telegram if needed.", { botId: config.botId });
   }
 
   bot.use(async (ctx, next) => {
@@ -49,9 +50,9 @@ export function createBot(config: BotConfig): Bot {
     const userId = ctx.from?.id;
     if (!chatId) return;
 
-    // Default deny: if no whitelist is configured, reject all messages
-    if (config.allowedChatIds.length === 0 && config.allowedUserIds.length === 0) {
-      log.debug("Denied (no whitelist configured)", { chatId, userId, botId: config.botId });
+    // Self-hosted: no whitelist = allow all
+    if (openAccess) {
+      await next();
       return;
     }
 
@@ -64,7 +65,7 @@ export function createBot(config: BotConfig): Bot {
       return;
     }
 
-    // Check user ID whitelist (admin restriction)
+    // Check user ID whitelist (admin restriction — only applies when explicitly configured)
     if (config.allowedUserIds.length > 0 && userId && !isAdmin) {
       log.warn("Unauthorized user", { chatId, userId, botId: config.botId });
       return;
@@ -104,6 +105,7 @@ export async function registerCommands(bot: Bot): Promise<void> {
       { command: "status", description: "Show session status" },
       { command: "model", description: "Change AI model" },
       { command: "templates", description: "Browse session templates" },
+      { command: "mood", description: "Agent pulse / health check" },
       { command: "help", description: "Show all commands" },
     ]);
     log.info("Commands registered");

@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { createLogger } from "../logger.js";
 import { isGraphReady, getProjectStats } from "./index.js";
 import { getLatestScanJob } from "./graph-store.js";
+import { getTracker } from "./event-collector.js";
 import {
   getHotFiles,
   getRelatedNodes,
@@ -28,6 +29,7 @@ export interface CodeGraphConfig {
   planReviewEnabled: boolean;
   breakCheckEnabled: boolean;
   webDocsEnabled: boolean;
+  activityFeedEnabled: boolean;
   excludePatterns: string[];
   maxContextTokens: number;
 }
@@ -39,6 +41,7 @@ const DEFAULT_CONFIG: CodeGraphConfig = {
   planReviewEnabled: true,
   breakCheckEnabled: true,
   webDocsEnabled: true,
+  activityFeedEnabled: true,
   excludePatterns: [],
   maxContextTokens: 800,
 };
@@ -60,6 +63,7 @@ export function getCodeGraphConfig(projectSlug: string): CodeGraphConfig {
       planReviewEnabled: row.planReviewEnabled,
       breakCheckEnabled: row.breakCheckEnabled,
       webDocsEnabled: row.webDocsEnabled,
+      activityFeedEnabled: (row as Record<string, unknown>).activityFeedEnabled as boolean ?? true,
       excludePatterns: (row.excludePatterns as string[]) ?? [],
       maxContextTokens: row.maxContextTokens,
     };
@@ -371,6 +375,125 @@ export function reviewPlan(projectSlug: string, mentionedFiles: string[]): strin
     log.warn("Failed to review plan", { error: String(err) });
     return null;
   }
+}
+
+// ─── Injection Point D: Break Check ─────────────────────────────────────
+
+// ─── Injection Point E: Activity Feed ──────────────────────────────────
+
+/** Tracks the last injection timestamp per session (inject every 3rd turn or on change) */
+const activityInjectionState = new Map<
+  string,
+  { lastInjectedTurn: number; lastHotNodesHash: string }
+>();
+
+/**
+ * Build activity context for agent self-awareness.
+ * Returns compact XML block (~150-200 tokens) with agent's own footprint.
+ * Returns null if no activity, disabled, or too frequent.
+ */
+export function buildActivityContext(
+  sessionId: string,
+  projectSlug: string,
+  currentTurn: number,
+  contextUsedPercent: number,
+): string | null {
+  // Adaptive sizing: skip if context is getting full
+  if (contextUsedPercent > 70) {
+    log.info("Skipping activity feed — context full", { contextUsedPercent });
+    return null;
+  }
+
+  try {
+    const tracker = getTracker(sessionId);
+    if (!tracker) return null;
+
+    const hotFiles = tracker.getHotFiles(5);
+    if (hotFiles.length === 0) return null;
+
+    // Rate limit: inject every 3rd turn or when hot nodes changed
+    const hotHash = hotFiles.map((f) => `${f.filePath}:${f.touchCount}`).join("|");
+    const prev = activityInjectionState.get(sessionId);
+    if (prev) {
+      const turnsSinceLast = currentTurn - prev.lastInjectedTurn;
+      if (turnsSinceLast < 3 && prev.lastHotNodesHash === hotHash) {
+        return null; // No change and too frequent
+      }
+    }
+
+    activityInjectionState.set(sessionId, {
+      lastInjectedTurn: currentTurn,
+      lastHotNodesHash: hotHash,
+    });
+
+    const totalTouches = tracker.getTotalTouches();
+    const touchedFiles = tracker.getTouchedFileCount();
+
+    // Build compact XML
+    const lines: string[] = [
+      `<graph_activity session="${sessionId.slice(0, 8)}" turn="${currentTurn}">`,
+      `  <hot_nodes>`,
+    ];
+
+    for (const file of hotFiles) {
+      const impact = file.touchCount >= 3 ? "high" : file.touchCount >= 2 ? "medium" : "low";
+      lines.push(
+        `    <node file="${file.filePath}" touches="${file.touchCount}" impact="${impact}" />`,
+      );
+    }
+
+    lines.push(`  </hot_nodes>`);
+    lines.push(
+      `  <summary touched_files="${touchedFiles}" total_edits="${totalTouches}" />`,
+    );
+
+    // Add hint for high-touch files
+    const highTouchFiles = hotFiles.filter((f) => f.touchCount >= 3);
+    if (highTouchFiles.length > 0) {
+      lines.push(
+        `  <hint>Files touched 3+ times: consider if the root cause is upstream of ${highTouchFiles[0]!.filePath}</hint>`,
+      );
+    }
+
+    lines.push(`</graph_activity>`);
+    return "\n\n" + lines.join("\n");
+  } catch (err) {
+    log.warn("Failed to build activity context", { error: String(err) });
+    return null;
+  }
+}
+
+/** Clean up activity injection state when session ends */
+export function clearActivityState(sessionId: string): void {
+  activityInjectionState.delete(sessionId);
+}
+
+// ─── Adaptive Context Sizing ──────────────────────────────────────────
+
+/**
+ * Determine which injection types should be skipped based on context usage.
+ * Returns a set of injection types to skip.
+ */
+export function getSkippedInjections(contextUsedPercent: number): Set<string> {
+  const skip = new Set<string>();
+
+  if (contextUsedPercent > 95) {
+    // Emergency: skip everything except break_check (safety-critical)
+    skip.add("project_map");
+    skip.add("message_context");
+    skip.add("plan_review");
+    skip.add("activity_feed");
+    skip.add("web_docs");
+  } else if (contextUsedPercent > 85) {
+    // High: skip non-critical
+    skip.add("activity_feed");
+    skip.add("web_docs");
+  } else if (contextUsedPercent > 70) {
+    // Moderate: skip activity feed only
+    skip.add("activity_feed");
+  }
+
+  return skip;
 }
 
 // ─── Injection Point D: Break Check ─────────────────────────────────────

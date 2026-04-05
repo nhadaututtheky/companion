@@ -18,6 +18,7 @@ import { CostBreakdown } from "./cost-breakdown";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { ContextMeter } from "./context-meter";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { FileTree } from "./file-tree";
 import { FileViewer } from "./file-viewer";
 import { ChangesPanel } from "./changes-panel";
@@ -155,7 +156,7 @@ function CompactModeControl({ sessionId }: { sessionId: string }) {
                 className="flex-1 text-xs py-1 rounded cursor-pointer transition-colors capitalize"
                 style={{
                   background: mode === m ? "var(--color-accent)" : "var(--color-bg-elevated)",
-                  color: mode === m ? "#fff" : "var(--color-text-secondary)",
+                  color: mode === m ? "var(--color-bg-base)" : "var(--color-text-secondary)",
                 }}
                 onClick={() => {
                   setMode(m);
@@ -233,11 +234,11 @@ function RTKSavingsCard({
       style={{
         background: "var(--color-bg-card)",
         border: "1px solid var(--color-border)",
-        borderLeft: "3px solid #34A853",
+        borderLeft: "3px solid var(--color-success)",
       }}
     >
       <div className="flex items-center gap-2 mb-2">
-        <span style={{ color: "#34A853", fontSize: 14 }}>⚡</span>
+        <span style={{ color: "var(--color-success)", fontSize: 14 }}>⚡</span>
         <span
           className="text-xs font-semibold"
          
@@ -252,7 +253,7 @@ function RTKSavingsCard({
           </p>
           <p
             className="text-sm font-semibold font-mono"
-            style={{ color: "#34A853" }}
+            style={{ color: "var(--color-success)" }}
           >
             {formatTokens(tokensSaved)}
           </p>
@@ -263,7 +264,7 @@ function RTKSavingsCard({
           </p>
           <p
             className="text-sm font-semibold font-mono"
-            style={{ color: "#34A853" }}
+            style={{ color: "var(--color-success)" }}
           >
             ${costSaved < 0.01 ? "<0.01" : costSaved.toFixed(2)}
           </p>
@@ -343,8 +344,8 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
             onClick={() => setActiveTab(tab.id)}
             className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold cursor-pointer transition-colors flex-1 justify-center"
             style={{
-              color: activeTab === tab.id ? "#4285F4" : "var(--color-text-muted)",
-              borderBottom: activeTab === tab.id ? "2px solid #4285F4" : "2px solid transparent",
+              color: activeTab === tab.id ? "var(--color-accent)" : "var(--color-text-muted)",
+              borderBottom: activeTab === tab.id ? "2px solid var(--color-accent)" : "2px solid transparent",
               background: "transparent",
             }}
           >
@@ -362,33 +363,15 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
         <>
           {/* Session header */}
           <div className="px-4 py-4 border-b">
-            <p className="text-xs font-medium mb-1">
+            <p className="text-sm font-semibold">
               {session.projectName}
             </p>
-            <p className="text-sm font-semibold">
+            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
               {session.model}
             </p>
             <div className="flex items-center gap-2 mt-2">
-              <span
-                className="text-xs px-2 py-0.5 rounded-full font-medium capitalize"
-                style={{
-                  background:
-                    session.status === "running"
-                      ? "#4285F420"
-                      : session.status === "waiting"
-                        ? "#FBBC0420"
-                        : "var(--color-bg-elevated)",
-                  color:
-                    session.status === "running"
-                      ? "#4285F4"
-                      : session.status === "waiting"
-                        ? "#FBBC04"
-                        : "var(--color-text-muted)",
-                }}
-              >
-                {session.status}
-              </span>
-              <span className="text-xs">
+              <StatusBadge status={session.status} />
+              <span className="text-xs text-[var(--color-text-muted)] font-mono">
                 #{session.id.slice(0, 8)}
               </span>
             </div>
@@ -421,19 +404,19 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
               icon={<ArrowsCounterClockwise size={16} weight="bold" />}
               label="Turns"
               value={String(s.num_turns)}
-              color="#4285F4"
+              color="var(--color-accent)"
             />
             <StatCard
               icon={<Clock size={16} weight="bold" />}
               label="Duration"
               value={elapsed > 0 ? formatDuration(elapsed) : "—"}
-              color="#FBBC04"
+              color="var(--color-warning)"
             />
             <StatCard
               icon={<Robot size={16} weight="bold" />}
               label="Tokens"
               value={`${formatTokens(s.total_input_tokens + s.total_output_tokens)}`}
-              color="#EA4335"
+              color="var(--color-danger)"
             />
             <RTKSavingsCard
               tokensSaved={s.rtk_tokens_saved ?? 0}
@@ -491,7 +474,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
                       (e.currentTarget as HTMLElement).style.background = "transparent";
                     }}
                   >
-                    <span className="text-xs" style={{ color: "#FBBC04" }}>
+                    <span className="text-xs" style={{ color: "var(--color-warning)" }}>
                       ~
                     </span>
                     <span
@@ -517,7 +500,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
                         (e.currentTarget as HTMLElement).style.background = "transparent";
                       }}
                     >
-                      <span className="text-xs" style={{ color: "#4285F4" }}>
+                      <span className="text-xs" style={{ color: "var(--color-accent)" }}>
                         ○
                       </span>
                       <span
@@ -554,7 +537,11 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
           {/* Snapshots */}
           <SnapshotPanel
             sessionId={session.id}
-            isActive={session.status !== "ended" && session.status !== "error"}
+            isActive={
+              session.status !== "ended" &&
+              session.status !== "error" &&
+              session.status !== "starting"
+            }
           />
 
           {/* Summary (for ended sessions) */}
@@ -833,10 +820,10 @@ function StreamToTelegramButton({ sessionId }: { sessionId: string }) {
       title={notConfigured ? "Configure in Settings → Session Streaming" : undefined}
       className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       style={{
-        background: streaming ? "#0088cc15" : "var(--color-bg-elevated)",
-        border: streaming ? "1px solid #0088cc40" : "1px solid var(--color-border)",
+        background: streaming ? "color-mix(in srgb, var(--color-accent) 8%, transparent)" : "var(--color-bg-elevated)",
+        border: streaming ? "1px solid color-mix(in srgb, var(--color-accent) 25%, transparent)" : "1px solid var(--color-border)",
         color: streaming
-          ? "#0088cc"
+          ? "var(--color-accent)"
           : notConfigured
             ? "var(--color-text-muted)"
             : "var(--color-text-secondary)",

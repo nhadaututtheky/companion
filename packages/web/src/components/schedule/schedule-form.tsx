@@ -189,7 +189,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Daily code review"
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+              className="w-full px-3 py-2 rounded-lg text-xs input-bordered"
               style={inputStyle}
             />
           </Field>
@@ -199,7 +199,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
             <select
               value={projectSlug}
               onChange={(e) => setProjectSlug(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+              className="w-full px-3 py-2 rounded-lg text-xs input-bordered cursor-pointer"
               style={inputStyle}
               disabled={isEdit}
             >
@@ -219,7 +219,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Review all recent changes and create a summary..."
               rows={4}
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent resize-none"
+              className="w-full px-3 py-2 rounded-lg text-xs input-bordered resize-none"
               style={inputStyle}
             />
           </Field>
@@ -229,7 +229,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+              className="w-full px-3 py-2 rounded-lg text-xs input-bordered cursor-pointer"
               style={inputStyle}
             >
               <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
@@ -266,7 +266,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
                 type="datetime-local"
                 value={scheduledAt}
                 onChange={(e) => setScheduledAt(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+                className="w-full px-3 py-2 rounded-lg text-xs input-bordered"
                 style={inputStyle}
               />
             </Field>
@@ -277,7 +277,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
                 value={cronExpression}
                 onChange={(e) => setCronExpression(e.target.value)}
                 placeholder="0 9 * * 1-5 (weekdays at 9am)"
-                className="w-full px-3 py-2 rounded-lg text-xs font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+                className="w-full px-3 py-2 rounded-lg text-xs font-mono input-bordered"
                 style={inputStyle}
               />
               <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -311,7 +311,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
               type="text"
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+              className="w-full px-3 py-2 rounded-lg text-xs input-bordered"
               style={inputStyle}
             />
           </Field>
@@ -326,7 +326,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
                 placeholder="1.00"
                 step="0.1"
                 min="0"
-                className="w-full px-3 py-2 rounded-lg text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+                className="w-full px-3 py-2 rounded-lg text-xs input-bordered"
                 style={inputStyle}
               />
             </Field>
@@ -337,7 +337,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
                 onChange={(e) => setMaxTurns(e.target.value)}
                 placeholder="50"
                 min="1"
-                className="w-full px-3 py-2 rounded-lg text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+                className="w-full px-3 py-2 rounded-lg text-xs input-bordered"
                 style={inputStyle}
               />
             </Field>
@@ -382,7 +382,6 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
 
 const inputStyle = {
   background: "var(--color-bg-elevated)",
-  border: "1px solid var(--color-border)",
   color: "var(--color-text-primary)",
 };
 

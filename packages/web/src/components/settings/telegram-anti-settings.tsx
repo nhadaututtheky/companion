@@ -324,10 +324,9 @@ function FieldInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="px-3 py-1.5 rounded-lg text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
+        className="px-3 py-1.5 rounded-lg text-xs input-bordered font-mono"
         style={{
           background: "var(--color-bg-elevated)",
-          border: "1px solid var(--color-border)",
           color: "var(--color-text-primary)",
         }}
       />

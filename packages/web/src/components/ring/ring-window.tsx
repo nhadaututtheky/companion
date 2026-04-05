@@ -5,8 +5,9 @@ import { useRingStore, MODEL_PRESETS } from "@/lib/stores/ring-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
+import { ChannelPanel } from "@/components/shared/channel-panel";
 
-const GOOGLE_COLORS = ["#4285F4", "#EA4335", "#FBBC04", "#34A853"];
+const GOOGLE_COLORS = ["var(--color-google-blue)", "var(--color-google-red)", "var(--color-google-yellow)", "var(--color-google-green)"];
 
 function getSessionColor(id: string): string {
   let hash = 0;
@@ -76,9 +77,13 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   const dockWidth = linkedSessionIds.length * (bubbleSize + bubbleGap) - bubbleGap;
 
   // Card: right edge near Ring, above bubbles
-  const cardWidth = 300;
-  const cardHeight = 300;
-  const cardLeft = Math.max(8, anchorX - cardWidth + 26);
+  // Debate with active channel → bigger card to show live feed
+  const isDebateLive = mode === "debate" && !!debateChannelId;
+  const viewportH = typeof window !== "undefined" ? window.innerHeight : 800;
+  const viewportW = typeof window !== "undefined" ? window.innerWidth : 1200;
+  const cardWidth = Math.min(isDebateLive ? 480 : 300, viewportW - 16);
+  const cardHeight = Math.min(isDebateLive ? 600 : 300, viewportH - 80);
+  const cardLeft = Math.max(8, Math.min(anchorX - cardWidth + 26, viewportW - cardWidth - 8));
   const cardTop = Math.max(8, anchorY - bubbleSize / 2 - cardHeight - 8);
 
   async function handleSend() {
@@ -91,7 +96,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
       id: `user-${Date.now()}`,
       sessionId: "user",
       sessionName: "You",
-      sessionColor: "#4285F4",
+      sessionColor: "var(--color-accent)",
       content,
       timestamp: Date.now(),
       role: "user",
@@ -247,7 +252,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
               <div style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
               <span
                 style={{
-                  fontSize: isHovered ? 8 : 7,
+                  fontSize: isHovered ? 10 : 9,
                   fontWeight: 600,
                   color: "var(--color-text-secondary, #555)",
                   maxWidth: size - 8,
@@ -272,7 +277,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                   height: 16,
                   borderRadius: "50%",
                   border: "none",
-                  background: "#EA4335",
+                  background: "var(--color-danger)",
                   color: "#fff",
                   cursor: "pointer",
                   display: "flex",
@@ -334,14 +339,14 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
             <button
               onClick={() => setMode("broadcast")}
               style={{
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: mode === "broadcast" ? 700 : 500,
                 padding: "2px 6px",
                 borderRadius: 6,
                 border: "none",
                 cursor: "pointer",
                 background: mode === "broadcast" ? "var(--color-accent, #4285F4)" : "transparent",
-                color: mode === "broadcast" ? "#fff" : "var(--color-text-muted, #999)",
+                color: mode === "broadcast" ? "#fff" : "var(--color-text-muted)",
               }}
             >
               Broadcast
@@ -349,14 +354,14 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
             <button
               onClick={() => setMode("debate")}
               style={{
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: mode === "debate" ? 700 : 500,
                 padding: "2px 6px",
                 borderRadius: 6,
                 border: "none",
                 cursor: "pointer",
-                background: mode === "debate" ? "#EA4335" : "transparent",
-                color: mode === "debate" ? "#fff" : "var(--color-text-muted, #999)",
+                background: mode === "debate" ? "var(--color-danger)" : "transparent",
+                color: mode === "debate" ? "#fff" : "var(--color-text-muted)",
                 display: "flex",
                 alignItems: "center",
                 gap: 3,
@@ -386,11 +391,13 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
           ref={chatRef}
           style={{
             flex: 1,
-            overflowY: "auto",
-            padding: "6px 10px",
+            minHeight: 0,
+            // Debate live feed has its own scroll — disable outer scroll to prevent conflict
+            overflowY: isDebateLive ? "hidden" : "auto",
+            padding: isDebateLive ? 0 : "6px 10px",
             display: "flex",
             flexDirection: "column",
-            gap: 4,
+            gap: isDebateLive ? 0 : 4,
           }}
         >
           {/* Debate mode: topic input + start */}
@@ -409,9 +416,9 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
               <div
                 style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}
               >
-                <Scales size={20} weight="duotone" style={{ color: "#EA4335", opacity: 0.5 }} />
+                <Scales size={20} weight="duotone" style={{ color: "var(--color-danger)", opacity: 0.5 }} />
                 <span style={{ fontSize: 11, color: "var(--color-text-muted, #999)" }}>
-                  Multi-model debate
+                  Agents debate a question from opposing sides
                 </span>
               </div>
               <input
@@ -421,7 +428,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void handleStartDebate();
                 }}
-                placeholder="Debate topic…"
+                placeholder="What should agents debate? e.g. Redis vs Memcached for caching"
                 style={{
                   width: "100%",
                   padding: "5px 8px",
@@ -436,8 +443,8 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
               {/* Agent model selectors */}
               <div style={{ display: "flex", gap: 4 }}>
                 {[
-                  { agentId: "advocate", label: "Advocate", color: "#4285F4" },
-                  { agentId: "challenger", label: "Challenger", color: "#EA4335" },
+                  { agentId: "advocate", label: "Advocate", color: "var(--color-accent)" },
+                  { agentId: "challenger", label: "Challenger", color: "var(--color-danger)" },
                 ].map(({ agentId, label, color }) => {
                   const selected = debateAgentModels.find((m) => m.agentId === agentId);
                   return (
@@ -446,7 +453,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                       style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}
                     >
                       <span
-                        style={{ fontSize: 9, fontWeight: 600, color, textTransform: "uppercase" }}
+                        style={{ fontSize: 11, fontWeight: 600, color, textTransform: "uppercase" }}
                       >
                         {label}
                       </span>
@@ -461,7 +468,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                           );
                         }}
                         style={{
-                          fontSize: 10,
+                          fontSize: 11,
                           padding: "3px 4px",
                           borderRadius: 6,
                           border: `1px solid ${selected ? color + "60" : "var(--color-border, rgba(0,0,0,0.08))"}`,
@@ -491,7 +498,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                   fontWeight: 600,
                   borderRadius: 8,
                   border: "none",
-                  background: debateTopic.trim() ? "#EA4335" : "#ccc",
+                  background: debateTopic.trim() ? "var(--color-danger)" : "var(--color-text-muted)",
                   color: "#fff",
                   cursor: debateTopic.trim() ? "pointer" : "not-allowed",
                 }}
@@ -501,50 +508,48 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
             </div>
           )}
 
-          {/* Debate running */}
+          {/* Debate running — live feed via ChannelPanel */}
           {mode === "debate" && debateChannelId && (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-                gap: 6,
-              }}
-            >
-              <Scales size={28} weight="duotone" style={{ color: "#EA4335" }} />
-              <span
-                style={{ fontSize: 11, fontWeight: 600, color: "var(--color-text-primary, #333)" }}
-              >
-                Debate in progress
-              </span>
-              <span
+            <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+              <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+                <ChannelPanel
+                  channelId={debateChannelId}
+                  compact
+                  onChannelLost={() => {
+                    setDebateChannelId(null);
+                    setMode("broadcast");
+                  }}
+                />
+              </div>
+              <div
                 style={{
-                  fontSize: 10,
-                  color: "var(--color-text-muted, #999)",
-                  textAlign: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  padding: "4px 8px",
+                  borderTop: "1px solid var(--color-border, rgba(0,0,0,0.06))",
+                  flexShrink: 0,
                 }}
               >
-                Agents are debating. View results in Telegram or check /channels API.
-              </span>
-              <button
-                onClick={() => {
-                  setDebateChannelId(null);
-                  setMode("broadcast");
-                }}
-                style={{
-                  padding: "4px 12px",
-                  fontSize: 10,
-                  borderRadius: 6,
-                  border: "1px solid var(--color-border)",
-                  background: "transparent",
-                  cursor: "pointer",
-                  color: "var(--color-text-secondary, #666)",
-                }}
-              >
-                Back to Broadcast
-              </button>
+                <button
+                  onClick={() => {
+                    setDebateChannelId(null);
+                    setMode("broadcast");
+                  }}
+                  style={{
+                    padding: "3px 10px",
+                    fontSize: 11,
+                    borderRadius: 6,
+                    border: "1px solid var(--color-border)",
+                    background: "transparent",
+                    cursor: "pointer",
+                    color: "var(--color-text-secondary, #666)",
+                  }}
+                >
+                  Back
+                </button>
+              </div>
             </div>
           )}
 
@@ -583,7 +588,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                   gap: 1,
                 }}
               >
-                <span style={{ fontSize: 9, color: "var(--color-text-muted, #999)" }}>
+                <span style={{ fontSize: 11, color: "var(--color-text-muted, #999)" }}>
                   {msg.sessionName} · {formatTime(msg.timestamp)}
                 </span>
                 <div
@@ -594,8 +599,8 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                     borderRadius: 8,
                     maxWidth: "85%",
                     background:
-                      msg.role === "user" ? "#4285F4" : "var(--color-bg-elevated, #f0f0f0)",
-                    color: msg.role === "user" ? "#fff" : "var(--color-text-primary, #333)",
+                      msg.role === "user" ? "var(--color-accent)" : "var(--color-bg-elevated)",
+                    color: msg.role === "user" ? "#fff" : "var(--color-text-primary)",
                     borderLeft:
                       msg.role === "assistant" ? `3px solid ${msg.sessionColor}` : undefined,
                   }}
@@ -641,7 +646,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
               onClick={() => void handleSend()}
               disabled={sending || !input.trim()}
               style={{
-                background: "#4285F4",
+                background: "var(--color-accent)",
                 color: "#fff",
                 border: "none",
                 borderRadius: 8,

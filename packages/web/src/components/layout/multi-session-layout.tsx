@@ -44,7 +44,7 @@ function ResizeHandle({ orientation }: { orientation: "horizontal" | "vertical" 
             ? { width: 3, height: 32, margin: "auto 0" }
             : { width: 32, height: 3, margin: "0 auto" }),
         }}
-        className="group-hover:!bg-[#4285F4] group-active:!bg-[#4285F4]"
+        className="group-hover:!bg-[var(--color-accent)] group-active:!bg-[var(--color-accent)]"
       />
     </Separator>
   );
@@ -80,7 +80,7 @@ function EmptyPane({
                 color: "var(--color-text-secondary)",
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = "#4285F4";
+                (e.currentTarget as HTMLElement).style.borderColor = "var(--color-accent)";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.borderColor = "var(--color-border)";

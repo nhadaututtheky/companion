@@ -6,15 +6,14 @@ import {
   Sun,
   Gear,
   Terminal,
-  ListBullets,
   FolderOpen,
-  Timer,
   Globe,
   TerminalWindow,
   List,
   ChartBar,
   Brain,
 } from "@phosphor-icons/react";
+import { TemplateQuickPicker } from "./template-quick-picker";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { CompanionLogo } from "./companion-logo";
@@ -40,44 +39,39 @@ function HeaderStats() {
       {/* Active sessions */}
       <div className="flex items-center gap-1.5">
         <span
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: "50%",
-            background: activeCount > 0 ? "#34A853" : "#9CA3AF",
-            display: "inline-block",
-          }}
+          className="inline-block w-1.5 h-1.5 rounded-full"
+          style={{ background: activeCount > 0 ? "var(--color-success)" : "var(--color-text-muted)" }}
         />
-        <span className="text-xs font-semibold">
+        <span className="text-sm font-semibold tabular-nums">
           {activeCount}
         </span>
-        <span className="text-xs">
+        <span className="text-xs text-[var(--color-text-muted)]">
           active
         </span>
       </div>
 
       {/* Separator */}
-      <span style={{ width: 1, height: 14, background: "var(--color-border)" }} />
+      <span className="w-px h-3.5 bg-[var(--color-border)]" />
 
       {/* Cost */}
       <div className="flex items-center gap-1.5">
-        <span className="text-xs font-semibold font-mono" style={{ color: "#4285F4" }}>
+        <span className="text-sm font-semibold font-mono tabular-nums text-[var(--color-accent)]">
           ${totalCost < 0.01 && totalCost > 0 ? "<0.01" : totalCost.toFixed(2)}
         </span>
-        <span className="text-xs">
+        <span className="text-xs text-[var(--color-text-muted)]">
           cost
         </span>
       </div>
 
       {/* Separator */}
-      <span style={{ width: 1, height: 14, background: "var(--color-border)" }} />
+      <span className="w-px h-3.5 bg-[var(--color-border)]" />
 
       {/* Turns */}
       <div className="flex items-center gap-1.5">
-        <span className="text-xs font-semibold">
+        <span className="text-sm font-semibold tabular-nums">
           {totalTurns}
         </span>
-        <span className="text-xs">
+        <span className="text-xs text-[var(--color-text-muted)]">
           turns
         </span>
       </div>
@@ -100,14 +94,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
   return (
     <header
-      className="flex items-center px-5 py-3 gap-4"
-      style={{
-        background: "var(--color-bg-card)",
-        height: 52,
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-        position: "relative",
-        zIndex: 10,
-      }}
+      className="flex items-center px-5 gap-4 h-12 relative z-10 bg-[var(--color-bg-card)]"
+      style={{ boxShadow: "var(--shadow-sm)" }}
     >
       {/* Hamburger — mobile only */}
       <button
@@ -216,8 +204,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
           onClick={() => setRightPanelMode(rightPanelMode === "stats" ? "none" : "stats")}
           className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
           style={{
-            color: rightPanelMode === "stats" ? "#4285f4" : "var(--color-text-muted)",
-            background: rightPanelMode === "stats" ? "#4285f415" : "transparent",
+            color: rightPanelMode === "stats" ? "var(--color-accent)" : "var(--color-text-muted)",
+            background: rightPanelMode === "stats" ? "color-mix(in srgb, var(--color-accent) 8%, transparent)" : "transparent",
           }}
           aria-label="Activity stats"
           title="Activity Stats"
@@ -228,8 +216,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
           onClick={() => setRightPanelMode(rightPanelMode === "ai-context" ? "none" : "ai-context")}
           className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
           style={{
-            color: rightPanelMode === "ai-context" ? "#A855F7" : "var(--color-text-muted)",
-            background: rightPanelMode === "ai-context" ? "#A855F715" : "transparent",
+            color: rightPanelMode === "ai-context" ? "var(--color-purple)" : "var(--color-text-muted)",
+            background: rightPanelMode === "ai-context" ? "color-mix(in srgb, var(--color-purple) 8%, transparent)" : "transparent",
           }}
           aria-label="AI Context panel"
           title="AI Context — Code intelligence & web docs"
@@ -244,7 +232,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
           onClick={() => setActivityTerminalOpen(!activityTerminalOpen)}
           className="hidden md:flex p-2 rounded-lg transition-colors cursor-pointer"
           style={{
-            color: activityTerminalOpen ? "#4285F4" : "var(--color-text-secondary)",
+            color: activityTerminalOpen ? "var(--color-accent)" : "var(--color-text-secondary)",
             background: activityTerminalOpen ? "rgba(66,133,244,0.12)" : undefined,
           }}
           aria-label="Toggle activity terminal"
@@ -261,31 +249,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
         >
           {theme === "dark" ? <Sun size={16} weight="bold" /> : <Moon size={16} weight="bold" />}
         </button>
-        {/* Nav links — desktop only */}
-        <a
-          href="/projects"
-          className="hidden md:flex p-2 rounded-lg transition-colors"
-         
-          aria-label="Projects"
-        >
-          <FolderOpen size={16} weight="bold" />
-        </a>
-        <a
-          href="/schedules"
-          className="hidden md:flex p-2 rounded-lg transition-colors"
-         
-          aria-label="Schedules"
-        >
-          <Timer size={16} weight="bold" />
-        </a>
-        <a
-          href="/templates"
-          className="hidden md:flex p-2 rounded-lg transition-colors"
-         
-          aria-label="Templates"
-        >
-          <ListBullets size={16} weight="bold" />
-        </a>
+        {/* Quick start from template */}
+        <TemplateQuickPicker />
         <a
           href="/settings"
           className="p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"

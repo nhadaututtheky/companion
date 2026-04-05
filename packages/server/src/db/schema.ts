@@ -41,6 +41,8 @@ export const sessions = sqliteTable(
     parentId: text("parent_id"),
     /** Shared channel ID for debate/collab */
     channelId: text("channel_id"),
+    /** Expert Mode persona ID (e.g. "tim-cook", "staff-sre") */
+    personaId: text("persona_id"),
 
     // Session management config
     /** Cost warning threshold in USD (null = no budget) */
@@ -229,10 +231,49 @@ export const channelMessages = sqliteTable("channel_messages", {
   role: text("role").notNull(), // 'advocate' | 'challenger' | 'judge' | 'reviewer' | 'human'
   content: text("content").notNull(),
   round: integer("round").notNull().default(0),
+  /** Expert Mode persona ID for this agent message */
+  personaId: text("persona_id"),
   timestamp: integer("timestamp", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => new Date()),
 });
+
+// ─── Custom Personas ────────────────────────────────────────────────────────
+
+export const customPersonas = sqliteTable(
+  "custom_personas",
+  {
+    id: text("id").primaryKey(), // custom-{nanoid}
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    icon: text("icon").notNull().default("🧠"),
+    title: text("title").notNull(),
+    intro: text("intro").notNull().default(""),
+    systemPrompt: text("system_prompt").notNull(),
+    mentalModels: text("mental_models", { mode: "json" }).$type<string[]>().notNull().default([]),
+    decisionFramework: text("decision_framework").notNull().default(""),
+    redFlags: text("red_flags", { mode: "json" }).$type<string[]>().notNull().default([]),
+    communicationStyle: text("communication_style").notNull().default(""),
+    blindSpots: text("blind_spots", { mode: "json" }).$type<string[]>().notNull().default([]),
+    bestFor: text("best_for", { mode: "json" }).$type<string[]>().notNull().default([]),
+    strength: text("strength").notNull().default(""),
+    avatarGradient: text("avatar_gradient", { mode: "json" })
+      .$type<[string, string]>()
+      .notNull()
+      .default(["#6366f1", "#8b5cf6"]),
+    avatarInitials: text("avatar_initials").notNull().default("CP"),
+    combinableWith: text("combinable_with", { mode: "json" }).$type<string[]>(),
+    /** Built-in persona ID this was cloned from */
+    clonedFrom: text("cloned_from"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [index("idx_custom_personas_slug").on(table.slug)],
+);
 
 // ─── Session Templates ──────────────────────────────────────────────────────
 

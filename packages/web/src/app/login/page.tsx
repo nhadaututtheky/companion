@@ -96,10 +96,10 @@ export default function LoginPage() {
                 placeholder="Enter PIN"
                 autoComplete="current-password"
                 spellCheck={false}
-                className="w-full rounded-lg pl-9 pr-10 py-2.5 text-sm text-center tracking-widest outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+                className="w-full rounded-lg pl-9 pr-10 py-2.5 text-sm text-center tracking-widest input-bordered transition-colors"
                 style={{
                   background: "var(--color-bg-elevated)",
-                  border: `1px solid ${error ? "var(--color-danger)" : "var(--color-border)"}`,
+                  ...(error ? { borderColor: "var(--color-danger)" } : {}),
                   color: "var(--color-text-primary)",
                   fontFamily: "var(--font-mono)",
                   fontSize: "1.25rem",

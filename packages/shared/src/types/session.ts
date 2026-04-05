@@ -207,7 +207,27 @@ export type BrowserIncomingMessage =
       risks: Array<{ category: string; severity: string; description: string; matched: string }>;
       blocked: boolean;
     }
-  | { type: "spectator_count"; count: number };
+  | { type: "spectator_count"; count: number }
+  | {
+      type: "graph:activity";
+      sessionId: string;
+      filePaths: string[];
+      nodeIds: string[];
+      toolName: string;
+      toolAction: "read" | "modify" | "create";
+      timestamp: number;
+    }
+  | {
+      type: "pulse:update";
+      sessionId: string;
+      score: number;
+      state: "flow" | "focused" | "cautious" | "struggling" | "spiraling" | "blocked";
+      trend: "improving" | "stable" | "degrading";
+      signals: Record<string, number>;
+      topSignal: string;
+      turn: number;
+      timestamp: number;
+    };
 
 // ─── Session State ───────────────────────────────────────────────────────────
 
@@ -401,4 +421,6 @@ export interface SessionListItem {
   endedAt?: number;
   /** Session tags for filtering/organization */
   tags?: string[];
+  /** Expert Mode persona ID (e.g. "tim-cook", "staff-sre") */
+  personaId?: string;
 }

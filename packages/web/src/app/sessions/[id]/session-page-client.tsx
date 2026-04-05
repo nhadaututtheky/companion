@@ -23,6 +23,7 @@ import { ShareModal } from "@/components/session/share-modal";
 import { PromptHistoryPanel } from "@/components/panels/prompt-history-panel";
 import { ModelSelector } from "@/components/session/model-selector";
 import { ThinkingModeSelector } from "@/components/session/thinking-mode-selector";
+import { PersonaChip } from "@/components/persona/persona-chip";
 import { usePinnedMessagesStore } from "@/lib/stores/pinned-messages-store";
 import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
@@ -180,6 +181,19 @@ export function SessionPageClient({ params }: PageProps) {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [promptHistoryOpen, setPromptHistoryOpen] = useState(false);
   const [terminalOpen, setTerminalOpen] = useState(false);
+
+  const handlePersonaSwitch = useCallback(
+    async (personaId: string | null) => {
+      try {
+        await api.sessions.switchPersona(id, personaId);
+        useSessionStore.getState().setSession(id, { personaId: personaId ?? undefined });
+        toast.success(personaId ? "Persona switched" : "Persona cleared");
+      } catch {
+        toast.error("Failed to switch persona");
+      }
+    },
+    [id],
+  );
   const scrollToMessageRef = useRef<((index: number) => void) | null>(null);
   const getPins = usePinnedMessagesStore((s) => s.getPins);
   const pinCount = getPins(id).length;
@@ -301,7 +315,7 @@ export function SessionPageClient({ params }: PageProps) {
               </button>
             </div>
 
-            {/* Mid-session model + thinking mode selectors */}
+            {/* Mid-session model + thinking mode + persona selectors */}
             {session?.status !== "ended" && session?.status !== "error" && (
               <>
                 <ModelSelector
@@ -314,6 +328,13 @@ export function SessionPageClient({ params }: PageProps) {
                   onModeChange={setThinkingMode}
                   disabled={session?.status === "starting"}
                 />
+                {session?.personaId && (
+                  <PersonaChip
+                    personaId={session.personaId}
+                    onSwitch={handlePersonaSwitch}
+                    disabled={session?.status === "starting"}
+                  />
+                )}
               </>
             )}
 

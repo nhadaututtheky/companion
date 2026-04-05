@@ -58,10 +58,9 @@ export function TemplateVariablesForm({ variables, values, onChange }: TemplateV
               }
               placeholder={`{{${variable.key}}}`}
               required={variable.required}
-              className="w-full px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+              className="w-full px-3 py-2 rounded-lg text-sm input-bordered"
               style={{
                 background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
                 color: "var(--color-text-primary)",
                 fontFamily: "var(--font-body)",
               }}

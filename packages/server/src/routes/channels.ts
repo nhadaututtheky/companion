@@ -33,6 +33,7 @@ const postMessageSchema = z.object({
   role: z.enum(["advocate", "challenger", "judge", "reviewer", "human"]),
   content: z.string().min(1).max(50000),
   round: z.number().int().min(0).optional(),
+  personaId: z.string().max(100).optional(),
 });
 
 const linkSessionSchema = z.object({
@@ -117,6 +118,7 @@ channelRoutes.post("/:id/messages", zValidator("json", postMessageSchema), (c) =
       role: body.role,
       content: body.content,
       round: body.round,
+      personaId: body.personaId,
     });
 
     return c.json({ success: true, data: message } satisfies ApiResponse, 201);
@@ -180,6 +182,7 @@ const agentModelSchema = z.object({
   agentId: z.string().min(1),
   model: z.string().min(1),
   label: z.string().optional(),
+  personaId: z.string().max(100).optional(),
 });
 
 const debateSchema = z.object({
@@ -189,7 +192,7 @@ const debateSchema = z.object({
   maxRounds: z.number().int().min(1).max(20).optional(),
   agentModels: z
     .array(agentModelSchema)
-    .max(2)
+    .max(4)
     .refine((arr) => !arr || new Set(arr.map((a) => a.agentId)).size === arr.length, {
       message: "Duplicate agentId in agentModels",
     })
@@ -221,6 +224,8 @@ channelRoutes.post("/debate", zValidator("json", debateSchema), async (c) => {
             role: a.role,
             model: a.model,
             modelLabel: a.modelLabel,
+            personaId: a.personaId,
+            personaLabel: a.personaLabel,
           })),
         },
       } satisfies ApiResponse,

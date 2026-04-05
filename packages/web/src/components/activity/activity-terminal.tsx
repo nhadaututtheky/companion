@@ -22,13 +22,13 @@ import { useSessionStore } from "@/lib/stores/session-store";
 // ── Constants ──────────────────────────────────────────────────────────────
 
 const LOG_TYPE_COLORS: Record<ActivityLogType, string> = {
-  thinking: "#a855f7",
-  tool_use: "#4285F4",
-  tool_result: "#34A853",
-  result: "#34A853",
-  error: "#EA4335",
-  permission: "#FBBC04",
-  cost: "#FBBC04",
+  thinking: "var(--color-purple, #a855f7)",
+  tool_use: "var(--color-accent)",
+  tool_result: "var(--color-success)",
+  result: "var(--color-success)",
+  error: "var(--color-danger)",
+  permission: "var(--color-warning)",
+  cost: "var(--color-warning)",
 };
 
 const LOG_TYPE_LABELS: Record<ActivityLogType, string> = {
@@ -89,13 +89,13 @@ function LogLine({ log }: { log: ActivityLog }) {
       }}
     >
       {/* Timestamp */}
-      <span style={{ color: "#555", flexShrink: 0, userSelect: "none" }}>
+      <span style={{ color: "var(--color-text-muted)", flexShrink: 0, userSelect: "none" }}>
         [{formatTs(log.timestamp)}]
       </span>
       {/* Session */}
       <span
         style={{
-          color: "#888",
+          color: "var(--color-text-secondary)",
           flexShrink: 0,
           maxWidth: 100,
           overflow: "hidden",
@@ -112,7 +112,7 @@ function LogLine({ log }: { log: ActivityLog }) {
         <span style={{ fontSize: 10, fontWeight: 700 }}>{label}</span>
       </span>
       {/* Content */}
-      <span className="flex-1 min-w-0 break-words" style={{ color: "#d4d4d4" }}>
+      <span className="flex-1 min-w-0 break-words" style={{ color: "var(--color-text-primary)" }}>
         {log.content}
       </span>
     </div>
@@ -138,9 +138,9 @@ function FilterSelect({
       onChange={(e) => onChange(e.target.value || null)}
       className="cursor-pointer"
       style={{
-        background: "#1a1a1a",
-        border: "1px solid #333",
-        color: "#aaa",
+        background: "var(--color-bg-elevated)",
+        border: "1px solid var(--color-border-strong)",
+        color: "var(--color-text-secondary)",
         borderRadius: 4,
         padding: "2px 6px",
         fontSize: 11,
@@ -233,8 +233,8 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
   return (
     <div
       style={{
-        borderTop: "1px solid #2E2E2E",
-        background: "#0a0a0a",
+        borderTop: "1px solid var(--color-border)",
+        background: "var(--color-bg-sidebar)",
         display: "flex",
         flexDirection: "column",
         flexShrink: 0,
@@ -248,8 +248,8 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
         className="flex items-center gap-2 px-3 flex-shrink-0"
         style={{
           height: 32,
-          borderBottom: open ? "1px solid #1e1e1e" : "none",
-          background: "#111",
+          borderBottom: open ? "1px solid var(--color-border)" : "none",
+          background: "var(--color-bg-card)",
           userSelect: "none",
         }}
       >
@@ -257,17 +257,17 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
         <button
           onClick={onToggle}
           className="flex items-center gap-1.5 cursor-pointer transition-opacity hover:opacity-80"
-          style={{ color: "#888", background: "none", border: "none", padding: 0 }}
+          style={{ color: "var(--color-text-secondary)", background: "none", border: "none", padding: 0 }}
           aria-label={open ? "Collapse activity terminal" : "Expand activity terminal"}
         >
           {open ? <CaretDown size={11} weight="bold" /> : <CaretRight size={11} weight="bold" />}
-          <Terminal size={13} color="#4285F4" weight="bold" />
+          <Terminal size={13} style={{ color: "var(--color-accent)" }} weight="bold" />
           <span
             style={{
               fontFamily: "var(--font-mono, monospace)",
               fontSize: 11,
               fontWeight: 600,
-              color: "#888",
+              color: "var(--color-text-secondary)",
               letterSpacing: "0.05em",
             }}
           >
@@ -278,13 +278,13 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
         {/* Log count badge */}
         <span
           style={{
-            background: "#1e1e1e",
-            border: "1px solid #2e2e2e",
+            background: "var(--color-bg-hover)",
+            border: "1px solid var(--color-border)",
             borderRadius: 4,
             padding: "0 6px",
             fontSize: 10,
             fontFamily: "var(--font-mono, monospace)",
-            color: "#555",
+            color: "var(--color-text-muted)",
           }}
         >
           {displayLogs.length}
@@ -316,7 +316,7 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
               onClick={handleClear}
               className="flex items-center gap-1 cursor-pointer transition-opacity hover:opacity-80"
               style={{
-                color: "#555",
+                color: "var(--color-text-muted)",
                 background: "none",
                 border: "none",
                 padding: "2px 4px",
@@ -340,9 +340,9 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
                 style={{
                   fontSize: 10,
                   fontFamily: "var(--font-mono, monospace)",
-                  color: "#FBBC04",
+                  color: "var(--color-warning)",
                   background: "none",
-                  border: "1px solid #FBBC04",
+                  border: "1px solid var(--color-warning)",
                   borderRadius: 4,
                   padding: "1px 6px",
                   cursor: "pointer",
@@ -364,14 +364,14 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
           className="flex-1 overflow-y-auto overflow-x-hidden"
           style={{
             scrollbarWidth: "thin",
-            scrollbarColor: "#333 transparent",
+            scrollbarColor: "var(--color-border-strong) transparent",
           }}
         >
           {displayLogs.length === 0 ? (
             <div
               className="flex items-center justify-center h-full"
               style={{
-                color: "#333",
+                color: "var(--color-text-muted)",
                 fontFamily: "var(--font-mono, monospace)",
                 fontSize: 12,
               }}

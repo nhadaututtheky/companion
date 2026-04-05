@@ -16,16 +16,40 @@ class TerminalManager {
 
   spawn(cwd: string): string {
     const id = randomUUID();
-    const shell =
-      process.platform === "win32" ? "powershell.exe" : (process.env.SHELL ?? "/bin/bash");
 
-    const proc = Bun.spawn([shell], {
-      cwd,
-      stdin: "pipe",
-      stdout: "pipe",
-      stderr: "pipe",
-      env: { ...process.env, TERM: "xterm-256color" },
-    });
+    // On Windows, prefer pwsh (PowerShell 7+) > powershell.exe > cmd.exe
+    let shell: string;
+    if (process.platform === "win32") {
+      shell = "cmd.exe";
+      // Try PowerShell variants (cmd.exe is the safest fallback for Bun.spawn)
+      for (const candidate of ["pwsh.exe", "powershell.exe"]) {
+        try {
+          const check = Bun.spawnSync(["where", candidate]);
+          if (check.exitCode === 0) {
+            shell = candidate;
+            break;
+          }
+        } catch {
+          // candidate not found, continue
+        }
+      }
+    } else {
+      shell = process.env.SHELL ?? "/bin/bash";
+    }
+
+    let proc: ReturnType<typeof Bun.spawn>;
+    try {
+      proc = Bun.spawn([shell], {
+        cwd,
+        stdin: "pipe",
+        stdout: "pipe",
+        stderr: "pipe",
+        env: { ...process.env, TERM: "xterm-256color" },
+      });
+    } catch (err) {
+      log.error("Failed to spawn terminal process", { id, cwd, shell, error: String(err) });
+      throw new Error(`Failed to spawn shell: ${shell}`);
+    }
 
     const terminal: TerminalProcess = {
       id,
@@ -37,16 +61,17 @@ class TerminalManager {
 
     this.terminals.set(id, terminal);
 
-    this.pipeStream(terminal, proc.stdout);
-    this.pipeStream(terminal, proc.stderr);
+    this.pipeStream(terminal, proc.stdout as ReadableStream<Uint8Array> | null);
+    this.pipeStream(terminal, proc.stderr as ReadableStream<Uint8Array> | null);
 
     proc.exited.then((code) => {
       log.info("Terminal process exited", { id, code });
       this.broadcast(terminal, JSON.stringify({ type: "exit", code }));
-      this.terminals.delete(id);
+      // Delay cleanup so late subscribers can still see the exit message
+      setTimeout(() => this.terminals.delete(id), 2000);
     });
 
-    log.info("Terminal spawned", { id, cwd, shell });
+    log.info("Terminal spawned", { id, cwd, shell, pid: proc.pid });
     return id;
   }
 

@@ -169,6 +169,7 @@ export function createSessionRecord(opts: {
   costBudgetUsd?: number;
   compactMode?: string;
   compactThreshold?: number;
+  personaId?: string;
 }): string {
   const db = getDb();
   const MAX_RETRIES = 5;
@@ -188,6 +189,7 @@ export function createSessionRecord(opts: {
           source: opts.source ?? "api",
           parentId: opts.parentId,
           channelId: opts.channelId,
+          personaId: opts.personaId,
           costBudgetUsd: opts.costBudgetUsd,
           compactMode: opts.compactMode ?? "manual",
           compactThreshold: opts.compactThreshold ?? 75,
@@ -379,6 +381,7 @@ export function listSessions(opts?: {
       startedAt: row.startedAt?.getTime() ?? 0,
       endedAt: row.endedAt?.getTime(),
       tags: (row.tags as string[] | null) ?? [],
+      personaId: row.personaId ?? undefined,
     })),
     total: total ?? 0,
   };
@@ -637,6 +640,17 @@ export function updateSessionTags(sessionId: string, tags: string[]): boolean {
     return true;
   } catch (err) {
     log.warn("Failed to update session tags", { sessionId, error: String(err) });
+    return false;
+  }
+}
+
+export function updateSessionPersona(sessionId: string, personaId: string | null): boolean {
+  const db = getDb();
+  try {
+    db.update(sessions).set({ personaId }).where(eq(sessions.id, sessionId)).run();
+    return true;
+  } catch (err) {
+    log.warn("Failed to update session persona", { sessionId, error: String(err) });
     return false;
   }
 }

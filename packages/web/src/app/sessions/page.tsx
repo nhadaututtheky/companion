@@ -18,11 +18,11 @@ interface Session {
 
 function StatusBadge({ status }: { status: string }) {
   const configs: Record<string, { bg: string; color: string; label: string }> = {
-    running: { bg: "#4285F420", color: "#4285F4", label: "Running" },
-    waiting: { bg: "#FBBC0420", color: "#FBBC04", label: "Waiting" },
-    idle: { bg: "#34A85320", color: "#34A853", label: "Idle" },
+    running: { bg: "color-mix(in srgb, var(--color-accent) 12%, transparent)", color: "var(--color-accent)", label: "Running" },
+    waiting: { bg: "color-mix(in srgb, var(--color-warning) 12%, transparent)", color: "var(--color-warning)", label: "Waiting" },
+    idle: { bg: "color-mix(in srgb, var(--color-success) 12%, transparent)", color: "var(--color-success)", label: "Idle" },
     ended: { bg: "var(--color-bg-elevated)", color: "var(--color-text-muted)", label: "Ended" },
-    error: { bg: "#EA433520", color: "#EA4335", label: "Error" },
+    error: { bg: "color-mix(in srgb, var(--color-danger) 12%, transparent)", color: "var(--color-danger)", label: "Error" },
   };
 
   const c = configs[status] ?? configs.ended!;
@@ -184,7 +184,7 @@ export default function SessionsPage() {
                 </div>
                 <div
                   className="flex items-center gap-1 font-mono text-sm font-semibold"
-                  style={{ color: "#34A853" }}
+                  style={{ color: "var(--color-success)" }}
                 >
                   <CurrencyDollar size={14} weight="bold" />
                   {s.totalCostUsd.toFixed(4)}

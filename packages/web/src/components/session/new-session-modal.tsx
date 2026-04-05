@@ -20,6 +20,9 @@ import { api } from "@/lib/api-client";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { TemplateVariablesForm, type TemplateVariable } from "./template-variables-form";
 import { COMMAND_PRESETS } from "@companion/shared";
+import { PersonaAvatar } from "@/components/persona/persona-avatar";
+import { PersonaTooltip } from "@/components/persona/persona-tooltip";
+import { usePersonas } from "@/hooks/use-personas";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -164,6 +167,10 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [templateVars, setTemplateVars] = useState<Record<string, string>>({});
+
+  // Persona / Expert Mode
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
+  const { all: allPersonas } = usePersonas();
 
   // Launch step
   const [launching, setLaunching] = useState(false);
@@ -349,6 +356,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
           selectedTemplateId && Object.keys(templateVars).length > 0 ? templateVars : undefined,
         idleTimeoutMs: idleTimeout,
         keepAlive: idleTimeout === 0,
+        personaId: selectedPersonaId ?? undefined,
       });
 
       const sessionId = res.data.sessionId;
@@ -363,6 +371,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
         model,
         status: "starting",
         createdAt: Date.now(),
+        personaId: selectedPersonaId ?? undefined,
       });
 
       useSessionStore.getState().addToGrid(sessionId);
@@ -390,6 +399,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
     idleTimeout,
     selectedTemplateId,
     templateVars,
+    selectedPersonaId,
     onClose,
   ]);
 
@@ -520,7 +530,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   value={projectSearch}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setProjectSearch(e.target.value)}
                   placeholder="Search projects..."
-                  className="flex-1 bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent text-sm"
+                  className="flex-1 bg-transparent outline-none text-sm"
                   style={{
                     color: "var(--color-text-primary)",
                     fontFamily: "var(--font-body)",
@@ -681,10 +691,9 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                       value={githubUrl}
                       onChange={(e: ChangeEvent<HTMLInputElement>) => setGithubUrl(e.target.value)}
                       placeholder="https://github.com/owner/repo"
-                      className="flex-1 px-2.5 py-1.5 rounded-md text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+                      className="flex-1 px-2.5 py-1.5 rounded-md text-sm input-bordered"
                       style={{
                         background: "var(--color-bg-card)",
-                        border: "1px solid var(--color-border)",
                         color: "var(--color-text-primary)",
                         fontFamily: "var(--font-body)",
                       }}
@@ -737,10 +746,9 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   value={projectName}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => setProjectName(e.target.value)}
                   placeholder="my-project"
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+                  className="w-full px-3 py-2 rounded-lg text-sm input-bordered"
                   style={{
                     background: "var(--color-bg-elevated)",
-                    border: "1px solid var(--color-border)",
                     color: "var(--color-text-primary)",
                     fontFamily: "var(--font-body)",
                   }}
@@ -761,10 +769,9 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   id="model-select"
                   value={model}
                   onChange={(e: ChangeEvent<HTMLSelectElement>) => setModel(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+                  className="w-full px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
                   style={{
                     background: "var(--color-bg-elevated)",
-                    border: "1px solid var(--color-border)",
                     color: "var(--color-text-primary)",
                     fontFamily: "var(--font-mono)",
                   }}
@@ -777,11 +784,95 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                 </select>
               </div>
 
+              {/* Expert Mode / Persona picker */}
+              <div>
+                <p className="text-xs font-semibold mb-2">
+                  EXPERT MODE{" "}
+                  <span className="font-normal">
+                    (optional)
+                  </span>
+                </p>
+                <div
+                  className="flex gap-2 overflow-x-auto pb-1"
+                  style={{ scrollbarWidth: "thin" }}
+                >
+                  {/* None option */}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPersonaId(null)}
+                    className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer transition-all flex-shrink-0"
+                    style={{
+                      width: 64,
+                      background: selectedPersonaId === null ? "#4285F410" : "var(--color-bg-elevated)",
+                      border: selectedPersonaId === null
+                        ? "2px solid #4285F4"
+                        : "1px solid var(--color-border)",
+                      transform: selectedPersonaId === null ? "scale(1.05)" : "scale(1)",
+                    }}
+                    aria-pressed={selectedPersonaId === null}
+                  >
+                    <div
+                      className="flex items-center justify-center rounded-full"
+                      style={{
+                        width: 36,
+                        height: 36,
+                        background: "var(--color-bg-card)",
+                        border: "1px solid var(--color-border)",
+                        fontSize: 14,
+                        color: "var(--color-text-muted)",
+                      }}
+                    >
+                      —
+                    </div>
+                    <span
+                      className="text-[10px] truncate w-full text-center"
+                      style={{ color: "var(--color-text-muted)" }}
+                    >
+                      None
+                    </span>
+                  </button>
+
+                  {allPersonas.map((persona) => {
+                    const isSelected = selectedPersonaId === persona.id;
+                    return (
+                      <PersonaTooltip key={persona.id} persona={persona} placement="bottom">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPersonaId(isSelected ? null : persona.id)}
+                          className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer transition-all flex-shrink-0"
+                          style={{
+                            width: 64,
+                            background: isSelected ? "#4285F410" : "var(--color-bg-elevated)",
+                            border: isSelected
+                              ? "2px solid #4285F4"
+                              : "1px solid var(--color-border)",
+                            transform: isSelected ? "scale(1.05)" : "scale(1)",
+                          }}
+                          aria-pressed={isSelected}
+                          aria-label={`${persona.name} — ${persona.strength}`}
+                        >
+                          <PersonaAvatar persona={persona} size={36} showBadge={false} />
+                          <span
+                            className="text-[10px] truncate w-full text-center"
+                            style={{
+                              color: isSelected ? "#4285F4" : "var(--color-text-muted)",
+                              fontWeight: isSelected ? 600 : 400,
+                            }}
+                          >
+                            {persona.name.split(" ")[0]}
+                          </span>
+                        </button>
+                      </PersonaTooltip>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Permission mode */}
               <div>
                 <p
                   className="text-xs font-semibold mb-2"
-                 
+
                 >
                   PERMISSION MODE
                 </p>
@@ -946,10 +1037,9 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   }
                   placeholder="Start with a specific task..."
                   rows={3}
-                  className="w-full px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent resize-none"
+                  className="w-full px-3 py-2 rounded-lg text-sm input-bordered resize-none"
                   style={{
                     background: "var(--color-bg-elevated)",
-                    border: "1px solid var(--color-border)",
                     color: "var(--color-text-primary)",
                     fontFamily: "var(--font-body)",
                   }}
@@ -1111,11 +1201,32 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                       {permissionMode}
                     </span>
                   </div>
+                  {selectedPersonaId && (() => {
+                    const selectedPersona = allPersonas.find((p) => p.id === selectedPersonaId);
+                    if (!selectedPersona) return null;
+                    return (
+                      <div className="flex items-center gap-2">
+                        <span className="w-24 flex-shrink-0 text-xs font-semibold uppercase">
+                          Expert
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <PersonaAvatar
+                            persona={selectedPersona}
+                            size={18}
+                            showBadge={false}
+                          />
+                          <span className="text-xs font-medium" style={{ color: "#4285F4" }}>
+                            {selectedPersona.name}
+                          </span>
+                        </span>
+                      </div>
+                    );
+                  })()}
                   {resume && (
                     <div className="flex items-center gap-2">
                       <span
                         className="w-24 flex-shrink-0 text-xs font-semibold uppercase"
-                       
+
                       >
                         Resume
                       </span>

@@ -16,6 +16,8 @@ interface Session {
   contextUsedPercent?: number;
   contextTokens?: number;
   contextMaxTokens?: number;
+  /** Expert Mode persona ID (e.g. "tim-cook", "staff-sre") */
+  personaId?: string;
 }
 
 interface SessionStore {

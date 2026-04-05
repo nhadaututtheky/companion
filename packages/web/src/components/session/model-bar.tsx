@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Lightning, X, Plus, CircleNotch } from "@phosphor-icons/react";
 import { ModelDropdown } from "./model-dropdown";
 import { api } from "@/lib/api-client";
+import { getPersonaById } from "@companion/shared";
+import { PersonaAvatar } from "@/components/persona/persona-avatar";
 
 export interface ModelInfo {
   id: string;
@@ -12,6 +14,8 @@ export interface ModelInfo {
   contextWindow: number;
   free: boolean;
   capabilities: { toolUse: boolean; streaming: boolean; vision: boolean; reasoning: boolean };
+  /** Expert Mode persona ID assigned to this debate participant */
+  personaId?: string;
 }
 
 interface ModelBarProps {
@@ -93,41 +97,47 @@ export function ModelBar({
       </span>
 
       {/* Debate participant chips */}
-      {debateParticipants.map((p) => (
-        <span
-          key={p.id}
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-medium group"
-          style={{
-            background: "#10b98115",
-            color: "#10b981",
-            fontSize: 11,
-          }}
-          title={`${p.name} (${p.providerName}) — Context: ${formatContextWindow(p.contextWindow)}`}
-        >
-          {p.free && (
-            <span
-              style={{
-                fontSize: 9,
-                fontWeight: 700,
-                padding: "0 3px",
-                borderRadius: 3,
-                background: "#10b98120",
-              }}
-            >
-              FREE
-            </span>
-          )}
-          {p.name}
-          <button
-            onClick={() => onRemoveParticipant(p.id)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-            style={{ color: "#10b981" }}
-            aria-label={`Remove ${p.name} from debate`}
+      {debateParticipants.map((p) => {
+        const persona = p.personaId ? getPersonaById(p.personaId) : undefined;
+        return (
+          <span
+            key={p.id}
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-medium group"
+            style={{
+              background: "#10b98115",
+              color: "#10b981",
+              fontSize: 11,
+            }}
+            title={`${p.name} (${p.providerName})${persona ? ` — ${persona.name}` : ""} — Context: ${formatContextWindow(p.contextWindow)}`}
           >
-            <X size={10} weight="bold" />
-          </button>
-        </span>
-      ))}
+            {persona && (
+              <PersonaAvatar persona={persona} size={14} showBadge={false} />
+            )}
+            {p.free && (
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 700,
+                  padding: "0 3px",
+                  borderRadius: 3,
+                  background: "#10b98120",
+                }}
+              >
+                FREE
+              </span>
+            )}
+            {p.name}
+            <button
+              onClick={() => onRemoveParticipant(p.id)}
+              className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              style={{ color: "#10b981" }}
+              aria-label={`Remove ${p.name} from debate`}
+            >
+              <X size={10} weight="bold" />
+            </button>
+          </span>
+        );
+      })}
 
       {/* Add model button */}
       <div className="relative">

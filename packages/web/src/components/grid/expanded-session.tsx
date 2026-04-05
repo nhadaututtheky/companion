@@ -11,26 +11,19 @@ import { PermissionGate } from "@/components/session/permission-gate";
 import { ContextMeter } from "@/components/session/context-meter";
 import { SessionDetails } from "@/components/session/session-details";
 import { ChannelPanel } from "@/components/shared/channel-panel";
+import { PulseWarning } from "@/components/pulse/pulse-warning";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
+import { getStatusColor } from "@/components/ui/status-badge";
 
 // ── Status badge ────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
-  const colorMap: Record<string, { bg: string; fg: string }> = {
-    running: { bg: "#4285F420", fg: "#4285F4" },
-    busy: { bg: "#4285F420", fg: "#4285F4" },
-    waiting: { bg: "#FBBC0420", fg: "#FBBC04" },
-    idle: { bg: "#34A85320", fg: "#34A853" },
-    ended: { bg: "var(--color-bg-elevated)", fg: "var(--color-text-muted)" },
-    error: { bg: "#EA433520", fg: "#EA4335" },
-  };
-  const { bg, fg } = colorMap[status] ?? colorMap.idle!;
-
+  const color = getStatusColor(status);
   return (
     <span
       className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold capitalize"
-      style={{ background: bg, color: fg }}
+      style={{ background: `color-mix(in srgb, ${color} 15%, transparent)`, color }}
     >
       <Circle
         size={6}
@@ -279,7 +272,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                 className="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
                 style={{
                   background: wsStatus === "connecting" ? "#FBBC0420" : "#EA433520",
-                  color: wsStatus === "connecting" ? "#FBBC04" : "#EA4335",
+                  color: wsStatus === "connecting" ? "var(--color-warning)" : "var(--color-danger)",
                 }}
               >
                 {wsStatus === "connecting" ? "…" : "!"}
@@ -339,6 +332,9 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
           <div className="flex flex-1 min-h-0">
             {/* Left: message feed + permissions + composer */}
             <div className="flex flex-col flex-1 min-w-0">
+              {/* Pulse warning — agent health alert with action buttons */}
+              <PulseWarning sessionId={sessionId} onSendMessage={sendMessage} onStop={handleStop} />
+
               {/* Message feed */}
               <div className="flex-1 min-h-0 overflow-y-auto">
                 <MessageFeed messages={messages} sessionId={sessionId} />
@@ -382,7 +378,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                   onClick={() => setSidebarTab("details")}
                   className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium cursor-pointer transition-colors flex-1 justify-center"
                   style={{
-                    color: sidebarTab === "details" ? "#4285F4" : "var(--color-text-muted)",
+                    color: sidebarTab === "details" ? "var(--color-accent)" : "var(--color-text-muted)",
                     borderBottom:
                       sidebarTab === "details" ? "2px solid #4285F4" : "2px solid transparent",
                     background: "transparent",
@@ -397,7 +393,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                   onClick={() => setSidebarTab("context")}
                   className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium cursor-pointer transition-colors flex-1 justify-center"
                   style={{
-                    color: sidebarTab === "context" ? "#4285F4" : "var(--color-text-muted)",
+                    color: sidebarTab === "context" ? "var(--color-accent)" : "var(--color-text-muted)",
                     borderBottom:
                       sidebarTab === "context" ? "2px solid #4285F4" : "2px solid transparent",
                     background: "transparent",
@@ -408,7 +404,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                   {channelId && (
                     <span
                       className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
-                      style={{ background: "#4285F4" }}
+                      style={{ background: "var(--color-accent)" }}
                       aria-label="Channel active"
                     />
                   )}

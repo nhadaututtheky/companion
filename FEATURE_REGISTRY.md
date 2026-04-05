@@ -1,7 +1,7 @@
 # Companion — Feature Registry
 
 > Single source of truth for all features, their relationships, and boundaries.
-> Updated: 2026-04-04 | ~100 features across 8 domains
+> Updated: 2026-04-05 | ~105 features across 8 domains
 
 ## How to Use This File
 - **Before building**: Check if feature exists or overlaps with existing ones
@@ -27,6 +27,7 @@ The core domain. Sessions are Claude Code processes managed through WebSocket br
 | Context injection (env info for Claude) | `session-context.ts` | project-profiles |
 | Compact manager (auto context-compaction) | `compact-manager.ts` | ws-bridge |
 | Share + spectator (read-only session view) | `share-manager.ts`, `spectator-bridge.ts` | ws-bridge |
+| Pulse estimator (agent health scoring) | `pulse-estimator.ts` | ws-bridge, telegram-bridge |
 | Session REST API | `routes/sessions.ts` | session-store, ws-bridge |
 
 **Web UI:**
@@ -43,6 +44,8 @@ The core domain. Sessions are Claude Code processes managed through WebSocket br
 | Context meter | `context-meter.tsx` | ws-bridge |
 | Cost breakdown | `cost-breakdown.tsx` | session API |
 | Pinned messages | `pinned-messages-drawer.tsx` | session-store |
+| Pulse indicator (heartbeat + sparkline) | `pulse/pulse-indicator.tsx` | pulse-store |
+| Pulse warning (alert + action buttons) | `pulse/pulse-warning.tsx` | pulse-store, context-feed-store |
 
 ---
 
@@ -151,7 +154,9 @@ Telegram bot integration — multi-bot, forum topics, streaming responses.
 | Commands: /thinking, /clear, /mcp | `telegram/commands/control.ts` | ws-bridge |
 | Commands: /info, /status | `telegram/commands/info.ts` | session-store |
 | Commands: /panel, /compact, /share | `telegram/commands/panel.ts` | share-manager |
+| Commands: /mood (agent pulse health) | `telegram/commands/mood.ts` | pulse-estimator |
 | Commands: /template | `telegram/commands/template.ts` | templates |
+| Auto-alert (pulse state transition → TG) | `telegram/telegram-bridge.ts` | pulse-estimator |
 
 **Web UI:**
 | Component | File | Connects To |

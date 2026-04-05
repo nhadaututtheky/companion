@@ -33,6 +33,7 @@ export interface ChannelMessage {
   role: string;
   content: string;
   round: number;
+  personaId: string | null;
   timestamp: Date | null;
 }
 
@@ -110,6 +111,7 @@ export function postMessage(opts: {
   role: string;
   content: string;
   round?: number;
+  personaId?: string;
 }): ChannelMessage {
   const db = getDb();
   const id = randomUUID();
@@ -122,6 +124,7 @@ export function postMessage(opts: {
       role: opts.role,
       content: opts.content,
       round: opts.round ?? 0,
+      personaId: opts.personaId ?? null,
       timestamp: new Date(),
     })
     .run();

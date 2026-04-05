@@ -328,10 +328,9 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
               type="text"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+              className="px-3 py-2 rounded-lg text-sm input-bordered"
               style={{
                 background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
                 color: "var(--color-text-primary)",
               }}
             />
@@ -345,10 +344,9 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as BotRole)}
-              className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+              className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
               style={{
                 background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
                 color: "var(--color-text-primary)",
               }}
             >
@@ -372,10 +370,9 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
                 value={botToken}
                 onChange={(e) => setBotToken(e.target.value)}
                 placeholder="New token or leave blank"
-                className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+                className="w-full px-3 py-2 pr-10 rounded-lg text-sm input-bordered"
                 style={{
                   background: "var(--color-bg-elevated)",
-                  border: "1px solid var(--color-border)",
                   color: "var(--color-text-primary)",
                 }}
               />
@@ -404,10 +401,9 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
               value={chatIds}
               onChange={(e) => setChatIds(e.target.value)}
               placeholder="-100123456789, -100987654321"
-              className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
+              className="px-3 py-2 rounded-lg text-sm input-bordered font-mono"
               style={{
                 background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
                 color: "var(--color-text-primary)",
               }}
             />
@@ -426,10 +422,9 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
               value={userIds}
               onChange={(e) => setUserIds(e.target.value)}
               placeholder="123456789, 987654321"
-              className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
+              className="px-3 py-2 rounded-lg text-sm input-bordered font-mono"
               style={{
                 background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
                 color: "var(--color-text-primary)",
               }}
             />
@@ -452,10 +447,9 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
               value={notificationGroupId}
               onChange={(e) => setNotificationGroupId(e.target.value)}
               placeholder="-100123456789"
-              className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
+              className="px-3 py-2 rounded-lg text-sm input-bordered font-mono"
               style={{
                 background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
                 color: "var(--color-text-primary)",
               }}
             />

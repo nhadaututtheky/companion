@@ -3,6 +3,7 @@ import { useState, useRef, useCallback } from "react";
 import { ArrowsOut, X, LinkSimple } from "@phosphor-icons/react";
 import { SessionSettingsButton } from "./session-settings";
 import { CostBreakdown } from "@/components/session/cost-breakdown";
+import { PulseIndicator } from "@/components/pulse/pulse-indicator";
 import { api } from "@/lib/api-client";
 
 interface SessionHeaderProps {
@@ -29,13 +30,13 @@ interface SessionHeaderProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  starting: "#FBBC04",
-  idle: "#34A853",
-  running: "#4285F4",
-  busy: "#4285F4",
-  waiting: "#FBBC04",
-  ended: "#9AA0A6",
-  error: "#EA4335",
+  starting: "var(--color-warning)",
+  idle: "var(--color-success)",
+  running: "var(--color-accent)",
+  busy: "var(--color-accent)",
+  waiting: "var(--color-warning)",
+  ended: "var(--color-text-muted)",
+  error: "var(--color-danger)",
 };
 
 export function SessionHeader({
@@ -86,17 +87,17 @@ export function SessionHeader({
 
   const dotColor = STATUS_COLORS[status] ?? STATUS_COLORS.idle;
   const modelShort = model.includes("opus") ? "Opus" : model.includes("haiku") ? "Haiku" : "Sonnet";
-  const channelColor = channelStatus === "active" ? "#4285F4" : "#9AA0A6";
+  const channelColor = channelStatus === "active" ? "var(--color-accent)" : "var(--color-text-muted)";
   const isActive = !["ended", "error"].includes(status);
 
   const contextBarColor =
     contextPercent === undefined
       ? undefined
       : contextPercent >= 80
-        ? "#EA4335"
+        ? "var(--color-danger)"
         : contextPercent >= 60
-          ? "#FBBC04"
-          : "#34A853";
+          ? "var(--color-warning)"
+          : "var(--color-success)";
 
   const contextTooltip =
     contextPercent !== undefined && totalTokens !== undefined && maxTokens !== undefined
@@ -125,7 +126,7 @@ export function SessionHeader({
         {shortId && (
           <span
             className="text-xs font-mono px-1 py-0.5 rounded flex-shrink-0"
-            style={{ background: "var(--color-bg-elevated)", color: "#34A853" }}
+            style={{ background: "var(--color-bg-elevated)", color: "var(--color-success)" }}
             title={`@${shortId} — mention this session in other chats`}
           >
             @{shortId}
@@ -134,7 +135,7 @@ export function SessionHeader({
         {editing ? (
           <input
             ref={inputRef}
-            className="text-sm font-semibold flex-1 bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent border-b"
+            className="text-sm font-semibold flex-1 bg-transparent outline-none border-b"
             style={{
               color: "var(--color-text-primary)",
               borderColor: "var(--color-border)",
@@ -188,6 +189,9 @@ export function SessionHeader({
           />
         )}
 
+        {/* Pulse indicator — agent operational health */}
+        {isActive && <PulseIndicator sessionId={sessionId} />}
+
         {/* Channel badge */}
         {channelId && (
           <span
@@ -222,7 +226,7 @@ export function SessionHeader({
           aria-label="Close session"
           title="Stop & close session"
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.color = "#EA4335";
+            (e.currentTarget as HTMLButtonElement).style.color = "var(--color-danger)";
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.color = "var(--color-text-muted)";
@@ -264,8 +268,8 @@ export function SessionHeader({
         <div
           className="flex items-center justify-center px-3 py-0.5 flex-shrink-0 text-xs font-medium"
           style={{
-            background: "#EA433510",
-            color: "#EA4335",
+            background: "color-mix(in srgb, var(--color-danger) 6%, transparent)",
+            color: "var(--color-danger)",
             borderBottom: "1px solid var(--color-border)",
             fontSize: 10,
           }}

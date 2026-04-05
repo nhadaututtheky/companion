@@ -23,6 +23,8 @@ import { registerConfigCommands } from "./commands/config.js";
 import { registerPanelCommands } from "./commands/panel.js";
 import { registerUtilityCommands } from "./commands/utility.js";
 import { registerTemplateCommands } from "./commands/template.js";
+import { registerMoodCommands } from "./commands/mood.js";
+import { getLatestReading, type OperationalState } from "../services/pulse-estimator.js";
 import { createLogger } from "../logger.js";
 import { storeMessage } from "../services/session-store.js";
 import { getProject, listProjects } from "../services/project-profiles.js";
@@ -176,6 +178,10 @@ export class TelegramBridge {
   private toolFeedLines = new Map<string, string[]>();
   /** Active debate channel per chat (chatKey → channelId) */
   private activeDebateChannels = new Map<string, string>();
+
+  // Pulse auto-alert state
+  private pulseAlertCooldowns = new Map<string, number>(); // sessionId → last alert timestamp
+  private pulsePrevState = new Map<string, OperationalState>(); // sessionId → previous state
   /** viewfile callback cache: short key → { sessionId, filePath } (avoids 64-byte callback_data limit) */
   viewFileCache = new Map<string, { sessionId: string; filePath: string }>();
   private viewFileCounter = 0;
@@ -198,6 +204,7 @@ export class TelegramBridge {
     registerPanelCommands(this);
     registerUtilityCommands(this);
     registerTemplateCommands(this);
+    registerMoodCommands(this);
     // Handle text messages (not commands)
     this.bot.on("message:text", async (ctx) => {
       if (ctx.message.text.startsWith("/")) return; // Skip unregistered commands
@@ -1152,6 +1159,8 @@ export class TelegramBridge {
             await this.streamHandler.completeStream(chatId, topicId);
             this.cleanupToolFeed(chatId, topicId);
             this.removeMapping(chatId, topicId);
+            this.pulseAlertCooldowns.delete(sessionId);
+            this.pulsePrevState.delete(sessionId);
             // Send summary after a delay (wait for summarizer to finish)
             void this.sendSessionSummary(chatId, topicId, sessionId);
           }
@@ -1165,6 +1174,74 @@ export class TelegramBridge {
             })
             .catch(() => {});
           break;
+
+        case "pulse:update": {
+          const ALERT_STATES = new Set<OperationalState>(["struggling", "spiraling", "blocked"]);
+          const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes between alerts per session
+
+          const prevState = this.pulsePrevState.get(sessionId);
+          const newState = msg.state as OperationalState;
+          this.pulsePrevState.set(sessionId, newState);
+
+          // Alert on: (1) transition INTO an alert state, or (2) escalation within alert states
+          // Skip if: not an alert state, or same state as before (no change)
+          if (!ALERT_STATES.has(newState) || newState === prevState) {
+            break;
+          }
+
+          // Cooldown check
+          const lastAlert = this.pulseAlertCooldowns.get(sessionId) ?? 0;
+          if (Date.now() - lastAlert < COOLDOWN_MS) break;
+
+          this.pulseAlertCooldowns.set(sessionId, Date.now());
+
+          const session = this.wsBridge.getSession(sessionId);
+          const shortId = session?.state.short_id ?? sessionId.slice(0, 8);
+          const projectName = session?.state.name ?? "Unknown";
+
+          const stateEmoji: Record<string, string> = {
+            struggling: "🟡",
+            spiraling: "🔴",
+            blocked: "⏸",
+          };
+          const emoji = stateEmoji[newState] ?? "⚠️";
+          const stateLabel = newState.charAt(0).toUpperCase() + newState.slice(1);
+
+          const SIGNAL_LABELS: Record<string, string> = {
+            failureRate: "Failure Rate",
+            editChurn: "Edit Churn",
+            costAccel: "Cost Accel",
+            contextPressure: "Context Pressure",
+            thinkingDepth: "Thinking Depth",
+            toolDiversity: "Tool Diversity",
+            completionTone: "Tone",
+          };
+
+          const reading = getLatestReading(sessionId);
+          const topSignalKey = reading?.topSignal ?? "unknown";
+          const topSignalLabel = SIGNAL_LABELS[topSignalKey] ?? topSignalKey;
+          const sigs: Record<string, number> = reading ? { ...reading.signals } : {};
+          const topSignalValue = reading ? Math.round((sigs[topSignalKey] ?? 0) * 100) : 0;
+
+          const alertText = [
+            `${emoji} <b>Pulse Alert: ${escapeHTML(projectName)}</b> (@${escapeHTML(shortId)})`,
+            `State: <b>${stateLabel}</b> — Score ${msg.score}/100`,
+            `Top signal: ${topSignalLabel} (${topSignalValue}%)`,
+            `Turn ${msg.turn}`,
+            "",
+            `💡 Reply to send guidance, or:`,
+            `  <code>/mood ${shortId}</code> — Full breakdown`,
+            `  <code>/stop ${shortId}</code> — Stop session`,
+          ].join("\n");
+
+          await this.bot.api
+            .sendMessage(chatId, alertText, {
+              parse_mode: "HTML",
+              message_thread_id: topicId,
+            })
+            .catch(() => {});
+          break;
+        }
 
         case "error":
           await this.bot.api.sendMessage(chatId, `⚠️ ${escapeHTML(msg.message)}`, {

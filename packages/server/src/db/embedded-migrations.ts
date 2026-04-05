@@ -97,4 +97,16 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0023_saved_prompts.sql",
     sql: "-- Saved prompts: reusable prompt templates (global or project-scoped)\nCREATE TABLE IF NOT EXISTS saved_prompts (\n  id TEXT PRIMARY KEY,\n  name TEXT NOT NULL,\n  content TEXT NOT NULL,\n  project_slug TEXT,\n  tags TEXT DEFAULT '[]',\n  sort_order INTEGER DEFAULT 0,\n  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),\n  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)\n);\n\nCREATE INDEX IF NOT EXISTS idx_saved_prompts_project ON saved_prompts(project_slug);\n",
   },
+  {
+    name: "0024_add_persona_id.sql",
+    sql: "ALTER TABLE sessions ADD COLUMN persona_id TEXT;\n",
+  },
+  {
+    name: "0025_channel_message_persona_id.sql",
+    sql: "ALTER TABLE channel_messages ADD COLUMN persona_id TEXT;\n",
+  },
+  {
+    name: "0026_custom_personas.sql",
+    sql: "CREATE TABLE IF NOT EXISTS custom_personas (\n  id TEXT PRIMARY KEY NOT NULL,\n  name TEXT NOT NULL,\n  slug TEXT NOT NULL,\n  icon TEXT NOT NULL DEFAULT '🧠',\n  title TEXT NOT NULL,\n  intro TEXT NOT NULL DEFAULT '',\n  system_prompt TEXT NOT NULL,\n  mental_models TEXT NOT NULL DEFAULT '[]',\n  decision_framework TEXT NOT NULL DEFAULT '',\n  red_flags TEXT NOT NULL DEFAULT '[]',\n  communication_style TEXT NOT NULL DEFAULT '',\n  blind_spots TEXT NOT NULL DEFAULT '[]',\n  best_for TEXT NOT NULL DEFAULT '[]',\n  strength TEXT NOT NULL DEFAULT '',\n  avatar_gradient TEXT NOT NULL DEFAULT '[\"#6366f1\",\"#8b5cf6\"]',\n  avatar_initials TEXT NOT NULL DEFAULT 'CP',\n  combinable_with TEXT,\n  cloned_from TEXT,\n  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),\n  updated_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)\n);\n\nCREATE INDEX IF NOT EXISTS idx_custom_personas_slug ON custom_personas(slug);\n",
+  },
 ];

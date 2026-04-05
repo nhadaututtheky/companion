@@ -12,6 +12,8 @@ import {
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
+import { getPersonaById } from "@companion/shared";
+import { PersonaAvatar } from "@/components/persona/persona-avatar";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -22,6 +24,7 @@ interface ChannelMessage {
   role: string;
   content: string;
   round: number;
+  personaId?: string | null;
   timestamp: string | null;
 }
 
@@ -50,11 +53,11 @@ interface Channel {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 const ROLE_COLORS: Record<string, string> = {
-  advocate: "#4285F4",
-  challenger: "#EA4335",
-  judge: "#FBBC04",
-  reviewer: "#34A853",
-  human: "#9AA0A6",
+  advocate: "var(--color-accent)",
+  challenger: "var(--color-danger)",
+  judge: "var(--color-warning)",
+  reviewer: "var(--color-success)",
+  human: "var(--color-text-muted)",
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -102,6 +105,7 @@ function ChannelFeed({ messages }: { messages: ChannelMessage[] }) {
       {messages.map((msg) => {
         const roleColor = ROLE_COLORS[msg.role] ?? "#9AA0A6";
         const isHuman = msg.role === "human";
+        const persona = msg.personaId ? getPersonaById(msg.personaId) : undefined;
         return (
           <div
             key={msg.id}
@@ -115,6 +119,8 @@ function ChannelFeed({ messages }: { messages: ChannelMessage[] }) {
             <div className="flex items-center gap-1.5">
               {isHuman ? (
                 <User size={11} style={{ color: roleColor, flexShrink: 0 }} />
+              ) : persona ? (
+                <PersonaAvatar persona={persona} size={14} showBadge={false} />
               ) : (
                 <Robot size={11} style={{ color: roleColor, flexShrink: 0 }} />
               )}
@@ -190,10 +196,9 @@ function MessageComposer({ channelId, onPosted }: { channelId: string; onPosted:
         disabled={posting}
         placeholder="Post to channel… (Enter to send)"
         rows={2}
-        className="flex-1 resize-none rounded-lg px-2 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+        className="flex-1 resize-none rounded-lg px-2 py-1.5 text-xs input-bordered"
         style={{
           background: "var(--color-bg-card)",
-          border: "1px solid var(--color-border)",
           color: "var(--color-text-primary)",
           fontFamily: "var(--font-body)",
         }}
@@ -204,7 +209,7 @@ function MessageComposer({ channelId, onPosted }: { channelId: string; onPosted:
         disabled={!text.trim() || posting}
         className="flex-shrink-0 p-2 rounded-lg transition-all cursor-pointer disabled:opacity-40"
         style={{
-          background: text.trim() && !posting ? "#4285F4" : "var(--color-bg-elevated)",
+          background: text.trim() && !posting ? "var(--color-accent)" : "var(--color-bg-elevated)",
           color: text.trim() && !posting ? "#fff" : "var(--color-text-muted)",
         }}
         aria-label="Post message to channel"
@@ -278,10 +283,9 @@ function CreateChannelForm({
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
           placeholder="e.g. Review auth implementation"
-          className="rounded-lg px-2 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+          className="rounded-lg px-2 py-1.5 text-xs input-bordered"
           style={{
             background: "var(--color-bg-card)",
-            border: "1px solid var(--color-border)",
             color: "var(--color-text-primary)",
             fontFamily: "var(--font-body)",
           }}
@@ -308,10 +312,9 @@ function CreateChannelForm({
             onChange={(e) =>
               setType(e.target.value as "debate" | "review" | "red_team" | "brainstorm")
             }
-            className="w-full appearance-none rounded-lg px-2 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+            className="w-full appearance-none rounded-lg px-2 py-1.5 text-xs input-bordered cursor-pointer"
             style={{
               background: "var(--color-bg-card)",
-              border: "1px solid var(--color-border)",
               color: "var(--color-text-primary)",
               fontFamily: "var(--font-body)",
             }}
@@ -335,7 +338,7 @@ function CreateChannelForm({
           onClick={() => void handleCreate()}
           disabled={!topic.trim() || creating}
           className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-40"
-          style={{ background: "#4285F4", color: "#fff" }}
+          style={{ background: "var(--color-accent)", color: "#fff" }}
         >
           {creating ? "Creating…" : "Create"}
         </button>
@@ -416,10 +419,9 @@ function LinkSessionSelector({ channelId, alreadyLinked, onLinked }: LinkSession
         <select
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
-          className="w-full appearance-none rounded-lg px-2 py-1.5 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+          className="w-full appearance-none rounded-lg px-2 py-1.5 text-xs input-bordered cursor-pointer"
           style={{
             background: "var(--color-bg-card)",
-            border: "1px solid var(--color-border)",
             color: "var(--color-text-primary)",
             fontFamily: "var(--font-body)",
           }}
@@ -442,7 +444,7 @@ function LinkSessionSelector({ channelId, alreadyLinked, onLinked }: LinkSession
         onClick={() => void handleLink()}
         disabled={!selectedId || linking}
         className="px-3 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-40 transition-all"
-        style={{ background: "#34A853", color: "#fff" }}
+        style={{ background: "var(--color-success)", color: "#fff" }}
         aria-label="Link selected session"
       >
         <LinkSimple size={14} weight="bold" />
@@ -454,10 +456,14 @@ function LinkSessionSelector({ channelId, alreadyLinked, onLinked }: LinkSession
 // ── Main ChannelPanel ───────────────────────────────────────────────────────
 
 interface ChannelPanelProps {
-  sessionId: string;
+  sessionId?: string;
   channelId: string | null | undefined;
   projectSlug?: string;
   onChannelChange?: (channelId: string | null) => void;
+  /** Compact mode for embedding in Ring — hides link/unlink controls, tighter padding */
+  compact?: boolean;
+  /** Called when channel is not found (deleted/concluded) — allows parent to reset state */
+  onChannelLost?: () => void;
 }
 
 export function ChannelPanel({
@@ -465,6 +471,8 @@ export function ChannelPanel({
   channelId,
   projectSlug,
   onChannelChange,
+  compact = false,
+  onChannelLost,
 }: ChannelPanelProps) {
   const [channel, setChannel] = useState<Channel | null>(null);
   const [loading, setLoading] = useState(false);
@@ -478,8 +486,9 @@ export function ChannelPanel({
     } catch {
       // channel may have been deleted
       setChannel(null);
+      onChannelLost?.();
     }
-  }, []);
+  }, [onChannelLost]);
 
   // Initial load + poll every 5 seconds
   useEffect(() => {
@@ -510,7 +519,7 @@ export function ChannelPanel({
   );
 
   const handleUnlinkSelf = useCallback(async () => {
-    if (!channelId) return;
+    if (!channelId || !sessionId) return;
     try {
       await api.channels.unlinkSession(channelId, sessionId);
       toast.success("Session unlinked from channel");
@@ -523,7 +532,7 @@ export function ChannelPanel({
 
   // No channel linked
   if (!channelId) {
-    if (showCreate) {
+    if (showCreate && sessionId) {
       return (
         <CreateChannelForm
           sessionId={sessionId}
@@ -547,7 +556,7 @@ export function ChannelPanel({
         <button
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all"
-          style={{ background: "#4285F4", color: "#fff" }}
+          style={{ background: "var(--color-accent)", color: "#fff" }}
         >
           <Plus size={13} weight="bold" aria-hidden="true" />
           Create Shared Context
@@ -579,7 +588,7 @@ export function ChannelPanel({
   }
 
   const isActive = channel.status === "active";
-  const statusColor = isActive ? "#4285F4" : "var(--color-text-muted)";
+  const statusColor = isActive ? "var(--color-accent)" : "var(--color-text-muted)";
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -607,15 +616,16 @@ export function ChannelPanel({
           >
             {channel.status}
           </span>
-          <button
-            onClick={() => void handleUnlinkSelf()}
-            className="flex-shrink-0 p-1 rounded transition-all cursor-pointer"
-           
-            aria-label="Unlink session from channel"
-            title="Unlink this session"
-          >
-            <X size={12} weight="bold" />
-          </button>
+          {!compact && (
+            <button
+              onClick={() => void handleUnlinkSelf()}
+              className="flex-shrink-0 p-1 rounded transition-all cursor-pointer"
+              aria-label="Unlink session from channel"
+              title="Unlink this session"
+            >
+              <X size={12} weight="bold" />
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -641,12 +651,14 @@ export function ChannelPanel({
         <ChannelFeed messages={channel.messages} />
       </div>
 
-      {/* Link session selector */}
-      <LinkSessionSelector
-        channelId={channel.id}
-        alreadyLinked={channel.linkedSessions.map((s) => s.id)}
-        onLinked={() => void fetchChannel(channel.id)}
-      />
+      {/* Link session selector — hidden in compact mode */}
+      {!compact && (
+        <LinkSessionSelector
+          channelId={channel.id}
+          alreadyLinked={channel.linkedSessions.map((s) => s.id)}
+          onLinked={() => void fetchChannel(channel.id)}
+        />
+      )}
 
       {/* Message composer (human messages) */}
       {isActive && (

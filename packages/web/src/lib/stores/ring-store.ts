@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface SharedMessage {
   id: string;
@@ -98,6 +99,10 @@ interface RingStore {
   debateChannelId: string | null;
   /** Per-agent model assignments for multi-model debate */
   debateAgentModels: DebateAgentModel[];
+  /** Number of unread debate messages when Ring is collapsed */
+  unreadCount: number;
+  /** Last known message count — used to detect new messages */
+  lastSeenMessageCount: number;
 
   linkSession: (id: string) => void;
   unlinkSession: (id: string) => void;
@@ -110,65 +115,103 @@ interface RingStore {
   setDebateChannelId: (id: string | null) => void;
   setDebateAgentModel: (agentId: string, model: string, label: string) => void;
   clearDebateAgentModels: () => void;
+  /** Update debate message count — increments unread if Ring is collapsed */
+  updateDebateMessageCount: (count: number) => void;
+  /** Clear unread count (called when Ring expands) */
+  clearUnread: () => void;
   reset: () => void;
 }
 
 const DEFAULT_POSITION = { x: -1, y: -1 }; // -1 means "not yet initialized — use default"
 
-export const useRingStore = create<RingStore>((set) => ({
-  linkedSessionIds: [],
-  topic: "",
-  isExpanded: false,
-  isSelecting: false,
-  position: DEFAULT_POSITION,
-  sharedMessages: [],
-  mode: "broadcast",
-  debateChannelId: null,
-  debateAgentModels: [],
-
-  linkSession: (id) =>
-    set((s) => {
-      if (s.linkedSessionIds.includes(id)) return s;
-      return { linkedSessionIds: [...s.linkedSessionIds, id] };
-    }),
-
-  unlinkSession: (id) =>
-    set((s) => ({
-      linkedSessionIds: s.linkedSessionIds.filter((sid) => sid !== id),
-    })),
-
-  setTopic: (t) => set({ topic: t }),
-
-  setExpanded: (v) => set({ isExpanded: v }),
-
-  setSelecting: (v) => set({ isSelecting: v }),
-
-  setPosition: (pos) => set({ position: pos }),
-
-  addSharedMessage: (msg) => set((s) => ({ sharedMessages: [...s.sharedMessages, msg] })),
-
-  setMode: (mode) => set({ mode }),
-
-  setDebateChannelId: (id) => set({ debateChannelId: id }),
-
-  setDebateAgentModel: (agentId, model, label) =>
-    set((s) => {
-      const filtered = s.debateAgentModels.filter((m) => m.agentId !== agentId);
-      if (model === "default") return { debateAgentModels: filtered };
-      return { debateAgentModels: [...filtered, { agentId, model, label }] };
-    }),
-
-  clearDebateAgentModels: () => set({ debateAgentModels: [] }),
-
-  reset: () =>
-    set({
+export const useRingStore = create<RingStore>()(
+  persist(
+    (set) => ({
       linkedSessionIds: [],
       topic: "",
       isExpanded: false,
       isSelecting: false,
+      position: DEFAULT_POSITION,
       sharedMessages: [],
       mode: "broadcast",
       debateChannelId: null,
       debateAgentModels: [],
+      unreadCount: 0,
+      lastSeenMessageCount: 0,
+
+      linkSession: (id) =>
+        set((s) => {
+          if (s.linkedSessionIds.includes(id)) return s;
+          return { linkedSessionIds: [...s.linkedSessionIds, id] };
+        }),
+
+      unlinkSession: (id) =>
+        set((s) => ({
+          linkedSessionIds: s.linkedSessionIds.filter((sid) => sid !== id),
+        })),
+
+      setTopic: (t) => set({ topic: t }),
+
+      setExpanded: (v) => set({ isExpanded: v }),
+
+      setSelecting: (v) => set({ isSelecting: v }),
+
+      setPosition: (pos) => set({ position: pos }),
+
+      addSharedMessage: (msg) => set((s) => ({ sharedMessages: [...s.sharedMessages, msg] })),
+
+      setMode: (mode) => set({ mode }),
+
+      setDebateChannelId: (id) => set({ debateChannelId: id, unreadCount: 0, lastSeenMessageCount: 0 }),
+
+      setDebateAgentModel: (agentId, model, label) =>
+        set((s) => {
+          const filtered = s.debateAgentModels.filter((m) => m.agentId !== agentId);
+          if (model === "default") return { debateAgentModels: filtered };
+          return { debateAgentModels: [...filtered, { agentId, model, label }] };
+        }),
+
+      clearDebateAgentModels: () => set({ debateAgentModels: [] }),
+
+      updateDebateMessageCount: (count) =>
+        set((s) => {
+          // Count decreased (channel reset/changed) — reset unread
+          if (count <= s.lastSeenMessageCount) return { lastSeenMessageCount: count, unreadCount: 0 };
+          const newMessages = count - s.lastSeenMessageCount;
+          // Only increment unread if Ring is collapsed
+          return {
+            lastSeenMessageCount: count,
+            unreadCount: s.isExpanded ? 0 : s.unreadCount + newMessages,
+          };
+        }),
+
+      clearUnread: () => set({ unreadCount: 0 }),
+
+      reset: () =>
+        set({
+          linkedSessionIds: [],
+          topic: "",
+          isExpanded: false,
+          isSelecting: false,
+          sharedMessages: [],
+          mode: "broadcast",
+          debateChannelId: null,
+          debateAgentModels: [],
+          unreadCount: 0,
+          lastSeenMessageCount: 0,
+        }),
     }),
-}));
+    {
+      name: "companion-ring",
+      // SSR-safe: skip auto-hydration, manually rehydrate in MagicRingMount
+      skipHydration: true,
+      // Only persist debate state + linked sessions + position — not transient UI state
+      partialize: (state) => ({
+        linkedSessionIds: state.linkedSessionIds,
+        mode: state.mode,
+        debateChannelId: state.debateChannelId,
+        position: state.position,
+      }),
+    },
+  ),
+);

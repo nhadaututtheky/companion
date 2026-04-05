@@ -23,6 +23,7 @@ import {
   MinusCircle,
   Play,
   Package,
+  Heartbeat,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { useContextFeedStore } from "@/lib/stores/context-feed-store";
@@ -393,11 +394,10 @@ function QuickScrape() {
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleScrape()}
           placeholder="https://docs.example.com"
-          className="flex-1 text-xs px-2.5 py-1.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+          className="flex-1 text-xs px-2.5 py-1.5 rounded-md input-bordered"
           style={{
             background: "var(--color-bg-base)",
             color: "var(--color-text-primary)",
-            border: "1px solid var(--color-border)",
           }}
           aria-label="URL to scrape"
         />
@@ -498,11 +498,10 @@ function QuickResearch() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleResearch()}
           placeholder="Search query..."
-          className="flex-1 text-xs px-2.5 py-1.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+          className="flex-1 text-xs px-2.5 py-1.5 rounded-md input-bordered"
           style={{
             background: "var(--color-bg-base)",
             color: "var(--color-text-primary)",
-            border: "1px solid var(--color-border)",
           }}
           aria-label="Research query"
         />
@@ -586,6 +585,8 @@ const INJECTION_META: Record<
   plan_review: { label: "Plan Review", color: "#F59E0B", icon: File },
   break_check: { label: "Break Check", color: "#EA4335", icon: WarningCircle },
   web_docs: { label: "Library Docs", color: "#4285F4", icon: Globe },
+  activity_feed: { label: "Activity Feed", color: "#3B82F6", icon: Lightning },
+  pulse_guidance: { label: "Pulse Guidance", color: "#F59E0B", icon: Heartbeat },
 };
 
 function formatTimeAgo(ts: number): string {
@@ -919,11 +920,10 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
               }
             }}
             placeholder="**/test/** or **/*.spec.ts"
-            className="flex-1 text-xs px-2.5 py-1.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+            className="flex-1 text-xs px-2.5 py-1.5 rounded-md input-bordered"
             style={{
               background: "var(--color-bg-base)",
               color: "var(--color-text-primary)",
-              border: "1px solid var(--color-border)",
             }}
             aria-label="Add exclude pattern"
           />
@@ -1056,11 +1056,10 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="WEBCLAW_API_KEY"
-              className="w-full text-xs px-2.5 py-1.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+              className="w-full text-xs px-2.5 py-1.5 rounded-md input-bordered"
               style={{
                 background: "var(--color-bg-base)",
                 color: "var(--color-text-primary)",
-                border: "1px solid var(--color-border)",
               }}
               aria-label="Webclaw API key"
             />
@@ -1335,11 +1334,10 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
         <select
           value={selectedSlug}
           onChange={(e) => setSelectedSlug(e.target.value)}
-          className="w-full text-xs py-1.5 px-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+          className="w-full text-xs py-1.5 px-2 rounded-md input-bordered cursor-pointer"
           style={{
             background: "var(--color-bg-elevated)",
             color: "var(--color-text-primary)",
-            border: "1px solid var(--color-border)",
           }}
           aria-label="Select project"
         >
@@ -1439,10 +1437,9 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                       placeholder="Search symbols..."
-                      className="w-full pl-8 pr-3 py-1.5 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+                      className="w-full pl-8 pr-3 py-1.5 rounded-lg text-sm input-bordered"
                       style={{
                         background: "var(--color-bg-elevated)",
-                        border: "1px solid var(--color-border-strong, var(--color-border))",
                         color: "var(--color-text-primary)",
                       }}
                       aria-label="Search symbols"

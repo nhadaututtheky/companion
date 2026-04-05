@@ -28,6 +28,32 @@ fi
 
 echo "==> Building Companion desktop ($BUILD_MODE)"
 
+# ── 0. Resolve signing key ────────────────────────────────────────────────────
+if [[ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]]; then
+    KEY_FILE="$HOME/.tauri/companion.key"
+    ENV_TAURI="$ROOT_DIR/.env.tauri"
+
+    if [[ -f "$KEY_FILE" ]]; then
+        echo "==> Loading signing key from $KEY_FILE"
+        export TAURI_SIGNING_PRIVATE_KEY
+        # Must preserve newlines — Tauri expects the full 2-line rsign format
+        TAURI_SIGNING_PRIVATE_KEY="$(cat "$KEY_FILE")"
+    elif [[ -f "$ENV_TAURI" ]]; then
+        echo "==> Loading signing key from .env.tauri"
+        # shellcheck disable=SC1090
+        source "$ENV_TAURI"
+        export TAURI_SIGNING_PRIVATE_KEY
+    else
+        echo ""
+        echo "WARNING: No signing key found. Updater artifacts will NOT be signed."
+        echo "  Fix: cargo tauri signer generate -w ~/.tauri/companion.key"
+        echo "  Or:  Create .env.tauri with TAURI_SIGNING_PRIVATE_KEY=<key>"
+        echo ""
+    fi
+else
+    echo "==> Signing key found in environment"
+fi
+
 # ── 1. Install JS dependencies ────────────────────────────────────────────────
 echo "==> Installing dependencies..."
 cd "$ROOT_DIR"

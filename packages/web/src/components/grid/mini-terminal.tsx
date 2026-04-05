@@ -129,7 +129,7 @@ function CompactComposer({
           disabled={isRunning}
           placeholder={isRunning ? "Claude is thinking…" : "Message…"}
           rows={1}
-          className="flex-1 resize-none bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent leading-snug"
+          className="flex-1 resize-none bg-transparent outline-none leading-snug"
           style={{
             fontSize: 12,
             color: "var(--color-text-primary)",

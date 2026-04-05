@@ -62,6 +62,7 @@ export const api = {
       resume?: boolean;
       idleTimeoutMs?: number;
       keepAlive?: boolean;
+      personaId?: string;
     }) =>
       request<{ data: { sessionId: string; projectCreated?: boolean } }>("/api/sessions", {
         method: "POST",
@@ -80,6 +81,11 @@ export const api = {
       request<{ success: boolean }>(`/api/sessions/${id}/permissions/${requestId}`, {
         method: "POST",
         body: JSON.stringify({ behavior }),
+      }),
+    switchPersona: (id: string, personaId: string | null) =>
+      request<{ success: boolean }>(`/api/sessions/${id}/persona`, {
+        method: "POST",
+        body: JSON.stringify({ personaId }),
       }),
     cleanup: () =>
       request<{ success: boolean; data: { cleaned: number } }>("/api/sessions/cleanup", {
@@ -189,10 +195,10 @@ export const api = {
         body: JSON.stringify({ tags }),
       }),
     debate: {
-      addParticipant: (id: string, model: string) =>
-        request<{ success: boolean; data: { modelId: string; name: string; provider: string } }>(
+      addParticipant: (id: string, model: string, personaId?: string) =>
+        request<{ success: boolean; data: { modelId: string; name: string; provider: string; personaId?: string } }>(
           `/api/sessions/${id}/debate/participants`,
-          { method: "POST", body: JSON.stringify({ model }) },
+          { method: "POST", body: JSON.stringify({ model, personaId }) },
         ),
       removeParticipant: (id: string, modelId: string) =>
         request<{ success: boolean }>(
@@ -200,7 +206,7 @@ export const api = {
           { method: "DELETE" },
         ),
       listParticipants: (id: string) =>
-        request<{ success: boolean; data: Array<{ modelId: string; provider: string; name: string }> }>(
+        request<{ success: boolean; data: Array<{ modelId: string; provider: string; name: string; personaId?: string }> }>(
           `/api/sessions/${id}/debate/participants`,
         ),
       startRound: (id: string, topic: string, format?: string) =>
@@ -440,10 +446,10 @@ export const api = {
 
   // Terminal
   terminal: {
-    spawn: (cwd: string) =>
+    spawn: (cwd?: string) =>
       request<{ data: { terminalId: string } }>("/api/terminal", {
         method: "POST",
-        body: JSON.stringify({ cwd }),
+        body: JSON.stringify(cwd ? { cwd } : {}),
       }),
     list: () =>
       request<{ data: { terminals: Array<{ id: string; cwd: string; createdAt: number }> } }>(
@@ -1181,5 +1187,78 @@ export const api = {
       request<{ success: boolean }>(`/api/saved-prompts/${encodeURIComponent(id)}`, {
         method: "DELETE",
       }),
+  },
+
+  customPersonas: {
+    list: () =>
+      request<{
+        success: boolean;
+        data: import("@companion/shared").Persona[];
+        meta: { total: number };
+      }>("/api/custom-personas"),
+
+    get: (id: string) =>
+      request<{ success: boolean; data: import("@companion/shared").Persona }>(
+        `/api/custom-personas/${encodeURIComponent(id)}`,
+      ),
+
+    create: (body: {
+      name: string;
+      title: string;
+      systemPrompt: string;
+      icon?: string;
+      intro?: string;
+      mentalModels?: string[];
+      decisionFramework?: string;
+      redFlags?: string[];
+      communicationStyle?: string;
+      blindSpots?: string[];
+      bestFor?: string[];
+      strength?: string;
+      avatarGradient?: [string, string];
+      avatarInitials?: string;
+      combinableWith?: string[];
+    }) =>
+      request<{ success: boolean; data: import("@companion/shared").Persona }>(
+        "/api/custom-personas",
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+
+    update: (
+      id: string,
+      body: {
+        name?: string;
+        title?: string;
+        systemPrompt?: string;
+        icon?: string;
+        intro?: string;
+        mentalModels?: string[];
+        decisionFramework?: string;
+        redFlags?: string[];
+        communicationStyle?: string;
+        blindSpots?: string[];
+        bestFor?: string[];
+        strength?: string;
+        avatarGradient?: [string, string];
+        avatarInitials?: string;
+        combinableWith?: string[];
+      },
+    ) =>
+      request<{ success: boolean; data: import("@companion/shared").Persona }>(
+        `/api/custom-personas/${encodeURIComponent(id)}`,
+        { method: "PUT", body: JSON.stringify(body) },
+      ),
+
+    delete: (id: string) =>
+      request<{ success: boolean }>(
+        `/api/custom-personas/${encodeURIComponent(id)}`,
+        { method: "DELETE" },
+      ),
+
+    clone: (builtInId: string, overrides?: { name?: string }) =>
+      request<{ success: boolean; data: import("@companion/shared").Persona }>(
+        `/api/custom-personas/clone/${encodeURIComponent(builtInId)}`,
+        { method: "POST", body: JSON.stringify(overrides ?? {}) },
+      ),
   },
 };

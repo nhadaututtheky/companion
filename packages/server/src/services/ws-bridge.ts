@@ -26,6 +26,8 @@ import {
 import {
   buildProjectMap,
   buildMessageContext,
+  buildActivityContext,
+  clearActivityState,
   reviewPlan,
   checkBreaks,
   hasPlanIndicators,
@@ -38,6 +40,12 @@ import { broadcastToSpectators, disconnectAllSpectators } from "./spectator-brid
 import { revokeAllForSession } from "./share-manager.js";
 import { eventBus } from "./event-bus.js";
 import { generateSessionName } from "./session-namer.js";
+import { processToolEvent, removeTracker } from "../codegraph/event-collector.js";
+import {
+  getOrCreatePulse,
+  cleanupPulse,
+  finalizePulseTurn,
+} from "./pulse-estimator.js";
 import {
   createActiveSession,
   getActiveSession,
@@ -325,6 +333,8 @@ export class WsBridge {
     costBudgetUsd?: number;
     compactMode?: string;
     compactThreshold?: number;
+    /** Expert Mode persona ID (e.g. "tim-cook", "staff-sre"). */
+    personaId?: string;
     /** Optional identity/personality prompt re-injected after context compaction. */
     identityPrompt?: string;
     /** When false, disables auto re-injection on compact for this session (default: true). */
@@ -403,6 +413,7 @@ export class WsBridge {
       costBudgetUsd: opts.costBudgetUsd,
       compactMode: opts.compactMode,
       compactThreshold: opts.compactThreshold,
+      personaId: opts.personaId,
     });
 
     // Attach shortId to session state for clients
@@ -773,6 +784,11 @@ export class WsBridge {
       watcher.stop();
       this.planWatchers.delete(sessionId);
     }
+
+    // Clean up graph activity tracker, injection state, and pulse (safe no-ops if never created)
+    removeTracker(sessionId);
+    clearActivityState(sessionId);
+    cleanupPulse(sessionId);
 
     if (session) {
       this.updateStatus(session, "ended");
@@ -1150,6 +1166,42 @@ export class WsBridge {
           session.state = { ...session.state, is_in_plan_mode: false };
           this.planWatchers.get(session.id)?.onExitPlan();
         }
+
+        // CodeGraph: emit graph:activity event (fire-and-forget)
+        try {
+          const cgEventRecord = getSessionRecord(session.id);
+          const cgProjectSlug = cgEventRecord?.projectSlug;
+          if (cgProjectSlug) {
+            const activityEvent = processToolEvent(
+              session.id,
+              cgProjectSlug,
+              session.state.cwd,
+              toolName,
+              block.input as Record<string, unknown>,
+            );
+            if (activityEvent) {
+              this.broadcastToAll(session, {
+                type: "graph:activity",
+                sessionId: activityEvent.sessionId,
+                filePaths: activityEvent.filePaths,
+                nodeIds: activityEvent.nodeIds,
+                toolName: activityEvent.toolName,
+                toolAction: activityEvent.toolAction,
+                timestamp: activityEvent.timestamp,
+              });
+            }
+          }
+        } catch {
+          // Fire-and-forget — never block agent thread
+        }
+
+        // Pulse: record tool_use (fire-and-forget)
+        try {
+          getOrCreatePulse(session.id).recordToolUse(
+            toolName,
+            block.input as Record<string, unknown>,
+          );
+        } catch { /* never block */ }
       }
     }
 
@@ -1180,6 +1232,14 @@ export class WsBridge {
           ...msg.message,
           content: msg.message.content?.map((block) => {
             if (block.type === "tool_result" && typeof block.content === "string") {
+              // Pulse: record tool result success/failure
+              try {
+                getOrCreatePulse(session.id).recordToolResult(
+                  toolNameMap.get(block.tool_use_id) ?? "unknown",
+                  !!block.is_error,
+                );
+              } catch { /* never block */ }
+
               const rtkResult = this.rtkPipeline.transform(block.content, {
                 sessionId: session.id,
                 isError: block.is_error,
@@ -1235,6 +1295,11 @@ export class WsBridge {
         .join("\n");
 
       if (textContent) {
+        // Pulse: record assistant text for tone analysis
+        try {
+          getOrCreatePulse(session.id).recordAssistantText(textContent);
+        } catch { /* never block */ }
+
         storeMessage({
           id: msg.message.id ?? randomUUID(),
           sessionId: session.id,
@@ -1275,7 +1340,7 @@ export class WsBridge {
   /** Emit a context:injection event to all connected browsers for this session */
   private emitContextInjection(
     session: ActiveSession,
-    injectionType: "project_map" | "message_context" | "plan_review" | "break_check" | "web_docs",
+    injectionType: "project_map" | "message_context" | "plan_review" | "break_check" | "web_docs" | "activity_feed",
     summary: string,
     charCount: number,
   ): void {
@@ -1319,6 +1384,11 @@ export class WsBridge {
     const totalTokens = lastTurnInput + lastTurnOutput;
     const maxTokens = WsBridge.getMaxContextTokens(state.model);
     const contextUsedPercent = Math.min(100, (totalTokens / maxTokens) * 100);
+
+    // Pulse: record context pressure
+    try {
+      getOrCreatePulse(session.id).recordContextUpdate(contextUsedPercent);
+    } catch { /* never block */ }
 
     this.broadcastToAll(session, {
       type: "context_update",
@@ -1429,6 +1499,31 @@ export class WsBridge {
         cache_read_tokens: session.state.cache_read_tokens,
       },
     });
+
+    // Pulse: finalize turn and broadcast reading (fire-and-forget, observe-only)
+    try {
+      // Pass cumulative tokens — PulseEstimator computes delta internally
+      const cumulativeTokens = (msg.usage?.input_tokens ?? 0) + (msg.usage?.output_tokens ?? 0);
+      const pulseReading = finalizePulseTurn(
+        session.id,
+        msg.num_turns,
+        cumulativeTokens,
+        msg.total_cost_usd,
+      );
+      if (pulseReading) {
+        this.broadcastToAll(session, {
+          type: "pulse:update",
+          sessionId: session.id,
+          score: pulseReading.score,
+          state: pulseReading.state,
+          trend: pulseReading.trend,
+          signals: { ...pulseReading.signals },
+          topSignal: pulseReading.topSignal,
+          turn: pulseReading.turn,
+          timestamp: pulseReading.timestamp,
+        });
+      }
+    } catch { /* never block */ }
 
     this.updateStatus(session, "idle");
     persistSession(session);
@@ -1553,6 +1648,14 @@ export class WsBridge {
   }
 
   private handleStreamEvent(session: ActiveSession, msg: CLIStreamEventMessage): void {
+    // Pulse: track thinking block size for depth signal
+    try {
+      const event = msg.event as { delta?: { type?: string; thinking?: string } } | undefined;
+      if (event?.delta?.type === "thinking_delta" && event.delta.thinking) {
+        getOrCreatePulse(session.id).recordThinking(event.delta.thinking.length);
+      }
+    } catch { /* never block */ }
+
     this.broadcastToAll(session, {
       type: "stream_event",
       event: msg.event,
@@ -1604,6 +1707,9 @@ export class WsBridge {
     };
 
     session.pendingPermissions.set(msg.request_id, perm);
+
+    // Pulse: mark session as blocked (waiting for human)
+    try { getOrCreatePulse(session.id).setBlocked(true); } catch { /* */ }
 
     this.broadcastToAll(session, {
       type: "permission_request",
@@ -1962,6 +2068,36 @@ export class WsBridge {
       }
     }
 
+    // ── CodeGraph: activity feed injection (agent self-awareness) ──
+    if (
+      cgSlug &&
+      cgMsgConfig?.injectionEnabled &&
+      cgMsgConfig.activityFeedEnabled
+    ) {
+      try {
+        const contextPercent = session.state.total_input_tokens && session.state.total_output_tokens
+          ? 0 // We don't have exact context %, use 0 to let buildActivityContext decide
+          : 0;
+        const activityCtx = buildActivityContext(
+          session.id,
+          cgSlug,
+          session.state.num_turns,
+          contextPercent,
+        );
+        if (activityCtx) {
+          cgContent = `${cgContent}${activityCtx}`;
+          this.emitContextInjection(
+            session,
+            "activity_feed",
+            `Activity feed: agent footprint`,
+            activityCtx.length,
+          );
+        }
+      } catch {
+        /* skip */
+      }
+    }
+
     // ── WebIntel: auto-inject library docs (async, best-effort, respects config) ────────
     // Try to enrich with docs before sending to CLI/SDK (timeout 3s)
     const webDocsDisabled =
@@ -2057,6 +2193,11 @@ export class WsBridge {
     }
 
     session.pendingPermissions.delete(msg.request_id);
+
+    // Pulse: unblock if no more pending permissions
+    if (session.pendingPermissions.size === 0) {
+      try { getOrCreatePulse(session.id).setBlocked(false); } catch { /* */ }
+    }
 
     // SDK engine path: resolve the permission Promise
     const resolver = this.permissionResolvers.get(msg.request_id);

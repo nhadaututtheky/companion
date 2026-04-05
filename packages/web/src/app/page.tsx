@@ -3,14 +3,13 @@ import { useEffect, useMemo, useCallback, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { ArrowCounterClockwise, X, TelegramLogo, Globe, Trash } from "@phosphor-icons/react";
 import { Header } from "@/components/layout/header";
-import { SessionList } from "@/components/session/session-list";
+import { ProjectSidebar } from "@/components/layout/project-sidebar";
 // StatsGrid moved to Header
 import { ExpandedSession } from "@/components/grid/expanded-session";
 import { MultiSessionLayout } from "@/components/layout/multi-session-layout";
 import { NewSessionModal } from "@/components/session/new-session-modal";
 import { CompanionLogo } from "@/components/layout/companion-logo";
 import { ActivityTerminal } from "@/components/activity/activity-terminal";
-import { MagicRing } from "@/components/ring/magic-ring";
 import { FileExplorerPanel } from "@/components/panels/file-explorer-panel";
 import { BrowserPreviewPanel } from "@/components/panels/browser-preview-panel";
 import { SearchPanel } from "@/components/panels/search-panel";
@@ -21,7 +20,6 @@ import { useUiStore } from "@/lib/stores/ui-store";
 import { useNotificationPermission } from "@/hooks/use-notifications";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
-import { ApiKeyIndicator } from "@/components/auth/api-key-indicator";
 import dynamic from "next/dynamic";
 
 const AiContextPanel = dynamic(
@@ -42,97 +40,6 @@ function EmptyCenter() {
       <p className="text-base text-center" style={{ color: "var(--color-text-secondary)" }}>
         Select a session or start a new one
       </p>
-    </div>
-  );
-}
-
-// SidebarStats removed — stats now in Header
-
-// ── Session Management Bar ─────────────────────────────────────────────────
-
-function SessionManagementBar() {
-  const [clearing, setClearing] = useState(false);
-  const [killing, setKilling] = useState(false);
-
-  const sessions = useSessionStore((s) => s.sessions);
-  const removeSession = useSessionStore((s) => s.removeSession);
-
-  const endedIds = useMemo(
-    () =>
-      Object.values(sessions)
-        .filter((s) => ["ended", "error"].includes(s.status))
-        .map((s) => s.id),
-    [sessions],
-  );
-  const activeIds = useMemo(
-    () =>
-      Object.values(sessions)
-        .filter((s) => ["starting", "running", "waiting", "idle", "busy"].includes(s.status))
-        .map((s) => s.id),
-    [sessions],
-  );
-
-  const handleClearEnded = useCallback(async () => {
-    if (endedIds.length === 0) return;
-    setClearing(true);
-    try {
-      for (const id of endedIds) {
-        removeSession(id);
-      }
-    } finally {
-      setClearing(false);
-    }
-  }, [endedIds, removeSession]);
-
-  const handleKillAll = useCallback(async () => {
-    if (activeIds.length === 0) return;
-    if (!window.confirm(`Stop all ${activeIds.length} active session(s)?`)) return;
-    setKilling(true);
-    try {
-      await api.sessions.killAll(activeIds);
-      for (const id of activeIds) {
-        useSessionStore.getState().setSession(id, {
-          ...useSessionStore.getState().sessions[id]!,
-          status: "ended",
-          shortId: undefined,
-        });
-      }
-    } catch {
-      // ignore individual failures
-    } finally {
-      setKilling(false);
-    }
-  }, [activeIds]);
-
-  if (endedIds.length === 0 && activeIds.length === 0) return null;
-
-  return (
-    <div className="flex items-center justify-center gap-3 px-3 py-1">
-      {endedIds.length > 0 && (
-        <button
-          onClick={handleClearEnded}
-          disabled={clearing}
-          className="text-xs cursor-pointer transition-opacity hover:opacity-100"
-          style={{ color: "var(--color-text-muted)", opacity: 0.7, background: "none", border: "none" }}
-          aria-label={`Clear ${endedIds.length} ended session(s)`}
-        >
-          {clearing ? "Clearing..." : `Clear ${endedIds.length} ended`}
-        </button>
-      )}
-      {endedIds.length > 0 && activeIds.length > 0 && (
-        <span style={{ color: "var(--color-border)" }}>·</span>
-      )}
-      {activeIds.length > 0 && (
-        <button
-          onClick={handleKillAll}
-          disabled={killing}
-          className="text-xs cursor-pointer transition-opacity hover:opacity-100"
-          style={{ color: "#EA4335", opacity: 0.7, background: "none", border: "none" }}
-          aria-label={`Stop all ${activeIds.length} active session(s)`}
-        >
-          {killing ? "Stopping..." : `Stop all (${activeIds.length})`}
-        </button>
-      )}
     </div>
   );
 }
@@ -187,7 +94,7 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
         <TelegramLogo
           size={12}
           weight="fill"
-          style={{ color: "#29B6F6" }}
+          style={{ color: "var(--color-accent)" }}
           aria-label="From Telegram"
         />
       );
@@ -197,14 +104,14 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
   return (
     <div
       style={{
-        background: "#4285F410",
-        borderBottom: "1px solid #4285F430",
+        background: "color-mix(in srgb, var(--color-accent) 6%, transparent)",
+        borderBottom: "1px solid color-mix(in srgb, var(--color-accent) 18%, transparent)",
       }}
     >
       {/* Summary row */}
       <div className="flex items-center gap-2 px-4 py-2">
-        <ArrowCounterClockwise size={14} color="#4285F4" weight="bold" aria-hidden="true" />
-        <span className="text-xs font-semibold flex-1" style={{ color: "#4285F4" }}>
+        <ArrowCounterClockwise size={14} style={{ color: "var(--color-accent)" }} weight="bold" aria-hidden="true" />
+        <span className="text-xs font-semibold flex-1" style={{ color: "var(--color-accent)" }}>
           {sessions.length === 1
             ? "1 session can be resumed"
             : `${sessions.length} sessions can be resumed`}
@@ -213,8 +120,8 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
           onClick={() => setExpanded((v) => !v)}
           className="text-xs font-medium px-2 py-0.5 rounded cursor-pointer transition-colors"
           style={{
-            color: "#4285F4",
-            background: "#4285F415",
+            color: "var(--color-accent)",
+            background: "color-mix(in srgb, var(--color-accent) 8%, transparent)",
           }}
           aria-expanded={expanded}
         >
@@ -223,7 +130,7 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
         <button
           onClick={onDismiss}
           className="p-0.5 rounded cursor-pointer"
-          style={{ color: "#4285F480" }}
+          style={{ color: "color-mix(in srgb, var(--color-accent) 50%, transparent)" }}
           aria-label="Dismiss resume banner"
         >
           <X size={12} weight="bold" aria-hidden="true" />
@@ -232,12 +139,12 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
 
       {/* Expanded session list */}
       {expanded && (
-        <div className="flex flex-col" style={{ borderTop: "1px solid #4285F420" }}>
+        <div className="flex flex-col" style={{ borderTop: "1px solid color-mix(in srgb, var(--color-accent) 12%, transparent)" }}>
           {sessions.map((s) => (
             <div
               key={s.id}
               className="flex items-center gap-3 px-4 py-2"
-              style={{ borderBottom: "1px solid #4285F415" }}
+              style={{ borderBottom: "1px solid color-mix(in srgb, var(--color-accent) 8%, transparent)" }}
             >
               <SourceIcon source={s.source} />
               <div className="flex flex-col flex-1 min-w-0">
@@ -272,7 +179,7 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
                 onClick={() => handleResume(s.id)}
                 disabled={resumingId === s.id}
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
-                style={{ background: "#4285F4", color: "#fff" }}
+                style={{ background: "var(--color-accent)", color: "#fff" }}
                 aria-label={`Resume session for ${projectLabel(s)}`}
               >
                 <ArrowCounterClockwise
@@ -339,6 +246,7 @@ export default function DashboardPage() {
       Object.values(sessions).map((s) => ({
         id: s.id,
         shortId: s.shortId ?? s.state?.short_id,
+        projectSlug: s.projectSlug ?? s.projectName,
         projectName: s.projectName,
         model: s.model,
         status: s.status,
@@ -407,6 +315,7 @@ export default function DashboardPage() {
             state: s.state as unknown as import("@companion/shared").SessionState,
             createdAt: new Date(s.createdAt).getTime() || Date.now(),
             tags: (s as { tags?: string[] }).tags ?? [],
+            personaId: (s as { personaId?: string }).personaId,
           });
           useSessionStore.getState().addToGrid(s.id);
         }
@@ -578,34 +487,32 @@ export default function DashboardPage() {
             />
           )}
 
-          {/* Left sidebar — relative on desktop, fixed overlay on mobile */}
+          {/* Left sidebar — icon rail + expandable project panel */}
           <aside
             className={[
-              "companion-sidebar flex flex-col flex-shrink-0 overflow-hidden",
+              "companion-sidebar flex flex-shrink-0 overflow-hidden",
               // Mobile: fixed overlay; desktop: static in flex flow
               "fixed md:static",
               mobileSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
               "transition-transform duration-200 ease-in-out",
-              // Mobile z-index handled via CSS class
               "mobile-sidebar-overlay",
             ].join(" ")}
             style={{
-              width: 260,
               background: "var(--color-bg-sidebar)",
               boxShadow: "1px 0 4px rgba(0,0,0,0.03)",
             }}
-            aria-label="Session sidebar"
+            aria-label="Project sidebar"
           >
             {/* Mobile close button */}
             <div
               className="md:hidden flex items-center justify-between px-4 py-2"
-              style={{ borderBottom: "1px solid var(--color-border)" }}
+              style={{ borderBottom: "1px solid var(--color-border)", width: "100%" }}
             >
               <span
                 className="text-xs font-semibold"
                 style={{ color: "var(--color-text-secondary)" }}
               >
-                Sessions
+                Projects
               </span>
               <button
                 onClick={() => setMobileSidebarOpen(false)}
@@ -617,22 +524,18 @@ export default function DashboardPage() {
               </button>
             </div>
 
-            <SessionManagementBar />
-            <div className="flex-1 overflow-hidden">
-              <SessionList
-                sessions={sessionList}
-                activeSessionId={activeSessionId}
-                onSelect={(id) => {
-                  handleSelectSession(id);
-                  setMobileSidebarOpen(false);
-                }}
-                onNew={() => {
-                  handleNewSession();
-                  setMobileSidebarOpen(false);
-                }}
-              />
-            </div>
-            <ApiKeyIndicator />
+            <ProjectSidebar
+              sessions={sessionList}
+              activeSessionId={activeSessionId}
+              onSelect={(id) => {
+                handleSelectSession(id);
+                setMobileSidebarOpen(false);
+              }}
+              onNew={() => {
+                handleNewSession();
+                setMobileSidebarOpen(false);
+              }}
+            />
           </aside>
 
           {/* Corner arc SVG — concave curve where sidebar meets content (desktop only) */}
@@ -649,10 +552,10 @@ export default function DashboardPage() {
             >
               <defs>
                 <linearGradient id="corner-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#4285F4" />
-                  <stop offset="33%" stopColor="#EA4335" />
-                  <stop offset="66%" stopColor="#FBBC04" />
-                  <stop offset="100%" stopColor="#34A853" />
+                  <stop offset="0%" stopColor="var(--color-google-blue)" />
+                  <stop offset="33%" stopColor="var(--color-google-red)" />
+                  <stop offset="66%" stopColor="var(--color-google-yellow)" />
+                  <stop offset="100%" stopColor="var(--color-google-green)" />
                 </linearGradient>
               </defs>
               {/* Fill: sidebar bg covers the square, quadratic curve reveals main bg */}
@@ -698,15 +601,11 @@ export default function DashboardPage() {
               className="hidden md:flex flex-col flex-shrink-0 overflow-hidden"
               style={{
                 width:
-                  rightPanelMode === "browser"
+                  rightPanelMode === "browser" || rightPanelMode === "terminal"
                     ? 600
-                    : rightPanelMode === "terminal"
-                      ? 600
-                      : rightPanelMode === "stats"
-                        ? 360
-                        : rightPanelMode === "ai-context"
-                          ? 420
-                          : 500,
+                    : rightPanelMode === "stats"
+                      ? 360
+                      : 480,
                 borderLeft: "1px solid var(--color-border)",
                 transition: "width 200ms ease",
               }}
@@ -760,8 +659,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Magic Ring — floating shared context hub */}
-      <MagicRing />
+      {/* Magic Ring moved to layout.tsx for cross-route persistence */}
 
       {/* First-run onboarding wizard */}
       <OnboardingWizard onOpenNewSession={handleNewSession} />

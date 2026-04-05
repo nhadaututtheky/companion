@@ -262,17 +262,10 @@ export function LayoutSelector() {
                   value={saveName}
                   onChange={(e) => setSaveName(e.target.value)}
                   placeholder="Preset name..."
-                  className="flex-1 text-xs px-2 py-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+                  className="flex-1 text-xs px-2 py-1 rounded-md input-bordered"
                   style={{
                     background: "var(--color-bg-elevated)",
-                    border: "1px solid var(--color-border)",
                     color: "var(--color-text-primary)",
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#4285F4";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "var(--color-border)";
                   }}
                 />
                 <button

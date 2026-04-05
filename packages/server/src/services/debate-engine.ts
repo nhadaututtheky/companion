@@ -19,6 +19,7 @@ import { channels } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import { callAI, callAIWithModel, getOpenRouterConfig, type ModelTier } from "./ai-client.js";
 import { resolveModelProvider, getProviderOverride } from "./provider-registry.js";
+import { resolvePersona } from "./custom-personas.js";
 import { createLogger } from "../logger.js";
 
 const log = createLogger("debate-engine");
@@ -38,6 +39,8 @@ export interface AgentModelConfig {
   model: string;
   /** Display label for UI (e.g. "GPT-4o", "Claude Sonnet") */
   label?: string;
+  /** Expert Mode persona ID (e.g. "tim-cook", "staff-sre") */
+  personaId?: string;
 }
 
 export interface DebateConfig {
@@ -66,6 +69,10 @@ export interface DebateAgent {
     baseUrl: string;
     apiKey: string;
   };
+  /** Expert Mode persona ID */
+  personaId?: string;
+  /** Persona display name */
+  personaLabel?: string;
 }
 
 export interface DebateState {
@@ -340,6 +347,34 @@ export async function startDebate(
     }
   }
 
+  // Apply persona overlays (layer persona thinking style on top of role prompt)
+  // Separate pass from model overrides — persona works with or without model override
+  if (config.agentModels && config.agentModels.length > 0) {
+    for (let i = 0; i < agents.length; i++) {
+      // Judge must remain neutral — never assign persona
+      if (agents[i]!.role === "judge") continue;
+
+      const modelCfg = config.agentModels.find((m) => m.agentId === agents[i]!.id);
+      if (!modelCfg?.personaId) continue;
+
+      const persona = resolvePersona(modelCfg.personaId);
+      if (!persona) {
+        log.warn("Unknown personaId in debate config, skipping persona injection", {
+          agentId: agents[i]!.id,
+          personaId: modelCfg.personaId,
+        });
+        continue;
+      }
+
+      agents[i] = {
+        ...agents[i]!,
+        personaId: persona.id,
+        personaLabel: persona.name,
+        systemPrompt: `[Persona: ${persona.name}]\n${persona.systemPrompt}\n\n---\n\n[Debate Role]\n${agents[i]!.systemPrompt}`,
+      };
+    }
+  }
+
   // Create channel in DB
   const channel = createChannel({
     projectSlug: config.projectSlug,
@@ -368,7 +403,7 @@ export async function startDebate(
     channelId: channel.id,
     topic: config.topic,
     format: config.format,
-    agents: agents.map((a) => `${a.label}${a.model ? ` [${a.modelLabel ?? a.model}]` : ""}`),
+    agents: agents.map((a) => `${a.label}${a.model ? ` [${a.modelLabel ?? a.model}]` : ""}${a.personaLabel ? ` <${a.personaLabel}>` : ""}`),
   });
 
   // Run first round (non-blocking)
@@ -430,6 +465,7 @@ async function runDebateLoop(
           role: agent.role,
           content: text,
           round: state.currentRound,
+          personaId: agent.personaId,
         });
 
         onMessage?.(state.channelId, agent, text, state.currentRound, costUsd);
@@ -648,6 +684,7 @@ export async function concludeDebate(
       role: "judge",
       content: verdictText,
       round: state.currentRound + 1,
+      personaId: undefined,
     });
 
     // Notify callback

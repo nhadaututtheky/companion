@@ -66,13 +66,13 @@ const ACTIVE_STATUSES = new Set(["starting", "running", "waiting", "idle", "busy
 
 function StatusDot({ status }: { status: string }) {
   const configs: Record<string, { color: string; label: string; pulse?: boolean }> = {
-    starting: { color: "#FBBC04", label: "Starting" },
-    running: { color: "#4285F4", label: "Running" },
-    busy: { color: "#4285F4", label: "Busy" },
-    waiting: { color: "#FBBC04", label: "Waiting" },
-    idle: { color: "#34A853", label: "Idle", pulse: true },
-    ended: { color: "#A0A0A0", label: "Ended" },
-    error: { color: "#EA4335", label: "Error" },
+    starting: { color: "var(--color-warning)", label: "Starting" },
+    running: { color: "var(--color-accent)", label: "Running" },
+    busy: { color: "var(--color-accent)", label: "Busy" },
+    waiting: { color: "var(--color-warning)", label: "Waiting" },
+    idle: { color: "var(--color-success)", label: "Idle", pulse: true },
+    ended: { color: "var(--color-text-muted)", label: "Ended" },
+    error: { color: "var(--color-danger)", label: "Error" },
   };
 
   const config = configs[status] ?? configs.idle!;
@@ -192,10 +192,9 @@ function TagInput({ onAdd, onClose }: TagInputProps) {
         onBlur={onClose}
         placeholder="Tag name…"
         maxLength={50}
-        className="text-xs px-2 py-0.5 rounded outline-none focus-visible:ring-2 focus-visible:ring-accent w-24"
+        className="text-xs px-2 py-0.5 rounded w-24 input-bordered"
         style={{
           background: "var(--color-bg-elevated)",
-          border: "1px solid var(--color-border)",
           color: "var(--color-text-primary)",
         }}
         aria-label="Enter tag name"
@@ -372,10 +371,9 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
       {/* Header row: search + filter toggle + new */}
       <div className="flex items-center gap-1.5 px-3 pt-3 pb-2">
         <div
-          className="flex items-center gap-1.5 flex-1 px-2 py-1.5 rounded-lg"
+          className="flex items-center gap-1.5 flex-1 px-2 py-1.5 rounded-lg input-wrapper"
           style={{
             background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
           }}
         >
           <MagnifyingGlass
@@ -388,7 +386,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
             value={searchRaw}
             onChange={(e) => setSearchRaw(e.target.value)}
             placeholder="Search..."
-            className="flex-1 text-xs bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="flex-1 text-xs bg-transparent outline-none"
             style={{ color: "var(--color-text-primary)", minWidth: 0 }}
             aria-label="Search sessions"
           />
@@ -546,7 +544,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
                 {s.shortId && (
                   <span
                     className="text-xs font-mono px-1.5 py-0.5 rounded shrink-0"
-                    style={{ background: "var(--color-bg-elevated)", color: "#34A853" }}
+                    style={{ background: "var(--color-bg-elevated)", color: "var(--color-success)" }}
                     title={`@${s.shortId} — use in chat to mention this session`}
                   >
                     @{s.shortId}
@@ -584,10 +582,10 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
                 >
                   {badge.label}
                 </span>
-                <span className="text-xs">
+                <span className="text-xs text-[var(--color-text-muted)]">
                   {s.numTurns} turns
                 </span>
-                <span className="text-xs ml-auto">
+                <span className="text-xs text-[var(--color-text-muted)] ml-auto">
                   {formatTime(s.createdAt)}
                 </span>
               </div>

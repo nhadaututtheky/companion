@@ -232,7 +232,7 @@ export function MessageComposer({
                   : placeholder
             }
             rows={1}
-            className="flex-1 resize-none bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-accent text-sm leading-relaxed"
+            className="flex-1 resize-none bg-transparent outline-none text-sm leading-relaxed"
             style={{
               color: "var(--color-text-primary)",
               maxHeight: 200,

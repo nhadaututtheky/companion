@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useRingStore } from "@/lib/stores/ring-store";
+import { api } from "@/lib/api-client";
 import { RingSelector } from "./ring-selector";
 import { RingWindow } from "./ring-window";
 
@@ -117,6 +118,9 @@ export function MagicRing() {
   const setExpanded = useRingStore((s) => s.setExpanded);
   const setSelecting = useRingStore((s) => s.setSelecting);
   const setPosition = useRingStore((s) => s.setPosition);
+  const unreadCount = useRingStore((s) => s.unreadCount);
+  const clearUnread = useRingStore((s) => s.clearUnread);
+  const debateChannelId = useRingStore((s) => s.debateChannelId);
 
   const hasLinked = linkedSessionIds.length > 0;
   const isDraggingRef = useRef(false);
@@ -138,6 +142,22 @@ export function MagicRing() {
     }
   }, []);
   /* eslint-enable react-hooks/exhaustive-deps */
+
+  // Background poll: track new debate messages when Ring is collapsed
+  const updateDebateMessageCount = useRingStore((s) => s.updateDebateMessageCount);
+  useEffect(() => {
+    if (!debateChannelId || isExpanded) return;
+    const poll = setInterval(async () => {
+      try {
+        const res = await api.channels.get(debateChannelId);
+        const count = res.data?.messages?.length ?? 0;
+        updateDebateMessageCount(count);
+      } catch {
+        // Channel may be gone — ignore
+      }
+    }, 5000);
+    return () => clearInterval(poll);
+  }, [debateChannelId, isExpanded, updateDebateMessageCount]);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -186,6 +206,7 @@ export function MagicRing() {
         setSelecting(true);
       } else {
         setExpanded(!isExpanded);
+      if (!isExpanded) clearUnread();
       }
     } else {
       setPosition(pos);
@@ -230,6 +251,35 @@ export function MagicRing() {
         }}
       >
         <SiriOrb sessionIds={linkedSessionIds} size={RING_SIZE} />
+
+        {/* Unread badge — shows when debate has new messages while collapsed */}
+        {unreadCount > 0 && !isExpanded && (
+          <span
+            style={{
+              position: "absolute",
+              top: -2,
+              right: -2,
+              minWidth: 18,
+              height: 18,
+              borderRadius: 9,
+              background: "#EA4335",
+              color: "#fff",
+              fontSize: 10,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "0 4px",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
+              fontFamily: "var(--font-mono)",
+            }}
+            role="status"
+            aria-live="polite"
+            aria-label={`${unreadCount} unread debate messages`}
+          >
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
       </button>
 
       {isSelecting && <RingSelector anchorX={ringCenterX} anchorY={ringCenterY} />}

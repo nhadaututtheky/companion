@@ -8,6 +8,8 @@ interface UiStore {
   rightPanelMode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context";
   rightPanelPath: string | null;
   browserPreviewUrl: string | null;
+  sidebarExpanded: boolean;
+  sidebarActiveProject: string | null;
   setTheme: (t: "light" | "dark") => void;
   toggleTheme: () => void;
   setCommandPaletteOpen: (open: boolean) => void;
@@ -18,6 +20,9 @@ interface UiStore {
   ) => void;
   setRightPanelPath: (path: string | null) => void;
   setBrowserPreviewUrl: (url: string | null) => void;
+  setSidebarExpanded: (expanded: boolean) => void;
+  setSidebarActiveProject: (slug: string | null) => void;
+  toggleSidebarProject: (slug: string) => void;
 }
 
 // Read persisted theme on store creation (runs once)
@@ -38,6 +43,8 @@ export const useUiStore = create<UiStore>((set) => ({
   rightPanelMode: "none",
   rightPanelPath: null,
   browserPreviewUrl: null,
+  sidebarExpanded: false,
+  sidebarActiveProject: null,
 
   setTheme: (theme) => {
     set({ theme });
@@ -68,4 +75,16 @@ export const useUiStore = create<UiStore>((set) => ({
   setRightPanelPath: (path) => set({ rightPanelPath: path }),
 
   setBrowserPreviewUrl: (url) => set({ browserPreviewUrl: url }),
+
+  setSidebarExpanded: (expanded) => set({ sidebarExpanded: expanded }),
+
+  setSidebarActiveProject: (slug) => set({ sidebarActiveProject: slug, sidebarExpanded: slug !== null }),
+
+  toggleSidebarProject: (slug) =>
+    set((s) => {
+      if (s.sidebarActiveProject === slug) {
+        return { sidebarActiveProject: null, sidebarExpanded: false };
+      }
+      return { sidebarActiveProject: slug, sidebarExpanded: true };
+    }),
 }));

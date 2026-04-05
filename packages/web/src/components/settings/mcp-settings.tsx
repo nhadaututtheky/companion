@@ -350,10 +350,9 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
             value={server.name}
             onChange={(e) => update({ name: e.target.value })}
             placeholder="e.g. My MCP Server"
-            className="w-full px-3 py-2 rounded-lg text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+            className="w-full px-3 py-2 rounded-lg text-xs input-bordered"
             style={{
               background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
               color: "var(--color-text-primary)",
             }}
           />
@@ -393,10 +392,9 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 value={server.command ?? ""}
                 onChange={(e) => update({ command: e.target.value })}
                 placeholder="e.g. bun, node, npx"
-                className="w-full px-3 py-2 rounded-lg text-xs font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+                className="w-full px-3 py-2 rounded-lg text-xs font-mono input-bordered"
                 style={{
                   background: "var(--color-bg-elevated)",
-                  border: "1px solid var(--color-border)",
                   color: "var(--color-text-primary)",
                 }}
               />
@@ -411,10 +409,9 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 }
                 placeholder={"run\npath/to/server.ts"}
                 rows={3}
-                className="w-full px-3 py-2 rounded-lg text-xs font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent resize-none"
+                className="w-full px-3 py-2 rounded-lg text-xs font-mono input-bordered resize-none"
                 style={{
                   background: "var(--color-bg-elevated)",
-                  border: "1px solid var(--color-border)",
                   color: "var(--color-text-primary)",
                 }}
               />
@@ -430,10 +427,9 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
               value={server.url ?? ""}
               onChange={(e) => update({ url: e.target.value })}
               placeholder="https://example.com/mcp"
-              className="w-full px-3 py-2 rounded-lg text-xs font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+              className="w-full px-3 py-2 rounded-lg text-xs font-mono input-bordered"
               style={{
                 background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
                 color: "var(--color-text-primary)",
               }}
             />
@@ -447,10 +443,9 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
             value={server.description ?? ""}
             onChange={(e) => update({ description: e.target.value })}
             placeholder="What this server does..."
-            className="w-full px-3 py-2 rounded-lg text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+            className="w-full px-3 py-2 rounded-lg text-xs input-bordered"
             style={{
               background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
               color: "var(--color-text-primary)",
             }}
           />
@@ -497,10 +492,9 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
               value={newEnvKey}
               onChange={(e) => setNewEnvKey(e.target.value)}
               placeholder="KEY"
-              className="px-2 py-1 rounded text-xs font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+              className="px-2 py-1 rounded text-xs font-mono input-bordered"
               style={{
                 background: "var(--color-bg-base)",
-                border: "1px solid var(--color-border)",
                 color: "var(--color-text-primary)",
                 width: 100,
               }}
@@ -510,10 +504,9 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
               value={newEnvVal}
               onChange={(e) => setNewEnvVal(e.target.value)}
               placeholder="value"
-              className="flex-1 px-2 py-1 rounded text-xs font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+              className="flex-1 px-2 py-1 rounded text-xs font-mono input-bordered"
               style={{
                 background: "var(--color-bg-base)",
-                border: "1px solid var(--color-border)",
                 color: "var(--color-text-primary)",
               }}
             />
@@ -573,10 +566,9 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 value={newHeaderKey}
                 onChange={(e) => setNewHeaderKey(e.target.value)}
                 placeholder="Header-Name"
-                className="px-2 py-1 rounded text-xs font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+                className="px-2 py-1 rounded text-xs font-mono input-bordered"
                 style={{
                   background: "var(--color-bg-base)",
-                  border: "1px solid var(--color-border)",
                   color: "var(--color-text-primary)",
                   width: 120,
                 }}
@@ -586,10 +578,9 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 value={newHeaderVal}
                 onChange={(e) => setNewHeaderVal(e.target.value)}
                 placeholder="value"
-                className="flex-1 px-2 py-1 rounded text-xs font-mono outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+                className="flex-1 px-2 py-1 rounded text-xs font-mono input-bordered"
                 style={{
                   background: "var(--color-bg-base)",
-                  border: "1px solid var(--color-border)",
                   color: "var(--color-text-primary)",
                 }}
               />

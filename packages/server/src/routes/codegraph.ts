@@ -21,6 +21,7 @@ import {
   getHotFiles,
 } from "../codegraph/query-engine.js";
 import { getExternalPackages, getPackageUsageCounts } from "../codegraph/webintel-bridge.js";
+import { getSessionActivity } from "../codegraph/event-collector.js";
 import { getDb } from "../db/client.js";
 import { codegraphConfig } from "../db/schema.js";
 import type { ApiResponse } from "@companion/shared";
@@ -371,4 +372,13 @@ codegraphRoutes.put("/config", async (c) => {
     .get();
 
   return c.json({ success: true, data: updated } satisfies ApiResponse);
+});
+
+// ─── Live Activity ──────────────────────────────────────────────────────
+
+/** GET /codegraph/activity/:sessionId — session graph activity summary */
+codegraphRoutes.get("/activity/:sessionId", (c) => {
+  const sessionId = c.req.param("sessionId");
+  const activity = getSessionActivity(sessionId);
+  return c.json({ success: true, data: activity } satisfies ApiResponse);
 });

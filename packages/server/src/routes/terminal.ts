@@ -8,7 +8,7 @@ import type { ApiResponse } from "@companion/shared";
 export const terminalRoutes = new Hono();
 
 const spawnSchema = z.object({
-  cwd: z.string().default(""),
+  cwd: z.string().optional().default(""),
 });
 
 /** Validate cwd is a real directory within allowed roots */
@@ -33,7 +33,12 @@ function validateCwd(cwd: string): { ok: true; resolved: string } | { ok: false;
 
 // POST /api/terminal — spawn a new terminal
 terminalRoutes.post("/", async (c) => {
-  const body = await c.req.json();
+  let body: unknown = {};
+  try {
+    body = await c.req.json();
+  } catch {
+    // empty body is fine — cwd will default
+  }
   const parsed = spawnSchema.safeParse(body);
   if (!parsed.success) {
     return c.json(
@@ -48,8 +53,15 @@ terminalRoutes.post("/", async (c) => {
     return c.json({ success: false, error: cwdCheck.error } satisfies ApiResponse, 403);
   }
 
-  const id = terminalManager.spawn(cwdCheck.resolved);
-  return c.json({ success: true, data: { terminalId: id } } satisfies ApiResponse);
+  try {
+    const id = terminalManager.spawn(cwdCheck.resolved);
+    return c.json({ success: true, data: { terminalId: id } } satisfies ApiResponse);
+  } catch (err) {
+    return c.json(
+      { success: false, error: String(err) } satisfies ApiResponse,
+      500,
+    );
+  }
 });
 
 // GET /api/terminal — list active terminals

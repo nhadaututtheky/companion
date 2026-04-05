@@ -23,6 +23,7 @@ import {
   renameSession,
   updateSessionConfig,
   updateSessionTags,
+  updateSessionPersona,
 } from "../services/session-store.js";
 import { getProject, upsertProject } from "../services/project-profiles.js";
 import { getTemplate, resolveTemplateVariables } from "../services/templates.js";
@@ -33,6 +34,7 @@ import { resolveModelProvider } from "../services/provider-registry.js";
 import { getSessionSummary } from "../services/session-summarizer.js";
 import type { ApiResponse } from "@companion/shared";
 import { thinkingModeTobudget } from "@companion/shared";
+import { resolvePersona } from "../services/custom-personas.js";
 
 const log = createLogger("routes:sessions");
 
@@ -60,6 +62,7 @@ const createSessionSchema = z.object({
   keepAlive: z.boolean().optional(),
   bare: z.boolean().optional(),
   thinkingMode: z.enum(["adaptive", "off", "deep"]).optional(),
+  personaId: z.string().max(100).optional(),
 });
 
 const sendMessageSchema = z.object({
@@ -85,7 +88,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
   const app = new Hono();
 
   /** In-memory debate participants per session — cleaned up on session delete */
-  const sessionDebateParticipants = new Map<string, Array<{ modelId: string; provider: string; name: string }>>();
+  const sessionDebateParticipants = new Map<string, Array<{ modelId: string; provider: string; name: string; personaId?: string }>>();
 
   app.get("/", (c) => {
     const projectSlug = c.req.query("project");
@@ -245,6 +248,15 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       );
     }
 
+    // Resolve persona → identityPrompt
+    const persona = body.personaId ? resolvePersona(body.personaId) : undefined;
+    if (body.personaId && !persona) {
+      return c.json(
+        { success: false, error: "Unknown persona ID" } satisfies ApiResponse,
+        400,
+      );
+    }
+
     try {
       const sessionId = await bridge.startSession({
         projectSlug: body.projectSlug,
@@ -258,6 +270,8 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         envVars: project?.envVars,
         bare: body.bare,
         thinkingBudget: body.thinkingMode ? thinkingModeTobudget(body.thinkingMode) : undefined,
+        personaId: persona?.id,
+        identityPrompt: persona?.systemPrompt,
       });
 
       // Apply idle timeout / keep-alive settings from the request
@@ -688,6 +702,58 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     return c.json({ success: true, data: { tags } } satisfies ApiResponse);
   });
 
+  // ── Persona switching ─────────────────────────────────────────────────────
+
+  const personaSwitchSchema = z.object({
+    personaId: z.string().max(100).nullable(),
+  });
+
+  app.post("/:id/persona", zValidator("json", personaSwitchSchema), (c) => {
+    const sessionId = c.req.param("id");
+    const session = bridge.getSession(sessionId);
+    if (!session) {
+      return c.json(
+        { success: false, error: "Session not found or not active" } satisfies ApiResponse,
+        404,
+      );
+    }
+
+    // Guard: don't inject mid-inference
+    const busyStatuses = new Set(["busy", "compacting", "starting"]);
+    if (busyStatuses.has(session.state.status)) {
+      return c.json(
+        { success: false, error: "Session is busy — wait for idle before switching persona" } satisfies ApiResponse,
+        409,
+      );
+    }
+
+    const { personaId } = c.req.valid("json");
+
+    // Validate persona ID if provided
+    const persona = personaId ? resolvePersona(personaId) : null;
+    if (personaId && !persona) {
+      return c.json(
+        { success: false, error: "Unknown persona ID" } satisfies ApiResponse,
+        400,
+      );
+    }
+
+    // Update identity prompt on in-memory session
+    if (persona) {
+      session.identityPrompt = persona.systemPrompt;
+      bridge.sendUserMessage(sessionId, `[Persona switched to: ${persona.name}]\n\n${persona.systemPrompt}`);
+    } else {
+      session.identityPrompt = undefined;
+      bridge.sendUserMessage(sessionId, "[Persona cleared] Returning to default Claude behavior.");
+    }
+
+    // Persist to DB
+    updateSessionPersona(sessionId, personaId);
+
+    log.info("Session persona switched", { sessionId, personaId });
+    return c.json({ success: true, data: { personaId } } satisfies ApiResponse);
+  });
+
   // ── Snapshots ───────────────────────────────────────────────────────────────
 
   // POST /:id/snapshots — capture current terminal screen
@@ -707,13 +773,30 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     // Build snapshot content from message history
     const content = session.messageHistory
       .map((m) => {
-        const msg = m as { type?: string; content?: string };
-        const role = msg.type === "user_message" ? "user" : "assistant";
-        return `[${role}]\n${msg.content ?? ""}`;
+        const msg = m as Record<string, unknown>;
+        if (msg.type === "user_message") {
+          return `[user]\n${(msg.content as string) ?? ""}`;
+        }
+        if (msg.type === "assistant") {
+          // Assistant messages have nested content blocks: { message: { content: [{ type: "text", text: "..." }] } }
+          const message = msg.message as Record<string, unknown> | undefined;
+          const blocks = (message?.content ?? []) as Array<{ type: string; text?: string }>;
+          const text = blocks
+            .filter((b) => b.type === "text" && b.text)
+            .map((b) => b.text)
+            .join("\n");
+          return text ? `[assistant]\n${text}` : "";
+        }
+        // Skip result/system messages
+        return "";
       })
+      .filter(Boolean)
       .join("\n\n");
     if (!content.trim()) {
-      return c.json({ success: false, error: "No messages to snapshot" } satisfies ApiResponse, 400);
+      return c.json(
+        { success: false, error: "Session has no messages yet — send a message first" } satisfies ApiResponse,
+        400,
+      );
     }
 
     try {
@@ -803,7 +886,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
   /** POST /sessions/:id/debate/participants — add model to session debate */
   app.post("/:id/debate/participants", async (c) => {
     const sessionId = c.req.param("id");
-    const body = await c.req.json<{ model: string; provider?: string }>().catch(() => null);
+    const body = await c.req.json<{ model: string; provider?: string; personaId?: string }>().catch(() => null);
 
     if (!body?.model) {
       return c.json({ success: false, error: "Body must include { model: string }" } satisfies ApiResponse, 400);
@@ -824,6 +907,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       modelId: resolved.model.id,
       provider: resolved.provider.id,
       name: resolved.model.name,
+      personaId: body.personaId,
     });
     sessionDebateParticipants.set(sessionId, participants);
 
@@ -832,7 +916,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     if (session) {
       const msg = JSON.stringify({
         type: "debate_participant_added",
-        model: { id: resolved.model.id, name: resolved.model.name, provider: resolved.provider.id },
+        model: { id: resolved.model.id, name: resolved.model.name, provider: resolved.provider.id, personaId: body.personaId },
       });
       for (const ws of session.browserSockets) {
         try { ws.send(msg); } catch { /* socket error */ }
@@ -900,6 +984,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       agentId: i === 0 ? getAgentSlot(format, 0) : getAgentSlot(format, 1),
       model: p.modelId,
       label: p.name,
+      personaId: p.personaId,
     }));
 
     try {
@@ -922,6 +1007,8 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
               emoji: agent.emoji,
               model: agent.model,
               modelLabel: agent.modelLabel,
+              personaId: agent.personaId,
+              personaLabel: agent.personaLabel,
             },
             content,
             round,
@@ -944,6 +1031,8 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
             label: a.label,
             model: a.model,
             modelLabel: a.modelLabel,
+            personaId: a.personaId,
+            personaLabel: a.personaLabel,
           })),
         },
       } satisfies ApiResponse, 201);

@@ -3,7 +3,7 @@ import { create } from "zustand";
 export interface ContextInjectionEvent {
   id: string;
   sessionId: string;
-  injectionType: "project_map" | "message_context" | "plan_review" | "break_check" | "web_docs";
+  injectionType: "project_map" | "message_context" | "plan_review" | "break_check" | "web_docs" | "activity_feed" | "pulse_guidance";
   summary: string;
   charCount: number;
   tokenEstimate: number;

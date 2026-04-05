@@ -13,6 +13,10 @@ import {
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import Link from "next/link";
+import { BUILT_IN_PERSONAS, type Persona, type PersonaCategory } from "@companion/shared";
+import { PersonaAvatar } from "@/components/persona/persona-avatar";
+import { PersonaTooltip } from "@/components/persona/persona-tooltip";
+import { PersonaBuilder, type PersonaFormData } from "@/components/persona/persona-builder";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -277,6 +281,167 @@ function TemplateCard({
   );
 }
 
+// ── Persona Section ─────────────────────────────────────────────────────────
+
+const CATEGORY_ORDER: PersonaCategory[] = ["leader", "engineer", "wildcard"];
+const CATEGORY_META: Record<string, { label: string; description: string }> = {
+  leader: { label: "Tech Leaders", description: "Think like industry visionaries" },
+  engineer: { label: "Engineering Roles", description: "Specialized technical perspectives" },
+  wildcard: { label: "Wild Cards", description: "Unconventional review angles" },
+};
+
+function PersonaCard({
+  persona,
+  onClone,
+}: {
+  persona: Persona;
+  onClone?: (id: string) => void;
+}) {
+  return (
+    <PersonaTooltip persona={persona} placement="bottom">
+      <div
+        className="flex items-center gap-3 p-3 rounded-xl persona-card w-full group"
+        style={{
+          background: "var(--color-bg-card)",
+          border: "1px solid var(--color-border)",
+        }}
+      >
+        <PersonaAvatar persona={persona} size={40} />
+        <div className="flex flex-col flex-1 min-w-0">
+          <span
+            className="text-sm font-semibold truncate"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            {persona.name}
+          </span>
+          <span
+            className="text-xs truncate"
+            style={{ color: "var(--color-text-muted)" }}
+          >
+            {persona.strength}
+          </span>
+        </div>
+        {onClone && persona.builtIn && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClone(persona.id);
+            }}
+            className="opacity-0 group-hover:opacity-100 px-2 py-1 rounded-md text-xs font-medium cursor-pointer transition-all flex-shrink-0"
+            style={{
+              background: "var(--color-bg-elevated)",
+              color: "var(--color-text-secondary)",
+            }}
+            aria-label={`Clone ${persona.name}`}
+          >
+            Clone
+          </button>
+        )}
+      </div>
+    </PersonaTooltip>
+  );
+}
+
+function PersonaSection({ onClone }: { onClone?: (id: string) => void }) {
+  return (
+    <div className="space-y-5">
+      {CATEGORY_ORDER.map((cat) => {
+        const meta = CATEGORY_META[cat]!;
+        const personas = BUILT_IN_PERSONAS.filter((p) => p.category === cat);
+        if (personas.length === 0) return null;
+
+        return (
+          <div key={cat}>
+            <div className="flex items-center gap-2 mb-2.5">
+              <h2
+                className="text-sm font-semibold"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                {meta.label}
+              </h2>
+              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                {meta.description}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {personas.map((p) => (
+                <PersonaCard key={p.id} persona={p} onClone={onClone} />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Custom Persona Cards ───────────────────────────────────────────────────
+
+function CustomPersonaCard({
+  persona,
+  onEdit,
+  onDelete,
+}: {
+  persona: Persona;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!confirm(`Delete "${persona.name}"?`)) return;
+    setDeleting(true);
+    onDelete();
+    setDeleting(false);
+  };
+
+  return (
+    <div
+      className="flex items-center gap-3 p-3 rounded-xl group"
+      style={{
+        background: "var(--color-bg-card)",
+        border: "1px solid var(--color-border)",
+      }}
+    >
+      <PersonaAvatar persona={persona} size={40} />
+      <div className="flex flex-col flex-1 min-w-0">
+        <span
+          className="text-sm font-semibold truncate"
+          style={{ color: "var(--color-text-primary)" }}
+        >
+          {persona.name} {persona.icon}
+        </span>
+        <span
+          className="text-xs truncate"
+          style={{ color: "var(--color-text-muted)" }}
+        >
+          {persona.title}
+        </span>
+      </div>
+      <div className="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={onEdit}
+          className="p-1.5 rounded-md cursor-pointer transition-colors"
+          style={{ color: "var(--color-text-muted)" }}
+          aria-label={`Edit ${persona.name}`}
+        >
+          <PencilSimple size={14} />
+        </button>
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="p-1.5 rounded-md cursor-pointer transition-colors"
+          style={{ color: "var(--color-danger, #ef4444)" }}
+          aria-label={`Delete ${persona.name}`}
+        >
+          <Trash size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function TemplatesPage() {
@@ -284,6 +449,12 @@ export default function TemplatesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | undefined>();
+
+  // Custom personas state
+  const [customPersonas, setCustomPersonas] = useState<Persona[]>([]);
+  const [showBuilder, setShowBuilder] = useState(false);
+  const [editingPersona, setEditingPersona] = useState<Persona | undefined>();
+  const [savingPersona, setSavingPersona] = useState(false);
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -296,9 +467,71 @@ export default function TemplatesPage() {
     }
   }, []);
 
+  const fetchCustomPersonas = useCallback(async () => {
+    try {
+      const res = await api.customPersonas.list();
+      setCustomPersonas(res.data);
+    } catch {
+      // Silently fail — custom personas are optional
+    }
+  }, []);
+
   useEffect(() => {
     fetchTemplates();
-  }, [fetchTemplates]);
+    fetchCustomPersonas();
+  }, [fetchTemplates, fetchCustomPersonas]);
+
+  const handleSavePersona = useCallback(
+    async (data: PersonaFormData) => {
+      setSavingPersona(true);
+      try {
+        if (editingPersona) {
+          await api.customPersonas.update(editingPersona.id, data);
+          toast.success("Persona updated");
+        } else {
+          await api.customPersonas.create(data);
+          toast.success("Persona created");
+        }
+        setShowBuilder(false);
+        setEditingPersona(undefined);
+        fetchCustomPersonas();
+      } catch (err) {
+        toast.error(String(err));
+      } finally {
+        setSavingPersona(false);
+      }
+    },
+    [editingPersona, fetchCustomPersonas],
+  );
+
+  const handleDeletePersona = useCallback(
+    async (id: string) => {
+      try {
+        await api.customPersonas.delete(id);
+        toast.success("Persona deleted");
+        fetchCustomPersonas();
+      } catch {
+        toast.error("Failed to delete persona");
+      }
+    },
+    [fetchCustomPersonas],
+  );
+
+  const handleCloneBuiltIn = useCallback(
+    async (builtInId: string) => {
+      try {
+        const res = await api.customPersonas.clone(builtInId);
+        toast.success(`Cloned as "${res.data.name}"`);
+        fetchCustomPersonas();
+        // Open editor for the cloned persona
+        setEditingPersona(res.data);
+        setShowBuilder(true);
+      } catch (err) {
+        toast.error(String(err));
+      }
+    },
+    [fetchCustomPersonas],
+  );
 
   const handleCreate = async (data: {
     name: string;
@@ -375,18 +608,18 @@ export default function TemplatesPage() {
           <div>
             <h1 className="text-lg font-semibold">
               <Lightning size={20} className="inline mr-1" weight="fill" />
-              Templates
+              Expert Modes
             </h1>
             <p className="text-xs">
-              Saved prompts for quick session starts
+              Personas that change how Claude thinks, not just what it does
             </p>
           </div>
         </div>
 
         <button
           onClick={() => {
-            setEditingTemplate(undefined);
-            setShowForm(!showForm);
+            setEditingPersona(undefined);
+            setShowBuilder(true);
           }}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors"
           style={{
@@ -395,13 +628,88 @@ export default function TemplatesPage() {
           }}
         >
           <Plus size={14} weight="bold" />
-          New Template
+          Create Persona
         </button>
       </div>
 
       {/* Content */}
-      <div className="max-w-3xl mx-auto px-6 py-6 space-y-4">
-        {/* Create/Edit Form */}
+      <div className="max-w-3xl mx-auto px-6 py-6 space-y-6">
+        {/* Persona Builder (modal-like inline) */}
+        {showBuilder && (
+          <PersonaBuilder
+            initial={
+              editingPersona
+                ? {
+                    name: editingPersona.name,
+                    icon: editingPersona.icon,
+                    title: editingPersona.title,
+                    intro: editingPersona.intro,
+                    systemPrompt: editingPersona.systemPrompt,
+                    mentalModels: editingPersona.mentalModels,
+                    decisionFramework: editingPersona.decisionFramework,
+                    redFlags: editingPersona.redFlags,
+                    communicationStyle: editingPersona.communicationStyle,
+                    blindSpots: editingPersona.blindSpots,
+                    bestFor: editingPersona.bestFor,
+                    strength: editingPersona.strength,
+                    avatarGradient: editingPersona.avatarGradient,
+                    avatarInitials: editingPersona.avatarInitials,
+                  }
+                : undefined
+            }
+            editing={!!editingPersona}
+            onSave={handleSavePersona}
+            onCancel={() => {
+              setShowBuilder(false);
+              setEditingPersona(undefined);
+            }}
+            saving={savingPersona}
+          />
+        )}
+
+        {/* Custom Personas */}
+        {customPersonas.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-2.5">
+              <h2
+                className="text-sm font-semibold"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                Your Custom Personas
+              </h2>
+              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                {customPersonas.length}/50
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {customPersonas.map((p) => (
+                <CustomPersonaCard
+                  key={p.id}
+                  persona={p}
+                  onEdit={() => {
+                    setEditingPersona(p);
+                    setShowBuilder(true);
+                  }}
+                  onDelete={() => handleDeletePersona(p.id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Built-in Expert Modes */}
+        <PersonaSection onClone={handleCloneBuiltIn} />
+
+        {/* Divider */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px" style={{ background: "var(--color-border)" }} />
+          <span className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
+            Custom Prompts
+          </span>
+          <div className="flex-1 h-px" style={{ background: "var(--color-border)" }} />
+        </div>
+
+        {/* Create/Edit Template Form */}
         {(showForm || editingTemplate) && (
           <div
             className="p-5 rounded-xl"

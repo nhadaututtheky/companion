@@ -182,7 +182,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
               value={inputUrl}
               onChange={(e) => setInputUrl(e.target.value)}
               placeholder="http://localhost:3000"
-              className="flex-1 text-xs outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent bg-transparent font-mono"
+              className="flex-1 text-xs outline-none bg-transparent font-mono"
              
             />
             {loading && (

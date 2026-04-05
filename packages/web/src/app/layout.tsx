@@ -5,6 +5,7 @@ import { CommandPaletteProvider } from "@/components/layout/command-palette-prov
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ThemeSync } from "@/components/layout/theme-sync";
+import { MagicRingMount } from "@/components/ring/magic-ring-mount";
 
 export const metadata: Metadata = {
   title: "Companion",
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <CommandPaletteProvider />
             <ThemeSync />
             {children}
+            <MagicRingMount />
           </AuthGuard>
         </ErrorBoundary>
         <Toaster

@@ -324,11 +324,10 @@ export function SpectatePageClient({ params }: { params: Promise<{ token: string
               }
             }}
             placeholder="Type a message..."
-            className="flex-1 text-sm px-3 py-2 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+            className="flex-1 text-sm px-3 py-2 rounded-xl input-bordered"
             style={{
               background: "#1a2332",
               color: "#fff",
-              border: "1px solid #2a3f52",
             }}
             disabled={!connected}
             aria-label="Message input"

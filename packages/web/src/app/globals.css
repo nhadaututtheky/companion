@@ -29,6 +29,7 @@
   --color-success: #34a853;
   --color-danger: #ea4335;
   --color-warning: #fbbc04;
+  --color-purple: #a855f7;
 
   /* Dark mode */
   --color-dark-bg: #0f0f0f;
@@ -276,9 +277,9 @@ p {
 @media (max-width: 767px) {
   .mobile-sidebar-overlay {
     position: fixed !important;
-    top: 52px !important; /* below header */
+    top: 48px !important; /* below header (h-12 = 48px) */
     left: 0 !important;
-    height: calc(100dvh - 52px) !important;
+    height: calc(100dvh - 48px) !important;
     z-index: 41 !important;
   }
 }
@@ -306,6 +307,149 @@ p {
     grid-template-columns: 1fr !important;
     grid-template-rows: auto !important;
   }
+}
+
+/* ── Form inputs — unified border/focus treatment ────────────────────────── */
+
+/* Form inputs: keep browser focus-visible ring, only suppress non-keyboard focus */
+input:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible),
+select:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Standalone input/select/textarea with border — focus-visible ring + border color */
+.input-bordered {
+  border: 1px solid var(--color-border);
+  transition: border-color 150ms ease;
+}
+
+.input-bordered:focus-visible {
+  border-color: var(--color-accent);
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
+}
+
+/* Wrapper that contains a borderless input — focus-within changes wrapper border */
+.input-wrapper {
+  border: 1px solid var(--color-border);
+  transition: border-color 150ms ease;
+}
+
+.input-wrapper:focus-within {
+  border-color: var(--color-accent);
+}
+
+/* ── Project sidebar ──────────────────────────────────────────────────────── */
+
+.project-icon-rail {
+  width: 48px;
+  background: var(--color-bg-card);
+  border-right: 1px solid var(--color-border);
+}
+
+.project-icon-btn {
+  width: 36px;
+  height: 36px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 2px solid transparent;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.project-icon-btn[data-active] {
+  background: color-mix(in srgb, var(--project-color) 15%, transparent);
+  color: var(--project-color);
+  border-color: var(--project-color);
+}
+
+.project-icon-btn[data-has-active-session]:not([data-active]) {
+  background: color-mix(in srgb, var(--project-color) 6%, transparent);
+}
+
+.project-icon-btn:hover:not([data-active]) {
+  background: color-mix(in srgb, var(--project-color, var(--color-text-muted)) 10%, transparent);
+  color: var(--project-color, var(--color-text-muted));
+}
+
+.project-icon-new {
+  color: var(--color-text-muted);
+}
+
+.project-icon-new:hover {
+  background: var(--color-bg-elevated);
+  color: var(--color-success);
+}
+
+.project-icon-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+  border: 1.5px solid var(--color-bg-card);
+}
+
+.project-panel {
+  width: 212px;
+  background: var(--color-bg-sidebar);
+}
+
+.project-options-btn {
+  color: var(--color-text-muted);
+  background: transparent;
+  transition: background 150ms ease;
+}
+
+.project-options-btn:hover:not(:disabled) {
+  background: var(--color-bg-elevated);
+}
+
+.project-new-session-btn {
+  color: var(--color-text-secondary);
+  background: transparent;
+  transition: background 150ms ease;
+}
+
+.project-new-session-btn:hover {
+  background: var(--color-bg-elevated);
+}
+
+/* ── Persona cards ────────────────────────────────────────────────────────── */
+
+.persona-card {
+  transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.persona-card:hover {
+  transform: scale(1.02);
+  border-color: var(--color-accent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Template quick picker ────────────────────────────────────────────────── */
+
+.template-picker-item {
+  background: transparent;
+  transition: background 150ms ease;
+}
+
+.template-picker-item:hover {
+  background: var(--color-bg-elevated);
+}
+
+.template-picker-footer {
+  transition: color 150ms ease;
+}
+
+.template-picker-footer:hover {
+  color: var(--color-accent);
 }
 
 /* ── Safe-area padding for mobile browsers (notch / home indicator) ─────── */

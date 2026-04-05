@@ -4,6 +4,8 @@ import { useWebSocket } from "./use-websocket";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useActivityStore } from "@/lib/stores/activity-store";
 import { useContextFeedStore } from "@/lib/stores/context-feed-store";
+import { useGraphActivityStore } from "@/lib/stores/graph-activity-store";
+import { usePulseStore } from "@/lib/stores/pulse-store";
 import { notify } from "./use-notifications";
 import { api } from "@/lib/api-client";
 import type {
@@ -504,6 +506,10 @@ export function useSession(sessionId: string): UseSessionReturn {
         }
 
         case "cli_disconnected": {
+          // Clear graph activity and pulse on session end
+          useGraphActivityStore.getState().clear();
+          usePulseStore.getState().clear(sessionId);
+
           // CLI process exited but WS may still be open; reflect in UI
           const exitCode = (msg as { exitCode?: number }).exitCode;
           const exitReason = (msg as { reason?: string }).reason;
@@ -695,10 +701,34 @@ export function useSession(sessionId: string): UseSessionReturn {
             | "message_context"
             | "plan_review"
             | "break_check"
-            | "web_docs",
+            | "web_docs"
+            | "activity_feed",
           summary: rawMsg.summary as string,
           charCount: rawMsg.charCount as number,
           tokenEstimate: rawMsg.tokenEstimate as number,
+          timestamp: rawMsg.timestamp as number,
+        });
+      }
+
+      // Handle graph:activity events for live CodeGraph visualization
+      if (rawMsg.type === "graph:activity" && Array.isArray(rawMsg.nodeIds)) {
+        useGraphActivityStore.getState().recordActivity({
+          nodeIds: rawMsg.nodeIds as string[],
+          filePaths: (rawMsg.filePaths as string[]) ?? [],
+          toolName: (rawMsg.toolName as string) ?? "",
+          toolAction: (rawMsg.toolAction as "read" | "modify" | "create") ?? "read",
+        });
+      }
+
+      // Handle pulse:update events for agent operational health
+      if (rawMsg.type === "pulse:update" && typeof rawMsg.score === "number") {
+        usePulseStore.getState().pushReading(rawMsg.sessionId as string, {
+          score: rawMsg.score as number,
+          state: rawMsg.state as "flow" | "focused" | "cautious" | "struggling" | "spiraling" | "blocked",
+          trend: rawMsg.trend as "improving" | "stable" | "degrading",
+          signals: rawMsg.signals as Record<string, number>,
+          topSignal: rawMsg.topSignal as string,
+          turn: rawMsg.turn as number,
           timestamp: rawMsg.timestamp as number,
         });
       }

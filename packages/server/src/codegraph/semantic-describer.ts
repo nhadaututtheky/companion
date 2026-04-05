@@ -95,7 +95,92 @@ export async function describeNodes(projectSlug: string): Promise<number> {
 }
 
 /**
+ * Describe specific nodes by ID (on-demand, for reveal trigger).
+ * Non-blocking — queues nodes and flushes after a short delay.
+ */
+const pendingDescriptions = new Map<string, Set<number>>(); // projectSlug → nodeIds
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function queueNodeDescription(projectSlug: string, nodeIds: number[]): void {
+  if (!isAIConfigured() || nodeIds.length === 0) return;
+
+  const pending = pendingDescriptions.get(projectSlug) ?? new Set();
+  for (const id of nodeIds) {
+    pending.add(id);
+  }
+  pendingDescriptions.set(projectSlug, pending);
+
+  // Flush after 5s to batch nearby reveals
+  if (!flushTimer) {
+    flushTimer = setTimeout(() => {
+      flushTimer = null;
+      void flushPendingDescriptions();
+    }, 5_000);
+  }
+}
+
+async function flushPendingDescriptions(): Promise<void> {
+  for (const [projectSlug, nodeIds] of pendingDescriptions) {
+    if (nodeIds.size === 0) continue;
+
+    const db = getDb();
+    const ids = [...nodeIds].slice(0, 20); // max 20 per flush
+    nodeIds.clear();
+
+    // Only describe nodes that don't already have descriptions
+    const undescribed = db
+      .select({
+        id: codeNodes.id,
+        symbolName: codeNodes.symbolName,
+        symbolType: codeNodes.symbolType,
+        signature: codeNodes.signature,
+        bodyPreview: codeNodes.bodyPreview,
+        filePath: codeNodes.filePath,
+      })
+      .from(codeNodes)
+      .where(
+        and(
+          eq(codeNodes.projectSlug, projectSlug),
+          isNull(codeNodes.description),
+        ),
+      )
+      .all()
+      .filter((n) => ids.includes(n.id));
+
+    if (undescribed.length === 0) continue;
+
+    const inputs: DescriptionInput[] = undescribed.map((n) => ({
+      nodeId: n.id,
+      symbolName: n.symbolName,
+      symbolType: n.symbolType,
+      signature: n.signature,
+      bodyPreview: n.bodyPreview,
+      filePath: n.filePath,
+    }));
+
+    try {
+      const descriptions = await describeBatch(inputs);
+      for (const desc of descriptions) {
+        db.update(codeNodes)
+          .set({ description: desc.description })
+          .where(eq(codeNodes.id, desc.nodeId))
+          .run();
+      }
+      log.info("On-demand descriptions generated", { projectSlug, count: descriptions.length });
+    } catch (err) {
+      log.warn("On-demand description failed", { error: String(err) });
+    }
+  }
+
+  // Only delete entries we actually processed (not ones added during async flush)
+  for (const [slug, nodeIds] of pendingDescriptions) {
+    if (nodeIds.size === 0) pendingDescriptions.delete(slug);
+  }
+}
+
+/**
  * Describe a batch of nodes with a single AI call.
+ * Uses feature-aware prompt: output format is "Feature Area — Description" (max 80 chars).
  */
 async function describeBatch(
   inputs: DescriptionInput[],
@@ -114,8 +199,19 @@ async function describeBatch(
     .join("\n\n");
 
   const response = await callAI({
-    systemPrompt:
-      'You are a code documentation assistant. For each symbol, write a concise 1-sentence description of what it DOES (not what it IS). Focus on behavior and purpose. Return ONLY a JSON array of objects with "index" (1-based) and "description" fields. No markdown, no explanation.',
+    systemPrompt: [
+      'You are a code documentation assistant. For each symbol, write a description in the format:',
+      '"Feature Area — what it does" (max 80 characters total).',
+      '',
+      'Examples:',
+      '- "Session Lifecycle — spawns and monitors CLI processes"',
+      '- "Debate Engine — orchestrates multi-agent conversation rounds"',
+      '- "Auth Middleware — validates API keys and rate limits"',
+      '',
+      'The Feature Area should be 1-3 words identifying the domain/subsystem.',
+      'Return ONLY a JSON array of objects with "index" (1-based) and "description" fields.',
+      'No markdown, no explanation.',
+    ].join('\n'),
     messages: [{ role: "user", content: `Describe these code symbols:\n\n${symbolList}` }],
     tier: "fast",
     maxTokens: 1024,

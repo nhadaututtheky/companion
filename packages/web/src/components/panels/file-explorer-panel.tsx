@@ -529,11 +529,10 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Filter..."
-            className="text-xs pl-6 pr-2 py-1 rounded outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+            className="text-xs pl-6 pr-2 py-1 rounded input-bordered"
             style={{
               width: 120,
               background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
               color: "var(--color-text-primary)",
             }}
             aria-label="Filter files"

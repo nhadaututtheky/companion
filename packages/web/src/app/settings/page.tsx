@@ -85,10 +85,9 @@ function InputField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent transition-colors"
+        className="px-3 py-2 rounded-lg text-sm input-bordered transition-colors"
         style={{
           background: "var(--color-bg-elevated)",
-          border: "1px solid var(--color-border)",
           color: "var(--color-text-primary)",
         }}
       />
@@ -240,10 +239,9 @@ function LicenseSection() {
           value={licenseKey}
           onChange={(e) => setLicenseKey(e.target.value)}
           placeholder="cmp_pro_XXXX_XXXX_XXXX"
-          className="flex-1 px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+          className="flex-1 px-3 py-2 rounded-lg text-sm input-bordered"
           style={{
             background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
             color: "var(--color-text-primary)",
             fontFamily: "var(--font-mono)",
           }}
@@ -457,10 +455,9 @@ function AIProviderTab() {
                 value={apiKeyVal}
                 onChange={(e) => setApiKeyVal(e.target.value)}
                 placeholder="sk-..."
-                className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
+                className="w-full px-3 py-2 pr-10 rounded-lg text-sm input-bordered font-mono"
                 style={{
                   background: "var(--color-bg-elevated)",
-                  border: "1px solid var(--color-border)",
                   color: "var(--color-text-primary)",
                 }}
               />
@@ -489,10 +486,9 @@ function AIProviderTab() {
                   if (!modelFast) setModelFast(e.target.value);
                   if (!modelStrong) setModelStrong(e.target.value);
                 }}
-                className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+                className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
                 style={{
                   background: "var(--color-bg-elevated)",
-                  border: "1px solid var(--color-border)",
                   color: "var(--color-text-primary)",
                 }}
               >
@@ -509,10 +505,9 @@ function AIProviderTab() {
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 placeholder="model-name"
-                className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
+                className="px-3 py-2 rounded-lg text-sm input-bordered font-mono"
                 style={{
                   background: "var(--color-bg-elevated)",
-                  border: "1px solid var(--color-border)",
                   color: "var(--color-text-primary)",
                 }}
               />
@@ -967,10 +962,9 @@ function TelegramTab() {
                   <select
                     value={expandedBotId ?? configs[0]?.id ?? ""}
                     onChange={(e) => setExpandedBotId(e.target.value)}
-                    className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+                    className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
                     style={{
                       background: "var(--color-bg-elevated)",
-                      border: "1px solid var(--color-border)",
                       color: "var(--color-text-primary)",
                     }}
                   >
@@ -1055,10 +1049,9 @@ function TelegramTab() {
                       value={newLabel}
                       onChange={(e) => setNewLabel(e.target.value)}
                       placeholder="My Claude Bot"
-                      className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent"
+                      className="px-3 py-2 rounded-lg text-sm input-bordered"
                       style={{
                         background: "var(--color-bg-card)",
-                        border: "1px solid var(--color-border)",
                         color: "var(--color-text-primary)",
                       }}
                     />
@@ -1074,10 +1067,9 @@ function TelegramTab() {
                     <select
                       value={newRole}
                       onChange={(e) => setNewRole(e.target.value as "claude" | "anti" | "general")}
-                      className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+                      className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
                       style={{
                         background: "var(--color-bg-card)",
-                        border: "1px solid var(--color-border)",
                         color: "var(--color-text-primary)",
                       }}
                     >
@@ -1090,7 +1082,7 @@ function TelegramTab() {
                   <div className="flex flex-col gap-1.5">
                     <label
                       className="text-xs font-medium"
-                     
+
                     >
                       Bot Token
                     </label>
@@ -1100,10 +1092,9 @@ function TelegramTab() {
                         value={newToken}
                         onChange={(e) => setNewToken(e.target.value)}
                         placeholder="1234567890:ABCdefGHI..."
-                        className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
+                        className="w-full px-3 py-2 pr-10 rounded-lg text-sm input-bordered font-mono"
                         style={{
                           background: "var(--color-bg-card)",
-                          border: "1px solid var(--color-border)",
                           color: "var(--color-text-primary)",
                         }}
                       />
@@ -1134,10 +1125,9 @@ function TelegramTab() {
                       value={newChatIds}
                       onChange={(e) => setNewChatIds(e.target.value)}
                       placeholder="-100123456789"
-                      className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
+                      className="px-3 py-2 rounded-lg text-sm input-bordered font-mono"
                       style={{
                         background: "var(--color-bg-card)",
-                        border: "1px solid var(--color-border)",
                         color: "var(--color-text-primary)",
                       }}
                     />
@@ -1146,7 +1136,7 @@ function TelegramTab() {
                   <div className="flex flex-col gap-1.5">
                     <label
                       className="text-xs font-medium"
-                     
+
                     >
                       Admin User IDs{" "}
                       <span>
@@ -1158,10 +1148,9 @@ function TelegramTab() {
                       value={newUserIds}
                       onChange={(e) => setNewUserIds(e.target.value)}
                       placeholder="123456789"
-                      className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
+                      className="px-3 py-2 rounded-lg text-sm input-bordered font-mono"
                       style={{
                         background: "var(--color-bg-card)",
-                        border: "1px solid var(--color-border)",
                         color: "var(--color-text-primary)",
                       }}
                     />
@@ -1362,10 +1351,9 @@ function TelegramBotsTab() {
                 <select
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value as "claude" | "anti" | "general")}
-                  className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+                  className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
                   style={{
                     background: "var(--color-bg-card)",
-                    border: "1px solid var(--color-border)",
                     color: "var(--color-text-primary)",
                   }}
                 >
@@ -1387,10 +1375,9 @@ function TelegramBotsTab() {
                     value={newToken}
                     onChange={(e) => setNewToken(e.target.value)}
                     placeholder="1234567890:ABCdefGHI..."
-                    className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
+                    className="w-full px-3 py-2 pr-10 rounded-lg text-sm input-bordered font-mono"
                     style={{
                       background: "var(--color-bg-card)",
-                      border: "1px solid var(--color-border)",
                       color: "var(--color-text-primary)",
                     }}
                   />
@@ -1524,10 +1511,9 @@ function TelegramStreamingTab() {
             <select
               value={selectedBotId ?? ""}
               onChange={(e) => setSelectedBotId(e.target.value)}
-              className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+              className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
               style={{
                 background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
                 color: "var(--color-text-primary)",
               }}
             >
@@ -1690,10 +1676,9 @@ function DomainTab() {
                       value={tunnelToken}
                       onChange={(e) => setTunnelToken(e.target.value)}
                       placeholder="eyJhIjoiN..."
-                      className="w-full px-3 py-2 pr-10 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
+                      className="w-full px-3 py-2 pr-10 rounded-lg text-sm input-bordered font-mono"
                       style={{
                         background: "var(--color-bg-elevated)",
-                        border: "1px solid var(--color-border)",
                         color: "var(--color-text-primary)",
                       }}
                     />

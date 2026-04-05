@@ -182,10 +182,9 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
                   value={targetChatId}
                   onChange={(e) => setTargetChatId(e.target.value)}
                   placeholder="-100123456789"
-                  className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
+                  className="px-3 py-2 rounded-lg text-sm input-bordered font-mono"
                   style={{
                     background: "var(--color-bg-elevated)",
-                    border: "1px solid var(--color-border)",
                     color: "var(--color-text-primary)",
                   }}
                 />
@@ -207,10 +206,9 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
                   value={targetTopicId}
                   onChange={(e) => setTargetTopicId(e.target.value)}
                   placeholder="12345"
-                  className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent font-mono"
+                  className="px-3 py-2 rounded-lg text-sm input-bordered font-mono"
                   style={{
                     background: "var(--color-bg-elevated)",
-                    border: "1px solid var(--color-border)",
                     color: "var(--color-text-primary)",
                   }}
                 />
@@ -229,10 +227,9 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
                   onChange={(e) =>
                     setMessageFormat(e.target.value as "compact" | "full" | "code_only")
                   }
-                  className="px-3 py-2 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-2 focus-visible:ring-accent cursor-pointer"
+                  className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
                   style={{
                     background: "var(--color-bg-elevated)",
-                    border: "1px solid var(--color-border)",
                     color: "var(--color-text-primary)",
                   }}
                 >
