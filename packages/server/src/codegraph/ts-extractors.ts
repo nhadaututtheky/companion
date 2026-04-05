@@ -517,6 +517,10 @@ const BUILTIN_CALLEES = new Set([
   "globalThis", "window", "document", "navigator",
   "Intl", "URL", "URLSearchParams", "AbortController",
   "TextEncoder", "TextDecoder", "Bun",
+  // Node.js built-in modules (avoid false positive edges to local files)
+  "fs", "path", "os", "crypto", "http", "https", "net", "child_process",
+  "util", "events", "stream", "assert", "zlib", "dns", "tls",
+  "structuredClone", "queueMicrotask", "performance", "EventEmitter",
 ]);
 
 /**
@@ -572,6 +576,8 @@ function extractCallEdges(
       // Direct call: createLogger(), getDb()
       calleeName = funcNode.text;
       if (BUILTIN_CALLEES.has(calleeName)) continue;
+      // Skip if a local function with the same name exists (local shadows import)
+      if (extractedNodes.some((n) => n.symbolName === calleeName && (n.symbolType === "function" || n.symbolType === "method"))) continue;
       importEntry = importMap.get(calleeName);
     } else if (funcNode.type === "member_expression") {
       // Method call: obj.method()

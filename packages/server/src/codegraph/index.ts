@@ -313,13 +313,22 @@ async function runScan(
     const edgeKey = (e: EdgeRecord) => `${e.sourceNodeId}-${e.targetNodeId}-${e.edgeType}`;
     const uniqueEdges = [...new Map(resolvedEdges.map((e) => [edgeKey(e), e])).values()];
 
-    // Upgrade import trust when import + call coexist for same source node
+    // Upgrade import trust when import + call coexist for same source file
+    // (import edges use file-proxy node, call edges use actual caller node — compare by file)
+    const nodeToFile = new Map<number, string>();
+    for (const node of allNodes) nodeToFile.set(node.id, node.filePath);
+
+    const filesWithCalls = new Set(
+      uniqueEdges
+        .filter((e) => e.edgeType === "calls")
+        .map((e) => nodeToFile.get(e.sourceNodeId))
+        .filter(Boolean),
+    );
+
     for (const e of uniqueEdges) {
       if (e.edgeType === "imports" && e.trustWeight < 0.9) {
-        const hasCall = uniqueEdges.some(
-          (c) => c.edgeType === "calls" && c.sourceNodeId === e.sourceNodeId,
-        );
-        if (hasCall) {
+        const sourceFile = nodeToFile.get(e.sourceNodeId);
+        if (sourceFile && filesWithCalls.has(sourceFile)) {
           e.trustWeight = calculateTrustWeight("imports", { hasCall: true });
         }
       }
