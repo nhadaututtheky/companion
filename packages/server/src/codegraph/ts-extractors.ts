@@ -30,10 +30,12 @@ function childOfType(node: TSNode, type: string): TSNode | null {
 
 /** Check if a node (or its parent) has an export keyword */
 function isExported(node: TSNode): boolean {
-  // Direct: export function / export class / export const
-  if (node.parent?.type === "export_statement") return true;
-  // export default
-  if (node.parent?.type === "export_statement" && node.parent.text.includes("default")) return true;
+  const parent = node.parent;
+  if (!parent) return false;
+  // Direct: export function / export class / export const / export default
+  if (parent.type === "export_statement") return true;
+  // Named re-export: export { Foo } — node is export_specifier inside export_clause
+  if (parent.type === "export_specifier") return true;
   return false;
 }
 
@@ -113,7 +115,9 @@ const HTTP_OBJECTS = new Set(["app", "router", "server", "api"]);
 export function extractTypeScript(tree: TSTree, code: string, filePath: string): ScanResult {
   const nodes: ScannedNode[] = [];
   const edges: ScannedEdge[] = [];
-  const isTsx = filePath.endsWith(".tsx") || filePath.endsWith(".jsx");
+  // JSX pass only for .tsx files (parsed with tsx grammar that supports JSX node types)
+  // .jsx files use javascript grammar which doesn't produce jsx_* nodes
+  const isTsx = filePath.endsWith(".tsx");
 
   const root = tree.rootNode;
 
@@ -210,7 +214,7 @@ export function extractTypeScript(tree: TSTree, code: string, filePath: string):
 
     const name = nameNode.text;
     const params = childOfType(func, "formal_parameters");
-    const isHook = name.startsWith("use") && name.length > 3 && name[3] === name[3]?.toUpperCase();
+    const isHook = name.startsWith("use") && name.length > 3 && name[3]! === name[3]!.toUpperCase();
     const exported = isExported(func);
 
     nodes.push({
@@ -228,9 +232,8 @@ export function extractTypeScript(tree: TSTree, code: string, filePath: string):
   const lexDecls = collectNodes(root, new Set(["lexical_declaration"]));
   for (const lex of lexDecls) {
     const declarators = lex.descendantsOfType("variable_declarator");
-    for (const rawDecl of declarators) {
-      if (!rawDecl) continue;
-      const decl = rawDecl;
+    for (const decl of declarators) {
+      if (!decl) continue;
       const nameNode = childOfType(decl, "identifier");
       const valueNode = decl.childForFieldName("value");
 
@@ -266,7 +269,7 @@ export function extractTypeScript(tree: TSTree, code: string, filePath: string):
       const name = nameNode.text;
       const params = childOfType(arrowNode, "formal_parameters");
       const isComponent = /^[A-Z]/.test(name);
-      const isHook = name.startsWith("use") && name.length > 3 && name[3] === name[3]?.toUpperCase();
+      const isHook = name.startsWith("use") && name.length > 3 && name[3]! === name[3]!.toUpperCase();
       const exported = isExported(lex);
 
       nodes.push({
@@ -341,7 +344,7 @@ export function extractTypeScript(tree: TSTree, code: string, filePath: string):
       });
     }
 
-    // Methods
+    // Methods (qualified with class name to avoid collisions)
     const methods = cls.descendantsOfType("method_definition");
     for (const method of methods) {
       if (!method) continue;
@@ -350,7 +353,7 @@ export function extractTypeScript(tree: TSTree, code: string, filePath: string):
 
       const methodParams = childOfType(method, "formal_parameters");
       nodes.push({
-        symbolName: methodName.text,
+        symbolName: `${name}.${methodName.text}`,
         symbolType: "method",
         signature: methodParams?.text ?? null,
         isExported: false,

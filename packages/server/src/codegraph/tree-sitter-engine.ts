@@ -24,42 +24,38 @@ export type TSLanguageType = InstanceType<typeof TreeSitter.Language>;
 
 // ─── State ──────────────────────────────────────────────────────────────
 
-let initialized = false;
 const grammars = new Map<string, TSLanguageType>();
+const grammarExists = new Map<string, boolean>(); // memoized hasGrammar results
 
-/** Directory containing .wasm grammar files */
-function getGrammarsDir(): string {
-  // @repomix/tree-sitter-wasms stores wasm files in /out/
-  // Walk up from this file to find node_modules
+/** Directory containing .wasm grammar files (computed once) */
+const grammarsDir: string = (() => {
   const candidates = [
     join(process.cwd(), "packages/server/node_modules/@repomix/tree-sitter-wasms/out"),
     join(process.cwd(), "node_modules/@repomix/tree-sitter-wasms/out"),
-    // Monorepo hoisted
     join(import.meta.dir, "../../../node_modules/@repomix/tree-sitter-wasms/out"),
   ];
-
   for (const dir of candidates) {
     if (existsSync(dir)) return dir;
   }
-
   return candidates[0]!;
-}
+})();
 
 // ─── Init ───────────────────────────────────────────────────────────────
 
-/**
- * Initialize the Tree-sitter WASM runtime. Called once, idempotent.
- */
+/** Promise-singleton to prevent concurrent double-init of WASM runtime */
+let initPromise: Promise<void> | null = null;
+
 async function ensureInit(): Promise<void> {
-  if (initialized) return;
-  try {
-    await TSParser.init();
-    initialized = true;
-    log.info("Tree-sitter WASM runtime initialized");
-  } catch (err) {
-    log.error("Failed to initialize Tree-sitter", { error: String(err) });
-    throw err;
+  if (!initPromise) {
+    initPromise = TSParser.init()
+      .then(() => log.info("Tree-sitter WASM runtime initialized"))
+      .catch((err: unknown) => {
+        initPromise = null; // allow retry on failure
+        log.error("Failed to initialize Tree-sitter", { error: String(err) });
+        throw err;
+      });
   }
+  return initPromise;
 }
 
 // ─── Grammar Loading ────────────────────────────────────────────────────
@@ -75,7 +71,6 @@ async function loadGrammar(language: string): Promise<TSLanguageType | null> {
   const cached = grammars.get(grammarName);
   if (cached) return cached;
 
-  const grammarsDir = getGrammarsDir();
   const wasmPath = join(grammarsDir, `tree-sitter-${grammarName}.wasm`);
 
   if (!existsSync(wasmPath)) {
@@ -121,8 +116,12 @@ export function hasGrammar(language: string): boolean {
   const grammarName = treeSitterGrammarName(language);
   if (!grammarName) return false;
 
-  const grammarsDir = getGrammarsDir();
-  return existsSync(join(grammarsDir, `tree-sitter-${grammarName}.wasm`));
+  const cached = grammarExists.get(grammarName);
+  if (cached !== undefined) return cached;
+
+  const exists = existsSync(join(grammarsDir, `tree-sitter-${grammarName}.wasm`));
+  grammarExists.set(grammarName, exists);
+  return exists;
 }
 
 /**
