@@ -2,7 +2,7 @@
 
 All notable changes to Companion are documented here.
 
-## [0.10.0] - 2026-04-06
+## [0.10.1] - 2026-04-06
 
 ### Added
 - **Multi-CLI Platform Support** — Adapters for Codex, Gemini CLI, OpenCode alongside Claude. Abstract CLI interface with normalized message format.
