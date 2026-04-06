@@ -18,41 +18,88 @@ interface UpdateInfo {
   publishedAt: string;
 }
 
+// ── Tauri global API types ─────────────────────────────────────────────────
+
+interface TauriEvent<T> {
+  payload: T;
+}
+
+interface TauriUpdatePayload {
+  current: string;
+  version: string;
+  body: string;
+}
+
+/**
+ * Access Tauri's global event listener (available when withGlobalTauri: true).
+ * Returns undefined in browser / Docker mode.
+ */
+function getTauriListen(): ((event: string, handler: (e: TauriEvent<TauriUpdatePayload>) => void) => Promise<() => void>) | undefined {
+  const w = globalThis as unknown as Record<string, unknown>;
+  const tauri = w.__TAURI__ as Record<string, unknown> | undefined;
+  const eventModule = tauri?.event as Record<string, unknown> | undefined;
+  return eventModule?.listen as ((event: string, handler: (e: TauriEvent<TauriUpdatePayload>) => void) => Promise<() => void>) | undefined;
+}
+
 // ── Hook ───────────────────────────────────────────────────────────────────
 
 const DISMISS_KEY = "companion_update_dismissed";
 const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 hours
+const RELEASE_BASE_URL = "https://github.com/nhadaututtheky/companion-release/releases";
 
 function useUpdateCheck() {
   const [update, setUpdate] = useState<UpdateInfo | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
+  const applyUpdate = useCallback((info: UpdateInfo) => {
+    if (info.available) {
+      const dismissedVersion = localStorage.getItem(DISMISS_KEY);
+      if (dismissedVersion === info.latestVersion) {
+        setDismissed(true);
+      } else {
+        setDismissed(false);
+      }
+    }
+    setUpdate(info);
+  }, []);
+
   const checkNow = useCallback(async (force = false) => {
     try {
       const info = await api.updateCheck.check(force);
-      if (info.available) {
-        // Check if this version was already dismissed
-        const dismissedVersion = localStorage.getItem(DISMISS_KEY);
-        if (dismissedVersion === info.latestVersion) {
-          setDismissed(true);
-        } else {
-          setDismissed(false);
-        }
-      }
-      setUpdate(info);
+      applyUpdate(info);
     } catch {
       // Silently fail — update check is non-critical
     }
-  }, []);
+  }, [applyUpdate]);
 
   const dismiss = useCallback((version: string) => {
     localStorage.setItem(DISMISS_KEY, version);
     setDismissed(true);
   }, []);
 
-  // Check on mount + interval
+  // Listen for Tauri's native update-available event (emitted by Rust updater)
   useEffect(() => {
-    // Delay initial check by 5 seconds so the app loads first
+    const listen = getTauriListen();
+    if (!listen) return;
+
+    let unlisten: (() => void) | undefined;
+    listen("update-available", (event: TauriEvent<TauriUpdatePayload>) => {
+      const { current, version, body } = event.payload;
+      applyUpdate({
+        available: true,
+        currentVersion: current,
+        latestVersion: version,
+        releaseUrl: `${RELEASE_BASE_URL}/tag/v${version}`,
+        releaseNotes: body,
+        publishedAt: "",
+      });
+    }).then((fn) => { unlisten = fn; });
+
+    return () => { unlisten?.(); };
+  }, [applyUpdate]);
+
+  // Server-side check on mount + interval (works for both Docker and Tauri)
+  useEffect(() => {
     const initialTimer = setTimeout(() => {
       void checkNow();
     }, 5000);
