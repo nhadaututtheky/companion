@@ -348,7 +348,16 @@ async function runScan(
       log.warn("Description phase failed (non-fatal)", { error: String(err) });
     }
 
-    // 6. Done
+    // 6. Populate FTS5 index
+    try {
+      const { populateFtsIndex } = await import("./analysis.js");
+      populateFtsIndex(projectSlug);
+      log.info("FTS5 index populated", { projectSlug });
+    } catch (err) {
+      log.warn("FTS5 index population failed (non-fatal)", { error: String(err) });
+    }
+
+    // 7. Done
     const elapsed = Date.now() - startTime;
     updateScanJob(jobId, {
       status: "done",

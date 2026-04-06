@@ -21,6 +21,12 @@ import {
   getHotFiles,
 } from "../codegraph/query-engine.js";
 import { getExternalPackages, getPackageUsageCounts } from "../codegraph/webintel-bridge.js";
+import {
+  fusedSearch,
+  computeRiskScores,
+  traceExecutionFlows,
+  detectCommunities,
+} from "../codegraph/analysis.js";
 import { getSessionActivity } from "../codegraph/event-collector.js";
 import { getDb } from "../db/client.js";
 import { codegraphConfig } from "../db/schema.js";
@@ -123,10 +129,11 @@ codegraphRoutes.get("/stats", (c) => {
 
 // ─── Query ──────────────────────────────────────────────────────────────
 
-/** GET /codegraph/search?project=slug&q=keyword — search symbols */
+/** GET /codegraph/search?project=slug&q=keyword&mode=fused|legacy — search symbols */
 codegraphRoutes.get("/search", (c) => {
   const project = c.req.query("project");
   const query = c.req.query("q");
+  const mode = c.req.query("mode") ?? "fused";
 
   if (!project || !query) {
     return c.json(
@@ -142,9 +149,22 @@ codegraphRoutes.get("/search", (c) => {
     );
   }
 
-  const keywords = query.split(/\s+/).filter((k) => k.length >= 2);
-  const nodes = getRelatedNodes(project, keywords, 10);
-  return c.json({ success: true, data: nodes } satisfies ApiResponse);
+  // Use RRF fused search by default, fallback to legacy for backward compat
+  if (mode === "legacy") {
+    const keywords = query.split(/\s+/).filter((k) => k.length >= 2);
+    const nodes = getRelatedNodes(project, keywords, 10);
+    return c.json({ success: true, data: nodes } satisfies ApiResponse);
+  }
+
+  try {
+    const results = fusedSearch(project, query, 15);
+    return c.json({ success: true, data: results } satisfies ApiResponse);
+  } catch {
+    // Fallback to legacy search if FTS5 not yet available
+    const keywords = query.split(/\s+/).filter((k) => k.length >= 2);
+    const nodes = getRelatedNodes(project, keywords, 10);
+    return c.json({ success: true, data: nodes } satisfies ApiResponse);
+  }
 });
 
 /** GET /codegraph/node/:id/edges — get edges for a node */
@@ -247,14 +267,14 @@ codegraphRoutes.get("/graph", (c) => {
   // Limit for performance — warn if too large
   const MAX_NODES = 500;
   if (nodes.length > MAX_NODES) {
+    const truncatedNodes = nodes.slice(0, MAX_NODES);
+    const nodeIdSet = new Set(truncatedNodes.map((n) => n.id));
     return c.json({
       success: true,
       data: {
-        nodes: nodes.slice(0, MAX_NODES),
+        nodes: truncatedNodes,
         edges: edges.filter(
-          (e) =>
-            nodes.slice(0, MAX_NODES).some((n) => n.id === e.sourceNodeId) &&
-            nodes.slice(0, MAX_NODES).some((n) => n.id === e.targetNodeId),
+          (e) => nodeIdSet.has(e.sourceNodeId) && nodeIdSet.has(e.targetNodeId),
         ),
         truncated: true,
         totalNodes: nodes.length,
@@ -266,6 +286,68 @@ codegraphRoutes.get("/graph", (c) => {
     success: true,
     data: { nodes, edges, truncated: false, totalNodes: nodes.length },
   } satisfies ApiResponse);
+});
+
+// ─── Analysis ──────────────────────────────────────────────────────────
+
+/** GET /codegraph/risk?project=slug&files=path1,path2 — blast radius risk scores */
+codegraphRoutes.get("/risk", (c) => {
+  const project = c.req.query("project");
+  const filesParam = c.req.query("files");
+
+  if (!project || !filesParam) {
+    return c.json(
+      { success: false, error: "project and files params required" } satisfies ApiResponse,
+      400,
+    );
+  }
+
+  const filePaths = filesParam.split(",").map((f) => f.trim()).filter(Boolean);
+  if (filePaths.length === 0) {
+    return c.json({ success: true, data: [] } satisfies ApiResponse);
+  }
+  if (filePaths.length > 100) {
+    return c.json(
+      { success: false, error: "Too many files (max 100)" } satisfies ApiResponse,
+      400,
+    );
+  }
+
+  const scores = computeRiskScores(project, filePaths);
+  return c.json({ success: true, data: scores } satisfies ApiResponse);
+});
+
+/** GET /codegraph/flows?project=slug — execution flow tracing */
+codegraphRoutes.get("/flows", (c) => {
+  const project = c.req.query("project");
+  if (!project) {
+    return c.json(
+      { success: false, error: "project query param required" } satisfies ApiResponse,
+      400,
+    );
+  }
+
+  const rawDepth = parseInt(c.req.query("maxDepth") ?? "15", 10);
+  const rawFlows = parseInt(c.req.query("maxFlows") ?? "30", 10);
+  const maxDepth = Math.min(isNaN(rawDepth) ? 15 : rawDepth, 20);
+  const maxFlows = Math.min(isNaN(rawFlows) ? 30 : rawFlows, 100);
+
+  const flows = traceExecutionFlows(project, { maxDepth, maxFlows });
+  return c.json({ success: true, data: flows } satisfies ApiResponse);
+});
+
+/** GET /codegraph/communities?project=slug — community detection */
+codegraphRoutes.get("/communities", (c) => {
+  const project = c.req.query("project");
+  if (!project) {
+    return c.json(
+      { success: false, error: "project query param required" } satisfies ApiResponse,
+      400,
+    );
+  }
+
+  const communities = detectCommunities(project);
+  return c.json({ success: true, data: communities } satisfies ApiResponse);
 });
 
 // ─── Config ────────────────────────────────────────────────────────────

@@ -374,7 +374,17 @@ async function doIncrementalRescan(
     });
   }
 
-  // 4. Re-describe changed nodes (non-blocking)
+  // 4. Sync FTS5 index for changed files (within mutex scope)
+  if (updated + added > 0) {
+    try {
+      const { populateFtsIndex } = await import("./analysis.js");
+      populateFtsIndex(projectSlug);
+    } catch (err) {
+      log.warn("FTS5 sync failed (non-fatal)", { error: String(err) });
+    }
+  }
+
+  // 5. Re-describe changed nodes (non-blocking)
   if (updated + added > 0) {
     void describeNodes(projectSlug).catch((err) => {
       log.warn("Post-rescan description failed", { error: String(err) });
