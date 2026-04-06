@@ -20,7 +20,7 @@ import {
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 
-type BotRole = "claude" | "anti" | "general";
+type BotRole = "claude" | "codex" | "gemini" | "opencode" | "general";
 
 interface BotConfig {
   id: string;
@@ -47,14 +47,18 @@ interface TelegramBotCardProps {
 }
 
 const ROLE_LABELS: Record<BotRole, string> = {
-  claude: "Claude",
-  anti: "Anti",
+  claude: "Claude Code",
+  codex: "Codex CLI",
+  gemini: "Gemini CLI",
+  opencode: "OpenCode",
   general: "General",
 };
 
 const ROLE_COLORS: Record<BotRole, string> = {
   claude: "#4285F4",
-  anti: "#EA4335",
+  codex: "#10b981",
+  gemini: "#FBBC04",
+  opencode: "#a855f7",
   general: "#34A853",
 };
 
@@ -350,8 +354,10 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
                 color: "var(--color-text-primary)",
               }}
             >
-              <option value="claude">Claude — handles Claude AI sessions</option>
-              <option value="anti">Anti — human feedback / counterpoint</option>
+              <option value="claude">Claude Code — Anthropic CLI</option>
+              <option value="codex">Codex CLI — OpenAI CLI</option>
+              <option value="gemini">Gemini CLI — Google CLI</option>
+              <option value="opencode">OpenCode — open-source CLI</option>
               <option value="general">General — general purpose</option>
             </select>
           </div>

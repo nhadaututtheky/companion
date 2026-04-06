@@ -46,7 +46,7 @@ export const DEFAULT_IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 60 min
 
 // ─── Multi-Bot Config ──────────────────────────────────────────────────────
 
-export type BotRole = "claude" | "anti" | "general";
+export type BotRole = "claude" | "codex" | "gemini" | "opencode" | "general";
 
 export interface BotInstanceConfig {
   id: string;

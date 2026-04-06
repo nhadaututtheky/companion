@@ -13,7 +13,7 @@ export interface BotConfig {
   token: string;
   botId: string;
   label: string;
-  role: "claude" | "anti" | "general";
+  role: "claude" | "codex" | "gemini" | "opencode" | "general";
   allowedChatIds: number[];
   allowedUserIds: number[];
 }

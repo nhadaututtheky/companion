@@ -11,7 +11,7 @@ import type { ApiResponse } from "@companion/shared";
 const botConfigSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
-  role: z.enum(["claude", "anti", "general"]).default("claude"),
+  role: z.enum(["claude", "codex", "gemini", "opencode", "general"]).default("claude"),
   // Pass "KEEP_EXISTING" to leave the stored token unchanged
   botToken: z.string().min(1),
   allowedChatIds: z.array(z.number()).default([]),
@@ -22,7 +22,7 @@ const botConfigSchema = z.object({
 
 const createBotSchema = z.object({
   label: z.string().min(1),
-  role: z.enum(["claude", "anti", "general"]).default("claude"),
+  role: z.enum(["claude", "codex", "gemini", "opencode", "general"]).default("claude"),
   botToken: z.string().min(10),
   allowedChatIds: z.array(z.number()).default([]),
   allowedUserIds: z.array(z.number()).default([]),
@@ -210,7 +210,7 @@ export function telegramRoutes(registry: BotRegistry) {
       token: row.botToken,
       botId: row.id,
       label: row.label,
-      role: row.role as "claude" | "anti" | "general",
+      role: row.role as "claude" | "codex" | "gemini" | "opencode" | "general",
       allowedChatIds: row.allowedChatIds ?? [],
       allowedUserIds: row.allowedUserIds ?? [],
     });

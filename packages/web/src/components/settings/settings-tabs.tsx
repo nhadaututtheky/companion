@@ -25,7 +25,7 @@ import { TelegramBotCard } from "@/components/settings/telegram-bot-card";
 import { TelegramStreaming } from "@/components/settings/telegram-streaming";
 import { TelegramStatus } from "@/components/settings/telegram-status";
 import { TelegramPreview } from "@/components/settings/telegram-preview";
-import { TelegramAntiSettings } from "@/components/settings/telegram-anti-settings";
+import { TelegramDebateGuide } from "@/components/settings/telegram-debate-guide";
 import { McpSettings } from "@/components/settings/mcp-settings";
 import { RTKSettings } from "@/components/settings/rtk-settings";
 import type { SettingsTab } from "@/types/settings";
@@ -113,7 +113,7 @@ export const TABS: Array<{ id: SettingsTab; label: string; icon: React.ReactNode
 export interface BotConfig {
   id: string;
   label: string;
-  role: "claude" | "anti" | "general";
+  role: "claude" | "codex" | "gemini" | "opencode" | "general";
   enabled: boolean;
   allowedChatIds: number[];
   allowedUserIds: number[];
@@ -870,7 +870,7 @@ export function TelegramTab() {
   // Add bot form state
   const [showAddForm, setShowAddForm] = useState(false);
   const [newLabel, setNewLabel] = useState("");
-  const [newRole, setNewRole] = useState<"claude" | "anti" | "general">("claude");
+  const [newRole, setNewRole] = useState<"claude" | "codex" | "gemini" | "opencode" | "general">("claude");
   const [newToken, setNewToken] = useState("");
   const [showNewToken, setShowNewToken] = useState(false);
   const [newChatIds, setNewChatIds] = useState("");
@@ -992,16 +992,6 @@ export function TelegramTab() {
             </SettingSection>
           )}
 
-          {/* Anti IDE Settings — show when an anti-role bot exists */}
-          {configs.some((c) => c.role === "anti") && (
-            <SettingSection
-              title="Anti IDE (CDP)"
-              description="Configure connection to Antigravity/Cursor IDE for remote control."
-            >
-              <TelegramAntiSettings botId={configs.find((c) => c.role === "anti")!.id} />
-            </SettingSection>
-          )}
-
           {/* Bot Management — same column */}
           <SettingSection
             title="Bot Management"
@@ -1067,15 +1057,17 @@ export function TelegramTab() {
                     </label>
                     <select
                       value={newRole}
-                      onChange={(e) => setNewRole(e.target.value as "claude" | "anti" | "general")}
+                      onChange={(e) => setNewRole(e.target.value as "claude" | "codex" | "gemini" | "opencode" | "general")}
                       className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
                       style={{
                         background: "var(--color-bg-card)",
                         color: "var(--color-text-primary)",
                       }}
                     >
-                      <option value="claude">Claude — handles Claude AI sessions</option>
-                      <option value="anti">Anti — human feedback / counterpoint</option>
+                      <option value="claude">Claude Code — Anthropic CLI</option>
+                      <option value="codex">Codex CLI — OpenAI CLI</option>
+                      <option value="gemini">Gemini CLI — Google CLI</option>
+                      <option value="opencode">OpenCode — open-source CLI</option>
                       <option value="general">General — general purpose</option>
                     </select>
                   </div>
@@ -1216,6 +1208,9 @@ export function TelegramTab() {
           </SettingSection>
         </div>
       </div>
+
+      {/* Debate Setup Guide — full width below */}
+      <TelegramDebateGuide />
     </div>
   );
 }
@@ -1242,7 +1237,7 @@ function TelegramBotsTab() {
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newLabel, setNewLabel] = useState("");
-  const [newRole, setNewRole] = useState<"claude" | "anti" | "general">("claude");
+  const [newRole, setNewRole] = useState<"claude" | "codex" | "gemini" | "opencode" | "general">("claude");
   const [newToken, setNewToken] = useState("");
   const [showNewToken, setShowNewToken] = useState(false);
   const [newChatIds, setNewChatIds] = useState("");
@@ -1351,15 +1346,17 @@ function TelegramBotsTab() {
                 </label>
                 <select
                   value={newRole}
-                  onChange={(e) => setNewRole(e.target.value as "claude" | "anti" | "general")}
+                  onChange={(e) => setNewRole(e.target.value as "claude" | "codex" | "gemini" | "opencode" | "general")}
                   className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
                   style={{
                     background: "var(--color-bg-card)",
                     color: "var(--color-text-primary)",
                   }}
                 >
-                  <option value="claude">Claude</option>
-                  <option value="anti">Anti</option>
+                  <option value="claude">Claude Code</option>
+                  <option value="codex">Codex CLI</option>
+                  <option value="gemini">Gemini CLI</option>
+                  <option value="opencode">OpenCode</option>
                   <option value="general">General</option>
                 </select>
               </div>

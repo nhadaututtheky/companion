@@ -108,6 +108,7 @@ const COMMAND_REFERENCE: CommandCategory[] = [
       { cmd: "/stop", desc: "End the current session" },
       { cmd: "/resume", desc: "Resume the last paused session" },
       { cmd: "/projects", desc: "List all available projects" },
+      { cmd: "/templates", desc: "Browse and use session templates" },
     ],
   },
   {
@@ -118,6 +119,7 @@ const COMMAND_REFERENCE: CommandCategory[] = [
       { cmd: "/exitplan", desc: "Exit plan mode and resume execution" },
       { cmd: "/cancel", desc: "Cancel the current operation" },
       { cmd: "/compact", desc: "Compact conversation context" },
+      { cmd: "/autoapprove", desc: "Toggle auto-approval for tool permissions" },
     ],
   },
   {
@@ -127,12 +129,16 @@ const COMMAND_REFERENCE: CommandCategory[] = [
       { cmd: "/cost", desc: "Show token usage and cost so far" },
       { cmd: "/files", desc: "List files modified in this session" },
       { cmd: "/model", desc: "Show or switch the active model" },
+      { cmd: "/mood", desc: "Agent pulse — health check and energy level" },
       { cmd: "/help", desc: "Show all available commands" },
     ],
   },
   {
-    category: "Config",
-    commands: [{ cmd: "/autoapprove", desc: "Toggle auto-approval for tool permissions" }],
+    category: "Multi-Bot Debate",
+    commands: [
+      { cmd: "@bot message", desc: "Mention a bot in group to trigger debate turn" },
+      { cmd: "/debate topic", desc: "Start a cross-platform debate on a topic" },
+    ],
   },
 ];
 

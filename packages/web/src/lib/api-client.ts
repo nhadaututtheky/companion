@@ -262,7 +262,7 @@ export const api = {
 
     createBot: (body: {
       label: string;
-      role: "claude" | "anti" | "general";
+      role: "claude" | "codex" | "gemini" | "opencode" | "general";
       botToken: string;
       allowedChatIds?: number[];
       allowedUserIds?: number[];
@@ -279,7 +279,7 @@ export const api = {
       body: {
         id: string;
         label: string;
-        role: "claude" | "anti" | "general";
+        role: "claude" | "codex" | "gemini" | "opencode" | "general";
         botToken: string;
         allowedChatIds?: number[];
         allowedUserIds?: number[];

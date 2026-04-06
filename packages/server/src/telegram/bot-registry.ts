@@ -122,7 +122,7 @@ export class BotRegistry {
         token: envToken,
         botId: "bot1",
         label: process.env.TELEGRAM_BOT_LABEL ?? "Claude",
-        role: (process.env.TELEGRAM_BOT_ROLE as "claude" | "anti" | "general") ?? "claude",
+        role: (process.env.TELEGRAM_BOT_ROLE as "claude" | "codex" | "gemini" | "opencode" | "general") ?? "claude",
         allowedChatIds: envChatIds,
         allowedUserIds: envUserIds,
       });
@@ -141,7 +141,7 @@ export class BotRegistry {
           token: row.botToken,
           botId: row.id,
           label: row.label,
-          role: row.role as "claude" | "anti" | "general",
+          role: row.role as "claude" | "codex" | "gemini" | "opencode" | "general",
           allowedChatIds: row.allowedChatIds ?? [],
           allowedUserIds: row.allowedUserIds ?? [],
         });
