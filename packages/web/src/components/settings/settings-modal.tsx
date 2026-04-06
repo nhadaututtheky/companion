@@ -16,6 +16,7 @@ import {
 } from "./settings-tabs";
 import { McpSettings } from "./mcp-settings";
 import { RTKSettings } from "./rtk-settings";
+import { SkillsTab } from "./skills-tab";
 
 // ─── Tab Content Renderer ──────────────────────────────────────────────
 
@@ -36,11 +37,7 @@ function TabContent({ tab }: { tab: SettingsTab }) {
     case "appearance":
       return <AppearanceTab />;
     case "skills":
-      return (
-        <div className="flex items-center justify-center h-64 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-          Skills management coming in Phase 2
-        </div>
-      );
+      return <SkillsTab />;
     default:
       return null;
   }

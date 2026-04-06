@@ -6,9 +6,9 @@ Convert `/settings` route into a modal overlay (like VS Code/Warp) and add a "Sk
 ## Phases
 | # | Name | Status | Plan File | Summary |
 |---|------|--------|-----------|---------|
-| 1 | Settings Modal | 🔄 Active | plan-settings-modal-phase1.md | Extract settings into modal overlay, remove /settings route, Ctrl+, shortcut |
-| 2 | Skills API + Tree | ⬚ Pending | plan-settings-modal-phase2.md | GET /api/skills endpoint, tree-folder component with preview pane |
-| 3 | Recommended Polish | ⬚ Pending | plan-settings-modal-phase3.md | Recommended skills cards, search/filter, exit animation, enable toggle stub |
+| 1 | Settings Modal | ✅ Done | plan-settings-modal-phase1.md | Extract settings into modal overlay, remove /settings route, Ctrl+, shortcut |
+| 2 | Skills API + Tree | ✅ Done | plan-settings-modal-phase2.md | GET /api/skills endpoint, tree-folder component with preview pane |
+| 3 | Recommended Polish | ✅ Done | plan-settings-modal-phase3.md | Recommended skills cards, search/filter, a11y fixes, stale preview guard |
 
 ## Key Decisions
 - Reuse createPortal + Escape + click-outside pattern from NewSessionModal
