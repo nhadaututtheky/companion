@@ -8,7 +8,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from "
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { hostname as getHostname } from "node:os";
-import { APP_VERSION } from "@companion/shared";
+import { APP_VERSION, FREE_FEATURES, PRO_FEATURES, TIER_CONFIG } from "@companion/shared";
 
 const log = createLogger("license");
 
@@ -38,53 +38,15 @@ interface CachedLicenseRecord extends LicenseInfo {
   machineId: string;
 }
 
-// ── Feature definitions by tier ─────────────────────────────────────────────
-
-const FREE_FEATURES = [
-  "web_terminal",
-  "basic_commands",
-  "multi_session",
-  "telegram_bot",
-  "magic_ring",
-  "stream_bridge",
-  "permission_gate_telegram",
-  "templates",
-  "desktop_app",
-  "thinking_mode",
-  "rtk_basic",
-  "mcp_detect",
-  "pulse_monitor",
-  "inline_diff",
-  "debate_free",
-];
-
-const PRO_FEATURES = [
-  ...FREE_FEATURES,
-  "shared_context",
-  "rtk_pro",
-  "web_intel",
-  "codegraph",
-  "codegraph_advanced",
-  "domain_config",
-  "letsencrypt_ssl",
-  "multi_bot_telegram",
-  "debate_multiplatform",
-  "personas",
-  "unlimited_sessions",
-];
-
 const FREE_LICENSE: LicenseInfo = {
   valid: false,
   tier: "free",
   email: "",
   expiresAt: "",
-  maxSessions: 2,
-  features: FREE_FEATURES,
+  maxSessions: TIER_CONFIG.free.maxSessions,
+  features: [...FREE_FEATURES],
   cachedAt: Date.now(),
 };
-
-// Trial gets PRO features for 7 days
-const TRIAL_FEATURES = PRO_FEATURES;
 
 // In-memory cache
 let cachedLicense: CachedLicenseRecord | null = null;
@@ -360,7 +322,7 @@ export async function checkOrActivateTrial(): Promise<LicenseInfo> {
       email: "",
       expiresAt: trialEnd.toISOString(),
       maxSessions: isValid ? -1 : 2,
-      features: isValid ? TRIAL_FEATURES : FREE_LICENSE.features,
+      features: isValid ? [...PRO_FEATURES] : FREE_LICENSE.features,
       cachedAt: Date.now(),
       daysLeft,
       source: "trial",

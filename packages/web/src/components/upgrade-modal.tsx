@@ -27,7 +27,7 @@ const BANK_NAME = "NGUYEN VIET NAM";
 const POLAR_MONTHLY_URL = "https://buy.polar.sh/polar_cl_bH3oM1b9ub5rugiUyeV4NvdHQf3IhkhtZBRkb0h2bmr";
 const POLAR_YEARLY_URL = "https://buy.polar.sh/polar_cl_CGWIyshnh7Xkodt1CaLkYPG0Z5jL1wjmLmD7Q4CEACZ";
 
-const PRO_FEATURES = [
+const PRO_FEATURE_HIGHLIGHTS = [
   { icon: <Lightning size={14} weight="fill" />, label: "Unlimited sessions", color: "#f59e0b" },
   { icon: <Users size={14} weight="fill" />, label: "Multi-bot Telegram", color: "#3b82f6" },
   { icon: <Robot size={14} weight="fill" />, label: "Multi-platform debate", color: "#8b5cf6" },
@@ -180,7 +180,7 @@ export function UpgradeModal() {
 
             {/* Features */}
             <div className="px-6 py-4 grid grid-cols-2 gap-2">
-              {PRO_FEATURES.map((f) => (
+              {PRO_FEATURE_HIGHLIGHTS.map((f) => (
                 <div key={f.label} className="flex items-center gap-2">
                   <span style={{ color: f.color }}>{f.icon}</span>
                   <span className="text-xs" style={{ color: "var(--color-text-primary)" }}>
