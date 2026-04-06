@@ -28,7 +28,7 @@ import cliPlatformRoutes from "./cli-platforms.js";
 import { initWorkflowEngine } from "../services/workflow-engine.js";
 import { apiKeyAuth } from "../middleware/auth.js";
 import { createRateLimit } from "../middleware/rate-limit.js";
-import { getLicense } from "../services/license.js";
+import { getLicense, hasFeature } from "../services/license.js";
 import type { WsBridge } from "../services/ws-bridge.js";
 import type { BotRegistry } from "../telegram/bot-registry.js";
 import type { ApiResponse } from "@companion/shared";
@@ -44,6 +44,19 @@ const sessionCreateRateLimit = createRateLimit({
   windowMs: 60_000,
   method: "POST",
 });
+
+/** Middleware: require a specific feature to be unlocked */
+function requireFeature(feature: string) {
+  return async (c: { json: (body: ApiResponse, status: number) => Response }, next: () => Promise<void>) => {
+    if (!hasFeature(feature)) {
+      return c.json(
+        { success: false, error: `This feature requires Companion Pro. Upgrade to unlock.` } satisfies ApiResponse,
+        403,
+      );
+    }
+    return next();
+  };
+}
 
 export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   const api = new Hono();
@@ -89,11 +102,24 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   protectedApi.route("/channels", channelRoutes);
   protectedApi.route("/settings", settingsRoutes);
   protectedApi.route("/templates", templateRoutes());
-  protectedApi.route("/domain", domainRoutes);
+  // PRO-gated routes
+  const domainGated = new Hono();
+  domainGated.use("*", requireFeature("domain_config"));
+  domainGated.route("/", domainRoutes);
+  protectedApi.route("/domain", domainGated);
+
   protectedApi.route("/terminal", terminalRoutes);
   protectedApi.route("/stats", statsRoutes);
-  protectedApi.route("/webintel", webintelRoutes);
-  protectedApi.route("/codegraph", codegraphRoutes);
+
+  const webintelGated = new Hono();
+  webintelGated.use("*", requireFeature("web_intel"));
+  webintelGated.route("/", webintelRoutes);
+  protectedApi.route("/webintel", webintelGated);
+
+  const codegraphGated = new Hono();
+  codegraphGated.use("*", requireFeature("codegraph"));
+  codegraphGated.route("/", codegraphRoutes);
+  protectedApi.route("/codegraph", codegraphGated);
   protectedApi.route("/", shareRoutes);
   protectedApi.route("/prompts", promptRoutes(bridge));
   protectedApi.route("/errors", errorRoutes);
@@ -103,7 +129,10 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   protectedApi.route("/schedules", scheduleRoutes(bridge));
   protectedApi.route("/saved-prompts", savedPromptRoutes);
   protectedApi.route("/models", modelRoutes);
-  protectedApi.route("/custom-personas", customPersonaRoutes());
+  const personasGated = new Hono();
+  personasGated.use("*", requireFeature("personas"));
+  personasGated.route("/", customPersonaRoutes());
+  protectedApi.route("/custom-personas", personasGated);
   protectedApi.route("/skills", skillsRoutes);
   protectedApi.route("/cli-platforms", cliPlatformRoutes);
 

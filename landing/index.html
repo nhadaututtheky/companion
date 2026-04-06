@@ -475,7 +475,7 @@
 
       <p class="pricing-note">You bring your own Claude subscription. Companion is the management layer — we don't touch your API usage or billing.</p>
 
-      <div class="pricing-grid pricing-grid-3">
+      <div class="pricing-grid" style="grid-template-columns: repeat(2, 1fr); max-width: 720px; margin: 0 auto;">
         <!-- Free -->
         <div class="pricing-card">
           <div class="pricing-header">
@@ -492,65 +492,42 @@
           <ul class="pricing-features">
             <li class="check-icon">2 concurrent sessions</li>
             <li class="check-icon">Web dashboard + Magic Ring</li>
-            <li class="check-icon">Telegram bot (full access)</li>
-            <li class="check-icon">Templates + Debate mode</li>
+            <li class="check-icon">1 Telegram bot</li>
+            <li class="check-icon">Templates + free model debate</li>
             <li class="check-icon">Desktop app (macOS/Win/Linux)</li>
-            <li class="check-icon">Thinking mode toggle</li>
-            <li class="check-icon">macOS, Windows, Linux</li>
+            <li class="check-icon">MCP auto-detect</li>
+            <li class="check-icon">7-day Pro trial included</li>
           </ul>
           <a href="#get-started" class="btn btn-outline btn-full">
             <svg width="16" height="16" viewBox="0 0 256 256" fill="none" style="vertical-align:-2px;margin-right:4px;"><path d="M128 24v152M56 128l72 72 72-72" stroke="currentColor" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/><path d="M40 216h176" stroke="currentColor" stroke-width="20" stroke-linecap="round"/></svg>Download Free
           </a>
         </div>
 
-        <!-- Starter -->
-        <div class="pricing-card">
+        <!-- Pro -->
+        <div class="pricing-card pricing-card-featured">
+          <div class="pricing-popular">Recommended</div>
           <div class="pricing-header">
             <div class="pricing-tier-icon">
               <svg width="20" height="20" viewBox="0 0 256 256" fill="none"><polygon points="128,16 160,96 248,104 184,160 200,248 128,208 56,248 72,160 8,104 96,96" stroke="currentColor" stroke-width="14" stroke-linejoin="round"/></svg>
             </div>
-            <h3>Starter</h3>
-            <div class="pricing-amount">
-              <span class="price">$39</span>
-              <span class="period">/year</span>
-            </div>
-            <p class="pricing-desc">~$3.25/mo &middot; billed annually</p>
-          </div>
-          <ul class="pricing-features">
-            <li class="check-icon"><strong>Everything in Free</strong></li>
-            <li class="check-icon"><strong>6 concurrent sessions</strong></li>
-            <li class="check-icon">Smart compact + cost budget</li>
-            <li class="check-icon">Stream Bridge (web ↔ Telegram)</li>
-            <li class="check-icon">Priority permission gate</li>
-            <li class="check-icon">30-day money-back guarantee</li>
-          </ul>
-          <button class="btn btn-accent btn-full" onclick="openPayment('CMP-STARTER')">Get Starter</button>
-        </div>
-
-        <!-- Pro — Most Popular -->
-        <div class="pricing-card pricing-card-featured">
-          <div class="pricing-popular">Most Popular</div>
-          <div class="pricing-header">
-            <div class="pricing-tier-icon">
-              <svg width="20" height="20" viewBox="0 0 256 256" fill="none"><path d="M40 200l88-160 88 160z" stroke="currentColor" stroke-width="16" stroke-linejoin="round"/><circle cx="128" cy="144" r="8" fill="currentColor"/><line x1="128" y1="96" x2="128" y2="128" stroke="currentColor" stroke-width="16" stroke-linecap="round"/></svg>
-            </div>
             <h3>Pro</h3>
             <div class="pricing-amount">
-              <span class="price">$79</span>
-              <span class="period">/year</span>
+              <span class="price">$5</span>
+              <span class="period">/month</span>
             </div>
-            <p class="pricing-desc">~$6.58/mo &middot; billed annually</p>
+            <p class="pricing-desc">or $39/year (save 35%)</p>
           </div>
           <ul class="pricing-features">
-            <li class="check-icon"><strong>Everything in Starter</strong></li>
             <li class="check-icon"><strong>Unlimited sessions</strong></li>
-            <li class="check-icon">WebIntel (auto docs + research)</li>
-            <li class="check-icon">CodeGraph (code intelligence)</li>
-            <li class="check-icon">Scheduled sessions (calendar)</li>
-            <li class="check-icon">Early access to new features</li>
+            <li class="check-icon"><strong>Multi-bot Telegram</strong></li>
+            <li class="check-icon">Multi-platform debate (Codex, Gemini, OpenCode)</li>
+            <li class="check-icon">WebIntel (research + crawl)</li>
+            <li class="check-icon">CodeGraph (blast radius, flow trace)</li>
+            <li class="check-icon">Custom domain + Let's Encrypt SSL</li>
+            <li class="check-icon">Custom personas + RTK Pro</li>
             <li class="check-icon">30-day money-back guarantee</li>
           </ul>
-          <button class="btn btn-primary btn-full" onclick="openPayment('CMP-PRO')">Get Pro</button>
+          <button class="btn btn-primary btn-full" onclick="openPayment('CMP-PRO')">Get Pro — $39/year</button>
         </div>
       </div>
 
@@ -697,17 +674,17 @@ docker compose up -d
 
         <details class="faq-item">
           <summary>How does the yearly subscription work?</summary>
-          <p>Starter ($39/yr) and Pro ($79/yr) are billed annually. Your license key works for 1 year from purchase. When it expires, you drop back to the free tier (2 sessions, no WebIntel/CodeGraph). Renew anytime to re-activate. No auto-renewal surprises — you renew when you want.</p>
+          <p>Pro is $5/month or $39/year (save 35%). Your license key works for the subscription period. When it expires, you drop back to the free tier (2 sessions, 1 bot). Renew anytime to re-activate. Cancel anytime — no auto-renewal surprises.</p>
         </details>
 
         <details class="faq-item">
           <summary>What's included in the free tier?</summary>
-          <p>Free tier gives you <strong>2 concurrent sessions forever</strong> with the full web dashboard, Magic Ring, Telegram bot, templates, Debate mode, desktop app, and thinking mode. No account, no credit card, no time limit. Paid plans unlock more sessions and intelligence features (WebIntel, CodeGraph, Scheduled Sessions).</p>
+          <p>Free tier gives you <strong>2 concurrent sessions forever</strong> with the full web dashboard, Magic Ring, 1 Telegram bot, templates, free model debate, desktop app, and MCP auto-detect. No account, no credit card, no time limit. Plus a 7-day Pro trial to try everything. Upgrade when you need more.</p>
         </details>
 
         <details class="faq-item">
-          <summary>What's the difference between Starter and Pro?</summary>
-          <p><strong>Starter ($39/yr)</strong> bumps you to 6 concurrent sessions — great for everyday use. <strong>Pro ($79/yr)</strong> gives unlimited sessions plus the intelligence layer: WebIntel (auto docs + web research), CodeGraph (code dependency analysis), and Scheduled Sessions (calendar-based automation).</p>
+          <summary>What does Pro unlock?</summary>
+          <p><strong>Pro ($5/mo or $39/yr)</strong> unlocks unlimited sessions, multi-bot Telegram, multi-platform debate (Codex, Gemini, OpenCode), WebIntel (auto docs + web research), CodeGraph (blast radius, flow trace), custom domain with Let's Encrypt SSL, custom personas, and RTK Pro compression. Free tier gives you 2 sessions and 1 bot — enough to try everything.</p>
         </details>
 
         <details class="faq-item">

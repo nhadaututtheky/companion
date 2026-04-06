@@ -17,7 +17,7 @@ const TRIAL_URL = process.env.COMPANION_TRIAL_URL ?? "https://pay.theio.vn/trial
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 const DATA_DIR = process.env.DATABASE_PATH ? join(process.env.DATABASE_PATH, "..") : "./data";
 
-export type LicenseTier = "free" | "trial" | "starter" | "pro";
+export type LicenseTier = "free" | "trial" | "pro";
 
 export interface LicenseInfo {
   valid: boolean;
@@ -49,13 +49,29 @@ const FREE_FEATURES = [
   "stream_bridge",
   "permission_gate_telegram",
   "templates",
-  "debate_mode",
   "desktop_app",
   "thinking_mode",
   "rtk_basic",
+  "mcp_detect",
+  "pulse_monitor",
+  "inline_diff",
+  "debate_free",
 ];
 
-const STARTER_FEATURES = [...FREE_FEATURES, "shared_context", "rtk_pro"];
+const PRO_FEATURES = [
+  ...FREE_FEATURES,
+  "shared_context",
+  "rtk_pro",
+  "web_intel",
+  "codegraph",
+  "codegraph_advanced",
+  "domain_config",
+  "letsencrypt_ssl",
+  "multi_bot_telegram",
+  "debate_multiplatform",
+  "personas",
+  "unlimited_sessions",
+];
 
 const FREE_LICENSE: LicenseInfo = {
   valid: false,
@@ -67,8 +83,8 @@ const FREE_LICENSE: LicenseInfo = {
   cachedAt: Date.now(),
 };
 
-// Trial gets starter-level features for 7 days
-const TRIAL_FEATURES = STARTER_FEATURES;
+// Trial gets PRO features for 7 days
+const TRIAL_FEATURES = PRO_FEATURES;
 
 // In-memory cache
 let cachedLicense: CachedLicenseRecord | null = null;
@@ -343,7 +359,7 @@ export async function checkOrActivateTrial(): Promise<LicenseInfo> {
       tier: isValid ? "trial" : "free",
       email: "",
       expiresAt: trialEnd.toISOString(),
-      maxSessions: isValid ? 6 : 2,
+      maxSessions: isValid ? -1 : 2,
       features: isValid ? TRIAL_FEATURES : FREE_LICENSE.features,
       cachedAt: Date.now(),
       daysLeft,
@@ -385,7 +401,7 @@ export function getMaxSessions(): number {
 
 /** Check if current plan is at least the given tier */
 export function isAtLeast(tier: LicenseTier): boolean {
-  const order: LicenseTier[] = ["free", "trial", "starter", "pro"];
+  const order: LicenseTier[] = ["free", "trial", "pro"];
   const current = getLicense().tier;
   return order.indexOf(current) >= order.indexOf(tier);
 }

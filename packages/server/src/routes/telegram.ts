@@ -7,6 +7,7 @@ import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import type { BotRegistry } from "../telegram/bot-registry.js";
 import type { ApiResponse } from "@companion/shared";
+import { hasFeature } from "../services/license.js";
 
 const botConfigSchema = z.object({
   id: z.string().min(1),
@@ -64,6 +65,16 @@ export function telegramRoutes(registry: BotRegistry) {
   // Create bot config (POST /bots — auto-generates ID, auto-starts if enabled)
   app.post("/bots", zValidator("json", createBotSchema), async (c) => {
     const body = c.req.valid("json");
+
+    // FREE tier: max 1 bot. PRO: unlimited.
+    const existingBots = registry.listBotConfigs();
+    if (existingBots.length >= 1 && !hasFeature("multi_bot_telegram")) {
+      return c.json(
+        { success: false, error: "Multiple bots require Companion Pro. Upgrade to add more bots." } satisfies ApiResponse,
+        403,
+      );
+    }
+
     const id = `bot_${Date.now()}`;
 
     try {

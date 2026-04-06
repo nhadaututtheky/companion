@@ -8,6 +8,7 @@ import { AuthGuard } from "@/components/auth/auth-guard";
 import { ThemeSync } from "@/components/layout/theme-sync";
 import { MagicRingMount } from "@/components/ring/magic-ring-mount";
 import { UpdateBanner } from "@/components/update-banner";
+import { LicenseProvider } from "@/components/license-provider";
 
 export const metadata: Metadata = {
   title: "Companion",
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
             <MagicRingMount />
             <UpdateBanner />
+            <LicenseProvider />
           </AuthGuard>
         </ErrorBoundary>
         <Toaster

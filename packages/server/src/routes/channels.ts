@@ -19,6 +19,7 @@ import { startDebate, concludeDebate, getActiveDebate } from "../services/debate
 import { startCLIDebate, abortCLIDebate, getActiveCLIDebate } from "../services/cli-debate-engine.js";
 import { createLogger } from "../logger.js";
 import type { ApiResponse, CLIPlatform } from "@companion/shared";
+import { hasFeature } from "../services/license.js";
 
 const log = createLogger("routes:channels");
 
@@ -259,6 +260,12 @@ const cliDebateSchema = z.object({
 });
 
 channelRoutes.post("/cli-debate", zValidator("json", cliDebateSchema), async (c) => {
+  if (!hasFeature("debate_multiplatform")) {
+    return c.json(
+      { success: false, error: "Multi-platform debate requires Companion Pro." } satisfies ApiResponse,
+      403,
+    );
+  }
   const body = c.req.valid("json");
 
   try {
