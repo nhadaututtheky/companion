@@ -1538,19 +1538,24 @@ export function DomainTab() {
   const [hostname, setHostname] = useState("");
   const [tunnelToken, setTunnelToken] = useState("");
   const [showToken, setShowToken] = useState(false);
+  const [sslMode, setSslMode] = useState<"manual" | "letsencrypt">("manual");
+  const [letsencryptEmail, setLetsencryptEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [issuingCert, setIssuingCert] = useState(false);
   const [status, setStatus] = useState<{ gateway: string; tunnel: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Load current config
   useEffect(() => {
     api
-      .get<{ data: { mode: string; hostname: string; hasTunnelToken: boolean } }>("/api/domain")
+      .get<{ data: { mode: string; hostname: string; hasTunnelToken: boolean; sslMode?: string; letsencryptEmail?: string } }>("/api/domain")
       .then((res) => {
         if (res.data) {
           setMode((res.data.mode as "off" | "tunnel" | "nginx") ?? "off");
           setHostname(res.data.hostname ?? "");
+          setSslMode((res.data.sslMode as "manual" | "letsencrypt") ?? "manual");
+          setLetsencryptEmail(res.data.letsencryptEmail ?? "");
         }
       })
       .catch(() => {})
@@ -1583,6 +1588,8 @@ export function DomainTab() {
         mode,
         hostname: hostname.trim(),
         tunnelToken: tunnelToken.trim() || undefined,
+        sslMode: mode === "nginx" ? sslMode : undefined,
+        letsencryptEmail: sslMode === "letsencrypt" ? letsencryptEmail.trim() || undefined : undefined,
       });
       setSaved(true);
       toast.success("Domain config saved — files generated");
@@ -1593,7 +1600,26 @@ export function DomainTab() {
     } finally {
       setSaving(false);
     }
-  }, [mode, hostname, tunnelToken, checkStatus]);
+  }, [mode, hostname, tunnelToken, sslMode, letsencryptEmail, checkStatus]);
+
+  const handleIssueCert = useCallback(async () => {
+    setIssuingCert(true);
+    try {
+      const res = await api.post<{
+        data?: { issued: boolean; hostname: string; output?: string };
+        error?: string;
+      }>("/api/domain/issue-cert", {});
+      if (res.data?.issued) {
+        toast.success(`SSL certificate issued for ${res.data.hostname}`);
+      } else {
+        toast.error(res.error ?? "Certificate issuance failed");
+      }
+    } catch (err) {
+      toast.error(String(err));
+    } finally {
+      setIssuingCert(false);
+    }
+  }, []);
 
   const handleApply = useCallback(async () => {
     try {
@@ -1696,25 +1722,72 @@ export function DomainTab() {
                 </div>
               )}
 
-              {/* Nginx SSL note */}
+              {/* SSL mode selector (nginx only) */}
               {mode === "nginx" && (
-                <div
-                  className="px-3 py-2.5 rounded-lg text-xs"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    color: "var(--color-text-muted)",
-                  }}
-                >
-                  Place SSL certificates in{" "}
-                  <code>
-                    nginx/certs/origin.pem
-                  </code>{" "}
-                  and{" "}
-                  <code>
-                    nginx/certs/origin.key
-                  </code>
-                  <br />
-                  Tip: Use free Cloudflare Origin Certificate (15-year validity)
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-medium">
+                      SSL Certificate
+                    </label>
+                    <div className="flex gap-2">
+                      {(["letsencrypt", "manual"] as const).map((m) => (
+                        <button
+                          key={m}
+                          onClick={() => setSslMode(m)}
+                          className="px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer flex-1"
+                          style={{
+                            background: sslMode === m ? "var(--color-accent)" : "var(--color-bg-elevated)",
+                            color: sslMode === m ? "#fff" : "var(--color-text-secondary)",
+                            border: `1px solid ${sslMode === m ? "var(--color-accent)" : "var(--color-border)"}`,
+                          }}
+                        >
+                          {m === "letsencrypt" ? "Let's Encrypt (free)" : "Manual Certificate"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {sslMode === "letsencrypt" ? (
+                    <div className="flex flex-col gap-2">
+                      <InputField
+                        label="Email (for certificate expiry notices)"
+                        value={letsencryptEmail}
+                        onChange={setLetsencryptEmail}
+                        placeholder="you@example.com (optional)"
+                      />
+                      <div
+                        className="px-3 py-2.5 rounded-lg text-xs"
+                        style={{
+                          background: "#34A85310",
+                          color: "var(--color-text-secondary)",
+                          border: "1px solid #34A85330",
+                        }}
+                      >
+                        <strong style={{ color: "#34A853" }}>Auto-renewing SSL</strong> — Certbot
+                        will obtain and renew certificates automatically. Make sure your domain
+                        points to this server before issuing.
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className="px-3 py-2.5 rounded-lg text-xs"
+                      style={{
+                        background: "var(--color-bg-elevated)",
+                        color: "var(--color-text-muted)",
+                      }}
+                    >
+                      Place SSL certificates in{" "}
+                      <code className="px-1 rounded" style={{ background: "var(--color-bg-base)" }}>
+                        nginx/certs/origin.pem
+                      </code>{" "}
+                      and{" "}
+                      <code className="px-1 rounded" style={{ background: "var(--color-bg-base)" }}>
+                        nginx/certs/origin.key
+                      </code>
+                      <br />
+                      Tip: Use free Cloudflare Origin Certificate (15-year validity)
+                    </div>
+                  )}
                 </div>
               )}
             </>
@@ -1789,6 +1862,28 @@ export function DomainTab() {
               After saving, run this command on the host to start the gateway
               {mode === "tunnel" ? " and tunnel" : ""}.
             </p>
+
+            {/* Issue Certificate button for Let's Encrypt */}
+            {mode === "nginx" && sslMode === "letsencrypt" && hostname && (
+              <button
+                onClick={handleIssueCert}
+                disabled={issuingCert}
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                style={{
+                  background: "#34A85315",
+                  color: "#34A853",
+                  border: "1px solid #34A85340",
+                  opacity: issuingCert ? 0.7 : 1,
+                }}
+              >
+                {issuingCert ? (
+                  <ArrowsClockwise size={14} weight="bold" className="animate-spin" />
+                ) : (
+                  <Globe size={14} weight="bold" />
+                )}
+                {issuingCert ? "Issuing certificate..." : "Issue SSL Certificate"}
+              </button>
+            )}
           </div>
         </SettingSection>
       )}

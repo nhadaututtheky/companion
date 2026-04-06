@@ -25,6 +25,8 @@ const domainSchema = z.object({
   mode: z.enum(["off", "tunnel", "nginx"]),
   hostname: z.string().min(1).max(253).optional(),
   tunnelToken: z.string().optional(),
+  sslMode: z.enum(["manual", "letsencrypt"]).optional(),
+  letsencryptEmail: z.string().email().optional(),
 });
 
 // Settings keys
@@ -32,6 +34,8 @@ const KEYS = {
   mode: "domain.mode",
   hostname: "domain.hostname",
   tunnelToken: "domain.tunnelToken",
+  sslMode: "domain.sslMode", // "manual" | "letsencrypt"
+  letsencryptEmail: "domain.letsencryptEmail",
 };
 
 function getSetting(key: string): string | undefined {
@@ -57,6 +61,8 @@ domainRoutes.get("/", (c) => {
   const mode = getSetting(KEYS.mode) ?? "off";
   const hostname = getSetting(KEYS.hostname) ?? "";
   const tunnelToken = getSetting(KEYS.tunnelToken);
+  const sslMode = getSetting(KEYS.sslMode) ?? "manual";
+  const letsencryptEmail = getSetting(KEYS.letsencryptEmail) ?? "";
 
   return c.json({
     success: true,
@@ -65,6 +71,8 @@ domainRoutes.get("/", (c) => {
       hostname,
       hasTunnelToken: !!tunnelToken,
       tunnelToken: tunnelToken ? tunnelToken.slice(0, 8) + "***" : "",
+      sslMode,
+      letsencryptEmail,
     },
   } satisfies ApiResponse);
 });
@@ -76,11 +84,15 @@ domainRoutes.put("/", zValidator("json", domainSchema), (c) => {
   setSetting(KEYS.mode, body.mode);
   if (body.hostname) setSetting(KEYS.hostname, body.hostname);
   if (body.tunnelToken) setSetting(KEYS.tunnelToken, body.tunnelToken);
+  if (body.sslMode) setSetting(KEYS.sslMode, body.sslMode);
+  if (body.letsencryptEmail) setSetting(KEYS.letsencryptEmail, body.letsencryptEmail);
 
   // Generate config files
   if (body.mode !== "off" && body.hostname) {
     try {
-      generateConfigs(body.mode, body.hostname, body.tunnelToken);
+      const sslMode = body.sslMode ?? (getSetting(KEYS.sslMode) as "manual" | "letsencrypt" | undefined) ?? "manual";
+      const email = body.letsencryptEmail ?? getSetting(KEYS.letsencryptEmail);
+      generateConfigs(body.mode, body.hostname, body.tunnelToken, sslMode, email);
     } catch (err) {
       log.error("Failed to generate domain configs", { error: String(err) });
       return c.json(
@@ -113,52 +125,56 @@ domainRoutes.post("/apply", async (c) => {
     return c.json({ success: false, error: "Domain not configured" } satisfies ApiResponse, 400);
   }
 
-  // Check if Docker socket is available
-  const dockerSocket = "/var/run/docker.sock";
-  const hasDocker = existsSync(dockerSocket);
-
-  if (!hasDocker) {
-    return c.json({
-      success: true,
-      data: {
-        applied: false,
-        manual: true,
-        command: "docker compose up -d",
-        message: "Docker socket not mounted. Run the command manually on the host.",
-      },
-    } satisfies ApiResponse);
+  // Find project root for docker compose
+  const possibleRoots = ["/app", join(process.cwd(), ".."), process.cwd()];
+  let projectRoot = possibleRoots[0]!;
+  for (const root of possibleRoots) {
+    if (existsSync(join(root, "docker-compose.yml"))) {
+      projectRoot = root;
+      break;
+    }
   }
 
-  // Try to restart via Docker API
+  // Try docker compose up -d via shell
   try {
-    const containers = ["companion-gateway", "cloudflared"];
-    const results: Array<{ name: string; status: string }> = [];
+    const proc = Bun.spawn(["docker", "compose", "up", "-d"], {
+      cwd: projectRoot,
+      stdout: "pipe",
+      stderr: "pipe",
+    });
 
-    for (const name of containers) {
-      try {
-        const res = await fetch(`http://localhost/containers/${name}/restart`, {
-          method: "POST",
-          // @ts-expect-error — Node fetch supports unix socket via dispatcher
-          dispatcher: undefined, // Would need undici for unix socket
-        });
-        results.push({ name, status: res.ok ? "restarted" : "failed" });
-      } catch {
-        results.push({ name, status: "not_found" });
-      }
+    const exitCode = await proc.exited;
+    const stdout = await new Response(proc.stdout).text();
+    const stderr = await new Response(proc.stderr).text();
+
+    if (exitCode === 0) {
+      log.info("Docker compose applied successfully", { stdout: stdout.trim() });
+      return c.json({
+        success: true,
+        data: { applied: true, output: (stdout + stderr).trim() },
+      } satisfies ApiResponse);
     }
 
-    return c.json({
-      success: true,
-      data: { applied: true, containers: results },
-    } satisfies ApiResponse);
-  } catch {
+    // docker command exists but failed
+    log.warn("Docker compose failed", { exitCode, stderr: stderr.trim() });
     return c.json({
       success: true,
       data: {
         applied: false,
         manual: true,
         command: "docker compose up -d",
-        message: "Failed to restart containers. Run the command manually.",
+        message: stderr.trim() || "Docker compose failed. Run the command manually on the host.",
+      },
+    } satisfies ApiResponse);
+  } catch {
+    // docker not available at all
+    return c.json({
+      success: true,
+      data: {
+        applied: false,
+        manual: true,
+        command: "docker compose up -d",
+        message: "Docker CLI not available. Run the command manually on the host.",
       },
     } satisfies ApiResponse);
   }
@@ -198,9 +214,81 @@ domainRoutes.get("/status", async (c) => {
   } satisfies ApiResponse);
 });
 
+// POST /domain/issue-cert — trigger initial Let's Encrypt certificate issuance
+domainRoutes.post("/issue-cert", async (c) => {
+  const hostname = getSetting(KEYS.hostname);
+  const sslMode = getSetting(KEYS.sslMode);
+  const email = getSetting(KEYS.letsencryptEmail);
+
+  if (!hostname || sslMode !== "letsencrypt") {
+    return c.json({
+      success: false,
+      error: "Let's Encrypt not configured. Save domain settings first.",
+    } satisfies ApiResponse, 400);
+  }
+
+  const emailFlag = email ? `--email ${email}` : "--register-unsafely-without-email";
+
+  try {
+    const proc = Bun.spawn(
+      [
+        "docker", "compose", "run", "--rm", "certbot",
+        "certbot", "certonly", "--webroot",
+        "-w", "/var/www/certbot",
+        "-d", hostname,
+        emailFlag,
+        "--agree-tos",
+        "--non-interactive",
+      ],
+      { stdout: "pipe", stderr: "pipe" },
+    );
+
+    const exitCode = await proc.exited;
+    const stdout = await new Response(proc.stdout).text();
+    const stderr = await new Response(proc.stderr).text();
+    const output = (stdout + stderr).trim();
+
+    if (exitCode === 0) {
+      log.info("Let's Encrypt certificate issued", { hostname });
+
+      // Reload nginx to pick up new cert
+      try {
+        await Bun.spawn(["docker", "exec", "companion-gateway", "nginx", "-s", "reload"], {
+          stdout: "ignore",
+          stderr: "ignore",
+        }).exited;
+      } catch {
+        // Non-critical — user can restart manually
+      }
+
+      return c.json({
+        success: true,
+        data: { issued: true, hostname, output },
+      } satisfies ApiResponse);
+    }
+
+    log.warn("Certbot failed", { exitCode, output });
+    return c.json({
+      success: false,
+      error: output || "Certbot failed — check that your domain points to this server.",
+    } satisfies ApiResponse, 500);
+  } catch (err) {
+    return c.json({
+      success: false,
+      error: `Docker not available: ${String(err)}`,
+    } satisfies ApiResponse, 500);
+  }
+});
+
 // ── File generation ───────────────────────────────────────────────────────────
 
-function generateConfigs(mode: string, hostname: string, tunnelToken?: string): void {
+function generateConfigs(
+  mode: string,
+  hostname: string,
+  tunnelToken?: string,
+  sslMode?: string,
+  letsencryptEmail?: string,
+): void {
   // Find project root — navigate up from server package
   // In Docker: /app/nginx/  On host: D:/Project/Companion/nginx/
   const possibleRoots = [
@@ -222,25 +310,27 @@ function generateConfigs(mode: string, hostname: string, tunnelToken?: string): 
     mkdirSync(nginxDir, { recursive: true });
   }
 
+  const useLetsEncrypt = mode === "nginx" && sslMode === "letsencrypt";
+
   // 1. Generate gateway.conf (always needed for routing)
-  const gatewayConf = generateGatewayConf(hostname);
+  const gatewayConf = generateGatewayConf(hostname, useLetsEncrypt);
   writeFileSync(join(nginxDir, "gateway.conf"), gatewayConf, "utf-8");
 
-  // 2. Generate docker-compose.override.yml
-  const override = generateComposeOverride(mode, tunnelToken);
+  // 2. Ensure certs dir exists for Let's Encrypt volume mount
+  const certsDir = join(projectRoot, "nginx", "certs");
+  if (!existsSync(certsDir)) {
+    mkdirSync(certsDir, { recursive: true });
+  }
+
+  // 3. Generate docker-compose.override.yml
+  const override = generateComposeOverride(mode, tunnelToken, useLetsEncrypt, hostname, letsencryptEmail);
   writeFileSync(join(projectRoot, "docker-compose.override.yml"), override, "utf-8");
 
   log.info("Generated domain config files", { mode, hostname, projectRoot });
 }
 
-function generateGatewayConf(hostname: string): string {
-  return `# Auto-generated by Companion Settings UI
-# Domain: ${hostname}
-
-server {
-    listen 80;
-    server_name ${hostname};
-
+function generateGatewayConf(hostname: string, letsEncrypt = false): string {
+  const proxyLocations = `
     location /api/ {
         proxy_pass http://companion:3579/api/;
         proxy_http_version 1.1;
@@ -270,16 +360,68 @@ server {
         proxy_set_header X-Forwarded-Proto https;
     }
 
-    client_max_body_size 50M;
+    client_max_body_size 50M;`;
+
+  if (!letsEncrypt) {
+    return `# Auto-generated by Companion Settings UI
+# Domain: ${hostname}
+
+server {
+    listen 80;
+    server_name ${hostname};
+${proxyLocations}
+}
+`;
+  }
+
+  // Let's Encrypt: HTTP server for ACME + HTTPS with certbot certs
+  return `# Auto-generated by Companion Settings UI
+# Domain: ${hostname} — Let's Encrypt SSL
+
+# HTTP → ACME challenge + redirect
+server {
+    listen 80;
+    server_name ${hostname};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# HTTPS
+server {
+    listen 443 ssl;
+    server_name ${hostname};
+
+    ssl_certificate /etc/letsencrypt/live/${hostname}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${hostname}/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+${proxyLocations}
 }
 `;
 }
 
-function generateComposeOverride(mode: string, tunnelToken?: string): string {
+function generateComposeOverride(
+  mode: string,
+  tunnelToken?: string,
+  letsEncrypt = false,
+  hostname?: string,
+  letsencryptEmail?: string,
+): string {
   const services: string[] = [];
 
-  // Gateway is always needed
-  services.push(`  gateway:
+  if (mode === "tunnel") {
+    // Tunnel mode: gateway + cloudflared
+    services.push(`  gateway:
     image: nginx:alpine
     container_name: companion-gateway
     restart: unless-stopped
@@ -288,8 +430,8 @@ function generateComposeOverride(mode: string, tunnelToken?: string): string {
     depends_on:
       - companion`);
 
-  if (mode === "tunnel" && tunnelToken) {
-    services.push(`  cloudflared:
+    if (tunnelToken) {
+      services.push(`  cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
     restart: unless-stopped
@@ -298,27 +440,62 @@ function generateComposeOverride(mode: string, tunnelToken?: string): string {
       - TUNNEL_TOKEN=${tunnelToken}
     depends_on:
       - gateway`);
+    }
   }
 
   if (mode === "nginx") {
-    services.push(`  nginx:
+    if (letsEncrypt && hostname) {
+      // Let's Encrypt: nginx with certbot volumes + certbot service
+      const emailFlag = letsencryptEmail ? `--email ${letsencryptEmail}` : "--register-unsafely-without-email";
+      services.push(`  gateway:
     image: nginx:alpine
-    container_name: companion-nginx
+    container_name: companion-gateway
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/conf.d/gateway.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot-webroot:/var/www/certbot:ro
+      - certbot-certs:/etc/letsencrypt:ro
+    depends_on:
+      - companion`);
+
+      services.push(`  certbot:
+    image: certbot/certbot:latest
+    container_name: companion-certbot
+    volumes:
+      - certbot-webroot:/var/www/certbot
+      - certbot-certs:/etc/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait \$\$\{!\}; done'"
+    depends_on:
+      - gateway`);
+    } else {
+      // Manual SSL: mount certs directory
+      services.push(`  gateway:
+    image: nginx:alpine
+    container_name: companion-gateway
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d/gateway.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/certs:/etc/nginx/certs:ro
     depends_on:
       - companion`);
+    }
   }
+
+  // Docker volumes for Let's Encrypt
+  const volumes = letsEncrypt
+    ? `\nvolumes:\n  certbot-webroot:\n  certbot-certs:\n`
+    : "";
 
   return `# Auto-generated by Companion Settings UI — do not edit manually
 # Apply: docker compose up -d
 
 services:
 ${services.join("\n\n")}
-`;
+${volumes}`;
 }
