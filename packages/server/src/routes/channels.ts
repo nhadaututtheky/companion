@@ -16,8 +16,9 @@ import {
   deleteChannel,
 } from "../services/channel-manager.js";
 import { startDebate, concludeDebate, getActiveDebate } from "../services/debate-engine.js";
+import { startCLIDebate, abortCLIDebate, getActiveCLIDebate } from "../services/cli-debate-engine.js";
 import { createLogger } from "../logger.js";
-import type { ApiResponse } from "@companion/shared";
+import type { ApiResponse, CLIPlatform } from "@companion/shared";
 
 const log = createLogger("routes:channels");
 
@@ -234,6 +235,91 @@ channelRoutes.post("/debate", zValidator("json", debateSchema), async (c) => {
   } catch {
     return c.json({ success: false, error: "Failed to start debate" } satisfies ApiResponse, 500);
   }
+});
+
+// ── CLI Debate ─────────────────────────────────────────────────────────────
+
+const cliDebateAgentSchema = z.object({
+  id: z.string().min(1),
+  role: z.string().min(1),
+  label: z.string().min(1),
+  emoji: z.string().default("🤖"),
+  platform: z.enum(["claude", "codex", "gemini", "opencode"]),
+  model: z.string().min(1),
+  platformOptions: z.record(z.unknown()).optional(),
+});
+
+const cliDebateSchema = z.object({
+  topic: z.string().min(1).max(500),
+  format: z.enum(["pro_con", "code_review", "architecture", "benchmark"]).default("pro_con"),
+  agents: z.array(cliDebateAgentSchema).min(2).max(4),
+  workingDir: z.string().min(1).max(500),
+  projectSlug: z.string().optional(),
+  maxRounds: z.number().int().min(1).max(10).optional(),
+});
+
+channelRoutes.post("/cli-debate", zValidator("json", cliDebateSchema), async (c) => {
+  const body = c.req.valid("json");
+
+  try {
+    const state = await startCLIDebate(
+      {
+        topic: body.topic,
+        format: body.format,
+        agents: body.agents.map((a) => ({
+          ...a,
+          platform: a.platform as CLIPlatform,
+        })),
+        workingDir: body.workingDir,
+        projectSlug: body.projectSlug,
+        maxRounds: body.maxRounds,
+      },
+      (msg) => {
+        log.info("CLI debate event", msg);
+        // TODO: broadcast to WebSocket subscribers in Phase 5
+      },
+    );
+
+    return c.json(
+      {
+        success: true,
+        data: {
+          channelId: state.channelId,
+          topic: state.topic,
+          format: state.format,
+          agents: state.agents.map((a) => ({
+            id: a.id,
+            label: a.label,
+            role: a.role,
+            platform: a.platform,
+            model: a.model,
+          })),
+        },
+      } satisfies ApiResponse,
+      201,
+    );
+  } catch (err) {
+    return c.json(
+      { success: false, error: err instanceof Error ? err.message : "Failed to start CLI debate" } satisfies ApiResponse,
+      500,
+    );
+  }
+});
+
+// POST /channels/:id/abort-cli — abort CLI debate (kills processes)
+channelRoutes.post("/:id/abort-cli", (c) => {
+  const id = c.req.param("id");
+  const aborted = abortCLIDebate(id);
+
+  if (!aborted) {
+    // Try regular debate conclude
+    const debate = getActiveDebate(id);
+    if (!debate) {
+      return c.json({ success: false, error: "No active CLI debate found" } satisfies ApiResponse, 404);
+    }
+  }
+
+  return c.json({ success: true, data: { aborted: true } } satisfies ApiResponse);
 });
 
 // POST /channels/:id/conclude — force conclude a debate

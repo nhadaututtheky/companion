@@ -346,6 +346,10 @@ export class WsBridge {
     bare?: boolean;
     /** Thinking budget in tokens. 0 = off, N = budget, undefined = adaptive. */
     thinkingBudget?: number;
+    /** CLI platform to use (claude, codex, gemini, opencode). */
+    cliPlatform?: CLIPlatform;
+    /** Platform-specific options (e.g. fullAuto for Codex, sandbox for Gemini). */
+    platformOptions?: Record<string, unknown>;
   }): Promise<string> {
     const sessionId = randomUUID();
 
@@ -1123,6 +1127,27 @@ export class WsBridge {
           type: "error",
           message: msg.errorMessage ?? "Unknown error",
         });
+        break;
+
+      case "status":
+        // Non-Claude platforms reporting status changes (e.g. compacting)
+        if (msg.raw) {
+          const raw = msg.raw as Record<string, unknown>;
+          const status = (raw.status as string | null) ?? null;
+          if (status === "compacting" || status === null) {
+            this.handleSystemStatus(session, { subtype: "status", status });
+          }
+        }
+        break;
+
+      case "control_request":
+        // Non-Claude platforms requesting user permission — broadcast raw to browsers
+        if (msg.raw) {
+          this.broadcastToSubscribers(session, {
+            type: "permission_request",
+            data: msg.raw,
+          });
+        }
         break;
 
       case "keep_alive":

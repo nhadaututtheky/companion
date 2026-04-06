@@ -6,6 +6,9 @@
 import { createLogger } from "../../logger.js";
 import type { CLIAdapter, CLIPlatform, CLIDetectResult } from "@companion/shared";
 import { ClaudeAdapter } from "./claude-adapter.js";
+import { CodexAdapter } from "./codex-adapter.js";
+import { GeminiAdapter } from "./gemini-adapter.js";
+import { OpenCodeAdapter } from "./opencode-adapter.js";
 
 const log = createLogger("adapter-registry");
 
@@ -19,9 +22,9 @@ const adapters = new Map<CLIPlatform, CLIAdapter>();
 function ensureRegistered(): void {
   if (adapters.size > 0) return;
   adapters.set("claude", new ClaudeAdapter());
-  // Future: adapters.set("codex", new CodexAdapter());
-  // Future: adapters.set("gemini", new GeminiAdapter());
-  // Future: adapters.set("opencode", new OpenCodeAdapter());
+  adapters.set("codex", new CodexAdapter());
+  adapters.set("gemini", new GeminiAdapter());
+  adapters.set("opencode", new OpenCodeAdapter());
 }
 
 /**

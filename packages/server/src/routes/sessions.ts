@@ -50,7 +50,7 @@ const ALLOWED_MODELS = [
 const createSessionSchema = z.object({
   projectSlug: z.string().optional(),
   projectDir: z.string().min(1).max(500),
-  model: z.enum(ALLOWED_MODELS).optional(),
+  model: z.string().max(100).optional(), // Relaxed: non-Claude platforms use their own model IDs
   permissionMode: z.enum(["default", "acceptEdits", "bypassPermissions", "plan"]).optional(),
   prompt: z.string().max(10000).optional(),
   templateId: z.string().optional(),
@@ -63,6 +63,8 @@ const createSessionSchema = z.object({
   bare: z.boolean().optional(),
   thinkingMode: z.enum(["adaptive", "off", "deep"]).optional(),
   personaId: z.string().max(100).optional(),
+  cliPlatform: z.enum(["claude", "codex", "gemini", "opencode"]).optional(),
+  platformOptions: z.record(z.unknown()).optional(),
 });
 
 const sendMessageSchema = z.object({
@@ -221,8 +223,12 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       log.info("Auto-created project", { slug: body.projectSlug, dir: body.projectDir });
     }
 
+    const cliPlatform = body.cliPlatform ?? "claude";
     const model = body.model ?? project?.defaultModel ?? "claude-sonnet-4-6";
-    const permissionMode = body.permissionMode ?? project?.permissionMode ?? "default";
+    // permissionMode only applies to Claude — other CLIs don't support it
+    const permissionMode = cliPlatform === "claude"
+      ? (body.permissionMode ?? project?.permissionMode ?? "default")
+      : "default";
 
     // Resolve template variables if a templateId and templateVars are provided
     let resolvedPrompt = body.prompt;
@@ -258,6 +264,17 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     }
 
     try {
+      // Validate model for Claude platform (allowlist prevents CLI argument injection)
+      if (cliPlatform === "claude") {
+        const validClaude = ALLOWED_MODELS as readonly string[];
+        if (body.model && !validClaude.includes(body.model)) {
+          return c.json(
+            { success: false, error: `Invalid model for Claude: ${body.model}` } satisfies ApiResponse,
+            400,
+          );
+        }
+      }
+
       const sessionId = await bridge.startSession({
         projectSlug: body.projectSlug,
         cwd: body.projectDir,
@@ -272,6 +289,8 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         thinkingBudget: body.thinkingMode ? thinkingModeTobudget(body.thinkingMode) : undefined,
         personaId: persona?.id,
         identityPrompt: persona?.systemPrompt,
+        cliPlatform,
+        platformOptions: body.platformOptions,
       });
 
       // Apply idle timeout / keep-alive settings from the request

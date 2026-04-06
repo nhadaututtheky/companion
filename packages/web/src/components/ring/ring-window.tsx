@@ -1,11 +1,12 @@
 "use client";
 import { useRef, useEffect, useState, type KeyboardEvent } from "react";
-import { PaperPlaneTilt, X, XCircle, Scales } from "@phosphor-icons/react";
+import { PaperPlaneTilt, X, XCircle, Scales, Terminal } from "@phosphor-icons/react";
 import { useRingStore, MODEL_PRESETS } from "@/lib/stores/ring-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { ChannelPanel } from "@/components/shared/channel-panel";
+import { DebateCreateModal } from "@/components/debate/debate-create-modal";
 
 const GOOGLE_COLORS = ["var(--color-google-blue)", "var(--color-google-red)", "var(--color-google-yellow)", "var(--color-google-green)"];
 
@@ -49,6 +50,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   const [hoveredBubble, setHoveredBubble] = useState<number>(-1);
   const [debateTopic, setDebateTopic] = useState("");
   const [startingDebate, setStartingDebate] = useState(false);
+  const [showCLIDebateModal, setShowCLIDebateModal] = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
 
   const reducedMotion =
@@ -489,22 +491,46 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                   );
                 })}
               </div>
-              <button
-                onClick={() => void handleStartDebate()}
-                disabled={!debateTopic.trim() || startingDebate}
-                style={{
-                  padding: "5px 16px",
-                  fontSize: 11,
-                  fontWeight: 600,
-                  borderRadius: 8,
-                  border: "none",
-                  background: debateTopic.trim() ? "var(--color-danger)" : "var(--color-text-muted)",
-                  color: "#fff",
-                  cursor: debateTopic.trim() ? "pointer" : "not-allowed",
-                }}
-              >
-                {startingDebate ? "Starting…" : "⚖️ Start Debate"}
-              </button>
+              <div style={{ display: "flex", gap: 4 }}>
+                <button
+                  onClick={() => void handleStartDebate()}
+                  disabled={!debateTopic.trim() || startingDebate}
+                  style={{
+                    flex: 1,
+                    padding: "5px 16px",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    borderRadius: 8,
+                    border: "none",
+                    background: debateTopic.trim() ? "var(--color-danger)" : "var(--color-text-muted)",
+                    color: "#fff",
+                    cursor: debateTopic.trim() ? "pointer" : "not-allowed",
+                  }}
+                >
+                  {startingDebate ? "Starting…" : "⚖️ API Debate"}
+                </button>
+                <button
+                  onClick={() => setShowCLIDebateModal(true)}
+                  style={{
+                    flex: 1,
+                    padding: "5px 16px",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    borderRadius: 8,
+                    border: "none",
+                    background: "var(--color-accent)",
+                    color: "#fff",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 4,
+                  }}
+                >
+                  <Terminal size={12} weight="bold" />
+                  CLI Debate
+                </button>
+              </div>
             </div>
           )}
 
@@ -663,6 +689,16 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
           </div>
         )}
       </div>
+
+      {/* CLI Debate creation modal */}
+      <DebateCreateModal
+        open={showCLIDebateModal}
+        onClose={() => setShowCLIDebateModal(false)}
+        onCreated={(channelId) => {
+          setDebateChannelId(channelId);
+          setMode("debate");
+        }}
+      />
     </>
   );
 }

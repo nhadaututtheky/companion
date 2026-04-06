@@ -274,6 +274,7 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
         totalOutputTokens={session?.state?.total_output_tokens}
         cacheCreationTokens={session?.state?.cache_creation_tokens}
         cacheReadTokens={session?.state?.cache_read_tokens}
+        cliPlatform={session?.state?.cli_platform}
       />
 
       {/* WS Status banner */}

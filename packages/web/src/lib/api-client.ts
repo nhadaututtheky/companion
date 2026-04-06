@@ -63,6 +63,8 @@ export const api = {
       idleTimeoutMs?: number;
       keepAlive?: boolean;
       personaId?: string;
+      cliPlatform?: "claude" | "codex" | "gemini" | "opencode";
+      platformOptions?: Record<string, unknown>;
     }) =>
       request<{ data: { sessionId: string; projectCreated?: boolean } }>("/api/sessions", {
         method: "POST",
@@ -413,6 +415,53 @@ export const api = {
     delete: (id: string) =>
       request<{ success: boolean }>(`/api/channels/${id}`, {
         method: "DELETE",
+      }),
+    startDebate: (body: {
+      topic: string;
+      format?: "pro_con" | "red_team" | "review" | "brainstorm";
+      projectSlug?: string;
+      maxRounds?: number;
+      agentModels?: Array<{ agentId: string; model: string; label?: string; personaId?: string }>;
+    }) =>
+      request<{
+        success: boolean;
+        data: {
+          channelId: string;
+          topic: string;
+          format: string;
+          agents: Array<{ id: string; label: string; role: string; model?: string; modelLabel?: string }>;
+        };
+      }>("/api/channels/debate", { method: "POST", body: JSON.stringify(body) }),
+    startCLIDebate: (body: {
+      topic: string;
+      format?: "pro_con" | "code_review" | "architecture" | "benchmark";
+      agents: Array<{
+        id: string;
+        role: string;
+        label: string;
+        emoji?: string;
+        platform: "claude" | "codex" | "gemini" | "opencode";
+        model: string;
+        platformOptions?: Record<string, unknown>;
+      }>;
+      workingDir: string;
+      projectSlug?: string;
+      maxRounds?: number;
+    }) =>
+      request<{
+        success: boolean;
+        data: {
+          channelId: string;
+          topic: string;
+          format: string;
+          agents: Array<{ id: string; label: string; role: string; platform: string; model: string }>;
+        };
+      }>("/api/channels/cli-debate", { method: "POST", body: JSON.stringify(body) }),
+    abortCLIDebate: (id: string) =>
+      request<{ success: boolean }>(`/api/channels/${id}/abort-cli`, { method: "POST" }),
+    conclude: (id: string) =>
+      request<{ success: boolean; data: { verdict: unknown } }>(`/api/channels/${id}/conclude`, {
+        method: "POST",
       }),
   },
 
@@ -1261,5 +1310,40 @@ export const api = {
         `/api/custom-personas/clone/${encodeURIComponent(builtInId)}`,
         { method: "POST", body: JSON.stringify(overrides ?? {}) },
       ),
+  },
+
+  // CLI Platforms
+  cliPlatforms: {
+    list: () =>
+      request<{
+        platforms: Array<{
+          id: string;
+          name: string;
+          available: boolean;
+          version?: string;
+          path?: string;
+          capabilities: {
+            supportsResume: boolean;
+            supportsStreaming: boolean;
+            supportsTools: boolean;
+            supportsMCP: boolean;
+            outputFormat: string;
+            inputFormat: string;
+            supportsModelFlag: boolean;
+            supportsThinking: boolean;
+            supportsInteractive: boolean;
+          };
+        }>;
+      }>("/api/cli-platforms"),
+
+    refresh: () =>
+      request<{
+        platforms: Array<{
+          id: string;
+          available: boolean;
+          version?: string;
+        }>;
+        refreshed: boolean;
+      }>("/api/cli-platforms/refresh", { method: "POST" }),
   },
 };

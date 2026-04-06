@@ -106,8 +106,7 @@ export function MessageComposer({
     const isSendCombo = (e.key === "Enter" && !e.shiftKey) || (e.key === "Enter" && e.ctrlKey);
     if (isSendCombo) {
       e.preventDefault();
-      if (isRunning) return; // Don't send while Claude is responding
-      handleSend();
+      handleSend(); // Allow sending even while running (interrupts the agent)
     }
   };
 
@@ -225,11 +224,13 @@ export function MessageComposer({
             onInput={handleInput}
             disabled={disabled}
             placeholder={
-              attachments.length > 0
-                ? "Add instructions or use a quick action above..."
-                : listening
-                  ? "Listening..."
-                  : placeholder
+              isRunning
+                ? "Type to interrupt or queue..."
+                : attachments.length > 0
+                  ? "Add instructions or use a quick action above..."
+                  : listening
+                    ? "Listening..."
+                    : placeholder
             }
             rows={1}
             className="flex-1 resize-none bg-transparent outline-none text-sm leading-relaxed"
@@ -261,29 +262,30 @@ export function MessageComposer({
             </button>
           )}
 
-          {isRunning ? (
+          {isRunning && (
             <button
               onClick={onStop}
               className="flex-shrink-0 p-1.5 rounded-lg transition-colors cursor-pointer"
               style={{ background: "#EA433515", color: "#EA4335" }}
               aria-label="Stop"
+              title="Stop agent"
             >
               <Stop size={16} weight="fill" />
             </button>
-          ) : (
-            <button
-              onClick={handleSend}
-              disabled={!hasContent || disabled}
-              className="flex-shrink-0 p-1.5 rounded-lg transition-all cursor-pointer disabled:opacity-40"
-              style={{
-                background: hasContent ? "#34A853" : "var(--color-bg-elevated)",
-                color: hasContent ? "#fff" : "var(--color-text-muted)",
-              }}
-              aria-label="Send message"
-            >
-              <PaperPlaneTilt size={16} weight="fill" />
-            </button>
           )}
+          <button
+            onClick={handleSend}
+            disabled={!hasContent || disabled}
+            className="flex-shrink-0 p-1.5 rounded-lg transition-all cursor-pointer disabled:opacity-40"
+            style={{
+              background: hasContent ? (isRunning ? "#D97706" : "#34A853") : "var(--color-bg-elevated)",
+              color: hasContent ? "#fff" : "var(--color-text-muted)",
+            }}
+            aria-label={isRunning ? "Interrupt and send" : "Send message"}
+            title={isRunning ? "Interrupt and send" : "Send message"}
+          >
+            <PaperPlaneTilt size={16} weight="fill" />
+          </button>
         </div>
       </div>
 
@@ -314,6 +316,8 @@ export function MessageComposer({
         <p className="flex-1 text-center text-xs" style={{ color: "var(--color-text-muted)" }}>
           {listening ? (
             <span style={{ color: "#EA4335" }}>Recording... click mic to stop</span>
+          ) : isRunning ? (
+            <span>Enter to interrupt · Shift+Enter newline</span>
           ) : (
             <>Enter · Shift+Enter newline</>
           )}

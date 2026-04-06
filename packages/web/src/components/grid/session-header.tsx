@@ -6,6 +6,13 @@ import { CostBreakdown } from "@/components/session/cost-breakdown";
 import { PulseIndicator } from "@/components/pulse/pulse-indicator";
 import { api } from "@/lib/api-client";
 
+const PLATFORM_ICONS: Record<string, { icon: string; color: string }> = {
+  claude: { icon: "◈", color: "#D97706" },
+  codex: { icon: "◇", color: "#10B981" },
+  gemini: { icon: "◆", color: "#4285F4" },
+  opencode: { icon: "☁", color: "#8B5CF6" },
+};
+
 interface SessionHeaderProps {
   sessionId: string;
   shortId?: string;
@@ -13,6 +20,7 @@ interface SessionHeaderProps {
   projectName: string;
   model: string;
   status: string;
+  cliPlatform?: string;
   onExpand: () => void;
   onClose: () => void;
   onRename?: (name: string | null) => void;
@@ -60,6 +68,7 @@ export function SessionHeader({
   totalOutputTokens,
   cacheCreationTokens,
   cacheReadTokens,
+  cliPlatform,
 }: SessionHeaderProps) {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
@@ -86,7 +95,16 @@ export function SessionHeader({
   }, [editValue, sessionId, onRename]);
 
   const dotColor = STATUS_COLORS[status] ?? STATUS_COLORS.idle;
-  const modelShort = model.includes("opus") ? "Opus" : model.includes("haiku") ? "Haiku" : "Sonnet";
+  // Strip provider prefix for OpenCode format (e.g., "anthropic/claude-sonnet-4-6" → "claude-sonnet-4-6")
+  const modelName = model.includes("/") ? model.split("/").pop()! : model;
+  const modelShort = modelName.includes("opus") ? "Opus"
+    : modelName.includes("haiku") ? "Haiku"
+    : modelName.includes("sonnet") ? "Sonnet"
+    : modelName.includes("gpt") ? modelName.split("-").slice(0, 2).join("-").toUpperCase()
+    : modelName.includes("gemini") ? "Gemini"
+    : modelName.includes("llama") ? "Llama"
+    : modelName.startsWith("o3") || modelName.startsWith("o4") ? modelName.split("-")[0]!.toUpperCase()
+    : modelName.split("-")[0]!;
   const channelColor = channelStatus === "active" ? "var(--color-accent)" : "var(--color-text-muted)";
   const isActive = !["ended", "error"].includes(status);
 
@@ -172,6 +190,11 @@ export function SessionHeader({
             fontFamily: "var(--font-mono)",
           }}
         >
+          {cliPlatform && cliPlatform !== "claude" && (
+            <span style={{ color: PLATFORM_ICONS[cliPlatform]?.color ?? "var(--color-text-muted)" }}>
+              {PLATFORM_ICONS[cliPlatform]?.icon ?? ""}{" "}
+            </span>
+          )}
           {modelShort}
         </span>
 

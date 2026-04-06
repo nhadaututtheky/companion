@@ -23,6 +23,8 @@ import { COMMAND_PRESETS } from "@companion/shared";
 import { PersonaAvatar } from "@/components/persona/persona-avatar";
 import { PersonaTooltip } from "@/components/persona/persona-tooltip";
 import { usePersonas } from "@/hooks/use-personas";
+import { useCLIPlatforms, getModelsForPlatform, getDefaultModelForPlatform } from "@/hooks/use-cli-platforms";
+import { PlatformPicker } from "./platform-picker";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -168,6 +170,31 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [templateVars, setTemplateVars] = useState<Record<string, string>>({});
 
+  // CLI Platform — default "claude", sync from localStorage after mount to avoid SSR mismatch
+  const [selectedPlatform, setSelectedPlatform] = useState<"claude" | "codex" | "gemini" | "opencode">("claude");
+  const { platforms: detectedPlatforms, loading: platformsLoading } = useCLIPlatforms();
+
+  useEffect(() => {
+    const stored = localStorage.getItem("companion_last_platform");
+    if (stored && ["claude", "codex", "gemini", "opencode"].includes(stored)) {
+      setSelectedPlatform(stored as "claude" | "codex" | "gemini" | "opencode");
+    }
+  }, []);
+
+  // Sync model when platform changes — ensures model select always has a valid value
+  useEffect(() => {
+    const platformModels = getModelsForPlatform(selectedPlatform);
+    const validValues = platformModels.map((m) => m.value);
+    if (!validValues.includes(model)) {
+      setModel(getDefaultModelForPlatform(selectedPlatform));
+    }
+  }, [selectedPlatform]); // eslint-disable-line react-hooks/exhaustive-deps -- intentionally only on platform change
+
+  // Platform-specific options
+  const [codexApprovalMode, setCodexApprovalMode] = useState("suggest");
+  const [geminiSandbox, setGeminiSandbox] = useState(true);
+  const [geminiYolo, setGeminiYolo] = useState(false);
+
   // Persona / Expert Mode
   const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
   const { all: allPersonas } = usePersonas();
@@ -270,17 +297,23 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
         setResumingId(null);
       }
     },
-    [atLimit, onClose],
+    [atLimit, onClose, idleTimeout],
   );
 
   const handleSelectProject = useCallback((p: ProjectItem) => {
     setSelectedDir(p.dir);
     setProjectName(p.name);
-    const validModels = MODEL_OPTIONS.map((m) => m.value);
-    setModel(validModels.includes(p.defaultModel) ? p.defaultModel : "claude-sonnet-4-6");
+    // Set model based on platform
+    const platformModels = getModelsForPlatform(selectedPlatform);
+    const validValues = platformModels.map((m) => m.value);
+    if (selectedPlatform === "claude") {
+      setModel(validValues.includes(p.defaultModel) ? p.defaultModel : "claude-sonnet-4-6");
+    } else {
+      setModel(platformModels[0]?.value ?? "");
+    }
     setPermissionMode((p.permissionMode as PermissionMode) || "default");
     setStep(2);
-  }, []);
+  }, [selectedPlatform]);
 
   const handleDirSelected = useCallback((path: string) => {
     setShowDirBrowser(false);
@@ -320,7 +353,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
       // Pre-fill prompt with template prompt; user can still edit it
       setInitialPrompt(tpl.prompt);
       if (tpl.model) {
-        const validModels = MODEL_OPTIONS.map((m) => m.value);
+        const validModels = getModelsForPlatform(selectedPlatform).map((m) => m.value);
         if (validModels.includes(tpl.model)) setModel(tpl.model);
       }
       if (tpl.permissionMode) {
@@ -346,20 +379,33 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
         return;
       }
 
+      // Build platform-specific options
+      const platformOptions: Record<string, unknown> = {};
+      if (selectedPlatform === "codex") {
+        if (codexApprovalMode === "full-auto") platformOptions.fullAuto = true;
+        else platformOptions.approvalMode = codexApprovalMode;
+      }
+      if (selectedPlatform === "gemini") {
+        if (geminiSandbox) platformOptions.sandbox = true;
+        if (geminiYolo) platformOptions.yolo = true;
+      }
+
       const res = await api.sessions.start({
         projectDir: selectedDir,
         projectSlug: projectName
           ? projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-")
           : undefined,
         model,
-        permissionMode,
+        permissionMode: selectedPlatform === "claude" ? permissionMode : undefined,
         prompt: initialPrompt.trim() || undefined,
         templateId: selectedTemplateId ?? undefined,
         templateVars:
           selectedTemplateId && Object.keys(templateVars).length > 0 ? templateVars : undefined,
         idleTimeoutMs: idleTimeout,
         keepAlive: idleTimeout === 0,
-        personaId: selectedPersonaId ?? undefined,
+        personaId: selectedPlatform === "claude" ? (selectedPersonaId ?? undefined) : undefined,
+        cliPlatform: selectedPlatform,
+        platformOptions: Object.keys(platformOptions).length > 0 ? platformOptions : undefined,
       });
 
       const sessionId = res.data.sessionId;
@@ -403,6 +449,10 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
     selectedTemplateId,
     templateVars,
     selectedPersonaId,
+    selectedPlatform,
+    codexApprovalMode,
+    geminiSandbox,
+    geminiYolo,
     onClose,
   ]);
 
@@ -479,7 +529,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
               <p className="text-xs mt-0.5">
                 {atLimit
                   ? "Maximum 6 sessions active — stop one to continue"
-                  : "Launch a Claude Code session in a project"}
+                  : "Launch a coding session in a project"}
               </p>
             </div>
 
@@ -717,6 +767,21 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   </div>
                 )}
               </div>
+
+              {/* Platform picker */}
+              <div className="px-4 pb-3" style={{ borderTop: "1px solid var(--color-border)", paddingTop: 12 }}>
+                <PlatformPicker
+                  platforms={detectedPlatforms}
+                  loading={platformsLoading}
+                  selected={selectedPlatform}
+                  onSelect={(id) => {
+                    setSelectedPlatform(id);
+                    localStorage.setItem("companion_last_platform", id);
+                    // Reset model to platform default
+                    setModel(getDefaultModelForPlatform(id));
+                  }}
+                />
+              </div>
             </div>
           )}
 
@@ -759,14 +824,16 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                 />
               </div>
 
-              {/* Model */}
+              {/* Model — dynamic per platform */}
               <div>
                 <label
                   className="block text-xs font-semibold mb-1.5"
-                 
                   htmlFor="model-select"
                 >
                   MODEL
+                  <span className="font-normal ml-1" style={{ color: "var(--color-text-muted)" }}>
+                    ({selectedPlatform === "claude" ? "Claude" : selectedPlatform === "codex" ? "Codex" : selectedPlatform === "gemini" ? "Gemini" : "OpenCode"})
+                  </span>
                 </label>
                 <select
                   id="model-select"
@@ -779,7 +846,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                     fontFamily: "var(--font-mono)",
                   }}
                 >
-                  {MODEL_OPTIONS.map((opt) => (
+                  {getModelsForPlatform(selectedPlatform).map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
@@ -787,8 +854,64 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                 </select>
               </div>
 
-              {/* Expert Mode / Persona picker */}
-              <div>
+              {/* ── Platform-specific options ── */}
+              {selectedPlatform === "codex" && (
+                <div>
+                  <p className="text-xs font-semibold mb-2">APPROVAL MODE</p>
+                  <div className="flex gap-2">
+                    {[
+                      { value: "suggest", label: "Suggest", desc: "Review all changes" },
+                      { value: "auto-edit", label: "Auto-edit", desc: "Auto-approve file edits" },
+                      { value: "full-auto", label: "Full Auto", desc: "No prompts" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setCodexApprovalMode(opt.value)}
+                        className="flex-1 flex flex-col items-center gap-1 px-3 py-2.5 rounded-lg text-xs cursor-pointer transition-colors"
+                        style={{
+                          background: codexApprovalMode === opt.value ? "#10B98115" : "var(--color-bg-elevated)",
+                          border: codexApprovalMode === opt.value ? "1.5px solid #10B981" : "1px solid var(--color-border)",
+                          color: codexApprovalMode === opt.value ? "#10B981" : "var(--color-text-secondary)",
+                        }}
+                      >
+                        <span className="font-semibold">{opt.label}</span>
+                        <span style={{ color: "var(--color-text-muted)", fontSize: 10 }}>{opt.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedPlatform === "gemini" && (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ background: "#4285F410", border: "1px solid #4285F430" }}>
+                    <span style={{ color: "#4285F4", fontSize: 11, fontWeight: 600 }}>Free tier: 1000 req/day with Google Account</span>
+                  </div>
+                  <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer" style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}>
+                    <input type="checkbox" checked={geminiSandbox} onChange={(e) => setGeminiSandbox(e.target.checked)} className="cursor-pointer" style={{ accentColor: "#4285F4" }} />
+                    <div>
+                      <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>Sandbox Mode</p>
+                      <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Run in isolated sandbox environment</p>
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer" style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}>
+                    <input type="checkbox" checked={geminiYolo} onChange={(e) => setGeminiYolo(e.target.checked)} className="cursor-pointer" style={{ accentColor: "#EA4335" }} />
+                    <div>
+                      <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>YOLO Mode</p>
+                      <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Skip all confirmations (dangerous)</p>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {selectedPlatform === "opencode" && (
+                <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg" style={{ background: "#8B5CF610", border: "1px solid #8B5CF630" }}>
+                  <span style={{ color: "#8B5CF6", fontSize: 11, fontWeight: 600 }}>75+ providers via OpenCode — supports local (Ollama) and cloud models</span>
+                </div>
+              )}
+
+              {/* Expert Mode / Persona picker — only for Claude */}
+              {selectedPlatform === "claude" && <div>
                 <p className="text-xs font-semibold mb-2">
                   EXPERT MODE{" "}
                   <span className="font-normal">
@@ -869,9 +992,10 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                     );
                   })}
                 </div>
-              </div>
+              </div>}
 
-              {/* Permission mode */}
+              {/* Permission mode — Claude only */}
+              {selectedPlatform === "claude" && <>
               <div>
                 <p
                   className="text-xs font-semibold mb-2"
@@ -922,6 +1046,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                   )}
                 </div>
               </div>
+              </>}
 
               {/* Template picker */}
               {templates.length > 0 && (
@@ -1177,17 +1302,19 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span
-                      className="w-24 flex-shrink-0 text-xs font-semibold uppercase"
-                     
-                    >
+                    <span className="w-24 flex-shrink-0 text-xs font-semibold uppercase">
+                      Platform
+                    </span>
+                    <span className="text-xs font-semibold" style={{ color: selectedPlatform === "claude" ? "#D97706" : selectedPlatform === "codex" ? "#10B981" : selectedPlatform === "gemini" ? "#4285F4" : "#8B5CF6" }}>
+                      {selectedPlatform === "claude" ? "◈ Claude Code" : selectedPlatform === "codex" ? "◇ Codex" : selectedPlatform === "gemini" ? "◆ Gemini CLI" : "☁ OpenCode"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-24 flex-shrink-0 text-xs font-semibold uppercase">
                       Model
                     </span>
-                    <span
-                      className="text-xs font-mono"
-                     
-                    >
-                      {MODEL_OPTIONS.find((m) => m.value === model)?.label ?? model}
+                    <span className="text-xs font-mono">
+                      {getModelsForPlatform(selectedPlatform).find((m) => m.value === model)?.label ?? model}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
