@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ThemeSync } from "@/components/layout/theme-sync";
 import { MagicRingMount } from "@/components/ring/magic-ring-mount";
+import { UpdateBanner } from "@/components/update-banner";
 
 export const metadata: Metadata = {
   title: "Companion",
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ThemeSync />
             {children}
             <MagicRingMount />
+            <UpdateBanner />
           </AuthGuard>
         </ErrorBoundary>
         <Toaster

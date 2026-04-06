@@ -5,6 +5,7 @@ import { getSqlite } from "../db/client.js";
 
 import { countActiveSessions } from "../services/session-store.js";
 import { getLicense, verifyLicense } from "../services/license.js";
+import { checkForUpdate } from "../services/version-check.js";
 import { createLogger } from "../logger.js";
 import type { HealthResponse } from "@companion/shared";
 import { APP_VERSION } from "@companion/shared";
@@ -126,4 +127,11 @@ licenseActivateRoute.post("/activate", zValidator("json", activateSchema), async
     daysLeft: license.daysLeft,
     message: `Pro activated! ${license.maxSessions < 0 ? "unlimited" : license.maxSessions} sessions, expires ${license.expiresAt?.split("T")[0]}`,
   });
+});
+
+// Update check endpoint — checks GitHub releases for newer version
+healthRoutes.get("/update-check", async (c) => {
+  const force = c.req.query("force") === "true";
+  const info = await checkForUpdate(force);
+  return c.json(info);
 });

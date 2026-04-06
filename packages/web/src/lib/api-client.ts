@@ -1346,4 +1346,17 @@ export const api = {
         refreshed: boolean;
       }>("/api/cli-platforms/refresh", { method: "POST" }),
   },
+
+  // Update check
+  updateCheck: {
+    check: (force = false) =>
+      request<{
+        available: boolean;
+        currentVersion: string;
+        latestVersion: string;
+        releaseUrl: string;
+        releaseNotes: string;
+        publishedAt: string;
+      }>(`/api/health/update-check${force ? "?force=true" : ""}`),
+  },
 };
