@@ -1084,6 +1084,29 @@ export const api = {
       request<{ success: boolean }>(`/api/mcp-config/servers/${encodeURIComponent(id)}`, {
         method: "DELETE",
       }),
+
+    detect: () =>
+      request<{
+        success: boolean;
+        data: Array<{
+          id: string;
+          name: string;
+          type: "stdio" | "streamableHttp" | "sse";
+          command?: string;
+          args?: string[];
+          url?: string;
+          env?: Record<string, string>;
+          headers?: Record<string, string>;
+          source: string;
+          alreadyImported: boolean;
+        }>;
+      }>("/api/mcp-config/detected"),
+
+    import: (id: string) =>
+      request<{ success: boolean; data: { id: string } }>(
+        `/api/mcp-config/import/${encodeURIComponent(id)}`,
+        { method: "POST" },
+      ),
   },
 
   schedules: {

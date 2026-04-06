@@ -11,8 +11,6 @@ import {
   CircleNotch,
   Warning,
   MagnifyingGlass,
-  ArrowSquareOut,
-  Star,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 
@@ -216,100 +214,6 @@ function EmptyState() {
   );
 }
 
-// ── Recommended Skills ──────────────────────────────────────────────
-
-interface RecommendedPack {
-  name: string;
-  description: string;
-  skillCount: number;
-  url: string;
-  color: string;
-}
-
-const RECOMMENDED_PACKS: RecommendedPack[] = [
-  {
-    name: "Rune Skills",
-    description: "61 specialized skills for Claude Code — planning, review, testing, deploy, and more.",
-    skillCount: 61,
-    url: "https://github.com/rune-ux/rune",
-    color: "var(--color-accent)",
-  },
-  {
-    name: "Neural Memory",
-    description: "Persistent memory across sessions. Auto-save decisions, preferences, and context.",
-    skillCount: 12,
-    url: "https://github.com/anthropics/neural-memory",
-    color: "var(--color-purple, #a855f7)",
-  },
-  {
-    name: "Claude Code Skills",
-    description: "Custom slash commands and reusable prompts for Claude Code workflows.",
-    skillCount: 15,
-    url: "https://docs.anthropic.com/en/docs/claude-code/tutorials",
-    color: "var(--color-success, #10b981)",
-  },
-];
-
-function RecommendedSection() {
-  return (
-    <div className="mb-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Star size={14} weight="fill" style={{ color: "var(--color-warning, #f59e0b)" }} />
-        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
-          Recommended
-        </span>
-      </div>
-      <div className="grid gap-2">
-        {RECOMMENDED_PACKS.map((pack) => (
-          <a
-            key={pack.name}
-            href={pack.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors group"
-            style={{
-              border: "1px solid var(--color-border)",
-              background: "var(--color-bg-base)",
-            }}
-          >
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-              style={{ background: `color-mix(in srgb, ${pack.color} 15%, transparent)` }}
-            >
-              <Package size={16} weight="duotone" style={{ color: pack.color }} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium" style={{ color: "var(--color-text-primary)" }}>
-                  {pack.name}
-                </span>
-                <ArrowSquareOut
-                  size={12}
-                  weight="bold"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ color: "var(--color-text-muted)" }}
-                />
-              </div>
-              <p className="text-xs mt-0.5 line-clamp-2" style={{ color: "var(--color-text-muted)" }}>
-                {pack.description}
-              </p>
-              <span
-                className="inline-block text-xs mt-1 px-1.5 py-0.5 rounded"
-                style={{
-                  background: `color-mix(in srgb, ${pack.color} 10%, transparent)`,
-                  color: pack.color,
-                }}
-              >
-                {pack.skillCount} skills
-              </span>
-            </div>
-          </a>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ── Main Component ──────────────────────────────────────────────────
 
 export function SkillsTab() {
@@ -422,15 +326,9 @@ export function SkillsTab() {
   return (
     <div className="space-y-4">
       {groups.length === 0 ? (
-        <>
-          <RecommendedSection />
-          <EmptyState />
-        </>
+        <EmptyState />
       ) : (
         <>
-          {/* Installed skills header + recommended */}
-          <RecommendedSection />
-
           {/* Search input */}
           <div className="relative">
             <MagnifyingGlass

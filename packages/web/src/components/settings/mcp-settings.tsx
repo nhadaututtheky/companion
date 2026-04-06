@@ -31,6 +31,17 @@ interface McpServer {
   description?: string;
 }
 
+interface DetectedServer {
+  id: string;
+  name: string;
+  type: "stdio" | "streamableHttp" | "sse";
+  command?: string;
+  args?: string[];
+  url?: string;
+  source: string;
+  alreadyImported: boolean;
+}
+
 type ServerType = McpServer["type"];
 
 const TYPE_LABELS: Record<ServerType, string> = {
@@ -64,6 +75,8 @@ export function McpSettings() {
   const [editing, setEditing] = useState<McpServer | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [detected, setDetected] = useState<DetectedServer[]>([]);
+  const [importing, setImporting] = useState<string | null>(null);
 
   const loadServers = useCallback(async () => {
     try {
@@ -77,9 +90,21 @@ export function McpSettings() {
     setLoading(false);
   }, []);
 
+  const loadDetected = useCallback(async () => {
+    try {
+      const res = await api.mcpConfig.detect();
+      if (res.success) {
+        setDetected(res.data);
+      }
+    } catch {
+      // Non-critical — detection may fail in Docker without ~/.claude.json
+    }
+  }, []);
+
   useEffect(() => {
     loadServers(); // eslint-disable-line react-hooks/set-state-in-effect
-  }, [loadServers]);
+    loadDetected();
+  }, [loadServers, loadDetected]);
 
   const handleSelect = (server: McpServer) => {
     setSelectedId(server.id);
@@ -128,6 +153,19 @@ export function McpSettings() {
       toast.error("Failed to save MCP server");
     }
     setSaving(false);
+  };
+
+  const handleImport = async (serverId: string) => {
+    setImporting(serverId);
+    try {
+      await api.mcpConfig.import(serverId);
+      toast.success(`Imported "${serverId}"`);
+      await loadServers();
+      await loadDetected();
+    } catch {
+      toast.error("Failed to import server");
+    }
+    setImporting(null);
   };
 
   const handleDelete = async (serverId: string) => {
@@ -287,6 +325,123 @@ export function McpSettings() {
           )}
         </div>
       </div>
+
+      {/* Detected from Claude Config */}
+      <DetectedServersSection
+        servers={detected}
+        importing={importing}
+        onImport={handleImport}
+      />
+    </div>
+  );
+}
+
+// ── Detected Servers Section ──────────────────────────────────────────
+
+function DetectedServersSection({
+  servers,
+  importing,
+  onImport,
+}: {
+  servers: DetectedServer[];
+  importing: string | null;
+  onImport: (id: string) => void;
+}) {
+  const notImported = servers.filter((s) => !s.alreadyImported);
+  if (notImported.length === 0 && servers.length === 0) return null;
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-2">
+        <Plugs size={14} weight="duotone" style={{ color: "var(--color-text-muted)" }} />
+        <span
+          className="text-xs font-semibold uppercase tracking-wider"
+          style={{ color: "var(--color-text-muted)" }}
+        >
+          Detected from Claude Config
+        </span>
+        <span
+          className="text-xs px-1.5 py-0.5 rounded-md"
+          style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-muted)" }}
+        >
+          {servers.length}
+        </span>
+      </div>
+
+      {notImported.length === 0 ? (
+        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+          All detected servers are already imported.
+        </p>
+      ) : (
+        <div className="grid gap-2">
+          {notImported.map((server) => {
+            const Icon = TYPE_ICONS[server.type];
+            const isImporting = importing === server.id;
+            return (
+              <div
+                key={`${server.id}-${server.source}`}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
+                style={{
+                  border: "1px solid var(--color-border)",
+                  background: "var(--color-bg-base)",
+                }}
+              >
+                <Icon
+                  size={14}
+                  weight="duotone"
+                  style={{ color: "var(--color-text-secondary)", flexShrink: 0 }}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="text-xs font-medium truncate"
+                      style={{ color: "var(--color-text-primary)" }}
+                    >
+                      {server.name}
+                    </span>
+                    <span
+                      className="text-xs px-1.5 py-0.5 rounded shrink-0"
+                      style={{
+                        background: "var(--color-bg-elevated)",
+                        color: "var(--color-text-muted)",
+                        fontSize: 10,
+                      }}
+                    >
+                      {server.type === "stdio" ? "stdio" : server.type === "streamableHttp" ? "HTTP" : "SSE"}
+                    </span>
+                  </div>
+                  <div
+                    className="text-xs truncate mt-0.5"
+                    style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                  >
+                    {server.source}
+                    {server.command && ` · ${server.command}`}
+                    {server.url && ` · ${server.url}`}
+                  </div>
+                </div>
+                <button
+                  onClick={() => onImport(server.id)}
+                  disabled={isImporting}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors shrink-0"
+                  style={{
+                    background: isImporting ? "var(--color-bg-elevated)" : "#4285F415",
+                    color: isImporting ? "var(--color-text-muted)" : "#4285F4",
+                    border: "1px solid #4285F430",
+                  }}
+                  aria-label={`Import ${server.name}`}
+                >
+                  {isImporting ? (
+                    <ArrowsClockwise size={12} className="animate-spin" />
+                  ) : (
+                    <Plus size={12} weight="bold" />
+                  )}
+                  Import
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

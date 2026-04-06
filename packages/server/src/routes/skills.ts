@@ -49,87 +49,113 @@ function parseFrontmatter(content: string): { name?: string; description?: strin
 /** Max file size to read (512 KB) */
 const MAX_SKILL_FILE_SIZE = 512 * 1024;
 
-/** Scan a skills directory for subdirectories containing skill.md or SKILL.md */
-function scanSkillsDir(dir: string): SkillLeaf[] {
+/** Skill file candidates in priority order */
+const SKILL_FILE_CANDIDATES = ["skill.md", "SKILL.md", "README.md"];
+
+/** Try to read a skill definition from a markdown file */
+function tryReadSkillFile(filePath: string, fallbackName: string): SkillLeaf | null {
+  try {
+    const stat = statSync(filePath);
+    if (stat.size > MAX_SKILL_FILE_SIZE) {
+      return { name: fallbackName, description: "File too large to preview", filePath };
+    }
+    const content = readFileSync(filePath, "utf-8");
+    const fm = parseFrontmatter(content);
+    return {
+      name: fm.name ?? fallbackName,
+      description: fm.description ?? "",
+      filePath,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Scan a skills directory recursively for skill definitions.
+ * Looks for skill.md, SKILL.md, or README.md in each subdirectory.
+ * Recurses into nested subdirs (e.g. vercel-deploy/vercel-deploy-claimable/).
+ */
+function scanSkillsDir(dir: string, maxDepth = 3): SkillLeaf[] {
   if (!existsSync(dir)) return [];
 
   const skills: SkillLeaf[] = [];
 
-  try {
-    const entries = readdirSync(dir, { withFileTypes: true });
+  function walk(currentDir: string, depth: number) {
+    if (depth > maxDepth) return;
 
-    for (const entry of entries) {
-      if (!entry.isDirectory()) {
-        // Check for top-level skill files (e.g. SKILL.md, README.md)
-        if (entry.name.toLowerCase() === "skill.md") {
-          const filePath = join(dir, entry.name);
-          try {
-            const stat = statSync(filePath);
-            if (stat.size > MAX_SKILL_FILE_SIZE) {
-              skills.push({ name: "Root Skill", description: "File too large to preview", filePath });
-              continue;
-            }
-            const content = readFileSync(filePath, "utf-8");
-            const fm = parseFrontmatter(content);
-            skills.push({
-              name: fm.name ?? "Root Skill",
-              description: fm.description ?? "",
-              filePath,
-            });
-          } catch {
-            // Skip unreadable files
-          }
-        }
-        continue;
-      }
+    let entries;
+    try {
+      entries = readdirSync(currentDir, { withFileTypes: true });
+    } catch {
+      return;
+    }
 
-      // Look for skill.md or SKILL.md inside the subdirectory
-      const subDir = join(dir, entry.name);
-      const candidates = ["skill.md", "SKILL.md"];
-      let found = false;
-
-      for (const candidate of candidates) {
-        const filePath = join(subDir, candidate);
+    // Check for a skill file at current level (top-level skill.md)
+    if (depth > 0) {
+      for (const candidate of SKILL_FILE_CANDIDATES) {
+        const filePath = join(currentDir, candidate);
         if (existsSync(filePath)) {
-          try {
-            const stat = statSync(filePath);
-            if (stat.size > MAX_SKILL_FILE_SIZE) {
-              skills.push({ name: entry.name, description: "File too large to preview", filePath });
-              found = true;
-              break;
-            }
-            const content = readFileSync(filePath, "utf-8");
-            const fm = parseFrontmatter(content);
-            skills.push({
-              name: fm.name ?? entry.name,
-              description: fm.description ?? "",
-              filePath,
-            });
-            found = true;
-          } catch {
-            // Skip unreadable files
-          }
+          const dirName = currentDir.split(sep).pop() ?? "Skill";
+          const skill = tryReadSkillFile(filePath, dirName);
+          if (skill) skills.push(skill);
+          return; // Found skill definition — don't recurse deeper
+        }
+      }
+    } else {
+      // At root level, check for a root skill.md
+      const rootSkillPath = join(currentDir, "skill.md");
+      const rootSkillPathUpper = join(currentDir, "SKILL.md");
+      for (const p of [rootSkillPath, rootSkillPathUpper]) {
+        if (existsSync(p)) {
+          const skill = tryReadSkillFile(p, "Root Skill");
+          if (skill) skills.push(skill);
           break;
         }
       }
+    }
 
-      // Fallback: if no skill.md found, check for README.md
-      if (!found) {
-        const readmePath = join(subDir, "README.md");
-        if (existsSync(readmePath)) {
-          skills.push({
-            name: entry.name,
-            description: "",
-            filePath: readmePath,
-          });
+    // Recurse into subdirectories
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      // Skip hidden directories and node_modules
+      if (entry.name.startsWith(".") || entry.name === "node_modules") continue;
+      walk(join(currentDir, entry.name), depth + 1);
+    }
+  }
+
+  walk(dir, 0);
+  return skills;
+}
+
+/** Scan a commands directory (flat .md files, each is a command) */
+function scanCommandsDir(dir: string): SkillLeaf[] {
+  if (!existsSync(dir)) return [];
+
+  const commands: SkillLeaf[] = [];
+  try {
+    const entries = readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        // Check for command.md or index.md inside
+        for (const candidate of ["command.md", "index.md", "README.md"]) {
+          const filePath = join(dir, entry.name, candidate);
+          if (existsSync(filePath)) {
+            const cmd = tryReadSkillFile(filePath, entry.name);
+            if (cmd) commands.push(cmd);
+            break;
+          }
         }
+      } else if (entry.name.endsWith(".md")) {
+        const filePath = join(dir, entry.name);
+        const cmd = tryReadSkillFile(filePath, entry.name.replace(/\.md$/, ""));
+        if (cmd) commands.push(cmd);
       }
     }
   } catch {
-    // Directory not readable — return empty
+    // Directory not readable
   }
-
-  return skills;
+  return commands;
 }
 
 /** Check if resolved path is within an allowed root (with separator boundary) */
@@ -158,7 +184,19 @@ skillsRoutes.get("/", (c) => {
     });
   }
 
-  // Source 2: ~/.rune/skills (if Rune is installed)
+  // Source 2: ~/.claude/commands (custom slash commands)
+  const claudeCommandsDir = join(home, ".claude", "commands");
+  const claudeCommands = scanCommandsDir(claudeCommandsDir);
+  if (claudeCommands.length > 0) {
+    groups.push({
+      id: "claude-commands",
+      label: "Custom Commands",
+      source: "~/.claude/commands",
+      skills: claudeCommands,
+    });
+  }
+
+  // Source 3: ~/.rune/skills (if Rune is installed)
   const runeSkillsDir = join(home, ".rune", "skills");
   const runeSkills = scanSkillsDir(runeSkillsDir);
   if (runeSkills.length > 0) {
@@ -170,7 +208,7 @@ skillsRoutes.get("/", (c) => {
     });
   }
 
-  // Source 3: Project-level .claude/skills (if project header provided)
+  // Source 4: Project-level skills (if project header provided)
   const projectDir = c.req.query("projectDir");
   if (projectDir) {
     const resolved = resolve(projectDir);
@@ -181,6 +219,17 @@ skillsRoutes.get("/", (c) => {
         label: "Project Skills (.claude)",
         source: `${projectDir}/.claude/skills`,
         skills: projectClaudeSkills,
+      });
+    }
+
+    // Project-level commands
+    const projectCommands = scanCommandsDir(join(resolved, ".claude", "commands"));
+    if (projectCommands.length > 0) {
+      groups.push({
+        id: "project-commands",
+        label: "Project Commands",
+        source: `${projectDir}/.claude/commands`,
+        skills: projectCommands,
       });
     }
 
@@ -213,6 +262,7 @@ skillsRoutes.get("/content", (c) => {
   const home = homedir();
   const allowedRoots = [
     resolve(join(home, ".claude", "skills")),
+    resolve(join(home, ".claude", "commands")),
     resolve(join(home, ".rune", "skills")),
   ];
 
@@ -221,6 +271,7 @@ skillsRoutes.get("/content", (c) => {
   if (projectDir) {
     const projResolved = resolve(projectDir);
     allowedRoots.push(resolve(join(projResolved, ".claude", "skills")));
+    allowedRoots.push(resolve(join(projResolved, ".claude", "commands")));
     allowedRoots.push(resolve(join(projResolved, ".rune", "skills")));
   }
 
