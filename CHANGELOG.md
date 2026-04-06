@@ -2,6 +2,27 @@
 
 All notable changes to Companion are documented here.
 
+## [0.10.2] - 2026-04-06
+
+### Added
+- **Let's Encrypt Auto-SSL** — Certbot sidecar container with automatic certificate issuance and 12h renewal cycle. SSL mode selector (Let's Encrypt / Manual) in domain settings UI.
+- **Issue Certificate Button** — One-click SSL cert issuance from Settings UI when Let's Encrypt mode is active.
+- **Multi-Bot Debate Guide** — Collapsible 4-step setup guide for running multi-platform AI debates in Telegram groups.
+- **Agent Pulse Health Monitor** — Live health monitoring with pulse indicators for active sessions.
+- **Inline Diff Summary** — Diff summary blocks rendered inline in chat feed.
+- **Free Model Debate** — Provider registry + model picker UI for cross-provider debate sessions.
+
+### Fixed
+- **Docker Apply** — Replaced broken `fetch` to unix socket with `Bun.spawn` for reliable `docker compose up -d` execution.
+- **WebIntel API Key UX** — Clarified that API key is not required for most features, moved to collapsed Advanced section.
+- **Memory Leak** — Fixed cost tracking memory leak and rate limit retry logic.
+- **Certbot Template Literal** — Escaped `$${!}` properly in docker-compose YAML generation.
+
+### Changed
+- Multi-platform bot roles: Claude, Codex, Gemini, OpenCode (removed deprecated Anti role)
+- Expanded Telegram command reference with `/templates`, `/mood`, debate commands
+- NGINX config generation now supports ACME challenge + HTTPS redirect + TLS 1.2/1.3
+
 ## [0.10.1] - 2026-04-06
 
 ### Added
