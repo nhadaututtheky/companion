@@ -4,7 +4,7 @@
  */
 
 import { createLogger } from "../logger.js";
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { hostname as getHostname } from "node:os";
@@ -29,6 +29,13 @@ export interface LicenseInfo {
   cachedAt: number;
   daysLeft?: number;
   error?: string;
+}
+
+/** Extended cache record with metadata to prevent cross-key/cross-source collisions */
+interface CachedLicenseRecord extends LicenseInfo {
+  source: "trial" | "license";
+  licenseKeyHash?: string;
+  machineId: string;
 }
 
 // ── Feature definitions by tier ─────────────────────────────────────────────
@@ -64,7 +71,7 @@ const FREE_LICENSE: LicenseInfo = {
 const TRIAL_FEATURES = STARTER_FEATURES;
 
 // In-memory cache
-let cachedLicense: LicenseInfo | null = null;
+let cachedLicense: CachedLicenseRecord | null = null;
 
 // ── Machine ID ──────────────────────────────────────────────────────────────
 
@@ -76,19 +83,24 @@ function getMachineId(): string {
   return createHash("sha256").update(raw).digest("hex").slice(0, 16);
 }
 
+/** Hash a license key for cache matching (never store raw key) */
+function hashKey(key: string): string {
+  return createHash("sha256").update(key).digest("hex").slice(0, 16);
+}
+
 // ── Cache persistence (survives restarts) ───────────────────────────────────
 
 function getCachePath(): string {
   return join(DATA_DIR, ".license-cache.json");
 }
 
-function loadCachedLicense(): LicenseInfo | null {
+function loadCachedLicense(): CachedLicenseRecord | null {
   try {
     const cachePath = getCachePath();
     if (!existsSync(cachePath)) return null;
     const data = JSON.parse(readFileSync(cachePath, "utf-8"));
     if (data && data.cachedAt && Date.now() - data.cachedAt < CACHE_TTL_MS) {
-      return data as LicenseInfo;
+      return data as CachedLicenseRecord;
     }
     return null;
   } catch {
@@ -96,40 +108,73 @@ function loadCachedLicense(): LicenseInfo | null {
   }
 }
 
-function saveLicenseCache(license: LicenseInfo): void {
+function saveLicenseCache(record: CachedLicenseRecord): void {
   try {
     mkdirSync(DATA_DIR, { recursive: true });
-    writeFileSync(getCachePath(), JSON.stringify(license, null, 2));
+    writeFileSync(getCachePath(), JSON.stringify(record, null, 2));
   } catch (err) {
     log.warn("Failed to persist license cache", { error: String(err) });
   }
+}
+
+function clearLicenseCache(): void {
+  try {
+    const cachePath = getCachePath();
+    if (existsSync(cachePath)) {
+      unlinkSync(cachePath);
+      log.info("License cache cleared");
+    }
+  } catch (err) {
+    log.warn("Failed to clear license cache", { error: String(err) });
+  }
+}
+
+/**
+ * Check if cached record matches the current verification context.
+ * Prevents trial cache from being used for paid key verification and vice versa.
+ */
+function isCacheValidFor(
+  record: CachedLicenseRecord,
+  source: "trial" | "license",
+  keyHash?: string,
+): boolean {
+  if (!record.valid) return false;
+  if (Date.now() - record.cachedAt >= CACHE_TTL_MS) return false;
+  if (record.machineId !== getMachineId()) return false;
+  // Source must match — trial cache cannot serve paid license verification
+  if (record.source !== source) return false;
+  // For paid licenses, the key hash must match
+  if (source === "license" && record.licenseKeyHash !== keyHash) return false;
+  return true;
 }
 
 // ── License verification ────────────────────────────────────────────────────
 
 /**
  * Verify license key against the cloud API.
- * Returns cached result if still valid.
+ * Returns cached result only if it matches the same key + source.
  */
 export async function verifyLicense(
   key: string,
   options?: { skipCache?: boolean },
 ): Promise<LicenseInfo> {
-  // Check cache (skip when explicitly activating a new key)
+  const keyH = hashKey(key);
+  const mid = getMachineId();
+
+  // Check cache — only reuse if same key + same source + same machine
   if (!options?.skipCache) {
-    if (cachedLicense?.valid && Date.now() - cachedLicense.cachedAt < CACHE_TTL_MS) {
+    if (cachedLicense && isCacheValidFor(cachedLicense, "license", keyH)) {
       return cachedLicense;
     }
 
     const persisted = loadCachedLicense();
-    if (persisted?.valid) {
+    if (persisted && isCacheValidFor(persisted, "license", keyH)) {
       cachedLicense = persisted;
       return persisted;
     }
   }
 
   try {
-    const mid = getMachineId();
     const res = await fetch(
       `${VERIFY_URL}?key=${encodeURIComponent(key)}&mid=${encodeURIComponent(mid)}`,
       {
@@ -149,7 +194,7 @@ export async function verifyLicense(
       error?: string;
     };
 
-    const license: LicenseInfo = {
+    const record: CachedLicenseRecord = {
       valid: data.valid,
       tier: (data.tier as LicenseTier) ?? "free",
       email: data.email ?? "",
@@ -159,28 +204,45 @@ export async function verifyLicense(
       cachedAt: Date.now(),
       daysLeft: data.daysLeft,
       error: data.error,
+      source: "license",
+      licenseKeyHash: keyH,
+      machineId: mid,
     };
 
-    if (license.valid) {
-      cachedLicense = license;
-      saveLicenseCache(license);
+    if (record.valid) {
+      cachedLicense = record;
+      saveLicenseCache(record);
       log.info("License verified", {
-        tier: license.tier,
-        email: license.email,
-        expiresAt: license.expiresAt,
-        maxSessions: license.maxSessions,
+        tier: record.tier,
+        email: record.email,
+        expiresAt: record.expiresAt,
+        maxSessions: record.maxSessions,
       });
     } else {
-      log.warn("License invalid", { error: license.error });
+      // Key invalid — clear any stale cache and log clearly
+      clearLicenseCache();
+      cachedLicense = null;
+      log.warn("License key rejected by verify endpoint", {
+        error: record.error,
+        tierFallback: "trial",
+      });
     }
 
-    return license;
+    return record;
   } catch (err) {
     log.error("License verification failed — using cached or free tier", { error: String(err) });
 
-    if (cachedLicense?.valid) {
+    // Offline fallback — only use cache if it's for the SAME key
+    if (cachedLicense && isCacheValidFor(cachedLicense, "license", keyH)) {
       log.info("Using cached license (offline mode)", { tier: cachedLicense.tier });
       return cachedLicense;
+    }
+
+    const persisted = loadCachedLicense();
+    if (persisted && isCacheValidFor(persisted, "license", keyH)) {
+      cachedLicense = persisted;
+      log.info("Using persisted license cache (offline mode)", { tier: persisted.tier });
+      return persisted;
     }
 
     return { ...FREE_LICENSE, cachedAt: Date.now(), error: "Cannot reach license server" };
@@ -196,12 +258,9 @@ export async function verifyLicense(
 export async function checkOrActivateTrial(): Promise<LicenseInfo> {
   const machineId = getMachineId();
 
-  // Check persistent cache first
+  // Check persistent cache — only reuse if it's a trial cache for this machine
   const persisted = loadCachedLicense();
-  if (
-    persisted?.valid &&
-    (persisted.tier === "trial" || persisted.tier === "starter" || persisted.tier === "pro")
-  ) {
+  if (persisted && isCacheValidFor(persisted, "trial")) {
     cachedLicense = persisted;
     return persisted;
   }
@@ -221,7 +280,7 @@ export async function checkOrActivateTrial(): Promise<LicenseInfo> {
       daysLeft?: number;
     };
 
-    const license: LicenseInfo = {
+    const record: CachedLicenseRecord = {
       valid: data.valid,
       tier: (data.tier as LicenseTier) ?? "free",
       email: "",
@@ -230,26 +289,28 @@ export async function checkOrActivateTrial(): Promise<LicenseInfo> {
       features: data.features ?? [],
       cachedAt: Date.now(),
       daysLeft: data.daysLeft,
+      source: "trial",
+      machineId,
     };
 
-    cachedLicense = license;
-    saveLicenseCache(license);
+    cachedLicense = record;
+    saveLicenseCache(record);
 
-    if (license.valid && license.tier === "trial") {
-      log.info(`Trial active — ${license.daysLeft} days remaining`, {
-        expiresAt: license.expiresAt,
-        maxSessions: license.maxSessions,
+    if (record.valid && record.tier === "trial") {
+      log.info(`Trial active — ${record.daysLeft} days remaining`, {
+        expiresAt: record.expiresAt,
+        maxSessions: record.maxSessions,
       });
     } else {
-      log.info("Trial expired — running in free mode (2 sessions)");
+      log.info(`Trial expired — free mode (${FREE_LICENSE.maxSessions} sessions)`);
     }
 
-    return license;
+    return record;
   } catch (err) {
     log.warn("Trial check failed — checking local cache", { error: String(err) });
 
     // Offline: if we have a cached trial, use it
-    if (persisted) {
+    if (persisted && persisted.source === "trial") {
       const expiry = new Date(persisted.expiresAt);
       if (expiry > new Date()) {
         cachedLicense = persisted;
@@ -277,7 +338,7 @@ export async function checkOrActivateTrial(): Promise<LicenseInfo> {
     const isValid = trialEnd > new Date();
     const daysLeft = isValid ? Math.ceil((trialEnd.getTime() - Date.now()) / 86400000) : 0;
 
-    const localTrial: LicenseInfo = {
+    const localTrial: CachedLicenseRecord = {
       valid: isValid,
       tier: isValid ? "trial" : "free",
       email: "",
@@ -286,6 +347,8 @@ export async function checkOrActivateTrial(): Promise<LicenseInfo> {
       features: isValid ? TRIAL_FEATURES : FREE_LICENSE.features,
       cachedAt: Date.now(),
       daysLeft,
+      source: "trial",
+      machineId,
     };
 
     cachedLicense = localTrial;

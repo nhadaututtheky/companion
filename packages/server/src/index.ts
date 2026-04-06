@@ -70,7 +70,8 @@ if (startupCleaned > 0) {
 // ── License / Trial verification ────────────────────────────────────────────
 const licenseKey = process.env.COMPANION_LICENSE_KEY;
 if (licenseKey) {
-  verifyLicense(licenseKey)
+  // Force skip cache when key is explicitly set — always verify against server
+  verifyLicense(licenseKey, { skipCache: true })
     .then((license) => {
       if (license.valid) {
         log.info(
@@ -93,12 +94,12 @@ if (licenseKey) {
         log.info(`Free trial: ${trial.daysLeft} days left — all Pro features unlocked`);
       } else {
         log.info(
-          "Trial expired — free mode (1 session). Get a license at https://companion.theio.vn — buy at https://pay.theio.vn",
+          "Trial expired — free mode (2 sessions). Get a license at https://companion.theio.vn",
         );
       }
     })
     .catch(() => {
-      log.info("No license, no trial — free mode (1 session)");
+      log.info("No license, no trial — free mode (2 sessions)");
     });
 }
 
