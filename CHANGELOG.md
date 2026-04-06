@@ -2,6 +2,24 @@
 
 All notable changes to Companion are documented here.
 
+## [0.10.0] - 2026-04-06
+
+### Added
+- **Multi-CLI Platform Support** — Adapters for Codex, Gemini CLI, OpenCode alongside Claude. Abstract CLI interface with normalized message format.
+- **CLI Debate Engine** — Cross-platform turn-based debates with sequential execution, agent cards, creation modal, and live feed with round dividers.
+- **Update Notification** — Dual-channel update detection: server-side GitHub API polling + Tauri native `update-available` event. Toast banner with dismiss-per-version.
+- **MCP Auto-Detect** — Reads `~/.claude.json`, `settings.json`, `settings.local.json` to discover MCP servers. One-click import into Companion's config.
+- **Recursive Skills Scanner** — Skills detection now recurses into nested subdirs and scans `~/.claude/commands/` for custom slash commands.
+
+### Fixed
+- **Orphan Hooks Cleanup** — Companion now cleans up `.claude/settings.local.json` hooks on shutdown + startup, preventing ECONNREFUSED when running Claude Code standalone.
+- **Codex/Gemini/OpenCode adapter fixes** — cwd propagation, tool_result typing, randomUUID for tool IDs, send() warns on non-interactive stdin.
+- **New Session Modal** — SSR-safe localStorage, model sync on platform change, template model validation per platform.
+
+### Changed
+- Removed hardcoded recommended skill packs with incorrect git links
+- Enabled `withGlobalTauri: true` for native update event listening
+
 ## [0.9.0] - 2026-04-06
 
 ### Added
