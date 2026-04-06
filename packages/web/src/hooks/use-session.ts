@@ -533,6 +533,26 @@ export function useSession(sessionId: string): UseSessionReturn {
           break;
         }
 
+        case "idle_warning": {
+          const remaining = (msg as { remainingMs?: number }).remainingMs ?? 300_000;
+          const mins = Math.round(remaining / 60_000);
+          const warningText = `Session will auto-stop in ${mins} minute${mins !== 1 ? "s" : ""} due to inactivity. Send a message to keep it alive.`;
+          addLog({
+            sessionId,
+            sessionName: getSessionName(),
+            timestamp: Date.now(),
+            type: "warning",
+            content: warningText,
+          });
+          import("sonner").then(({ toast }) => {
+            toast.warning(`Idle timeout: ${getSessionName()}`, {
+              description: warningText,
+              duration: 30_000,
+            });
+          });
+          break;
+        }
+
         case "tool_progress": {
           const elapsed = msg.elapsed_time_seconds;
           addLog({

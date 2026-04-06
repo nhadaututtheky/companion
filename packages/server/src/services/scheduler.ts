@@ -230,6 +230,9 @@ async function executeSchedule(schedule: Schedule) {
       source: "scheduler",
       name: `[scheduled] ${schedule.name}`,
     });
+
+    // Scheduled sessions should not auto-kill on idle
+    bridgeRef.setSessionSettings(sessionId, { keepAlive: true });
   } catch (err) {
     log.error("Failed to start scheduled session", {
       scheduleId: schedule.id,

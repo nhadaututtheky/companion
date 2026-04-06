@@ -202,6 +202,7 @@ export type BrowserIncomingMessage =
     }
   | { type: "lock_status"; locked: boolean; owner: string | null; queueSize: number }
   | { type: "session_idle"; sessionId: string; idleDurationMs: number }
+  | { type: "idle_warning"; remainingMs: number; message: string }
   | {
       type: "prompt_scan";
       risks: Array<{ category: string; severity: string; description: string; matched: string }>;

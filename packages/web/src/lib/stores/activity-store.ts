@@ -6,6 +6,7 @@ export type ActivityLogType =
   | "tool_result"
   | "result"
   | "error"
+  | "warning"
   | "permission"
   | "cost";
 

@@ -456,6 +456,10 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
   // Resume an ended session
   app.post("/:id/resume", async (c) => {
     const id = c.req.param("id");
+    const body = await c.req.json<{
+      idleTimeoutMs?: number;
+      keepAlive?: boolean;
+    }>().catch((): { idleTimeoutMs?: number; keepAlive?: boolean } => ({}));
     const record = getSessionRecord(id);
     if (!record) {
       return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
@@ -493,6 +497,12 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         resume: true,
         cliSessionId: record.cliSessionId,
         source: "api",
+      });
+
+      // Apply idle timeout / keep-alive settings (default to 1h if not specified)
+      bridge.setSessionSettings(sessionId, {
+        idleTimeoutMs: body.idleTimeoutMs ?? 3_600_000,
+        ...(body.keepAlive !== undefined ? { keepAlive: body.keepAlive } : {}),
       });
 
       // Clear cliSessionId on old session so it won't appear in resumable list again

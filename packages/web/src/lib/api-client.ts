@@ -132,9 +132,10 @@ export const api = {
     },
     dismissResumable: (id: string) =>
       request<{ success: boolean }>(`/api/sessions/resumable/${id}`, { method: "DELETE" }),
-    resume: (id: string) =>
+    resume: (id: string, opts?: { idleTimeoutMs?: number; keepAlive?: boolean }) =>
       request<{ success: boolean; data: { sessionId: string } }>(`/api/sessions/${id}/resume`, {
         method: "POST",
+        body: JSON.stringify(opts ?? {}),
       }),
     streamTelegramStatus: (id: string) =>
       request<{

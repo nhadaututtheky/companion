@@ -149,6 +149,8 @@ export class WsBridge {
   private onStatusChange?: StatusChangeCallback;
   /** Idle timers keyed by session ID — only for non-Telegram sessions */
   private idleTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  /** Warning timers that fire before the kill timer */
+  private idleWarningTimers = new Map<string, ReturnType<typeof setTimeout>>();
   /** Per-session timeout/keep-alive settings */
   private sessionSettings = new Map<string, SessionSettings>();
   /** Process liveness check interval handle */
@@ -2323,6 +2325,25 @@ export class WsBridge {
     this.clearIdleTimer(session.id);
 
     const timeoutMs = settings.idleTimeoutMs;
+
+    // Warning 5 minutes before kill (only if timeout > 5 min)
+    const WARN_BEFORE_MS = 5 * 60 * 1000;
+    if (timeoutMs > WARN_BEFORE_MS) {
+      const warnTimer = setTimeout(() => {
+        this.idleWarningTimers.delete(session.id);
+        const current = getActiveSession(session.id);
+        if (!current || current.state.status === "ended" || current.state.status === "error") return;
+        if (current.state.status === "busy" || current.state.status === "compacting") return;
+
+        this.broadcastToAll(current, {
+          type: "idle_warning",
+          remainingMs: WARN_BEFORE_MS,
+          message: "Session will auto-stop in 5 minutes due to inactivity",
+        });
+      }, timeoutMs - WARN_BEFORE_MS);
+      this.idleWarningTimers.set(session.id, warnTimer);
+    }
+
     const timer = setTimeout(() => {
       this.idleTimers.delete(session.id);
       // Only kill if session is still idle (not busy or already ended)
@@ -2342,6 +2363,11 @@ export class WsBridge {
     if (existing !== undefined) {
       clearTimeout(existing);
       this.idleTimers.delete(sessionId);
+    }
+    const warn = this.idleWarningTimers.get(sessionId);
+    if (warn !== undefined) {
+      clearTimeout(warn);
+      this.idleWarningTimers.delete(sessionId);
     }
   }
 

@@ -27,6 +27,7 @@ const LOG_TYPE_COLORS: Record<ActivityLogType, string> = {
   tool_result: "var(--color-success)",
   result: "var(--color-success)",
   error: "var(--color-danger)",
+  warning: "var(--color-warning)",
   permission: "var(--color-warning)",
   cost: "var(--color-warning)",
 };
@@ -37,6 +38,7 @@ const LOG_TYPE_LABELS: Record<ActivityLogType, string> = {
   tool_result: "RESULT",
   result: "DONE",
   error: "ERROR",
+  warning: "WARN",
   permission: "PERM",
   cost: "COST",
 };
@@ -57,6 +59,8 @@ function LogTypeIcon({ type, size = 12 }: { type: ActivityLogType; size?: number
       return <CheckCircle {...props} />;
     case "error":
       return <XCircle {...props} />;
+    case "warning":
+      return <Warning {...props} />;
     case "permission":
       return <Warning {...props} />;
     case "cost":

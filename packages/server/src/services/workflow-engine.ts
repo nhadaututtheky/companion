@@ -306,6 +306,9 @@ async function spawnStep(
     permissionMode: "auto-accept",
   });
 
+  // Workflow sessions should not auto-kill on idle
+  bridgeRef.setSessionSettings(sessionId, { keepAlive: true });
+
   // Link session to channel
   linkSession(channelId, sessionId);
 

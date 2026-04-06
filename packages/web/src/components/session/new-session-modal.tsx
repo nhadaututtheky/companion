@@ -243,7 +243,10 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
       if (atLimit) return;
       setResumingId(s.id);
       try {
-        const res = await api.sessions.resume(s.id);
+        const res = await api.sessions.resume(s.id, {
+          idleTimeoutMs: idleTimeout,
+          keepAlive: idleTimeout === 0,
+        });
         const sessionId = res.data.sessionId;
         const label =
           s.projectSlug ?? s.cwd.replace(/\\/g, "/").split("/").filter(Boolean).pop() ?? "session";

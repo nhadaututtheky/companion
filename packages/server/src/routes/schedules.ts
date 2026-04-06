@@ -380,6 +380,9 @@ export function scheduleRoutes(bridge: WsBridge): Hono {
         name: `[manual] ${schedule.name}`,
       });
 
+      // Manually-triggered scheduled sessions should not auto-kill on idle
+      bridge.setSessionSettings(sessionId, { keepAlive: true });
+
       // Update run count + lastRunAt
       db.update(schedules)
         .set({
