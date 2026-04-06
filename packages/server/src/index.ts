@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { createRoutes } from "./routes/index.js";
 import { createRateLimit } from "./middleware/rate-limit.js";
-import { getDb, closeDb } from "./db/client.js";
+import { getDb, getSqlite, closeDb } from "./db/client.js";
 import { eq } from "drizzle-orm";
 import { sessions as sessionsTable } from "./db/schema.js";
 import { runMigrations } from "./db/migrate.js";
@@ -18,6 +18,7 @@ import { DEFAULT_PORT, APP_VERSION } from "@companion/shared";
 import { timingSafeEqual } from "node:crypto";
 import { getAccessCredential } from "./middleware/auth.js";
 import { terminalManager } from "./services/terminal-manager.js";
+import { cleanupAllHooks, cleanupOrphanHooks } from "./services/adapters/claude-adapter.js";
 import * as spectatorBridge from "./services/spectator-bridge.js";
 import { startScheduler, stopScheduler } from "./services/scheduler.js";
 import { validateShareToken } from "./services/share-manager.js";
@@ -65,6 +66,21 @@ registerGlobalErrorHandlers();
 const startupCleaned = bulkEndSessions();
 if (startupCleaned > 0) {
   log.info("Startup cleanup: marked zombie sessions as ended", { count: startupCleaned });
+}
+
+// Cleanup orphan hooks from previous runs (prevents ECONNREFUSED in standalone Claude Code)
+try {
+  const sqlite = getSqlite();
+  const rows = sqlite.prepare("SELECT DISTINCT cwd FROM sessions WHERE cwd IS NOT NULL").all() as Array<{ cwd: string }>;
+  const dirs = rows.map((r) => r.cwd).filter(Boolean);
+  if (dirs.length > 0) {
+    const orphansCleaned = cleanupOrphanHooks(dirs);
+    if (orphansCleaned > 0) {
+      log.info("Startup cleanup: removed orphan hooks", { count: orphansCleaned });
+    }
+  }
+} catch {
+  // DB might not have sessions table yet — skip
 }
 
 // ── License / Trial verification ────────────────────────────────────────────
@@ -513,6 +529,9 @@ function shutdown() {
 
   // Stop Telegram bots
   botRegistry.stopAll().catch(() => {});
+
+  // Cleanup injected hooks from all project dirs (prevents ECONNREFUSED in standalone Claude Code)
+  cleanupAllHooks();
 
   // Kill all active sessions
   for (const session of bridge.getActiveSessions()) {

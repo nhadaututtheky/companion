@@ -102,6 +102,63 @@ function buildCleanEnv(extra?: Record<string, string>): Record<string, string> {
 
 // ─── Hooks Injection ────────────────────────────────────────────────────────
 
+/**
+ * Track all injected hook paths so we can cleanup on server shutdown/startup.
+ * Key = settingsPath, Value = cleanup function.
+ */
+const activeHookPaths = new Map<string, () => void>();
+
+/**
+ * Cleanup all injected hooks from active sessions — called on server shutdown.
+ */
+export function cleanupAllHooks(): void {
+  for (const [path, cleanup] of activeHookPaths) {
+    try {
+      cleanup();
+      log.info("Cleaned up hooks", { path });
+    } catch {
+      // best-effort
+    }
+  }
+  activeHookPaths.clear();
+}
+
+/**
+ * Cleanup orphan hooks from previous server runs — called on startup.
+ * Scans given project dirs for .claude/settings.local.json containing
+ * Companion hook URLs and removes them.
+ */
+export function cleanupOrphanHooks(projectDirs: string[]): number {
+  let cleaned = 0;
+  for (const dir of projectDirs) {
+    const settingsPath = join(dir, ".claude", "settings.local.json");
+    try {
+      if (!existsSync(settingsPath)) continue;
+      const raw = readFileSync(settingsPath, "utf-8");
+      const settings = JSON.parse(raw) as Record<string, unknown>;
+      const hooks = settings.hooks as Record<string, unknown> | undefined;
+      if (!hooks) continue;
+
+      // Check if hooks contain Companion URLs (any hook pointing to /api/hooks/)
+      const hooksJson = JSON.stringify(hooks);
+      if (!hooksJson.includes("/api/hooks/")) continue;
+
+      // Remove hooks
+      delete settings.hooks;
+      if (Object.keys(settings).length === 0) {
+        unlinkSync(settingsPath);
+      } else {
+        writeFileSync(settingsPath, JSON.stringify(settings, null, 2), "utf-8");
+      }
+      cleaned++;
+      log.info("Cleaned orphan hooks from previous session", { settingsPath });
+    } catch {
+      // skip files we can't read/write
+    }
+  }
+  return cleaned;
+}
+
 function injectHooksConfig(
   cwd: string,
   hooksUrl: string,
@@ -136,7 +193,7 @@ function injectHooksConfig(
   writeFileSync(settingsPath, JSON.stringify(merged, null, 2), "utf-8");
   log.info("Injected hooks config", { settingsPath, hookUrl });
 
-  return () => {
+  const cleanup = () => {
     try {
       if (originalHooks !== undefined) {
         const current = existsSync(settingsPath)
@@ -155,11 +212,15 @@ function injectHooksConfig(
           }
         }
       }
+      activeHookPaths.delete(settingsPath);
       log.debug("Cleaned up hooks config", { settingsPath });
     } catch (err) {
       log.warn("Failed to clean up hooks config", { error: String(err) });
     }
   };
+
+  activeHookPaths.set(settingsPath, cleanup);
+  return cleanup;
 }
 
 // ─── NDJSON → NormalizedMessage Parser ──────────────────────────────────────
