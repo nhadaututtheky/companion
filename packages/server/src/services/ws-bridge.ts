@@ -6,7 +6,7 @@
 import { randomUUID } from "crypto";
 import { createLogger } from "../logger.js";
 import { createDefaultPipeline, getRTKConfig, type RTKPipeline } from "../rtk/index.js";
-import { launchCLI, createPlanModeWatcher } from "./cli-launcher.js";
+import { launchCLI, createPlanModeWatcher, formatUserMessage } from "./cli-launcher.js";
 import { startSdkSession, type SdkSessionHandle } from "./sdk-engine.js";
 import { summarizeSession, buildSummaryInjection } from "./session-summarizer.js";
 import { buildSessionContext } from "./session-context.js";
@@ -85,7 +85,8 @@ import {
   HEALTH_CHECK_INTERVAL_MS,
   getMaxContextTokens,
 } from "@companion/shared";
-import type { LaunchResult } from "./cli-launcher.js";
+import type { CLIProcess, NormalizedMessage, CLIPlatform } from "@companion/shared";
+type LaunchResult = CLIProcess;
 import { IdleDetector } from "./idle-detector.js";
 import { terminalLock } from "./terminal-lock.js";
 
@@ -649,9 +650,16 @@ export class WsBridge {
       envVars?: Record<string, string>;
       bare?: boolean;
       thinkingBudget?: number;
+      cliPlatform?: CLIPlatform;
+      platformOptions?: Record<string, unknown>;
     },
   ): string {
-    // Create plan mode watcher
+    const cliPlatform = opts.cliPlatform ?? "claude";
+
+    // Store platform in session state
+    session.state.cli_platform = cliPlatform;
+
+    // Create plan mode watcher (Claude-specific but harmless for other platforms)
     const planWatcher = createPlanModeWatcher(
       (ndjson) => this.sendToCLI(session, ndjson),
       (action) => {
@@ -668,9 +676,9 @@ export class WsBridge {
     planWatcher.start();
     this.planWatchers.set(sessionId, planWatcher);
 
-    // Launch CLI process with hooks URL pointing to Companion's hook receiver
+    // Launch CLI process via adapter registry
     const hooksUrl = this.getHooksBaseUrl();
-    const launch = launchCLI(
+    const launchPromise = launchCLI(
       {
         sessionId,
         cwd: opts.cwd,
@@ -684,25 +692,70 @@ export class WsBridge {
         hookSecret: session.hookSecret,
         bare: opts.bare,
         thinkingBudget: opts.thinkingBudget,
+        cliPlatform,
+        platformOptions: opts.platformOptions,
       },
-      (ndjsonLine) => this.handleCLIMessage(session, ndjsonLine),
+      (msg: NormalizedMessage) => this.handleNormalizedMessage(session, msg),
       (exitCode) => {
-        session.lastStderrLines = launch.getStderrLines();
+        const proc = this.cliProcesses.get(sessionId);
+        if (proc) {
+          session.lastStderrLines = proc.getStderrLines();
+        }
         this.handleCLIExit(session, exitCode);
       },
     );
 
-    session.cliSend = launch.send;
-    session.pid = launch.pid;
-    this.cliProcesses.set(sessionId, launch);
+    // Handle async launch — move all post-launch logic into the .then()
+    launchPromise.then((launch) => {
+      session.cliSend = launch.send;
+      session.pid = launch.pid;
+      this.cliProcesses.set(sessionId, launch);
 
-    // Flush pending messages
-    for (const pending of session.pendingMessages) {
-      launch.send(pending);
+      // Flush pending messages
+      for (const pending of session.pendingMessages) {
+        launch.send(pending);
+      }
+      session.pendingMessages = [];
+
+      // Send initial prompt after launch
+      this.sendInitialPrompt(session, sessionId, opts, cliPlatform);
+    }).catch((err) => {
+      log.error("Failed to launch CLI", { sessionId, platform: cliPlatform, error: String(err) });
+      this.broadcastToSubscribers(session, {
+        type: "error",
+        message: `Failed to launch ${cliPlatform}: ${String(err)}`,
+      });
+      this.handleCLIExit(session, 1);
+    });
+
+    log.info("Session started (CLI launcher)", { sessionId, cwd: opts.cwd, model: opts.model, platform: cliPlatform });
+    return sessionId;
+  }
+
+  /** Send the initial prompt to a newly launched CLI session */
+  private sendInitialPrompt(
+    session: ActiveSession,
+    sessionId: string,
+    opts: {
+      projectSlug?: string;
+      cwd: string;
+      model: string;
+      permissionMode?: string;
+      prompt?: string;
+      resume?: boolean;
+      source?: string;
+    },
+    cliPlatform: CLIPlatform,
+  ): void {
+    if (!opts.prompt || opts.resume) return;
+
+    if (cliPlatform !== "claude") {
+      // Non-Claude platforms: prompt was passed via CLI args in adapter.launch()
+      // No need to send via stdin — adapter handles it
+      return;
     }
-    session.pendingMessages = [];
 
-    // Send initial prompt via stdin NDJSON
+    // Claude-specific: send initial prompt via stdin NDJSON
     if (opts.prompt && !opts.resume) {
       const summaryContext = buildSummaryInjection(opts.projectSlug);
       const sessionContext = buildSessionContext({
@@ -744,9 +797,6 @@ export class WsBridge {
         this.sendToCLI(session, ndjson);
       }, 1000);
     }
-
-    log.info("Session started (CLI launcher)", { sessionId, cwd: opts.cwd, model: opts.model });
-    return sessionId;
   }
 
   killSession(sessionId: string): void {
@@ -971,6 +1021,116 @@ export class WsBridge {
 
   // ── CLI message handling ────────────────────────────────────────────────
 
+  /**
+   * Handle a NormalizedMessage from any CLI adapter.
+   * Routes to existing handlers via raw message passthrough (Claude)
+   * or by reconstructing compatible message shapes (other platforms).
+   */
+  private handleNormalizedMessage(session: ActiveSession, msg: NormalizedMessage): void {
+    this.idleDetector.recordOutput(session.id);
+
+    // For Claude: passthrough to existing handleCLIMessage via raw
+    // This preserves all existing behavior during the transition period.
+    if (msg.platform === "claude" && msg.raw) {
+      const rawStr = typeof msg.raw === "string" ? msg.raw : JSON.stringify(msg.raw);
+      this.handleCLIMessage(session, rawStr);
+      return;
+    }
+
+    // For non-Claude platforms: route normalized messages to handlers
+    switch (msg.type) {
+      case "system_init":
+        this.handleSystemInit(session, {
+          type: "system",
+          subtype: "init",
+          cwd: msg.cwd ?? session.state.cwd,
+          session_id: msg.sessionId ?? session.id,
+          tools: msg.tools ?? [],
+          mcp_servers: [],
+          model: msg.model ?? session.state.model,
+          permissionMode: msg.permissionMode ?? "default",
+          claude_code_version: msg.cliVersion ?? "unknown",
+          slash_commands: [],
+          uuid: "",
+        } as CLISystemInitMessage);
+        break;
+
+      case "assistant":
+        if (msg.contentBlocks) {
+          this.handleAssistant(session, {
+            type: "assistant",
+            message: {
+              id: `${msg.platform}-${Date.now()}`,
+              type: "message",
+              role: "assistant",
+              model: msg.model ?? session.state.model,
+              content: msg.contentBlocks,
+              stop_reason: msg.stopReason ?? null,
+              usage: {
+                input_tokens: msg.tokenUsage?.input ?? 0,
+                output_tokens: msg.tokenUsage?.output ?? 0,
+                cache_creation_input_tokens: msg.tokenUsage?.cacheCreation ?? 0,
+                cache_read_input_tokens: msg.tokenUsage?.cacheRead ?? 0,
+              },
+            },
+            parent_tool_use_id: null,
+            uuid: "",
+            session_id: session.id,
+          } as CLIAssistantMessage);
+        }
+        break;
+
+      case "complete":
+        this.handleResult(session, {
+          type: "result",
+          subtype: msg.isError ? "error_during_execution" : "success",
+          is_error: msg.isError ?? false,
+          result: msg.resultText,
+          duration_ms: msg.durationMs ?? 0,
+          duration_api_ms: msg.durationMs ?? 0,
+          num_turns: msg.numTurns ?? 1,
+          total_cost_usd: msg.costUsd ?? 0,
+          stop_reason: null,
+          usage: {
+            input_tokens: msg.tokenUsage?.input ?? 0,
+            output_tokens: msg.tokenUsage?.output ?? 0,
+            cache_creation_input_tokens: msg.tokenUsage?.cacheCreation ?? 0,
+            cache_read_input_tokens: msg.tokenUsage?.cacheRead ?? 0,
+          },
+          total_lines_added: msg.linesAdded,
+          total_lines_removed: msg.linesRemoved,
+          uuid: "",
+          session_id: session.id,
+        } as CLIResultMessage);
+        break;
+
+      case "progress":
+        if (msg.toolName) {
+          this.handleToolProgress(session, {
+            type: "tool_progress",
+            tool_use_id: msg.toolUseId ?? "",
+            tool_name: msg.toolName,
+            parent_tool_use_id: null,
+            elapsed_time_seconds: msg.elapsedSeconds ?? 0,
+            uuid: "",
+            session_id: session.id,
+          } as CLIToolProgressMessage);
+        }
+        break;
+
+      case "error":
+        this.broadcastToSubscribers(session, {
+          type: "error",
+          message: msg.errorMessage ?? "Unknown error",
+        });
+        break;
+
+      case "keep_alive":
+        break;
+    }
+  }
+
+  /** @deprecated — Use handleNormalizedMessage for new code. Kept for Claude raw passthrough. */
   private handleCLIMessage(session: ActiveSession, line: string): void {
     // Record output activity for idle detection
     this.idleDetector.recordOutput(session.id);

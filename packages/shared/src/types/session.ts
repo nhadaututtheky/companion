@@ -279,6 +279,8 @@ export interface SessionState {
   short_id?: string;
   /** User-defined session name (persists after session end) */
   name?: string;
+  /** CLI platform used for this session */
+  cli_platform?: import("./cli-adapter").CLIPlatform;
   model: string;
   cwd: string;
   tools: string[];
@@ -404,6 +406,10 @@ export interface CreateSessionRequest {
   bare?: boolean;
   /** Thinking mode: adaptive (default), off, or deep (50k tokens) */
   thinkingMode?: ThinkingMode;
+  /** CLI platform to use (default: "claude") */
+  cliPlatform?: import("./cli-adapter").CLIPlatform;
+  /** Platform-specific options (approval mode, sandbox, etc.) */
+  platformOptions?: Record<string, unknown>;
 }
 
 export interface SessionListItem {
@@ -412,6 +418,8 @@ export interface SessionListItem {
   shortId?: string;
   /** User-defined session name */
   name?: string;
+  /** CLI platform used for this session */
+  cliPlatform?: import("./cli-adapter").CLIPlatform;
   projectSlug?: string;
   model: string;
   status: SessionStatus;
