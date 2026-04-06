@@ -1031,9 +1031,10 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
         </span>
       </div>
 
-      <p className="text-xs mb-3">
-        Webclaw powers library docs auto-injection. Scraping works without an API key; web search
-        requires one.
+      <p className="text-xs mb-3" style={{ color: "var(--color-text-secondary)" }}>
+        Docs Engine auto-injects library documentation into your AI sessions.
+        Works out of the box — <strong style={{ color: "var(--color-text-primary)" }}>no API key needed</strong> for
+        scraping, docs, and crawling.
       </p>
 
       {dockerStatus === null ? (
@@ -1046,26 +1047,7 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
         </div>
       ) : dockerStatus.dockerAvailable ? (
         <div className="flex flex-col gap-2">
-          {/* API key (optional) */}
-          <div>
-            <span className="text-xs block mb-1">
-              API Key (optional — for web search)
-            </span>
-            <input
-              type="text"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="WEBCLAW_API_KEY"
-              className="w-full text-xs px-2.5 py-1.5 rounded-md input-bordered"
-              style={{
-                background: "var(--color-bg-base)",
-                color: "var(--color-text-primary)",
-              }}
-              aria-label="Webclaw API key"
-            />
-          </div>
-
-          {/* Start button */}
+          {/* Start button — primary action */}
           <button
             onClick={handleStart}
             disabled={starting}
@@ -1085,6 +1067,31 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
               <WarningCircle size={12} /> {error}
             </div>
           )}
+
+          {/* Advanced: API key (collapsed by default) */}
+          <details className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <summary className="cursor-pointer py-1" style={{ color: "var(--color-text-muted)" }}>
+              Advanced: Web Search API key (optional)
+            </summary>
+            <div className="mt-1.5 flex flex-col gap-1.5">
+              <p style={{ color: "var(--color-text-muted)", fontSize: 11 }}>
+                Only needed for <code className="px-1 rounded" style={{ background: "var(--color-bg-base)" }}>/research</code> command.
+                Scraping, docs, and crawling work without it.
+              </p>
+              <input
+                type="text"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Leave empty — not required"
+                className="w-full text-xs px-2.5 py-1.5 rounded-md input-bordered"
+                style={{
+                  background: "var(--color-bg-base)",
+                  color: "var(--color-text-primary)",
+                }}
+                aria-label="Webclaw API key for web search"
+              />
+            </div>
+          </details>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
@@ -1379,7 +1386,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
             color="#FBBC04"
             online={false}
             statusText="Optional"
-            detail="Needs API key"
+            detail="For /research only"
           />
         </div>
 
