@@ -103,7 +103,7 @@
   var BANK_NAME = "NGUYEN VIET NAM";
 
   var PRODUCTS = {
-    "CMP-PRO": { name: "Companion Pro — 1 year", price: 975000, priceUSD: 39, polarUrl: "https://buy.polar.sh/polar_cl_FbxFpo0LqLA1kENgDfKKL8rmNjeL2UBdecWw93NvX9a" },
+    "CMP-PRO": { name: "Companion Pro — 1 year", price: 975000, priceUSD: 39, polarUrl: "https://buy.polar.sh/polar_cl_CGWIyshnh7Xkodt1CaLkYPG0Z5jL1wjmLmD7Q4CEACZ" },
   };
 
   var payState = {

@@ -14,8 +14,8 @@ import {
 } from "@phosphor-icons/react";
 import { useLicenseStore } from "@/lib/stores/license-store";
 
-const POLAR_MONTHLY_URL = "https://buy.polar.sh/polar_cl_companion_pro_monthly";
-const POLAR_YEARLY_URL = "https://buy.polar.sh/polar_cl_FbxFpo0LqLA1kENgDfKKL8rmNjeL2UBdecWw93NvX9a";
+const POLAR_MONTHLY_URL = "https://buy.polar.sh/polar_cl_bH3oM1b9ub5rugiUyeV4NvdHQf3IhkhtZBRkb0h2bmr";
+const POLAR_YEARLY_URL = "https://buy.polar.sh/polar_cl_CGWIyshnh7Xkodt1CaLkYPG0Z5jL1wjmLmD7Q4CEACZ";
 const SEPAY_URL = "https://pay.theio.vn/checkout/companion-pro";
 
 const PRO_FEATURES = [

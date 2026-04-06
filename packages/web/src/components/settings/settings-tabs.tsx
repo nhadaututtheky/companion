@@ -270,7 +270,7 @@ function LicenseSection() {
           </div>
           <div className="flex gap-2">
             <a
-              href="https://buy.polar.sh/polar_cl_FbxFpo0LqLA1kENgDfKKL8rmNjeL2UBdecWw93NvX9a"
+              href="https://buy.polar.sh/polar_cl_CGWIyshnh7Xkodt1CaLkYPG0Z5jL1wjmLmD7Q4CEACZ"
               target="_blank"
               rel="noopener"
               className="flex-1 flex items-center justify-center py-2 rounded-lg text-xs font-bold cursor-pointer"
