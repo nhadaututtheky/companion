@@ -259,4 +259,35 @@
     if (e.key === "Escape") window.closePayment();
   });
 
+  // ── Auto-sync version from GitHub releases ──────────────────────────
+  var RELEASE_API = "https://api.github.com/repos/nhadaututtheky/companion-release/releases/latest";
+  var RELEASE_DL = "https://github.com/nhadaututtheky/companion-release/releases/download";
+
+  fetch(RELEASE_API)
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var tag = data.tag_name; // e.g. "v0.9.0"
+      var ver = tag.replace(/^v/, ""); // e.g. "0.9.0"
+
+      // Update version badges
+      var heroVer = document.getElementById("hero-version");
+      var dlVer = document.getElementById("download-version");
+      if (heroVer) heroVer.textContent = tag;
+      if (dlVer) dlVer.textContent = tag;
+
+      // Update download links to versioned asset names
+      var links = document.querySelectorAll(".desktop-btn");
+      links.forEach(function (a) {
+        var href = a.getAttribute("href") || "";
+        if (href.includes("/download/macos")) {
+          a.href = RELEASE_DL + "/" + tag + "/Companion_" + ver + "_aarch64.dmg";
+        } else if (href.includes("/download/windows")) {
+          a.href = RELEASE_DL + "/" + tag + "/Companion_" + ver + "_x64-setup.exe";
+        } else if (href.includes("/download/linux")) {
+          a.href = RELEASE_DL + "/" + tag + "/Companion_" + ver + "_amd64.deb";
+        }
+      });
+    })
+    .catch(function () { /* fallback: keep hardcoded version */ });
+
 })();

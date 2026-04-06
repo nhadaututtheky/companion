@@ -1,7 +1,7 @@
 {
-  "version": "0.8.1",
-  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.8.1/Companion_aarch64.dmg",
+  "version": "0.9.0",
+  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.9.0/Companion_0.9.0_aarch64.dmg",
   "signature": "",
-  "notes": "## What's New in v0.8.1\n\n- Auto session names via AI\n- Saved prompts picker in message composer\n- PIN auth replaces API key gate\n- Removed 5,500 LOC of unused features\n- Auto-trigger desktop build on tag push",
-  "pub_date": "2026-04-04T12:00:00Z"
+  "notes": "## What's New in v0.9.0\n\n- Tree-sitter CodeGraph (WASM-based code analysis)\n- Skills Browser with one-click install\n- Multi-Provider Debate Engine\n- Agent Pulse Health Monitor\n- Inline Diff Summary in chat\n- Fix: idle timeout not inherited on resume (12h/Never sessions killed after 30min)\n- Fix: license cache cross-contamination",
+  "pub_date": "2026-04-06T12:00:00Z"
 }
