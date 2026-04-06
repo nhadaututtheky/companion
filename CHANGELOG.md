@@ -2,6 +2,40 @@
 
 All notable changes to Companion are documented here.
 
+## [0.9.0] - 2026-04-06
+
+### Added
+- **Tree-sitter WASM AST Parser** — 4-phase upgrade from regex to proper AST parsing. Multi-language support (TS, Python, Rust, Go, Java, C#), correct call graph with shadowing/trust/builtins.
+- **CodeGraph Advanced Analysis** — 5 ported features from code-review-graph:
+  - **FTS5 Full-Text Search** — Porter stemming, auto-sync triggers, snippet extraction
+  - **Blast Radius Scoring** — 5-factor risk score (0.0–1.0) with security keyword detection
+  - **Execution Flow Tracing** — BFS from entry points, max depth 15, cycle-safe
+  - **Community Detection** — File-path grouping with cohesion scoring
+  - **RRF Search Fusion** — FTS5 + symbol LIKE merged via Reciprocal Rank Fusion
+- **Settings Modal** — Overlay modal replacing /settings route, with tabs for all config
+- **Skills Browser** — API endpoint scanning ~/.claude/skills + tree UI with search, preview pane, and recommended skills section
+- **Cross-Provider Debate Engine** — Free model integration (Gemini, Groq, Ollama) with rate limit retry
+- **Provider Registry + Model Picker** — Dropdown below chat for main model + free model selection
+- **Agent Pulse Health Monitor** — Live codegraph visualization + UX overhaul + personas
+- **Inline Diff Summary** — Diff summary block rendered directly in chat feed
+- **10 Built-in Themes** — Expanded from 3 to 10 themes
+- **Per-Tool Renderers** — Dedicated icons, inputs, and outputs for each tool type
+
+### Fixed
+- CodeGraph: incremental rescan ordering + concurrency guard
+- CodeGraph: call graph correctness — shadowing, trust upgrade, builtins filtering
+- CodeGraph: race condition in scanner, memoization fixes
+- Memory leak in cost tracking, rate limit retry logic
+- Terminal spawn on Windows, chat input border softening
+- Terminal cleanup leak, border shift, error messages
+- Signing pubkey updated, updater artifacts enabled
+- CI: bun.lock synced for frozen-lockfile
+
+### Changed
+- Session list: collapsed controls, compact layout
+- Search endpoint upgraded to RRF fused search by default (legacy mode available)
+- Graph endpoint: O(n²) edge filter replaced with Set lookup
+
 ## [0.7.0] - 2026-04-03
 
 ### Added
