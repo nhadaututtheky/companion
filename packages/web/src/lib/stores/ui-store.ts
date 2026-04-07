@@ -8,7 +8,7 @@ interface UiStore {
   settingsModalOpen: boolean;
   settingsActiveTab: SettingsTab;
   activityTerminalOpen: boolean;
-  rightPanelMode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context";
+  rightPanelMode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context" | "wiki";
   rightPanelPath: string | null;
   browserPreviewUrl: string | null;
   sidebarExpanded: boolean;
@@ -21,7 +21,7 @@ interface UiStore {
   setSettingsActiveTab: (tab: SettingsTab) => void;
   setActivityTerminalOpen: (open: boolean) => void;
   setRightPanelMode: (
-    mode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context",
+    mode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context" | "wiki",
   ) => void;
   setRightPanelPath: (path: string | null) => void;
   setBrowserPreviewUrl: (url: string | null) => void;

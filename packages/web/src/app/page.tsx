@@ -26,6 +26,10 @@ const AiContextPanel = dynamic(
   () => import("@/components/panels/ai-context-panel").then((m) => ({ default: m.AiContextPanel })),
   { ssr: false },
 );
+const WikiPanel = dynamic(
+  () => import("@/components/panels/wiki-panel").then((m) => ({ default: m.WikiPanel })),
+  { ssr: false },
+);
 const OnboardingWizard = dynamic(
   () => import("@/components/onboarding-wizard").then((m) => ({ default: m.OnboardingWizard })),
   { ssr: false },
@@ -605,7 +609,9 @@ export default function DashboardPage() {
                     ? 600
                     : rightPanelMode === "stats"
                       ? 360
-                      : 480,
+                      : rightPanelMode === "wiki"
+                        ? 520
+                        : 480,
                 borderLeft: "1px solid var(--color-border)",
                 transition: "width 200ms ease",
               }}
@@ -647,6 +653,9 @@ export default function DashboardPage() {
                       : undefined
                   }
                 />
+              )}
+              {rightPanelMode === "wiki" && (
+                <WikiPanel onClose={() => setRightPanelMode("none")} />
               )}
             </aside>
           )}

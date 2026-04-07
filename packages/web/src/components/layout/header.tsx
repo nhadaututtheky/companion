@@ -12,6 +12,7 @@ import {
   List,
   ChartBar,
   Brain,
+  BookOpen,
 } from "@phosphor-icons/react";
 import { TemplateQuickPicker } from "./template-quick-picker";
 import { useUiStore } from "@/lib/stores/ui-store";
@@ -223,6 +224,18 @@ export function Header({ onMenuToggle }: HeaderProps) {
           title="AI Context — Code intelligence & web docs"
         >
           <Brain size={16} weight={rightPanelMode === "ai-context" ? "fill" : "regular"} />
+        </button>
+        <button
+          onClick={() => setRightPanelMode(rightPanelMode === "wiki" ? "none" : "wiki")}
+          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
+          style={{
+            color: rightPanelMode === "wiki" ? "var(--color-purple)" : "var(--color-text-muted)",
+            background: rightPanelMode === "wiki" ? "color-mix(in srgb, var(--color-purple) 8%, transparent)" : "transparent",
+          }}
+          aria-label="Wiki Knowledge Base"
+          title="Wiki KB — Domain knowledge for agents"
+        >
+          <BookOpen size={16} weight={rightPanelMode === "wiki" ? "fill" : "regular"} />
         </button>
         {/* Layout selector — switch between single, split, grid */}
         <div className="hidden md:flex">

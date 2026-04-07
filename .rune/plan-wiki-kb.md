@@ -12,7 +12,7 @@ test case for "how do we explain features to users" — solve both together.
 |---|------|--------|-----------|---------|
 | 1 | Wiki KB Core | ✅ Done | plan-wiki-kb-phase1.md | Store, compile, retrieve — filesystem-based wiki engine |
 | 2 | Wiki KB Integration | ✅ Done | plan-wiki-kb-phase2.md | Budget manager, feature toggles, session injection, feedback loop |
-| 3 | Wiki KB Web UI | Pending | plan-wiki-kb-phase3.md | Wiki browser, article editor, raw drop zone |
+| 3 | Wiki KB Web UI | ✅ Done | plan-wiki-kb-phase3.md | Wiki panel, article reader/editor, raw drop zone, compile trigger |
 | 4 | Feature Discovery UX | Pending | plan-wiki-kb-phase4.md | Settings redesign, feature guide, onboarding |
 | 5 | Wiki KB Advanced | Pending | plan-wiki-kb-phase5.md | NM graduation, Obsidian MCP, auto-lint, CodeGraph xref |
 
