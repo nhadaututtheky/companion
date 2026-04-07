@@ -1701,6 +1701,43 @@ export class TelegramBridge {
         message_thread_id: topicId,
       });
     }
+
+    // Inline token bar — compact 1-line after each turn
+    this.sendTokenBar(chatId, topicId, sessionId, result).catch(() => {});
+  }
+
+  /** Send compact token usage bar after each Claude turn */
+  private async sendTokenBar(
+    chatId: number,
+    topicId: number | undefined,
+    sessionId: string,
+    result: CLIResultMessage,
+  ): Promise<void> {
+    const session = this.wsBridge.getSession(sessionId);
+    if (!session) return;
+
+    const state = session.state;
+    const inputK = state.total_input_tokens / 1000;
+    const outputK = state.total_output_tokens / 1000;
+    const maxTokens = state.model.includes("haiku") ? 200 : 200; // 200K context
+    const totalK = inputK + outputK;
+    const pct = Math.min(100, Math.round((totalK / maxTokens) * 100));
+
+    // Progress bar: 20 chars wide
+    const filled = Math.round(pct / 5);
+    const bar = "█".repeat(filled) + "░".repeat(20 - filled);
+
+    const fmtK = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}M` : `${v.toFixed(1)}K`;
+
+    const cost = result.total_cost_usd > 0 ? ` · $${result.total_cost_usd.toFixed(3)}` : "";
+    const text = `<code>[${bar}]</code> ${pct}%\n${fmtK(inputK)} in / ${fmtK(outputK)} out${cost}`;
+
+    await this.bot.api
+      .sendMessage(chatId, text, {
+        parse_mode: "HTML",
+        message_thread_id: topicId,
+      })
+      .catch(() => {});
   }
 
   private async handleContextUpdate(
