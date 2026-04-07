@@ -581,11 +581,14 @@ function LintButton({ domain }: { domain: string }) {
 
       {showResults && issues !== null && (
         <div
-          className="absolute left-0 right-0 z-20 rounded-lg mx-3 mt-1 p-3 flex flex-col gap-1.5 max-h-48 overflow-y-auto"
+          className="fixed z-50 rounded-lg p-3 flex flex-col gap-1.5 max-h-48 overflow-y-auto"
           style={{
             background: "var(--color-bg-base)",
             border: "1px solid var(--color-border)",
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            width: "min(400px, calc(100vw - 2rem))",
+            top: "auto",
+            marginTop: 4,
           }}
         >
           <div className="flex items-center justify-between">

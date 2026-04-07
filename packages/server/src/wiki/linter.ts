@@ -5,8 +5,7 @@
  * to detect stale articles that need recompilation.
  */
 
-import { statSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync } from "node:fs";
 import { createLogger } from "../logger.js";
 import {
   listArticles,
@@ -14,7 +13,6 @@ import {
   readArticle,
   resolveWikiRoot,
 } from "./store.js";
-import type { ArticleRef } from "./types.js";
 
 const log = createLogger("wiki:linter");
 
@@ -47,6 +45,13 @@ export interface LintResult {
 
 /** Run freshness + consistency lint on a wiki domain */
 export function lintDomain(domain: string, cwd?: string): LintResult {
+  // Verify domain exists before linting
+  const root = resolveWikiRoot(cwd);
+  const domainPath = `${root}/${domain}`;
+  if (!existsSync(domainPath)) {
+    throw new Error(`Domain "${domain}" not found`);
+  }
+
   const issues: LintIssue[] = [];
   const articles = listArticles(domain, cwd);
   const rawFiles = listRawFiles(domain, cwd);
@@ -57,10 +62,19 @@ export function lintDomain(domain: string, cwd?: string): LintResult {
     rawModTimes.set(rf.name, new Date(rf.modifiedAt));
   }
 
-  // Check each article for staleness
+  // Single pass: check each article and collect compiledFrom in one go
+  const allCompiledFrom = new Set<string>();
+
   for (const ref of articles) {
     const article = readArticle(domain, ref.slug, cwd);
     if (!article) continue;
+
+    const compiledFrom = article.meta.compiledFrom ?? [];
+
+    // Accumulate all compiledFrom for uncompiled-raw check later
+    for (const src of compiledFrom) {
+      allCompiledFrom.add(src);
+    }
 
     const compiledAt = article.meta.compiledAt ? new Date(article.meta.compiledAt) : null;
 
@@ -77,7 +91,7 @@ export function lintDomain(domain: string, cwd?: string): LintResult {
 
     // 2. Check if any source raw files were modified after compilation
     const staleSourceFiles: string[] = [];
-    for (const sourceName of article.meta.compiledFrom) {
+    for (const sourceName of compiledFrom) {
       const rawModTime = rawModTimes.get(sourceName);
       if (rawModTime && rawModTime > compiledAt) {
         staleSourceFiles.push(sourceName);
@@ -94,7 +108,7 @@ export function lintDomain(domain: string, cwd?: string): LintResult {
     }
 
     // 3. Check for missing source files (raw deleted after compilation)
-    const missingSourceFiles = article.meta.compiledFrom.filter(
+    const missingSourceFiles = compiledFrom.filter(
       (name) => !rawModTimes.has(name),
     );
 
@@ -119,13 +133,6 @@ export function lintDomain(domain: string, cwd?: string): LintResult {
   }
 
   // 5. Check for uncompiled raw files (not referenced by any article)
-  const allCompiledFrom = new Set(
-    articles.flatMap((a) => {
-      const full = readArticle(domain, a.slug, cwd);
-      return full?.meta.compiledFrom ?? [];
-    }),
-  );
-
   const uncompiledRaw = rawFiles.filter((rf) => !allCompiledFrom.has(rf.name));
   if (uncompiledRaw.length > 0) {
     issues.push({

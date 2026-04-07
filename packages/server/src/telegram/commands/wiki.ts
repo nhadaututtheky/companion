@@ -32,6 +32,22 @@ interface ReplyCtx {
 /** Max chars to show for article content in Telegram */
 const ARTICLE_PREVIEW_LIMIT = 2000;
 
+/** Max bytes for Telegram callback data (Telegram limit is 64) */
+const MAX_CALLBACK_DATA = 64;
+
+/** Truncate callback data to fit Telegram's 64-byte limit */
+function cbData(prefix: string, ...parts: string[]): string {
+  const data = `${prefix}${parts.join(":")}`;
+  return data.length <= MAX_CALLBACK_DATA ? data : data.slice(0, MAX_CALLBACK_DATA);
+}
+
+/** Strip filesystem paths from error messages to avoid leaking server internals */
+function sanitizeError(err: unknown): string {
+  const msg = String(err);
+  // Remove absolute paths like /app/wiki/... or C:\Users\...
+  return msg.replace(/[A-Z]:\\[^\s"']+/gi, "[path]").replace(/\/(?:app|home|root|usr|tmp|var)[^\s"']*/g, "[path]");
+}
+
 export function registerWikiCommands(bridge: TelegramBridge): void {
   const bot = bridge.bot;
 
@@ -82,7 +98,7 @@ export function registerWikiCommands(bridge: TelegramBridge): void {
     await sendDomainIndex(ctx, domain);
   });
 
-  bot.callbackQuery(/^wiki:article:(.+):(.+)$/, async (ctx) => {
+  bot.callbackQuery(/^wiki:a:(.+):(.+)$/, async (ctx) => {
     const domain = ctx.match?.[1] ?? "";
     const slug = ctx.match?.[2] ?? "";
     await ctx.answerCallbackQuery();
@@ -113,7 +129,7 @@ async function handleListDomains(ctx: ReplyCtx): Promise<void> {
     lines.push(
       `• <b>${escapeHTML(d.name)}</b> (${d.articleCount} articles, ${d.totalTokens} tokens)`,
     );
-    keyboard.text(d.name, `wiki:domain:${d.slug}`).row();
+    keyboard.text(d.name, cbData("wiki:domain:", d.slug)).row();
   }
 
   await ctx.reply(lines.join("\n"), {
@@ -146,11 +162,11 @@ async function sendDomainIndex(ctx: ReplyCtx, domain: string): Promise<void> {
     for (const a of index.articles) {
       const tags = a.tags.length > 0 ? ` [${a.tags.join(", ")}]` : "";
       lines.push(`• <b>${escapeHTML(a.title)}</b> — ${a.tokens}t${escapeHTML(tags)}`);
-      keyboard.text(a.title, `wiki:article:${domain}:${a.slug}`).row();
+      keyboard.text(a.title, cbData("wiki:a:", domain, ":", a.slug)).row();
     }
   }
 
-  keyboard.text("🔄 Compile", `wiki:compile:${domain}`).row();
+  keyboard.text("🔄 Compile", cbData("wiki:compile:", domain)).row();
 
   await ctx.reply(lines.join("\n"), {
     parse_mode: "HTML",
@@ -250,7 +266,7 @@ async function doCompile(ctx: ReplyCtx, domain: string): Promise<void> {
 
     await ctx.reply(lines.join("\n"), { parse_mode: "HTML" });
   } catch (err) {
-    await ctx.reply(`❌ Compilation failed: ${escapeHTML(String(err))}`);
+    await ctx.reply(`❌ Compilation failed: ${escapeHTML(sanitizeError(err))}`);
   }
 }
 
@@ -278,6 +294,6 @@ async function handleLint(ctx: ReplyCtx, domain: string): Promise<void> {
 
     await ctx.reply(lines.join("\n"), { parse_mode: "HTML" });
   } catch (err) {
-    await ctx.reply(`❌ Lint failed: ${escapeHTML(String(err))}`);
+    await ctx.reply(`❌ Lint failed: ${escapeHTML(sanitizeError(err))}`);
   }
 }
