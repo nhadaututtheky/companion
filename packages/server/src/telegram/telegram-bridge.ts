@@ -1702,19 +1702,23 @@ export class TelegramBridge {
     sessionId: string,
     breakdown: import("../services/context-estimator.js").ContextBreakdown,
   ): Promise<void> {
-    const { formatBreakdownTelegram, formatBreakdownDetailed } = await import(
+    const { formatBreakdownDetailed } = await import(
       "../services/context-estimator.js"
     );
 
-    const summary = formatBreakdownTelegram(breakdown);
+    // Store detailed breakdown for expand callback (user clicks button to see)
+    this.contextBreakdowns.set(sessionId, formatBreakdownDetailed(breakdown));
+
+    // Compact inline: just % and total tokens — no full breakdown spam
+    const kt = (breakdown.totalTokens / 1000).toFixed(1);
+    const pct = breakdown.percent.toFixed(0);
+    const summary = `📊 Context: <b>${kt}K</b> tokens (${pct}%)`;
+
     const keyboard = {
       inline_keyboard: [
         [{ text: "📋 Details", callback_data: `ctx:detail:${sessionId}` }],
       ],
     };
-
-    // Store detailed breakdown for expand callback
-    this.contextBreakdowns.set(sessionId, formatBreakdownDetailed(breakdown));
 
     await this.bot.api
       .sendMessage(chatId, summary, {
