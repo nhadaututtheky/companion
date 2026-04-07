@@ -1,7 +1,7 @@
 {
-  "version": "0.11.0",
-  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.11.0/Companion_0.11.0_x64-setup.exe",
-  "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRYkttZEc2V2pRc1ViZlhxcFRsVFhOWU1ydHVDdCtCVmh1WUFxWnIvMXNEdXdZS3VmbUZwY2haTU94NUdudDhUcjB1LzBtSXZyblNpZGE5YlpTVG02djBIdHNRMnNtendZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1NTQ3Njg3CWZpbGU6Q29tcGFuaW9uXzAuMTEuMF94NjQtc2V0dXAuZXhlClJnRDMxdzZobFFuYm80V2NLK08xaDhxbDhSbVZLVnlZeGkxazJUSERIWS81RWVUMXBUSGdRek5wMzlWeEJRVStmdk1BZFM5Tlg1cG5ySlIwcFlTK0JBPT0K",
-  "notes": "## What's New in v0.11.0\n\n- Wiki Knowledge Base — Karpathy-style LLM-compiled local wiki for agents\n- Feature Guide — discover all 26 features (Ctrl+/)\n- Wiki Freshness Linter — detect stale articles\n- Telegram /wiki commands — manage KB from phone\n- Context Budget Manager — priority-based token allocation\n- Per-feature toggles (wiki, codegraph, pulse, RTK)",
-  "pub_date": "2026-04-07T12:00:00Z"
+  "version": "0.11.1",
+  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.11.1/Companion_0.11.1_x64-setup.exe",
+  "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRYkttZEc2V2pRc2JpZGdEMmZMZFdZLzg2RTVLZ3JqSWNHanFDc0c2dDNrNVdibXh3WXNFSmFyd1VTcnVQRUI5eHZQS3ExNFVGTktGT1E2QjVBVHg5MFU5bDNGRWNWOWdzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1NTU0NTU3CWZpbGU6Q29tcGFuaW9uXzAuMTEuMV94NjQtc2V0dXAuZXhlCkNYbmEzV0VEdmRWVUdmV1BWNGt4MG9HQjQzZW1TTmFPS2FqQkdEdDdqTkUxS0VuUlJKbC84Vk8rWHJ0S0FBWmtPdFdYZHV6c2NBNVY1bkxoOE9EMUFRPT0K",
+  "notes": "Fix: Telegram photo cross-contamination — images now sent as proper multimodal content blocks",
+  "pub_date": "2026-04-07T09:48:34Z"
 }
