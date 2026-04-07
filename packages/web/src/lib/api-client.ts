@@ -1402,6 +1402,8 @@ export const api = {
       request<{ success: boolean }>(`/api/wiki/${domain}/raw/${encodeURIComponent(filename)}`, { method: "DELETE" }),
     search: (domain: string, query: string) =>
       request<{ success: boolean; data: Array<{ slug: string; title: string; score: number; snippet: string }> }>(`/api/wiki/${domain}/query`, { method: "POST", body: JSON.stringify({ mode: "search", query }) }),
+    lint: (domain: string) =>
+      request<{ success: boolean; data: { domain: string; issues: Array<{ target: string; severity: string; code: string; message: string }>; articlesChecked: number; rawFilesChecked: number; lintedAt: string } }>(`/api/wiki/${domain}/lint`),
   },
 
   // Feature toggles

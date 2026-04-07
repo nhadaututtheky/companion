@@ -23,6 +23,7 @@ import { registerConfigCommands } from "./commands/config.js";
 import { registerPanelCommands } from "./commands/panel.js";
 import { registerUtilityCommands } from "./commands/utility.js";
 import { registerTemplateCommands } from "./commands/template.js";
+import { registerWikiCommands } from "./commands/wiki.js";
 import { registerMoodCommands } from "./commands/mood.js";
 import { getLatestReading, type OperationalState } from "../services/pulse-estimator.js";
 import { createLogger } from "../logger.js";
@@ -209,6 +210,7 @@ export class TelegramBridge {
     registerUtilityCommands(this);
     registerTemplateCommands(this);
     registerMoodCommands(this);
+    registerWikiCommands(this);
     // Handle text messages (not commands)
     this.bot.on("message:text", async (ctx) => {
       if (ctx.message.text.startsWith("/")) return; // Skip unregistered commands

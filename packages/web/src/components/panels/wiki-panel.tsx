@@ -15,6 +15,7 @@ import {
   Upload,
   File,
   CircleNotch,
+  Warning,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import {
@@ -306,7 +307,7 @@ function BrowseView() {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 relative">
           <button
             onClick={() => setView("raw")}
             className="flex items-center gap-1 text-xs px-2 py-1 rounded cursor-pointer"
@@ -315,6 +316,7 @@ function BrowseView() {
             <Upload size={12} /> Raw Files
           </button>
           <CompileButton domain={activeDomain} onDone={() => selectDomain(activeDomain)} />
+          <LintButton domain={activeDomain} />
         </div>
       </div>
 
@@ -517,6 +519,109 @@ function CompileButton({ domain, onDone }: { domain: string; onDone: () => void 
       )}
       {compiling ? "Compiling..." : "Compile"}
     </button>
+  );
+}
+
+// ── Lint Button ───────────────────────────────────────────────────────────
+
+interface LintIssue {
+  target: string;
+  severity: string;
+  code: string;
+  message: string;
+}
+
+function LintButton({ domain }: { domain: string }) {
+  const [linting, setLinting] = useState(false);
+  const [issues, setIssues] = useState<LintIssue[] | null>(null);
+  const [showResults, setShowResults] = useState(false);
+
+  const handleLint = useCallback(async () => {
+    if (linting) return;
+    setLinting(true);
+    try {
+      const res = await api.wiki.lint(domain);
+      if (res.success && res.data) {
+        setIssues(res.data.issues);
+        setShowResults(true);
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setLinting(false);
+    }
+  }, [linting, domain]);
+
+  const warningCount = issues?.filter((i) => i.severity === "warning").length ?? 0;
+
+  return (
+    <>
+      <button
+        onClick={handleLint}
+        disabled={linting}
+        className="flex items-center gap-1 text-xs px-2 py-1 rounded cursor-pointer relative"
+        style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
+        title="Check for stale articles"
+      >
+        {linting ? (
+          <CircleNotch size={12} className="animate-spin" />
+        ) : (
+          <Warning size={12} />
+        )}
+        Lint
+        {issues !== null && warningCount > 0 && (
+          <span
+            className="text-[9px] font-bold px-1 py-0.5 rounded-full leading-none"
+            style={{ background: "#f59e0b", color: "#000", minWidth: 14, textAlign: "center" }}
+          >
+            {warningCount}
+          </span>
+        )}
+      </button>
+
+      {showResults && issues !== null && (
+        <div
+          className="absolute left-0 right-0 z-20 rounded-lg mx-3 mt-1 p-3 flex flex-col gap-1.5 max-h-48 overflow-y-auto"
+          style={{
+            background: "var(--color-bg-base)",
+            border: "1px solid var(--color-border)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+              Lint Results
+            </span>
+            <button
+              onClick={() => setShowResults(false)}
+              className="text-xs cursor-pointer"
+              style={{ color: "var(--color-text-secondary)" }}
+              aria-label="Close lint results"
+            >
+              <X size={12} />
+            </button>
+          </div>
+          {issues.length === 0 ? (
+            <div className="text-xs" style={{ color: "#10b981" }}>
+              All clear — no issues found.
+            </div>
+          ) : (
+            issues.map((issue, i) => (
+              <div
+                key={`${issue.target}-${issue.code}-${i}`}
+                className="text-[11px] flex items-start gap-1.5"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
+                <span style={{ color: issue.severity === "warning" ? "#f59e0b" : "var(--color-text-secondary)" }}>
+                  {issue.severity === "warning" ? "⚠" : "ℹ"}
+                </span>
+                <span>{issue.message}</span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </>
   );
 }
 

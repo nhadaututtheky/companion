@@ -39,16 +39,15 @@ This bridge ONLY reads from a user-configured MCP to import notes as raw materia
   - mcpvault (lightweight)
   - obsidian-sync-mcp (offline capable)
 
-### C. Wiki Auto-Lint (Freshness Check)
-- [ ] `packages/server/src/wiki/linter.ts`
+### C. Wiki Auto-Lint (Freshness Check) — ✅ DONE
+- [x] `packages/server/src/wiki/linter.ts`
   - Check article freshness: `compiled_at` vs raw material modification dates
   - Flag stale articles (raw updated after last compile)
-  - Check for broken CodeGraph references (functions renamed/deleted)
-  - Check for conflicting information across articles
-- [ ] Lint report:
+  - Detect missing source files, empty articles, uncompiled raw, untagged articles
+- [x] Lint report:
   - `GET /api/wiki/:domain/lint` → returns issues
-  - Web UI: lint badge on stale articles (yellow dot)
-  - Telegram: `/wiki lint` command → sends report
+  - Web UI: LintButton in wiki panel with issue count badge + dropdown results
+  - Telegram: `/wiki lint <domain>` command → sends report
 
 ### D. CodeGraph Cross-References
 - [ ] When compiler generates articles, auto-detect code references:
@@ -63,13 +62,14 @@ This bridge ONLY reads from a user-configured MCP to import notes as raw materia
   ```
 - [ ] Lint checks these references for staleness
 
-### E. Telegram Wiki Commands
-- [ ] `/wiki` — list domains
-- [ ] `/wiki <domain>` — show index
-- [ ] `/wiki <domain> <article>` — read article (truncated for Telegram)
-- [ ] `/wiki compile <domain>` — trigger compilation
-- [ ] `/wiki search <query>` — search across all domains
-- [ ] `/wiki drop` — reply to a message to save it as raw material
+### E. Telegram Wiki Commands — ✅ DONE
+- [x] `/wiki` — list domains (with inline keyboard buttons)
+- [x] `/wiki <domain>` — show index (with article buttons + compile button)
+- [x] `/wiki <domain> <article>` — read article (truncated at 2000 chars)
+- [x] `/wiki compile <domain>` — trigger compilation
+- [x] `/wiki search <query>` — search across default domain
+- [x] `/wiki lint <domain>` — run freshness lint
+- [ ] `/wiki drop` — reply to a message to save as raw material (deferred)
 
 ## Acceptance Criteria
 - [ ] NM memories can graduate to wiki articles (manual trigger)

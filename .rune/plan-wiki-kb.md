@@ -14,7 +14,7 @@ test case for "how do we explain features to users" — solve both together.
 | 2 | Wiki KB Integration | ✅ Done | plan-wiki-kb-phase2.md | Budget manager, feature toggles, session injection, feedback loop |
 | 3 | Wiki KB Web UI | ✅ Done | plan-wiki-kb-phase3.md | Wiki panel, article reader/editor, raw drop zone, compile trigger |
 | 4 | Feature Discovery UX | ✅ Done | plan-wiki-kb-phase4.md | Feature guide modal, feature data catalog, header button |
-| 5 | Wiki KB Advanced | Pending | plan-wiki-kb-phase5.md | NM graduation, Obsidian MCP, auto-lint, CodeGraph xref |
+| 5 | Wiki KB Advanced | ✅ Done (partial) | plan-wiki-kb-phase5.md | Auto-lint + Telegram wiki commands (NM/Obsidian/xref deferred) |
 
 ## Key Decisions
 - **Local-first filesystem** — no Notion/external dependency required

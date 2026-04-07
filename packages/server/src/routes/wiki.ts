@@ -40,6 +40,7 @@ import {
   compileWiki,
   searchArticles,
   retrieve,
+  lintDomain,
   type ArticleMeta,
   CHARS_PER_TOKEN,
 } from "../wiki/index.js";
@@ -246,6 +247,19 @@ export function createWikiRoutes(): Hono {
       return c.json<ApiResponse>({ success: true, data: result });
     },
   );
+
+  // ─── Lint ───────────────────────────────────────────────────────────
+
+  /** Run freshness lint on a domain */
+  app.get("/:domain/lint", (c) => {
+    const { domain } = c.req.param();
+    try {
+      const result = lintDomain(domain);
+      return c.json<ApiResponse>({ success: true, data: result });
+    } catch (err) {
+      return c.json<ApiResponse>({ success: false, error: String(err) }, 400);
+    }
+  });
 
   // ─── Raw Material ──────────────────────────────────────────────────
 

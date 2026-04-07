@@ -30,6 +30,10 @@ export { compileWiki } from "./compiler.js";
 // Feedback loop (session findings → raw)
 export { saveSessionFindings } from "./feedback.js";
 
+// Linter (freshness checks)
+export { lintDomain } from "./linter.js";
+export type { LintIssue, LintResult, LintSeverity } from "./linter.js";
+
 // Retriever (context-loading)
 export {
   getIndex,
