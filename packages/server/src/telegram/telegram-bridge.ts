@@ -1719,18 +1719,28 @@ export class TelegramBridge {
     const state = session.state;
     const inputK = state.total_input_tokens / 1000;
     const outputK = state.total_output_tokens / 1000;
-    const maxTokens = state.model.includes("haiku") ? 200 : 200; // 200K context
-    const totalK = inputK + outputK;
-    const pct = Math.min(100, Math.round((totalK / maxTokens) * 100));
 
-    // Progress bar: 20 chars wide
-    const filled = Math.round(pct / 5);
-    const bar = "█".repeat(filled) + "░".repeat(20 - filled);
+    // Separate limits: input = context window, output = max output per response
+    const isHaiku = state.model.includes("haiku");
+    const inputMaxK = isHaiku ? 200 : 1000; // Haiku: 200K, Opus/Sonnet: 1M
+    const outputMaxK = isHaiku ? 8 : 32;    // Haiku: 8K, Opus/Sonnet: 32K (per response, cumulative shown)
+
+    const inputPct = Math.min(100, Math.round((inputK / inputMaxK) * 100));
+    const outputPct = Math.min(100, Math.round((outputK / outputMaxK) * 100));
+
+    // Mini bars: 10 chars each
+    const miniBar = (pct: number) => {
+      const filled = Math.round(pct / 10);
+      return "█".repeat(filled) + "░".repeat(10 - filled);
+    };
 
     const fmtK = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}M` : `${v.toFixed(1)}K`;
 
     const cost = result.total_cost_usd > 0 ? ` · $${result.total_cost_usd.toFixed(3)}` : "";
-    const text = `<code>[${bar}]</code> ${pct}%\n${fmtK(inputK)} in / ${fmtK(outputK)} out${cost}`;
+    const text = [
+      `📥 <code>[${miniBar(inputPct)}]</code> ${fmtK(inputK)}/${inputMaxK}K ${inputPct}%`,
+      `📤 <code>[${miniBar(outputPct)}]</code> ${fmtK(outputK)}/${outputMaxK}K ${outputPct}%${cost}`,
+    ].join("\n");
 
     await this.bot.api
       .sendMessage(chatId, text, {
