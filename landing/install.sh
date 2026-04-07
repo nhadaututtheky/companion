@@ -37,7 +37,7 @@ fi
 
 printf "\n"
 printf "${GREEN}  ╔══════════════════════════════════════╗${NC}\n"
-printf "${GREEN}  ║       Companion Installer v0.8.1     ║${NC}\n"
+printf "${GREEN}  ║       Companion Installer v0.11.0     ║${NC}\n"
 printf "${GREEN}  ║  Multi-session UI for Claude Code    ║${NC}\n"
 printf "${GREEN}  ╚══════════════════════════════════════╝${NC}\n"
 printf "\n"
