@@ -29,7 +29,7 @@ import { getProject, upsertProject } from "../services/project-profiles.js";
 import { getTemplate, resolveTemplateVariables } from "../services/templates.js";
 import { createLogger } from "../logger.js";
 import { getMaxSessions } from "../services/license.js";
-import { startDebate, getActiveDebate, concludeDebate } from "../services/debate-engine.js";
+import { startDebate } from "../services/debate-engine.js";
 import { resolveModelProvider } from "../services/provider-registry.js";
 import { getSessionSummary } from "../services/session-summarizer.js";
 import type { ApiResponse } from "@companion/shared";

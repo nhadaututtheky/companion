@@ -217,9 +217,8 @@ export function SettingsModal() {
 
   const handleClose = useCallback(() => setOpen(false), [setOpen]);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional SSR hydration guard
+  useEffect(() => { setMounted(true); }, []);
 
   if (!mounted || !shouldRender) return null;
 

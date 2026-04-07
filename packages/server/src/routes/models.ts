@@ -13,7 +13,6 @@ import {
   invalidateCache,
   getProviders,
 } from "../services/provider-registry.js";
-import { getSetting } from "../services/settings-helpers.js";
 import { getDb } from "../db/client.js";
 import { settings } from "../db/schema.js";
 import { eq } from "drizzle-orm";

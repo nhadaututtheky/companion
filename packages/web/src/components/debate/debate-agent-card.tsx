@@ -53,7 +53,7 @@ export function DebateAgentCard({
   onChange,
   onRemove,
 }: DebateAgentCardProps) {
-  const platformInfo = PLATFORM_LABELS[agent.platform] ?? PLATFORM_LABELS.claude;
+  const _platformInfo = PLATFORM_LABELS[agent.platform] ?? PLATFORM_LABELS.claude;
   const models = getModelsForPlatform(agent.platform);
   const isCLI = agent.source === "cli";
 

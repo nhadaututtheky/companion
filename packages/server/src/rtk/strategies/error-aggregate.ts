@@ -44,7 +44,7 @@ const ESLINT_ERROR_RE = /^(.+?):\d+:\d+\s+(error|warning)\s+(.+?)\s{2,}([\w-]+\/
 const RUST_ERROR_RE = /^(error|warning)\[([A-Z]\d+)\]:\s*(.+)$/;
 
 /** Generic: error: message or Error: message */
-const GENERIC_ERROR_RE = /^(.*?)(error|Error|ERROR|warning|Warning|WARNING):\s*(.+)$/;
+const _GENERIC_ERROR_RE = /^(.*?)(error|Error|ERROR|warning|Warning|WARNING):\s*(.+)$/;
 
 function matchError(line: string): ErrorMatch | null {
   const trimmed = line.trim();

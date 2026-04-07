@@ -28,23 +28,13 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
   const [guidanceText, setGuidanceText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Don't show if score <= 40 or dismissed (re-show if score jumps 10+ above dismissed level)
-  if (!reading || reading.score <= 40) return null;
-  if (dismissed && reading.score < dismissedScore + 10) return null;
-
-  const color = getPulseColor(reading.score);
-  const stateLabel = getStateLabel(reading.state);
-
-  const warningText = getWarningText(reading);
-  const suggestedGuidance = getSuggestedGuidance(reading);
-
   const handleDismiss = useCallback(() => {
     setDismissed(true);
-    setDismissedScore(reading.score);
+    if (reading) setDismissedScore(reading.score);
     setShowGuidance(false);
     setShowCalmConfirm(false);
     setShowDetails(false);
-  }, [reading.score]);
+  }, [reading]);
 
   const logPulseAction = useCallback((action: string, content: string) => {
     useContextFeedStore.getState().pushEvent({
@@ -65,10 +55,11 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
     setShowGuidance(false);
     setGuidanceText("");
     setDismissed(true);
-    setDismissedScore(reading.score);
-  }, [guidanceText, onSendMessage, reading.score, logPulseAction]);
+    if (reading) setDismissedScore(reading.score);
+  }, [guidanceText, onSendMessage, reading, logPulseAction]);
 
   const handleInjectCalm = useCallback(() => {
+    if (!reading) return;
     const calmMessage = getCalmInjection(reading);
     onSendMessage(calmMessage);
     logPulseAction(`Calm injection sent (score ${reading.score})`, calmMessage);
@@ -78,10 +69,19 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
   }, [reading, onSendMessage, logPulseAction]);
 
   const openGuidanceEditor = useCallback(() => {
-    setGuidanceText(suggestedGuidance);
+    if (!reading) return;
+    setGuidanceText(getSuggestedGuidance(reading));
     setShowGuidance(true);
     setTimeout(() => textareaRef.current?.focus(), 50);
-  }, [suggestedGuidance]);
+  }, [reading]);
+
+  // Don't show if score <= 40 or dismissed (re-show if score jumps 10+ above dismissed level)
+  if (!reading || reading.score <= 40) return null;
+  if (dismissed && reading.score < dismissedScore + 10) return null;
+
+  const color = getPulseColor(reading.score);
+  const stateLabel = getStateLabel(reading.state);
+  const warningText = getWarningText(reading);
 
   return (
     <div

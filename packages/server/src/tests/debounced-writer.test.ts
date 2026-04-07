@@ -2,7 +2,7 @@
  * Tests for DebouncedWriter — push/flush mechanics, debounce timer, batch size.
  */
 
-import { describe, test, expect, beforeEach } from "bun:test";
+import { describe, test, expect } from "bun:test";
 import { DebouncedWriter } from "../services/debounced-writer.js";
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));

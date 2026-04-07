@@ -176,7 +176,7 @@ function RoundDivider({ round, maxRounds }: { round: number; maxRounds: number }
 
 // ── Main Feed Component ────────────────────────────────────────────────────
 
-export function DebateFeed({ channelId, onClose }: DebateFeedProps) {
+export function DebateFeed({ channelId }: DebateFeedProps) {
   const [channel, setChannel] = useState<DebateChannel | null>(null);
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -192,7 +192,7 @@ export function DebateFeed({ channelId, onClose }: DebateFeedProps) {
   }, [channelId]);
 
   useEffect(() => {
-    setLoading(true);
+    setLoading(true); // eslint-disable-line react-hooks/set-state-in-effect -- loading state tied to fetch lifecycle
     fetchChannel().finally(() => setLoading(false));
 
     // Poll every 3 seconds for live updates

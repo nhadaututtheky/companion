@@ -446,7 +446,7 @@ function generateComposeOverride(
   if (mode === "nginx") {
     if (letsEncrypt && hostname) {
       // Let's Encrypt: nginx with certbot volumes + certbot service
-      const emailFlag = letsencryptEmail ? `--email ${letsencryptEmail}` : "--register-unsafely-without-email";
+      const _emailFlag = letsencryptEmail ? `--email ${letsencryptEmail}` : "--register-unsafely-without-email";
       services.push(`  gateway:
     image: nginx:alpine
     container_name: companion-gateway
@@ -461,6 +461,7 @@ function generateComposeOverride(
     depends_on:
       - companion`);
 
+      /* eslint-disable no-useless-escape -- escapes required inside template literal to prevent ${} interpolation */
       services.push(`  certbot:
     image: certbot/certbot:latest
     container_name: companion-certbot
@@ -470,6 +471,7 @@ function generateComposeOverride(
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait \$\$\{!\}; done'"
     depends_on:
       - gateway`);
+      /* eslint-enable no-useless-escape */
     } else {
       // Manual SSL: mount certs directory
       services.push(`  gateway:

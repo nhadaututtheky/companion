@@ -365,7 +365,7 @@ export async function checkProvidersHealth(): Promise<
   const providers = getProviders().filter((p) => p.enabled);
   const healthResults: Array<{ id: string; status: "ok" | "degraded" | "down"; latencyMs: number }> = [];
 
-  const checks = providers.map(async (p, idx) => {
+  const checks = providers.map(async (p, _idx) => {
     const start = Date.now();
     const healthUrl = getHealthCheckUrl(p);
 

@@ -292,7 +292,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
   // Load graph data (only on project change, NOT on label mode change)
   useEffect(() => {
     if (!projectSlug) return;
-    setLoading(true);
+    setLoading(true); // eslint-disable-line react-hooks/set-state-in-effect -- loading tied to fetch
     setError(null);
 
     (async () => {

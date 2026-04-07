@@ -358,6 +358,7 @@ export function UpgradeModal() {
 
             {/* QR Code */}
             <div className="flex justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element -- external QR code URL, can't use next/image */}
               <img
                 src={qrUrl}
                 alt="VietQR Payment"

@@ -26,8 +26,6 @@ import { TelegramStreaming } from "@/components/settings/telegram-streaming";
 import { TelegramStatus } from "@/components/settings/telegram-status";
 import { TelegramPreview } from "@/components/settings/telegram-preview";
 import { TelegramDebateGuide } from "@/components/settings/telegram-debate-guide";
-import { McpSettings } from "@/components/settings/mcp-settings";
-import { RTKSettings } from "@/components/settings/rtk-settings";
 import type { SettingsTab } from "@/types/settings";
 
 // ── Shared primitives ─────────────────────────────────────────────────────────

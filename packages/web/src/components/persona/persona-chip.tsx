@@ -18,7 +18,7 @@ interface PersonaChipProps {
 export function PersonaChip({ personaId, onSwitch, disabled }: PersonaChipProps) {
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const { all: allPersonas, custom: customPersonas } = usePersonas();
+  const { all: allPersonas } = usePersonas();
   const persona = allPersonas.find((p) => p.id === personaId) ?? getPersonaById(personaId);
 
   // Close on outside click

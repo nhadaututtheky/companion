@@ -30,7 +30,7 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
   useEffect(() => {
     if (!open) return;
     loadPrompts();
-  }, [open, projectSlug]);
+  }, [open, projectSlug]); // eslint-disable-line react-hooks/exhaustive-deps -- loadPrompts is stable, depends on projectSlug
 
   // Close on outside click
   useEffect(() => {

@@ -8,7 +8,7 @@
  * Token estimate: ~4 characters per token (rough average for English + code).
  */
 
-import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { homedir } from "node:os";
 

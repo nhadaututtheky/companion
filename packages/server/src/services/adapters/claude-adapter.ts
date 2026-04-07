@@ -317,7 +317,7 @@ function parseClaudeMessage(line: string): NormalizedMessage | null {
     }
 
     case "stream_event": {
-      const stream = msg as CLIStreamEventMessage;
+      const _stream = msg as CLIStreamEventMessage;
       return {
         type: "progress",
         platform: "claude",

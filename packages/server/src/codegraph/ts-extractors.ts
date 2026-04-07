@@ -11,7 +11,7 @@ import type { ScannedNode, ScannedEdge, ScanResult } from "./scanner.js";
 import type { EdgeType } from "./trust-calculator.js";
 import { getBodyPreview } from "./utils.js";
 
-const log = createLogger("ts-extractors");
+const _log = createLogger("ts-extractors");
 
 // ─── Helpers ────────────────────────────────────────────────────────────
 
@@ -87,7 +87,7 @@ function collectNodes(root: TSNode, types: Set<string>): TSNode[] {
   const result: TSNode[] = [];
   const cursor = root.walk();
 
-  let reached = cursor.gotoFirstChild();
+  let reached = cursor.gotoFirstChild(); // eslint-disable-line prefer-const
   while (reached) {
     if (types.has(cursor.currentNode.type)) {
       result.push(cursor.currentNode);
@@ -524,7 +524,7 @@ const BUILTIN_CALLEES = new Set([
  * Find the containing function/method name for a given AST node.
  * Walks up the tree to find the nearest function-like ancestor.
  */
-function findContainingFunction(node: TSNode, extractedNodes: ScannedNode[]): string | null {
+function findContainingFunction(node: TSNode, _extractedNodes: ScannedNode[]): string | null {
   let current: TSNode | null = node.parent;
   while (current) {
     if (current.type === "function_declaration") {

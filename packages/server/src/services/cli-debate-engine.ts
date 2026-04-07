@@ -124,11 +124,11 @@ Keep your response focused and under 2000 words.
 
 // ── Response collector ────────────────────────────────────────────────────
 
-function collectCLIResponse(
+function _collectCLIResponse(
   proc: CLIProcess,
   timeoutMs: number,
 ): Promise<{ content: string; toolUse: string[] }> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _reject) => {
     const chunks: string[] = [];
     const toolNames: string[] = [];
     let resolved = false;

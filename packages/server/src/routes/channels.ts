@@ -16,7 +16,7 @@ import {
   deleteChannel,
 } from "../services/channel-manager.js";
 import { startDebate, concludeDebate, getActiveDebate } from "../services/debate-engine.js";
-import { startCLIDebate, abortCLIDebate, getActiveCLIDebate } from "../services/cli-debate-engine.js";
+import { startCLIDebate, abortCLIDebate } from "../services/cli-debate-engine.js";
 import { createLogger } from "../logger.js";
 import type { ApiResponse, CLIPlatform } from "@companion/shared";
 import { hasFeature } from "../services/license.js";

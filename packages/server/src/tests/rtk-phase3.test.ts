@@ -6,7 +6,7 @@
 import { describe, it, expect } from "bun:test";
 import { RTKCache } from "../rtk/cache.js";
 import { applyBudget } from "../rtk/budget.js";
-import { RTKPipeline, estimateTokens } from "../rtk/pipeline.js";
+import { RTKPipeline } from "../rtk/pipeline.js";
 import { AnsiStripStrategy } from "../rtk/strategies/ansi-strip.js";
 import { BlankCollapseStrategy } from "../rtk/strategies/blank-collapse.js";
 import { DedupStrategy } from "../rtk/strategies/dedup.js";

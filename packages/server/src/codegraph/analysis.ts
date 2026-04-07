@@ -9,7 +9,7 @@
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { getSqlite } from "../db/client.js";
-import { codeNodes, codeEdges, codeFiles } from "../db/schema.js";
+import { codeNodes, codeEdges } from "../db/schema.js";
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -311,7 +311,7 @@ export function computeRiskScores(
     .from(codeNodes)
     .where(eq(codeNodes.projectSlug, projectSlug))
     .all();
-  const totalNodes = totalNodesResult[0]?.count ?? 1;
+  const _totalNodes = totalNodesResult[0]?.count ?? 1;
 
   // Compute scores
   const changedFileSet = new Set(filePaths);
@@ -664,10 +664,9 @@ export function fusedSearch(
     for (const m of matches) {
       const nameLower = m.symbolName.toLowerCase();
       const kwLower = kw.toLowerCase();
-      let score = 0;
+      let score = 0.5;
       if (nameLower === kwLower) score = 1.0;
       else if (nameLower.startsWith(kwLower)) score = 0.8;
-      else score = 0.5;
       if (m.isExported) score *= 1.3;
 
       const existing = symbolResults.find((r) => r.id === m.id);

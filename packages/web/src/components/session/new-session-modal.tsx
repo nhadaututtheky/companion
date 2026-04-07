@@ -39,12 +39,6 @@ const PERMISSION_DESCRIPTIONS: Record<PermissionMode, string> = {
   plan: "Claude plans only, no file or command execution",
 };
 
-const MODEL_OPTIONS = [
-  { value: "claude-sonnet-4-6", label: "Sonnet 4.6 (default)" },
-  { value: "claude-opus-4-6", label: "Opus 4.6" },
-  { value: "claude-haiku-4-5", label: "Haiku 4.5" },
-];
-
 interface ProjectItem {
   slug: string;
   name: string;
@@ -360,7 +354,7 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
         setPermissionMode((tpl.permissionMode as PermissionMode) || "default");
       }
     },
-    [selectedTemplateId],
+    [selectedTemplateId], // eslint-disable-line react-hooks/exhaustive-deps -- intentionally only re-run on template change
   );
 
   // Check if all required template variables are filled

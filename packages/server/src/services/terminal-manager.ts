@@ -48,7 +48,7 @@ class TerminalManager {
       });
     } catch (err) {
       log.error("Failed to spawn terminal process", { id, cwd, shell, error: String(err) });
-      throw new Error(`Failed to spawn shell: ${shell}`);
+      throw new Error(`Failed to spawn shell: ${shell}`, { cause: err });
     }
 
     const terminal: TerminalProcess = {

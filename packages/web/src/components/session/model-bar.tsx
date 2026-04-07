@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import { Lightning, X, Plus, CircleNotch } from "@phosphor-icons/react";
+import { useState, useCallback } from "react";
+import { Lightning, X, Plus } from "@phosphor-icons/react";
 import { ModelDropdown } from "./model-dropdown";
 import { api } from "@/lib/api-client";
 import { getPersonaById } from "@companion/shared";

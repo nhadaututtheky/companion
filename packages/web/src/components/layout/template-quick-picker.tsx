@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Rocket, CaretDown, Lightning } from "@phosphor-icons/react";
+import { Rocket, CaretDown } from "@phosphor-icons/react";
 import { BUILT_IN_PERSONAS, type Persona } from "@companion/shared";
 import { PersonaAvatar } from "@/components/persona/persona-avatar";
 import { api } from "@/lib/api-client";
@@ -27,7 +27,7 @@ export function TemplateQuickPicker() {
   // Lazy-load custom templates on first open
   useEffect(() => {
     if (!open || loaded) return;
-    setLoading(true);
+    setLoading(true); // eslint-disable-line react-hooks/set-state-in-effect -- loading tied to fetch
     api.templates
       .list()
       .then((res) => {
