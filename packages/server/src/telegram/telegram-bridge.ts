@@ -747,6 +747,7 @@ export class TelegramBridge {
         ],
         // Row 4: Actions
         [
+          btn("📊 Context", `ctx:detail:${sessionId}`),
           btn("↩ Back", `panel:back:${sessionId}`),
           btn("Cancel", `panel:cancel:${sessionId}`),
           btn("Stop", `panel:stop:${sessionId}`, "danger"),
@@ -1146,8 +1147,14 @@ export class TelegramBridge {
         }
 
         case "context_breakdown": {
+          // Only store breakdown silently — don't send a message.
+          // Users access it via the 📊 button shown in session_init or /context command.
           if ("breakdown" in msg) {
-            await this.sendContextBreakdown(chatId, topicId, sessionId, msg.breakdown);
+            const { formatBreakdownDetailed } = await import(
+              "../services/context-estimator.js"
+            );
+            const bd = msg.breakdown as import("../services/context-estimator.js").ContextBreakdown;
+            this.contextBreakdowns.set(sessionId, formatBreakdownDetailed(bd));
           }
           break;
         }
@@ -1694,39 +1701,6 @@ export class TelegramBridge {
         message_thread_id: topicId,
       });
     }
-  }
-
-  private async sendContextBreakdown(
-    chatId: number,
-    topicId: number | undefined,
-    sessionId: string,
-    breakdown: import("../services/context-estimator.js").ContextBreakdown,
-  ): Promise<void> {
-    const { formatBreakdownDetailed } = await import(
-      "../services/context-estimator.js"
-    );
-
-    // Store detailed breakdown for expand callback (user clicks button to see)
-    this.contextBreakdowns.set(sessionId, formatBreakdownDetailed(breakdown));
-
-    // Compact inline: just % and total tokens — no full breakdown spam
-    const kt = (breakdown.totalTokens / 1000).toFixed(1);
-    const pct = breakdown.percent.toFixed(0);
-    const summary = `📊 Context: <b>${kt}K</b> tokens (${pct}%)`;
-
-    const keyboard = {
-      inline_keyboard: [
-        [{ text: "📋 Details", callback_data: `ctx:detail:${sessionId}` }],
-      ],
-    };
-
-    await this.bot.api
-      .sendMessage(chatId, summary, {
-        parse_mode: "HTML",
-        reply_markup: keyboard as unknown as import("grammy").InlineKeyboard,
-        message_thread_id: topicId,
-      })
-      .catch(() => {});
   }
 
   private async handleContextUpdate(
