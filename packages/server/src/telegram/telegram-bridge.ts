@@ -1722,8 +1722,9 @@ export class TelegramBridge {
 
     // Separate limits: input = context window, output = max output per response
     const isHaiku = state.model.includes("haiku");
-    const inputMaxK = isHaiku ? 200 : 1000; // Haiku: 200K, Opus/Sonnet: 1M
-    const outputMaxK = isHaiku ? 8 : 32;    // Haiku: 8K, Opus/Sonnet: 32K (per response, cumulative shown)
+    const isOpus = state.model.includes("opus");
+    const inputMaxK = isHaiku ? 200 : 1000;        // Haiku: 200K, Opus/Sonnet: 1M
+    const outputMaxK = isOpus ? 128 : 64;           // Opus: 128K, Sonnet/Haiku: 64K
 
     const inputPct = Math.min(100, Math.round((inputK / inputMaxK) * 100));
     const outputPct = Math.min(100, Math.round((outputK / outputMaxK) * 100));
