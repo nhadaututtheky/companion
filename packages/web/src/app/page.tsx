@@ -34,6 +34,10 @@ const OnboardingWizard = dynamic(
   () => import("@/components/onboarding-wizard").then((m) => ({ default: m.OnboardingWizard })),
   { ssr: false },
 );
+const FeatureGuideModal = dynamic(
+  () => import("@/components/feature-guide/feature-guide-modal").then((m) => ({ default: m.FeatureGuideModal })),
+  { ssr: false },
+);
 
 // ── Empty center state ─────────────────────────────────────────────────────
 
@@ -211,6 +215,8 @@ export default function DashboardPage() {
   const setNewSessionOpen = useUiStore((s) => s.setNewSessionModalOpen);
   const activityTerminalOpen = useUiStore((s) => s.activityTerminalOpen);
   const setActivityTerminalOpen = useUiStore((s) => s.setActivityTerminalOpen);
+  const featureGuideOpen = useUiStore((s) => s.featureGuideOpen);
+  const setFeatureGuideOpen = useUiStore((s) => s.setFeatureGuideOpen);
   const rightPanelMode = useUiStore((s) => s.rightPanelMode);
   const rightPanelPath = useUiStore((s) => s.rightPanelPath);
   const browserPreviewUrl = useUiStore((s) => s.browserPreviewUrl);
@@ -425,6 +431,11 @@ export default function DashboardPage() {
         e.preventDefault();
         setRightPanelMode("search");
       }
+      // Ctrl+/ or Cmd+/ — open Feature Guide
+      if ((e.ctrlKey || e.metaKey) && e.key === "/") {
+        e.preventDefault();
+        setFeatureGuideOpen(!featureGuideOpen);
+      }
       // Ctrl+1 through Ctrl+6 — switch to session by grid position
       if (e.ctrlKey && e.key >= "1" && e.key <= "6") {
         const index = parseInt(e.key, 10) - 1;
@@ -445,6 +456,8 @@ export default function DashboardPage() {
     setExpandedSession,
     rightPanelMode,
     setRightPanelMode,
+    featureGuideOpen,
+    setFeatureGuideOpen,
     gridOrder,
     setActiveSession,
   ]);
@@ -672,6 +685,9 @@ export default function DashboardPage() {
 
       {/* First-run onboarding wizard */}
       <OnboardingWizard onOpenNewSession={handleNewSession} />
+
+      {/* Feature Guide modal */}
+      {featureGuideOpen && <FeatureGuideModal />}
     </div>
   );
 }

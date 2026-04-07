@@ -50,32 +50,15 @@ SETTINGS (redesigned)
 - [ ] Add Access PIN UI (currently hidden, API-only)
 - [ ] Move Domain config to Connection section (it's about access, not a standalone thing)
 
-### B. Feature Guide Panel ("What Can I Do?")
-- [ ] New component: `packages/web/src/components/feature-guide/`
-  - `feature-guide-modal.tsx` — full-screen overlay (opened from "?" button or Cmd+/)
-  - `feature-card.tsx` — individual feature card
-- [ ] Feature card design:
-  ```
-  ┌─────────────────────────────────────┐
-  │ icon  Feature Name           [FREE] │
-  │       One-line description          │
-  │       "When to use: ..."            │
-  │                          [Try it →] │
-  └─────────────────────────────────────┘
-  ```
-- [ ] Feature cards grouped by category:
-  - **Session Management** — Multi-session, Templates, Saved Prompts, Thinking Mode
-  - **AI Intelligence** — Wiki KB, CodeGraph, RTK, Pulse Monitor, Context Estimator
-  - **Collaboration** — Telegram, Debate, Shared Channels, @Mentions
-  - **Developer Tools** — Terminal, File Explorer, Browser Preview, Inline Diff
-  - **Automation** — Workflows, Schedules, Auto-Approve, MCP Servers
-  - **Security** — Permission Gate, Prompt Scanning, Access PIN
-- [ ] Each card links to:
-  - Settings section (if configurable)
-  - Panel (if it has a panel)
-  - Action (if it's a "try it" feature)
-- [ ] Free/Pro badge on each card
-- [ ] Search/filter by category or keyword
+### B. Feature Guide Panel ("What Can I Do?") — ✅ DONE
+- [x] New component: `packages/web/src/components/feature-guide/`
+  - `feature-guide-modal.tsx` — full-screen overlay (Ctrl+/ or Compass button in header)
+  - `feature-data.ts` — 26 feature definitions with categories, tiers, actions
+- [x] Feature card design: name, tier badge (FREE/PRO+Crown), toggleable badge, description, whenToUse, action button
+- [x] Feature cards grouped by 6 categories (session, intelligence, collaboration, devtools, automation, security)
+- [x] Each card links to panel (Open →) or settings tab (⚙ Settings)
+- [x] Free/Pro badge on each card
+- [x] Search/filter by category pills + text search
 
 ### C. Contextual Feature Tips
 - [ ] `packages/web/src/components/feature-guide/feature-tip.tsx`

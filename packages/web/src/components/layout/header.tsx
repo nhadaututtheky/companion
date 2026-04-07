@@ -13,6 +13,7 @@ import {
   ChartBar,
   Brain,
   BookOpen,
+  Compass,
 } from "@phosphor-icons/react";
 import { TemplateQuickPicker } from "./template-quick-picker";
 import { useUiStore } from "@/lib/stores/ui-store";
@@ -264,6 +265,14 @@ export function Header({ onMenuToggle }: HeaderProps) {
         </button>
         {/* Quick start from template */}
         <TemplateQuickPicker />
+        <button
+          onClick={() => useUiStore.getState().setFeatureGuideOpen(true)}
+          className="p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+          aria-label="Feature Guide"
+          title="Feature Guide (Ctrl+/)"
+        >
+          <Compass size={16} weight="bold" />
+        </button>
         <button
           onClick={() => useUiStore.getState().setSettingsModalOpen(true)}
           className="p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"

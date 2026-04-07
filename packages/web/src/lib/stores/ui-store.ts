@@ -11,8 +11,10 @@ interface UiStore {
   rightPanelMode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context" | "wiki";
   rightPanelPath: string | null;
   browserPreviewUrl: string | null;
+  featureGuideOpen: boolean;
   sidebarExpanded: boolean;
   sidebarActiveProject: string | null;
+  setFeatureGuideOpen: (open: boolean) => void;
   setTheme: (t: "light" | "dark") => void;
   toggleTheme: () => void;
   setCommandPaletteOpen: (open: boolean) => void;
@@ -47,6 +49,7 @@ export const useUiStore = create<UiStore>((set) => ({
   settingsModalOpen: false,
   settingsActiveTab: "general",
   activityTerminalOpen: false,
+  featureGuideOpen: false,
   rightPanelMode: "none",
   rightPanelPath: null,
   browserPreviewUrl: null,
@@ -80,6 +83,8 @@ export const useUiStore = create<UiStore>((set) => ({
   setSettingsActiveTab: (tab) => set({ settingsActiveTab: tab }),
 
   setActivityTerminalOpen: (open) => set({ activityTerminalOpen: open }),
+
+  setFeatureGuideOpen: (open) => set({ featureGuideOpen: open }),
 
   setRightPanelMode: (mode) => set({ rightPanelMode: mode }),
 
