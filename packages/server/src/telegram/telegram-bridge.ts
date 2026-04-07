@@ -1467,14 +1467,25 @@ export class TelegramBridge {
       if (!response.ok) throw new Error(`Download failed: ${response.status}`);
 
       const buffer = Buffer.from(await response.arrayBuffer());
-      const base64 = buffer.toString("base64");
       const ext = file.file_path.split(".").pop() ?? "jpg";
-      const mimeType = ext === "png" ? "image/png" : "image/jpeg";
+      const mediaType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+      const base64 = buffer.toString("base64");
 
-      const captionPart = caption ? `User caption: "${caption}"\n\n` : "";
-      const message = `${captionPart}[Image attached — base64 encoded, mime: ${mimeType}, size: ${buffer.length} bytes]\ndata:${mimeType};base64,${base64}`;
+      // Build multimodal content blocks (same format as Claude API)
+      const blocks: Array<
+        | { type: "text"; text: string }
+        | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
+      > = [
+        { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
+      ];
 
-      this.wsBridge.sendUserMessage(mapping.sessionId, message, "telegram");
+      if (caption.trim()) {
+        blocks.push({ type: "text", text: caption.trim() });
+      } else {
+        blocks.push({ type: "text", text: "What do you see in this image?" });
+      }
+
+      this.wsBridge.sendMultimodalMessage(mapping.sessionId, blocks, "telegram");
     } catch (err) {
       log.error("Failed to download/forward photo", { error: String(err) });
       await ctx.reply("❌ Failed to download image. Please try again.");

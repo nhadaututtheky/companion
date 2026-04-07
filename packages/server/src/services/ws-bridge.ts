@@ -1024,6 +1024,98 @@ export class WsBridge {
     this.handleUserMessage(session, content, source);
   }
 
+  /**
+   * Send a multimodal message (text + images) directly to CLI.
+   * Bypasses enrichment pipeline — images don't need CodeGraph/WebIntel.
+   */
+  sendMultimodalMessage(
+    sessionId: string,
+    contentBlocks: Array<
+      | { type: "text"; text: string }
+      | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
+    >,
+    source?: string,
+  ): void {
+    const session = getActiveSession(sessionId);
+    if (!session) {
+      log.warn("Cannot send multimodal message — session not found", { sessionId });
+      return;
+    }
+
+    // Record text parts in history
+    const textParts = contentBlocks
+      .filter((b): b is { type: "text"; text: string } => b.type === "text")
+      .map((b) => b.text);
+    const historyMsg: BrowserIncomingMessage = {
+      type: "user_message",
+      content: textParts.join("\n") || "[image]",
+      timestamp: Date.now(),
+      source: source ?? "web",
+    };
+    pushMessageHistory(session, historyMsg);
+    this.broadcastToAll(session, historyMsg);
+
+    // Store text representation in DB
+    storeMessage({
+      id: randomUUID(),
+      sessionId: session.id,
+      role: "user",
+      content: textParts.join("\n") || "[image]",
+      source: (source ?? "web") as "telegram" | "web" | "api" | "agent" | "system",
+    });
+
+    // SDK engine: doesn't support content blocks — save image to temp file + send path
+    const existingSdkHandle = this.sdkHandles.get(session.id);
+    if (existingSdkHandle || USE_SDK_ENGINE) {
+      void this.sendMultimodalViaTempFile(session, contentBlocks, textParts);
+      return;
+    }
+
+    // CLI engine: send multimodal content blocks directly (Claude API format)
+    const ndjson = JSON.stringify({
+      type: "user",
+      message: { role: "user", content: contentBlocks },
+    });
+    this.sendToCLI(session, ndjson);
+    this.updateStatus(session, "busy");
+  }
+
+  /**
+   * Fallback for SDK engine: save image to temp file, send file path as text.
+   */
+  private async sendMultimodalViaTempFile(
+    session: ActiveSession,
+    contentBlocks: Array<
+      | { type: "text"; text: string }
+      | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
+    >,
+    textParts: string[],
+  ): Promise<void> {
+    const { tmpdir } = await import("os");
+    const { join } = await import("path");
+    const { writeFile, mkdir } = await import("fs/promises");
+
+    const tempDir = join(tmpdir(), "companion-uploads");
+    await mkdir(tempDir, { recursive: true });
+
+    const filePaths: string[] = [];
+    for (const block of contentBlocks) {
+      if (block.type === "image") {
+        const ext = block.source.media_type.split("/")[1] ?? "jpg";
+        const filename = `${Date.now()}-photo.${ext}`;
+        const savePath = join(tempDir, filename);
+        await writeFile(savePath, Buffer.from(block.source.data, "base64"));
+        filePaths.push(savePath);
+      }
+    }
+
+    const caption = textParts.join("\n") || "What do you see in this image?";
+    const fileList = filePaths.map((p) => `Image saved at: ${p}`).join("\n");
+    const prompt = `${caption}\n\n${fileList}\n\nPlease read the image file(s) to see their contents.`;
+
+    this.sendToEngine(session, prompt);
+  }
+
   // ── CLI message handling ────────────────────────────────────────────────
 
   /**
