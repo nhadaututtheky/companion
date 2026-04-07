@@ -1716,32 +1716,35 @@ export class TelegramBridge {
     const session = this.wsBridge.getSession(sessionId);
     if (!session) return;
 
-    const state = session.state;
-    const inputK = state.total_input_tokens / 1000;
-    const outputK = state.total_output_tokens / 1000;
+    const model = session.state.model;
+    const isHaiku = model.includes("haiku");
+    const isOpus = model.includes("opus");
 
-    // Separate limits: input = context window, output = max output per response
-    const isHaiku = state.model.includes("haiku");
-    const isOpus = state.model.includes("opus");
-    const inputMaxK = isHaiku ? 200 : 1000;        // Haiku: 200K, Opus/Sonnet: 1M
-    const outputMaxK = isOpus ? 128 : 64;           // Opus: 128K, Sonnet/Haiku: 64K
+    // Per-turn tokens from result (= actual context window usage this turn)
+    const inputK = result.usage.input_tokens / 1000;
+    const outputK = result.usage.output_tokens / 1000;
+
+    // Context window limits
+    const inputMaxK = isHaiku ? 200 : 1000;  // Haiku: 200K, Opus/Sonnet: 1M
+    const outputMaxK = isOpus ? 128 : 64;    // Opus: 128K, Sonnet/Haiku: 64K
 
     const inputPct = Math.min(100, Math.round((inputK / inputMaxK) * 100));
-    const outputPct = Math.min(100, Math.round((outputK / outputMaxK) * 100));
 
-    // Mini bars: 10 chars each
-    const miniBar = (pct: number) => {
-      const filled = Math.round(pct / 10);
-      return "█".repeat(filled) + "░".repeat(10 - filled);
+    // Progress bar: 15 chars
+    const bar = (pct: number) => {
+      const filled = Math.round((pct / 100) * 15);
+      return "█".repeat(filled) + "░".repeat(15 - filled);
     };
 
     const fmtK = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}M` : `${v.toFixed(1)}K`;
 
-    const cost = result.total_cost_usd > 0 ? ` · $${result.total_cost_usd.toFixed(3)}` : "";
-    const text = [
-      `📥 <code>[${miniBar(inputPct)}]</code> ${fmtK(inputK)}/${inputMaxK}K ${inputPct}%`,
-      `📤 <code>[${miniBar(outputPct)}]</code> ${fmtK(outputK)}/${outputMaxK}K ${outputPct}%${cost}`,
-    ].join("\n");
+    const cost = result.total_cost_usd > 0 ? `$${result.total_cost_usd.toFixed(3)}` : "";
+    const turns = result.num_turns > 0 ? `T${result.num_turns}` : "";
+    const meta = [turns, cost].filter(Boolean).join(" · ");
+
+    // Single bar for context window (what matters for compaction)
+    // Output shown as plain number (no bar — no meaningful session-level max)
+    const text = `<code>[${bar(inputPct)}]</code> ${fmtK(inputK)}/${fmtK(inputMaxK)} · out ${fmtK(outputK)}${meta ? ` · ${meta}` : ""}`;
 
     await this.bot.api
       .sendMessage(chatId, text, {
