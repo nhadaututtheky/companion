@@ -25,6 +25,7 @@ import { modelRoutes } from "./models.js";
 import { customPersonaRoutes } from "./custom-personas.js";
 import { skillsRoutes } from "./skills.js";
 import cliPlatformRoutes from "./cli-platforms.js";
+import { createWikiRoutes } from "./wiki.js";
 import { initWorkflowEngine } from "../services/workflow-engine.js";
 import { apiKeyAuth } from "../middleware/auth.js";
 import { createRateLimit } from "../middleware/rate-limit.js";
@@ -135,6 +136,7 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   protectedApi.route("/custom-personas", personasGated);
   protectedApi.route("/skills", skillsRoutes);
   protectedApi.route("/cli-platforms", cliPlatformRoutes);
+  protectedApi.route("/wiki", createWikiRoutes());
 
   // Initialize workflow engine with bridge reference
   initWorkflowEngine(bridge);
