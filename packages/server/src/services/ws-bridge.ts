@@ -356,6 +356,7 @@ export class WsBridge {
 
     const initialState: SessionState = {
       session_id: sessionId,
+      source: (opts.source as SessionState["source"]) ?? "web",
       model: opts.model,
       cwd: opts.cwd,
       tools: [],
@@ -2623,8 +2624,7 @@ export class WsBridge {
 
   private startIdleTimer(session: ActiveSession): void {
     // Only apply to api/web sessions — Telegram has its own idle handling
-    const source = (session.state as unknown as { source?: string }).source;
-    if (source === "telegram") return;
+    if (session.state.source === "telegram") return;
 
     // Check per-session settings
     const settings = this.sessionSettings.get(session.id) ?? DEFAULT_SESSION_SETTINGS;

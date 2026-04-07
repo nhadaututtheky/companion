@@ -293,6 +293,8 @@ export interface SessionState {
   short_id?: string;
   /** User-defined session name (persists after session end) */
   name?: string;
+  /** Where this session was created from */
+  source?: "web" | "telegram" | "api" | "agent";
   /** CLI platform used for this session */
   cli_platform?: import("./cli-adapter").CLIPlatform;
   model: string;

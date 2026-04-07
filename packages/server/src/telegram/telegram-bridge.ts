@@ -528,9 +528,14 @@ export class TelegramBridge {
       }
     }
 
-    // Kill existing session if any
+    // Kill existing session if any — but preserve its idle config
     const existing = this.getMapping(chatId, effectiveTopicId);
+    let inheritedIdleMs: number | undefined;
     if (existing) {
+      const oldCfg = this.sessionConfigs.get(existing.sessionId);
+      if (oldCfg) {
+        inheritedIdleMs = oldCfg.idleTimeoutMs;
+      }
       this.killSession(existing.sessionId);
     }
 
@@ -557,6 +562,11 @@ export class TelegramBridge {
 
       this.setMapping(chatId, effectiveTopicId, mapping);
       this.subscribeToSession(sessionId, chatId, effectiveTopicId);
+
+      // Inherit idle timeout from previous session in this chat slot
+      if (inheritedIdleMs !== undefined) {
+        this.setIdleTimeout(sessionId, inheritedIdleMs);
+      }
 
       // Send settings panel (includes status + inline keyboard)
       const panelMsg = await this.sendSettingsPanel(

@@ -279,9 +279,8 @@ export function estimateContextBreakdown(
   const activeSources = sources.filter((s) => s.tokens > 0);
   const totalTokens = activeSources.reduce((sum, s) => sum + s.tokens, 0);
 
-  const maxTokens = model.includes("haiku") ? 200_000 : 200_000;
-  // Note: Opus/Sonnet have 200K context window, but effective prompt space
-  // is limited by output reservation. We use 200K as the reference.
+  // Haiku 4.5: 200K context, Opus/Sonnet 4.6: 1M context
+  const maxTokens = model.includes("haiku") ? 200_000 : 1_000_000;
   const percent = Math.min(100, (totalTokens / maxTokens) * 100);
 
   return {
