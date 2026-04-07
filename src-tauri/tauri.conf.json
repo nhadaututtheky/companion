@@ -45,7 +45,7 @@
       "open": false
     },
     "updater": {
-      "pubkey": "RWRm07SGSW/Heg1YwqCw3bbdBnHELge0TlwqfpmUU1VGeMXgaN53j6hP",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEIxRDA2OEU5NDY2NzJBMUIKUldRYkttZEc2V2pRc1JIekgvWTdFUmFtczQ5NHEwbXJ1M2pNZk1jUFZUN1NrZ2RLem1oWUd6VmQK",
       "endpoints": [
         "https://companion.theio.vn/updates/{{target}}.json"
       ],
