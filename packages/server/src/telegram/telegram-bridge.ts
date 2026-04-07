@@ -97,6 +97,8 @@ interface SessionConfig {
   idleTimeoutMs: number;
   /** Idle timeout timer handle */
   idleTimer?: ReturnType<typeof setTimeout>;
+  /** Warning timer — fires before idle kill */
+  idleWarningTimer?: ReturnType<typeof setTimeout>;
   /** Busy watchdog timer — kills session if stuck busy with no activity */
   busyWatchdog?: ReturnType<typeof setTimeout>;
 }
@@ -309,13 +311,17 @@ export class TelegramBridge {
     }
   }
 
-  /** Reset the idle timer for a session. Called on user message + result events. */
+  /** Reset the idle timer for a session. Called on session start, user message + result events. */
   resetIdleTimer(sessionId: string, chatId: number, topicId?: number): void {
     const cfg = this.getSessionConfig(sessionId);
 
     if (cfg.idleTimer) {
       clearTimeout(cfg.idleTimer);
       cfg.idleTimer = undefined;
+    }
+    if (cfg.idleWarningTimer) {
+      clearTimeout(cfg.idleWarningTimer);
+      cfg.idleWarningTimer = undefined;
     }
 
     // Clear busy watchdog — session is no longer busy
@@ -326,6 +332,39 @@ export class TelegramBridge {
 
     if (cfg.idleTimeoutMs <= 0) return;
 
+    const WARN_BEFORE_MS = 5 * 60 * 1000; // 5 minutes
+
+    // Warning before kill (only if timeout > 5 min)
+    if (cfg.idleTimeoutMs > WARN_BEFORE_MS) {
+      cfg.idleWarningTimer = setTimeout(async () => {
+        cfg.idleWarningTimer = undefined;
+        const session = this.wsBridge.getSession(sessionId);
+        if (!session) return;
+
+        const keyboard = {
+          inline_keyboard: [
+            [
+              { text: "💬 Keep Alive", callback_data: `panel:idle:extend:${sessionId}` },
+              { text: "💤 Let it go", callback_data: `panel:idle:letgo:${sessionId}` },
+            ],
+          ],
+        };
+
+        await this.bot.api
+          .sendMessage(
+            chatId,
+            "⏰ Session idle — auto-stop in <b>5 minutes</b>. Send a message or tap below.",
+            {
+              parse_mode: "HTML",
+              reply_markup: keyboard as unknown as import("grammy").InlineKeyboard,
+              message_thread_id: topicId,
+            },
+          )
+          .catch(() => {});
+      }, cfg.idleTimeoutMs - WARN_BEFORE_MS);
+    }
+
+    // Kill timer
     cfg.idleTimer = setTimeout(async () => {
       cfg.idleTimer = undefined;
       const session = this.wsBridge.getSession(sessionId);
@@ -338,7 +377,7 @@ export class TelegramBridge {
       const minutes = Math.round(cfg.idleTimeoutMs / 60_000);
       const label = minutes >= 60 ? `${Math.round(minutes / 60)}h` : `${minutes}m`;
       await this.bot.api
-        .sendMessage(chatId, `⏰ Session idle for ${label}, shutting down.`, {
+        .sendMessage(chatId, `⏰ Session idle for ${label}, stopped.`, {
           message_thread_id: topicId,
         })
         .catch(() => {});
@@ -527,10 +566,8 @@ export class TelegramBridge {
         this.setSessionPanelMessageId(sessionId, panelMsg.message_id);
       }
 
-      // Send quick action buttons (disappear after use or template prompt)
-      if (!opts?.initialPrompt) {
-        this.sendQuickActions(chatId, effectiveTopicId, sessionId).catch(() => {});
-      }
+      // Start idle timer immediately (prevents zombie sessions if user never sends a message)
+      this.resetIdleTimer(sessionId, chatId, effectiveTopicId);
 
       // Send initial prompt from template once session is ready
       if (opts?.initialPrompt) {
@@ -587,7 +624,9 @@ export class TelegramBridge {
     });
 
     const aa = session?.autoApproveConfig;
-    const aaLabel = !aa?.enabled ? "Off" : `${aa.timeoutSeconds}s`;
+    const aaLabel = !aa?.enabled
+      ? "Off"
+      : `${aa.timeoutSeconds}s · ${aa.allowBash ? "⚠️ Full" : "🛡 Safe"}`;
     const idleMs = cfg.idleTimeoutMs;
     const idleLabel =
       idleMs <= 0
@@ -627,7 +666,7 @@ export class TelegramBridge {
     const text = [
       `<b>${escapeHTML(projectName)}</b> · <code>${escapeHTML(model)}</code> · ${statusEmoji(status)} ${status}${shortIdStr}`,
       `$${cost.toFixed(4)} · ${turns} turns · Updated ${updatedAt}${contextStr}`,
-      `Auto-Approve: <b>${aaLabel}</b> · Timeout: <b>${idleLabel}</b> · Think: <b>${thinkingLabel}</b>`,
+      `Auto-Approve: <b>${aaLabel}</b> · Auto-stop: <b>${idleLabel}</b> · Think: <b>${thinkingLabel}</b>`,
     ].join("\n");
 
     // Build keyboard with styled buttons (Telegram Bot API style field)
@@ -642,7 +681,8 @@ export class TelegramBridge {
     const aa15 = aa?.enabled && aa.timeoutSeconds === 15;
     const aa30 = aa?.enabled && aa.timeoutSeconds === 30;
     const aa60 = aa?.enabled && aa.timeoutSeconds === 60;
-    const aaSafe = aa?.enabled && aa.timeoutSeconds === 0 && aa.allowBash;
+    const aaEnabled = aa?.enabled ?? false;
+    const aaBash = aaEnabled && (aa?.allowBash ?? false);
 
     const iNever = idleMs <= 0;
     const i30m = idleMs === 1_800_000;
@@ -657,7 +697,7 @@ export class TelegramBridge {
           btn(`Model: ${model}`, `panel:model:${sessionId}`, "primary"),
           btn("Status", `panel:status:${sessionId}`),
         ],
-        // Row 2: Auto-approve presets
+        // Row 2: Auto-approve timeout
         [
           btn(
             `Off${aaOff ? " ✓" : ""}`,
@@ -667,10 +707,18 @@ export class TelegramBridge {
           btn(`15s${aa15 ? " ✓" : ""}`, `panel:aa:15:${sessionId}`, aa15 ? "success" : undefined),
           btn(`30s${aa30 ? " ✓" : ""}`, `panel:aa:30:${sessionId}`, aa30 ? "success" : undefined),
           btn(`60s${aa60 ? " ✓" : ""}`, `panel:aa:60:${sessionId}`, aa60 ? "success" : undefined),
+        ],
+        // Row 3: Auto-approve mode (only meaningful when AA is enabled)
+        [
           btn(
-            `🛡 Safe${aaSafe ? " ✓" : ""}`,
-            `panel:aa:safe:${sessionId}`,
-            aaSafe ? "danger" : undefined,
+            `🛡 Safe${aaEnabled && !aaBash ? " ✓" : ""}`,
+            aaEnabled ? `panel:aamode:safe:${sessionId}` : `panel:aamode:disabled:${sessionId}`,
+            aaEnabled && !aaBash ? "success" : undefined,
+          ),
+          btn(
+            `⚠️ Full${aaBash ? " ✓" : ""}`,
+            aaEnabled ? `panel:aamode:full:${sessionId}` : `panel:aamode:disabled:${sessionId}`,
+            aaBash ? "danger" : undefined,
           ),
         ],
         // Row 3: Idle timeout presets
@@ -842,31 +890,6 @@ export class TelegramBridge {
     this.subscriptions.set(sessionId, unsub);
   }
 
-  /** Send quick action buttons after session start */
-  private async sendQuickActions(
-    chatId: number,
-    topicId: number | undefined,
-    sessionId: string,
-  ): Promise<void> {
-    const keyboard = {
-      inline_keyboard: [
-        [
-          { text: "📋 Templates", callback_data: `quick:tpl:${sessionId}` },
-          { text: "📌 Pin Panel", callback_data: `quick:pin:${sessionId}` },
-          { text: "⚡ AA 30s", callback_data: `quick:aa30:${sessionId}` },
-        ],
-      ],
-    };
-
-    try {
-      await this.bot.api.sendMessage(chatId, "Quick actions:", {
-        reply_markup: keyboard as unknown as import("grammy").InlineKeyboard,
-        message_thread_id: topicId,
-      });
-    } catch (err) {
-      log.error("Failed to send quick actions", { error: String(err) });
-    }
-  }
 
   /**
    * Wait for a session to reach "idle" status (CLI initialized).

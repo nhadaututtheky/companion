@@ -164,9 +164,9 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     );
   });
 
-  // ── Auto-approve presets ────────────────────────────────────────────────
+  // ── Auto-approve timeout presets ─────────────────────────────────────────
 
-  bot.callbackQuery(/^panel:aa:(off|15|30|60|safe):(.+)$/, async (ctx) => {
+  bot.callbackQuery(/^panel:aa:(off|15|30|60):(.+)$/, async (ctx) => {
     const preset = ctx.match[1]!;
     const sessionId = ctx.match[2]!;
 
@@ -180,24 +180,11 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     if (preset === "off") {
       session.autoApproveConfig = { enabled: false, timeoutSeconds: 0, allowBash: false };
       label = "Auto-approve off";
-    } else if (preset === "safe") {
-      // Safe mode = auto-approve everything including bash, approve all pending
-      session.autoApproveConfig = { enabled: true, timeoutSeconds: 0, allowBash: true };
-      // Approve all pending permissions immediately
-      for (const [reqId] of session.pendingPermissions) {
-        bridge.wsBridge.handleBrowserMessage(
-          sessionId,
-          JSON.stringify({
-            type: "permission_response",
-            request_id: reqId,
-            behavior: "allow",
-          }),
-        );
-      }
-      label = "Full auto-approve ON";
     } else {
       const seconds = parseInt(preset, 10);
-      session.autoApproveConfig = { enabled: true, timeoutSeconds: seconds, allowBash: false };
+      // Preserve current allowBash setting when changing timeout
+      const allowBash = session.autoApproveConfig.allowBash;
+      session.autoApproveConfig = { enabled: true, timeoutSeconds: seconds, allowBash };
       label = `Auto-approve ${seconds}s`;
     }
 
@@ -222,6 +209,105 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     }
   });
 
+  // ── Auto-approve mode (safe vs full) ───────────────────────────────────
+
+  bot.callbackQuery(/^panel:aamode:(safe|full|disabled):(.+)$/, async (ctx) => {
+    const mode = ctx.match[1]!;
+    const sessionId = ctx.match[2]!;
+
+    if (mode === "disabled") {
+      await ctx.answerCallbackQuery("Enable auto-approve first (pick a timeout)");
+      return;
+    }
+
+    const session = bridge.wsBridge.getSession(sessionId);
+    if (!session) {
+      await ctx.answerCallbackQuery("Session not found");
+      return;
+    }
+
+    if (mode === "full") {
+      session.autoApproveConfig = {
+        ...session.autoApproveConfig,
+        allowBash: true,
+      };
+      // Approve all pending permissions immediately
+      for (const [reqId] of session.pendingPermissions) {
+        bridge.wsBridge.handleBrowserMessage(
+          sessionId,
+          JSON.stringify({
+            type: "permission_response",
+            request_id: reqId,
+            behavior: "allow",
+          }),
+        );
+      }
+      await ctx.answerCallbackQuery("⚠️ Full mode — all tools approved");
+    } else {
+      session.autoApproveConfig = {
+        ...session.autoApproveConfig,
+        allowBash: false,
+      };
+      await ctx.answerCallbackQuery("🛡 Safe mode — dangerous tools excluded");
+    }
+
+    // Refresh panel
+    const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
+    const messageId = ctx.callbackQuery.message?.message_id;
+    if (chatId && messageId) {
+      const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+        ?.message_thread_id;
+      const mapping = bridge.getMapping(chatId, topicId);
+      const project = mapping ? getProject(mapping.projectSlug) : undefined;
+      await bridge.sendSettingsPanel(
+        chatId,
+        topicId,
+        sessionId,
+        project?.name ?? mapping?.projectSlug ?? "",
+        session.state.model,
+        messageId,
+      );
+    }
+  });
+
+  // ── Idle warning actions (extend / let go) ──────────────────────────────
+
+  bot.callbackQuery(/^panel:idle:extend:(.+)$/, async (ctx) => {
+    const sessionId = ctx.match[1]!;
+    const session = bridge.wsBridge.getSession(sessionId);
+    if (!session) {
+      await ctx.answerCallbackQuery("Session not found");
+      await ctx.deleteMessage().catch(() => {});
+      return;
+    }
+
+    const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+      ?.message_thread_id;
+
+    // Reset idle timer with current timeout (extends from now)
+    if (chatId) {
+      bridge.resetIdleTimer(sessionId, chatId, topicId);
+    }
+
+    await ctx.answerCallbackQuery("Session kept alive");
+    await ctx.deleteMessage().catch(() => {});
+  });
+
+  bot.callbackQuery(/^panel:idle:letgo:(.+)$/, async (ctx) => {
+    const sessionId = ctx.match[1]!;
+    await ctx.answerCallbackQuery("Stopping session...");
+
+    bridge.killSession(sessionId);
+
+    const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+      ?.message_thread_id;
+    if (chatId) bridge.removeMapping(chatId, topicId);
+
+    await ctx.editMessageText("⏹ Session stopped.").catch(() => {});
+  });
+
   // ── Idle timeout presets ────────────────────────────────────────────────
 
   bot.callbackQuery(/^panel:idle:(\d+):(.+)$/, async (ctx) => {
@@ -231,20 +317,25 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
 
     bridge.setIdleTimeout(sessionId, ms);
 
+    // Reset idle timer with new duration
+    const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
+    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+      ?.message_thread_id;
+    if (chatId) {
+      bridge.resetIdleTimer(sessionId, chatId, topicId);
+    }
+
     const label =
       ms <= 0
-        ? "Idle timeout: Never"
+        ? "Auto-stop: Never"
         : ms < 3_600_000
-          ? `Idle timeout: ${Math.round(ms / 60_000)}m`
-          : `Idle timeout: ${Math.round(ms / 3_600_000)}h`;
+          ? `Auto-stop: ${Math.round(ms / 60_000)}m idle`
+          : `Auto-stop: ${Math.round(ms / 3_600_000)}h idle`;
     await ctx.answerCallbackQuery(label);
 
     // Refresh panel
-    const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
     const messageId = ctx.callbackQuery.message?.message_id;
     if (chatId && messageId) {
-      const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
-        ?.message_thread_id;
       const mapping = bridge.getMapping(chatId, topicId);
       const session = bridge.wsBridge.getSession(sessionId);
       const project = mapping ? getProject(mapping.projectSlug) : undefined;
@@ -366,92 +457,6 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
       } catch {
         // Silently ignore — bot may not have pin permissions
       }
-    }
-  });
-
-  // ── Quick action buttons callback ─────────────────────────────────────
-
-  bot.callbackQuery(/^quick:tpl:(.+)$/, async (ctx) => {
-    const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
-    if (!chatId) return;
-
-    const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
-      ?.message_thread_id;
-    const mapping = bridge.getMapping(chatId, topicId);
-    if (!mapping) {
-      await ctx.answerCallbackQuery("No active session.");
-      return;
-    }
-
-    await ctx.answerCallbackQuery("Opening templates...");
-    await ctx.deleteMessage().catch(() => {});
-
-    // Import listTemplates dynamically to avoid circular deps
-    const { listTemplates } = await import("../../services/templates.js");
-    const templates = listTemplates(mapping.projectSlug);
-
-    if (templates.length === 0) {
-      await ctx.api.sendMessage(chatId, "No templates. Use /template save to create one.", {
-        message_thread_id: topicId,
-      });
-      return;
-    }
-
-    type Btn = { text: string; callback_data: string };
-    const rows: Btn[][] = [];
-    for (let i = 0; i < templates.length; i += 2) {
-      const row: Btn[] = [
-        {
-          text: `${templates[i]!.icon} ${templates[i]!.name}`,
-          callback_data: `tpl:use:${templates[i]!.slug}`,
-        },
-      ];
-      if (i + 1 < templates.length) {
-        row.push({
-          text: `${templates[i + 1]!.icon} ${templates[i + 1]!.name}`,
-          callback_data: `tpl:use:${templates[i + 1]!.slug}`,
-        });
-      }
-      rows.push(row);
-    }
-
-    await ctx.api.sendMessage(chatId, "<b>📋 Templates</b>\nTap to send prompt:", {
-      parse_mode: "HTML",
-      reply_markup: { inline_keyboard: rows },
-      message_thread_id: topicId,
-    });
-  });
-
-  bot.callbackQuery(/^quick:aa30:(.+)$/, async (ctx) => {
-    const sessionId = ctx.match[1]!;
-    await ctx.answerCallbackQuery("Auto-approve 30s enabled");
-
-    const session = bridge.wsBridge.getSession(sessionId);
-    if (session) {
-      session.autoApproveConfig = { enabled: true, timeoutSeconds: 30, allowBash: false };
-    }
-
-    await ctx.deleteMessage().catch(() => {});
-  });
-
-  bot.callbackQuery(/^quick:pin:(.+)$/, async (ctx) => {
-    const sessionId = ctx.match[1]!;
-    const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
-    if (!chatId) return;
-
-    await ctx.deleteMessage().catch(() => {});
-
-    // Pin the existing panel message instead of creating a new one
-    const cfg = bridge.getSessionConfig(sessionId);
-    if (cfg.panelMessageId) {
-      try {
-        await ctx.api.pinChatMessage(chatId, cfg.panelMessageId, { disable_notification: true });
-        await ctx.answerCallbackQuery("Panel pinned");
-      } catch {
-        await ctx.answerCallbackQuery("Cannot pin — missing permission");
-      }
-    } else {
-      await ctx.answerCallbackQuery("No panel to pin");
     }
   });
 
