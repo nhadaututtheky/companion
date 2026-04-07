@@ -13,6 +13,7 @@ import { eq, like } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { settings } from "../db/schema.js";
 import type { ApiResponse } from "@companion/shared";
+import { getFeatureToggles, type ToggleableFeature } from "../services/context-budget.js";
 
 const upsertSchema = z.object({
   value: z.string(),
@@ -96,3 +97,29 @@ settingsRoutes.delete("/:key", (c) => {
 
   return c.json({ success: true } satisfies ApiResponse);
 });
+
+// ─── Feature Toggles ──────────────────────────────────────────────────────
+
+/** Get all feature toggle states */
+settingsRoutes.get("/features/toggles", (c) => {
+  return c.json<ApiResponse>({ success: true, data: getFeatureToggles() });
+});
+
+/** Set a feature toggle */
+settingsRoutes.put(
+  "/features/toggles/:feature",
+  zValidator("json", z.object({ enabled: z.boolean() })),
+  (c) => {
+    const feature = c.req.param("feature") as ToggleableFeature;
+    const { enabled } = c.req.valid("json");
+    const key = `features.${feature}.enabled`;
+    const db = getDb();
+
+    db.insert(settings)
+      .values({ key, value: String(enabled) })
+      .onConflictDoUpdate({ target: settings.key, set: { value: String(enabled) } })
+      .run();
+
+    return c.json<ApiResponse>({ success: true, data: { feature, enabled } });
+  },
+);

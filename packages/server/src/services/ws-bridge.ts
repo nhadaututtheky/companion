@@ -6,9 +6,10 @@
 import { randomUUID } from "crypto";
 import { createLogger } from "../logger.js";
 import { createDefaultPipeline, getRTKConfig, type RTKPipeline } from "../rtk/index.js";
-import { launchCLI, createPlanModeWatcher, formatUserMessage } from "./cli-launcher.js";
+import { launchCLI, createPlanModeWatcher } from "./cli-launcher.js";
 import { startSdkSession, type SdkSessionHandle } from "./sdk-engine.js";
 import { summarizeSession, buildSummaryInjection } from "./session-summarizer.js";
+import { saveSessionFindings } from "../wiki/feedback.js";
 import { buildSessionContext } from "./session-context.js";
 import { handleMentions } from "./mention-router.js";
 import {
@@ -78,7 +79,6 @@ import type {
   PermissionRequest,
   HookEvent,
   PreToolUseResponse,
-  isTerminal as isTerminalStatus,
 } from "@companion/shared";
 import {
   SESSION_IDLE_TIMEOUT_MS,
@@ -86,7 +86,7 @@ import {
   getMaxContextTokens,
 } from "@companion/shared";
 import type { CLIProcess, NormalizedMessage, CLIPlatform } from "@companion/shared";
-import { estimateContextBreakdown, type ContextBreakdown } from "./context-estimator.js";
+import { getWikiStartContext, getFullBreakdown } from "./context-budget.js";
 type LaunchResult = CLIProcess;
 import { IdleDetector } from "./idle-detector.js";
 import { terminalLock } from "./terminal-lock.js";
@@ -1234,9 +1234,9 @@ export class WsBridge {
     this.updateStatus(session, "idle");
     persistSession(session);
 
-    // Broadcast context breakdown estimate
+    // Broadcast context breakdown estimate (includes wiki if enabled)
     try {
-      const breakdown = estimateContextBreakdown(
+      const breakdown = getFullBreakdown(
         session.state.cwd,
         session.state.mcp_servers,
         session.state.model,
@@ -1247,6 +1247,20 @@ export class WsBridge {
       });
     } catch (err) {
       log.error("Failed to estimate context breakdown", { error: String(err) });
+    }
+
+    // Inject wiki L0 context if enabled and domain configured
+    try {
+      const wikiCtx = getWikiStartContext(session.state.cwd);
+      if (wikiCtx) {
+        log.info("Wiki L0 injected", {
+          sessionId: session.id,
+          domain: wikiCtx.domain,
+          tokens: wikiCtx.tokens,
+        });
+      }
+    } catch (err) {
+      log.debug("Wiki context injection skipped", { error: String(err) });
     }
 
     log.info("CLI initialized", {
@@ -2013,6 +2027,8 @@ export class WsBridge {
     // Auto-summarize only for sessions that actually ran
     if (hadTurns) {
       void summarizeSession(session.id);
+      // Wiki feedback: save session findings as raw material (waits for summary)
+      void saveSessionFindings(session.id);
     }
 
     // CodeGraph: incremental rescan if session modified files
