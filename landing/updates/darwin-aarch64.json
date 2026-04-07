@@ -1,7 +1,7 @@
 {
-  "version": "0.9.0",
-  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.9.0/Companion_0.9.0_aarch64.dmg",
-  "signature": "",
-  "notes": "## What's New in v0.9.0\n\n- Tree-sitter CodeGraph (WASM-based code analysis)\n- Skills Browser with one-click install\n- Multi-Provider Debate Engine\n- Agent Pulse Health Monitor\n- Inline Diff Summary in chat\n- Fix: idle timeout not inherited on resume (12h/Never sessions killed after 30min)\n- Fix: license cache cross-contamination",
-  "pub_date": "2026-04-06T12:00:00Z"
+  "version": "0.11.0",
+  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.11.0/Companion_0.11.0_aarch64.dmg",
+  "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRYkttZEc2V2pRc1EzeEd5T0Q3Z0dGMWlSODFWK2s1bGF1YTNuWG5jVHp2UWJ5L0Vobjc1V29DR0FsbWhZaThHMjhnbjM1WkRySWZ5WmRRcnIzS0lYbm4wb3RZQ2dCUGdJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1NTQ3NDQzCWZpbGU6Q29tcGFuaW9uLmFwcC50YXIuZ3oKRjQ5eGhDSitLZUxsTUJnQVhSY1N0OEZFeFgrM080TUNvOE02c0pnT0FWemo2RE5kNUVQbTVJejloRFVXK1UwQ2lvMnF2TE9JWHZnNmRZRW11MXU0QXc9PQo=",
+  "notes": "## What's New in v0.11.0\n\n- Wiki Knowledge Base — Karpathy-style LLM-compiled local wiki for agents\n- Feature Guide — discover all 26 features (Ctrl+/)\n- Wiki Freshness Linter — detect stale articles\n- Telegram /wiki commands — manage KB from phone\n- Context Budget Manager — priority-based token allocation\n- Per-feature toggles (wiki, codegraph, pulse, RTK)",
+  "pub_date": "2026-04-07T12:00:00Z"
 }
