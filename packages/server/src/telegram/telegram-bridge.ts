@@ -166,6 +166,8 @@ export class TelegramBridge {
   private subscriptions = new Map<string, () => void>();
   /** sessionIds that already received a compact warning (prevent spam) */
   private compactWarningSent = new Set<string>();
+  /** sessionId → detailed context breakdown HTML (for expand callback) */
+  private contextBreakdowns = new Map<string, string>();
   /** sessionId → stream-only subscriber key (chatId:topicId) — for /stream without owning the session */
   private streamSubscriptions = new Map<string, string>();
   /** Dead sessions available for resume (keyed by "chatId:topicId") */
@@ -1141,6 +1143,13 @@ export class TelegramBridge {
           break;
         }
 
+        case "context_breakdown": {
+          if ("breakdown" in msg) {
+            await this.sendContextBreakdown(chatId, topicId, sessionId, msg.breakdown);
+          }
+          break;
+        }
+
         case "context_update":
           await this.handleContextUpdate(chatId, topicId, sessionId, msg.contextUsedPercent);
           break;
@@ -1672,6 +1681,35 @@ export class TelegramBridge {
         message_thread_id: topicId,
       });
     }
+  }
+
+  private async sendContextBreakdown(
+    chatId: number,
+    topicId: number | undefined,
+    sessionId: string,
+    breakdown: import("../services/context-estimator.js").ContextBreakdown,
+  ): Promise<void> {
+    const { formatBreakdownTelegram, formatBreakdownDetailed } = await import(
+      "../services/context-estimator.js"
+    );
+
+    const summary = formatBreakdownTelegram(breakdown);
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: "📋 Details", callback_data: `ctx:detail:${sessionId}` }],
+      ],
+    };
+
+    // Store detailed breakdown for expand callback
+    this.contextBreakdowns.set(sessionId, formatBreakdownDetailed(breakdown));
+
+    await this.bot.api
+      .sendMessage(chatId, summary, {
+        parse_mode: "HTML",
+        reply_markup: keyboard as unknown as import("grammy").InlineKeyboard,
+        message_thread_id: topicId,
+      })
+      .catch(() => {});
   }
 
   private async handleContextUpdate(

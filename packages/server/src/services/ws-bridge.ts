@@ -86,6 +86,7 @@ import {
   getMaxContextTokens,
 } from "@companion/shared";
 import type { CLIProcess, NormalizedMessage, CLIPlatform } from "@companion/shared";
+import { estimateContextBreakdown, type ContextBreakdown } from "./context-estimator.js";
 type LaunchResult = CLIProcess;
 import { IdleDetector } from "./idle-detector.js";
 import { terminalLock } from "./terminal-lock.js";
@@ -1232,6 +1233,21 @@ export class WsBridge {
 
     this.updateStatus(session, "idle");
     persistSession(session);
+
+    // Broadcast context breakdown estimate
+    try {
+      const breakdown = estimateContextBreakdown(
+        session.state.cwd,
+        session.state.mcp_servers,
+        session.state.model,
+      );
+      this.broadcastToAll(session, {
+        type: "context_breakdown",
+        breakdown,
+      });
+    } catch (err) {
+      log.error("Failed to estimate context breakdown", { error: String(err) });
+    }
 
     log.info("CLI initialized", {
       sessionId: session.id,

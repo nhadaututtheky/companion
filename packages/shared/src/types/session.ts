@@ -228,6 +228,20 @@ export type BrowserIncomingMessage =
       topSignal: string;
       turn: number;
       timestamp: number;
+    }
+  | {
+      type: "context_breakdown";
+      breakdown: {
+        totalTokens: number;
+        maxTokens: number;
+        percent: number;
+        sources: Array<{
+          label: string;
+          tokens: number;
+          count: number;
+          details?: string[];
+        }>;
+      };
     };
 
 // ─── Session State ───────────────────────────────────────────────────────────
