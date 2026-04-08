@@ -12,6 +12,8 @@ import { ContextMeter } from "@/components/session/context-meter";
 import { SessionDetails } from "@/components/session/session-details";
 import { ChannelPanel } from "@/components/shared/channel-panel";
 import { PulseWarning } from "@/components/pulse/pulse-warning";
+import { AgentTabBar } from "./agent-tab-bar";
+import { SpawnAgentModal } from "@/components/session/spawn-agent-modal";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { getStatusColor } from "@/components/ui/status-badge";
@@ -176,11 +178,18 @@ interface ExpandedSessionProps {
 type SidebarTab = "details" | "context";
 
 function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
-  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel } =
-    useSession(sessionId);
+  const [activeTab, setActiveTab] = useState(sessionId);
+  const [spawnOpen, setSpawnOpen] = useState(false);
+
+  const parentHook = useSession(sessionId);
+  const childHook = useSession(activeTab !== sessionId ? activeTab : "");
+  const activeHook = activeTab === sessionId ? parentHook : childHook;
+  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel } = activeHook;
 
   const session = useSessionStore((s) => s.sessions[sessionId]);
+  const childIds = useSessionStore((s) => s.sessions[sessionId]?.childSessionIds);
   const isRunning = session?.status === "running" || session?.status === "busy";
+  const hasChildren = !!childIds && childIds.length > 0;
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLDivElement>(null);
@@ -430,6 +439,14 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             />
           </div>
 
+          {/* ── Agent tab bar (multi-brain) ── */}
+          <AgentTabBar
+            parentSessionId={sessionId}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            onSpawnClick={() => setSpawnOpen(true)}
+          />
+
           {/* ── Body: message area + sidebar ── */}
           <div className="flex flex-1 min-h-0">
             {/* Left: message feed + permissions + composer */}
@@ -554,6 +571,31 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
           </div>
         </div>
       </div>
+
+      {/* Spawn agent modal */}
+      <SpawnAgentModal
+        parentSessionId={sessionId}
+        parentModel={session?.model ?? "claude-sonnet-4-6"}
+        open={spawnOpen}
+        onClose={() => setSpawnOpen(false)}
+        onSpawned={(childSessionId, childShortId, name, role) => {
+          const store = useSessionStore.getState();
+          store.setSession(childSessionId, {
+            id: childSessionId,
+            shortId: childShortId,
+            projectSlug: session?.projectSlug ?? "",
+            projectName: name,
+            model: session?.model ?? "claude-sonnet-4-6",
+            status: "starting",
+            state: {} as import("@companion/shared").SessionState,
+            createdAt: Date.now(),
+            parentSessionId: sessionId,
+            brainRole: role as "specialist" | "researcher" | "reviewer",
+            agentName: name,
+          });
+          store.addChildSession(sessionId, childSessionId);
+        }}
+      />
     </>
   );
 }

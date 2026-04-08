@@ -271,12 +271,17 @@ export default function DashboardPage() {
 
   // Ordered active sessions for grid (up to 6)
   const gridSessions = useMemo(() => {
-    const active = Object.values(sessions).filter((s) => ACTIVE_STATUSES.includes(s.status));
+    // Filter active sessions — exclude child sessions (they live in parent's agent tabs)
+    const active = Object.values(sessions).filter(
+      (s) => ACTIVE_STATUSES.includes(s.status) && !s.parentSessionId,
+    );
 
     // Use gridOrder for ordering, fallback to insertion order
     const ordered = gridOrder
       .map((id) => sessions[id])
-      .filter((s): s is NonNullable<typeof s> => !!s && ACTIVE_STATUSES.includes(s.status));
+      .filter((s): s is NonNullable<typeof s> =>
+        !!s && ACTIVE_STATUSES.includes(s.status) && !s.parentSessionId,
+      );
 
     // Add any active sessions not yet in gridOrder (unless user closed them)
     for (const s of active) {
@@ -316,6 +321,8 @@ export default function DashboardPage() {
           // Only load active sessions — skip ended/error to keep sidebar clean
           if (!ACTIVE_STATUSES.includes(s.status)) continue;
 
+          const parentId = (s as { parentId?: string }).parentId;
+          const role = (s as { role?: string }).role;
           useSessionStore.getState().setSession(s.id, {
             id: s.id,
             shortId: s.shortId,
@@ -327,8 +334,17 @@ export default function DashboardPage() {
             createdAt: new Date(s.createdAt).getTime() || Date.now(),
             tags: (s as { tags?: string[] }).tags ?? [],
             personaId: (s as { personaId?: string }).personaId,
+            parentSessionId: parentId,
+            brainRole: role as "coordinator" | "specialist" | "researcher" | "reviewer" | undefined,
+            agentName: (s as { name?: string }).name ?? undefined,
           });
-          useSessionStore.getState().addToGrid(s.id);
+          // Don't add child sessions to grid — they live in parent's agent tabs
+          if (!parentId) {
+            useSessionStore.getState().addToGrid(s.id);
+          } else {
+            // Track child in parent's childSessionIds
+            useSessionStore.getState().addChildSession(parentId, s.id);
+          }
         }
       })
       .catch(() => {

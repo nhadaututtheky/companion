@@ -62,6 +62,8 @@ import {
   pushMessageHistory,
   updateSessionCostWarned,
   getSessionRecord,
+  getChildSessions,
+  countActiveSessions,
   type ActiveSession,
 } from "./session-store.js";
 import type {
@@ -87,6 +89,7 @@ import {
 } from "@companion/shared";
 import type { CLIProcess, NormalizedMessage, CLIPlatform } from "@companion/shared";
 import { getWikiStartContext, getFullBreakdown } from "./context-budget.js";
+import { getMaxSessions } from "./license.js";
 type LaunchResult = CLIProcess;
 import { IdleDetector } from "./idle-detector.js";
 import { terminalLock } from "./terminal-lock.js";
@@ -351,6 +354,8 @@ export class WsBridge {
     cliPlatform?: CLIPlatform;
     /** Platform-specific options (e.g. fullAuto for Codex, sandbox for Gemini). */
     platformOptions?: Record<string, unknown>;
+    /** Agent role in multi-brain workspace. */
+    role?: "coordinator" | "specialist" | "researcher" | "reviewer";
   }): Promise<string> {
     const sessionId = randomUUID();
 
@@ -378,6 +383,8 @@ export class WsBridge {
       status: "starting",
       is_in_plan_mode: false,
       name: opts.name,
+      parent_id: opts.parentId,
+      role: opts.role,
       cost_budget_usd: opts.costBudgetUsd,
       cost_warned: 0,
       compact_mode: (opts.compactMode as SessionState["compact_mode"]) ?? "manual",
@@ -423,6 +430,7 @@ export class WsBridge {
       compactMode: opts.compactMode,
       compactThreshold: opts.compactThreshold,
       personaId: opts.personaId,
+      role: opts.role,
     });
 
     // Attach shortId to session state for clients
@@ -2105,6 +2113,11 @@ export class WsBridge {
     // Use "error" status for early/unexpected exits so the UI can show diagnostics
     const finalStatus = isEarlyExit ? "error" : "ended";
     this.updateStatus(session, finalStatus);
+
+    // Capture shortId BEFORE endSessionRecord clears it (for child_ended notification)
+    const preEndRecord = getSessionRecord(session.id);
+    const savedShortId = preEndRecord?.shortId ?? undefined;
+
     endSessionRecord(session.id, finalStatus);
     persistSession(session);
     disconnectAllSpectators(session.id, "Session ended");
@@ -2116,6 +2129,9 @@ export class WsBridge {
       exitCode,
       reason,
     });
+
+    // Notify parent session if this was a child (multi-brain workspace)
+    this.notifyParentOfChildEnd(session.id, finalStatus, savedShortId);
 
     // Auto-summarize only for sessions that actually ran
     if (hadTurns) {
@@ -2233,6 +2249,21 @@ export class WsBridge {
       const depth = Math.min(crawlMatch[2] ? parseInt(crawlMatch[2], 10) : 2, 5);
       const maxPages = Math.min(crawlMatch[3] ? parseInt(crawlMatch[3], 10) : 50, 200);
       this.handleCrawlCommand(session, url, depth, maxPages, source);
+      return;
+    }
+
+    // ── Multi-Brain: /spawn command — spawn a child agent ──
+    const spawnMatch = content.match(
+      /^\/spawn\s+"([^"]+)"(?:\s+--role\s+(specialist|researcher|reviewer))?(?:\s+--model\s+(\S+))?(?:\s+--prompt\s+"([^"]*)")?/i,
+    );
+    if (spawnMatch) {
+      this.handleSpawnCommand(session, spawnMatch);
+      return;
+    }
+
+    // ── Multi-Brain: /status command — show agent statuses ──
+    if (content.trim() === "/status") {
+      this.handleStatusCommand(session);
       return;
     }
 
@@ -2738,6 +2769,145 @@ export class WsBridge {
       log.error("Failed to send to CLI", { err: String(err) });
       session.pendingMessages.push(ndjson);
     }
+  }
+
+  /** Notify parent session when a child session ends (multi-brain workspace) */
+  private notifyParentOfChildEnd(childSessionId: string, status: string, preEndShortId?: string): void {
+    try {
+      const childRecord = getSessionRecord(childSessionId);
+      if (!childRecord?.parentId) return;
+
+      const parentSession = getActiveSession(childRecord.parentId);
+      if (!parentSession) return;
+
+      // Use pre-saved shortId since endSessionRecord clears it before this runs
+      const childShortId = preEndShortId ?? childRecord.shortId;
+
+      // Broadcast child_ended event to parent's subscribers (web UI)
+      this.broadcastEvent(childRecord.parentId, {
+        type: "child_ended",
+        childSessionId,
+        childShortId,
+        childName: childRecord.name,
+        childRole: childRecord.role,
+        status,
+      });
+
+      // Notify parent via @mention so Claude in parent session knows
+      const childLabel = childRecord.name ?? childShortId ?? childSessionId.slice(0, 8);
+      const statusEmoji = status === "ended" ? "✅" : "❌";
+      const notification = `[Agent "${childLabel}" has ${status === "ended" ? "completed" : "errored"} ${statusEmoji}]`;
+      this.sendUserMessage(childRecord.parentId, notification, "system");
+    } catch (err) {
+      log.error("Failed to notify parent of child end", { childSessionId, error: String(err) });
+    }
+  }
+
+  // ── Multi-Brain: /spawn command handler ──────────────────────────────
+
+  private async handleSpawnCommand(session: ActiveSession, match: RegExpMatchArray): Promise<void> {
+    const name = match[1]!;
+    const role = (match[2] as "specialist" | "researcher" | "reviewer") ?? "specialist";
+    const model = match[3] ?? session.state.model;
+    const prompt = match[4] ?? "";
+
+    // Session limit check
+    const activeCount = countActiveSessions();
+    const maxSessions = getMaxSessions();
+    if (activeCount >= maxSessions) {
+      this.broadcastToAll(session, {
+        type: "system_message",
+        message: `Cannot spawn agent — session limit reached (${maxSessions} active).`,
+      } as unknown as BrowserIncomingMessage);
+      return;
+    }
+
+    try {
+      const parentRecord = getSessionRecord(session.id);
+      const childSessionId = await this.startSession({
+        projectSlug: parentRecord?.projectSlug ?? undefined,
+        cwd: session.state.cwd,
+        model,
+        permissionMode: session.state.permissionMode,
+        source: "agent",
+        parentId: session.id,
+        name,
+        prompt: prompt || undefined,
+        cliPlatform: (session.state.cli_platform as CLIPlatform) ?? "claude",
+        role,
+      });
+
+      const childRecord = getSessionRecord(childSessionId);
+      const childShortId = childRecord?.shortId;
+
+      // Broadcast child_spawned event to parent's subscribers (web UI / Telegram)
+      this.broadcastEvent(session.id, {
+        type: "child_spawned",
+        childSessionId,
+        childShortId,
+        childName: name,
+        childRole: role,
+        childModel: model,
+      });
+
+      // Inject confirmation into the brain session so Claude knows the agent was created
+      const confirmMsg = `[Agent "${name}" spawned — shortId: ${childShortId}, role: ${role}, model: ${model}]`;
+      this.sendUserMessage(session.id, confirmMsg, "system");
+
+      log.info("Brain spawned child via /spawn", { parentId: session.id, childSessionId, name, role });
+    } catch (err) {
+      log.error("Failed to spawn agent via /spawn", { parentId: session.id, error: String(err) });
+      this.broadcastToAll(session, {
+        type: "system_message",
+        message: `Failed to spawn agent "${name}": ${String(err)}`,
+      } as unknown as BrowserIncomingMessage);
+    }
+  }
+
+  // ── Multi-Brain: /status command handler ─────────────────────────────
+
+  private handleStatusCommand(session: ActiveSession): void {
+    try {
+      const children = getChildSessions(session.id);
+
+      if (children.length === 0) {
+        this.sendUserMessage(session.id, "[No agents spawned in this workspace.]", "system");
+        return;
+      }
+
+      const lines = children.map((child) => {
+        const liveSession = getActiveSession(child.id);
+        const liveStatus = liveSession?.state.status ?? child.status ?? "ended";
+        const cost = child.totalCostUsd ? `$${Number(child.totalCostUsd).toFixed(4)}` : "$0.00";
+        const roleLabel = child.role ?? "agent";
+        const nameLabel = child.name ?? child.shortId ?? child.id.slice(0, 8);
+        const statusIcon =
+          liveStatus === "idle" ? "💤" :
+          liveStatus === "busy" ? "🔄" :
+          liveStatus === "ended" ? "✅" :
+          liveStatus === "error" ? "❌" : "⏳";
+        return `  ${statusIcon} **${nameLabel}** (${roleLabel}) @${child.shortId} — ${liveStatus} — ${cost}`;
+      });
+
+      const totalCost = children.reduce((sum, c) => sum + Number(c.totalCostUsd ?? 0), 0);
+      const statusReport = [
+        `[Workspace Status — ${children.length} agent(s)]`,
+        ...lines,
+        `  Total agent cost: $${totalCost.toFixed(4)}`,
+      ].join("\n");
+
+      this.sendUserMessage(session.id, statusReport, "system");
+    } catch (err) {
+      log.error("Failed to get workspace status", { sessionId: session.id, error: String(err) });
+      this.sendUserMessage(session.id, "[Failed to retrieve workspace status.]", "system");
+    }
+  }
+
+  /** Public: broadcast a custom event to all subscribers of a session */
+  broadcastEvent(sessionId: string, event: Record<string, unknown>): void {
+    const session = getActiveSession(sessionId);
+    if (!session) return;
+    this.broadcastToAll(session, event as unknown as BrowserIncomingMessage);
   }
 
   private broadcastToAll(session: ActiveSession, msg: BrowserIncomingMessage): void {

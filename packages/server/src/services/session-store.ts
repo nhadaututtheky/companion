@@ -170,6 +170,7 @@ export function createSessionRecord(opts: {
   compactMode?: string;
   compactThreshold?: number;
   personaId?: string;
+  role?: string;
 }): string {
   const db = getDb();
   const MAX_RETRIES = 5;
@@ -190,6 +191,7 @@ export function createSessionRecord(opts: {
           parentId: opts.parentId,
           channelId: opts.channelId,
           personaId: opts.personaId,
+          role: opts.role,
           costBudgetUsd: opts.costBudgetUsd,
           compactMode: opts.compactMode ?? "manual",
           compactThreshold: opts.compactThreshold ?? 75,
@@ -282,6 +284,27 @@ function aggregateSessionCost(sessionId: string): void {
 export function getSessionRecord(id: string) {
   const db = getDb();
   return db.select().from(sessions).where(eq(sessions.id, id)).get();
+}
+
+/** List child sessions of a parent (multi-brain workspace) */
+export function getChildSessions(parentId: string) {
+  const db = getDb();
+  return db
+    .select({
+      id: sessions.id,
+      shortId: sessions.shortId,
+      name: sessions.name,
+      status: sessions.status,
+      model: sessions.model,
+      role: sessions.role,
+      personaId: sessions.personaId,
+      totalCostUsd: sessions.totalCostUsd,
+      startedAt: sessions.startedAt,
+    })
+    .from(sessions)
+    .where(eq(sessions.parentId, parentId))
+    .orderBy(sessions.startedAt)
+    .all();
 }
 
 /** Update the cliSessionId on a session record (called when system:init arrives) */
@@ -382,6 +405,8 @@ export function listSessions(opts?: {
       endedAt: row.endedAt?.getTime(),
       tags: (row.tags as string[] | null) ?? [],
       personaId: row.personaId ?? undefined,
+      parentId: row.parentId ?? undefined,
+      role: row.role as SessionListItem["role"],
     })),
     total: total ?? 0,
   };

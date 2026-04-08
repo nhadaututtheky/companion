@@ -7,6 +7,8 @@ import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { SessionHeader } from "./session-header";
 import { CompactMessageFeed } from "./compact-message";
+import { AgentTabBar } from "./agent-tab-bar";
+import { SpawnAgentModal } from "@/components/session/spawn-agent-modal";
 
 interface ChannelInfo {
   id: string;
@@ -173,12 +175,23 @@ function getMaxContextTokens(model: string): number {
 }
 
 export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
-  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel } =
-    useSession(sessionId);
+  const [activeTab, setActiveTab] = useState(sessionId);
+  const [spawnOpen, setSpawnOpen] = useState(false);
+
+  // Always connect to parent session (for events, status)
+  const parentHook = useSession(sessionId);
+  // Connect to active child if tab switched (empty string = no WS connection)
+  const childHook = useSession(activeTab !== sessionId ? activeTab : "");
+
+  // Use the active tab's hook for display
+  const activeHook = activeTab === sessionId ? parentHook : childHook;
+  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel } = activeHook;
 
   const session = useSessionStore((s) => s.sessions[sessionId]);
+  const childIds = useSessionStore((s) => s.sessions[sessionId]?.childSessionIds);
   const flashType = useSessionStore((s) => s.sessions[sessionId]?.flashType);
   const isRunning = session?.status === "running" || session?.status === "busy";
+  const hasChildren = !!childIds && childIds.length > 0;
 
   // Context meter calculation
   const contextData = (() => {
@@ -318,6 +331,14 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
         </div>
       )}
 
+      {/* Agent tab bar — multi-brain workspace */}
+      <AgentTabBar
+        parentSessionId={sessionId}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onSpawnClick={() => setSpawnOpen(true)}
+      />
+
       {/* Error state — session crashed before starting */}
       {session?.status === "error" && messages.length === 0 ? (
         <div className="flex flex-col items-center justify-center flex-1 gap-2 px-4 py-6 text-center">
@@ -341,6 +362,33 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
           <CompactComposer onSend={sendMessage} isRunning={isRunning} />
         </>
       )}
+
+      {/* Spawn agent modal */}
+      <SpawnAgentModal
+        parentSessionId={sessionId}
+        parentModel={session?.model ?? "claude-sonnet-4-6"}
+        open={spawnOpen}
+        onClose={() => setSpawnOpen(false)}
+        onSpawned={(childSessionId, childShortId, name, role) => {
+          const store = useSessionStore.getState();
+          // Register child session in store
+          store.setSession(childSessionId, {
+            id: childSessionId,
+            shortId: childShortId,
+            projectSlug: session?.projectSlug ?? "",
+            projectName: name,
+            model: session?.model ?? "claude-sonnet-4-6",
+            status: "starting",
+            state: {} as import("@companion/shared").SessionState,
+            createdAt: Date.now(),
+            parentSessionId: sessionId,
+            brainRole: role as "specialist" | "researcher" | "reviewer",
+            agentName: name,
+          });
+          // Track child in parent
+          store.addChildSession(sessionId, childSessionId);
+        }}
+      />
     </div>
   );
 }

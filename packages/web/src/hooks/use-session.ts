@@ -705,6 +705,49 @@ export function useSession(sessionId: string): UseSessionReturn {
           setSpectatorCount(sc.count);
           break;
         }
+
+        case "child_spawned": {
+          const spawned = msg as {
+            type: "child_spawned";
+            childSessionId: string;
+            childShortId: string;
+            childName: string;
+            childRole: string;
+            childModel: string;
+          };
+          const store = useSessionStore.getState();
+          // Register child session in store if not already there
+          if (!store.sessions[spawned.childSessionId]) {
+            store.setSession(spawned.childSessionId, {
+              id: spawned.childSessionId,
+              shortId: spawned.childShortId,
+              projectSlug: store.sessions[sessionId]?.projectSlug ?? "",
+              projectName: spawned.childName,
+              model: spawned.childModel,
+              status: "starting",
+              state: {} as import("@companion/shared").SessionState,
+              createdAt: Date.now(),
+              parentSessionId: sessionId,
+              brainRole: spawned.childRole as "specialist" | "researcher" | "reviewer",
+              agentName: spawned.childName,
+            });
+          }
+          store.addChildSession(sessionId, spawned.childSessionId);
+          break;
+        }
+
+        case "child_ended": {
+          const ended = msg as {
+            type: "child_ended";
+            childSessionId: string;
+            childName: string;
+            childRole: string;
+            status: string;
+          };
+          const store = useSessionStore.getState();
+          store.setSession(ended.childSessionId, { status: ended.status });
+          break;
+        }
       }
 
       // Handle context injection events (outside typed switch — custom event)

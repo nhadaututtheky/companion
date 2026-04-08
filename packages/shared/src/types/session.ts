@@ -242,6 +242,22 @@ export type BrowserIncomingMessage =
           details?: string[];
         }>;
       };
+    }
+  | {
+      type: "child_spawned";
+      childSessionId: string;
+      childShortId: string;
+      childName: string;
+      childRole: string;
+      childModel: string;
+    }
+  | {
+      type: "child_ended";
+      childSessionId: string;
+      childShortId?: string;
+      childName?: string;
+      childRole?: string;
+      status: string;
     };
 
 // ─── Session State ───────────────────────────────────────────────────────────
@@ -295,6 +311,10 @@ export interface SessionState {
   name?: string;
   /** Where this session was created from */
   source?: "web" | "telegram" | "api" | "agent";
+  /** Parent session ID (multi-brain workspace) */
+  parent_id?: string;
+  /** Agent role in multi-brain workspace */
+  role?: "coordinator" | "specialist" | "researcher" | "reviewer";
   /** CLI platform used for this session */
   cli_platform?: import("./cli-adapter").CLIPlatform;
   model: string;
@@ -448,4 +468,8 @@ export interface SessionListItem {
   tags?: string[];
   /** Expert Mode persona ID (e.g. "tim-cook", "staff-sre") */
   personaId?: string;
+  /** Parent session ID (multi-brain workspace) */
+  parentId?: string;
+  /** Agent role in multi-brain workspace */
+  role?: "coordinator" | "specialist" | "researcher" | "reviewer";
 }

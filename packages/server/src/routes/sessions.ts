@@ -24,6 +24,7 @@ import {
   updateSessionConfig,
   updateSessionTags,
   updateSessionPersona,
+  getChildSessions,
 } from "../services/session-store.js";
 import { getProject, upsertProject } from "../services/project-profiles.js";
 import { getTemplate, resolveTemplateVariables } from "../services/templates.js";
@@ -1069,6 +1070,140 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       log.error("Failed to start session debate round", { sessionId, error: String(err) });
       return c.json({ success: false, error: "Failed to start debate" } satisfies ApiResponse, 500);
     }
+  });
+
+  // ── Multi-Brain Workspace ─────────────────────────────────────────────
+
+  const spawnSchema = z.object({
+    name: z.string().min(1).max(100),
+    role: z.enum(["specialist", "researcher", "reviewer"]).optional().default("specialist"),
+    model: z.string().max(100).optional(),
+    prompt: z.string().max(10000).optional(),
+    personaId: z.string().max(100).optional(),
+  });
+
+  // Spawn a child session from a parent (brain) session
+  app.post("/:id/spawn", zValidator("json", spawnSchema), async (c) => {
+    const parentId = c.req.param("id");
+    const body = c.req.valid("json");
+
+    const parentSession = bridge.getSession(parentId);
+    if (!parentSession) {
+      return c.json({ success: false, error: "Parent session not active" } satisfies ApiResponse, 404);
+    }
+
+    const parentRecord = getSessionRecord(parentId);
+    if (!parentRecord) {
+      return c.json({ success: false, error: "Parent session not found" } satisfies ApiResponse, 404);
+    }
+
+    const activeCount = countActiveSessions();
+    if (activeCount >= getMaxSessions()) {
+      return c.json(
+        { success: false, error: `Session limit reached (${getMaxSessions()} active)` } satisfies ApiResponse,
+        429,
+      );
+    }
+
+    // Resolve persona if provided
+    const persona = body.personaId ? resolvePersona(body.personaId) : undefined;
+    if (body.personaId && !persona) {
+      return c.json({ success: false, error: "Unknown persona ID" } satisfies ApiResponse, 400);
+    }
+
+    const childModel = body.model ?? parentRecord.model;
+
+    // Validate model for Claude platform
+    if (!parentSession.state.cli_platform || parentSession.state.cli_platform === "claude") {
+      const validClaude = ALLOWED_MODELS as readonly string[];
+      if (body.model && !validClaude.includes(body.model)) {
+        return c.json(
+          { success: false, error: `Invalid model: ${body.model}` } satisfies ApiResponse,
+          400,
+        );
+      }
+    }
+
+    try {
+      const childSessionId = await bridge.startSession({
+        projectSlug: parentRecord.projectSlug ?? undefined,
+        cwd: parentRecord.cwd,
+        model: childModel,
+        permissionMode: parentRecord.permissionMode,
+        source: "agent",
+        parentId,
+        name: body.name,
+        prompt: body.prompt,
+        personaId: persona?.id,
+        identityPrompt: persona?.systemPrompt,
+        cliPlatform: parentSession.state.cli_platform ?? "claude",
+        role: body.role,
+      });
+
+      // Get child shortId
+      const childRecord = getSessionRecord(childSessionId);
+      const childShortId = childRecord?.shortId;
+
+      // Broadcast child_spawned event to parent's subscribers
+      bridge.broadcastEvent(parentId, {
+        type: "child_spawned",
+        childSessionId,
+        childShortId,
+        childName: body.name,
+        childRole: body.role,
+        childModel,
+      });
+
+      log.info("Child session spawned", { parentId, childSessionId, name: body.name, role: body.role });
+      return c.json({
+        success: true,
+        data: { sessionId: childSessionId, shortId: childShortId, name: body.name, role: body.role },
+      } satisfies ApiResponse, 201);
+    } catch (err) {
+      log.error("Failed to spawn child session", { parentId, error: String(err) });
+      return c.json({ success: false, error: "Failed to spawn child session" } satisfies ApiResponse, 500);
+    }
+  });
+
+  // Wake an idle child session with a message
+  app.post("/:id/wake", zValidator("json", z.object({ message: z.string().min(1).max(10000) })), (c) => {
+    const sessionId = c.req.param("id");
+    const { message } = c.req.valid("json");
+
+    const session = bridge.getSession(sessionId);
+    if (!session) {
+      return c.json({ success: false, error: "Session not active" } satisfies ApiResponse, 404);
+    }
+
+    const status = session.state.status;
+    if (status === "ended" || status === "error") {
+      return c.json(
+        { success: false, error: `Session is ${status} — cannot wake. Consider re-spawning.` } satisfies ApiResponse,
+        400,
+      );
+    }
+
+    bridge.sendUserMessage(sessionId, message, "wake");
+    log.info("Session woken with message", { sessionId, messageLength: message.length });
+    return c.json({ success: true } satisfies ApiResponse);
+  });
+
+  // List child sessions of a parent
+  app.get("/:id/children", (c) => {
+    const parentId = c.req.param("id");
+    const children = getChildSessions(parentId);
+
+    // Enrich with live status from active sessions
+    const enriched = children.map((child) => {
+      const active = bridge.getSession(child.id);
+      return {
+        ...child,
+        status: active ? active.state.status : child.status,
+        shortId: active?.state.short_id ?? child.shortId,
+      };
+    });
+
+    return c.json({ success: true, data: { children: enriched } } satisfies ApiResponse);
   });
 
   return app;

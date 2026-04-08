@@ -25,6 +25,14 @@ interface Session {
   notifyMode?: NotifyMode;
   /** Transient flash state for visual notifications */
   flashType?: FlashType;
+  /** Parent session ID (multi-brain workspace) */
+  parentSessionId?: string;
+  /** Child session IDs spawned from this session */
+  childSessionIds?: string[];
+  /** Agent role in multi-brain workspace */
+  brainRole?: "coordinator" | "specialist" | "researcher" | "reviewer";
+  /** Agent display name (e.g. "Backend Engineer") */
+  agentName?: string;
 }
 
 interface SessionStore {
@@ -47,6 +55,12 @@ interface SessionStore {
   cycleNotifyMode: (id: string) => void;
   /** Trigger a card flash (auto-clears after 600ms) */
   triggerFlash: (id: string, type: "success" | "error" | "info") => void;
+  /** Add a child session to a parent's tracking */
+  addChildSession: (parentId: string, childId: string) => void;
+  /** Remove a child session from parent's tracking */
+  removeChildSession: (parentId: string, childId: string) => void;
+  /** Get all child sessions of a parent */
+  getChildSessions: (parentId: string) => Session[];
 }
 
 export const useSessionStore = create<SessionStore>((set, get) => ({
@@ -149,5 +163,43 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
         };
       });
     }, 600);
+  },
+
+  addChildSession: (parentId, childId) =>
+    set((s) => {
+      const parent = s.sessions[parentId];
+      if (!parent) return s;
+      const existing = parent.childSessionIds ?? [];
+      if (existing.includes(childId)) return s;
+      return {
+        sessions: {
+          ...s.sessions,
+          [parentId]: { ...parent, childSessionIds: [...existing, childId] },
+        },
+      };
+    }),
+
+  removeChildSession: (parentId, childId) =>
+    set((s) => {
+      const parent = s.sessions[parentId];
+      if (!parent) return s;
+      return {
+        sessions: {
+          ...s.sessions,
+          [parentId]: {
+            ...parent,
+            childSessionIds: (parent.childSessionIds ?? []).filter((id) => id !== childId),
+          },
+        },
+      };
+    }),
+
+  getChildSessions: (parentId) => {
+    const state = get();
+    const parent = state.sessions[parentId];
+    if (!parent?.childSessionIds) return [];
+    return parent.childSessionIds
+      .map((id) => state.sessions[id])
+      .filter((s): s is Session => !!s);
   },
 }));

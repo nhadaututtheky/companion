@@ -117,4 +117,8 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0028_cli_platform.sql",
     sql: "-- Add CLI platform tracking to sessions\n-- Supports multi-CLI: claude, codex, gemini, opencode\nALTER TABLE sessions ADD COLUMN cli_platform TEXT DEFAULT 'claude';\n",
   },
+  {
+    name: "0029_session_role.sql",
+    sql: "-- Add agent role for multi-brain workspace\n-- Values: coordinator, specialist, researcher, reviewer\nALTER TABLE sessions ADD COLUMN role TEXT;\n",
+  },
 ];

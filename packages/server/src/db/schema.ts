@@ -43,6 +43,8 @@ export const sessions = sqliteTable(
     channelId: text("channel_id"),
     /** Expert Mode persona ID (e.g. "tim-cook", "staff-sre") */
     personaId: text("persona_id"),
+    /** Agent role in multi-brain workspace (e.g. "coordinator", "specialist") */
+    role: text("role"),
 
     // Session management config
     /** Cost warning threshold in USD (null = no budget) */

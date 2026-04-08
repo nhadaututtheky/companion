@@ -1118,6 +1118,105 @@ export class TelegramBridge {
     return undefined;
   }
 
+  // ── Multi-Brain: Agent Topic Management ────────────────────────────────
+
+  /**
+   * When a parent session spawns a child agent, create a forum topic for the child
+   * and subscribe it so messages flow to the new topic.
+   */
+  private async handleChildSpawned(
+    chatId: number,
+    _parentTopicId: number | undefined,
+    parentSessionId: string,
+    msg: BrowserIncomingMessage & { type: "child_spawned" },
+  ): Promise<void> {
+    const { childSessionId, childShortId, childName, childRole, childModel } = msg;
+
+    const ROLE_EMOJI: Record<string, string> = {
+      specialist: "🔧",
+      researcher: "🔍",
+      reviewer: "🧪",
+    };
+    const emoji = ROLE_EMOJI[childRole] ?? "🤖";
+
+    // Try to create a forum topic for this agent
+    try {
+      const topicName = `${emoji} ${childName}`;
+      const forumTopic = await this.bot.api.createForumTopic(chatId, topicName);
+      const agentTopicId = forumTopic.message_thread_id;
+
+      // Map child session to this topic
+      const mapping: ChatMapping = {
+        sessionId: childSessionId,
+        projectSlug: this.getMapping(chatId, _parentTopicId)?.projectSlug ?? "",
+        model: childModel,
+        topicId: agentTopicId,
+      };
+      this.setMapping(chatId, agentTopicId, mapping);
+      this.subscribeToSession(childSessionId, chatId, agentTopicId);
+
+      // Send intro message in the new topic
+      await this.bot.api.sendMessage(
+        chatId,
+        `${emoji} <b>${escapeHTML(childName)}</b> (@${escapeHTML(childShortId ?? "?")}) spawned\n` +
+        `Model: <code>${escapeHTML(childModel)}</code> | Role: ${childRole}\n` +
+        `Parent: <code>${escapeHTML(parentSessionId.slice(0, 8))}</code>`,
+        { parse_mode: "HTML", message_thread_id: agentTopicId },
+      );
+
+      // Notify in parent topic
+      await this.bot.api.sendMessage(
+        chatId,
+        `${emoji} Spawned agent <b>${escapeHTML(childName)}</b> → topic "${escapeHTML(topicName)}"`,
+        { parse_mode: "HTML", message_thread_id: _parentTopicId },
+      );
+
+      log.info("Created agent topic", { chatId, childSessionId, childName, agentTopicId });
+    } catch (err) {
+      // Forum topics not available — send inline notification instead
+      log.warn("Could not create agent topic, falling back to inline", { chatId, error: String(err) });
+      await this.bot.api.sendMessage(
+        chatId,
+        `${emoji} Spawned agent <b>${escapeHTML(childName)}</b> (@${escapeHTML(childShortId ?? "?")})\nModel: ${escapeHTML(childModel)}`,
+        { parse_mode: "HTML", message_thread_id: _parentTopicId },
+      ).catch(() => {});
+    }
+  }
+
+  /** When a child agent session ends, notify in parent topic and close agent topic. */
+  private async handleChildEnded(
+    chatId: number,
+    parentTopicId: number | undefined,
+    msg: BrowserIncomingMessage & { type: "child_ended" },
+  ): Promise<void> {
+    const { childSessionId, childName, status } = msg;
+    const statusEmoji = status === "ended" ? "✅" : "❌";
+    const label = childName ?? childSessionId.slice(0, 8);
+
+    // Notify in parent topic
+    await this.bot.api.sendMessage(
+      chatId,
+      `${statusEmoji} Agent <b>${escapeHTML(label)}</b> ${status === "ended" ? "completed" : "errored"}`,
+      { parse_mode: "HTML", message_thread_id: parentTopicId },
+    ).catch(() => {});
+
+    // Try to close the agent's topic (optional — nice cleanup)
+    try {
+      // Find the child's topic
+      for (const [key, mapping] of this.mappings.entries()) {
+        if (mapping.sessionId === childSessionId && key.startsWith(`${chatId}:`)) {
+          const childTopicId = mapping.topicId;
+          if (childTopicId) {
+            await this.bot.api.closeForumTopic(chatId, childTopicId);
+          }
+          break;
+        }
+      }
+    } catch {
+      // Closing topic is best-effort
+    }
+  }
+
   private async handleSessionMessage(
     chatId: number,
     topicId: number | undefined,
@@ -1224,6 +1323,14 @@ export class TelegramBridge {
               message_thread_id: topicId,
             })
             .catch(() => {});
+          break;
+
+        case "child_spawned":
+          await this.handleChildSpawned(chatId, topicId, sessionId, msg);
+          break;
+
+        case "child_ended":
+          await this.handleChildEnded(chatId, topicId, msg);
           break;
 
         case "pulse:update": {
