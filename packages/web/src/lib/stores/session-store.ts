@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import type { SessionState } from "@companion/shared";
 
+type NotifyMode = "visual" | "toast" | "off";
+type FlashType = "success" | "error" | "info" | null;
+
 interface Session {
   id: string;
   shortId?: string;
@@ -18,6 +21,10 @@ interface Session {
   contextMaxTokens?: number;
   /** Expert Mode persona ID (e.g. "tim-cook", "staff-sre") */
   personaId?: string;
+  /** Notification mode: visual (card flash), toast (Sonner), off */
+  notifyMode?: NotifyMode;
+  /** Transient flash state for visual notifications */
+  flashType?: FlashType;
 }
 
 interface SessionStore {
@@ -36,6 +43,10 @@ interface SessionStore {
   reorderGrid: (ids: string[]) => void;
   getSession: (id: string) => Session | undefined;
   getActiveSessions: () => Session[];
+  /** Cycle notification mode: visual → toast → off → visual */
+  cycleNotifyMode: (id: string) => void;
+  /** Trigger a card flash (auto-clears after 600ms) */
+  triggerFlash: (id: string, type: "success" | "error" | "info") => void;
 }
 
 export const useSessionStore = create<SessionStore>((set, get) => ({
@@ -98,4 +109,45 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
 
   getActiveSessions: () =>
     Object.values(get().sessions).filter((s) => ["running", "waiting", "idle"].includes(s.status)),
+
+  cycleNotifyMode: (id) =>
+    set((s) => {
+      const session = s.sessions[id];
+      if (!session) return s;
+      const order: NotifyMode[] = ["visual", "toast", "off"];
+      const current = session.notifyMode ?? "visual";
+      const next = order[(order.indexOf(current) + 1) % order.length]!;
+      return {
+        sessions: {
+          ...s.sessions,
+          [id]: { ...session, notifyMode: next },
+        },
+      };
+    }),
+
+  triggerFlash: (id, type) => {
+    set((s) => {
+      const session = s.sessions[id];
+      if (!session) return s;
+      return {
+        sessions: {
+          ...s.sessions,
+          [id]: { ...session, flashType: type },
+        },
+      };
+    });
+    // Auto-clear after animation
+    setTimeout(() => {
+      set((s) => {
+        const session = s.sessions[id];
+        if (!session) return s;
+        return {
+          sessions: {
+            ...s.sessions,
+            [id]: { ...session, flashType: null },
+          },
+        };
+      });
+    }, 600);
+  },
 }));

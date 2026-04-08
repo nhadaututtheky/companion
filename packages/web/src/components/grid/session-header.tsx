@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ArrowsOut, X, LinkSimple, CaretDown, Check } from "@phosphor-icons/react";
+import { ArrowsOut, X, LinkSimple, CaretDown, Check, Bell, BellSlash, BellRinging } from "@phosphor-icons/react";
+import { useSessionStore } from "@/lib/stores/session-store";
 import { SessionSettingsButton } from "./session-settings";
 import { CostBreakdown } from "@/components/session/cost-breakdown";
 import { PulseIndicator } from "@/components/pulse/pulse-indicator";
@@ -318,6 +319,9 @@ export function SessionHeader({
           </span>
         )}
 
+        {/* Notification mode toggle */}
+        {isActive && <NotifyModeButton sessionId={sessionId} />}
+
         {/* Settings gear — only for active sessions */}
         {isActive && <SessionSettingsButton sessionId={sessionId} />}
 
@@ -390,5 +394,33 @@ export function SessionHeader({
         </div>
       )}
     </>
+  );
+}
+
+// ── Notification Mode Toggle ────────────────────────────────────────────────
+
+const NOTIFY_LABELS = {
+  visual: "Visual (card flash)",
+  toast: "Toast notifications",
+  off: "Notifications off",
+} as const;
+
+function NotifyModeButton({ sessionId }: { sessionId: string }) {
+  const mode = useSessionStore((s) => s.sessions[sessionId]?.notifyMode ?? "visual");
+  const cycleNotifyMode = useSessionStore((s) => s.cycleNotifyMode);
+
+  const Icon = mode === "off" ? BellSlash : mode === "toast" ? BellRinging : Bell;
+  const color = mode === "off" ? "var(--color-text-muted)" : mode === "toast" ? "var(--color-warning)" : "var(--color-text-secondary)";
+
+  return (
+    <button
+      onClick={() => cycleNotifyMode(sessionId)}
+      className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"
+      style={{ color }}
+      aria-label={NOTIFY_LABELS[mode]}
+      title={NOTIFY_LABELS[mode]}
+    >
+      <Icon size={12} weight={mode === "visual" ? "regular" : "bold"} />
+    </button>
   );
 }

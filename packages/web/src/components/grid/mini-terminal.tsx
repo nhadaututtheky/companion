@@ -157,14 +157,14 @@ function CompactComposer({
   );
 }
 
-const GOOGLE_COLORS = ["#4285F4", "#EA4335", "#FBBC04", "#34A853"];
+const SESSION_COLORS = ["#4285F4", "#EA4335", "#FBBC04", "#34A853", "#FF6D00", "#00BCD4"];
 
 function getSessionColor(id: string): string {
   let hash = 0;
   for (let i = 0; i < id.length; i++) {
     hash = ((hash << 5) - hash + id.charCodeAt(i)) | 0;
   }
-  return GOOGLE_COLORS[Math.abs(hash) % GOOGLE_COLORS.length]!;
+  return SESSION_COLORS[Math.abs(hash) % SESSION_COLORS.length]!;
 }
 
 function getMaxContextTokens(model: string): number {
@@ -177,6 +177,7 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
     useSession(sessionId);
 
   const session = useSessionStore((s) => s.sessions[sessionId]);
+  const flashType = useSessionStore((s) => s.sessions[sessionId]?.flashType);
   const isRunning = session?.status === "running" || session?.status === "busy";
 
   // Context meter calculation
@@ -248,6 +249,7 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
     <div
       className="flex flex-col overflow-hidden"
       style={{
+        position: "relative",
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
@@ -255,11 +257,29 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
           ? "1px solid var(--color-danger)"
           : hasSharedContext ? `2px dashed ${sessionColor}` : "1px solid var(--glass-border)",
         borderRadius: "var(--radius-xl)",
-        boxShadow: "var(--shadow-float)",
+        boxShadow: flashType
+          ? `0 0 0 3px ${flashType === "error" ? "#EA4335" : flashType === "success" ? "#34A853" : "var(--color-accent)"}60, var(--shadow-float)`
+          : "var(--shadow-float)",
+        transition: "box-shadow 300ms ease",
         height: "100%",
         minHeight: 0,
       }}
     >
+      {/* Left accent stripe — session identity */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 8,
+          bottom: 8,
+          width: 3,
+          borderRadius: "0 2px 2px 0",
+          background: sessionColor,
+          opacity: 0.7,
+          zIndex: 1,
+        }}
+      />
+
       {/* Header */}
       <SessionHeader
         sessionId={sessionId}

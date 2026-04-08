@@ -16,7 +16,6 @@ import { FileExplorerPanel } from "@/components/panels/file-explorer-panel";
 import { BrowserPreviewPanel } from "@/components/panels/browser-preview-panel";
 import { SearchPanel } from "@/components/panels/search-panel";
 import { TerminalPanel } from "@/components/panels/terminal-panel";
-import { FloatingStatsBar } from "@/components/panels/floating-stats-bar";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useNotificationPermission } from "@/hooks/use-notifications";
@@ -575,11 +574,15 @@ export default function DashboardPage() {
           <main
             className="flex flex-col flex-1 min-w-0 overflow-hidden"
             style={{
+              position: "relative",
               background: "var(--color-bg-base)",
               border: "1px solid var(--glass-border)",
               borderRadius: "var(--radius-xl)",
             }}
           >
+            {/* Stats watermark — centered behind sessions, click to expand */}
+            <BottomStatsBar />
+
             {/* Resume banner */}
             {!resumeBannerDismissed && resumableSessions.length > 0 && (
               <ResumeBanner
@@ -683,11 +686,7 @@ export default function DashboardPage() {
       {/* Nav menu overlay — floats on top of sessions */}
       <NavSidebar />
 
-      {/* Floating activity stats (horizontal bar) */}
-      <FloatingStatsBar />
-
-      {/* Floating stats bar (VinFast specs style) */}
-      <BottomStatsBar />
+      {/* Stats bar now rendered inside <main> as a watermark */}
     </div>
   );
 }

@@ -15,6 +15,35 @@ import type {
   ThinkingMode,
 } from "@companion/shared";
 
+/**
+ * Session-aware notification: respects per-session notifyMode.
+ * "error" type always fires toast regardless of mode (safety override).
+ */
+function sessionNotify(
+  sessionId: string,
+  type: "success" | "error" | "info",
+  message: string,
+  opts?: { duration?: number },
+) {
+  const session = useSessionStore.getState().sessions[sessionId];
+  const mode = session?.notifyMode ?? "visual";
+
+  // Errors always show toast (safety override)
+  if (type === "error" || mode === "toast") {
+    import("sonner").then(({ toast }) => {
+      toast[type](message, opts);
+    });
+    return;
+  }
+
+  if (mode === "visual") {
+    useSessionStore.getState().triggerFlash(sessionId, type);
+    return;
+  }
+
+  // mode === "off" — do nothing
+}
+
 interface Message {
   id: string;
   role: "user" | "assistant" | "system" | "tool";
@@ -517,12 +546,8 @@ export function useSession(sessionId: string): UseSessionReturn {
           // Early/error exits → show "error" status so user sees what happened
           if (exitCode !== undefined && exitCode !== 0) {
             setSession(sessionId, { status: "error", shortId: undefined });
-            // Show toast so user gets immediate feedback on launch failure
-            import("sonner").then(({ toast }) => {
-              toast.error(exitReason ?? `Session crashed (exit code ${exitCode})`, {
-                duration: 8000,
-              });
-            });
+            // Error always shows toast (safety override in sessionNotify)
+            sessionNotify(sessionId, "error", exitReason ?? `Session crashed (exit code ${exitCode})`, { duration: 8000 });
           } else {
             setSession(sessionId, { status: "ended", shortId: undefined });
           }
@@ -550,12 +575,7 @@ export function useSession(sessionId: string): UseSessionReturn {
             type: "warning",
             content: warningText,
           });
-          import("sonner").then(({ toast }) => {
-            toast.warning(`Idle timeout: ${getSessionName()}`, {
-              description: warningText,
-              duration: 30_000,
-            });
-          });
+          sessionNotify(sessionId, "info", `Idle timeout: ${getSessionName()}`, { duration: 30_000 });
           break;
         }
 
@@ -585,16 +605,7 @@ export function useSession(sessionId: string): UseSessionReturn {
             spent: number;
             percentage: number;
           };
-          import("sonner").then(({ toast }) => {
-            toast.warning(
-              `Budget at ${bwMsg.percentage}%: $${bwMsg.spent.toFixed(2)} / $${bwMsg.budget.toFixed(2)}`,
-              {
-                description:
-                  "Approaching session cost budget. Increase budget in settings if needed.",
-                duration: 8000,
-              },
-            );
-          });
+          sessionNotify(sessionId, "info", `Budget at ${bwMsg.percentage}%: $${bwMsg.spent.toFixed(2)} / $${bwMsg.budget.toFixed(2)}`, { duration: 8000 });
           addLog({
             sessionId,
             sessionName: getSessionName(),
@@ -607,15 +618,7 @@ export function useSession(sessionId: string): UseSessionReturn {
 
         case "budget_exceeded": {
           const beMsg = msg as { type: "budget_exceeded"; budget: number; spent: number };
-          import("sonner").then(({ toast }) => {
-            toast.error(
-              `Budget exceeded — $${beMsg.spent.toFixed(2)} / $${beMsg.budget.toFixed(2)}`,
-              {
-                description: "Increase your budget in session settings to continue.",
-                duration: 0,
-              },
-            );
-          });
+          sessionNotify(sessionId, "error", `Budget exceeded — $${beMsg.spent.toFixed(2)} / $${beMsg.budget.toFixed(2)}`);
           addLog({
             sessionId,
             sessionName: getSessionName(),
@@ -673,12 +676,7 @@ export function useSession(sessionId: string): UseSessionReturn {
         }
 
         case "session_idle": {
-          import("sonner").then(({ toast }) => {
-            toast.info(`Session idle: ${getSessionName()}`, {
-              description: "Agent appears to have finished processing.",
-              duration: 5000,
-            });
-          });
+          sessionNotify(sessionId, "info", `Session idle: ${getSessionName()}`);
           break;
         }
 
@@ -693,19 +691,11 @@ export function useSession(sessionId: string): UseSessionReturn {
             }>;
             blocked: boolean;
           };
-          import("sonner").then(({ toast }) => {
-            if (scan.blocked) {
-              toast.error("Prompt blocked by security scanner", {
-                description: scan.risks.map((r) => r.description).join(", "),
-                duration: 8000,
-              });
-            } else {
-              toast.warning("Security scan detected potential risks", {
-                description: scan.risks.map((r) => `[${r.severity}] ${r.description}`).join(", "),
-                duration: 6000,
-              });
-            }
-          });
+          if (scan.blocked) {
+            sessionNotify(sessionId, "error", "Prompt blocked by security scanner", { duration: 8000 });
+          } else {
+            sessionNotify(sessionId, "info", `Security scan: ${scan.risks.map((r) => r.description).join(", ")}`, { duration: 6000 });
+          }
           setLastScanResult(scan);
           break;
         }
