@@ -80,11 +80,7 @@ export function clearThemeOverrides(): void {
 export function useThemeSync(isDark: boolean): void {
   useEffect(() => {
     const themeId = getStoredThemeId();
-    if (themeId === "default") {
-      // Default theme uses CSS-defined vars, no override needed
-      clearThemeOverrides();
-    } else {
-      applyTheme(themeId, isDark);
-    }
+    // Always apply theme — default theme has explicit colors that match CSS vars
+    applyTheme(themeId, isDark);
   }, [isDark]);
 }

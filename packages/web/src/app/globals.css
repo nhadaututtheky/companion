@@ -25,7 +25,7 @@
   --color-google-green: #34a853;
 
   /* Semantic */
-  --color-accent: #4285f4;
+  --color-accent: #ff5722;
   --color-success: #34a853;
   --color-danger: #ea4335;
   --color-warning: #fbbc04;
@@ -44,16 +44,33 @@
   --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
-  /* Radius */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* Radius — Subtle square with light rounding */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-pill: 9999px;
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+  /* Soft Modern shadows — floating / elevated feel */
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-float: 0 8px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 0 3px rgba(255, 87, 34, 0.35);
+
+  /* Glass tokens */
+  --glass-bg: rgba(255, 255, 255, 0.82);
+  --glass-bg-heavy: rgba(255, 255, 255, 0.92);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-blur: 16px;
+
+  /* Dark glass tokens */
+  --glass-dark-bg: rgba(20, 20, 20, 0.75);
+  --glass-dark-bg-heavy: rgba(20, 20, 20, 0.88);
+  --glass-dark-border: rgba(255, 255, 255, 0.1);
 }
 
 /* ── Base Styles ─────────────────────────────────────────────────────────── */
@@ -106,29 +123,32 @@ p {
 
 /* ── Dark Mode ───────────────────────────────────────────────────────────── */
 .dark {
-  --color-bg-base: #050505;
-  --color-bg-card: #0d0d0d;
-  --color-bg-elevated: #161616;
-  --color-bg-sidebar: #0a0a0a;
+  --color-bg-base: #0a0a0a;
+  --color-bg-card: #111111;
+  --color-bg-elevated: #1a1a1a;
+  --color-bg-sidebar: #0d0d0d;
   --color-bg-hover: #1e1e1e;
   --color-text-primary: var(--color-dark-text);
   --color-text-secondary: #aaaaaa;
   --color-text-muted: var(--color-dark-muted);
   --color-border: #1e1e1e;
   --color-border-strong: #2e2e2e;
+
+  /* Glass overrides for dark */
+  --glass-bg: var(--glass-dark-bg);
+  --glass-bg-heavy: var(--glass-dark-bg-heavy);
+  --glass-border: var(--glass-dark-border);
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-float: 0 8px 30px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-glow: 0 0 0 3px rgba(255, 87, 34, 0.3);
 }
 
-/* ── Dark Mode: Mesh Gradient Background ─────────────────────────────────── */
+/* ── Dark Mode: Subtle Gradient Background ───────────────────────────────── */
 .dark body {
   background:
-    radial-gradient(ellipse 600px 500px at 5% 8%, rgba(66, 133, 244, 0.06) 0%, transparent 70%),
-    radial-gradient(ellipse 500px 400px at 92% 5%, rgba(234, 67, 53, 0.05) 0%, transparent 70%),
-    radial-gradient(ellipse 400px 500px at 10% 50%, rgba(52, 168, 131, 0.04) 0%, transparent 70%),
-    radial-gradient(ellipse 500px 400px at 50% 40%, rgba(251, 188, 4, 0.03) 0%, transparent 70%),
-    radial-gradient(ellipse 450px 500px at 85% 55%, rgba(139, 92, 246, 0.05) 0%, transparent 70%),
-    radial-gradient(ellipse 500px 400px at 15% 90%, rgba(52, 168, 83, 0.04) 0%, transparent 70%),
-    radial-gradient(ellipse 400px 450px at 90% 90%, rgba(56, 189, 248, 0.04) 0%, transparent 70%),
-    #050505;
+    radial-gradient(ellipse 600px 500px at 10% 10%, rgba(255, 87, 34, 0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 500px at 90% 90%, rgba(255, 87, 34, 0.03) 0%, transparent 70%),
+    var(--color-bg-base, #0a0a0a);
   background-attachment: fixed;
 }
 
@@ -191,6 +211,78 @@ p {
   }
 }
 
+/* ── Floating Menu Animation ────────────────────────────────────────────── */
+@keyframes floatingMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Nav Sidebar Animations ────────────────────────────────────────────── */
+@keyframes navSidebarSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+@keyframes navPillStaggerIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes navDetailFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Bottom Stats Bar Animation ─────────────────────────────────────────── */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ── Feature Guide Content Slide Up ─────────────────────────────────────── */
+@keyframes guideContentSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 360px;
+  }
+}
+
 /* ── Glass Overlay Animations ────────────────────────────────────────────── */
 
 /* Backdrop */
@@ -250,12 +342,94 @@ p {
     transition: none !important;
     animation: none !important;
   }
+
+  @keyframes floatingMenuIn {
+    from { opacity: 1; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUpFade {
+    from { opacity: 1; transform: translateX(-50%); }
+    to { opacity: 1; transform: translateX(-50%); }
+  }
+
+  @keyframes navSidebarSlideIn {
+    from { opacity: 1; transform: translateY(-50%); }
+    to { opacity: 1; transform: translateY(-50%); }
+  }
+  @keyframes navPillStaggerIn {
+    from { opacity: 1; }
+    to { opacity: 1; }
+  }
+  @keyframes navDetailFadeIn {
+    from { opacity: 1; }
+    to { opacity: 1; }
+  }
+  @keyframes guideContentSlideUp {
+    from { opacity: 1; max-height: 360px; }
+    to { opacity: 1; max-height: 360px; }
+  }
+}
+
+/* ── Soft Modern Utilities ──────────────────────────────────────────────── */
+
+/* Glass card — individual floating card with frosted glass effect */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-float);
+}
+
+/* Heavier glass — for cards over busy backgrounds */
+.glass-card-heavy {
+  background: var(--glass-bg-heavy);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-float);
+}
+
+/* Glass pill — small glass chip/button */
+.glass-pill {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-soft);
+}
+
+
+/* Soft focus glow — adds glow ring alongside browser outline for inputs */
+.focus-glow:focus-visible {
+  box-shadow: var(--shadow-glow);
+  border-color: var(--color-accent);
 }
 
 /* ── Focus Ring ──────────────────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--color-google-blue);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+/* ── Soft Scrollbar ────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-text-muted) 25%, transparent);
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--color-text-muted) 40%, transparent);
 }
 
 /* ── Expanded Session: full-screen on mobile ─────────────────────────────── */
@@ -277,10 +451,11 @@ p {
 @media (max-width: 767px) {
   .mobile-sidebar-overlay {
     position: fixed !important;
-    top: 48px !important; /* below header (h-12 = 48px) */
-    left: 0 !important;
-    height: calc(100dvh - 48px) !important;
+    top: 64px !important; /* below floating header (48px + 16px margin) */
+    left: 12px !important;
+    height: calc(100dvh - 76px) !important;
     z-index: 41 !important;
+    border-radius: var(--radius-xl) !important;
   }
 }
 
@@ -319,34 +494,39 @@ select:focus:not(:focus-visible) {
   box-shadow: none;
 }
 
-/* Standalone input/select/textarea with border — focus-visible ring + border color */
+/* Standalone input/select/textarea with border — soft modern style */
 .input-bordered {
   border: 1px solid var(--color-border);
-  transition: border-color 150ms ease;
+  border-radius: var(--radius-md);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .input-bordered:focus-visible {
   border-color: var(--color-accent);
-  outline: 2px solid var(--color-accent);
-  outline-offset: -1px;
+  outline: none;
+  box-shadow: var(--shadow-glow);
 }
 
 /* Wrapper that contains a borderless input — focus-within changes wrapper border */
 .input-wrapper {
   border: 1px solid var(--color-border);
-  transition: border-color 150ms ease;
+  border-radius: var(--radius-md);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .input-wrapper:focus-within {
   border-color: var(--color-accent);
+  box-shadow: var(--shadow-glow);
 }
 
 /* ── Project sidebar ──────────────────────────────────────────────────────── */
 
 .project-icon-rail {
   width: 48px;
-  background: var(--color-bg-card);
-  border-right: 1px solid var(--color-border);
+  background: var(--glass-bg-heavy);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
 }
 
 .project-icon-btn {
@@ -398,7 +578,10 @@ select:focus:not(:focus-visible) {
 
 .project-panel {
   width: 212px;
-  background: var(--color-bg-sidebar);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-right: 1px solid var(--glass-border);
 }
 
 .project-options-btn {
@@ -428,9 +611,9 @@ select:focus:not(:focus-visible) {
 }
 
 .persona-card:hover {
-  transform: scale(1.02);
+  transform: translateY(-2px) scale(1.01);
   border-color: var(--color-accent);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-float);
 }
 
 /* ── Template quick picker ────────────────────────────────────────────────── */
