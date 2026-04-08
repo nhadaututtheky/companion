@@ -1,7 +1,7 @@
 {
-  "version": "0.11.1",
-  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.11.1/Companion_0.11.1_x64-setup.exe",
-  "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRYkttZEc2V2pRc2JpZGdEMmZMZFdZLzg2RTVLZ3JqSWNHanFDc0c2dDNrNVdibXh3WXNFSmFyd1VTcnVQRUI5eHZQS3ExNFVGTktGT1E2QjVBVHg5MFU5bDNGRWNWOWdzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1NTU0NTU3CWZpbGU6Q29tcGFuaW9uXzAuMTEuMV94NjQtc2V0dXAuZXhlCkNYbmEzV0VEdmRWVUdmV1BWNGt4MG9HQjQzZW1TTmFPS2FqQkdEdDdqTkUxS0VuUlJKbC84Vk8rWHJ0S0FBWmtPdFdYZHV6c2NBNVY1bkxoOE9EMUFRPT0K",
-  "notes": "Fix: Telegram photo cross-contamination — images now sent as proper multimodal content blocks",
-  "pub_date": "2026-04-07T09:48:34Z"
+  "version": "0.12.0",
+  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.12.0/Companion_0.12.0_x64-setup.exe",
+  "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSR0FuNWFuQThzWjcrbkJyWGNiZTJxOWdVWjRJdzc2NFRJUExxOWZ3UisxYk1LeFUwQTd0MUJ1Q1pvUkxMbmF3RGZzcmY0M2tHWktEM1M0REFXSjVZSTdaY212WXZHUFEwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1NjcyNDkyCWZpbGU6Q29tcGFuaW9uXzAuMTIuMF94NjQtc2V0dXAuZXhlCnozRTdVVWhaTkVFbDFEc3piQVVuZVhsanpFSW9WNHlMRzA3ZS9KYy93WmxFbjA1NXNJeEtWSmp3SzJOOC9FdkhuaHVta1VyZEdFbHRrQm5yU1lwNERRPT0K",
+  "notes": "Multi-Brain Workspace: spawn specialist agents, /status tracking, workspace templates. UI redesign with glassmorphism + 10 themes.",
+  "pub_date": "2026-04-09T01:22:00Z"
 }
