@@ -184,8 +184,13 @@ function LicenseSection() {
       } else {
         toast.error(res.error ?? "Invalid license key");
       }
-    } catch {
-      toast.error("Failed to activate license");
+    } catch (err) {
+      // Server returns 400 with JSON body — extract the actual error message
+      const msg = err instanceof Error ? err.message : String(err);
+      // Try to parse server error JSON from the response text
+      const jsonMatch = msg.match(/\{[^}]*"error"\s*:\s*"([^"]+)"/);
+      const serverError = jsonMatch?.[1];
+      toast.error(serverError ?? (msg.includes("Cannot reach") ? "Cannot reach license server — check network" : "License activation failed"));
     } finally {
       setActivating(false);
     }

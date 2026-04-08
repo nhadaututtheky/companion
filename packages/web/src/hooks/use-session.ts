@@ -517,6 +517,12 @@ export function useSession(sessionId: string): UseSessionReturn {
           // Early/error exits → show "error" status so user sees what happened
           if (exitCode !== undefined && exitCode !== 0) {
             setSession(sessionId, { status: "error", shortId: undefined });
+            // Show toast so user gets immediate feedback on launch failure
+            import("sonner").then(({ toast }) => {
+              toast.error(exitReason ?? `Session crashed (exit code ${exitCode})`, {
+                duration: 8000,
+              });
+            });
           } else {
             setSession(sessionId, { status: "ended", shortId: undefined });
           }

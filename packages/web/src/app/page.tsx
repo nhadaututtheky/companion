@@ -210,7 +210,7 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
 
 // ── Root page ──────────────────────────────────────────────────────────────
 
-const ACTIVE_STATUSES = ["starting", "running", "waiting", "idle", "busy"];
+const ACTIVE_STATUSES = ["starting", "running", "waiting", "idle", "busy", "error"];
 
 export default function DashboardPage() {
   const newSessionOpen = useUiStore((s) => s.newSessionModalOpen);

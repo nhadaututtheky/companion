@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useCallback, useState, type KeyboardEvent } from "react";
-import { PaperPlaneTilt, Lock, CheckCircle, XCircle } from "@phosphor-icons/react";
+import { PaperPlaneTilt, Lock, CheckCircle, XCircle, Warning } from "@phosphor-icons/react";
 import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { api } from "@/lib/api-client";
@@ -251,7 +251,9 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
-        border: hasSharedContext ? `2px dashed ${sessionColor}` : "1px solid var(--glass-border)",
+        border: session?.status === "error"
+          ? "1px solid var(--color-danger)"
+          : hasSharedContext ? `2px dashed ${sessionColor}` : "1px solid var(--glass-border)",
         borderRadius: "var(--radius-xl)",
         boxShadow: "var(--shadow-float)",
         height: "100%",
@@ -296,14 +298,29 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
         </div>
       )}
 
-      {/* Message feed */}
-      <CompactMessageFeed messages={messages} feedRef={feedRef} />
+      {/* Error state — session crashed before starting */}
+      {session?.status === "error" && messages.length === 0 ? (
+        <div className="flex flex-col items-center justify-center flex-1 gap-2 px-4 py-6 text-center">
+          <Warning size={24} weight="bold" style={{ color: "var(--color-danger)" }} />
+          <p className="text-xs font-medium" style={{ color: "var(--color-danger)" }}>
+            Session failed to start
+          </p>
+          <p className="text-xs" style={{ color: "var(--color-text-muted)", maxWidth: 240 }}>
+            Check that the CLI is installed and authenticated. Click X to close.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Message feed */}
+          <CompactMessageFeed messages={messages} feedRef={feedRef} />
 
-      {/* Permission gate */}
-      <CompactPermissionGate permissions={pendingPermissions} onRespond={respondPermission} />
+          {/* Permission gate */}
+          <CompactPermissionGate permissions={pendingPermissions} onRespond={respondPermission} />
 
-      {/* Composer */}
-      <CompactComposer onSend={sendMessage} isRunning={isRunning} />
+          {/* Composer */}
+          <CompactComposer onSend={sendMessage} isRunning={isRunning} />
+        </>
+      )}
     </div>
   );
 }
