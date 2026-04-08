@@ -1,6 +1,6 @@
 [package]
 name = "companion"
-version = "0.11.1"
+version = "0.12.0"
 description = "Companion Desktop - Multi-session Claude Code Manager"
 authors = ["theio.vn"]
 license = "MIT"
