@@ -184,6 +184,28 @@ export function telegramRoutes(registry: BotRegistry) {
       notificationGroupId: body.notificationGroupId ?? null,
     });
 
+    // Hot-reload: restart the bot if it's currently running so new config takes effect
+    const runningBots = registry.getAll();
+    const isRunning = runningBots.some((b) => b.botId === body.id && b.running);
+    if (isRunning) {
+      try {
+        await registry.stopBot(body.id);
+        await registry.startBot({
+          token: botToken,
+          botId: body.id,
+          label: body.label,
+          role: body.role,
+          allowedChatIds: body.allowedChatIds ?? [],
+          allowedUserIds: body.allowedUserIds ?? [],
+        });
+      } catch {
+        return c.json({
+          success: true,
+          data: { id: body.id, restartError: "Config saved but bot failed to restart" },
+        } satisfies ApiResponse);
+      }
+    }
+
     return c.json({ success: true, data: { id: body.id } } satisfies ApiResponse);
   });
 
