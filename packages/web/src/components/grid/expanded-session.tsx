@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowsIn, X, Circle, Info, ChatTeardropDots, DownloadSimple } from "@phosphor-icons/react";
+import { ArrowsIn, X, Circle, Info, ChatTeardropDots, DownloadSimple, CaretDown, Check } from "@phosphor-icons/react";
 import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useAnimatePresence } from "@/lib/animation";
@@ -69,6 +69,103 @@ function trapFocus(container: HTMLElement, e: KeyboardEvent) {
   }
 }
 
+// ── Model Switcher for expanded view ────────────────────────────────────────
+
+const MODEL_OPTIONS = [
+  { id: "claude-opus-4-6", label: "Opus 4.6", emoji: "🧠", desc: "Deep reasoning" },
+  { id: "claude-sonnet-4-6", label: "Sonnet 4.6", emoji: "🎯", desc: "Fast & capable" },
+  { id: "claude-haiku-4-5", label: "Haiku 4.5", emoji: "⚡", desc: "Quick tasks" },
+] as const;
+
+function ExpandedModelSwitcher({
+  model,
+  onSetModel,
+  isActive,
+}: {
+  model: string;
+  onSetModel: (model: string) => void;
+  isActive: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const modelName = model.includes("/") ? model.split("/").pop()! : model;
+  const modelShort = modelName.includes("opus") ? "Opus"
+    : modelName.includes("haiku") ? "Haiku"
+    : modelName.includes("sonnet") ? "Sonnet"
+    : modelName;
+
+  return (
+    <div ref={ref} className="relative hidden sm:block flex-shrink-0">
+      <button
+        onClick={() => isActive && setOpen(!open)}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-colors cursor-pointer"
+        style={{
+          background: open ? "var(--color-accent)" : "var(--color-bg-elevated)",
+          color: open ? "#fff" : "var(--color-text-secondary)",
+          border: open ? "1px solid var(--color-accent)" : "1px solid var(--color-border)",
+        }}
+        title={isActive ? "Click to switch model" : model}
+        aria-label="Switch model"
+      >
+        {modelShort}
+        {isActive && <CaretDown size={10} weight="bold" />}
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 4px)",
+            right: 0,
+            zIndex: 50,
+            background: "var(--glass-bg-heavy)",
+            backdropFilter: "blur(var(--glass-blur))",
+            WebkitBackdropFilter: "blur(var(--glass-blur))",
+            border: "1px solid var(--glass-border)",
+            borderRadius: "var(--radius-lg)",
+            boxShadow: "var(--shadow-float)",
+            minWidth: 200,
+            padding: "4px",
+            animation: "slideUpFade 150ms ease forwards",
+          }}
+        >
+          {MODEL_OPTIONS.map((opt) => {
+            const isCurrent = modelName.includes(opt.id.replace("claude-", "").split("-")[0]!);
+            return (
+              <button
+                key={opt.id}
+                onClick={() => { onSetModel(opt.id); setOpen(false); }}
+                className="flex items-center gap-2 w-full px-3 py-2 text-xs rounded-md transition-colors cursor-pointer"
+                style={{
+                  background: isCurrent ? "color-mix(in srgb, var(--color-accent) 10%, transparent)" : "transparent",
+                  color: isCurrent ? "var(--color-accent)" : "var(--color-text-primary)",
+                }}
+                onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = "var(--color-bg-hover)"; }}
+                onMouseLeave={(e) => { if (!isCurrent) e.currentTarget.style.background = "transparent"; }}
+              >
+                <span>{opt.emoji}</span>
+                <span className="font-semibold">{opt.label}</span>
+                <span style={{ color: "var(--color-text-muted)" }}>{opt.desc}</span>
+                {isCurrent && <Check size={12} weight="bold" className="ml-auto" style={{ color: "var(--color-accent)" }} />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Expanded session overlay ────────────────────────────────────────────────
 
 interface ExpandedSessionProps {
@@ -79,7 +176,7 @@ interface ExpandedSessionProps {
 type SidebarTab = "details" | "context";
 
 function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
-  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission } =
+  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel } =
     useSession(sessionId);
 
   const session = useSessionStore((s) => s.sessions[sessionId]);
@@ -230,30 +327,35 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             className="flex items-center gap-2 px-4 py-3 flex-shrink-0"
             style={{ borderBottom: "1px solid var(--color-border)" }}
           >
-            {/* Project name */}
+            {/* Project name + typing status */}
             <h2
-              className="text-base font-semibold truncate flex-1"
+              className="text-base font-semibold truncate flex-1 flex items-center gap-2"
               style={{
                 fontFamily: "var(--font-display)",
                 color: "var(--color-text-primary)",
               }}
             >
               {session?.projectName ?? sessionId}
+              {isRunning && (
+                <span
+                  className="text-xs font-normal flex-shrink-0"
+                  style={{
+                    color: "var(--color-accent)",
+                    fontFamily: "var(--font-body)",
+                    animation: "pulse 1.5s ease-in-out infinite",
+                  }}
+                >
+                  typing…
+                </span>
+              )}
             </h2>
 
-            {/* Model badge — hidden on mobile */}
-            {session?.model && (
-              <span
-                className="hidden sm:inline px-2.5 py-1 rounded-full text-xs font-mono font-medium flex-shrink-0"
-                style={{
-                  background: "var(--color-bg-elevated)",
-                  color: "var(--color-text-secondary)",
-                  border: "1px solid var(--color-border)",
-                }}
-              >
-                {session.model}
-              </span>
-            )}
+            {/* Model switcher dropdown — hidden on mobile */}
+            <ExpandedModelSwitcher
+              model={session?.model ?? ""}
+              onSetModel={setModel}
+              isActive={!["ended", "error"].includes(session?.status ?? "idle")}
+            />
 
             {/* Status */}
             <StatusBadge status={session?.status ?? "idle"} />

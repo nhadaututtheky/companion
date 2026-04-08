@@ -1,6 +1,6 @@
 "use client";
-import { useState, useRef, useCallback } from "react";
-import { ArrowsOut, X, LinkSimple } from "@phosphor-icons/react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { ArrowsOut, X, LinkSimple, CaretDown, Check } from "@phosphor-icons/react";
 import { SessionSettingsButton } from "./session-settings";
 import { CostBreakdown } from "@/components/session/cost-breakdown";
 import { PulseIndicator } from "@/components/pulse/pulse-indicator";
@@ -24,6 +24,7 @@ interface SessionHeaderProps {
   onExpand: () => void;
   onClose: () => void;
   onRename?: (name: string | null) => void;
+  onSetModel?: (model: string) => void;
   channelId?: string | null;
   channelTopic?: string | null;
   channelStatus?: string | null;
@@ -57,6 +58,7 @@ export function SessionHeader({
   onExpand,
   onClose,
   onRename,
+  onSetModel,
   channelId,
   channelTopic,
   channelStatus,
@@ -72,7 +74,9 @@ export function SessionHeader({
 }: SessionHeaderProps) {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
+  const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const modelDropdownRef = useRef<HTMLDivElement>(null);
 
   const displayName = name || projectName;
 
@@ -94,6 +98,18 @@ export function SessionHeader({
     }
   }, [editValue, sessionId, onRename]);
 
+  // Close model dropdown on click outside
+  useEffect(() => {
+    if (!modelDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (modelDropdownRef.current && !modelDropdownRef.current.contains(e.target as Node)) {
+        setModelDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [modelDropdownOpen]);
+
   const dotColor = STATUS_COLORS[status] ?? STATUS_COLORS.idle;
   // Strip provider prefix for OpenCode format (e.g., "anthropic/claude-sonnet-4-6" → "claude-sonnet-4-6")
   const modelName = model.includes("/") ? model.split("/").pop()! : model;
@@ -107,6 +123,7 @@ export function SessionHeader({
     : modelName.split("-")[0]!;
   const channelColor = channelStatus === "active" ? "var(--color-accent)" : "var(--color-text-muted)";
   const isActive = !["ended", "error"].includes(status);
+  const isThinking = ["running", "busy"].includes(status);
 
   const contextBarColor =
     contextPercent === undefined
@@ -127,7 +144,7 @@ export function SessionHeader({
       <div
         className="flex items-center gap-2 px-3 py-2 flex-shrink-0"
         style={{
-          borderBottom: contextPercent === undefined ? "1px solid var(--color-border)" : "none",
+          borderBottom: contextPercent === undefined ? "1px solid var(--glass-border)" : "none",
         }}
       >
         {/* Left: status dot + project name */}
@@ -143,7 +160,7 @@ export function SessionHeader({
         />
         {shortId && (
           <span
-            className="text-xs font-mono px-1 py-0.5 rounded flex-shrink-0"
+            className="text-xs font-mono px-1.5 py-0.5 rounded-full flex-shrink-0"
             style={{ background: "var(--color-bg-elevated)", color: "var(--color-success)" }}
             title={`@${shortId} — mention this session in other chats`}
           >
@@ -172,31 +189,103 @@ export function SessionHeader({
           />
         ) : (
           <span
-            className="text-sm font-semibold truncate flex-1 cursor-pointer"
-           
+            className="text-sm font-semibold truncate flex-1 cursor-pointer flex items-center gap-1.5"
             title={`${displayName} — double-click to rename`}
             onDoubleClick={startEditing}
           >
             {displayName}
+            {isThinking && (
+              <span
+                className="text-xs font-normal flex-shrink-0"
+                style={{
+                  color: "var(--color-accent)",
+                  animation: "pulse 1.5s ease-in-out infinite",
+                }}
+              >
+                typing…
+              </span>
+            )}
           </span>
         )}
 
-        {/* Center: model badge */}
-        <span
-          className="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0"
-          style={{
-            background: "var(--color-bg-elevated)",
-            color: "var(--color-text-muted)",
-            fontFamily: "var(--font-mono)",
-          }}
-        >
-          {cliPlatform && cliPlatform !== "claude" && (
-            <span style={{ color: PLATFORM_ICONS[cliPlatform]?.color ?? "var(--color-text-muted)" }}>
-              {PLATFORM_ICONS[cliPlatform]?.icon ?? ""}{" "}
-            </span>
+        {/* Center: model badge — clickable dropdown */}
+        <div ref={modelDropdownRef} className="relative flex-shrink-0">
+          <button
+            onClick={() => isActive && onSetModel && setModelDropdownOpen(!modelDropdownOpen)}
+            className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium transition-colors cursor-pointer"
+            style={{
+              background: modelDropdownOpen ? "var(--color-accent)" : "var(--color-bg-elevated)",
+              color: modelDropdownOpen ? "#fff" : "var(--color-text-muted)",
+              fontFamily: "var(--font-mono)",
+              border: modelDropdownOpen ? "1px solid var(--color-accent)" : "1px solid transparent",
+            }}
+            title={isActive && onSetModel ? "Click to switch model" : modelName}
+            aria-label="Switch model"
+            aria-expanded={modelDropdownOpen}
+          >
+            {cliPlatform && cliPlatform !== "claude" && (
+              <span style={{ color: modelDropdownOpen ? "#fff" : (PLATFORM_ICONS[cliPlatform]?.color ?? "var(--color-text-muted)") }}>
+                {PLATFORM_ICONS[cliPlatform]?.icon ?? ""}{" "}
+              </span>
+            )}
+            {modelShort}
+            {isActive && onSetModel && <CaretDown size={10} weight="bold" />}
+          </button>
+
+          {/* Model dropdown */}
+          {modelDropdownOpen && (
+            <div
+              style={{
+                position: "absolute",
+                top: "calc(100% + 4px)",
+                right: 0,
+                zIndex: 50,
+                background: "var(--glass-bg-heavy)",
+                backdropFilter: "blur(var(--glass-blur))",
+                WebkitBackdropFilter: "blur(var(--glass-blur))",
+                border: "1px solid var(--glass-border)",
+                borderRadius: "var(--radius-lg)",
+                boxShadow: "var(--shadow-float)",
+                minWidth: 180,
+                padding: "4px",
+                animation: "slideUpFade 150ms ease forwards",
+              }}
+            >
+              {([
+                { id: "claude-opus-4-6", label: "Opus 4.6", emoji: "🧠", desc: "Deep reasoning" },
+                { id: "claude-sonnet-4-6", label: "Sonnet 4.6", emoji: "🎯", desc: "Fast & capable" },
+                { id: "claude-haiku-4-5", label: "Haiku 4.5", emoji: "⚡", desc: "Quick tasks" },
+              ]).map((opt) => {
+                const isCurrent = modelName.includes(opt.id.replace("claude-", "").split("-")[0]!);
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => {
+                      onSetModel?.(opt.id);
+                      setModelDropdownOpen(false);
+                    }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-xs rounded-md transition-colors cursor-pointer"
+                    style={{
+                      background: isCurrent ? "color-mix(in srgb, var(--color-accent) 10%, transparent)" : "transparent",
+                      color: isCurrent ? "var(--color-accent)" : "var(--color-text-primary)",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isCurrent) e.currentTarget.style.background = "var(--color-bg-hover)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isCurrent) e.currentTarget.style.background = "transparent";
+                    }}
+                  >
+                    <span>{opt.emoji}</span>
+                    <span className="font-semibold">{opt.label}</span>
+                    <span style={{ color: "var(--color-text-muted)" }}>{opt.desc}</span>
+                    {isCurrent && <Check size={12} weight="bold" className="ml-auto" style={{ color: "var(--color-accent)" }} />}
+                  </button>
+                );
+              })}
+            </div>
           )}
-          {modelShort}
-        </span>
+        </div>
 
         {/* Compact cost display */}
         {totalCostUsd !== undefined && (
@@ -264,9 +353,8 @@ export function SessionHeader({
         <div
           style={{
             height: 2,
-            background: "var(--color-border)",
+            background: "var(--glass-border)",
             flexShrink: 0,
-            borderBottom: "1px solid var(--color-border)",
           }}
           title={contextTooltip}
           aria-label={contextTooltip}
@@ -293,7 +381,7 @@ export function SessionHeader({
           style={{
             background: "color-mix(in srgb, var(--color-danger) 6%, transparent)",
             color: "var(--color-danger)",
-            borderBottom: "1px solid var(--color-border)",
+            borderBottom: "1px solid var(--glass-border)",
             fontSize: 10,
           }}
           role="alert"

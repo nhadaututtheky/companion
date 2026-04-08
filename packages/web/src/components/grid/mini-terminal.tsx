@@ -34,8 +34,9 @@ function CompactPermissionGate({
     <div
       className="flex items-center gap-2 px-3 py-2 flex-shrink-0"
       style={{
-        borderTop: "1px solid #FBBC04",
-        background: "#FBBC0408",
+        borderTop: "1px solid var(--glass-border)",
+        background: "color-mix(in srgb, var(--color-warning) 6%, transparent)",
+        borderRadius: "0 0 var(--radius-xl) var(--radius-xl)",
       }}
     >
       <Lock size={11} weight="bold" style={{ color: "#FBBC04", flexShrink: 0 }} />
@@ -47,7 +48,7 @@ function CompactPermissionGate({
       </span>
       <button
         onClick={() => onRespond(req.requestId, "allow")}
-        className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold cursor-pointer flex-shrink-0"
+        className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold cursor-pointer flex-shrink-0"
         style={{ background: "#34A853", color: "#fff" }}
         aria-label="Allow"
       >
@@ -55,7 +56,7 @@ function CompactPermissionGate({
       </button>
       <button
         onClick={() => onRespond(req.requestId, "deny")}
-        className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold cursor-pointer flex-shrink-0"
+        className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold cursor-pointer flex-shrink-0"
         style={{
           background: "var(--color-bg-elevated)",
           color: "#EA4335",
@@ -86,7 +87,7 @@ function CompactComposer({
 
   const handleSend = () => {
     const trimmed = text.trim();
-    if (!trimmed || isRunning) return;
+    if (!trimmed) return;
     onSend(trimmed);
     setText("");
     if (textareaRef.current) {
@@ -110,14 +111,15 @@ function CompactComposer({
 
   return (
     <div
-      className="flex items-end gap-2 px-2 py-2 flex-shrink-0"
-      style={{ borderTop: "1px solid var(--color-border)" }}
+      className="flex items-end gap-2 px-3 py-2.5 flex-shrink-0"
+      style={{ borderTop: "1px solid var(--glass-border)" }}
     >
       <div
-        className="flex items-end gap-1 flex-1 rounded-xl px-2 py-1.5"
+        className="flex items-end gap-1 flex-1 px-2.5 py-1.5"
         style={{
-          background: "var(--color-bg-card)",
-          border: "1px solid var(--color-border)",
+          background: "var(--color-bg-elevated)",
+          border: "1px solid var(--glass-border)",
+          borderRadius: "var(--radius-pill)",
         }}
       >
         <textarea
@@ -126,8 +128,7 @@ function CompactComposer({
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           onInput={handleInput}
-          disabled={isRunning}
-          placeholder={isRunning ? "Claude is thinking…" : "Message…"}
+          placeholder={isRunning ? "Type to interrupt…" : "Message…"}
           rows={1}
           className="flex-1 resize-none bg-transparent outline-none leading-snug"
           style={{
@@ -141,11 +142,11 @@ function CompactComposer({
         />
         <button
           onClick={handleSend}
-          disabled={!text.trim() || isRunning}
-          className="flex-shrink-0 p-1 rounded-lg transition-all cursor-pointer disabled:opacity-40"
+          disabled={!text.trim()}
+          className="flex-shrink-0 p-1 rounded-full transition-all cursor-pointer disabled:opacity-40"
           style={{
-            background: text.trim() && !isRunning ? "#34A853" : "var(--color-bg-elevated)",
-            color: text.trim() && !isRunning ? "#fff" : "var(--color-text-muted)",
+            background: text.trim() ? (isRunning ? "#D97706" : "#34A853") : "var(--color-bg-elevated)",
+            color: text.trim() ? "#fff" : "var(--color-text-muted)",
           }}
           aria-label="Send message"
         >
@@ -172,7 +173,7 @@ function getMaxContextTokens(model: string): number {
 }
 
 export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
-  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission } =
+  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel } =
     useSession(sessionId);
 
   const session = useSessionStore((s) => s.sessions[sessionId]);
@@ -245,11 +246,14 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
 
   return (
     <div
-      className="flex flex-col overflow-hidden rounded-xl"
+      className="flex flex-col overflow-hidden"
       style={{
-        background: "var(--color-bg-card)",
-        border: hasSharedContext ? `2px dashed ${sessionColor}` : "1px solid var(--color-border)",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 0 0 1px rgba(0,0,0,0.02)",
+        background: "var(--glass-bg-heavy)",
+        backdropFilter: "blur(var(--glass-blur))",
+        WebkitBackdropFilter: "blur(var(--glass-blur))",
+        border: hasSharedContext ? `2px dashed ${sessionColor}` : "1px solid var(--glass-border)",
+        borderRadius: "var(--radius-xl)",
+        boxShadow: "var(--shadow-float)",
         height: "100%",
         minHeight: 0,
       }}
@@ -275,6 +279,7 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
         cacheCreationTokens={session?.state?.cache_creation_tokens}
         cacheReadTokens={session?.state?.cache_read_tokens}
         cliPlatform={session?.state?.cli_platform}
+        onSetModel={setModel}
       />
 
       {/* WS Status banner */}
