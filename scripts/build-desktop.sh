@@ -29,14 +29,15 @@ fi
 echo "==> Building Companion desktop ($BUILD_MODE)"
 
 # ── 0. Resolve signing key ────────────────────────────────────────────────────
-if [[ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" && -z "${TAURI_SIGNING_PRIVATE_KEY_PATH:-}" ]]; then
+if [[ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]]; then
     KEY_FILE="$HOME/.tauri/companion-v2.key"
     ENV_TAURI="$ROOT_DIR/.env.tauri"
 
     if [[ -f "$KEY_FILE" ]]; then
-        echo "==> Loading signing key from $KEY_FILE (via path)"
-        export TAURI_SIGNING_PRIVATE_KEY_PATH="$KEY_FILE"
-        # Password defaults to empty if not set
+        echo "==> Loading signing key from $KEY_FILE"
+        # Tauri bundler requires TAURI_SIGNING_PRIVATE_KEY as string (not path)
+        export TAURI_SIGNING_PRIVATE_KEY
+        TAURI_SIGNING_PRIVATE_KEY="$(cat "$KEY_FILE")"
         export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}"
     elif [[ -f "$ENV_TAURI" ]]; then
         echo "==> Loading signing key from .env.tauri"
