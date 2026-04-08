@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
   X,
   MagnifyingGlass,
-  Compass,
   Crown,
   ArrowRight,
   Gear,
+  CaretUp,
+  CaretDown,
 } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import {
@@ -18,204 +19,237 @@ import {
   type FeatureCategory,
 } from "./feature-data";
 
-// ── Main Modal ─────────────────────────────────────────────────────────────
+// ── Main Floating Guide ──────────────────────────────────────────────────
 
 export function FeatureGuideModal() {
+  const [activeCategory, setActiveCategory] = useState<FeatureCategory | null>(null);
   const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState<FeatureCategory | "all">("all");
   const setRightPanelMode = useUiStore((s) => s.setRightPanelMode);
   const setSettingsModalOpen = useUiStore((s) => s.setSettingsModalOpen);
   const setSettingsActiveTab = useUiStore((s) => s.setSettingsActiveTab);
   const setOpen = useUiStore((s) => s.setFeatureGuideOpen);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const filtered = useMemo(() => {
-    let list = FEATURES;
+  // Close on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        const target = e.target as HTMLElement;
+        if (target.closest("[data-guide-trigger]")) return;
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [setOpen]);
 
-    if (activeCategory !== "all") {
-      list = list.filter((f) => f.category === activeCategory);
-    }
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (activeCategory) {
+          setActiveCategory(null);
+        } else {
+          setOpen(false);
+        }
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [activeCategory, setOpen]);
 
+  const filteredFeatures = useMemo(() => {
+    if (!activeCategory) return [];
+    let list = FEATURES.filter((f) => f.category === activeCategory);
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
         (f) =>
           f.name.toLowerCase().includes(q) ||
-          f.description.toLowerCase().includes(q) ||
-          f.whenToUse.toLowerCase().includes(q),
+          f.description.toLowerCase().includes(q),
       );
     }
-
     return list;
-  }, [search, activeCategory]);
+  }, [activeCategory, search]);
 
-  const grouped = useMemo(() => {
-    const map = new Map<FeatureCategory, FeatureDef[]>();
-    for (const f of filtered) {
-      const existing = map.get(f.category) ?? [];
-      existing.push(f);
-      map.set(f.category, existing);
-    }
-    return map;
-  }, [filtered]);
-
-  const handleAction = (feature: FeatureDef) => {
-    if (feature.panel) {
-      setRightPanelMode(feature.panel as "wiki" | "terminal" | "files" | "browser" | "ai-context" | "stats");
-      setOpen(false);
-    } else if (feature.settingsTab) {
-      setSettingsActiveTab(feature.settingsTab as "general" | "ai" | "telegram" | "mcp" | "rtk");
-      setSettingsModalOpen(true);
-      setOpen(false);
-    }
-  };
+  const handleAction = useCallback(
+    (feature: FeatureDef) => {
+      if (feature.panel) {
+        if (feature.panel === "stats") {
+          useUiStore.getState().setStatsBarOpen(true);
+        } else {
+          setRightPanelMode(feature.panel as "wiki" | "terminal" | "files" | "browser" | "ai-context");
+        }
+        setOpen(false);
+      } else if (feature.settingsTab) {
+        setSettingsActiveTab(feature.settingsTab as "general" | "ai" | "telegram" | "mcp" | "rtk");
+        setSettingsModalOpen(true);
+        setOpen(false);
+      }
+    },
+    [setRightPanelMode, setSettingsModalOpen, setSettingsActiveTab, setOpen],
+  );
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0, 0, 0, 0.5)", backdropFilter: "blur(4px)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
+      ref={containerRef}
+      className="hidden sm:flex flex-col items-center"
+      style={{
+        position: "fixed",
+        bottom: 20,
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 50,
+        maxWidth: "90vw",
+        animation: "slideUpFade 250ms ease forwards",
+      }}
     >
+      {/* Expanded content panel — slides up when category selected */}
+      {activeCategory && (
+        <div
+          key={activeCategory}
+          style={{
+            background: "var(--glass-bg-heavy)",
+            backdropFilter: "blur(var(--glass-blur))",
+            WebkitBackdropFilter: "blur(var(--glass-blur))",
+            border: "1px solid var(--glass-border)",
+            borderRadius: "var(--radius-xl)",
+            boxShadow: "var(--shadow-float)",
+            marginBottom: 8,
+            width: 540,
+            maxHeight: 360,
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            animation: "guideContentSlideUp 200ms ease forwards",
+          }}
+        >
+          {/* Content header */}
+          <div
+            className="flex items-center gap-2 px-4 py-2.5 shrink-0"
+            style={{ borderBottom: "1px solid var(--glass-border)" }}
+          >
+            <span
+              className="text-xs font-semibold uppercase tracking-wider"
+              style={{ color: "var(--color-accent)" }}
+            >
+              {CATEGORY_LABELS[activeCategory]}
+            </span>
+            <span
+              className="text-[10px] tabular-nums"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              {filteredFeatures.length}
+            </span>
+            <div className="flex-1" />
+            {/* Search within category */}
+            <div
+              className="flex items-center gap-1.5 px-2 py-1 text-xs"
+              style={{
+                borderRadius: "var(--radius-md)",
+                background: "color-mix(in srgb, var(--color-bg-elevated) 60%, transparent)",
+                border: "1px solid var(--glass-border)",
+              }}
+            >
+              <MagnifyingGlass size={10} style={{ color: "var(--color-text-muted)" }} />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Filter..."
+                className="bg-transparent outline-none text-xs"
+                style={{ color: "var(--color-text-primary)", width: 80 }}
+                aria-label="Filter features"
+              />
+            </div>
+            <button
+              onClick={() => { setActiveCategory(null); setSearch(""); }}
+              className="p-1 cursor-pointer rounded"
+              style={{ color: "var(--color-text-muted)" }}
+              aria-label="Close category"
+            >
+              <CaretDown size={12} weight="bold" />
+            </button>
+          </div>
+
+          {/* Feature list */}
+          <div className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-1.5">
+            {filteredFeatures.length === 0 && (
+              <div className="text-xs py-4 text-center" style={{ color: "var(--color-text-muted)" }}>
+                No features match
+              </div>
+            )}
+            {filteredFeatures.map((feature) => (
+              <FeatureRow key={feature.id} feature={feature} onAction={() => handleAction(feature)} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Category pills bar — always visible */}
       <div
-        className="flex flex-col w-full max-w-2xl max-h-[80vh] rounded-xl overflow-hidden"
+        className="flex items-center gap-1.5 px-3 py-2"
         style={{
-          background: "var(--color-bg-base)",
-          border: "1px solid var(--color-border)",
-          boxShadow: "0 25px 50px rgba(0,0,0,0.25)",
+          background: "var(--glass-bg-heavy)",
+          backdropFilter: "blur(var(--glass-blur))",
+          WebkitBackdropFilter: "blur(var(--glass-blur))",
+          border: "1px solid var(--glass-border)",
+          borderRadius: "var(--radius-xl)",
+          boxShadow: "var(--shadow-float)",
         }}
       >
-        {/* Header */}
-        <div
-          className="flex items-center gap-3 px-5 py-4 shrink-0"
-          style={{ borderBottom: "1px solid var(--color-border)" }}
+        <span
+          className="text-xs font-semibold px-2"
+          style={{ color: "var(--color-text-primary)" }}
         >
-          <Compass size={20} weight="duotone" style={{ color: "var(--color-purple, #7c3aed)" }} />
-          <div className="flex-1">
-            <h2
-              className="text-base font-bold"
-              style={{ color: "var(--color-text-primary)" }}
+          Guide
+        </span>
+
+        <span className="w-px h-4 mx-0.5" style={{ background: "var(--glass-border)" }} />
+
+        {CATEGORY_ORDER.map((cat) => {
+          const count = FEATURES.filter((f) => f.category === cat).length;
+          const isActive = activeCategory === cat;
+          return (
+            <button
+              key={cat}
+              onClick={() => {
+                setActiveCategory(isActive ? null : cat);
+                setSearch("");
+              }}
+              className="text-[11px] px-2.5 py-1 cursor-pointer transition-all font-medium"
+              style={{
+                borderRadius: "var(--radius-pill)",
+                background: isActive ? "var(--color-accent)" : "transparent",
+                color: isActive ? "#fff" : "var(--color-text-secondary)",
+                border: isActive ? "1px solid var(--color-accent)" : "1px solid transparent",
+              }}
             >
-              Feature Guide
-            </h2>
-            <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-              {FEATURES.length} features &middot; Discover what Companion can do
-            </p>
-          </div>
-          <button
-            onClick={() => setOpen(false)}
-            className="p-1.5 rounded-lg cursor-pointer hover:bg-[var(--color-bg-elevated)]"
-            aria-label="Close feature guide"
-          >
-            <X size={16} />
-          </button>
-        </div>
+              {CATEGORY_LABELS[cat]}
+              <span style={{ opacity: 0.6, marginLeft: 3 }}>({count})</span>
+            </button>
+          );
+        })}
 
-        {/* Search + Category Filter */}
-        <div className="px-5 py-3 flex flex-col gap-2 shrink-0" style={{ borderBottom: "1px solid var(--color-border)" }}>
-          {/* Search */}
-          <div
-            className="flex items-center gap-2 rounded-lg px-3 py-2"
-            style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
-          >
-            <MagnifyingGlass size={14} style={{ color: "var(--color-text-secondary)" }} />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search features..."
-              aria-label="Search features"
-              className="flex-1 text-sm bg-transparent outline-none"
-              style={{ color: "var(--color-text-primary)" }}
-              autoFocus
-            />
-          </div>
+        <span className="w-px h-4 mx-0.5" style={{ background: "var(--glass-border)" }} />
 
-          {/* Category pills */}
-          <div className="flex gap-1.5 flex-wrap">
-            <CategoryPill
-              label="All"
-              active={activeCategory === "all"}
-              onClick={() => setActiveCategory("all")}
-              count={FEATURES.length}
-            />
-            {CATEGORY_ORDER.map((cat) => {
-              const count = FEATURES.filter((f) => f.category === cat).length;
-              return (
-                <CategoryPill
-                  key={cat}
-                  label={CATEGORY_LABELS[cat]}
-                  active={activeCategory === cat}
-                  onClick={() => setActiveCategory(cat)}
-                  count={count}
-                />
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Feature List */}
-        <div className="flex-1 overflow-y-auto px-5 py-3">
-          {filtered.length === 0 && (
-            <div className="text-sm p-6 text-center" style={{ color: "var(--color-text-secondary)" }}>
-              No features match &ldquo;{search}&rdquo;
-            </div>
-          )}
-
-          {CATEGORY_ORDER.filter((cat) => grouped.has(cat)).map((cat) => (
-            <div key={cat} className="mb-4">
-              <h3
-                className="text-[11px] font-semibold uppercase tracking-wider mb-2"
-                style={{ color: "var(--color-text-secondary)" }}
-              >
-                {CATEGORY_LABELS[cat]}
-              </h3>
-              <div className="flex flex-col gap-1.5">
-                {(grouped.get(cat) ?? []).map((feature) => (
-                  <FeatureCard
-                    key={feature.id}
-                    feature={feature}
-                    onAction={() => handleAction(feature)}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* Close */}
+        <button
+          onClick={() => setOpen(false)}
+          className="p-1 cursor-pointer rounded"
+          style={{ color: "var(--color-text-muted)" }}
+          aria-label="Close guide"
+        >
+          <X size={12} weight="bold" />
+        </button>
       </div>
     </div>
   );
 }
 
-// ── Category Pill ──────────────────────────────────────────────────────────
+// ── Feature Row (compact) ────────────────────────────────────────────────
 
-function CategoryPill({
-  label,
-  active,
-  onClick,
-  count,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-  count: number;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="text-[11px] px-2.5 py-1 rounded-full cursor-pointer transition-colors"
-      style={{
-        background: active ? "var(--color-purple, #7c3aed)" : "var(--color-bg-elevated)",
-        color: active ? "#fff" : "var(--color-text-secondary)",
-        border: active ? "none" : "1px solid var(--color-border)",
-      }}
-    >
-      {label} <span style={{ opacity: 0.7 }}>({count})</span>
-    </button>
-  );
-}
-
-// ── Feature Card ───────────────────────────────────────────────────────────
-
-function FeatureCard({
+function FeatureRow({
   feature,
   onAction,
 }: {
@@ -226,71 +260,61 @@ function FeatureCard({
 
   return (
     <div
-      className="flex items-start gap-3 p-3 rounded-lg"
+      className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"
       style={{
-        background: "var(--color-bg-elevated)",
-        border: "1px solid var(--color-border)",
+        background: "transparent",
+        border: "1px solid transparent",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "var(--color-bg-hover)";
+        e.currentTarget.style.borderColor = "var(--glass-border)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "transparent";
+        e.currentTarget.style.borderColor = "transparent";
       }}
     >
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span
-            className="text-sm font-semibold"
-            style={{ color: "var(--color-text-primary)" }}
-          >
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
             {feature.name}
           </span>
           <span
-            className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+            className="text-[9px] px-1.5 py-0.5 font-medium"
             style={{
+              borderRadius: "var(--radius-pill)",
               background: feature.tier === "pro"
-                ? "rgba(234, 179, 8, 0.15)"
-                : "rgba(16, 185, 129, 0.15)",
+                ? "rgba(234, 179, 8, 0.12)"
+                : "rgba(16, 185, 129, 0.12)",
               color: feature.tier === "pro" ? "#eab308" : "#10b981",
             }}
           >
             {feature.tier === "pro" ? (
               <span className="flex items-center gap-0.5">
-                <Crown size={9} weight="fill" /> PRO
+                <Crown size={8} weight="fill" /> PRO
               </span>
-            ) : (
-              "FREE"
-            )}
+            ) : "FREE"}
           </span>
-          {feature.toggleable && (
-            <span
-              className="text-[10px] px-1.5 py-0.5 rounded-full"
-              style={{
-                background: "var(--color-bg-base)",
-                color: "var(--color-text-secondary)",
-              }}
-            >
-              toggleable
-            </span>
-          )}
         </div>
-        <p className="text-xs mb-1" style={{ color: "var(--color-text-secondary)" }}>
+        <p className="text-[11px] mt-0.5 truncate" style={{ color: "var(--color-text-muted)" }}>
           {feature.description}
-        </p>
-        <p className="text-[11px] italic" style={{ color: "var(--color-text-secondary)", opacity: 0.8 }}>
-          When to use: {feature.whenToUse}
         </p>
       </div>
 
       {hasAction && (
         <button
           onClick={onAction}
-          className="shrink-0 flex items-center gap-1 text-[11px] px-2 py-1 rounded cursor-pointer mt-1"
+          className="shrink-0 flex items-center gap-1 text-[10px] px-2 py-1 rounded cursor-pointer transition-colors"
           style={{
-            background: "var(--color-bg-base)",
-            color: "var(--color-text-secondary)",
-            border: "1px solid var(--color-border)",
+            color: "var(--color-accent)",
+            background: "color-mix(in srgb, var(--color-accent) 8%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)",
           }}
         >
           {feature.panel ? (
-            <>Open <ArrowRight size={10} /></>
+            <>Open <ArrowRight size={9} /></>
           ) : (
-            <><Gear size={10} /> Settings</>
+            <><Gear size={9} /> Settings</>
           )}
         </button>
       )}

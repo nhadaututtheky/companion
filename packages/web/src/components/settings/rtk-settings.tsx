@@ -103,8 +103,9 @@ export function RTKSettings() {
       <div
         className="p-5 rounded-xl"
         style={{
-          background: "var(--color-bg-card)",
-          border: "1px solid var(--color-border)",
+          background: "var(--glass-bg-heavy)",
+          border: "1px solid var(--glass-border)",
+          boxShadow: "var(--shadow-soft)",
         }}
       >
         <div className="flex items-center justify-between">
@@ -302,7 +303,7 @@ export function RTKSettings() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors cursor-pointer"
           style={{
             background: "var(--color-accent)",
             color: "#fff",

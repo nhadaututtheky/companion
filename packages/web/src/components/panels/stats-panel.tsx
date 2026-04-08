@@ -84,7 +84,7 @@ function KpiCard({ label, value, sub, icon, accent = "#4285f4" }: KpiCardProps) 
       className="flex flex-col gap-1 rounded-lg p-3 flex-1 min-w-0"
       style={{
         background: "var(--color-bg-elevated)",
-        border: "1px solid var(--color-border)",
+        border: "1px solid var(--glass-border)",
       }}
     >
       <div className="flex items-center justify-between gap-1">
@@ -156,7 +156,7 @@ export function StatsPanel({ onClose }: StatsPanelProps) {
       {/* Header */}
       <div
         className="flex items-center justify-between px-4 py-3 flex-shrink-0"
-        style={{ borderBottom: "1px solid var(--color-border)" }}
+        style={{ borderBottom: "1px solid var(--glass-border)" }}
       >
         <div className="flex items-center gap-2">
           <ChartBar size={16} weight="bold" style={{ color: "#4285f4" }} aria-hidden="true" />
@@ -262,7 +262,7 @@ export function StatsPanel({ onClose }: StatsPanelProps) {
               style={{
                 color: "var(--color-accent)",
                 background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
+                border: "1px solid var(--glass-border)",
               }}
             >
               <ChartBar size={12} weight="bold" aria-hidden="true" />
@@ -284,7 +284,7 @@ function ActivityHeatmap({ data }: { data: StatsData["dailyActivity"] }) {
   return (
     <div
       className="rounded-lg p-3"
-      style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
+      style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--glass-border)" }}
     >
       <div
         style={{
@@ -348,7 +348,7 @@ function ModelBreakdown({ breakdown }: { breakdown: StatsData["modelBreakdown"] 
   return (
     <div
       className="flex flex-col gap-2 rounded-lg p-3"
-      style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
+      style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--glass-border)" }}
     >
       {breakdown.map((m) => {
         const pct = total > 0 ? Math.round((m.count / total) * 100) : 0;
@@ -400,7 +400,7 @@ function TopProjects({ projects }: { projects: StatsData["topProjects"] }) {
   return (
     <div
       className="flex flex-col gap-1.5 rounded-lg p-3"
-      style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
+      style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--glass-border)" }}
     >
       {projects.map((p) => {
         const pct = max > 0 ? Math.round((p.sessions / max) * 100) : 0;

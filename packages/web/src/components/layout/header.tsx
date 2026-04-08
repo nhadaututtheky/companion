@@ -5,23 +5,14 @@ import {
   Moon,
   Sun,
   Gear,
-  Terminal,
-  FolderOpen,
-  Globe,
-  TerminalWindow,
   List,
-  ChartBar,
-  Brain,
-  BookOpen,
-  Compass,
 } from "@phosphor-icons/react";
 import { TemplateQuickPicker } from "./template-quick-picker";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { CompanionLogo } from "./companion-logo";
-import { LayoutSelector } from "./layout-selector";
 
-function HeaderStats() {
+export function HeaderStats() {
   const sessions = useSessionStore((s) => s.sessions);
 
   const { activeCount, totalCost, totalTurns } = useMemo(() => {
@@ -34,48 +25,27 @@ function HeaderStats() {
     return { activeCount: active.length, totalCost: cost, totalTurns: turns };
   }, [sessions]);
 
-  // Always show stats — even when 0
-
   return (
     <div className="header-stats flex items-center gap-4 px-3">
-      {/* Active sessions */}
       <div className="flex items-center gap-1.5">
         <span
           className="inline-block w-1.5 h-1.5 rounded-full"
           style={{ background: activeCount > 0 ? "var(--color-success)" : "var(--color-text-muted)" }}
         />
-        <span className="text-sm font-semibold tabular-nums">
-          {activeCount}
-        </span>
-        <span className="text-xs text-[var(--color-text-muted)]">
-          active
-        </span>
+        <span className="text-sm font-semibold tabular-nums">{activeCount}</span>
+        <span className="text-xs text-[var(--color-text-muted)]">active</span>
       </div>
-
-      {/* Separator */}
       <span className="w-px h-3.5 bg-[var(--color-border)]" />
-
-      {/* Cost */}
       <div className="flex items-center gap-1.5">
         <span className="text-sm font-semibold font-mono tabular-nums text-[var(--color-accent)]">
           ${totalCost < 0.01 && totalCost > 0 ? "<0.01" : totalCost.toFixed(2)}
         </span>
-        <span className="text-xs text-[var(--color-text-muted)]">
-          cost
-        </span>
+        <span className="text-xs text-[var(--color-text-muted)]">cost</span>
       </div>
-
-      {/* Separator */}
       <span className="w-px h-3.5 bg-[var(--color-border)]" />
-
-      {/* Turns */}
       <div className="flex items-center gap-1.5">
-        <span className="text-sm font-semibold tabular-nums">
-          {totalTurns}
-        </span>
-        <span className="text-xs text-[var(--color-text-muted)]">
-          turns
-        </span>
+        <span className="text-sm font-semibold tabular-nums">{totalTurns}</span>
+        <span className="text-xs text-[var(--color-text-muted)]">turns</span>
       </div>
     </div>
   );
@@ -89,45 +59,55 @@ export function Header({ onMenuToggle }: HeaderProps) {
   const theme = useUiStore((s) => s.theme);
   const toggleTheme = useUiStore((s) => s.toggleTheme);
   const setCommandPaletteOpen = useUiStore((s) => s.setCommandPaletteOpen);
-  const activityTerminalOpen = useUiStore((s) => s.activityTerminalOpen);
-  const setActivityTerminalOpen = useUiStore((s) => s.setActivityTerminalOpen);
+  const activeNavMenu = useUiStore((s) => s.activeNavMenu);
+  const toggleNavMenu = useUiStore((s) => s.toggleNavMenu);
   const rightPanelMode = useUiStore((s) => s.rightPanelMode);
-  const setRightPanelMode = useUiStore((s) => s.setRightPanelMode);
+
+  const statsBarOpen = useUiStore((s) => s.statsBarOpen);
+  const featureGuideOpen = useUiStore((s) => s.featureGuideOpen);
+  const setFeatureGuideOpen = useUiStore((s) => s.setFeatureGuideOpen);
+
+  const hasPanelActive = ["search", "files", "browser", "terminal"].includes(rightPanelMode);
+  const hasAiActive = ["ai-context", "wiki"].includes(rightPanelMode) || statsBarOpen;
 
   return (
     <header
-      className="flex items-center px-5 gap-4 h-12 relative z-10 bg-[var(--color-bg-card)]"
-      style={{ boxShadow: "var(--shadow-sm)" }}
+      className="flex items-center px-5 gap-3 h-12 relative z-10"
+      style={{
+        background: "var(--glass-bg-heavy)",
+        backdropFilter: "blur(var(--glass-blur))",
+        WebkitBackdropFilter: "blur(var(--glass-blur))",
+        border: "1px solid var(--glass-border)",
+        borderRadius: "var(--radius-xl)",
+        boxShadow: "var(--shadow-float)",
+        margin: "8px 12px 0 12px",
+      }}
     >
       {/* Hamburger — mobile only */}
       <button
         className="md:hidden p-2 rounded-lg cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center -ml-1"
-       
         onClick={onMenuToggle}
         aria-label="Open sidebar menu"
       >
         <List size={20} weight="bold" />
       </button>
 
-      {/* Left: Logo + Stats */}
+      {/* Left: Logo */}
       <a href="/" aria-label="Home">
         <CompanionLogo size="sm" />
       </a>
-      <div className="hidden sm:block">
-        <HeaderStats />
-      </div>
 
-      {/* Center: push search to middle */}
       <div className="flex-1" />
 
-      {/* Center: Search trigger */}
+      {/* Center: Search trigger (⌘K) */}
       <button
         onClick={() => setCommandPaletteOpen(true)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors cursor-pointer min-h-[44px]"
+        className="flex items-center gap-2 px-3 py-1.5 text-sm transition-colors cursor-pointer min-h-[44px]"
         style={{
+          borderRadius: "var(--radius-pill)",
           background: "var(--color-bg-elevated)",
           color: "var(--color-text-muted)",
-          border: "1px solid var(--color-border)",
+          border: "1px solid var(--glass-border)",
           minWidth: 44,
         }}
         aria-label="Open command palette"
@@ -138,9 +118,9 @@ export function Header({ onMenuToggle }: HeaderProps) {
           className="ml-auto text-xs hidden sm:inline"
           style={{
             background: "var(--color-bg-base)",
-            border: "1px solid var(--color-border)",
+            border: "1px solid var(--glass-border)",
             padding: "1px 5px",
-            borderRadius: 4,
+            borderRadius: "var(--radius-sm)",
           }}
         >
           ⌘K
@@ -149,129 +129,71 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
       <div className="flex-1" />
 
-      {/* Right: Actions */}
+      {/* Right: Nav menu triggers — desktop only */}
+      <div className="hidden md:flex items-center gap-1">
+        {([
+          { id: "panels" as const, label: "Panels", isActive: hasPanelActive },
+          { id: "ai" as const, label: "AI", isActive: hasAiActive },
+          { id: "layout" as const, label: "View", isActive: false },
+        ]).map((item) => {
+          const isOpen = activeNavMenu === item.id;
+          return (
+            <button
+              key={item.id}
+              data-nav-trigger
+              onClick={() => toggleNavMenu(item.id)}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all cursor-pointer"
+              style={{
+                borderRadius: "var(--radius-pill)",
+                background: isOpen
+                  ? "var(--color-text-primary)"
+                  : item.isActive
+                    ? "color-mix(in srgb, var(--color-accent) 10%, transparent)"
+                    : "transparent",
+                color: isOpen
+                  ? "var(--color-bg-base)"
+                  : item.isActive
+                    ? "var(--color-accent)"
+                    : "var(--color-text-secondary)",
+                border: isOpen
+                  ? "1px solid var(--color-text-primary)"
+                  : "1px solid transparent",
+                fontWeight: isOpen ? 600 : 400,
+              }}
+              aria-expanded={isOpen}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Right: Standalone actions */}
       <div className="flex items-center gap-1">
-        {/* Panel toggles — desktop only */}
-        <button
-          onClick={() => setRightPanelMode(rightPanelMode === "search" ? "none" : "search")}
-          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
-          style={{
-            color: rightPanelMode === "search" ? "var(--color-accent)" : "var(--color-text-muted)",
-            background: rightPanelMode === "search" ? "var(--color-accent)" + "15" : "transparent",
-          }}
-          aria-label="Search in files"
-          title="Search in Files (Ctrl+Shift+F)"
-        >
-          <MagnifyingGlass size={16} weight={rightPanelMode === "search" ? "fill" : "regular"} />
-        </button>
-        <button
-          onClick={() => setRightPanelMode(rightPanelMode === "files" ? "none" : "files")}
-          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
-          style={{
-            color: rightPanelMode === "files" ? "var(--color-accent)" : "var(--color-text-muted)",
-            background: rightPanelMode === "files" ? "var(--color-accent)" + "15" : "transparent",
-          }}
-          aria-label="File Explorer"
-          title="File Explorer"
-        >
-          <FolderOpen size={16} weight={rightPanelMode === "files" ? "fill" : "regular"} />
-        </button>
-        <button
-          onClick={() => setRightPanelMode(rightPanelMode === "browser" ? "none" : "browser")}
-          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
-          style={{
-            color: rightPanelMode === "browser" ? "var(--color-accent)" : "var(--color-text-muted)",
-            background: rightPanelMode === "browser" ? "var(--color-accent)" + "15" : "transparent",
-          }}
-          aria-label="Browser Preview"
-          title="Browser Preview"
-        >
-          <Globe size={16} weight={rightPanelMode === "browser" ? "fill" : "regular"} />
-        </button>
-        <button
-          onClick={() => setRightPanelMode(rightPanelMode === "terminal" ? "none" : "terminal")}
-          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
-          style={{
-            color:
-              rightPanelMode === "terminal" ? "var(--color-accent)" : "var(--color-text-muted)",
-            background:
-              rightPanelMode === "terminal" ? "var(--color-accent)" + "15" : "transparent",
-          }}
-          aria-label="Terminal"
-          title="Terminal"
-        >
-          <TerminalWindow size={16} weight={rightPanelMode === "terminal" ? "fill" : "regular"} />
-        </button>
-        <button
-          onClick={() => setRightPanelMode(rightPanelMode === "stats" ? "none" : "stats")}
-          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
-          style={{
-            color: rightPanelMode === "stats" ? "var(--color-accent)" : "var(--color-text-muted)",
-            background: rightPanelMode === "stats" ? "color-mix(in srgb, var(--color-accent) 8%, transparent)" : "transparent",
-          }}
-          aria-label="Activity stats"
-          title="Activity Stats"
-        >
-          <ChartBar size={16} weight={rightPanelMode === "stats" ? "fill" : "regular"} />
-        </button>
-        <button
-          onClick={() => setRightPanelMode(rightPanelMode === "ai-context" ? "none" : "ai-context")}
-          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
-          style={{
-            color: rightPanelMode === "ai-context" ? "var(--color-purple)" : "var(--color-text-muted)",
-            background: rightPanelMode === "ai-context" ? "color-mix(in srgb, var(--color-purple) 8%, transparent)" : "transparent",
-          }}
-          aria-label="AI Context panel"
-          title="AI Context — Code intelligence & web docs"
-        >
-          <Brain size={16} weight={rightPanelMode === "ai-context" ? "fill" : "regular"} />
-        </button>
-        <button
-          onClick={() => setRightPanelMode(rightPanelMode === "wiki" ? "none" : "wiki")}
-          className="hidden md:flex p-1.5 rounded-lg transition-colors cursor-pointer"
-          style={{
-            color: rightPanelMode === "wiki" ? "var(--color-purple)" : "var(--color-text-muted)",
-            background: rightPanelMode === "wiki" ? "color-mix(in srgb, var(--color-purple) 8%, transparent)" : "transparent",
-          }}
-          aria-label="Wiki Knowledge Base"
-          title="Wiki KB — Domain knowledge for agents"
-        >
-          <BookOpen size={16} weight={rightPanelMode === "wiki" ? "fill" : "regular"} />
-        </button>
-        {/* Layout selector — switch between single, split, grid */}
-        <div className="hidden md:flex">
-          <LayoutSelector />
-        </div>
-        <button
-          onClick={() => setActivityTerminalOpen(!activityTerminalOpen)}
-          className="hidden md:flex p-2 rounded-lg transition-colors cursor-pointer"
-          style={{
-            color: activityTerminalOpen ? "var(--color-accent)" : "var(--color-text-secondary)",
-            background: activityTerminalOpen ? "rgba(66,133,244,0.12)" : undefined,
-          }}
-          aria-label="Toggle activity terminal"
-          title="Activity Terminal (Ctrl+`)"
-        >
-          <Terminal size={16} weight={activityTerminalOpen ? "fill" : "bold"} />
-        </button>
-        {/* Theme toggle — always visible */}
         <button
           onClick={toggleTheme}
           className="p-2 rounded-lg transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
-         
           aria-label="Toggle theme"
         >
           {theme === "dark" ? <Sun size={16} weight="bold" /> : <Moon size={16} weight="bold" />}
         </button>
-        {/* Quick start from template */}
         <TemplateQuickPicker />
         <button
-          onClick={() => useUiStore.getState().setFeatureGuideOpen(true)}
-          className="p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+          data-guide-trigger
+          onClick={() => setFeatureGuideOpen(!featureGuideOpen)}
+          className="px-3 py-1.5 text-xs font-medium transition-all cursor-pointer min-h-[44px] flex items-center"
+          style={{
+            borderRadius: "var(--radius-pill)",
+            background: featureGuideOpen ? "var(--color-accent)" : "transparent",
+            color: featureGuideOpen ? "#fff" : "var(--color-text-secondary)",
+            border: featureGuideOpen
+              ? "1px solid var(--color-accent)"
+              : "1px solid transparent",
+          }}
           aria-label="Feature Guide"
           title="Feature Guide (Ctrl+/)"
         >
-          <Compass size={16} weight="bold" />
+          Guide
         </button>
         <button
           onClick={() => useUiStore.getState().setSettingsModalOpen(true)}

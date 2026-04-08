@@ -62,7 +62,7 @@ export function FileTabBar({ tabs, activeTabId, onSwitch, onClose }: FileTabBarP
       aria-label="Open file tabs"
       style={{
         background: "var(--color-bg-elevated)",
-        borderBottom: "1px solid var(--color-border)",
+        borderBottom: "1px solid var(--glass-border)",
         scrollbarWidth: "none",
       }}
     >
@@ -87,7 +87,7 @@ export function FileTabBar({ tabs, activeTabId, onSwitch, onClose }: FileTabBarP
               fontSize: 11,
               maxWidth: 160,
               border: "none",
-              borderRight: "1px solid var(--color-border)",
+              borderRight: "1px solid var(--glass-border)",
               borderBottom: isActive ? "2px solid var(--color-accent)" : "2px solid transparent",
               background: isActive ? "var(--color-bg-card)" : "var(--color-bg-elevated)",
               color: isActive ? "var(--color-text-primary)" : "var(--color-text-muted)",

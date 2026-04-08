@@ -134,7 +134,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
         className="flex items-center gap-2 px-3 py-2 shrink-0"
         style={{
           background: "var(--color-bg-card)",
-          borderBottom: "1px solid var(--color-border)",
+          borderBottom: "1px solid var(--glass-border)",
         }}
       >
         {/* Nav buttons */}
@@ -304,7 +304,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
         className="flex items-center justify-between px-3 py-1 shrink-0"
         style={{
           background: "var(--color-bg-elevated)",
-          borderTop: "1px solid var(--color-border)",
+          borderTop: "1px solid var(--glass-border)",
         }}
       >
         <span

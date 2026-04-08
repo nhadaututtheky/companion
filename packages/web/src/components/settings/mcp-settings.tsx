@@ -197,15 +197,15 @@ export function McpSettings() {
         <div className="flex items-center gap-2">
           <button
             onClick={loadServers}
-            className="p-1.5 rounded-lg cursor-pointer transition-colors"
-           
+            className="p-1.5 rounded-full cursor-pointer transition-colors"
+
             aria-label="Refresh"
           >
             <ArrowsClockwise size={14} />
           </button>
           <button
             onClick={handleNew}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors"
             style={{ background: "#4285F4", color: "#fff" }}
           >
             <Plus size={12} weight="bold" />
@@ -220,8 +220,9 @@ export function McpSettings() {
         <div
           className="rounded-xl overflow-hidden"
           style={{
-            background: "var(--color-bg-card)",
-            border: "1px solid var(--color-border)",
+            background: "var(--glass-bg-heavy)",
+            border: "1px solid var(--glass-border)",
+            boxShadow: "var(--shadow-soft)",
           }}
         >
           {loading ? (
@@ -302,8 +303,9 @@ export function McpSettings() {
         <div
           className="rounded-xl"
           style={{
-            background: "var(--color-bg-card)",
-            border: "1px solid var(--color-border)",
+            background: "var(--glass-bg-heavy)",
+            border: "1px solid var(--glass-border)",
+            boxShadow: "var(--shadow-soft)",
           }}
         >
           {editing ? (
@@ -380,9 +382,9 @@ function DetectedServersSection({
             return (
               <div
                 key={`${server.id}-${server.source}`}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
                 style={{
-                  border: "1px solid var(--color-border)",
+                  border: "1px solid var(--glass-border)",
                   background: "var(--color-bg-base)",
                 }}
               >
@@ -793,12 +795,12 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
       {/* Footer actions */}
       <div
         className="flex items-center justify-between px-4 py-3"
-        style={{ borderTop: "1px solid var(--color-border)" }}
+        style={{ borderTop: "1px solid var(--glass-border)" }}
       >
         {!isNew ? (
           <button
             onClick={onDelete}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs cursor-pointer transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs cursor-pointer transition-colors"
             style={{ color: "#EA4335" }}
           >
             <Trash size={12} />
@@ -810,7 +812,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
         <button
           onClick={onSave}
           disabled={saving || !server.name.trim()}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+          className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors"
           style={{
             background: saving || !server.name.trim() ? "var(--color-bg-elevated)" : "#4285F4",
             color: saving || !server.name.trim() ? "var(--color-text-muted)" : "#fff",

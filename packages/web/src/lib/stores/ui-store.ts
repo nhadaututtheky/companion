@@ -14,6 +14,9 @@ interface UiStore {
   featureGuideOpen: boolean;
   sidebarExpanded: boolean;
   sidebarActiveProject: string | null;
+  activeNavMenu: "panels" | "ai" | "layout" | null;
+  statsBarOpen: boolean;
+  setStatsBarOpen: (open: boolean) => void;
   setFeatureGuideOpen: (open: boolean) => void;
   setTheme: (t: "light" | "dark") => void;
   toggleTheme: () => void;
@@ -30,6 +33,8 @@ interface UiStore {
   setSidebarExpanded: (expanded: boolean) => void;
   setSidebarActiveProject: (slug: string | null) => void;
   toggleSidebarProject: (slug: string) => void;
+  setActiveNavMenu: (menu: "panels" | "ai" | "layout" | null) => void;
+  toggleNavMenu: (menu: "panels" | "ai" | "layout") => void;
 }
 
 // Read persisted theme on store creation (runs once)
@@ -55,6 +60,10 @@ export const useUiStore = create<UiStore>((set) => ({
   browserPreviewUrl: null,
   sidebarExpanded: false,
   sidebarActiveProject: null,
+  activeNavMenu: null,
+  statsBarOpen: false,
+
+  setStatsBarOpen: (open) => set({ statsBarOpen: open }),
 
   setTheme: (theme) => {
     set({ theme });
@@ -103,4 +112,9 @@ export const useUiStore = create<UiStore>((set) => ({
       }
       return { sidebarActiveProject: slug, sidebarExpanded: true };
     }),
+
+  setActiveNavMenu: (menu) => set({ activeNavMenu: menu }),
+
+  toggleNavMenu: (menu) =>
+    set((s) => ({ activeNavMenu: s.activeNavMenu === menu ? null : menu })),
 }));

@@ -119,9 +119,11 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
       style={{
         width: "min(calc(100vw - 32px), 1100px)",
         height: "min(85vh, calc(100vh - 32px))",
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
-        boxShadow: "0 24px 80px rgba(0,0,0,0.35)",
+        background: "var(--glass-bg-heavy)",
+        backdropFilter: "blur(var(--glass-blur))",
+        WebkitBackdropFilter: "blur(var(--glass-blur))",
+        border: "1px solid var(--glass-border)",
+        boxShadow: "var(--shadow-float)",
       }}
     >
       {/* Title bar */}
@@ -154,19 +156,20 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
           className="shrink-0 overflow-y-auto py-2 hidden sm:block"
           style={{
             width: 200,
-            borderRight: "1px solid var(--color-border)",
+            borderRight: "1px solid var(--glass-border)",
           }}
         >
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-colors cursor-pointer"
+              className="flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-all cursor-pointer"
               style={{
                 color: activeTab === tab.id ? "var(--color-accent)" : "var(--color-text-secondary)",
                 background: activeTab === tab.id ? "color-mix(in srgb, var(--color-accent) 12%, transparent)" : "transparent",
                 fontWeight: activeTab === tab.id ? 600 : 400,
-                borderRadius: 0,
+                borderRadius: "var(--radius-pill)",
+                margin: "0 8px",
               }}
               role="tab"
               aria-selected={activeTab === tab.id}
@@ -183,7 +186,7 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs whitespace-nowrap rounded-lg transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs whitespace-nowrap rounded-full transition-all cursor-pointer"
               style={{
                 color: activeTab === tab.id ? "var(--color-accent)" : "var(--color-text-secondary)",
                 background: activeTab === tab.id ? "color-mix(in srgb, var(--color-accent) 12%, transparent)" : "transparent",

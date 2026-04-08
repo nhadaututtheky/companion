@@ -177,8 +177,11 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
     <div
       className="rounded-xl p-4 flex flex-col gap-3"
       style={{
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
+        background: "var(--glass-bg-heavy)",
+        backdropFilter: "blur(var(--glass-blur))",
+        WebkitBackdropFilter: "blur(var(--glass-blur))",
+        border: "1px solid var(--glass-border)",
+        boxShadow: "var(--shadow-soft)",
       }}
     >
       {/* Header row */}
@@ -232,10 +235,10 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
           <button
             onClick={handleTest}
             disabled={testing}
-            className="px-2 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+            className="px-2 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer"
             style={{
               background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
+              border: "1px solid var(--glass-border)",
               color: "var(--color-text-secondary)",
             }}
             aria-label="Test bot token"
@@ -247,10 +250,10 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
           <button
             onClick={handleToggle}
             disabled={toggling}
-            className="p-1.5 rounded-lg transition-colors cursor-pointer"
+            className="p-1.5 rounded-full transition-colors cursor-pointer"
             style={{
               background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
+              border: "1px solid var(--glass-border)",
               color: isRunning ? "var(--color-danger)" : "var(--color-success)",
             }}
             aria-label={isRunning ? "Stop bot" : "Start bot"}
@@ -299,7 +302,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
       {/* Test result */}
       {testResult && (
         <div
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs"
           style={{
             background: testResult.error
               ? "var(--color-danger-bg, #fef2f2)"
@@ -321,7 +324,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
       {editing && (
         <div
           className="flex flex-col gap-3 pt-3"
-          style={{ borderTop: "1px solid var(--color-border)" }}
+          style={{ borderTop: "1px solid var(--glass-border)" }}
         >
           {/* Label */}
           <div className="flex flex-col gap-1">
@@ -474,7 +477,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold transition-colors cursor-pointer"
               style={{
                 background: "var(--color-accent)",
                 color: "#fff",
@@ -497,10 +500,10 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
                   config.notificationGroupId ? String(config.notificationGroupId) : "",
                 );
               }}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer"
               style={{
                 background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
+                border: "1px solid var(--glass-border)",
                 color: "var(--color-text-secondary)",
               }}
             >
@@ -517,11 +520,11 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
           {config.allowedChatIds.map((id) => (
             <span
               key={id}
-              className="text-xs px-2 py-0.5 rounded font-mono"
+              className="text-xs px-2 py-0.5 rounded-full font-mono"
               style={{
                 background: "var(--color-bg-elevated)",
                 color: "var(--color-text-muted)",
-                border: "1px solid var(--color-border)",
+                border: "1px solid var(--glass-border)",
               }}
             >
               {id}

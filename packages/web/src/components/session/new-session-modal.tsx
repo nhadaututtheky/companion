@@ -77,40 +77,52 @@ function StepPills({ current }: { current: Step }) {
   ];
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5">
       {steps.map(({ n, label }, idx) => (
-        <div key={n} className="flex items-center gap-2">
+        <div key={n} className="flex items-center gap-1.5">
           {idx > 0 && (
             <div
               style={{
-                width: 24,
+                width: 16,
                 height: 1,
-                background: current > idx ? "#4285F4" : "var(--color-border)",
+                background: current > idx ? "var(--color-accent)" : "var(--color-border)",
+                borderRadius: 1,
               }}
               aria-hidden="true"
             />
           )}
-          <div className="flex items-center gap-1.5">
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1"
+            style={{
+              borderRadius: "var(--radius-pill)",
+              background:
+                current === n
+                  ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
+                  : current > n
+                    ? "color-mix(in srgb, var(--color-success) 10%, transparent)"
+                    : "transparent",
+              border:
+                current === n
+                  ? "1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)"
+                  : "1px solid transparent",
+            }}
+          >
             <div
               className="flex items-center justify-center rounded-full text-xs font-bold flex-shrink-0"
               style={{
-                width: 22,
-                height: 22,
+                width: 20,
+                height: 20,
                 background:
-                  current === n ? "#4285F4" : current > n ? "#34A853" : "var(--color-bg-elevated)",
+                  current === n ? "var(--color-accent)" : current > n ? "var(--color-success)" : "var(--color-bg-elevated)",
                 color: current >= n ? "#fff" : "var(--color-text-muted)",
-                border:
-                  current === n
-                    ? "none"
-                    : `1px solid ${current > n ? "#34A853" : "var(--color-border)"}`,
               }}
             >
-              {current > n ? <Check size={12} weight="bold" aria-hidden="true" /> : n}
+              {current > n ? <Check size={10} weight="bold" aria-hidden="true" /> : n}
             </div>
             <span
               className="text-xs font-medium"
               style={{
-                color: current === n ? "var(--color-text-primary)" : "var(--color-text-muted)",
+                color: current === n ? "var(--color-accent)" : current > n ? "var(--color-success)" : "var(--color-text-muted)",
               }}
             >
               {label}

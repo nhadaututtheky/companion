@@ -131,11 +131,7 @@ export function CommandPalette() {
   };
 
   const handleSelectTheme = (themeId: string, themeName: string) => {
-    if (themeId === "default") {
-      clearThemeOverrides();
-    } else {
-      applyTheme(themeId, theme === "dark");
-    }
+    applyTheme(themeId, theme === "dark");
     close(`Theme: ${themeName}`);
   };
 
@@ -222,10 +218,12 @@ export function CommandPalette() {
           width: "100%",
           maxWidth: "560px",
           margin: "0 16px",
-          background: "var(--color-bg-card)",
-          border: "1px solid var(--color-border)",
-          borderRadius: "var(--radius-lg)",
-          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)",
+          background: "var(--glass-bg-heavy)",
+          backdropFilter: "blur(var(--glass-blur))",
+          WebkitBackdropFilter: "blur(var(--glass-blur))",
+          border: "1px solid var(--glass-border)",
+          borderRadius: "var(--radius-xl)",
+          boxShadow: "var(--shadow-float)",
           overflow: "hidden",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -237,7 +235,7 @@ export function CommandPalette() {
               display: "flex",
               alignItems: "center",
               padding: "12px 16px",
-              borderBottom: "1px solid var(--color-border)",
+              borderBottom: "1px solid var(--glass-border)",
               gap: "10px",
             }}
           >
@@ -260,8 +258,8 @@ export function CommandPalette() {
                 fontSize: "11px",
                 color: "var(--color-text-muted)",
                 background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
-                borderRadius: "4px",
+                border: "1px solid var(--glass-border)",
+                borderRadius: "var(--radius-sm)",
                 padding: "2px 6px",
               }}
             >
@@ -644,8 +642,8 @@ function ShortcutBadge({ keys }: { keys: string[] }) {
             fontSize: "10px",
             color: "var(--color-text-muted)",
             background: "var(--color-bg-base)",
-            border: "1px solid var(--color-border)",
-            borderRadius: "4px",
+            border: "1px solid var(--glass-border)",
+            borderRadius: "var(--radius-sm)",
             padding: "1px 5px",
           }}
         >
@@ -665,7 +663,7 @@ function ActiveBadge({ active }: { active: boolean }) {
         fontWeight: 600,
         color: "var(--color-accent)",
         background: "color-mix(in srgb, var(--color-accent) 12%, transparent)",
-        borderRadius: "var(--radius-sm)",
+        borderRadius: "var(--radius-pill)",
         padding: "1px 6px",
         flexShrink: 0,
       }}

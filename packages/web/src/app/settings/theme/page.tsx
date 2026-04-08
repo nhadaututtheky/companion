@@ -145,12 +145,8 @@ export default function ThemeSettingsPage() {
 
   const handleSelect = (id: string) => {
     setActiveId(id);
-    if (id === "default") {
-      clearThemeOverrides();
-      localStorage.setItem("companion_theme_id", "default");
-    } else {
-      applyTheme(id, isDark);
-    }
+    // Apply theme (default included — its colors match the CSS vars)
+    applyTheme(id, isDark);
     toast.success(`Theme "${id}" applied`);
   };
 

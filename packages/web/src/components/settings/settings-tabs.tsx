@@ -43,8 +43,9 @@ export function SettingSection({
     <div
       className="p-5 rounded-xl"
       style={{
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
+        background: "var(--glass-bg-heavy)",
+        border: "1px solid var(--glass-border)",
+        boxShadow: "var(--shadow-soft)",
       }}
     >
       <h2 className="text-sm font-semibold mb-1">
@@ -243,7 +244,7 @@ function LicenseSection() {
           className="mb-4 p-4 rounded-xl"
           style={{
             background: "linear-gradient(135deg, #6366f108, #8b5cf610, #ec489808)",
-            border: "1px solid var(--color-border)",
+            border: "1px solid var(--glass-border)",
           }}
         >
           <div className="flex items-center justify-between mb-3">
@@ -288,7 +289,7 @@ function LicenseSection() {
               style={{
                 background: "var(--color-bg-elevated)",
                 color: "var(--color-text-secondary)",
-                border: "1px solid var(--color-border)",
+                border: "1px solid var(--glass-border)",
                 textDecoration: "none",
               }}
             >
@@ -787,7 +788,7 @@ export function GeneralTab() {
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer"
           style={{
             color: "var(--color-text-secondary)",
-            border: "1px solid var(--color-border)",
+            border: "1px solid var(--glass-border)",
             background: "none",
           }}
         >
@@ -827,7 +828,7 @@ export function GeneralTab() {
             className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer"
             style={{
               background: promptScanEnabled ? "var(--color-accent)" : "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
+              border: "1px solid var(--glass-border)",
             }}
             role="switch"
             aria-checked={promptScanEnabled}
@@ -850,7 +851,7 @@ export function GeneralTab() {
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer"
           style={{
             color: "var(--color-text-secondary)",
-            border: "1px solid var(--color-border)",
+            border: "1px solid var(--glass-border)",
             textDecoration: "none",
             marginTop: 12,
           }}
@@ -907,7 +908,7 @@ export function AppearanceTab() {
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
             style={{
               background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
+              border: "1px solid var(--glass-border)",
               color: "var(--color-text-primary)",
             }}
           >
@@ -1063,7 +1064,7 @@ export function TelegramTab() {
                 className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer w-fit"
                 style={{
                   background: showAddForm ? "var(--color-bg-elevated)" : "var(--color-accent)",
-                  border: "1px solid var(--color-border)",
+                  border: "1px solid var(--glass-border)",
                   color: showAddForm ? "var(--color-text-secondary)" : "#fff",
                 }}
               >
@@ -1077,7 +1078,7 @@ export function TelegramTab() {
                   className="flex flex-col gap-3 p-4 rounded-xl"
                   style={{
                     background: "var(--color-bg-elevated)",
-                    border: "1px solid var(--color-border)",
+                    border: "1px solid var(--glass-border)",
                   }}
                 >
                   <h3
@@ -1374,7 +1375,7 @@ function TelegramBotsTab() {
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer w-fit"
             style={{
               background: showAddForm ? "var(--color-bg-elevated)" : "var(--color-accent)",
-              border: "1px solid var(--color-border)",
+              border: "1px solid var(--glass-border)",
               color: showAddForm ? "var(--color-text-secondary)" : "#fff",
             }}
           >
@@ -1387,7 +1388,7 @@ function TelegramBotsTab() {
               className="flex flex-col gap-3 p-4 rounded-xl"
               style={{
                 background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
+                border: "1px solid var(--glass-border)",
               }}
             >
               <InputField
@@ -1898,7 +1899,7 @@ export function DomainTab() {
               style={{
                 background: "#1a1a2e",
                 color: "#34A853",
-                border: "1px solid var(--color-border)",
+                border: "1px solid var(--glass-border)",
               }}
             >
               <code>docker compose up -d</code>
@@ -1978,7 +1979,7 @@ export function DomainTab() {
             style={{
               background: "var(--color-bg-elevated)",
               color: "var(--color-text-primary)",
-              border: "1px solid var(--color-border)",
+              border: "1px solid var(--glass-border)",
             }}
           >
             <ArrowsClockwise size={16} weight="bold" />

@@ -463,7 +463,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
         className="flex items-center gap-2 px-3 py-2 shrink-0"
         style={{
           background: "var(--color-bg-card)",
-          borderBottom: "1px solid var(--color-border)",
+          borderBottom: "1px solid var(--glass-border)",
         }}
       >
         {/* Root selector */}
@@ -556,7 +556,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
           className="shrink-0 overflow-y-auto py-1"
           style={{
             width: 250,
-            borderRight: "1px solid var(--color-border)",
+            borderRight: "1px solid var(--glass-border)",
             background: "var(--color-bg-sidebar, var(--color-bg-card))",
           }}
         >
@@ -593,7 +593,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
                 className="flex items-center justify-between px-3 py-1.5 shrink-0"
                 style={{
                   background: "var(--color-bg-elevated)",
-                  borderBottom: "1px solid var(--color-border)",
+                  borderBottom: "1px solid var(--glass-border)",
                 }}
               >
                 <div className="flex items-center gap-2 min-w-0">
@@ -654,7 +654,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
               <div
                 className="px-3 py-1 shrink-0"
                 style={{
-                  borderTop: "1px solid var(--color-border)",
+                  borderTop: "1px solid var(--glass-border)",
                   background: "var(--color-bg-elevated)",
                 }}
               >

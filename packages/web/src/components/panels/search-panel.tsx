@@ -135,7 +135,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
       {/* Header */}
       <div
         className="flex items-center gap-2 px-3 py-3 flex-shrink-0"
-        style={{ borderBottom: "1px solid var(--color-border)" }}
+        style={{ borderBottom: "1px solid var(--glass-border)" }}
       >
         <MagnifyingGlass
           size={15}
@@ -162,7 +162,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
       {/* Inputs */}
       <div
         className="flex flex-col gap-2 px-3 py-3 flex-shrink-0"
-        style={{ borderBottom: "1px solid var(--color-border)" }}
+        style={{ borderBottom: "1px solid var(--glass-border)" }}
       >
         {/* Query input */}
         <div className="relative flex items-center">
@@ -265,7 +265,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
             <div
               className="flex items-center gap-1.5 px-3 py-2 text-xs flex-shrink-0"
               style={{
-                borderBottom: "1px solid var(--color-border)",
+                borderBottom: "1px solid var(--glass-border)",
                 color: "var(--color-text-muted)",
               }}
             >
@@ -282,7 +282,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
                   <button
                     onClick={() => onOpenFile(match.file)}
                     className="w-full text-left px-3 py-2.5 transition-colors cursor-pointer hover:bg-[var(--color-bg-elevated)]"
-                    style={{ borderBottom: "1px solid var(--color-border)" }}
+                    style={{ borderBottom: "1px solid var(--glass-border)" }}
                     aria-label={`Open ${fileBasename(match.file)} at line ${match.line}`}
                   >
                     {/* File + line */}
@@ -328,7 +328,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
       <div
         className="flex items-center gap-1.5 px-3 py-2 flex-shrink-0 text-xs truncate"
         style={{
-          borderTop: "1px solid var(--color-border)",
+          borderTop: "1px solid var(--glass-border)",
           color: "var(--color-text-muted)",
         }}
         title={searchRoot}

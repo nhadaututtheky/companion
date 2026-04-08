@@ -33,7 +33,7 @@ export function SessionGrid({ sessions, onExpand }: SessionGridProps) {
 
   return (
     // Outer wrapper handles scroll + padding
-    <div className="h-full overflow-auto p-3">
+    <div className="h-full overflow-auto p-4">
       {/*
         Responsive grid:
         - Mobile (<768px): single column
@@ -43,7 +43,7 @@ export function SessionGrid({ sessions, onExpand }: SessionGridProps) {
         column/row logic at md+ via a CSS custom property approach.
       */}
       <div
-        className="session-grid-inner grid gap-3 h-full min-h-0"
+        className="session-grid-inner grid gap-4 h-full min-h-0"
         style={
           {
             "--grid-cols-desktop": getGridCols(sessions.length),

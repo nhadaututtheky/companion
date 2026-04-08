@@ -237,8 +237,12 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
   return (
     <div
       style={{
-        borderTop: "1px solid var(--color-border)",
-        background: "var(--color-bg-sidebar)",
+        background: "var(--glass-bg-heavy)",
+        backdropFilter: "blur(var(--glass-blur))",
+        WebkitBackdropFilter: "blur(var(--glass-blur))",
+        border: "1px solid var(--glass-border)",
+        borderRadius: "var(--radius-xl)",
+        boxShadow: "var(--shadow-float)",
         display: "flex",
         flexDirection: "column",
         flexShrink: 0,
@@ -252,8 +256,8 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
         className="flex items-center gap-2 px-3 flex-shrink-0"
         style={{
           height: 32,
-          borderBottom: open ? "1px solid var(--color-border)" : "none",
-          background: "var(--color-bg-card)",
+          borderBottom: open ? "1px solid var(--glass-border)" : "none",
+          background: "var(--glass-bg-heavy)",
           userSelect: "none",
         }}
       >

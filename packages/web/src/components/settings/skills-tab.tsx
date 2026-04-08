@@ -165,7 +165,7 @@ function SkillPreview({
         className="px-4 py-3 sticky top-0"
         style={{
           background: "var(--color-bg-card)",
-          borderBottom: "1px solid var(--color-border)",
+          borderBottom: "1px solid var(--glass-border)",
         }}
       >
         <h3 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
@@ -345,7 +345,7 @@ export function SkillsTab() {
               className="w-full pl-9 pr-3 py-2 text-sm rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:outline-none"
               style={{
                 background: "var(--color-bg-base)",
-                border: "1px solid var(--color-border)",
+                border: "1px solid var(--glass-border)",
                 color: "var(--color-text-primary)",
               }}
               aria-label="Filter skills by name"
@@ -356,7 +356,7 @@ export function SkillsTab() {
           <div
             className="flex rounded-xl overflow-hidden"
             style={{
-              border: "1px solid var(--color-border)",
+              border: "1px solid var(--glass-border)",
               height: "min(480px, 60vh)",
             }}
           >
@@ -365,7 +365,7 @@ export function SkillsTab() {
               className="shrink-0 overflow-y-auto py-2"
               style={{
                 width: "clamp(180px, 35%, 280px)",
-                borderRight: "1px solid var(--color-border)",
+                borderRight: "1px solid var(--glass-border)",
                 background: "var(--color-bg-base)",
               }}
             >

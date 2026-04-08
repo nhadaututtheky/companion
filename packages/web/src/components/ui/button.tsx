@@ -11,15 +11,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-[var(--color-accent)] text-white hover:brightness-110 disabled:opacity-40",
+    "bg-[var(--color-accent)] text-white shadow-soft hover:shadow-float hover:brightness-105 disabled:opacity-40",
   secondary:
     "bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] disabled:opacity-40",
   ghost:
     "bg-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] disabled:opacity-40",
   danger:
-    "bg-[var(--color-danger)] text-white hover:brightness-110 disabled:opacity-40",
+    "bg-[var(--color-danger)] text-white shadow-soft hover:shadow-float hover:brightness-105 disabled:opacity-40",
   success:
-    "bg-[var(--color-success)] text-white hover:brightness-110 disabled:opacity-40",
+    "bg-[var(--color-success)] text-white shadow-soft hover:shadow-float hover:brightness-105 disabled:opacity-40",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -35,7 +35,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={[
-          "inline-flex items-center justify-center font-medium rounded-lg",
+          "inline-flex items-center justify-center font-medium rounded-full",
           "cursor-pointer transition-all duration-150",
           "focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] focus-visible:outline-offset-2",
           "disabled:cursor-not-allowed",

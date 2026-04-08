@@ -188,7 +188,7 @@ export function ProjectSidebar({
           {/* Project header */}
           <div
             className="flex items-center gap-2 px-3 py-2.5"
-            style={{ borderBottom: "1px solid var(--color-border)" }}
+            style={{ borderBottom: "1px solid var(--glass-border)" }}
           >
             <span
               className="flex items-center justify-center rounded-md flex-shrink-0"
@@ -226,7 +226,7 @@ export function ProjectSidebar({
           <button
             onClick={onNew}
             className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium cursor-pointer project-new-session-btn"
-            style={{ borderBottom: "1px solid var(--color-border)" }}
+            style={{ borderBottom: "1px solid var(--glass-border)" }}
             aria-label="New session"
           >
             <NotePencil size={14} weight="bold" />

@@ -3,6 +3,8 @@ import { useEffect, useMemo, useCallback, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { ArrowCounterClockwise, X, TelegramLogo, Globe, Trash } from "@phosphor-icons/react";
 import { Header } from "@/components/layout/header";
+import { BottomStatsBar } from "@/components/layout/bottom-stats-bar";
+import { NavSidebar } from "@/components/layout/nav-sidebar";
 import { ProjectSidebar } from "@/components/layout/project-sidebar";
 // StatsGrid moved to Header
 import { ExpandedSession } from "@/components/grid/expanded-session";
@@ -14,7 +16,7 @@ import { FileExplorerPanel } from "@/components/panels/file-explorer-panel";
 import { BrowserPreviewPanel } from "@/components/panels/browser-preview-panel";
 import { SearchPanel } from "@/components/panels/search-panel";
 import { TerminalPanel } from "@/components/panels/terminal-panel";
-import { StatsPanel } from "@/components/panels/stats-panel";
+import { FloatingStatsBar } from "@/components/panels/floating-stats-bar";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useNotificationPermission } from "@/hooks/use-notifications";
@@ -416,9 +418,13 @@ export default function DashboardPage() {
         e.preventDefault();
         setActivityTerminalOpen(!activityTerminalOpen);
       }
-      // Ctrl+S or Escape — close expanded session / right panel
+      // Ctrl+S or Escape — close nav sidebar / expanded session / right panel
       if ((e.ctrlKey && e.key === "s") || e.key === "Escape") {
-        if (expandedSessionId) {
+        const navMenu = useUiStore.getState().activeNavMenu;
+        if (navMenu) {
+          e.preventDefault();
+          useUiStore.getState().setActiveNavMenu(null);
+        } else if (expandedSessionId) {
           e.preventDefault();
           setExpandedSession(null);
         } else if (rightPanelMode !== "none") {
@@ -478,7 +484,13 @@ export default function DashboardPage() {
   }, [setExpandedSession]);
 
   return (
-    <div className="flex flex-col" style={{ height: "100vh", background: "var(--color-bg-base)" }}>
+    <div
+      className="flex flex-col"
+      style={{
+        height: "100vh",
+        background: "linear-gradient(135deg, var(--color-bg-base) 0%, color-mix(in srgb, var(--color-accent) 3%, var(--color-bg-base)) 50%, var(--color-bg-base) 100%)",
+      }}
+    >
       {/* Expanded session overlay (Phase 3) */}
       <ExpandedSession sessionId={expandedSessionId} onClose={handleCloseExpanded} />
 
@@ -487,8 +499,8 @@ export default function DashboardPage() {
 
       <Header onMenuToggle={() => setMobileSidebarOpen(true)} />
 
-      <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-        <div style={{ flex: 1, overflow: "hidden", display: "flex" }}>
+      <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", padding: "8px 12px 12px 12px", gap: 8 }}>
+        <div style={{ flex: 1, overflow: "hidden", display: "flex", gap: 8, borderRadius: "var(--radius-xl)" }}>
           {/* Mobile sidebar overlay backdrop */}
           {mobileSidebarOpen && (
             <div
@@ -515,8 +527,12 @@ export default function DashboardPage() {
               "mobile-sidebar-overlay",
             ].join(" ")}
             style={{
-              background: "var(--color-bg-sidebar)",
-              boxShadow: "1px 0 4px rgba(0,0,0,0.03)",
+              background: "var(--glass-bg-heavy)",
+              backdropFilter: "blur(var(--glass-blur))",
+              WebkitBackdropFilter: "blur(var(--glass-blur))",
+              border: "1px solid var(--glass-border)",
+              borderRadius: "var(--radius-xl)",
+              boxShadow: "var(--shadow-float)",
             }}
             aria-label="Project sidebar"
           >
@@ -555,38 +571,13 @@ export default function DashboardPage() {
             />
           </aside>
 
-          {/* Corner arc SVG — concave curve where sidebar meets content (desktop only) */}
-          <div
-            className="hidden md:block companion-corner-arc"
-            style={{ position: "relative", width: 0, height: 0, flexShrink: 0 }}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              style={{ position: "absolute", top: 0, left: 0 }}
-              aria-hidden="true"
-            >
-              <defs>
-                <linearGradient id="corner-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="var(--color-google-blue)" />
-                  <stop offset="33%" stopColor="var(--color-google-red)" />
-                  <stop offset="66%" stopColor="var(--color-google-yellow)" />
-                  <stop offset="100%" stopColor="var(--color-google-green)" />
-                </linearGradient>
-              </defs>
-              {/* Fill: sidebar bg covers the square, quadratic curve reveals main bg */}
-              <path d="M 0 0 L 16 0 Q 0 0 0 16 L 0 0 Z" fill="var(--color-bg-sidebar)" />
-              {/* Subtle gradient arc */}
-              <path d="M 16 0 Q 0 0 0 16" fill="none" stroke="url(#corner-grad)" strokeWidth="2" />
-            </svg>
-          </div>
-
           {/* Main grid area */}
           <main
             className="flex flex-col flex-1 min-w-0 overflow-hidden"
             style={{
               background: "var(--color-bg-base)",
+              border: "1px solid var(--glass-border)",
+              borderRadius: "var(--radius-xl)",
             }}
           >
             {/* Resume banner */}
@@ -620,12 +611,15 @@ export default function DashboardPage() {
                 width:
                   rightPanelMode === "browser" || rightPanelMode === "terminal"
                     ? 600
-                    : rightPanelMode === "stats"
-                      ? 360
-                      : rightPanelMode === "wiki"
-                        ? 520
-                        : 480,
-                borderLeft: "1px solid var(--color-border)",
+                    : rightPanelMode === "wiki"
+                      ? 520
+                      : 480,
+                background: "var(--glass-bg-heavy)",
+                backdropFilter: "blur(var(--glass-blur))",
+                WebkitBackdropFilter: "blur(var(--glass-blur))",
+                border: "1px solid var(--glass-border)",
+                borderRadius: "var(--radius-xl)",
+                boxShadow: "var(--shadow-float)",
                 transition: "width 200ms ease",
               }}
             >
@@ -653,9 +647,6 @@ export default function DashboardPage() {
               )}
               {rightPanelMode === "terminal" && (
                 <TerminalPanel onClose={() => setRightPanelMode("none")} />
-              )}
-              {rightPanelMode === "stats" && (
-                <StatsPanel onClose={() => setRightPanelMode("none")} />
               )}
               {rightPanelMode === "ai-context" && (
                 <AiContextPanel
@@ -688,6 +679,15 @@ export default function DashboardPage() {
 
       {/* Feature Guide modal */}
       {featureGuideOpen && <FeatureGuideModal />}
+
+      {/* Nav menu overlay — floats on top of sessions */}
+      <NavSidebar />
+
+      {/* Floating activity stats (horizontal bar) */}
+      <FloatingStatsBar />
+
+      {/* Floating stats bar (VinFast specs style) */}
+      <BottomStatsBar />
     </div>
   );
 }
