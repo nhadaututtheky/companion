@@ -914,13 +914,15 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
   // ── Session Debate Participants ──────────────────────────────────────────
 
   /** POST /sessions/:id/debate/participants — add model to session debate */
-  app.post("/:id/debate/participants", async (c) => {
-    const sessionId = c.req.param("id");
-    const body = await c.req.json<{ model: string; provider?: string; personaId?: string }>().catch(() => null);
+  const debateParticipantSchema = z.object({
+    model: z.string().min(1).max(200),
+    provider: z.string().max(100).optional(),
+    personaId: z.string().max(100).optional(),
+  });
 
-    if (!body?.model) {
-      return c.json({ success: false, error: "Body must include { model: string }" } satisfies ApiResponse, 400);
-    }
+  app.post("/:id/debate/participants", zValidator("json", debateParticipantSchema), async (c) => {
+    const sessionId = c.req.param("id");
+    const body = c.req.valid("json");
 
     // Resolve model via registry
     const resolved = resolveModelProvider(body.model);
@@ -993,21 +995,28 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
   });
 
   /** POST /sessions/:id/debate/round — trigger a debate round with tagged models */
-  app.post("/:id/debate/round", async (c) => {
+  const debateRoundSchema = z.object({
+    topic: z.string().max(1000).default("General discussion"),
+    format: z.enum(["pro_con", "red_team", "review", "brainstorm"]).default("brainstorm"),
+  });
+
+  app.post("/:id/debate/round", zValidator("json", debateRoundSchema), async (c) => {
     const sessionId = c.req.param("id");
-    const body = await c.req.json<{ topic: string; format?: string }>().catch(() => null);
+    const body = c.req.valid("json");
+
+    // Verify session exists
+    const session = bridge.getSession(sessionId);
+    if (!session) {
+      return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
+    }
 
     const participants = sessionDebateParticipants.get(sessionId) ?? [];
     if (participants.length === 0) {
       return c.json({ success: false, error: "No debate participants tagged" } satisfies ApiResponse, 400);
     }
 
-    const topic = (body?.topic ?? "General discussion").slice(0, 1000);
-    const validFormats = ["pro_con", "red_team", "review", "brainstorm"] as const;
-    const rawFormat = body?.format ?? "brainstorm";
-    const format = validFormats.includes(rawFormat as typeof validFormats[number])
-      ? (rawFormat as typeof validFormats[number])
-      : "brainstorm";
+    const topic = body.topic;
+    const format = body.format;
 
     // Map participants to agent model configs
     const agentModels = participants.slice(0, 2).map((p, i) => ({

@@ -70,6 +70,14 @@ function makeKey(ip: string, pathname: string): string {
 
 /** Extract the best available IP from the Hono context. */
 function resolveIp(c: Context): { ip: string; isLocal: boolean } {
+  // If X-Forwarded-For is present, the request came through a proxy/Docker
+  // — use the forwarded IP instead of the socket IP for rate limiting
+  const forwarded = c.req.header("x-forwarded-for");
+  if (forwarded) {
+    const clientIp = forwarded.split(",")[0]!.trim();
+    return { ip: clientIp, isLocal: isLocalhost(clientIp) };
+  }
+
   const envIp = (c.env as Record<string, unknown>)?.ip as { address?: string } | undefined;
   const socketIp = envIp?.address;
   const ip = socketIp ?? c.req.header("x-real-ip") ?? "unknown";

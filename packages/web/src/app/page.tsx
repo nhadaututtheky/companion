@@ -16,6 +16,7 @@ import { FileExplorerPanel } from "@/components/panels/file-explorer-panel";
 import { BrowserPreviewPanel } from "@/components/panels/browser-preview-panel";
 import { SearchPanel } from "@/components/panels/search-panel";
 import { TerminalPanel } from "@/components/panels/terminal-panel";
+import { PanelErrorBoundary } from "@/components/ui/panel-error-boundary";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useNotificationPermission } from "@/hooks/use-notifications";
@@ -643,42 +644,54 @@ export default function DashboardPage() {
               }}
             >
               {rightPanelMode === "files" && (
-                <FileExplorerPanel
-                  initialPath={rightPanelPath ?? undefined}
-                  onClose={() => setRightPanelMode("none")}
-                />
+                <PanelErrorBoundary name="File Explorer">
+                  <FileExplorerPanel
+                    initialPath={rightPanelPath ?? undefined}
+                    onClose={() => setRightPanelMode("none")}
+                  />
+                </PanelErrorBoundary>
               )}
               {rightPanelMode === "browser" && (
-                <BrowserPreviewPanel
-                  initialUrl={browserPreviewUrl ?? undefined}
-                  onClose={() => setRightPanelMode("none")}
-                />
+                <PanelErrorBoundary name="Browser Preview">
+                  <BrowserPreviewPanel
+                    initialUrl={browserPreviewUrl ?? undefined}
+                    onClose={() => setRightPanelMode("none")}
+                  />
+                </PanelErrorBoundary>
               )}
               {rightPanelMode === "search" && (
-                <SearchPanel
-                  searchRoot={rightPanelPath ?? ""}
-                  onOpenFile={(path) => {
-                    setRightPanelMode("files");
-                    setRightPanelPath(path);
-                  }}
-                  onClose={() => setRightPanelMode("none")}
-                />
+                <PanelErrorBoundary name="Search">
+                  <SearchPanel
+                    searchRoot={rightPanelPath ?? ""}
+                    onOpenFile={(path) => {
+                      setRightPanelMode("files");
+                      setRightPanelPath(path);
+                    }}
+                    onClose={() => setRightPanelMode("none")}
+                  />
+                </PanelErrorBoundary>
               )}
               {rightPanelMode === "terminal" && (
-                <TerminalPanel onClose={() => setRightPanelMode("none")} />
+                <PanelErrorBoundary name="Terminal">
+                  <TerminalPanel onClose={() => setRightPanelMode("none")} />
+                </PanelErrorBoundary>
               )}
               {rightPanelMode === "ai-context" && (
-                <AiContextPanel
-                  onClose={() => setRightPanelMode("none")}
-                  projectSlug={
-                    activeSessionId
-                      ? (sessions[activeSessionId]?.projectSlug ?? undefined)
-                      : undefined
-                  }
-                />
+                <PanelErrorBoundary name="AI Context">
+                  <AiContextPanel
+                    onClose={() => setRightPanelMode("none")}
+                    projectSlug={
+                      activeSessionId
+                        ? (sessions[activeSessionId]?.projectSlug ?? undefined)
+                        : undefined
+                    }
+                  />
+                </PanelErrorBoundary>
               )}
               {rightPanelMode === "wiki" && (
-                <WikiPanel onClose={() => setRightPanelMode("none")} />
+                <PanelErrorBoundary name="Wiki">
+                  <WikiPanel onClose={() => setRightPanelMode("none")} />
+                </PanelErrorBoundary>
               )}
             </aside>
           )}

@@ -25,6 +25,7 @@ import { PromptHistoryPanel } from "@/components/panels/prompt-history-panel";
 import { ModelSelector } from "@/components/session/model-selector";
 import { ThinkingModeSelector } from "@/components/session/thinking-mode-selector";
 import { PersonaChip } from "@/components/persona/persona-chip";
+import { PanelErrorBoundary } from "@/components/ui/panel-error-boundary";
 import { usePinnedMessagesStore } from "@/lib/stores/pinned-messages-store";
 import { usePreviewStore } from "@/lib/stores/preview-store";
 import { useSession } from "@/hooks/use-session";
@@ -477,7 +478,9 @@ export function SessionPageClient({ params }: PageProps) {
           <ContextStatusBar session={session} />
 
           {/* Messages */}
-          <MessageFeed messages={messages} sessionId={id} onScrollToRef={handleScrollToRef} />
+          <PanelErrorBoundary name="Message Feed">
+            <MessageFeed messages={messages} sessionId={id} onScrollToRef={handleScrollToRef} />
+          </PanelErrorBoundary>
 
           {/* Terminal panel — collapsible bottom section */}
           {terminalOpen && (
@@ -489,7 +492,9 @@ export function SessionPageClient({ params }: PageProps) {
                 flexShrink: 0,
               }}
             >
-              <TerminalPanel defaultCwd={session?.state?.cwd} onClose={toggleTerminal} />
+              <PanelErrorBoundary name="Terminal">
+                <TerminalPanel defaultCwd={session?.state?.cwd} onClose={toggleTerminal} />
+              </PanelErrorBoundary>
             </div>
           )}
 
@@ -557,7 +562,9 @@ export function SessionPageClient({ params }: PageProps) {
 
       {/* ── Design Preview Page (slides in from right) ── */}
       <div className="session-slide-page session-slide-preview">
-        <DesignPreviewPanel />
+        <PanelErrorBoundary name="Design Preview">
+          <DesignPreviewPanel />
+        </PanelErrorBoundary>
       </div>
     </div>
   );
