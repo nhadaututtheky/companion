@@ -20,6 +20,7 @@ import { startCLIDebate, abortCLIDebate } from "../services/cli-debate-engine.js
 import { createLogger } from "../logger.js";
 import type { ApiResponse, CLIPlatform } from "@companion/shared";
 import { hasFeature } from "../services/license.js";
+import type { WsBridge } from "../services/ws-bridge.js";
 
 const log = createLogger("routes:channels");
 
@@ -51,10 +52,11 @@ const paginationSchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
-export const channelRoutes = new Hono();
+export function channelRoutes(bridge: WsBridge): Hono {
+const router = new Hono();
 
 // GET /channels — list all channels
-channelRoutes.get("/", (c) => {
+router.get("/", (c) => {
   const projectSlug = c.req.query("project");
   const status = c.req.query("status");
   const { limit, offset } = paginationSchema.parse({
@@ -72,7 +74,7 @@ channelRoutes.get("/", (c) => {
 });
 
 // POST /channels — create channel
-channelRoutes.post("/", zValidator("json", createChannelSchema), (c) => {
+router.post("/", zValidator("json", createChannelSchema), (c) => {
   const body = c.req.valid("json");
 
   try {
@@ -92,7 +94,7 @@ channelRoutes.post("/", zValidator("json", createChannelSchema), (c) => {
 });
 
 // GET /channels/:id — get channel with messages and linked sessions
-channelRoutes.get("/:id", (c) => {
+router.get("/:id", (c) => {
   const id = c.req.param("id");
   const channel = getChannel(id);
 
@@ -104,7 +106,7 @@ channelRoutes.get("/:id", (c) => {
 });
 
 // POST /channels/:id/messages — post message to channel
-channelRoutes.post("/:id/messages", zValidator("json", postMessageSchema), (c) => {
+router.post("/:id/messages", zValidator("json", postMessageSchema), (c) => {
   const id = c.req.param("id");
   const body = c.req.valid("json");
 
@@ -131,7 +133,7 @@ channelRoutes.post("/:id/messages", zValidator("json", postMessageSchema), (c) =
 });
 
 // PATCH /channels/:id — update channel status
-channelRoutes.patch("/:id", zValidator("json", patchChannelSchema), (c) => {
+router.patch("/:id", zValidator("json", patchChannelSchema), (c) => {
   const id = c.req.param("id");
   const { status } = c.req.valid("json");
 
@@ -153,7 +155,7 @@ channelRoutes.patch("/:id", zValidator("json", patchChannelSchema), (c) => {
 });
 
 // POST /channels/:id/link — link a session to this channel
-channelRoutes.post("/:id/link", zValidator("json", linkSessionSchema), (c) => {
+router.post("/:id/link", zValidator("json", linkSessionSchema), (c) => {
   const id = c.req.param("id");
   const { sessionId } = c.req.valid("json");
 
@@ -167,7 +169,7 @@ channelRoutes.post("/:id/link", zValidator("json", linkSessionSchema), (c) => {
 });
 
 // DELETE /channels/:id/sessions/:sessionId — unlink session from channel
-channelRoutes.delete("/:id/sessions/:sessionId", (c) => {
+router.delete("/:id/sessions/:sessionId", (c) => {
   const sessionId = c.req.param("sessionId");
 
   try {
@@ -201,7 +203,7 @@ const debateSchema = z.object({
     .optional(),
 });
 
-channelRoutes.post("/debate", zValidator("json", debateSchema), async (c) => {
+router.post("/debate", zValidator("json", debateSchema), async (c) => {
   const body = c.req.valid("json");
 
   try {
@@ -259,7 +261,7 @@ const cliDebateSchema = z.object({
   maxRounds: z.number().int().min(1).max(10).optional(),
 });
 
-channelRoutes.post("/cli-debate", zValidator("json", cliDebateSchema), async (c) => {
+router.post("/cli-debate", zValidator("json", cliDebateSchema), async (c) => {
   if (!hasFeature("debate_multiplatform")) {
     return c.json(
       { success: false, error: "Multi-platform debate requires Companion Pro." } satisfies ApiResponse,
@@ -283,7 +285,24 @@ channelRoutes.post("/cli-debate", zValidator("json", cliDebateSchema), async (c)
       },
       (msg) => {
         log.info("CLI debate event", msg);
-        // TODO: broadcast to WebSocket subscribers in Phase 5
+        // Broadcast debate events to linked session browser sockets
+        if (msg && typeof msg === "object" && "channelId" in msg) {
+          const channel = getChannel(String(msg.channelId));
+          if (channel?.linkedSessions) {
+            for (const linked of channel.linkedSessions) {
+              const session = bridge.getSession(linked.id);
+              if (session) {
+                const payload = JSON.stringify({
+                  type: "debate_event",
+                  data: msg,
+                });
+                for (const ws of session.browserSockets) {
+                  try { ws.send(payload); } catch { /* socket closed */ }
+                }
+              }
+            }
+          }
+        }
       },
     );
 
@@ -314,7 +333,7 @@ channelRoutes.post("/cli-debate", zValidator("json", cliDebateSchema), async (c)
 });
 
 // POST /channels/:id/abort-cli — abort CLI debate (kills processes)
-channelRoutes.post("/:id/abort-cli", (c) => {
+router.post("/:id/abort-cli", (c) => {
   const id = c.req.param("id");
   const aborted = abortCLIDebate(id);
 
@@ -330,7 +349,7 @@ channelRoutes.post("/:id/abort-cli", (c) => {
 });
 
 // POST /channels/:id/conclude — force conclude a debate
-channelRoutes.post("/:id/conclude", async (c) => {
+router.post("/:id/conclude", async (c) => {
   const id = c.req.param("id");
   const debate = getActiveDebate(id);
 
@@ -343,7 +362,7 @@ channelRoutes.post("/:id/conclude", async (c) => {
 });
 
 // DELETE /channels/:id — delete channel
-channelRoutes.delete("/:id", (c) => {
+router.delete("/:id", (c) => {
   const id = c.req.param("id");
   const deleted = deleteChannel(id);
 
@@ -353,3 +372,6 @@ channelRoutes.delete("/:id", (c) => {
 
   return c.json({ success: true } satisfies ApiResponse);
 });
+
+return router;
+}

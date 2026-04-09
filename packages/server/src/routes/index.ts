@@ -100,7 +100,7 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   protectedApi.route("/projects", projectRoutes);
   protectedApi.route("/telegram", telegramRoutes(botRegistry));
   protectedApi.route("/fs", filesystemRoutes);
-  protectedApi.route("/channels", channelRoutes);
+  protectedApi.route("/channels", channelRoutes(bridge));
   protectedApi.route("/settings", settingsRoutes);
   protectedApi.route("/templates", templateRoutes());
   // PRO-gated routes

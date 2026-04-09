@@ -385,6 +385,41 @@ function readIndexMeta(domainPath: string): { domain: string; lastCompiledAt: st
 
 // ─── Raw Material ───────────────────────────────────────────────────────────
 
+/**
+ * Check if a raw file has been compiled into any article.
+ * A raw file is "compiled" if an article lists it in compiledFrom
+ * and the article's compiledAt is newer than the raw file's modification time.
+ */
+function isRawFileCompiled(domain: string, filename: string, rawModified: Date, cwd?: string): boolean {
+  try {
+    const root = resolveWikiRoot(cwd);
+    const domainPath = safePath(root, domain);
+    const articles = listArticleFiles(domainPath);
+
+    for (const article of articles) {
+      const filePath = safePath(root, domain, `${article.slug}.md`);
+      if (!existsSync(filePath)) continue;
+
+      const raw = readFileSync(filePath, "utf-8");
+      const { meta } = parseFrontmatter(raw);
+      const compiledFrom = (meta.compiled_from ?? meta.compiledFrom ?? []) as string[];
+
+      // Check if this raw file is listed in compiledFrom
+      if (compiledFrom.some((src) => src === filename || src === `raw/${filename}` || src.endsWith(`/${filename}`))) {
+        // Compare timestamps — compiled if article was compiled after raw file was modified
+        const compiledAt = String(meta.compiled_at ?? meta.compiledAt ?? "");
+        if (compiledAt) {
+          const compiledDate = new Date(compiledAt);
+          if (compiledDate >= rawModified) return true;
+        }
+      }
+    }
+  } catch {
+    // Non-fatal — default to uncompiled
+  }
+  return false;
+}
+
 /** List raw files in a domain */
 export function listRawFiles(domain: string, cwd?: string): RawFile[] {
   const root = resolveWikiRoot(cwd);
@@ -408,7 +443,7 @@ export function listRawFiles(domain: string, cwd?: string): RawFile[] {
       ext,
       sizeBytes: stat.size,
       modifiedAt: stat.mtime.toISOString(),
-      compiled: false, // TODO: track via compilation log
+      compiled: isRawFileCompiled(domain, entry.name, stat.mtime, cwd),
     });
   }
 
@@ -448,6 +483,71 @@ export function deleteRawFile(domain: string, filename: string, cwd?: string): v
 
   unlinkSync(filePath);
   log.info("Deleted raw file", { domain, filename });
+}
+
+// ─── Cross-Reference: CodeGraph ↔ Wiki ──────────────────────────────────────
+
+/**
+ * Find wiki articles related to a set of code file paths.
+ * Matches by extracting module names from paths and comparing against
+ * article slugs and tags.
+ */
+export function findArticlesByRelatedFiles(
+  filePaths: string[],
+  cwd?: string,
+): Array<{ domain: string; article: ArticleRef; relevance: number }> {
+  if (filePaths.length === 0) return [];
+
+  // Extract module keywords from file paths (e.g. "src/services/auth.ts" → "auth")
+  const keywords = new Set<string>();
+  for (const fp of filePaths) {
+    const segments = fp.replace(/\\/g, "/").split("/");
+    const filename = segments[segments.length - 1] ?? "";
+    const stem = filename.replace(/\.[^.]+$/, "").toLowerCase();
+    if (stem && stem.length >= 2) keywords.add(stem);
+
+    // Also add parent directory name for broader matching
+    const parent = segments[segments.length - 2]?.toLowerCase();
+    if (parent && parent.length >= 2 && !["src", "lib", "utils", "components"].includes(parent)) {
+      keywords.add(parent);
+    }
+  }
+
+  if (keywords.size === 0) return [];
+
+  const results: Array<{ domain: string; article: ArticleRef; relevance: number }> = [];
+  const domains = listDomains(cwd);
+
+  for (const domain of domains) {
+    const articles = listArticleFiles(domain.path);
+    for (const article of articles) {
+      let relevance = 0;
+
+      // Check slug match
+      for (const kw of keywords) {
+        if (article.slug.includes(kw) || kw.includes(article.slug)) {
+          relevance += 2;
+        }
+      }
+
+      // Check tag match
+      for (const tag of article.tags) {
+        const normalizedTag = tag.toLowerCase();
+        for (const kw of keywords) {
+          if (normalizedTag.includes(kw) || kw.includes(normalizedTag)) {
+            relevance += 1;
+          }
+        }
+      }
+
+      if (relevance > 0) {
+        results.push({ domain: domain.slug, article, relevance });
+      }
+    }
+  }
+
+  // Sort by relevance descending
+  return results.sort((a, b) => b.relevance - a.relevance);
 }
 
 // ─── Frontmatter Parser ─────────────────────────────────────────────────────

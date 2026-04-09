@@ -18,6 +18,8 @@ import {
   type ContextBreakdown,
   type ContextSource,
 } from "./context-estimator.js";
+import { getProjectFilePaths } from "../codegraph/graph-store.js";
+import { findArticlesByRelatedFiles, readArticle } from "../wiki/store.js";
 
 const _log = createLogger("context-budget");
 
@@ -240,6 +242,53 @@ export function getFullBreakdown(
   }
 
   return { ...base, featureToggles: toggles };
+}
+
+// ─── CodeGraph ↔ Wiki Cross-Reference ───────────────────────────────────────
+
+/**
+ * Find wiki articles related to files known to CodeGraph for a project.
+ * Returns article content within the token budget for injection into context.
+ */
+export function getWikiCodeGraphContext(
+  projectSlug: string,
+  maxTokens: number = 2000,
+  cwd?: string,
+): { content: string; tokens: number; articleCount: number } | null {
+  if (!isFeatureEnabled("wiki") || !isFeatureEnabled("codegraph")) return null;
+
+  try {
+    const filePaths = getProjectFilePaths(projectSlug);
+    if (filePaths.length === 0) return null;
+
+    const related = findArticlesByRelatedFiles(filePaths, cwd);
+    if (related.length === 0) return null;
+
+    const parts: string[] = [];
+    let totalTokens = 0;
+
+    // Take top articles within budget
+    for (const { domain, article } of related) {
+      if (totalTokens + article.tokens > maxTokens) break;
+
+      const full = readArticle(domain, article.slug, cwd);
+      if (!full) continue;
+
+      parts.push(`## ${full.meta.title}\n${full.content}`);
+      totalTokens += article.tokens;
+    }
+
+    if (parts.length === 0) return null;
+
+    return {
+      content: `# Related Wiki Articles (CodeGraph)\n\n${parts.join("\n\n---\n\n")}`,
+      tokens: totalTokens,
+      articleCount: parts.length,
+    };
+  } catch (err) {
+    _log.debug("CodeGraph↔Wiki cross-ref failed", { error: String(err) });
+    return null;
+  }
 }
 
 // ─── Re-export estimator for backward compat ────────────────────────────────

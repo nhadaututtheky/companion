@@ -266,6 +266,17 @@ export function insertEdges(edges: EdgeRecord[]): void {
 
 // ─── Queries ─────────────────────────────────────────────────────────────
 
+/** Get distinct file paths for a project (for cross-referencing with wiki). */
+export function getProjectFilePaths(projectSlug: string): string[] {
+  const db = getDb();
+  const rows = db
+    .select({ filePath: codeFiles.filePath })
+    .from(codeFiles)
+    .where(eq(codeFiles.projectSlug, projectSlug))
+    .all();
+  return rows.map((r) => r.filePath);
+}
+
 /** Get all nodes for a project. */
 export function getProjectNodes(projectSlug: string) {
   const db = getDb();

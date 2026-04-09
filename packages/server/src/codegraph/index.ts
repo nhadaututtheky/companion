@@ -91,7 +91,7 @@ export function isGraphReady(projectSlug: string): boolean {
 /**
  * Get project graph statistics.
  */
-export { getProjectStats } from "./graph-store.js";
+export { getProjectStats, getProjectFilePaths } from "./graph-store.js";
 
 /**
  * Generate semantic descriptions for undescribed exported nodes.

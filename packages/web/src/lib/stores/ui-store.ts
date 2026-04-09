@@ -5,6 +5,7 @@ interface UiStore {
   theme: "light" | "dark";
   commandPaletteOpen: boolean;
   newSessionModalOpen: boolean;
+  newSessionDefaultPersonaId: string | null;
   settingsModalOpen: boolean;
   settingsActiveTab: SettingsTab;
   activityTerminalOpen: boolean;
@@ -21,7 +22,7 @@ interface UiStore {
   setTheme: (t: "light" | "dark") => void;
   toggleTheme: () => void;
   setCommandPaletteOpen: (open: boolean) => void;
-  setNewSessionModalOpen: (open: boolean) => void;
+  setNewSessionModalOpen: (open: boolean, defaultPersonaId?: string | null) => void;
   setSettingsModalOpen: (open: boolean) => void;
   setSettingsActiveTab: (tab: SettingsTab) => void;
   setActivityTerminalOpen: (open: boolean) => void;
@@ -51,6 +52,7 @@ export const useUiStore = create<UiStore>((set) => ({
   theme: getInitialTheme(),
   commandPaletteOpen: false,
   newSessionModalOpen: false,
+  newSessionDefaultPersonaId: null,
   settingsModalOpen: false,
   settingsActiveTab: "general",
   activityTerminalOpen: false,
@@ -85,7 +87,8 @@ export const useUiStore = create<UiStore>((set) => ({
 
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
 
-  setNewSessionModalOpen: (open) => set({ newSessionModalOpen: open }),
+  setNewSessionModalOpen: (open, defaultPersonaId) =>
+    set({ newSessionModalOpen: open, newSessionDefaultPersonaId: defaultPersonaId ?? null }),
 
   setSettingsModalOpen: (open) => set({ settingsModalOpen: open }),
 

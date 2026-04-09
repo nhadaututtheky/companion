@@ -18,6 +18,7 @@ import { useAnimatePresence } from "@/lib/animation";
 import { DirectoryBrowser } from "./directory-browser";
 import { api } from "@/lib/api-client";
 import { useSessionStore } from "@/lib/stores/session-store";
+import { useUiStore } from "@/lib/stores/ui-store";
 import { TemplateVariablesForm, type TemplateVariable } from "./template-variables-form";
 import { COMMAND_PRESETS } from "@companion/shared";
 import { PersonaAvatar } from "@/components/persona/persona-avatar";
@@ -201,9 +202,15 @@ function NewSessionModalInner({ onClose }: ModalInnerProps) {
   const [geminiSandbox, setGeminiSandbox] = useState(true);
   const [geminiYolo, setGeminiYolo] = useState(false);
 
-  // Persona / Expert Mode
-  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
+  // Persona / Expert Mode — pre-select from template picker if set
+  const defaultPersonaId = useUiStore((s) => s.newSessionDefaultPersonaId);
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(defaultPersonaId);
   const { all: allPersonas } = usePersonas();
+
+  // Sync if defaultPersonaId changes (picker opened while modal was closed)
+  useEffect(() => {
+    if (defaultPersonaId) setSelectedPersonaId(defaultPersonaId);
+  }, [defaultPersonaId]);
 
   // Launch step
   const [launching, setLaunching] = useState(false);

@@ -13,6 +13,7 @@
 
 import { resolveShortId } from "./short-id.js";
 import { getActiveSession } from "./session-store.js";
+import { listActiveDebates, injectHumanMessage } from "./debate-engine.js";
 import { createLogger } from "../logger.js";
 
 const log = createLogger("mention-router");
@@ -31,6 +32,8 @@ export interface ParsedMention {
   start: number;
   /** End index in original message */
   end: number;
+  /** If this mention targets a debate channel instead of a session */
+  debateChannelId?: string;
 }
 
 export interface MentionContext {
@@ -62,27 +65,38 @@ export function parseMentions(
     const shortId = match[1]!.toLowerCase();
     const sessionId = resolveShortId(shortId);
 
-    if (!sessionId) {
-      log.debug("Unresolved mention", { shortId });
-      continue;
+    if (sessionId) {
+      // Don't mention yourself
+      if (sessionId === fromSessionId) continue;
+
+      // Check session is active
+      const target = getActiveSession(sessionId);
+      if (!target) {
+        log.debug("Mentioned session not active", { shortId, sessionId });
+        continue;
+      }
+
+      mentions.push({
+        shortId,
+        sessionId,
+        start: match.index,
+        end: match.index + match[0].length,
+      });
+    } else {
+      // Try resolving as a debate agent ID (e.g. @advocate, @challenger)
+      const debateMatch = resolveDebateAgentMention(shortId);
+      if (debateMatch) {
+        mentions.push({
+          shortId,
+          sessionId: `debate:${debateMatch.channelId}`,
+          debateChannelId: debateMatch.channelId,
+          start: match.index,
+          end: match.index + match[0].length,
+        });
+      } else {
+        log.debug("Unresolved mention", { shortId });
+      }
     }
-
-    // Don't mention yourself
-    if (sessionId === fromSessionId) continue;
-
-    // Check session is active
-    const target = getActiveSession(sessionId);
-    if (!target) {
-      log.debug("Mentioned session not active", { shortId, sessionId });
-      continue;
-    }
-
-    mentions.push({
-      shortId,
-      sessionId,
-      start: match.index,
-      end: match.index + match[0].length,
-    });
   }
 
   if (mentions.length === 0) return null;
@@ -110,6 +124,23 @@ export function parseMentions(
 }
 
 /**
+ * Resolve a mention as a debate agent ID.
+ * Checks active debates for matching agent IDs (e.g. "advocate", "challenger").
+ */
+function resolveDebateAgentMention(
+  shortId: string,
+): { channelId: string; agentId: string } | null {
+  const debates = listActiveDebates();
+  for (const debate of debates) {
+    const agent = debate.agents.find((a) => a.id === shortId);
+    if (agent) {
+      return { channelId: debate.channelId, agentId: agent.id };
+    }
+  }
+  return null;
+}
+
+/**
  * Route a mention to the target session.
  * Sends a contextualized message to the target session's CLI.
  * The injected prompt deliberately avoids @shortId syntax to prevent recursive routing.
@@ -119,6 +150,18 @@ function routeMention(
   mention: ParsedMention,
   sendToSession: (sessionId: string, content: string) => void,
 ): void {
+  // Handle debate channel mentions — inject as human message into the debate
+  if (mention.debateChannelId) {
+    const injected = injectHumanMessage(mention.debateChannelId, ctx.cleanMessage);
+    if (injected) {
+      log.info("Routed mention to debate", {
+        from: ctx.fromShortId,
+        channelId: mention.debateChannelId,
+      });
+    }
+    return;
+  }
+
   const target = getActiveSession(mention.sessionId);
   if (!target) return;
 

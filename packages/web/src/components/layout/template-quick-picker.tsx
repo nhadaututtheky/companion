@@ -61,10 +61,9 @@ export function TemplateQuickPicker() {
   }, [open]);
 
   const handleSelectPersona = useCallback(
-    (_persona: Persona) => {
+    (persona: Persona) => {
       setOpen(false);
-      // TODO: Phase 2 — open NewSessionModal with persona pre-selected
-      setNewSessionModalOpen(true);
+      setNewSessionModalOpen(true, persona.id);
     },
     [setNewSessionModalOpen],
   );
