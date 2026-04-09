@@ -11,6 +11,7 @@ import {
   Users,
   ClockCounterClockwise,
   TerminalWindow,
+  PaintBrush,
 } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
@@ -25,11 +26,18 @@ import { ModelSelector } from "@/components/session/model-selector";
 import { ThinkingModeSelector } from "@/components/session/thinking-mode-selector";
 import { PersonaChip } from "@/components/persona/persona-chip";
 import { usePinnedMessagesStore } from "@/lib/stores/pinned-messages-store";
+import { usePreviewStore } from "@/lib/stores/preview-store";
 import { useSession } from "@/hooks/use-session";
+import { useArtifactExtractor } from "@/hooks/use-artifact-extractor";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useDebateStore } from "@/lib/stores/debate-store";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
+
+const DesignPreviewPanel = dynamic(
+  () => import("@/components/panels/design-preview-panel").then((m) => ({ default: m.DesignPreviewPanel })),
+  { ssr: false },
+);
 
 const TerminalPanel = dynamic(
   () => import("@/components/panels/terminal-panel").then((m) => ({ default: m.TerminalPanel })),
@@ -182,6 +190,13 @@ export function SessionPageClient({ params }: PageProps) {
   const [promptHistoryOpen, setPromptHistoryOpen] = useState(false);
   const [terminalOpen, setTerminalOpen] = useState(false);
 
+  // Artifact extraction + preview panel
+  useArtifactExtractor(messages);
+  const previewPanelOpen = usePreviewStore((s) => s.panelOpen);
+  const previewArtifactCount = usePreviewStore((s) => s.artifacts.length);
+  const openPreviewPanel = usePreviewStore((s) => s.openPanel);
+  const clearPreviewArtifacts = usePreviewStore((s) => s.clearArtifacts);
+
   const handlePersonaSwitch = useCallback(
     async (personaId: string | null) => {
       try {
@@ -199,6 +214,11 @@ export function SessionPageClient({ params }: PageProps) {
   const pinCount = getPins(id).length;
 
   const toggleTerminal = useCallback(() => setTerminalOpen((v) => !v), []);
+
+  // Clear preview artifacts when leaving session
+  useEffect(() => {
+    return () => clearPreviewArtifacts();
+  }, [clearPreviewArtifacts]);
 
   // Ctrl+` keyboard shortcut for terminal toggle
   useEffect(() => {
@@ -230,7 +250,10 @@ export function SessionPageClient({ params }: PageProps) {
   };
 
   return (
-    <div className="flex flex-col" style={{ height: "100vh", background: "var(--color-bg-base)" }}>
+    <div className="session-slide-container" data-preview-open={previewPanelOpen || undefined}>
+      {/* ── Chat Page (slides left when preview opens) ── */}
+      <div className="session-slide-page session-slide-chat">
+      <div className="flex flex-col" style={{ height: "100vh", background: "var(--color-bg-base)" }}>
       <Header />
 
       <div className="flex flex-1 overflow-hidden">
@@ -349,6 +372,36 @@ export function SessionPageClient({ params }: PageProps) {
                 {wsStatus}
               </span>
             )}
+
+            {/* Design Preview toggle — always visible */}
+            <button
+              onClick={() => openPreviewPanel()}
+              className="relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+              style={{
+                color: previewArtifactCount > 0 ? "#a855f7" : "var(--color-text-muted)",
+                background: previewArtifactCount > 0 ? "#a855f710" : "transparent",
+                border: `1px solid ${previewArtifactCount > 0 ? "#a855f730" : "var(--color-border)"}`,
+              }}
+              aria-label="Open design preview"
+              title="Open design preview"
+            >
+              <PaintBrush size={14} weight="bold" />
+              Preview
+              {previewArtifactCount > 0 && (
+                <span
+                  className="font-mono font-bold px-1 rounded-full leading-tight"
+                  style={{
+                    background: "#a855f7",
+                    color: "#fff",
+                    fontSize: 9,
+                    minWidth: 16,
+                    textAlign: "center",
+                  }}
+                >
+                  {previewArtifactCount}
+                </span>
+              )}
+            </button>
 
             {/* Terminal toggle */}
             <button
@@ -499,6 +552,13 @@ export function SessionPageClient({ params }: PageProps) {
           />
         </div>
       )}
+    </div>
+    </div>{/* close session-slide-chat */}
+
+      {/* ── Design Preview Page (slides in from right) ── */}
+      <div className="session-slide-page session-slide-preview">
+        <DesignPreviewPanel />
+      </div>
     </div>
   );
 }
