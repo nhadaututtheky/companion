@@ -19,11 +19,7 @@ import {
   maybeEnrichWithDocs as enrichWithDocs,
   type WebIntelBridge,
 } from "./web-intel-handler.js";
-import {
-  checkSmartCompact as checkCompact,
-  clearCompactTimers,
-  type CompactBridge,
-} from "./compact-manager.js";
+import { type CompactBridge } from "./compact-manager.js";
 import {
   buildProjectMap,
   buildMessageContext,
@@ -37,7 +33,44 @@ import {
 } from "../codegraph/agent-context-provider.js";
 import { isGraphReady } from "../codegraph/index.js";
 import { scanPrompt, isScanEnabled } from "./prompt-scanner.js";
-import { broadcastToSpectators, disconnectAllSpectators } from "./spectator-bridge.js";
+import { disconnectAllSpectators } from "./spectator-bridge.js";
+import {
+  broadcastToAll as _broadcastToAll,
+  broadcastToSubscribers as _broadcastToSubscribers,
+  type SocketLike,
+} from "./ws-broadcast.js";
+import {
+  handlePermissionResponse as _handlePermissionResponse,
+  handleControlRequest as _handleControlRequest,
+  handleInterrupt as _handleInterrupt,
+  handleHookEvent as _handleHookEvent,
+  type PermissionBridge,
+  type PermissionResolver,
+} from "./ws-permission-handler.js";
+import {
+  handleStreamEvent as _handleStreamEvent,
+  handleToolProgress as _handleToolProgress,
+  bufferEarlyResult,
+  clearEarlyResult,
+  replayEarlyResult,
+} from "./ws-stream-handler.js";
+import {
+  handleSpawnCommand as _handleSpawnCommand,
+  handleStatusCommand as _handleStatusCommand,
+  notifyParentOfChildEnd as _notifyParentOfChildEnd,
+  type MultiBrainBridge,
+} from "./ws-multi-brain.js";
+import {
+  broadcastContextUpdate as _broadcastContextUpdate,
+  requestContextUsage as _requestContextUsage,
+  handleControlResponse as _handleControlResponse,
+  emitContextInjection as _emitContextInjection,
+  checkCostBudget as _checkCostBudget,
+  checkSmartCompact as _checkSmartCompact,
+  clearCompactTimers as _clearCompactTimers,
+  clearPrevTokens,
+  type ContextBridge,
+} from "./ws-context-tracker.js";
 import { revokeAllForSession } from "./share-manager.js";
 import { eventBus } from "./event-bus.js";
 import { generateSessionName } from "./session-namer.js";
@@ -60,10 +93,7 @@ import {
   cleanupZombieSessions,
   clearCliSessionId,
   pushMessageHistory,
-  updateSessionCostWarned,
   getSessionRecord,
-  getChildSessions,
-  countActiveSessions,
   type ActiveSession,
 } from "./session-store.js";
 import type {
@@ -89,7 +119,7 @@ import {
 } from "@companion/shared";
 import type { CLIProcess, NormalizedMessage, CLIPlatform } from "@companion/shared";
 import { getWikiStartContext, getFullBreakdown } from "./context-budget.js";
-import { getMaxSessions } from "./license.js";
+// getMaxSessions moved to ws-multi-brain.ts
 type LaunchResult = CLIProcess;
 import { IdleDetector } from "./idle-detector.js";
 import { terminalLock } from "./terminal-lock.js";
@@ -97,10 +127,6 @@ import { terminalLock } from "./terminal-lock.js";
 const log = createLogger("ws-bridge");
 
 // ─── Types ──────────────────────────────────────────────────────────────────
-
-interface SocketLike {
-  send: (data: string) => void;
-}
 
 type StatusChangeCallback = (sessionId: string, status: SessionStatus) => void;
 
@@ -123,16 +149,6 @@ const DEFAULT_SESSION_SETTINGS: SessionSettings = {
   autoReinjectOnCompact: true,
 };
 
-// ─── EarlyResults buffer ─────────────────────────────────────────────────────
-
-interface EarlyResultEntry {
-  msg: BrowserIncomingMessage;
-  expiresAt: number;
-}
-
-/** TTL for buffered early results (5 seconds) */
-const EARLY_RESULT_TTL_MS = 5_000;
-
 /** Whether to use the new SDK engine (set USE_SDK_ENGINE=1 to enable) */
 const USE_SDK_ENGINE = process.env.USE_SDK_ENGINE === "1";
 
@@ -140,14 +156,7 @@ export class WsBridge {
   private cliProcesses = new Map<string, LaunchResult>();
   private sdkHandles = new Map<string, SdkSessionHandle>();
   /** Permission resolvers: requestId → resolve function (for SDK canUseTool bridge) */
-  private permissionResolvers = new Map<
-    string,
-    (result: {
-      behavior: "allow" | "deny";
-      message?: string;
-      updatedPermissions?: unknown[];
-    }) => void
-  >();
+  private permissionResolvers = new Map<string, PermissionResolver>();
   private planWatchers = new Map<string, ReturnType<typeof createPlanModeWatcher>>();
   /** RTK compression pipeline for tool outputs */
   private rtkPipeline: RTKPipeline = this.initRTKPipeline();
@@ -817,7 +826,7 @@ export class WsBridge {
     this.clearIdleTimer(sessionId);
     this.cancelCleanupTimer(sessionId);
     this.sessionSettings.delete(sessionId);
-    this.earlyResults.delete(sessionId);
+    clearEarlyResult(sessionId);
 
     // Kill SDK handle if present
     const sdkHandle = this.sdkHandles.get(sessionId);
@@ -925,18 +934,13 @@ export class WsBridge {
     log.info("Subscriber added", { sessionId, subscriberId });
 
     // Replay any buffered early result that arrived before this subscriber registered
-    const early = this.earlyResults.get(sessionId);
-    if (early && Date.now() < early.expiresAt) {
+    const replayed = replayEarlyResult(sessionId, (msg) => {
       log.info("Replaying early result to late subscriber", { sessionId, subscriberId });
-      try {
-        callback(early.msg);
-      } catch (err) {
-        log.error("Early result replay error", { subscriber: subscriberId, err: String(err) });
-      }
-      this.earlyResults.delete(sessionId);
-    } else if (early) {
-      // Entry expired — clean it up
-      this.earlyResults.delete(sessionId);
+      callback(msg);
+    });
+    if (!replayed) {
+      // Clear expired entry if present
+      clearEarlyResult(sessionId);
     }
 
     return () => {
@@ -974,18 +978,10 @@ export class WsBridge {
     }
 
     // Replay any buffered early result to this browser (race window fix)
-    const earlyResult = this.earlyResults.get(sessionId);
-    if (earlyResult && Date.now() < earlyResult.expiresAt) {
+    replayEarlyResult(sessionId, (msg) => {
       log.debug("Replaying early result to late browser", { sessionId });
-      try {
-        ws.send(JSON.stringify(earlyResult.msg));
-      } catch {
-        // ignore send errors on this newly connected socket
-      }
-      this.earlyResults.delete(sessionId);
-    } else if (earlyResult) {
-      this.earlyResults.delete(sessionId);
-    }
+      try { ws.send(JSON.stringify(msg)); } catch { /* ignore */ }
+    });
 
     // Notify CLI status — only send cli_disconnected if session isn't already ended/error
     // (avoids re-triggering "ended" in client on WebSocket reconnect)
@@ -1662,109 +1658,19 @@ export class WsBridge {
     summary: string,
     charCount: number,
   ): void {
-    this.broadcastToAll(session, {
-      type: "context:injection",
-      sessionId: session.id,
-      injectionType,
-      summary,
-      charCount,
-      tokenEstimate: Math.ceil(charCount / 4),
-      timestamp: Date.now(),
-    } as unknown as BrowserIncomingMessage);
+    _emitContextInjection(session, injectionType, summary, charCount);
   }
-
-  /** Max context tokens by model name — delegates to shared constant */
-  private static getMaxContextTokens(model: string): number {
-    return getMaxContextTokens(model);
-  }
-
-  /** Broadcast context_update event with current token usage.
-   *
-   * CLI sends cumulative totals (total_input_tokens grows each turn).
-   * Context window ≈ last turn's input tokens + last turn's output tokens.
-   * We estimate by computing the delta between previous and current cumulative values.
-   */
-  private prevTokens = new Map<string, { input: number; output: number }>();
 
   private broadcastContextUpdate(session: ActiveSession): void {
-    const state = session.state;
-    const prev = this.prevTokens.get(session.id) ?? { input: 0, output: 0 };
-
-    // Per-turn values = delta from previous cumulative totals
-    const lastTurnInput = state.total_input_tokens - prev.input;
-    const lastTurnOutput = state.total_output_tokens - prev.output;
-    this.prevTokens.set(session.id, {
-      input: state.total_input_tokens,
-      output: state.total_output_tokens,
-    });
-
-    // Context ≈ last turn input + last output (output joins next turn's context)
-    const totalTokens = lastTurnInput + lastTurnOutput;
-    const maxTokens = WsBridge.getMaxContextTokens(state.model);
-    const contextUsedPercent = Math.min(100, (totalTokens / maxTokens) * 100);
-
-    // Pulse: record context pressure
-    try {
-      getOrCreatePulse(session.id).recordContextUpdate(contextUsedPercent);
-    } catch { /* never block */ }
-
-    this.broadcastToAll(session, {
-      type: "context_update",
-      contextUsedPercent,
-      totalTokens,
-      maxTokens,
-    });
+    _broadcastContextUpdate(session);
   }
 
-  /**
-   * Request accurate context usage from Claude CLI via get_context_usage control_request.
-   * Sent after each turn completes (idle). Response arrives as control_response on stdout.
-   */
   private requestContextUsage(session: ActiveSession): void {
-    // Only for CLI engine sessions (SDK has its own tracking)
-    if (this.sdkHandles.has(session.id)) return;
-    // Don't request if session is ended
-    if (session.state.status === "ended" || session.state.status === "error") return;
-
-    const ndjson = JSON.stringify({
-      type: "control_request",
-      request: { subtype: "get_context_usage" },
-    });
-    this.sendToCLI(session, ndjson);
+    _requestContextUsage(this.contextBridge, session);
   }
 
-  /**
-   * Handle control_response messages from CLI (e.g. get_context_usage response).
-   * These are responses to control_requests we sent TO the CLI.
-   */
   private handleControlResponse(session: ActiveSession, msg: Record<string, unknown>): void {
-    const response = msg.response as Record<string, unknown> | undefined;
-    if (!response) return;
-
-    const subtype = response.subtype as string | undefined;
-
-    if (subtype === "get_context_usage") {
-      const usage = response.usage as
-        | {
-            input_tokens?: number;
-            output_tokens?: number;
-            context_window?: number;
-          }
-        | undefined;
-
-      if (!usage) return;
-
-      const totalTokens = (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0);
-      const maxTokens = usage.context_window ?? WsBridge.getMaxContextTokens(session.state.model);
-      const contextUsedPercent = maxTokens > 0 ? Math.min(100, (totalTokens / maxTokens) * 100) : 0;
-
-      this.broadcastToAll(session, {
-        type: "context_update",
-        contextUsedPercent,
-        totalTokens,
-        maxTokens,
-      });
-    }
+    _handleControlResponse(session, msg);
   }
 
   private handleResult(session: ActiveSession, msg: CLIResultMessage): void {
@@ -1793,14 +1699,10 @@ export class WsBridge {
     // arrivals can replay it when they subscribe.
     const hasActiveReceivers = session.browserSockets.size > 0 || session.subscribers.size > 0;
     if (!hasActiveReceivers) {
-      this.earlyResults.set(session.id, {
-        msg: browserMsg,
-        expiresAt: Date.now() + EARLY_RESULT_TTL_MS,
-      });
+      bufferEarlyResult(session.id, browserMsg);
       log.debug("Buffered early result (no receivers yet)", { sessionId: session.id });
     } else {
-      // Clear any stale early result once we know receivers are present
-      this.earlyResults.delete(session.id);
+      clearEarlyResult(session.id);
     }
 
     this.broadcastToAll(session, browserMsg);
@@ -1887,51 +1789,8 @@ export class WsBridge {
     this.startIdleTimer(session);
   }
 
-  /** Check cost budget and broadcast warnings at 80% and 100% thresholds. */
   private checkCostBudget(session: ActiveSession): void {
-    const { cost_budget_usd, cost_warned, total_cost_usd } = session.state;
-    if (!cost_budget_usd || cost_budget_usd <= 0) return;
-
-    const pct = total_cost_usd / cost_budget_usd;
-
-    if (pct >= 1.0 && cost_warned < 2) {
-      // 100% — budget reached
-      session.state = { ...session.state, cost_warned: 2 };
-      // Existing cost_warning for Telegram bridge
-      this.broadcastToAll(session, {
-        type: "cost_warning",
-        level: "critical",
-        costUsd: total_cost_usd,
-        budgetUsd: cost_budget_usd,
-        message: `Cost budget reached: $${total_cost_usd.toFixed(2)} / $${cost_budget_usd.toFixed(2)}`,
-      } as BrowserIncomingMessage);
-      // Structured budget_exceeded event for web client
-      this.broadcastToAll(session, {
-        type: "budget_exceeded",
-        budget: cost_budget_usd,
-        spent: total_cost_usd,
-      } as BrowserIncomingMessage);
-      updateSessionCostWarned(session.id, 2);
-    } else if (pct >= 0.8 && cost_warned < 1) {
-      // 80% — first warning
-      session.state = { ...session.state, cost_warned: 1 };
-      // Existing cost_warning for Telegram bridge
-      this.broadcastToAll(session, {
-        type: "cost_warning",
-        level: "warning",
-        costUsd: total_cost_usd,
-        budgetUsd: cost_budget_usd,
-        message: `Approaching cost budget: $${total_cost_usd.toFixed(2)} / $${cost_budget_usd.toFixed(2)} (${Math.round(pct * 100)}%)`,
-      } as BrowserIncomingMessage);
-      // Structured budget_warning event for web client
-      this.broadcastToAll(session, {
-        type: "budget_warning",
-        budget: cost_budget_usd,
-        spent: total_cost_usd,
-        percentage: 80,
-      } as BrowserIncomingMessage);
-      updateSessionCostWarned(session.id, 1);
-    }
+    _checkCostBudget(session);
   }
 
   /**
@@ -1948,103 +1807,54 @@ export class WsBridge {
     };
   }
 
-  private checkSmartCompact(session: ActiveSession): void {
-    const prev = this.prevTokens.get(session.id) ?? { input: 0, output: 0 };
-    checkCompact(this.compactBridge, session, prev);
+  /** Bridge interface for ws-multi-brain.ts */
+  private get multiBrainBridge(): MultiBrainBridge {
+    return {
+      startSession: this.startSession.bind(this),
+      sendUserMessage: this.sendUserMessage.bind(this),
+      broadcastEvent: this.broadcastEvent.bind(this),
+    };
   }
 
-  /**
-   * EarlyResults buffer — stores result messages that arrived before a subscriber
-   * was ready to handle them. Entries are keyed by sessionId and expire after
-   * EARLY_RESULT_TTL_MS to prevent stale state accumulation.
-   */
-  private earlyResults = new Map<string, EarlyResultEntry>();
+  /** Bridge interface for ws-context-tracker.ts */
+  private get contextBridge(): ContextBridge {
+    return {
+      sendToCLI: this.sendToCLI.bind(this),
+      broadcastToAll: this.broadcastToAll.bind(this),
+      sdkHandles: this.sdkHandles,
+    };
+  }
+
+  /** Bridge interface for ws-permission-handler.ts */
+  private get permBridge(): PermissionBridge {
+    return {
+      sendToCLI: this.sendToCLI.bind(this),
+      permissionResolvers: this.permissionResolvers,
+      sdkHandles: this.sdkHandles,
+    };
+  }
+
+  private checkSmartCompact(session: ActiveSession): void {
+    _checkSmartCompact(this.compactBridge, session);
+  }
+
+  // EarlyResults buffer moved to ws-stream-handler.ts
 
   /** Clear compact handoff timers for a session (delegates to compact-manager) */
   private clearCompactTimers(sessionId: string): void {
-    clearCompactTimers(sessionId);
+    _clearCompactTimers(sessionId);
   }
 
   private handleStreamEvent(session: ActiveSession, msg: CLIStreamEventMessage): void {
-    // Pulse: track thinking block size for depth signal
-    try {
-      const event = msg.event as { delta?: { type?: string; thinking?: string } } | undefined;
-      if (event?.delta?.type === "thinking_delta" && event.delta.thinking) {
-        getOrCreatePulse(session.id).recordThinking(event.delta.thinking.length);
-      }
-    } catch { /* never block */ }
-
-    this.broadcastToAll(session, {
-      type: "stream_event",
-      event: msg.event,
-      parent_tool_use_id: msg.parent_tool_use_id,
-    });
+    _handleStreamEvent(session, msg);
   }
 
-  // Tools that are safe state transitions — auto-approve immediately
-  private static readonly ALWAYS_APPROVE_TOOLS = new Set(["EnterPlanMode", "ExitPlanMode"]);
-
-  // Tools that should NEVER be auto-approved
-  private static readonly NEVER_AUTO_APPROVE_TOOLS = new Set(["AskUserQuestion"]);
-
   private handleControlRequest(session: ActiveSession, msg: CLIControlRequestMessage): void {
-    const toolName = msg.request.tool_name ?? "";
-    const subtype = msg.request.subtype;
-
-    // Auto-approve safe state transition tools
-    const shouldAutoApprove =
-      WsBridge.ALWAYS_APPROVE_TOOLS.has(toolName) &&
-      !(session.bypassDisabled && toolName === "ExitPlanMode");
-
-    if (shouldAutoApprove) {
-      log.info("Auto-approving safe tool", {
-        tool: toolName,
-        requestId: msg.request_id.slice(0, 8),
-      });
-      this.handlePermissionResponse(session, {
-        request_id: msg.request_id,
-        behavior: "allow",
-      });
-      return;
-    }
-
-    log.info("control_request received", {
-      tool: toolName,
-      subtype,
-      requestId: msg.request_id.slice(0, 8),
-    });
-
-    const perm: PermissionRequest = {
-      request_id: msg.request_id,
-      tool_name: toolName || subtype || "unknown",
-      input: msg.request.input ?? {},
-      permission_suggestions: msg.request.permission_suggestions,
-      description: msg.request.description,
-      tool_use_id: msg.request.tool_use_id ?? "",
-      timestamp: Date.now(),
-    };
-
-    session.pendingPermissions.set(msg.request_id, perm);
-
-    // Pulse: mark session as blocked (waiting for human)
-    try { getOrCreatePulse(session.id).setBlocked(true); } catch { /* */ }
-
-    this.broadcastToAll(session, {
-      type: "permission_request",
-      request: perm,
-    });
-
-    // Start auto-approve timer
-    this.startAutoApproveTimer(session, perm);
+    _handleControlRequest(this.permBridge, session, msg);
   }
 
   private handleToolProgress(session: ActiveSession, msg: CLIToolProgressMessage): void {
-    this.broadcastToAll(session, {
-      type: "tool_progress",
-      tool_use_id: msg.tool_use_id,
-      tool_name: msg.tool_name,
-      elapsed_time_seconds: msg.elapsed_time_seconds,
-    });
+    _handleToolProgress(session, msg);
   }
 
   private handleCLIExit(session: ActiveSession, exitCode: number): void {
@@ -2067,8 +1877,8 @@ export class WsBridge {
     this.clearIdleTimer(session.id);
     this.clearCompactTimers(session.id);
     this.idleDetector.stopTracking(session.id);
-    this.prevTokens.delete(session.id);
-    this.earlyResults.delete(session.id);
+    clearPrevTokens(session.id);
+    clearEarlyResult(session.id);
 
     // Reject any outstanding SDK permission resolvers for this session
     for (const [reqId] of session.pendingPermissions) {
@@ -2528,95 +2338,11 @@ export class WsBridge {
       updated_permissions?: unknown[];
     },
   ): void {
-    // Clear auto-approve timer
-    const timer = session.autoApproveTimers.get(msg.request_id);
-    if (timer) {
-      clearTimeout(timer);
-      session.autoApproveTimers.delete(msg.request_id);
-    }
-
-    session.pendingPermissions.delete(msg.request_id);
-
-    // Pulse: unblock if no more pending permissions
-    if (session.pendingPermissions.size === 0) {
-      try { getOrCreatePulse(session.id).setBlocked(false); } catch { /* */ }
-    }
-
-    // SDK engine path: resolve the permission Promise
-    const resolver = this.permissionResolvers.get(msg.request_id);
-    if (resolver) {
-      resolver({
-        behavior: msg.behavior,
-        ...(msg.updated_permissions ? { updatedPermissions: msg.updated_permissions } : {}),
-      });
-      this.permissionResolvers.delete(msg.request_id);
-    } else if (session.cliSend) {
-      // CLI engine path: send NDJSON response to stdin (only if CLI is connected)
-      let ndjson: string;
-      if (msg.behavior === "allow") {
-        ndjson = JSON.stringify({
-          type: "control_response",
-          response: {
-            subtype: "success",
-            request_id: msg.request_id,
-            response: {
-              behavior: "allow",
-              updatedInput: {},
-              ...(msg.updated_permissions ? { updatedPermissions: msg.updated_permissions } : {}),
-            },
-          },
-        });
-      } else {
-        ndjson = JSON.stringify({
-          type: "control_response",
-          response: {
-            subtype: "success",
-            request_id: msg.request_id,
-            response: {
-              behavior: "deny",
-              message: "Denied by user",
-            },
-          },
-        });
-      }
-
-      this.sendToCLI(session, ndjson);
-    } else {
-      // Stale response — no resolver and no CLI stdin; discard silently
-      log.debug("Permission response has no target (stale?)", {
-        sessionId: session.id,
-        requestId: msg.request_id,
-      });
-    }
-
-    // Notify browsers the permission was handled
-    this.broadcastToAll(session, {
-      type: "permission_cancelled",
-      request_id: msg.request_id,
-    });
+    _handlePermissionResponse(this.permBridge, session, msg);
   }
 
   private handleInterrupt(session: ActiveSession): void {
-    // SDK engine path: use query.interrupt()
-    const sdkHandle = this.sdkHandles.get(session.id);
-    if (sdkHandle) {
-      try {
-        sdkHandle.query.interrupt();
-      } catch (err) {
-        log.warn("Failed to interrupt SDK session", {
-          sessionId: session.id,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-      return;
-    }
-
-    // CLI engine path: send NDJSON interrupt
-    const ndjson = JSON.stringify({
-      type: "control_request",
-      request: { subtype: "interrupt" },
-    });
-    this.sendToCLI(session, ndjson);
+    _handleInterrupt(this.permBridge, session);
   }
 
   private static readonly MODEL_MAP: Record<string, string> = {
@@ -2713,33 +2439,7 @@ export class WsBridge {
 
   // ── Auto-approve timer ──────────────────────────────────────────────────
 
-  private startAutoApproveTimer(session: ActiveSession, perm: PermissionRequest): void {
-    const config = session.autoApproveConfig;
-    if (!config.enabled || config.timeoutSeconds <= 0) return;
-
-    // Never auto-approve tools requiring user decision
-    if (WsBridge.NEVER_AUTO_APPROVE_TOOLS.has(perm.tool_name)) return;
-
-    // Skip Bash if allowBash is false
-    if (perm.tool_name === "Bash" && !config.allowBash) return;
-
-    const timer = setTimeout(() => {
-      session.autoApproveTimers.delete(perm.request_id);
-      if (!session.pendingPermissions.has(perm.request_id)) return;
-
-      log.info("Auto-approving after timeout", {
-        tool: perm.tool_name,
-        timeoutSeconds: config.timeoutSeconds,
-      });
-
-      this.handlePermissionResponse(session, {
-        request_id: perm.request_id,
-        behavior: "allow",
-      });
-    }, config.timeoutSeconds * 1000);
-
-    session.autoApproveTimers.set(perm.request_id, timer);
-  }
+  // Auto-approve timer moved to ws-permission-handler.ts
 
   // ── Lock status broadcast ──────────────────────────────────────────────
 
@@ -2771,136 +2471,18 @@ export class WsBridge {
     }
   }
 
-  /** Notify parent session when a child session ends (multi-brain workspace) */
   private notifyParentOfChildEnd(childSessionId: string, status: string, preEndShortId?: string): void {
-    try {
-      const childRecord = getSessionRecord(childSessionId);
-      if (!childRecord?.parentId) return;
-
-      const parentSession = getActiveSession(childRecord.parentId);
-      if (!parentSession) return;
-
-      // Use pre-saved shortId since endSessionRecord clears it before this runs
-      const childShortId = preEndShortId ?? childRecord.shortId;
-
-      // Broadcast child_ended event to parent's subscribers (web UI)
-      this.broadcastEvent(childRecord.parentId, {
-        type: "child_ended",
-        childSessionId,
-        childShortId,
-        childName: childRecord.name,
-        childRole: childRecord.role,
-        status,
-      });
-
-      // Notify parent via @mention so Claude in parent session knows
-      const childLabel = childRecord.name ?? childShortId ?? childSessionId.slice(0, 8);
-      const statusEmoji = status === "ended" ? "✅" : "❌";
-      const notification = `[Agent "${childLabel}" has ${status === "ended" ? "completed" : "errored"} ${statusEmoji}]`;
-      this.sendUserMessage(childRecord.parentId, notification, "system");
-    } catch (err) {
-      log.error("Failed to notify parent of child end", { childSessionId, error: String(err) });
-    }
+    _notifyParentOfChildEnd(this.multiBrainBridge, childSessionId, status, preEndShortId);
   }
 
   // ── Multi-Brain: /spawn command handler ──────────────────────────────
 
   private async handleSpawnCommand(session: ActiveSession, match: RegExpMatchArray): Promise<void> {
-    const name = match[1]!;
-    const role = (match[2] as "specialist" | "researcher" | "reviewer") ?? "specialist";
-    const model = match[3] ?? session.state.model;
-    const prompt = match[4] ?? "";
-
-    // Session limit check
-    const activeCount = countActiveSessions();
-    const maxSessions = getMaxSessions();
-    if (activeCount >= maxSessions) {
-      this.broadcastToAll(session, {
-        type: "system_message",
-        message: `Cannot spawn agent — session limit reached (${maxSessions} active).`,
-      } as unknown as BrowserIncomingMessage);
-      return;
-    }
-
-    try {
-      const parentRecord = getSessionRecord(session.id);
-      const childSessionId = await this.startSession({
-        projectSlug: parentRecord?.projectSlug ?? undefined,
-        cwd: session.state.cwd,
-        model,
-        permissionMode: session.state.permissionMode,
-        source: "agent",
-        parentId: session.id,
-        name,
-        prompt: prompt || undefined,
-        cliPlatform: (session.state.cli_platform as CLIPlatform) ?? "claude",
-        role,
-      });
-
-      const childRecord = getSessionRecord(childSessionId);
-      const childShortId = childRecord?.shortId;
-
-      // Broadcast child_spawned event to parent's subscribers (web UI / Telegram)
-      this.broadcastEvent(session.id, {
-        type: "child_spawned",
-        childSessionId,
-        childShortId,
-        childName: name,
-        childRole: role,
-        childModel: model,
-      });
-
-      // Inject confirmation into the brain session so Claude knows the agent was created
-      const confirmMsg = `[Agent "${name}" spawned — shortId: ${childShortId}, role: ${role}, model: ${model}]`;
-      this.sendUserMessage(session.id, confirmMsg, "system");
-
-      log.info("Brain spawned child via /spawn", { parentId: session.id, childSessionId, name, role });
-    } catch (err) {
-      log.error("Failed to spawn agent via /spawn", { parentId: session.id, error: String(err) });
-      this.broadcastToAll(session, {
-        type: "system_message",
-        message: `Failed to spawn agent "${name}": ${String(err)}`,
-      } as unknown as BrowserIncomingMessage);
-    }
+    return _handleSpawnCommand(this.multiBrainBridge, session, match);
   }
 
-  // ── Multi-Brain: /status command handler ─────────────────────────────
-
   private handleStatusCommand(session: ActiveSession): void {
-    try {
-      const children = getChildSessions(session.id);
-
-      if (children.length === 0) {
-        this.sendUserMessage(session.id, "[No agents spawned in this workspace.]", "system");
-        return;
-      }
-
-      const lines = children.map((child) => {
-        const liveSession = getActiveSession(child.id);
-        const liveStatus = liveSession?.state.status ?? child.status ?? "ended";
-        const cost = child.totalCostUsd ? `$${Number(child.totalCostUsd).toFixed(4)}` : "$0.00";
-        const roleLabel = child.role ?? "agent";
-        const nameLabel = child.name ?? child.shortId ?? child.id.slice(0, 8);
-        const statusIcon =
-          liveStatus === "idle" ? "💤" :
-          liveStatus === "busy" ? "🔄" :
-          liveStatus === "ended" ? "✅" :
-          liveStatus === "error" ? "❌" : "⏳";
-        return `  ${statusIcon} **${nameLabel}** (${roleLabel}) @${child.shortId} — ${liveStatus} — ${cost}`;
-      });
-
-      const totalCost = children.reduce((sum, c) => sum + Number(c.totalCostUsd ?? 0), 0);
-      const statusReport = [
-        `[Workspace Status — ${children.length} agent(s)]`,
-        ...lines,
-        `  Total agent cost: $${totalCost.toFixed(4)}`,
-      ].join("\n");
-
-      this.sendUserMessage(session.id, statusReport, "system");
-    } catch (err) {
-      log.error("Failed to get workspace status", { sessionId: session.id, error: String(err) });
-      this.sendUserMessage(session.id, "[Failed to retrieve workspace status.]", "system");
-    }
+    _handleStatusCommand(this.multiBrainBridge, session);
   }
 
   /** Public: broadcast a custom event to all subscribers of a session */
@@ -2911,32 +2493,11 @@ export class WsBridge {
   }
 
   private broadcastToAll(session: ActiveSession, msg: BrowserIncomingMessage): void {
-    const payload = JSON.stringify(msg);
-
-    // Send to browser WebSockets
-    for (const ws of session.browserSockets) {
-      try {
-        ws.send(payload);
-      } catch {
-        session.browserSockets.delete(ws);
-      }
-    }
-
-    // Send to subscribers (Telegram, etc.)
-    this.broadcastToSubscribers(session, msg);
-
-    // Fan-out to spectators (QR Stream Sharing)
-    broadcastToSpectators(session.id, msg);
+    _broadcastToAll(session, msg);
   }
 
   private broadcastToSubscribers(session: ActiveSession, msg: unknown): void {
-    for (const [id, callback] of session.subscribers) {
-      try {
-        callback(msg);
-      } catch (err) {
-        log.error("Subscriber callback error", { subscriber: id, err: String(err) });
-      }
-    }
+    _broadcastToSubscribers(session, msg);
   }
 
   private updateStatus(session: ActiveSession, status: SessionStatus): void {
@@ -2993,31 +2554,6 @@ export class WsBridge {
       return { found: false };
     }
 
-    const timestamp = event.timestamp ?? Date.now();
-
-    // Broadcast hook event to all subscribers (browser, Telegram)
-    this.broadcastToAll(session, {
-      type: "hook_event",
-      hookType: event.type,
-      toolName: event.tool_name,
-      toolInput: event.tool_input,
-      toolOutput: event.tool_output,
-      toolError: event.tool_error,
-      message: event.message,
-      timestamp,
-    });
-
-    log.debug("Hook event received", {
-      sessionId,
-      type: event.type,
-      tool: event.tool_name,
-    });
-
-    // PreToolUse: default allow (extensible — custom rules can be added here)
-    if (event.type === "PreToolUse") {
-      return { found: true, decision: { decision: "allow" } };
-    }
-
-    return { found: true };
+    return _handleHookEvent(session, event);
   }
 }

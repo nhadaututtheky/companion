@@ -9,7 +9,7 @@ Goal: improve maintainability, close integration gaps, harden security, add safe
 |---|------|--------|-----------|---------|
 | 1 | Safety Nets | ✅ Done | plan-health-hardening-phase1.md | Error boundaries, input validation, rate limiter |
 | 2 | Integration Gaps | ✅ Done | plan-health-hardening-phase2.md | CodeGraph↔Wiki, Debate↔Mentions, incomplete stubs |
-| 3 | ws-bridge Surgery | ⬚ Pending | plan-health-hardening-phase3.md | Split 3,023-line god file into modules |
+| 3 | ws-bridge Surgery | ✅ Done | plan-health-hardening-phase3.md | Split 3,023→2,559 LOC: 5 modules extracted |
 | 4 | God File Cleanup | ⬚ Pending | plan-health-hardening-phase4.md | telegram-bridge, settings-tabs, new-session-modal |
 | 5 | Security Hardening | ⬚ Pending | plan-health-hardening-phase5.md | Zod on all routes, auth defaults, iframe policy |
 | 6 | Test Coverage | ⬚ Pending | plan-health-hardening-phase6.md | Critical path tests: ws-bridge, debate, telegram |
