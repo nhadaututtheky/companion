@@ -18,6 +18,7 @@ import {
   ListBullets,
   House,
   ClockCounterClockwise,
+  Timer,
 } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useUiStore } from "@/lib/stores/ui-store";
@@ -155,6 +156,11 @@ export function CommandPalette() {
     router.push("/templates");
   };
 
+  const handleGoSchedules = () => {
+    close("Go to Schedules");
+    useUiStore.getState().setSchedulesModalOpen(true);
+  };
+
   const handleTogglePanel = (mode: "files" | "search" | "terminal" | "browser", label: string) => {
     close(label);
     setRightPanelMode(rightPanelMode === mode ? "none" : mode);
@@ -184,6 +190,7 @@ export function CommandPalette() {
     "Go to Dashboard": handleGoDashboard,
     "Go to Projects": handleGoProjects,
     "Go to Templates": handleGoTemplates,
+    "Go to Schedules": handleGoSchedules,
     "Toggle File Explorer": () => handleTogglePanel("files", "Toggle File Explorer"),
     "Toggle Search": () => handleTogglePanel("search", "Toggle Search"),
     "Toggle Terminal": () => handleTogglePanel("terminal", "Toggle Terminal"),
@@ -476,6 +483,17 @@ export function CommandPalette() {
                 <div style={itemInnerStyle}>
                   <ListBullets size={14} aria-hidden="true" />
                   <span style={labelStyle}>Go to Templates</span>
+                </div>
+              </Command.Item>
+
+              <Command.Item
+                value="go to schedules scheduled sessions cron"
+                onSelect={handleGoSchedules}
+                style={commandItemStyle(false)}
+              >
+                <div style={itemInnerStyle}>
+                  <Timer size={14} aria-hidden="true" />
+                  <span style={labelStyle}>Go to Schedules</span>
                 </div>
               </Command.Item>
             </Command.Group>

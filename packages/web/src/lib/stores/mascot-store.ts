@@ -87,6 +87,34 @@ export const MASCOT_OPTIONS: MascotOption[] = [
     lottieFile: "/mascots/ai animation Flow 1.lottie",
     proOnly: false,
   },
+  {
+    id: "vutru",
+    label: "Cosmos",
+    description: "Celestial space explorer",
+    lottieFile: "/mascots/vutru.lottie",
+    proOnly: false,
+  },
+  {
+    id: "untitled",
+    label: "Spirit",
+    description: "Mysterious floating entity",
+    lottieFile: "/mascots/Untitled file.lottie",
+    proOnly: false,
+  },
+  {
+    id: "hero",
+    label: "Hero",
+    description: "Dynamic hero background aura",
+    lottieFile: "/mascots/Heroanimation.lottie",
+    proOnly: false,
+  },
+  {
+    id: "pulse",
+    label: "Pulse",
+    description: "Glowing energy pulse",
+    lottieFile: "/mascots/pulse.lottie",
+    proOnly: false,
+  },
 ];
 
 interface MascotStore {

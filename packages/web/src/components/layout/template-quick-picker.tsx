@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Rocket, CaretDown } from "@phosphor-icons/react";
+import { useState, useEffect, useCallback } from "react";
+import { Rocket, X } from "@phosphor-icons/react";
 import { BUILT_IN_PERSONAS, type Persona } from "@companion/shared";
 import { PersonaAvatar } from "@/components/persona/persona-avatar";
 import { api } from "@/lib/api-client";
@@ -21,13 +21,12 @@ export function TemplateQuickPicker() {
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const setNewSessionModalOpen = useUiStore((s) => s.setNewSessionModalOpen);
 
   // Lazy-load custom templates on first open
   useEffect(() => {
     if (!open || loaded) return;
-    setLoading(true); // eslint-disable-line react-hooks/set-state-in-effect -- loading tied to fetch
+    setLoading(true);
     api.templates
       .list()
       .then((res) => {
@@ -37,18 +36,6 @@ export function TemplateQuickPicker() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [open, loaded]);
-
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
 
   // Close on Escape
   useEffect(() => {
@@ -76,144 +63,168 @@ export function TemplateQuickPicker() {
     [setNewSessionModalOpen],
   );
 
-  // Show top 6 personas (2 per category)
-  const quickPersonas = BUILT_IN_PERSONAS.filter((p) =>
-    [
-      "tim-cook",
-      "elon-musk",
-      "staff-sre",
-      "security-auditor",
-      "devils-advocate",
-      "junior-dev",
-    ].includes(p.id),
-  );
-
   return (
-    <div ref={dropdownRef} style={{ position: "relative" }}>
+    <>
+      {/* Header button */}
       <button
-        onClick={() => setOpen((v) => !v)}
-        className="hidden md:flex items-center gap-1 p-2 rounded-lg transition-colors cursor-pointer"
+        onClick={() => setOpen(true)}
+        className="px-3 py-1.5 text-xs font-medium transition-all cursor-pointer min-h-[44px] flex items-center gap-1"
         style={{
-          color: open ? "var(--color-accent)" : "var(--color-text-muted)",
-          background: open ? "rgba(66,133,244,0.08)" : "transparent",
+          borderRadius: "var(--radius-md)",
+          background: "transparent",
+          color: "var(--color-text-secondary)",
+          border: "1px solid transparent",
         }}
         aria-label="Expert Modes"
         title="Expert Modes & Quick Start"
-        aria-expanded={open}
-        aria-haspopup="true"
       >
-        <Rocket size={16} weight={open ? "fill" : "bold"} />
-        <CaretDown
-          size={10}
-          weight="bold"
-          style={{
-            transition: "transform 150ms ease",
-            transform: open ? "rotate(180deg)" : "rotate(0deg)",
-          }}
-        />
+        <Rocket size={14} weight="bold" />
+        <span className="hidden sm:inline">Expert</span>
       </button>
 
+      {/* Modal */}
       {open && (
-        <div
-          className="absolute right-0 mt-1 rounded-lg overflow-hidden"
-          style={{
-            top: "100%",
-            width: 300,
-            background: "var(--color-bg-card)",
-            border: "1px solid var(--color-border)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-            zIndex: 50,
-          }}
-          role="menu"
-        >
-          {/* Expert Modes section */}
-          <div className="px-3 py-2" style={{ borderBottom: "1px solid var(--color-border)" }}>
-            <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
-              Expert Modes
-            </span>
-          </div>
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.5)",
+              backdropFilter: "blur(4px)",
+              zIndex: 100,
+            }}
+          />
 
-          <div style={{ maxHeight: 350, overflowY: "auto" }}>
-            {quickPersonas.map((persona) => (
-              <button
-                key={persona.id}
-                onClick={() => handleSelectPersona(persona)}
-                className="flex items-center gap-2.5 w-full px-3 py-2 text-left cursor-pointer template-picker-item"
-                role="menuitem"
-                title={persona.strength}
-              >
-                <PersonaAvatar persona={persona} size={28} showBadge={false} />
-                <div className="flex flex-col flex-1 min-w-0">
-                  <span
-                    className="text-xs font-medium truncate"
-                    style={{ color: "var(--color-text-primary)" }}
-                  >
-                    {persona.icon} {persona.name}
-                  </span>
-                  <span
-                    className="text-xs truncate"
-                    style={{ color: "var(--color-text-muted)", fontSize: 10 }}
-                  >
-                    {persona.strength}
-                  </span>
-                </div>
-              </button>
-            ))}
-
-            {/* View all link */}
-            <a
-              href="/templates"
-              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs cursor-pointer template-picker-footer"
-              style={{ color: "var(--color-text-muted)" }}
+          {/* Panel */}
+          <div
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "min(640px, 90vw)",
+              maxHeight: "80vh",
+              zIndex: 101,
+              borderRadius: "var(--radius-xl)",
+              background: "var(--color-bg-card)",
+              border: "1px solid var(--glass-border)",
+              boxShadow: "0 24px 64px rgba(0,0,0,0.3)",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }}
+          >
+            {/* Header */}
+            <div
+              className="px-5 py-3 flex items-center justify-between flex-shrink-0"
+              style={{ borderBottom: "1px solid var(--glass-border)" }}
             >
-              View all 12 experts →
-            </a>
+              <div className="flex items-center gap-2">
+                <Rocket size={18} weight="bold" style={{ color: "#4285F4" }} />
+                <h2 className="text-sm font-semibold">Expert Modes</h2>
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full"
+                  style={{
+                    background: "var(--color-bg-elevated)",
+                    color: "var(--color-text-muted)",
+                  }}
+                >
+                  {BUILT_IN_PERSONAS.length} experts
+                </span>
+              </div>
+              <button
+                onClick={() => setOpen(false)}
+                className="p-1.5 rounded-lg cursor-pointer transition-colors"
+                style={{ color: "var(--color-text-muted)" }}
+                aria-label="Close expert modes"
+              >
+                <X size={16} weight="bold" />
+              </button>
+            </div>
 
-            {/* Custom templates section */}
-            {(loading || templates.length > 0) && (
-              <>
-                <div className="px-3 py-1.5" style={{ borderTop: "1px solid var(--color-border)" }}>
-                  <span
-                    className="text-xs font-semibold"
-                    style={{ color: "var(--color-text-muted)" }}
-                  >
-                    Custom Prompts
-                  </span>
-                </div>
-
-                {loading && (
-                  <div className="px-3 py-3 text-center">
-                    <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                      Loading...
-                    </span>
-                  </div>
-                )}
-
-                {templates.map((tpl) => (
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {/* Built-in personas */}
+              <div className="grid grid-cols-2 gap-2">
+                {BUILT_IN_PERSONAS.map((persona) => (
                   <button
-                    key={tpl.id}
-                    onClick={() => handleSelectTemplate(tpl)}
-                    className="flex items-center gap-2.5 w-full px-3 py-2 text-left cursor-pointer template-picker-item"
-                    role="menuitem"
+                    key={persona.id}
+                    onClick={() => handleSelectPersona(persona)}
+                    className="flex items-center gap-3 p-3 rounded-xl text-left cursor-pointer transition-all"
+                    style={{
+                      background: "var(--color-bg-elevated)",
+                      border: "1px solid var(--glass-border)",
+                    }}
+                    title={persona.strength}
                   >
-                    <span style={{ fontSize: 16, lineHeight: 1, flexShrink: 0 }}>
-                      {tpl.icon || "📝"}
-                    </span>
+                    <PersonaAvatar persona={persona} size={36} showBadge={false} />
                     <div className="flex flex-col flex-1 min-w-0">
                       <span
-                        className="text-xs font-medium truncate"
+                        className="text-xs font-semibold truncate"
                         style={{ color: "var(--color-text-primary)" }}
                       >
-                        {tpl.name}
+                        {persona.icon} {persona.name}
+                      </span>
+                      <span
+                        className="text-xs truncate"
+                        style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                      >
+                        {persona.strength}
                       </span>
                     </div>
                   </button>
                 ))}
-              </>
-            )}
+              </div>
+
+              {/* Custom templates */}
+              {(loading || templates.length > 0) && (
+                <div className="mt-4">
+                  <span
+                    className="text-xs font-semibold mb-2 block"
+                    style={{ color: "var(--color-text-muted)" }}
+                  >
+                    Custom Prompts
+                  </span>
+
+                  {loading && (
+                    <div className="py-4 text-center">
+                      <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                        Loading...
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {templates.map((tpl) => (
+                      <button
+                        key={tpl.id}
+                        onClick={() => handleSelectTemplate(tpl)}
+                        className="flex items-center gap-3 p-3 rounded-xl text-left cursor-pointer transition-all"
+                        style={{
+                          background: "var(--color-bg-elevated)",
+                          border: "1px solid var(--glass-border)",
+                        }}
+                      >
+                        <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>
+                          {tpl.icon || "\uD83D\uDCDD"}
+                        </span>
+                        <span
+                          className="text-xs font-medium truncate"
+                          style={{ color: "var(--color-text-primary)" }}
+                        >
+                          {tpl.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
-    </div>
+    </>
   );
 }

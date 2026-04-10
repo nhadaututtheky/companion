@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ThemeSync } from "@/components/layout/theme-sync";
 import { MagicRingMount } from "@/components/ring/magic-ring-mount";
+import { ScheduleModal } from "@/components/schedule/schedule-modal";
 import { UpdateBanner } from "@/components/update-banner";
 import { LicenseProvider } from "@/components/license-provider";
 
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ThemeSync />
             {children}
             <MagicRingMount />
+            <ScheduleModal />
             <UpdateBanner />
             <LicenseProvider />
           </AuthGuard>

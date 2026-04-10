@@ -25,7 +25,9 @@ interface UiStore {
   sidebarActiveProject: string | null;
   activeNavMenu: "panels" | "ai" | "layout" | null;
   statsBarOpen: boolean;
+  schedulesModalOpen: boolean;
   setStatsBarOpen: (open: boolean) => void;
+  setSchedulesModalOpen: (open: boolean) => void;
   setFeatureGuideOpen: (open: boolean) => void;
   setTheme: (t: "light" | "dark") => void;
   toggleTheme: () => void;
@@ -72,8 +74,11 @@ export const useUiStore = create<UiStore>((set) => ({
   sidebarActiveProject: null,
   activeNavMenu: null,
   statsBarOpen: false,
+  schedulesModalOpen: false,
 
   setStatsBarOpen: (open) => set({ statsBarOpen: open }),
+
+  setSchedulesModalOpen: (open) => set({ schedulesModalOpen: open }),
 
   setTheme: (theme) => {
     set({ theme });

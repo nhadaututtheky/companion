@@ -1,6 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import { MagnifyingGlass, Gear, List } from "@phosphor-icons/react";
+import { MagnifyingGlass, Gear, List, Timer } from "@phosphor-icons/react";
 import { TemplateQuickPicker } from "./template-quick-picker";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
@@ -163,6 +163,21 @@ export function Header({ onMenuToggle }: HeaderProps) {
       {/* Right: Standalone actions */}
       <div className="flex items-center gap-1">
         <TemplateQuickPicker />
+        <button
+          onClick={() => useUiStore.getState().setSchedulesModalOpen(true)}
+          className="px-3 py-1.5 text-xs font-medium transition-all cursor-pointer min-h-[44px] flex items-center gap-1"
+          style={{
+            borderRadius: "var(--radius-md)",
+            background: "transparent",
+            color: "var(--color-text-secondary)",
+            border: "1px solid transparent",
+          }}
+          aria-label="Schedules"
+          title="Scheduled Sessions"
+        >
+          <Timer size={14} weight="bold" />
+          <span className="hidden sm:inline">Schedule</span>
+        </button>
         <button
           data-guide-trigger
           onClick={() => setFeatureGuideOpen(!featureGuideOpen)}
