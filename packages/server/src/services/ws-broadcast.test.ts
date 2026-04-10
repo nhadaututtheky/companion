@@ -19,7 +19,7 @@ function createMockSession(overrides: Partial<ActiveSession> = {}): ActiveSessio
       session_id: "test-session-1",
       model: "claude-sonnet-4-6",
       status: "running",
-    } as ActiveSession["state"],
+    } as unknown as ActiveSession["state"],
     cliSend: null,
     browserSockets: new Set(),
     subscribers: new Map(),
@@ -33,6 +33,7 @@ function createMockSession(overrides: Partial<ActiveSession> = {}): ActiveSessio
     pid: null,
     cliSessionId: null,
     extensionSend: null,
+    machine: { status: "running", transition: () => true, canTransition: () => true } as any,
     ...overrides,
   };
 }

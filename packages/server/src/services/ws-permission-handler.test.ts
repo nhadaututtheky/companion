@@ -31,7 +31,7 @@ function createMockSession(overrides: Partial<ActiveSession> = {}): ActiveSessio
       session_id: "test-session",
       model: "claude-sonnet-4-6",
       status: "running",
-    } as ActiveSession["state"],
+    } as unknown as ActiveSession["state"],
     cliSend: null,
     browserSockets: new Set(),
     subscribers: new Map(),
@@ -45,6 +45,7 @@ function createMockSession(overrides: Partial<ActiveSession> = {}): ActiveSessio
     pid: null,
     cliSessionId: null,
     extensionSend: null,
+    machine: { status: "running", transition: () => true, canTransition: () => true } as any,
     ...overrides,
   };
 }
@@ -96,7 +97,7 @@ describe("ws-permission-handler", () => {
 
       expect(cliSend).not.toHaveBeenCalled(); // cliSend is on session, but bridge.sendToCLI is called
       expect(bridge.sendToCLI).toHaveBeenCalled();
-      const ndjson = (bridge.sendToCLI as ReturnType<typeof mock>).mock.calls[0][1] as string;
+      const ndjson = ((bridge.sendToCLI as ReturnType<typeof mock>).mock.calls as any[][])[0]![1] as string;
       const parsed = JSON.parse(ndjson);
       expect(parsed.response.response.behavior).toBe("allow");
     });
@@ -111,7 +112,7 @@ describe("ws-permission-handler", () => {
         behavior: "deny",
       });
 
-      const ndjson = (bridge.sendToCLI as ReturnType<typeof mock>).mock.calls[0][1] as string;
+      const ndjson = ((bridge.sendToCLI as ReturnType<typeof mock>).mock.calls as any[][])[0]![1] as string;
       const parsed = JSON.parse(ndjson);
       expect(parsed.response.response.behavior).toBe("deny");
     });
@@ -141,11 +142,11 @@ describe("ws-permission-handler", () => {
         behavior: "allow",
       });
 
-      const cancelMsg = mockBroadcastToAll.mock.calls.find(
-        (c) => (c[1] as any).type === "permission_cancelled",
+      const cancelMsg = (mockBroadcastToAll.mock.calls as any[][]).find(
+        (c) => c[1].type === "permission_cancelled",
       );
       expect(cancelMsg).toBeDefined();
-      expect((cancelMsg![1] as any).request_id).toBe("req-5");
+      expect(cancelMsg![1].request_id).toBe("req-5");
     });
   });
 
@@ -184,8 +185,8 @@ describe("ws-permission-handler", () => {
       } as any);
 
       expect(session.pendingPermissions.has("req-normal")).toBe(true);
-      const permMsg = mockBroadcastToAll.mock.calls.find(
-        (c) => (c[1] as any).type === "permission_request",
+      const permMsg = (mockBroadcastToAll.mock.calls as any[][]).find(
+        (c) => c[1].type === "permission_request",
       );
       expect(permMsg).toBeDefined();
     });
@@ -216,7 +217,7 @@ describe("ws-permission-handler", () => {
       handleInterrupt(bridge, session);
 
       expect(bridge.sendToCLI).toHaveBeenCalled();
-      const ndjson = (bridge.sendToCLI as ReturnType<typeof mock>).mock.calls[0][1] as string;
+      const ndjson = ((bridge.sendToCLI as ReturnType<typeof mock>).mock.calls as any[][])[0]![1] as string;
       const parsed = JSON.parse(ndjson);
       expect(parsed.request.subtype).toBe("interrupt");
     });
@@ -247,11 +248,11 @@ describe("ws-permission-handler", () => {
         timestamp: 1234,
       } as any);
 
-      const hookMsg = mockBroadcastToAll.mock.calls.find(
-        (c) => (c[1] as any).type === "hook_event",
+      const hookMsg = (mockBroadcastToAll.mock.calls as any[][]).find(
+        (c) => c[1].type === "hook_event",
       );
       expect(hookMsg).toBeDefined();
-      expect((hookMsg![1] as any).toolName).toBe("Read");
+      expect(hookMsg![1].toolName).toBe("Read");
     });
 
     it("returns allow decision for PreToolUse events", () => {

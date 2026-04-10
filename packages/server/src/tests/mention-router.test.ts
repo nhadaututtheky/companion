@@ -46,8 +46,8 @@ describe("mention-router", () => {
 
       expect(result).not.toBeNull();
       expect(result!.mentions).toHaveLength(1);
-      expect(result!.mentions[0].shortId).toBe("fox");
-      expect(result!.mentions[0].sessionId).toBe("session-fox-123");
+      expect(result!.mentions[0]!.shortId).toBe("fox");
+      expect(result!.mentions[0]!.sessionId).toBe("session-fox-123");
     });
 
     it("parses multiple @mentions", () => {
@@ -74,7 +74,7 @@ describe("mention-router", () => {
 
       expect(result).not.toBeNull();
       expect(result!.mentions).toHaveLength(1);
-      expect(result!.mentions[0].shortId).toBe("fox");
+      expect(result!.mentions[0]!.shortId).toBe("fox");
     });
 
     it("deduplicates multiple mentions of the same session", () => {
@@ -95,7 +95,7 @@ describe("mention-router", () => {
 
       expect(result).not.toBeNull();
       expect(result!.mentions).toHaveLength(1);
-      expect(result!.mentions[0].debateChannelId).toBe("debate-1");
+      expect(result!.mentions[0]!.debateChannelId).toBe("debate-1");
     });
   });
 
@@ -116,7 +116,7 @@ describe("mention-router", () => {
       expect(targets).toHaveLength(1);
       expect(targets[0]).toBe("session-fox-123");
       expect(sentMessages).toHaveLength(1);
-      expect(sentMessages[0].content).toContain("Cross-session mention");
+      expect(sentMessages[0]!.content).toContain("Cross-session mention");
     });
 
     it("returns empty array when no mentions", () => {

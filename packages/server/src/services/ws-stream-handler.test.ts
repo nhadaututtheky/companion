@@ -30,7 +30,7 @@ function createMockSession(id = "test-session"): ActiveSession {
       session_id: id,
       model: "claude-sonnet-4-6",
       status: "running",
-    } as ActiveSession["state"],
+    } as unknown as ActiveSession["state"],
     cliSend: null,
     browserSockets: new Set(),
     subscribers: new Map(),
@@ -44,6 +44,7 @@ function createMockSession(id = "test-session"): ActiveSession {
     pid: null,
     cliSessionId: null,
     extensionSend: null,
+    machine: { status: "running", transition: () => true, canTransition: () => true } as any,
   };
 }
 
@@ -116,8 +117,8 @@ describe("ws-stream-handler", () => {
       } as any);
 
       expect(mockBroadcast).toHaveBeenCalled();
-      const call = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1];
-      expect(call[1].type).toBe("stream_event");
+      const call = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]!;
+      expect(call[1]!.type).toBe("stream_event");
     });
   });
 
@@ -134,9 +135,9 @@ describe("ws-stream-handler", () => {
       } as any);
 
       expect(mockBroadcast).toHaveBeenCalled();
-      const call = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1];
-      expect(call[1].type).toBe("tool_progress");
-      expect(call[1].tool_name).toBe("Read");
+      const call = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]!;
+      expect(call[1]!.type).toBe("tool_progress");
+      expect(call[1]!.tool_name).toBe("Read");
     });
   });
 });

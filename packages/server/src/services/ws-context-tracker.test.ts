@@ -46,7 +46,7 @@ function createMockSession(overrides: Partial<ActiveSession["state"]> = {}): Act
       cost_budget_usd: 0,
       cost_warned: 0,
       ...overrides,
-    } as ActiveSession["state"],
+    } as unknown as ActiveSession["state"],
     cliSend: null,
     browserSockets: new Set(),
     subscribers: new Map(),
@@ -60,6 +60,7 @@ function createMockSession(overrides: Partial<ActiveSession["state"]> = {}): Act
     pid: null,
     cliSessionId: null,
     extensionSend: null,
+    machine: { status: "running", transition: () => true, canTransition: () => true } as any,
   };
 }
 
@@ -102,7 +103,7 @@ describe("ws-context-tracker", () => {
       broadcastContextUpdate(session);
 
       expect(mockBroadcastToAll).toHaveBeenCalledTimes(1);
-      const msg = mockBroadcastToAll.mock.calls[0][1] as any;
+      const msg = (mockBroadcastToAll.mock.calls as any[][])[0]![1];
       expect(msg.type).toBe("context_update");
       expect(msg.totalTokens).toBe(6000); // 5000 + 1000 (first call, prev = 0)
       expect(msg.maxTokens).toBeGreaterThan(0);
@@ -125,7 +126,7 @@ describe("ws-context-tracker", () => {
       };
       broadcastContextUpdate(session);
 
-      const msg = mockBroadcastToAll.mock.calls[1][1] as any;
+      const msg = (mockBroadcastToAll.mock.calls as any[][])[1]![1];
       // Delta: (8000-5000) + (2000-1000) = 4000
       expect(msg.totalTokens).toBe(4000);
     });
@@ -147,7 +148,7 @@ describe("ws-context-tracker", () => {
       });
 
       expect(mockBroadcastToAll).toHaveBeenCalledTimes(1);
-      const msg = mockBroadcastToAll.mock.calls[0][1] as any;
+      const msg = (mockBroadcastToAll.mock.calls as any[][])[0]![1];
       expect(msg.type).toBe("context_update");
       expect(msg.totalTokens).toBe(13000);
       expect(msg.maxTokens).toBe(200000);
@@ -175,7 +176,7 @@ describe("ws-context-tracker", () => {
       emitContextInjection(session, "project_map", "Project context loaded", 4000);
 
       expect(mockBroadcastToAll).toHaveBeenCalledTimes(1);
-      const msg = mockBroadcastToAll.mock.calls[0][1] as any;
+      const msg = (mockBroadcastToAll.mock.calls as any[][])[0]![1];
       expect(msg.type).toBe("context:injection");
       expect(msg.injectionType).toBe("project_map");
       expect(msg.charCount).toBe(4000);
@@ -200,7 +201,7 @@ describe("ws-context-tracker", () => {
       checkCostBudget(session);
 
       expect(mockBroadcastToAll).toHaveBeenCalled();
-      const msgs = mockBroadcastToAll.mock.calls.map((c) => (c[1] as any).type);
+      const msgs = (mockBroadcastToAll.mock.calls as any[][]).map((c) => c[1].type);
       expect(msgs).toContain("cost_warning");
       expect(msgs).toContain("budget_warning");
       expect(session.state.cost_warned).toBe(1);
@@ -215,7 +216,7 @@ describe("ws-context-tracker", () => {
 
       checkCostBudget(session);
 
-      const msgs = mockBroadcastToAll.mock.calls.map((c) => c[1] as any);
+      const msgs = (mockBroadcastToAll.mock.calls as any[][]).map((c) => c[1]);
       const critical = msgs.find((m) => m.type === "cost_warning" && m.level === "critical");
       expect(critical).toBeDefined();
       expect(session.state.cost_warned).toBe(2);
