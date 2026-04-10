@@ -31,9 +31,9 @@ interface ClassifierRule {
   confidence: number;
 }
 
-const MENTION_PATTERN = /@([a-z][a-z0-9-]*)/g;
+const MENTION_PATTERN = /@([a-z][a-z0-9-]*)/;
 
-const FILE_PATTERN = /(?:^|\s)((?:[\w.-]+\/)+[\w.-]+\.\w+)/g;
+const FILE_PATTERN = /(?:^|\s)([\w.-]+(?:\/[\w.-]+)+\.\w+)/;
 
 const RULES: ClassifierRule[] = [
   // Debate patterns (highest priority — explicit intent)
@@ -168,12 +168,15 @@ const RULES: ClassifierRule[] = [
 // ── Regex classifier ────────────────────────────────────────────────────────
 
 function extractFiles(message: string): string[] {
-  const matches = [...message.matchAll(FILE_PATTERN)];
+  const globalPattern = new RegExp(FILE_PATTERN.source, "g");
+  const matches = [...message.matchAll(globalPattern)];
   return [...new Set(matches.map((m) => m[1]!.trim()))];
 }
 
 function hasMentions(message: string): boolean {
-  return MENTION_PATTERN.test(message);
+  // Exclude email-like patterns (word@mention)
+  const emailStripped = message.replace(/\S+@/g, "  ");
+  return MENTION_PATTERN.test(emailStripped);
 }
 
 export function classifyByRules(message: string): TaskClassification {
@@ -249,6 +252,11 @@ Respond with ONLY a JSON object (no markdown, no explanation):
   "suggestedModel": "<haiku|sonnet|opus or null>"
 }`;
 
+const VALID_PATTERNS = new Set<OrchestrationPattern>(["single", "workflow", "debate", "mention"]);
+const VALID_COMPLEXITIES = new Set<TaskComplexity>(["simple", "medium", "complex"]);
+const VALID_DEBATE_FORMATS = new Set<DebateFormat>(["pro_con", "red_team", "review", "brainstorm"]);
+const VALID_MODELS = new Set(["haiku", "sonnet", "opus"]);
+
 async function classifyByAI(message: string): Promise<TaskClassification | null> {
   try {
     const result = await callAI({
@@ -260,21 +268,32 @@ async function classifyByAI(message: string): Promise<TaskClassification | null>
 
     const parsed = JSON.parse(result.text);
 
-    // Validate required fields
-    if (!parsed.pattern || !parsed.complexity || typeof parsed.confidence !== "number") {
-      log.warn("AI classifier returned invalid structure", { parsed });
+    // Validate required fields and enum values
+    if (typeof parsed.confidence !== "number") {
+      log.warn("AI classifier returned invalid confidence", { parsed });
       return null;
     }
+    if (!VALID_PATTERNS.has(parsed.pattern)) {
+      log.warn("AI classifier returned invalid pattern", { pattern: parsed.pattern });
+      return null;
+    }
+    if (!VALID_COMPLEXITIES.has(parsed.complexity)) {
+      log.warn("AI classifier returned invalid complexity", { complexity: parsed.complexity });
+      return null;
+    }
+
+    const debateFormat = parsed.suggestedDebateFormat;
+    const model = parsed.suggestedModel;
 
     return {
       intent: parsed.intent ?? "unknown",
       pattern: parsed.pattern,
       complexity: parsed.complexity,
       suggestedTemplate: parsed.suggestedTemplate ?? undefined,
-      suggestedDebateFormat: parsed.suggestedDebateFormat ?? undefined,
-      relevantFiles: parsed.relevantFiles ?? [],
+      suggestedDebateFormat: debateFormat && VALID_DEBATE_FORMATS.has(debateFormat) ? debateFormat : undefined,
+      relevantFiles: Array.isArray(parsed.relevantFiles) ? parsed.relevantFiles : [],
       confidence: Math.min(1, Math.max(0, parsed.confidence)),
-      suggestedModel: parsed.suggestedModel ?? undefined,
+      suggestedModel: model && VALID_MODELS.has(model) ? model : undefined,
     };
   } catch (err) {
     log.warn("AI classification failed, falling back to rules", { error: String(err) });

@@ -171,7 +171,7 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
                     ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
                     : "transparent",
                 fontWeight: activeTab === tab.id ? 600 : 400,
-                borderRadius: "var(--radius-pill)",
+                borderRadius: "var(--radius-md)",
                 margin: "0 8px",
               }}
               role="tab"

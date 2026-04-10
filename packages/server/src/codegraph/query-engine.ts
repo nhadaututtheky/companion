@@ -254,6 +254,24 @@ export function getRelatedNodes(
     }
   }
 
+  // Batch edge counts for all matched nodes (avoid N+1)
+  const allNodeIds = [...matchedNodes.keys()];
+  const edgeCountMap = new Map<number, number>();
+  if (allNodeIds.length > 0) {
+    const edgeCounts = db.all<{ nodeId: number; cnt: number }>(sql`
+      SELECT node_id, count(*) as cnt FROM (
+        SELECT source_node_id as node_id FROM code_edges
+        WHERE project_slug = ${projectSlug} AND source_node_id IN (${sql.join(allNodeIds.map(id => sql`${id}`), sql`, `)})
+        UNION ALL
+        SELECT target_node_id as node_id FROM code_edges
+        WHERE project_slug = ${projectSlug} AND target_node_id IN (${sql.join(allNodeIds.map(id => sql`${id}`), sql`, `)})
+      ) GROUP BY node_id
+    `);
+    for (const row of edgeCounts) {
+      edgeCountMap.set(row.nodeId, row.cnt);
+    }
+  }
+
   // Weighted relevance scoring
   const scored = [...matchedNodes.values()].map((node) => {
     let score = 0;
@@ -278,14 +296,7 @@ export function getRelatedNodes(
     if (node.symbolName.length <= 2) score *= 0.5;
 
     // Edge connectivity bonus: nodes with more connections are more central
-    const edgeCount = db
-      .select({ count: sql<number>`count(*)` })
-      .from(codeEdges)
-      .where(
-        sql`${codeEdges.sourceNodeId} = ${node.id} OR ${codeEdges.targetNodeId} = ${node.id}`,
-      )
-      .get();
-    const connections = edgeCount?.count ?? 0;
+    const connections = edgeCountMap.get(node.id) ?? 0;
     if (connections > 0) {
       score += Math.min(0.5, connections * 0.05); // max +0.5 from edges
     }

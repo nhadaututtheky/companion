@@ -39,7 +39,7 @@ export function SpawnAgentModal({
   const [loading, setLoading] = useState(false);
   const [spawningTemplate, setSpawningTemplate] = useState<string | null>(null);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
   const handleSpawnTemplate = async (templateId: string) => {
     const template = WORKSPACE_TEMPLATES.find((t) => t.id === templateId);
@@ -103,21 +103,24 @@ export function SpawnAgentModal({
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center"
-      style={{ zIndex: 60, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
+      className="absolute inset-0 flex items-center justify-center"
+      style={{ zIndex: 50, background: "rgba(0,0,0,0.4)", borderRadius: "inherit" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className="flex flex-col gap-4 p-5"
+        className="flex flex-col gap-4 p-5 overflow-y-auto"
         style={{
           background: "var(--glass-bg-heavy)",
+          backdropFilter: "blur(var(--glass-blur))",
+          WebkitBackdropFilter: "blur(var(--glass-blur))",
           border: "1px solid var(--glass-border)",
           borderRadius: "var(--radius-xl)",
           boxShadow: "var(--shadow-float)",
           width: 400,
-          maxWidth: "90vw",
+          maxWidth: "calc(100% - 24px)",
+          maxHeight: "calc(100% - 24px)",
           animation: "slideUpFade 200ms ease forwards",
         }}
       >

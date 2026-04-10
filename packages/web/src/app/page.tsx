@@ -17,6 +17,7 @@ import { BrowserPreviewPanel } from "@/components/panels/browser-preview-panel";
 import { SearchPanel } from "@/components/panels/search-panel";
 import { TerminalPanel } from "@/components/panels/terminal-panel";
 import { PanelErrorBoundary } from "@/components/ui/panel-error-boundary";
+import { FloatingStatsBar } from "@/components/panels/floating-stats-bar";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useNotificationPermission } from "@/hooks/use-notifications";
@@ -531,6 +532,7 @@ export default function DashboardPage() {
       <NewSessionModal open={newSessionOpen} onClose={handleCloseNewSession} />
 
       <Header onMenuToggle={() => setMobileSidebarOpen(true)} />
+      <FloatingStatsBar />
 
       <div
         style={{

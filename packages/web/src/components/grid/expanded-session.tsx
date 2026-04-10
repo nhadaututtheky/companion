@@ -10,6 +10,7 @@ import {
   DownloadSimple,
   CaretDown,
   Check,
+  Plus,
 } from "@phosphor-icons/react";
 import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
@@ -272,6 +273,12 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
   }, [sessionId]);
 
   const handleStop = useCallback(async () => {
+    const s = useSessionStore.getState().sessions[sessionId];
+    const confirmed = window.confirm(
+      `Stop session "${s?.projectName || s?.shortId || sessionId.slice(0, 8)}"?\n\nThis will terminate the running agent.`,
+    );
+    if (!confirmed) return;
+
     try {
       await api.sessions.stop(sessionId);
       toast.success("Session stopped");
@@ -342,6 +349,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
       >
         <div
           style={{
+            position: "relative",
             width: "100%",
             maxWidth: 1200,
             height: "100%",
@@ -417,6 +425,26 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             )}
 
             {/* Export button — desktop only */}
+            {/* Spawn agent button */}
+            <button
+              onClick={() => setSpawnOpen(true)}
+              className="hidden sm:flex flex-shrink-0 p-2 rounded-lg transition-colors cursor-pointer min-h-[44px] min-w-[44px] items-center justify-center"
+              style={{
+                background: "var(--color-bg-elevated)",
+                color: "var(--color-text-secondary)",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--color-accent)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--color-text-secondary)";
+              }}
+              aria-label="Spawn new agent"
+              title="Spawn new agent"
+            >
+              <Plus size={16} weight="bold" />
+            </button>
+
             <button
               onClick={handleExport}
               className="hidden sm:flex flex-shrink-0 p-2 rounded-lg transition-colors cursor-pointer min-h-[44px] min-w-[44px] items-center justify-center"
@@ -465,13 +493,15 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             />
           </div>
 
-          {/* ── Agent tab bar (multi-brain) ── */}
-          <AgentTabBar
-            parentSessionId={sessionId}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            onSpawnClick={() => setSpawnOpen(true)}
-          />
+          {/* ── Agent tab bar (multi-brain) — only when children exist ── */}
+          {hasChildren && (
+            <AgentTabBar
+              parentSessionId={sessionId}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              onSpawnClick={() => setSpawnOpen(true)}
+            />
+          )}
 
           {/* ── Body: message area + sidebar ── */}
           <div className="flex flex-1 min-h-0">

@@ -87,6 +87,15 @@ interface UseSessionReturn {
   setThinkingMode: (mode: ThinkingMode) => void;
 }
 
+function makeSystemMessage(content: string): Message {
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}-sys`,
+    role: "system",
+    content,
+    timestamp: Date.now(),
+  };
+}
+
 export function useSession(sessionId: string): UseSessionReturn {
   const [messages, setMessages] = useState<Message[]>([]);
   const [pendingPermissions, setPendingPermissions] = useState<PermissionRequest[]>([]);
@@ -110,6 +119,8 @@ export function useSession(sessionId: string): UseSessionReturn {
   // ── Stream buffering: accumulate tokens, flush every 50ms ──
   const streamBufferRef = useRef("");
   const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track the current streaming message ID so "assistant" final can find & replace it
+  const activeStreamIdRef = useRef<string | null>(null);
 
   const flushStreamBuffer = useCallback(() => {
     flushTimerRef.current = null;
@@ -122,10 +133,12 @@ export function useSession(sessionId: string): UseSessionReturn {
       if (last?.isStreaming && last.role === "assistant") {
         return [...prev.slice(0, -1), { ...last, content: last.content + buffered }];
       }
+      const newId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}-stream`;
+      activeStreamIdRef.current = newId;
       return [
         ...prev,
         {
-          id: `${Date.now()}-stream`,
+          id: newId,
           role: "assistant" as const,
           content: buffered,
           timestamp: Date.now(),
@@ -254,7 +267,7 @@ export function useSession(sessionId: string): UseSessionReturn {
             : undefined;
 
           const messageData = {
-            id: `${Date.now()}-ast`,
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}-ast`,
             role: "assistant" as const,
             content: text,
             timestamp: Date.now(),
@@ -266,11 +279,24 @@ export function useSession(sessionId: string): UseSessionReturn {
           };
 
           if (text || toolUseBlocks.length > 0 || thinkingBlocks.length > 0) {
+            const streamId = activeStreamIdRef.current;
+            activeStreamIdRef.current = null;
+
             setMessages((prev) => {
+              // Find the streaming message to replace (by tracked ID or last streaming)
+              const streamIdx = streamId
+                ? prev.findIndex((m) => m.id === streamId)
+                : prev.findLastIndex((m) => m.role === "assistant" && m.isStreaming);
+
+              if (streamIdx >= 0) {
+                const updated = [...prev];
+                updated[streamIdx] = { ...prev[streamIdx]!, ...messageData };
+                return updated;
+              }
+              // Dedup: skip if last assistant message has same content (server duplicate)
               const last = prev[prev.length - 1];
-              // Always replace last assistant message (handles partial + final)
-              if (last?.role === "assistant") {
-                return [...prev.slice(0, -1), { ...last, ...messageData }];
+              if (last?.role === "assistant" && last.content === text) {
+                return prev;
               }
               return [...prev, messageData];
             });
@@ -373,10 +399,34 @@ export function useSession(sessionId: string): UseSessionReturn {
           }
           setMessages((prev) => {
             const last = prev[prev.length - 1];
-            if (last?.isStreaming) {
-              return [...prev.slice(0, -1), { ...last, isStreaming: false }];
+            const updated = last?.isStreaming
+              ? [...prev.slice(0, -1), { ...last, isStreaming: false }]
+              : [...prev];
+
+            // Inject end-of-session message — skip if already present (dedup)
+            if (result) {
+              const hasEndMsg = updated.some(
+                (m) => m.role === "system" && (m.content.includes("Session completed") || m.content.includes("Session ended with an error")),
+              );
+              if (!hasEndMsg) {
+                if (result.is_error) {
+                  updated.push(
+                    makeSystemMessage(
+                      `⚠ Session ended with an error. You can send a new message to resume, or close this session.`,
+                    ),
+                  );
+                } else {
+                  const costStr = `$${result.total_cost_usd.toFixed(4)}`;
+                  const turns = result.num_turns;
+                  updated.push(
+                    makeSystemMessage(
+                      `Session completed — ${turns} turn${turns !== 1 ? "s" : ""}, ${costStr}. Send a message to continue or close when done.`,
+                    ),
+                  );
+                }
+              }
             }
-            return prev;
+            return updated;
           });
           break;
         }
@@ -531,6 +581,17 @@ export function useSession(sessionId: string): UseSessionReturn {
 
         case "cli_connected": {
           setWsStatus("connected");
+          // If messages exist, this is a resume (not first connect)
+          setMessages((prev) => {
+            if (prev.length === 0) return prev;
+            // Check if the last system message is already a "resumed" message
+            const last = prev[prev.length - 1];
+            if (last?.role === "system" && last.content.includes("resumed")) return prev;
+            return [
+              ...prev,
+              makeSystemMessage(`Session resumed — continuing from where it left off.`),
+            ];
+          });
           break;
         }
 
@@ -546,15 +607,40 @@ export function useSession(sessionId: string): UseSessionReturn {
           // Early/error exits → show "error" status so user sees what happened
           if (exitCode !== undefined && exitCode !== 0) {
             setSession(sessionId, { status: "error", shortId: undefined });
-            // Error always shows toast (safety override in sessionNotify)
             sessionNotify(
               sessionId,
               "error",
               exitReason ?? `Session crashed (exit code ${exitCode})`,
               { duration: 8000 },
             );
+            setMessages((prev) => {
+              const hasEndMsg = prev.some(
+                (m) => m.role === "system" && (m.content.includes("crashed") || m.content.includes("Session ended") || m.content.includes("Session completed")),
+              );
+              if (hasEndMsg) return prev;
+              return [
+                ...prev,
+                makeSystemMessage(
+                  `⚠ Session crashed unexpectedly. Send a message to resume from where it left off.`,
+                ),
+              ];
+            });
           } else {
             setSession(sessionId, { status: "ended", shortId: undefined });
+            // Don't inject "ended" message here — result handler already does it.
+            // Only add if result handler didn't fire (e.g. idle timeout)
+            setMessages((prev) => {
+              const hasEndMsg = prev.some(
+                (m) => m.role === "system" && (m.content.includes("Session ended") || m.content.includes("Session completed")),
+              );
+              if (hasEndMsg) return prev;
+              return [
+                ...prev,
+                makeSystemMessage(
+                  `Session ended. Send a message to resume or close this session.`,
+                ),
+              ];
+            });
           }
 
           if (exitReason) {
@@ -582,6 +668,18 @@ export function useSession(sessionId: string): UseSessionReturn {
           });
           sessionNotify(sessionId, "info", `Idle timeout: ${getSessionName()}`, {
             duration: 30_000,
+          });
+          // Show inline warning in chat feed (replace previous idle warning if any)
+          setMessages((prev) => {
+            const withoutOldWarning = prev.filter(
+              (m) => !(m.role === "system" && m.content.includes("Idle timeout")),
+            );
+            return [
+              ...withoutOldWarning,
+              makeSystemMessage(
+                `⏳ Idle timeout — session will auto-stop in ${mins} min. Send a message to keep it alive.`,
+              ),
+            ];
           });
           break;
         }

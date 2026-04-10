@@ -1,6 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import { MagnifyingGlass, Moon, Sun, Gear, List } from "@phosphor-icons/react";
+import { MagnifyingGlass, Gear, List } from "@phosphor-icons/react";
 import { TemplateQuickPicker } from "./template-quick-picker";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
@@ -52,8 +52,6 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuToggle }: HeaderProps) {
-  const theme = useUiStore((s) => s.theme);
-  const toggleTheme = useUiStore((s) => s.toggleTheme);
   const setCommandPaletteOpen = useUiStore((s) => s.setCommandPaletteOpen);
   const activeNavMenu = useUiStore((s) => s.activeNavMenu);
   const toggleNavMenu = useUiStore((s) => s.toggleNavMenu);
@@ -100,7 +98,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         onClick={() => setCommandPaletteOpen(true)}
         className="flex items-center gap-2 px-3 py-1.5 text-sm transition-colors cursor-pointer min-h-[44px]"
         style={{
-          borderRadius: "var(--radius-pill)",
+          borderRadius: "var(--radius-md)",
           background: "var(--color-bg-elevated)",
           color: "var(--color-text-muted)",
           border: "1px solid var(--glass-border)",
@@ -140,7 +138,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
               onClick={() => toggleNavMenu(item.id)}
               className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all cursor-pointer"
               style={{
-                borderRadius: "var(--radius-pill)",
+                borderRadius: "var(--radius-md)",
                 background: isOpen
                   ? "var(--color-text-primary)"
                   : item.isActive
@@ -164,20 +162,13 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
       {/* Right: Standalone actions */}
       <div className="flex items-center gap-1">
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-lg transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
-          aria-label="Toggle theme"
-        >
-          {theme === "dark" ? <Sun size={16} weight="bold" /> : <Moon size={16} weight="bold" />}
-        </button>
         <TemplateQuickPicker />
         <button
           data-guide-trigger
           onClick={() => setFeatureGuideOpen(!featureGuideOpen)}
           className="px-3 py-1.5 text-xs font-medium transition-all cursor-pointer min-h-[44px] flex items-center"
           style={{
-            borderRadius: "var(--radius-pill)",
+            borderRadius: "var(--radius-md)",
             background: featureGuideOpen ? "var(--color-accent)" : "transparent",
             color: featureGuideOpen ? "#fff" : "var(--color-text-secondary)",
             border: featureGuideOpen ? "1px solid var(--color-accent)" : "1px solid transparent",

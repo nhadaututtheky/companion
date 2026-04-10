@@ -223,7 +223,7 @@ export function FeatureGuideModal() {
               }}
               className="text-[11px] px-2.5 py-1 cursor-pointer transition-all font-medium"
               style={{
-                borderRadius: "var(--radius-pill)",
+                borderRadius: "var(--radius-md)",
                 background: isActive ? "var(--color-accent)" : "transparent",
                 color: isActive ? "#fff" : "var(--color-text-secondary)",
                 border: isActive ? "1px solid var(--color-accent)" : "1px solid transparent",

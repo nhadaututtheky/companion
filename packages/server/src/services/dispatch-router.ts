@@ -30,7 +30,9 @@ export function isAutoDispatchEnabled(): boolean {
 /** Confidence threshold for auto-dispatch (default 0.8) */
 function getConfidenceThreshold(): number {
   const val = getSetting("orchestration.confidenceThreshold");
-  return val ? parseFloat(val) : 0.8;
+  if (!val) return 0.8;
+  const parsed = parseFloat(val);
+  return Number.isFinite(parsed) ? parsed : 0.8;
 }
 
 // ── Dispatch Logic ──────────────────────────────────────────────────────────
@@ -82,6 +84,11 @@ export async function tryAutoDispatch(
     return null;
   }
 
+  // Single pattern: no orchestration needed, let caller handle normally
+  if (classification.pattern === "single") {
+    return null;
+  }
+
   // Mentions always pass through to mention router (no session creation needed)
   if (classification.pattern === "mention") {
     return dispatchMention(message, ctx);
@@ -128,7 +135,13 @@ export async function dispatch(
       error: String(err),
     });
 
-    // Fallback: send as regular message to origin session
+    // Fallback: ensure message reaches origin session so it's not silently dropped
+    try {
+      ctx.sendToSession(ctx.originSessionId, message);
+    } catch (sendErr) {
+      log.error("Fallback send also failed", { error: String(sendErr) });
+    }
+
     return {
       dispatched: false,
       pattern: "single",
@@ -230,13 +243,12 @@ function dispatchMention(
 }
 
 function dispatchSingle(
-  classification: TaskClassification,
-  message: string,
+  _classification: TaskClassification,
+  _message: string,
   ctx: DispatchContext,
 ): DispatchResult {
-  // For single session, just send to the origin session — no new session needed
-  ctx.sendToSession(ctx.originSessionId, message);
-
+  // Single session: message stays in origin session — caller already handles delivery.
+  // No re-send needed; just signal that dispatch chose "single".
   return {
     dispatched: true,
     pattern: "single",

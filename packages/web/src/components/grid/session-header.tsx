@@ -9,6 +9,7 @@ import {
   Bell,
   BellSlash,
   BellRinging,
+  Plus,
 } from "@phosphor-icons/react";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { SessionSettingsButton } from "./session-settings";
@@ -33,6 +34,7 @@ interface SessionHeaderProps {
   cliPlatform?: string;
   onExpand: () => void;
   onClose: () => void;
+  onSpawnClick?: () => void;
   onRename?: (name: string | null) => void;
   onSetModel?: (model: string) => void;
   channelId?: string | null;
@@ -67,6 +69,7 @@ export function SessionHeader({
   status,
   onExpand,
   onClose,
+  onSpawnClick,
   onRename,
   onSetModel,
   channelId,
@@ -361,6 +364,25 @@ export function SessionHeader({
 
         {/* Settings gear — only for active sessions */}
         {isActive && <SessionSettingsButton sessionId={sessionId} />}
+
+        {/* Spawn agent */}
+        {isActive && onSpawnClick && (
+          <button
+            onClick={onSpawnClick}
+            className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"
+            style={{ color: "var(--color-text-muted)" }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--color-accent)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--color-text-muted)";
+            }}
+            aria-label="Spawn agent"
+            title="Spawn new agent"
+          >
+            <Plus size={14} weight="bold" />
+          </button>
+        )}
 
         {/* Right: expand + close */}
         <button

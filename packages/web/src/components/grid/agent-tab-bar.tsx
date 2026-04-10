@@ -31,7 +31,7 @@ export function AgentTabBar({
   onTabChange,
   onSpawnClick,
 }: AgentTabBarProps) {
-  const childIds = useSessionStore((s) => s.sessions[parentSessionId]?.childSessionIds ?? []);
+  const childIds = useSessionStore((s) => s.sessions[parentSessionId]?.childSessionIds);
   const sessions = useSessionStore((s) => s.sessions);
 
   const isParentActive = activeTab === parentSessionId;
@@ -65,7 +65,7 @@ export function AgentTabBar({
       </button>
 
       {/* Child agent tabs */}
-      {childIds.map((childId) => {
+      {(childIds ?? []).map((childId) => {
         const child = sessions[childId];
         if (!child) return null;
 

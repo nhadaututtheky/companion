@@ -242,7 +242,16 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
   }, [sessionId, onExpand]);
 
   const handleClose = useCallback(async () => {
-    // Immediately update local state so grid removes it
+    const session = useSessionStore.getState().sessions[sessionId];
+    const isActive = session && ["starting", "running", "waiting", "idle", "busy"].includes(session.status);
+
+    if (isActive) {
+      const confirmed = window.confirm(
+        `Stop session "${session.projectName || session.shortId || sessionId.slice(0, 8)}"?\n\nThis will terminate the running agent.`,
+      );
+      if (!confirmed) return;
+    }
+
     useSessionStore.getState().setSession(sessionId, { status: "ended", shortId: undefined });
     useSessionStore.getState().removeFromGrid(sessionId);
     try {
@@ -303,6 +312,7 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
         status={session?.status ?? "idle"}
         onExpand={handleExpand}
         onClose={handleClose}
+        onSpawnClick={() => setSpawnOpen(true)}
         channelId={channelInfo?.id}
         channelTopic={channelInfo?.topic}
         channelStatus={channelInfo?.status}
@@ -332,13 +342,15 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
         </div>
       )}
 
-      {/* Agent tab bar — multi-brain workspace */}
-      <AgentTabBar
-        parentSessionId={sessionId}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        onSpawnClick={() => setSpawnOpen(true)}
-      />
+      {/* Agent tab bar — only shown when multi-brain is active */}
+      {childIds && childIds.length > 0 && (
+        <AgentTabBar
+          parentSessionId={sessionId}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onSpawnClick={() => setSpawnOpen(true)}
+        />
+      )}
 
       {/* Error state — session crashed before starting */}
       {session?.status === "error" && messages.length === 0 ? (

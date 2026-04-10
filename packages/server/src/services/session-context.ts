@@ -4,6 +4,7 @@
  */
 
 import { getProject } from "./project-profiles.js";
+import { getRelevantInsights, formatInsightsForContext, recordInsightUsed } from "./session-memory.js";
 
 interface SessionContextOpts {
   sessionId: string;
@@ -43,5 +44,23 @@ export function buildSessionContext(opts: SessionContextOpts): string {
     "</companion-context>",
   );
 
-  return "\n\n" + lines.join("\n");
+  // Inject session-memory insights if available
+  let insightsBlock = "";
+  if (opts.projectSlug) {
+    try {
+      const insights = getRelevantInsights(opts.projectSlug, undefined, 5);
+      const formatted = formatInsightsForContext(insights);
+      if (formatted) {
+        insightsBlock = formatted;
+        // Record usage for relevance tracking
+        for (const insight of insights) {
+          recordInsightUsed(insight.id);
+        }
+      }
+    } catch {
+      /* non-critical */
+    }
+  }
+
+  return "\n\n" + lines.join("\n") + insightsBlock;
 }

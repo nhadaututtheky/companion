@@ -61,6 +61,12 @@
   --shadow-float: 0 8px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-glow: 0 0 0 3px rgba(255, 87, 34, 0.35);
 
+  /* Typography scale — bumped for readability (TW4 defaults: xs=12px, sm=14px) */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.45;
+  --text-sm: 0.9rem;
+  --text-sm--line-height: 1.5;
+
   /* Glass tokens */
   --glass-bg: rgba(255, 255, 255, 0.82);
   --glass-bg-heavy: rgba(255, 255, 255, 0.92);

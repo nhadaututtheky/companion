@@ -14,6 +14,19 @@ import type { InsightType, SessionInsight, TaskClassification } from "@companion
 
 const log = createLogger("session-memory");
 
+// ── Validation ─────────────────────────────────────────────────────────────
+
+const VALID_INSIGHT_TYPES = new Set<InsightType>(["pattern", "mistake", "preference", "hotspot"]);
+
+/** Escape XML special characters to prevent prompt injection */
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 // ── Content hashing for dedup ───────────────────────────────────────────────
 
 function hashContent(content: string): string {
@@ -94,6 +107,8 @@ export async function extractInsights(
 
     for (const item of parsed) {
       if (!item.type || !item.content) continue;
+      if (!VALID_INSIGHT_TYPES.has(item.type)) continue; // Reject unknown types
+      if (typeof item.content !== "string") continue;
       if (item.content.length > 500) continue; // Reject wall-of-text
 
       const hash = hashContent(item.content);
@@ -124,7 +139,9 @@ export async function extractInsights(
 
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
-      const files: string[] = item.files ?? [];
+      const files: string[] = Array.isArray(item.files)
+        ? item.files.filter((f: unknown) => typeof f === "string")
+        : [];
 
       db.insert(sessionInsights)
         .values({
@@ -254,7 +271,7 @@ export function formatInsightsForContext(insights: SessionInsight[]): string | n
   const lines = ["<session-memory>", "Past insights for this project:"];
 
   for (const insight of insights) {
-    lines.push(`- [${insight.type}] ${insight.content}`);
+    lines.push(`- [${escapeXml(insight.type)}] ${escapeXml(insight.content)}`);
   }
 
   lines.push("</session-memory>");

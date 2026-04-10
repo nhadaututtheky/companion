@@ -8,6 +8,7 @@ import { getDb } from "../db/client.js";
 import { sessionSummaries, settings } from "../db/schema.js";
 import { getSessionRecord, getSessionMessages } from "./session-store.js";
 import { callAI, isAIConfigured } from "./ai-client.js";
+import { extractInsights } from "./session-memory.js";
 import { createLogger } from "../logger.js";
 import { randomUUID } from "crypto";
 
@@ -145,6 +146,25 @@ export async function summarizeSession(sessionId: string): Promise<void> {
       decisions: parsed.keyDecisions.length,
       files: parsed.filesModified.length,
     });
+
+    // Extract cross-session insights from this summary (non-blocking)
+    if (record.projectSlug) {
+      const filesModified = parsed.filesModified.length > 0
+        ? parsed.filesModified
+        : ((record.filesModified as string[]) ?? []);
+
+      void extractInsights({
+        sessionId,
+        projectSlug: record.projectSlug,
+        summary: parsed.summary,
+        filesModified,
+        toolsUsed: [], // Not tracked per-session yet
+        turnCount: record.numTurns,
+        permissionsDenied: [],
+      }).catch((err) => {
+        log.warn("Failed to extract insights", { sessionId, error: String(err) });
+      });
+    }
   } catch (err) {
     log.error("Failed to generate summary", { sessionId, error: String(err) });
   }

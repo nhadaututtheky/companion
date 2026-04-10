@@ -396,10 +396,12 @@ function MessageBubble({
     return (
       <div className="flex justify-center py-2" ref={msgRef}>
         <span
-          className="text-xs px-3 py-1 rounded-full"
+          className="text-xs px-3 py-1.5 rounded-lg text-center"
           style={{
             background: "var(--color-bg-elevated)",
             color: "var(--color-text-muted)",
+            maxWidth: "80%",
+            lineHeight: 1.5,
           }}
         >
           {msg.content}

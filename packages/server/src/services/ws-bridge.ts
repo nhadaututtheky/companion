@@ -12,6 +12,7 @@ import { summarizeSession, buildSummaryInjection } from "./session-summarizer.js
 import { saveSessionFindings } from "../wiki/feedback.js";
 import { buildSessionContext } from "./session-context.js";
 import { handleMentions } from "./mention-router.js";
+import { classifyByRules } from "./task-classifier.js";
 import {
   handleDocsCommand as handleDocsCmd,
   handleResearchCommand as handleResearchCmd,
@@ -75,7 +76,7 @@ import { revokeAllForSession } from "./share-manager.js";
 import { eventBus } from "./event-bus.js";
 import { generateSessionName } from "./session-namer.js";
 import { processToolEvent, removeTracker } from "../codegraph/event-collector.js";
-import { getOrCreatePulse, cleanupPulse, finalizePulseTurn } from "./pulse-estimator.js";
+import { getOrCreatePulse, cleanupPulse, finalizePulseTurn, getLatestReading } from "./pulse-estimator.js";
 import {
   createActiveSession,
   getActiveSession,
@@ -978,6 +979,26 @@ export class WsBridge {
           messages: session.messageHistory as BrowserIncomingMessage[],
         } satisfies BrowserIncomingMessage),
       );
+    }
+
+    // Replay latest pulse reading so indicator survives refresh
+    {
+      const pulse = getLatestReading(sessionId);
+      if (pulse) {
+        ws.send(
+          JSON.stringify({
+            type: "pulse:update",
+            sessionId: session.id,
+            score: pulse.score,
+            state: pulse.state,
+            trend: pulse.trend,
+            signals: { ...pulse.signals },
+            topSignal: pulse.topSignal,
+            turn: pulse.turn,
+            timestamp: pulse.timestamp,
+          }),
+        );
+      }
     }
 
     // Replay any buffered early result to this browser (race window fix)
@@ -2227,7 +2248,8 @@ export class WsBridge {
       cgMsgConfig.messageContextEnabled
     ) {
       try {
-        const ctx = buildMessageContext(cgSlug, content);
+        const classification = classifyByRules(content);
+        const ctx = buildMessageContext(cgSlug, content, classification);
         if (ctx) {
           cgContent = `${cgContent}${ctx}`;
           this.emitContextInjection(

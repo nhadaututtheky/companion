@@ -35,10 +35,10 @@ interface MarkdownMessageProps {
 }
 
 export function MarkdownMessage({ content, compact = false }: MarkdownMessageProps) {
-  const fontSize = compact ? 14 : 15;
+  const fontSize = compact ? 15 : 16;
 
   return (
-    <div className="markdown-content" style={{ fontSize, lineHeight: 1.6 }}>
+    <div className="markdown-content" style={{ fontSize, lineHeight: 1.65 }}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -67,8 +67,8 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
                     style={{
                       background: "#1e1e1e",
                       color: "#d4d4d4",
-                      fontSize: compact ? 12 : 13,
-                      lineHeight: 1.5,
+                      fontSize: compact ? 13 : 14,
+                      lineHeight: 1.55,
                       fontFamily: "var(--font-mono)",
                     }}
                   >
@@ -105,7 +105,7 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
                   style={{
                     borderCollapse: "collapse",
                     width: "100%",
-                    fontSize: compact ? 12 : 13,
+                    fontSize: "inherit",
                     fontFamily: "var(--font-body)",
                   }}
                 >
@@ -131,7 +131,7 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
               <th
                 className="text-left"
                 style={{
-                  padding: compact ? "4px 8px" : "6px 12px",
+                  padding: compact ? "6px 10px" : "8px 14px",
                   fontWeight: 600,
                   color: "var(--color-text-primary)",
                   whiteSpace: "nowrap",
@@ -145,9 +145,9 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
             return (
               <td
                 style={{
-                  padding: compact ? "3px 8px" : "5px 12px",
+                  padding: compact ? "6px 10px" : "8px 14px",
                   borderBottom: "1px solid var(--color-border)",
-                  color: "var(--color-text-secondary)",
+                  color: "var(--color-text-primary)",
                 }}
               >
                 {children}
@@ -160,7 +160,7 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
 
           // ── Block elements ──────────────────────────────
           p({ children }) {
-            return <p style={{ margin: "4px 0", lineHeight: 1.6 }}>{children}</p>;
+            return <p style={{ margin: "6px 0", lineHeight: 1.65 }}>{children}</p>;
           },
           blockquote({ children }) {
             return (
@@ -184,7 +184,7 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
             return <ol style={{ paddingLeft: 20, margin: "4px 0" }}>{children}</ol>;
           },
           li({ children }) {
-            return <li style={{ marginBottom: 2 }}>{children}</li>;
+            return <li style={{ marginBottom: 4 }}>{children}</li>;
           },
 
           // ── Inline elements ─────────────────────────────
@@ -220,21 +220,21 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
           // ── Headings (scale down for chat) ──────────────
           h1({ children }) {
             return (
-              <h3 style={{ fontSize: compact ? 15 : 17, fontWeight: 700, margin: "8px 0 4px" }}>
+              <h3 style={{ fontSize: compact ? 18 : 20, fontWeight: 700, margin: "12px 0 6px" }}>
                 {children}
               </h3>
             );
           },
           h2({ children }) {
             return (
-              <h4 style={{ fontSize: compact ? 14 : 16, fontWeight: 600, margin: "6px 0 3px" }}>
+              <h4 style={{ fontSize: compact ? 16 : 18, fontWeight: 600, margin: "10px 0 4px" }}>
                 {children}
               </h4>
             );
           },
           h3({ children }) {
             return (
-              <h5 style={{ fontSize: compact ? 13 : 15, fontWeight: 600, margin: "4px 0 2px" }}>
+              <h5 style={{ fontSize: compact ? 15 : 16, fontWeight: 600, margin: "8px 0 3px" }}>
                 {children}
               </h5>
             );

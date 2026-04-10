@@ -10,6 +10,27 @@ import {
   type PulseReading,
 } from "@/lib/stores/pulse-store";
 
+const PULSE_GUIDANCE: Record<string, { advice: string; action?: string }> = {
+  flow: { advice: "Agent is productive. No action needed." },
+  focused: { advice: "Deep thinking in progress. Let it work." },
+  cautious: {
+    advice: "Editing same files repeatedly — possible fix loop.",
+    action: "Consider giving clearer instructions or a different approach.",
+  },
+  struggling: {
+    advice: "High error rate or cost spike detected.",
+    action: "Try: /compact to free context, simplify the task, or switch model.",
+  },
+  spiraling: {
+    advice: "Agent is stuck in a failure loop.",
+    action: "Stop and restart with a fresh approach. Break the task into smaller steps.",
+  },
+  blocked: {
+    advice: "Agent flagged as blocked.",
+    action: "Check permissions, review errors, or provide missing context.",
+  },
+};
+
 interface PulseIndicatorProps {
   sessionId: string;
 }
@@ -57,18 +78,53 @@ export function PulseIndicator({ sessionId }: PulseIndicatorProps) {
       {/* Sparkline popover */}
       {showSparkline && history && history.length > 1 && (
         <div
-          className="absolute top-full right-0 mt-1 p-2 rounded-lg z-50"
+          className="absolute top-full right-0 mt-1 p-2.5 rounded-lg z-50 flex flex-col gap-2"
           style={{
             background: "var(--color-bg-elevated)",
             border: "1px solid var(--color-border)",
             boxShadow: "var(--shadow-lg)",
-            minWidth: 160,
+            minWidth: 200,
+            maxWidth: 260,
           }}
         >
-          <div className="text-xs mb-1" style={{ color: "var(--color-text-muted)" }}>
-            {label} · Turn {reading.turn}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold" style={{ color }}>
+              {label}
+            </span>
+            <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
+              Turn {reading.turn}
+            </span>
           </div>
-          <Sparkline readings={history} sessionId={sessionId} />
+          {history.length > 1 && <Sparkline readings={history} sessionId={sessionId} />}
+          {/* Actionable guidance */}
+          {(() => {
+            const guide = PULSE_GUIDANCE[reading.state];
+            if (!guide) return null;
+            return (
+              <div className="flex flex-col gap-1">
+                <p className="text-[11px] leading-snug" style={{ color: "var(--color-text-secondary)" }}>
+                  {guide.advice}
+                </p>
+                {guide.action && (
+                  <p className="text-[11px] leading-snug font-medium" style={{ color }}>
+                    → {guide.action}
+                  </p>
+                )}
+              </div>
+            );
+          })()}
+          {/* Top signal */}
+          {reading.topSignal && (
+            <div
+              className="text-[10px] px-1.5 py-0.5 rounded"
+              style={{
+                background: `${color}10`,
+                color: "var(--color-text-muted)",
+              }}
+            >
+              Top signal: {reading.topSignal.replace(/([A-Z])/g, " $1").trim().toLowerCase()}
+            </div>
+          )}
         </div>
       )}
     </div>

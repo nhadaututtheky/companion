@@ -143,7 +143,7 @@ function NavPill({
       onMouseLeave={onLeave}
       className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium cursor-pointer transition-all"
       style={{
-        borderRadius: "var(--radius-pill)",
+        borderRadius: "var(--radius-md)",
         background: isActive ? "var(--color-text-primary)" : "var(--glass-bg)",
         backdropFilter: isActive ? "none" : "blur(var(--glass-blur))",
         WebkitBackdropFilter: isActive ? "none" : "blur(var(--glass-blur))",

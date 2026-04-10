@@ -1,6 +1,11 @@
 "use client";
-import { Wrench } from "@phosphor-icons/react";
+import { useState } from "react";
+import { Wrench, Brain, CaretRight, CaretDown } from "@phosphor-icons/react";
 import { MarkdownMessage } from "../chat/markdown-message";
+
+interface ThinkingBlock {
+  text: string;
+}
 
 interface Message {
   id: string;
@@ -8,6 +13,65 @@ interface Message {
   content: string;
   timestamp: number;
   isStreaming?: boolean;
+  thinkingBlocks?: ThinkingBlock[];
+}
+
+function CompactThinking({ blocks }: { blocks: ThinkingBlock[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const text = blocks.map((b) => b.text).join("\n");
+  if (!text.trim()) return null;
+
+  const firstLine = text.split("\n").find((l) => l.trim())?.trim() ?? "";
+  const summary = firstLine.length > 80 ? firstLine.slice(0, 80) + "..." : firstLine;
+
+  return (
+    <div
+      className="mx-3 my-1 rounded-lg overflow-hidden"
+      style={{
+        background: "var(--color-bg-elevated)",
+        border: "1px solid var(--color-border)",
+      }}
+    >
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-1.5 w-full px-2.5 py-1.5 cursor-pointer"
+        style={{ fontSize: 12 }}
+        aria-expanded={expanded}
+      >
+        <Brain size={12} weight="bold" style={{ color: "#a855f7" }} />
+        <span className="font-medium" style={{ color: "var(--color-text-secondary)" }}>
+          Thinking
+        </span>
+        {expanded ? (
+          <CaretDown size={10} style={{ color: "var(--color-text-muted)" }} />
+        ) : (
+          <>
+            <CaretRight size={10} style={{ color: "var(--color-text-muted)" }} />
+            {summary && (
+              <span
+                className="truncate"
+                style={{ color: "var(--color-text-muted)", maxWidth: 200 }}
+              >
+                {summary}
+              </span>
+            )}
+          </>
+        )}
+      </button>
+      {expanded && (
+        <div
+          className="px-2.5 pb-2 leading-relaxed max-h-[300px] overflow-y-auto"
+          style={{
+            borderTop: "1px solid var(--color-border)",
+            paddingTop: 6,
+            fontSize: 13,
+          }}
+        >
+          <MarkdownMessage content={text} compact />
+        </div>
+      )}
+    </div>
+  );
 }
 
 function CompactBubble({ msg }: { msg: Message }) {
@@ -17,13 +81,15 @@ function CompactBubble({ msg }: { msg: Message }) {
 
   if (isSystem) {
     return (
-      <div className="flex justify-center py-1">
+      <div className="flex justify-center py-2">
         <span
-          className="px-2.5 py-0.5 rounded-full"
+          className="px-3 py-1 rounded-lg text-center"
           style={{
             background: "var(--color-bg-elevated)",
             color: "var(--color-text-muted)",
             fontSize: 12,
+            maxWidth: "85%",
+            lineHeight: 1.4,
           }}
         >
           {msg.content}
@@ -51,7 +117,12 @@ function CompactBubble({ msg }: { msg: Message }) {
   }
 
   return (
-    <div className={`flex px-3 py-1 ${isUser ? "justify-end" : "justify-start"}`}>
+    <div className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
+      {/* Thinking blocks (assistant only) */}
+      {!isUser && msg.thinkingBlocks && msg.thinkingBlocks.length > 0 && (
+        <CompactThinking blocks={msg.thinkingBlocks} />
+      )}
+      <div className={`flex px-3 py-1 ${isUser ? "justify-end" : "justify-start"} w-full`}>
       <div
         className="px-3 py-2 rounded-2xl leading-relaxed"
         style={{
@@ -80,6 +151,7 @@ function CompactBubble({ msg }: { msg: Message }) {
             }}
           />
         )}
+      </div>
       </div>
     </div>
   );

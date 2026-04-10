@@ -219,10 +219,11 @@ export function allocateBudgetForTask(
   }
 
   const totalAllocated = [...adjusted.values()].reduce((a, b) => a + b, 0);
+  const available = Math.floor(maxContextTokens * (1 - reservePercent));
   return {
     allocations: adjusted,
     totalAllocated,
-    remaining: Math.floor(maxContextTokens * (1 - reservePercent)) - totalAllocated,
+    remaining: Math.max(0, available - totalAllocated),
     disabled: base.disabled,
   };
 }

@@ -175,16 +175,16 @@ describe("dispatch-router", () => {
       expect(result.dispatched).toBe(true);
       expect(result.pattern).toBe("single");
       expect(result.sessionIds).toContain("sess-origin");
-      expect(sent).toHaveLength(1);
-      expect(sent[0]!.sessionId).toBe("sess-origin");
+      // Single pattern does NOT re-send — caller handles delivery
+      expect(sent).toHaveLength(0);
     });
 
-    it("falls back to single on engine error", async () => {
+    it("falls back to single on engine error and sends message", async () => {
       mockStartWorkflow.mockImplementationOnce(() => {
         throw new Error("Engine crashed");
       });
 
-      const { ctx } = createCtx();
+      const { ctx, sent } = createCtx();
       const classification = makeClassification({
         pattern: "workflow",
         suggestedTemplate: "code-review",
@@ -195,6 +195,9 @@ describe("dispatch-router", () => {
       expect(result.dispatched).toBe(false);
       expect(result.pattern).toBe("single");
       expect(result.error).toContain("Engine crashed");
+      // Fallback sends message to origin so it's not silently dropped
+      expect(sent).toHaveLength(1);
+      expect(sent[0]!.sessionId).toBe("sess-origin");
     });
 
     it("defaults to implement-feature template when none suggested", async () => {
