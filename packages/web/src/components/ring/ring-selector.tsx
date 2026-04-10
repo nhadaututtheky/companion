@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { X, LinkSimple } from "@phosphor-icons/react";
 import { useRingStore } from "@/lib/stores/ring-store";
 import { useSessionStore } from "@/lib/stores/session-store";
-import { MascotViewer } from "@/components/mascot/mascot-viewer";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
 const GOOGLE_COLORS = ["#4285F4", "#EA4335", "#FBBC04", "#34A853"];
 const MAX_SESSIONS = 4;
@@ -139,18 +139,19 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
               borderRadius: "50%",
               border: isSelected
                 ? `3px solid ${color}`
-                : "2px solid var(--color-border, rgba(0,0,0,0.1))",
-              background: isSelected ? `${color}12` : "var(--color-bg-card, #fff)",
+                : "2px solid transparent",
+              background: isSelected ? `${color}20` : "transparent",
               boxShadow: isHovered
                 ? `0 4px 16px ${color}40`
                 : isSelected
                   ? `0 0 12px ${color}30`
-                  : "0 2px 8px rgba(0,0,0,0.08)",
+                  : "none",
               cursor: "pointer",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
+              overflow: "visible",
               gap: 1,
               padding: 0,
               transform: open ? "scale(1)" : "scale(0)",
@@ -161,8 +162,20 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
             }}
             title={session.projectName ?? session.id}
           >
-            <div style={{ position: "absolute", inset: 0, opacity: 0.35, pointerEvents: "none" }}>
-              <MascotViewer lottieFile="/mascots/pulse.lottie" size={size} />
+            <div
+              style={{
+                position: "absolute",
+                inset: -4,
+                opacity: 0.85,
+                pointerEvents: "none",
+              }}
+            >
+              <DotLottieReact
+                src="/mascots/pulse.lottie"
+                loop
+                autoplay
+                style={{ width: "100%", height: "100%" }}
+              />
             </div>
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: color, zIndex: 1 }} />
             <span
