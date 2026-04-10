@@ -414,8 +414,10 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
         : s.state.model.includes("haiku")
           ? "Haiku"
           : "Sonnet";
-      const slug =
-        (s.state as unknown as { projectSlug?: string })?.projectSlug ?? s.id.slice(0, 6);
+      const label = s.state.name
+        ?? (s.state as unknown as { projectSlug?: string })?.projectSlug
+        ?? s.state.short_id
+        ?? s.id.slice(0, 6);
       const statusDot =
         s.state.status === "idle"
           ? "🟢"
@@ -426,7 +428,7 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
               : "🟡";
       return [
         {
-          text: `${statusDot} ${slug} · ${modelShort} · ${s.state.status}`,
+          text: `${statusDot} ${label} · ${modelShort} · ${s.state.status}`,
           callback_data: `stream:${s.id}`,
         },
       ];
