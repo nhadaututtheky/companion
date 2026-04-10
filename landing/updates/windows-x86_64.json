@@ -1,7 +1,7 @@
 {
-  "version": "0.12.0",
-  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.12.0/Companion_0.12.0_x64-setup.exe",
-  "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSR0FuNWFuQThzWjcrbkJyWGNiZTJxOWdVWjRJdzc2NFRJUExxOWZ3UisxYk1LeFUwQTd0MUJ1Q1pvUkxMbmF3RGZzcmY0M2tHWktEM1M0REFXSjVZSTdaY212WXZHUFEwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1NjcyNDkyCWZpbGU6Q29tcGFuaW9uXzAuMTIuMF94NjQtc2V0dXAuZXhlCnozRTdVVWhaTkVFbDFEc3piQVVuZVhsanpFSW9WNHlMRzA3ZS9KYy93WmxFbjA1NXNJeEtWSmp3SzJOOC9FdkhuaHVta1VyZEdFbHRrQm5yU1lwNERRPT0K",
-  "notes": "Multi-Brain Workspace: spawn specialist agents, /status tracking, workspace templates. UI redesign with glassmorphism + 10 themes.",
-  "pub_date": "2026-04-09T01:22:00Z"
+  "version": "0.14.0",
+  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.14.0/Companion_0.14.0_x64-setup.nsis.zip",
+  "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUldSbU0xMmU1aUFEekpEUGkyaGluK2xrdXdRaUQyYWx3TjVoVWROd3dZSER1Nm01QjFVOHFzc1RLby9rdTdIdWpYU1lRTHZ3TExIOVRUdVdhakpLbVRQNGNjWUZEQkhvc0FvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1ODM3OTA2CWZpbGU6Q29tcGFuaW9uXzAuMTQuMF94NjQtc2V0dXAubnNpcy56aXAKU24rVzFpMDZmSHdqbFdCLzJxRVd6K3cxRUgwc1h0d05ETXAzdkJ1TEdZeHRZTHBlUzAveXdBU01sSDI4VzdqREM2QURndVRvalVvMFRrWS9EdllkRHc9PQo=",
+  "notes": "Update to v0.14.0 — UX hardening: message rendering, typography, session lifecycle",
+  "pub_date": "2026-04-10T16:11:46Z"
 }

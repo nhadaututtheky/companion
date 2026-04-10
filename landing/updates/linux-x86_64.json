@@ -1,7 +1,7 @@
 {
-  "version": "0.11.1",
-  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.11.1/Companion_0.11.1_amd64.deb",
+  "version": "0.14.0",
+  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.14.0/Companion_0.14.0_amd64.deb",
   "signature": "",
-  "notes": "Fix: Telegram photo cross-contamination — images now sent as proper multimodal content blocks",
-  "pub_date": "2026-04-07T09:48:34Z"
+  "notes": "Update to v0.14.0 — UX hardening: message rendering, typography, session lifecycle",
+  "pub_date": "2026-04-10T16:11:46Z"
 }
