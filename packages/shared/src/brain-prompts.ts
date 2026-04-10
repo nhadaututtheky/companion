@@ -41,9 +41,24 @@ export const WORKSPACE_TEMPLATES = [
     icon: "🏗️",
     description: "Backend + Frontend + Testing team",
     agents: [
-      { name: "Backend Engineer", role: "specialist" as const, model: "claude-sonnet-4-6", promptTemplate: "Implement the backend: {task}" },
-      { name: "Frontend Dev", role: "specialist" as const, model: "claude-sonnet-4-6", promptTemplate: "Build the frontend UI: {task}" },
-      { name: "QA Tester", role: "reviewer" as const, model: "claude-haiku-4-5", promptTemplate: "Write tests and verify: {task}" },
+      {
+        name: "Backend Engineer",
+        role: "specialist" as const,
+        model: "claude-sonnet-4-6",
+        promptTemplate: "Implement the backend: {task}",
+      },
+      {
+        name: "Frontend Dev",
+        role: "specialist" as const,
+        model: "claude-sonnet-4-6",
+        promptTemplate: "Build the frontend UI: {task}",
+      },
+      {
+        name: "QA Tester",
+        role: "reviewer" as const,
+        model: "claude-haiku-4-5",
+        promptTemplate: "Write tests and verify: {task}",
+      },
     ],
   },
   {
@@ -52,9 +67,24 @@ export const WORKSPACE_TEMPLATES = [
     icon: "🔍",
     description: "Security + Performance + Style reviewers",
     agents: [
-      { name: "Security Reviewer", role: "reviewer" as const, model: "claude-opus-4-6", promptTemplate: "Security audit: {task}" },
-      { name: "Performance Reviewer", role: "reviewer" as const, model: "claude-sonnet-4-6", promptTemplate: "Performance review: {task}" },
-      { name: "Style Reviewer", role: "reviewer" as const, model: "claude-haiku-4-5", promptTemplate: "Code style and best practices review: {task}" },
+      {
+        name: "Security Reviewer",
+        role: "reviewer" as const,
+        model: "claude-opus-4-6",
+        promptTemplate: "Security audit: {task}",
+      },
+      {
+        name: "Performance Reviewer",
+        role: "reviewer" as const,
+        model: "claude-sonnet-4-6",
+        promptTemplate: "Performance review: {task}",
+      },
+      {
+        name: "Style Reviewer",
+        role: "reviewer" as const,
+        model: "claude-haiku-4-5",
+        promptTemplate: "Code style and best practices review: {task}",
+      },
     ],
   },
   {
@@ -63,8 +93,18 @@ export const WORKSPACE_TEMPLATES = [
     icon: "📚",
     description: "Researcher + Fact-checker",
     agents: [
-      { name: "Researcher", role: "researcher" as const, model: "claude-opus-4-6", promptTemplate: "Research thoroughly: {task}" },
-      { name: "Fact Checker", role: "reviewer" as const, model: "claude-sonnet-4-6", promptTemplate: "Verify findings and check for errors: {task}" },
+      {
+        name: "Researcher",
+        role: "researcher" as const,
+        model: "claude-opus-4-6",
+        promptTemplate: "Research thoroughly: {task}",
+      },
+      {
+        name: "Fact Checker",
+        role: "reviewer" as const,
+        model: "claude-sonnet-4-6",
+        promptTemplate: "Verify findings and check for errors: {task}",
+      },
     ],
   },
   {
@@ -73,9 +113,24 @@ export const WORKSPACE_TEMPLATES = [
     icon: "♻️",
     description: "Analyst + Implementer + Verifier",
     agents: [
-      { name: "Analyst", role: "researcher" as const, model: "claude-opus-4-6", promptTemplate: "Analyze code and plan refactoring: {task}" },
-      { name: "Implementer", role: "specialist" as const, model: "claude-sonnet-4-6", promptTemplate: "Execute the refactoring plan: {task}" },
-      { name: "Verifier", role: "reviewer" as const, model: "claude-haiku-4-5", promptTemplate: "Verify refactoring didn't break anything: {task}" },
+      {
+        name: "Analyst",
+        role: "researcher" as const,
+        model: "claude-opus-4-6",
+        promptTemplate: "Analyze code and plan refactoring: {task}",
+      },
+      {
+        name: "Implementer",
+        role: "specialist" as const,
+        model: "claude-sonnet-4-6",
+        promptTemplate: "Execute the refactoring plan: {task}",
+      },
+      {
+        name: "Verifier",
+        role: "reviewer" as const,
+        model: "claude-haiku-4-5",
+        promptTemplate: "Verify refactoring didn't break anything: {task}",
+      },
     ],
   },
 ] as const;

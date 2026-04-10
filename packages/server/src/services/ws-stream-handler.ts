@@ -71,7 +71,9 @@ export function handleStreamEvent(session: ActiveSession, msg: CLIStreamEventMes
     if (event?.delta?.type === "thinking_delta" && event.delta.thinking) {
       getOrCreatePulse(session.id).recordThinking(event.delta.thinking.length);
     }
-  } catch { /* never block */ }
+  } catch {
+    /* never block */
+  }
 
   broadcastToAll(session, {
     type: "stream_event",

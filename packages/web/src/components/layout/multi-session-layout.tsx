@@ -60,13 +60,8 @@ function EmptyPane({
   const pinToPane = useLayoutStore((s) => s.pinToPane);
 
   return (
-    <div
-      className="flex flex-col items-center justify-center h-full gap-3 px-4"
-     
-    >
-      <p className="text-xs text-center">
-        Click a session to pin it here
-      </p>
+    <div className="flex flex-col items-center justify-center h-full gap-3 px-4">
+      <p className="text-xs text-center">Click a session to pin it here</p>
       {sessions.length > 0 && (
         <div className="flex flex-col gap-1 w-full max-w-48">
           {sessions.map((s) => (

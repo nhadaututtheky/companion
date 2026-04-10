@@ -113,9 +113,7 @@ function BreakdownRow({
           }}
           aria-hidden="true"
         />
-        <span className="text-xs truncate">
-          {label}
-        </span>
+        <span className="text-xs truncate">{label}</span>
       </div>
       <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
         <span
@@ -163,7 +161,6 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
       <button
         onClick={() => setExpanded((v) => !v)}
         className="flex items-center gap-1 cursor-pointer rounded transition-colors"
-       
         aria-label={`Cost: ${fmtCost(totalCost)}. Click to expand breakdown`}
         aria-expanded={expanded}
       >
@@ -194,7 +191,6 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
       <button
         onClick={() => setExpanded((v) => !v)}
         className="flex items-center gap-2 w-full px-3 py-2.5 cursor-pointer transition-colors"
-       
         aria-expanded={expanded}
         aria-label="Toggle cost breakdown"
       >
@@ -204,18 +200,14 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
           style={{ color: "#34A853", flexShrink: 0 }}
           aria-hidden="true"
         />
-        <span className="text-xs flex-1 text-left">
-          Total Cost
-        </span>
+        <span className="text-xs flex-1 text-left">Total Cost</span>
         <span
           className="text-sm font-semibold"
           style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-mono)" }}
         >
           {fmtCost(totalCost)}
         </span>
-        <span className="text-xs ml-1">
-          {expanded ? "▲" : "▼"}
-        </span>
+        <span className="text-xs ml-1">{expanded ? "▲" : "▼"}</span>
       </button>
 
       {/* Expanded detail */}
@@ -250,11 +242,7 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
                 note="~90% cheaper"
               />
             )}
-            {totalTokens === 0 && (
-              <p className="text-xs py-1">
-                No token data yet
-              </p>
-            )}
+            {totalTokens === 0 && <p className="text-xs py-1">No token data yet</p>}
           </div>
 
           {/* Legend summary */}

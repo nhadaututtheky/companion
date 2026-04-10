@@ -26,7 +26,15 @@ const VIEWPORTS = [
 
 const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
-function ArtifactRenderer({ artifact, zoom, safeMode }: { artifact: PreviewArtifact; zoom: number; safeMode: boolean }) {
+function ArtifactRenderer({
+  artifact,
+  zoom,
+  safeMode,
+}: {
+  artifact: PreviewArtifact;
+  zoom: number;
+  safeMode: boolean;
+}) {
   if (artifact.type === "image") {
     return (
       <div className="flex items-center justify-center h-full p-8">
@@ -222,9 +230,7 @@ export function DesignPreviewPanel() {
 
         {/* Artifact label + counter */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-sm font-semibold truncate">
-            {artifact.label}
-          </span>
+          <span className="text-sm font-semibold truncate">{artifact.label}</span>
           {artifactCounter && (
             <span
               className="text-xs font-mono px-2 py-0.5 rounded-full"
@@ -342,10 +348,16 @@ export function DesignPreviewPanel() {
             color: safeMode ? "#10B981" : "#F59E0B",
             background: safeMode ? "#10B98115" : "#F59E0B15",
           }}
-          aria-label={safeMode ? "Safe mode on — scripts blocked" : "Interactive mode — scripts allowed"}
+          aria-label={
+            safeMode ? "Safe mode on — scripts blocked" : "Interactive mode — scripts allowed"
+          }
           title={safeMode ? "Safe mode (scripts blocked)" : "Interactive mode (scripts allowed)"}
         >
-          {safeMode ? <ShieldCheck size={14} weight="bold" /> : <ShieldSlash size={14} weight="bold" />}
+          {safeMode ? (
+            <ShieldCheck size={14} weight="bold" />
+          ) : (
+            <ShieldSlash size={14} weight="bold" />
+          )}
         </button>
 
         {/* Toggle source / preview */}

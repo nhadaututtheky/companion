@@ -22,8 +22,14 @@ export function PlatformPicker({ platforms, loading, selected, onSelect }: Platf
   if (loading) {
     return (
       <div className="flex items-center justify-center py-4 gap-2">
-        <CircleNotch size={16} className="animate-spin" style={{ color: "var(--color-text-muted)" }} />
-        <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>Detecting CLI platforms...</span>
+        <CircleNotch
+          size={16}
+          className="animate-spin"
+          style={{ color: "var(--color-text-muted)" }}
+        />
+        <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+          Detecting CLI platforms...
+        </span>
       </div>
     );
   }
@@ -87,7 +93,9 @@ export function PlatformPicker({ platforms, loading, selected, onSelect }: Platf
               {/* Name */}
               <span
                 className="text-xs font-semibold"
-                style={{ color: isSelected ? "var(--color-text-primary)" : "var(--color-text-secondary)" }}
+                style={{
+                  color: isSelected ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                }}
               >
                 {detected?.name ?? id}
               </span>
@@ -101,7 +109,10 @@ export function PlatformPicker({ platforms, loading, selected, onSelect }: Platf
                   </>
                 ) : (
                   <>
-                    <WarningCircle size={10} style={{ display: "inline", verticalAlign: "middle" }} />{" "}
+                    <WarningCircle
+                      size={10}
+                      style={{ display: "inline", verticalAlign: "middle" }}
+                    />{" "}
                     Not installed
                   </>
                 )}

@@ -92,7 +92,12 @@ export async function handleSpawnCommand(
     const confirmMsg = `[Agent "${name}" spawned — shortId: ${childShortId}, role: ${role}, model: ${model}]`;
     bridge.sendUserMessage(session.id, confirmMsg, "system");
 
-    log.info("Brain spawned child via /spawn", { parentId: session.id, childSessionId, name, role });
+    log.info("Brain spawned child via /spawn", {
+      parentId: session.id,
+      childSessionId,
+      name,
+      role,
+    });
   } catch (err) {
     log.error("Failed to spawn agent via /spawn", { parentId: session.id, error: String(err) });
     broadcastToAll(session, {
@@ -105,10 +110,7 @@ export async function handleSpawnCommand(
 // ─── /status Command ────────────────────────────────────────────────────────
 
 /** Handle /status command — show agent statuses in workspace. */
-export function handleStatusCommand(
-  bridge: MultiBrainBridge,
-  session: ActiveSession,
-): void {
+export function handleStatusCommand(bridge: MultiBrainBridge, session: ActiveSession): void {
   try {
     const children = getChildSessions(session.id);
 
@@ -124,10 +126,15 @@ export function handleStatusCommand(
       const roleLabel = child.role ?? "agent";
       const nameLabel = child.name ?? child.shortId ?? child.id.slice(0, 8);
       const statusIcon =
-        liveStatus === "idle" ? "💤" :
-        liveStatus === "busy" ? "🔄" :
-        liveStatus === "ended" ? "✅" :
-        liveStatus === "error" ? "❌" : "⏳";
+        liveStatus === "idle"
+          ? "💤"
+          : liveStatus === "busy"
+            ? "🔄"
+            : liveStatus === "ended"
+              ? "✅"
+              : liveStatus === "error"
+                ? "❌"
+                : "⏳";
       return `  ${statusIcon} **${nameLabel}** (${roleLabel}) @${child.shortId} — ${liveStatus} — ${cost}`;
     });
 

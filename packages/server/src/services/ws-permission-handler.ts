@@ -63,7 +63,11 @@ export function handlePermissionResponse(
 
   // Pulse: unblock if no more pending permissions
   if (session.pendingPermissions.size === 0) {
-    try { getOrCreatePulse(session.id).setBlocked(false); } catch { /* */ }
+    try {
+      getOrCreatePulse(session.id).setBlocked(false);
+    } catch {
+      /* */
+    }
   }
 
   // SDK engine path: resolve the permission Promise
@@ -133,8 +137,7 @@ export function handleControlRequest(
 
   // Auto-approve safe state transition tools
   const shouldAutoApprove =
-    ALWAYS_APPROVE_TOOLS.has(toolName) &&
-    !(session.bypassDisabled && toolName === "ExitPlanMode");
+    ALWAYS_APPROVE_TOOLS.has(toolName) && !(session.bypassDisabled && toolName === "ExitPlanMode");
 
   if (shouldAutoApprove) {
     log.info("Auto-approving safe tool", {
@@ -167,7 +170,11 @@ export function handleControlRequest(
   session.pendingPermissions.set(msg.request_id, perm);
 
   // Pulse: mark session as blocked (waiting for human)
-  try { getOrCreatePulse(session.id).setBlocked(true); } catch { /* */ }
+  try {
+    getOrCreatePulse(session.id).setBlocked(true);
+  } catch {
+    /* */
+  }
 
   broadcastToAll(session, {
     type: "permission_request",
@@ -216,10 +223,7 @@ function startAutoApproveTimer(
 // ─── Interrupt ──────────────────────────────────────────────────────────────
 
 /** Handle user interrupt request — abort current CLI/SDK operation. */
-export function handleInterrupt(
-  bridge: PermissionBridge,
-  session: ActiveSession,
-): void {
+export function handleInterrupt(bridge: PermissionBridge, session: ActiveSession): void {
   // SDK engine path: use query.interrupt()
   const sdkHandle = bridge.sdkHandles.get(session.id);
   if (sdkHandle) {

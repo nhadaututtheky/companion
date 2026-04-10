@@ -75,11 +75,7 @@ import { revokeAllForSession } from "./share-manager.js";
 import { eventBus } from "./event-bus.js";
 import { generateSessionName } from "./session-namer.js";
 import { processToolEvent, removeTracker } from "../codegraph/event-collector.js";
-import {
-  getOrCreatePulse,
-  cleanupPulse,
-  finalizePulseTurn,
-} from "./pulse-estimator.js";
+import { getOrCreatePulse, cleanupPulse, finalizePulseTurn } from "./pulse-estimator.js";
 import {
   createActiveSession,
   getActiveSession,
@@ -729,29 +725,36 @@ export class WsBridge {
     );
 
     // Handle async launch — move all post-launch logic into the .then()
-    launchPromise.then((launch) => {
-      session.cliSend = launch.send;
-      session.pid = launch.pid;
-      this.cliProcesses.set(sessionId, launch);
+    launchPromise
+      .then((launch) => {
+        session.cliSend = launch.send;
+        session.pid = launch.pid;
+        this.cliProcesses.set(sessionId, launch);
 
-      // Flush pending messages
-      for (const pending of session.pendingMessages) {
-        launch.send(pending);
-      }
-      session.pendingMessages = [];
+        // Flush pending messages
+        for (const pending of session.pendingMessages) {
+          launch.send(pending);
+        }
+        session.pendingMessages = [];
 
-      // Send initial prompt after launch
-      this.sendInitialPrompt(session, sessionId, opts, cliPlatform);
-    }).catch((err) => {
-      log.error("Failed to launch CLI", { sessionId, platform: cliPlatform, error: String(err) });
-      this.broadcastToSubscribers(session, {
-        type: "error",
-        message: `Failed to launch ${cliPlatform}: ${String(err)}`,
+        // Send initial prompt after launch
+        this.sendInitialPrompt(session, sessionId, opts, cliPlatform);
+      })
+      .catch((err) => {
+        log.error("Failed to launch CLI", { sessionId, platform: cliPlatform, error: String(err) });
+        this.broadcastToSubscribers(session, {
+          type: "error",
+          message: `Failed to launch ${cliPlatform}: ${String(err)}`,
+        });
+        this.handleCLIExit(session, 1);
       });
-      this.handleCLIExit(session, 1);
-    });
 
-    log.info("Session started (CLI launcher)", { sessionId, cwd: opts.cwd, model: opts.model, platform: cliPlatform });
+    log.info("Session started (CLI launcher)", {
+      sessionId,
+      cwd: opts.cwd,
+      model: opts.model,
+      platform: cliPlatform,
+    });
     return sessionId;
   }
 
@@ -980,7 +983,11 @@ export class WsBridge {
     // Replay any buffered early result to this browser (race window fix)
     replayEarlyResult(sessionId, (msg) => {
       log.debug("Replaying early result to late browser", { sessionId });
-      try { ws.send(JSON.stringify(msg)); } catch { /* ignore */ }
+      try {
+        ws.send(JSON.stringify(msg));
+      } catch {
+        /* ignore */
+      }
     });
 
     // Notify CLI status — only send cli_disconnected if session isn't already ended/error
@@ -1515,7 +1522,9 @@ export class WsBridge {
             toolName,
             block.input as Record<string, unknown>,
           );
-        } catch { /* never block */ }
+        } catch {
+          /* never block */
+        }
       }
     }
 
@@ -1552,7 +1561,9 @@ export class WsBridge {
                   toolNameMap.get(block.tool_use_id) ?? "unknown",
                   !!block.is_error,
                 );
-              } catch { /* never block */ }
+              } catch {
+                /* never block */
+              }
 
               const rtkResult = this.rtkPipeline.transform(block.content, {
                 sessionId: session.id,
@@ -1612,7 +1623,9 @@ export class WsBridge {
         // Pulse: record assistant text for tone analysis
         try {
           getOrCreatePulse(session.id).recordAssistantText(textContent);
-        } catch { /* never block */ }
+        } catch {
+          /* never block */
+        }
 
         storeMessage({
           id: msg.message.id ?? randomUUID(),
@@ -1654,7 +1667,13 @@ export class WsBridge {
   /** Emit a context:injection event to all connected browsers for this session */
   private emitContextInjection(
     session: ActiveSession,
-    injectionType: "project_map" | "message_context" | "plan_review" | "break_check" | "web_docs" | "activity_feed",
+    injectionType:
+      | "project_map"
+      | "message_context"
+      | "plan_review"
+      | "break_check"
+      | "web_docs"
+      | "activity_feed",
     summary: string,
     charCount: number,
   ): void {
@@ -1743,7 +1762,9 @@ export class WsBridge {
           timestamp: pulseReading.timestamp,
         });
       }
-    } catch { /* never block */ }
+    } catch {
+      /* never block */
+    }
 
     this.updateStatus(session, "idle");
     persistSession(session);
@@ -2222,15 +2243,12 @@ export class WsBridge {
     }
 
     // ── CodeGraph: activity feed injection (agent self-awareness) ──
-    if (
-      cgSlug &&
-      cgMsgConfig?.injectionEnabled &&
-      cgMsgConfig.activityFeedEnabled
-    ) {
+    if (cgSlug && cgMsgConfig?.injectionEnabled && cgMsgConfig.activityFeedEnabled) {
       try {
-        const contextPercent = session.state.total_input_tokens && session.state.total_output_tokens
-          ? 0 // We don't have exact context %, use 0 to let buildActivityContext decide
-          : 0;
+        const contextPercent =
+          session.state.total_input_tokens && session.state.total_output_tokens
+            ? 0 // We don't have exact context %, use 0 to let buildActivityContext decide
+            : 0;
         const activityCtx = buildActivityContext(
           session.id,
           cgSlug,
@@ -2398,7 +2416,8 @@ export class WsBridge {
       const warnTimer = setTimeout(() => {
         this.idleWarningTimers.delete(session.id);
         const current = getActiveSession(session.id);
-        if (!current || current.state.status === "ended" || current.state.status === "error") return;
+        if (!current || current.state.status === "ended" || current.state.status === "error")
+          return;
         if (current.state.status === "busy" || current.state.status === "compacting") return;
 
         this.broadcastToAll(current, {
@@ -2471,7 +2490,11 @@ export class WsBridge {
     }
   }
 
-  private notifyParentOfChildEnd(childSessionId: string, status: string, preEndShortId?: string): void {
+  private notifyParentOfChildEnd(
+    childSessionId: string,
+    status: string,
+    preEndShortId?: string,
+  ): void {
     _notifyParentOfChildEnd(this.multiBrainBridge, childSessionId, status, preEndShortId);
   }
 

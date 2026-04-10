@@ -70,7 +70,9 @@ export function broadcastContextUpdate(session: ActiveSession): void {
   // Pulse: record context pressure
   try {
     getOrCreatePulse(session.id).recordContextUpdate(contextUsedPercent);
-  } catch { /* never block */ }
+  } catch {
+    /* never block */
+  }
 
   broadcastToAll(session, {
     type: "context_update",
@@ -86,10 +88,7 @@ export function broadcastContextUpdate(session: ActiveSession): void {
  * Request accurate context usage from Claude CLI via get_context_usage control_request.
  * Sent after each turn completes (idle). Response arrives as control_response on stdout.
  */
-export function requestContextUsage(
-  bridge: ContextBridge,
-  session: ActiveSession,
-): void {
+export function requestContextUsage(bridge: ContextBridge, session: ActiveSession): void {
   // Only for CLI engine sessions (SDK has its own tracking)
   if (bridge.sdkHandles.has(session.id)) return;
   // Don't request if session is ended
@@ -108,10 +107,7 @@ export function requestContextUsage(
  * Handle control_response messages from CLI (e.g. get_context_usage response).
  * These are responses to control_requests we sent TO the CLI.
  */
-export function handleControlResponse(
-  session: ActiveSession,
-  msg: Record<string, unknown>,
-): void {
+export function handleControlResponse(session: ActiveSession, msg: Record<string, unknown>): void {
   const response = msg.response as Record<string, unknown> | undefined;
   if (!response) return;
 
@@ -146,7 +142,13 @@ export function handleControlResponse(
 /** Emit a context injection event to browsers (for context budget visualization). */
 export function emitContextInjection(
   session: ActiveSession,
-  injectionType: "project_map" | "message_context" | "plan_review" | "break_check" | "web_docs" | "activity_feed",
+  injectionType:
+    | "project_map"
+    | "message_context"
+    | "plan_review"
+    | "break_check"
+    | "web_docs"
+    | "activity_feed",
   summary: string,
   charCount: number,
 ): void {
@@ -209,10 +211,7 @@ export function checkCostBudget(session: ActiveSession): void {
 // ─── Smart Compact ──────────────────────────────────────────────────────────
 
 /** Check if context exceeds threshold and trigger compact handoff. */
-export function checkSmartCompact(
-  compactBridge: CompactBridge,
-  session: ActiveSession,
-): void {
+export function checkSmartCompact(compactBridge: CompactBridge, session: ActiveSession): void {
   const prev = prevTokens.get(session.id) ?? { input: 0, output: 0 };
   checkCompact(compactBridge, session, prev);
 }

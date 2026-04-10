@@ -145,9 +145,7 @@ export function startSdkSession(
   };
 
   // Build SDK options
-  const env = opts.envVars
-    ? { ...process.env, ...opts.envVars }
-    : undefined;
+  const env = opts.envVars ? { ...process.env, ...opts.envVars } : undefined;
 
   const sdkQuery = query({
     prompt: opts.prompt,

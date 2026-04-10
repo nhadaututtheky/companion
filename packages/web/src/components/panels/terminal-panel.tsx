@@ -217,15 +217,8 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
         }}
       >
         <div className="flex items-center gap-2">
-          <TerminalWindow
-            size={14}
-            weight="bold"
-           
-            aria-hidden="true"
-          />
-          <span className="text-xs font-semibold">
-            Terminal
-          </span>
+          <TerminalWindow size={14} weight="bold" aria-hidden="true" />
+          <span className="text-xs font-semibold">Terminal</span>
           <span
             aria-hidden="true"
             style={{

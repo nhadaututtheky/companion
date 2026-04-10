@@ -8,7 +8,12 @@ import { toast } from "sonner";
 import { ChannelPanel } from "@/components/shared/channel-panel";
 import { DebateCreateModal } from "@/components/debate/debate-create-modal";
 
-const GOOGLE_COLORS = ["var(--color-google-blue)", "var(--color-google-red)", "var(--color-google-yellow)", "var(--color-google-green)"];
+const GOOGLE_COLORS = [
+  "var(--color-google-blue)",
+  "var(--color-google-red)",
+  "var(--color-google-yellow)",
+  "var(--color-google-green)",
+];
 
 function getSessionColor(id: string): string {
   let hash = 0;
@@ -418,7 +423,11 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
               <div
                 style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}
               >
-                <Scales size={20} weight="duotone" style={{ color: "var(--color-danger)", opacity: 0.5 }} />
+                <Scales
+                  size={20}
+                  weight="duotone"
+                  style={{ color: "var(--color-danger)", opacity: 0.5 }}
+                />
                 <span style={{ fontSize: 11, color: "var(--color-text-muted, #999)" }}>
                   Agents debate a question from opposing sides
                 </span>
@@ -502,7 +511,9 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                     fontWeight: 600,
                     borderRadius: 8,
                     border: "none",
-                    background: debateTopic.trim() ? "var(--color-danger)" : "var(--color-text-muted)",
+                    background: debateTopic.trim()
+                      ? "var(--color-danger)"
+                      : "var(--color-text-muted)",
                     color: "#fff",
                     cursor: debateTopic.trim() ? "pointer" : "not-allowed",
                   }}

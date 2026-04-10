@@ -31,17 +31,11 @@ export function TemplateVariablesForm({ variables, values, onChange }: TemplateV
 
   return (
     <div>
-      <p className="text-xs font-semibold mb-2">
-        TEMPLATE VARIABLES
-      </p>
+      <p className="text-xs font-semibold mb-2">TEMPLATE VARIABLES</p>
       <div className={useGrid ? "grid grid-cols-2 gap-3" : "flex flex-col gap-3"}>
         {variables.map((variable) => (
           <div key={variable.key}>
-            <label
-              htmlFor={`tvar-${variable.key}`}
-              className="block text-xs font-medium mb-1"
-             
-            >
+            <label htmlFor={`tvar-${variable.key}`} className="block text-xs font-medium mb-1">
               {variable.label}
               {variable.required && (
                 <span className="ml-1 font-bold" style={{ color: "#EA4335" }} aria-hidden="true">

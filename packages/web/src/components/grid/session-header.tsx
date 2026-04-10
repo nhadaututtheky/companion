@@ -1,6 +1,15 @@
 "use client";
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ArrowsOut, X, LinkSimple, CaretDown, Check, Bell, BellSlash, BellRinging } from "@phosphor-icons/react";
+import {
+  ArrowsOut,
+  X,
+  LinkSimple,
+  CaretDown,
+  Check,
+  Bell,
+  BellSlash,
+  BellRinging,
+} from "@phosphor-icons/react";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { SessionSettingsButton } from "./session-settings";
 import { CostBreakdown } from "@/components/session/cost-breakdown";
@@ -114,15 +123,23 @@ export function SessionHeader({
   const dotColor = STATUS_COLORS[status] ?? STATUS_COLORS.idle;
   // Strip provider prefix for OpenCode format (e.g., "anthropic/claude-sonnet-4-6" → "claude-sonnet-4-6")
   const modelName = model.includes("/") ? model.split("/").pop()! : model;
-  const modelShort = modelName.includes("opus") ? "Opus"
-    : modelName.includes("haiku") ? "Haiku"
-    : modelName.includes("sonnet") ? "Sonnet"
-    : modelName.includes("gpt") ? modelName.split("-").slice(0, 2).join("-").toUpperCase()
-    : modelName.includes("gemini") ? "Gemini"
-    : modelName.includes("llama") ? "Llama"
-    : modelName.startsWith("o3") || modelName.startsWith("o4") ? modelName.split("-")[0]!.toUpperCase()
-    : modelName.split("-")[0]!;
-  const channelColor = channelStatus === "active" ? "var(--color-accent)" : "var(--color-text-muted)";
+  const modelShort = modelName.includes("opus")
+    ? "Opus"
+    : modelName.includes("haiku")
+      ? "Haiku"
+      : modelName.includes("sonnet")
+        ? "Sonnet"
+        : modelName.includes("gpt")
+          ? modelName.split("-").slice(0, 2).join("-").toUpperCase()
+          : modelName.includes("gemini")
+            ? "Gemini"
+            : modelName.includes("llama")
+              ? "Llama"
+              : modelName.startsWith("o3") || modelName.startsWith("o4")
+                ? modelName.split("-")[0]!.toUpperCase()
+                : modelName.split("-")[0]!;
+  const channelColor =
+    channelStatus === "active" ? "var(--color-accent)" : "var(--color-text-muted)";
   const isActive = !["ended", "error"].includes(status);
   const isThinking = ["running", "busy"].includes(status);
 
@@ -225,7 +242,13 @@ export function SessionHeader({
             aria-expanded={modelDropdownOpen}
           >
             {cliPlatform && cliPlatform !== "claude" && (
-              <span style={{ color: modelDropdownOpen ? "#fff" : (PLATFORM_ICONS[cliPlatform]?.color ?? "var(--color-text-muted)") }}>
+              <span
+                style={{
+                  color: modelDropdownOpen
+                    ? "#fff"
+                    : (PLATFORM_ICONS[cliPlatform]?.color ?? "var(--color-text-muted)"),
+                }}
+              >
                 {PLATFORM_ICONS[cliPlatform]?.icon ?? ""}{" "}
               </span>
             )}
@@ -252,11 +275,16 @@ export function SessionHeader({
                 animation: "slideUpFade 150ms ease forwards",
               }}
             >
-              {([
+              {[
                 { id: "claude-opus-4-6", label: "Opus 4.6", emoji: "🧠", desc: "Deep reasoning" },
-                { id: "claude-sonnet-4-6", label: "Sonnet 4.6", emoji: "🎯", desc: "Fast & capable" },
+                {
+                  id: "claude-sonnet-4-6",
+                  label: "Sonnet 4.6",
+                  emoji: "🎯",
+                  desc: "Fast & capable",
+                },
                 { id: "claude-haiku-4-5", label: "Haiku 4.5", emoji: "⚡", desc: "Quick tasks" },
-              ]).map((opt) => {
+              ].map((opt) => {
                 const isCurrent = modelName.includes(opt.id.replace("claude-", "").split("-")[0]!);
                 return (
                   <button
@@ -267,7 +295,9 @@ export function SessionHeader({
                     }}
                     className="flex items-center gap-2 w-full px-3 py-2 text-xs rounded-md transition-colors cursor-pointer"
                     style={{
-                      background: isCurrent ? "color-mix(in srgb, var(--color-accent) 10%, transparent)" : "transparent",
+                      background: isCurrent
+                        ? "color-mix(in srgb, var(--color-accent) 10%, transparent)"
+                        : "transparent",
                       color: isCurrent ? "var(--color-accent)" : "var(--color-text-primary)",
                     }}
                     onMouseEnter={(e) => {
@@ -280,7 +310,14 @@ export function SessionHeader({
                     <span>{opt.emoji}</span>
                     <span className="font-semibold">{opt.label}</span>
                     <span style={{ color: "var(--color-text-muted)" }}>{opt.desc}</span>
-                    {isCurrent && <Check size={12} weight="bold" className="ml-auto" style={{ color: "var(--color-accent)" }} />}
+                    {isCurrent && (
+                      <Check
+                        size={12}
+                        weight="bold"
+                        className="ml-auto"
+                        style={{ color: "var(--color-accent)" }}
+                      />
+                    )}
                   </button>
                 );
               })}
@@ -329,7 +366,6 @@ export function SessionHeader({
         <button
           onClick={onExpand}
           className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"
-         
           aria-label="Expand session"
           title="Expand to full view"
         >
@@ -338,7 +374,6 @@ export function SessionHeader({
         <button
           onClick={onClose}
           className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"
-         
           aria-label="Close session"
           title="Stop & close session"
           onMouseEnter={(e) => {
@@ -410,7 +445,12 @@ function NotifyModeButton({ sessionId }: { sessionId: string }) {
   const cycleNotifyMode = useSessionStore((s) => s.cycleNotifyMode);
 
   const Icon = mode === "off" ? BellSlash : mode === "toast" ? BellRinging : Bell;
-  const color = mode === "off" ? "var(--color-text-muted)" : mode === "toast" ? "var(--color-warning)" : "var(--color-text-secondary)";
+  const color =
+    mode === "off"
+      ? "var(--color-text-muted)"
+      : mode === "toast"
+        ? "var(--color-warning)"
+        : "var(--color-text-secondary)";
 
   return (
     <button

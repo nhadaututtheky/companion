@@ -87,7 +87,10 @@ modelRoutes.post("/providers/:id/toggle", async (c) => {
 
   if (!parsed.success) {
     return c.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Body must include { enabled: boolean }" } satisfies ApiResponse,
+      {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Body must include { enabled: boolean }",
+      } satisfies ApiResponse,
       400,
     );
   }

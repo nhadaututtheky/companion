@@ -265,7 +265,12 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
         <button
           onClick={onToggle}
           className="flex items-center gap-1.5 cursor-pointer transition-opacity hover:opacity-80"
-          style={{ color: "var(--color-text-secondary)", background: "none", border: "none", padding: 0 }}
+          style={{
+            color: "var(--color-text-secondary)",
+            background: "none",
+            border: "none",
+            padding: 0,
+          }}
           aria-label={open ? "Collapse activity terminal" : "Expand activity terminal"}
         >
           {open ? <CaretDown size={11} weight="bold" /> : <CaretRight size={11} weight="bold" />}

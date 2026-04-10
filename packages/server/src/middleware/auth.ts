@@ -36,8 +36,8 @@ export function warnIfNoAuth(): void {
   if (!credential) {
     log.warn(
       "No authentication configured (no access_pin in DB, no API_KEY env). " +
-      "All API requests will be allowed. Set a PIN in Settings > General, " +
-      "or set API_KEY env var to secure your instance.",
+        "All API requests will be allowed. Set a PIN in Settings > General, " +
+        "or set API_KEY env var to secure your instance.",
     );
   }
 }

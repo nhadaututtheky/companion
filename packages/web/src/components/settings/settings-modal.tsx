@@ -166,7 +166,10 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
               className="flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-all cursor-pointer"
               style={{
                 color: activeTab === tab.id ? "var(--color-accent)" : "var(--color-text-secondary)",
-                background: activeTab === tab.id ? "color-mix(in srgb, var(--color-accent) 12%, transparent)" : "transparent",
+                background:
+                  activeTab === tab.id
+                    ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
+                    : "transparent",
                 fontWeight: activeTab === tab.id ? 600 : 400,
                 borderRadius: "var(--radius-pill)",
                 margin: "0 8px",
@@ -181,7 +184,10 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
         </nav>
 
         {/* Mobile tab selector (visible below sm breakpoint) */}
-        <div className="sm:hidden shrink-0 px-4 py-2 overflow-x-auto flex gap-1" style={{ borderBottom: "1px solid var(--color-border)" }}>
+        <div
+          className="sm:hidden shrink-0 px-4 py-2 overflow-x-auto flex gap-1"
+          style={{ borderBottom: "1px solid var(--color-border)" }}
+        >
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -189,7 +195,10 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
               className="flex items-center gap-1.5 px-3 py-2 text-xs whitespace-nowrap rounded-full transition-all cursor-pointer"
               style={{
                 color: activeTab === tab.id ? "var(--color-accent)" : "var(--color-text-secondary)",
-                background: activeTab === tab.id ? "color-mix(in srgb, var(--color-accent) 12%, transparent)" : "transparent",
+                background:
+                  activeTab === tab.id
+                    ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
+                    : "transparent",
                 fontWeight: activeTab === tab.id ? 600 : 400,
               }}
             >
@@ -221,7 +230,9 @@ export function SettingsModal() {
   const handleClose = useCallback(() => setOpen(false), [setOpen]);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional SSR hydration guard
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!mounted || !shouldRender) return null;
 

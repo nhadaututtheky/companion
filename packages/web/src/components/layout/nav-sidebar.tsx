@@ -38,23 +38,83 @@ interface NavItem {
 }
 
 const PANEL_ITEMS: NavItem[] = [
-  { id: "search", label: "Search", icon: MagnifyingGlass, description: "Search across files in the current project", shortcut: "Ctrl+Shift+F" },
-  { id: "files", label: "Files", icon: FolderOpen, description: "Browse and navigate project file tree" },
-  { id: "browser", label: "Browser", icon: Globe, description: "Preview web pages and browser output" },
-  { id: "terminal", label: "Terminal", icon: TerminalWindow, description: "Interactive terminal for command execution" },
+  {
+    id: "search",
+    label: "Search",
+    icon: MagnifyingGlass,
+    description: "Search across files in the current project",
+    shortcut: "Ctrl+Shift+F",
+  },
+  {
+    id: "files",
+    label: "Files",
+    icon: FolderOpen,
+    description: "Browse and navigate project file tree",
+  },
+  {
+    id: "browser",
+    label: "Browser",
+    icon: Globe,
+    description: "Preview web pages and browser output",
+  },
+  {
+    id: "terminal",
+    label: "Terminal",
+    icon: TerminalWindow,
+    description: "Interactive terminal for command execution",
+  },
 ];
 
 const AI_ITEMS: NavItem[] = [
-  { id: "ai-context", label: "AI Context", icon: Brain, description: "Code intelligence, web docs, and context graph for AI agents" },
-  { id: "wiki", label: "Wiki KB", icon: BookOpen, description: "Domain knowledge base — feeds context to AI agents automatically" },
-  { id: "stats", label: "Stats", icon: ChartBar, description: "Activity statistics, session metrics, and cost tracking" },
+  {
+    id: "ai-context",
+    label: "AI Context",
+    icon: Brain,
+    description: "Code intelligence, web docs, and context graph for AI agents",
+  },
+  {
+    id: "wiki",
+    label: "Wiki KB",
+    icon: BookOpen,
+    description: "Domain knowledge base — feeds context to AI agents automatically",
+  },
+  {
+    id: "stats",
+    label: "Stats",
+    icon: ChartBar,
+    description: "Activity statistics, session metrics, and cost tracking",
+  },
 ];
 
 const LAYOUT_ITEMS: Array<NavItem & { mode: LayoutMode }> = [
-  { id: "single", mode: "single", label: "Single", icon: Square, description: "One session fills the entire workspace" },
-  { id: "side-by-side", mode: "side-by-side", label: "Side by Side", icon: Columns, description: "Two sessions displayed in horizontal columns" },
-  { id: "stacked", mode: "stacked", label: "Stacked", icon: Rows, description: "Sessions stacked vertically in rows" },
-  { id: "grid", mode: "grid", label: "Grid", icon: GridFour, description: "Multiple sessions in a responsive grid layout" },
+  {
+    id: "single",
+    mode: "single",
+    label: "Single",
+    icon: Square,
+    description: "One session fills the entire workspace",
+  },
+  {
+    id: "side-by-side",
+    mode: "side-by-side",
+    label: "Side by Side",
+    icon: Columns,
+    description: "Two sessions displayed in horizontal columns",
+  },
+  {
+    id: "stacked",
+    mode: "stacked",
+    label: "Stacked",
+    icon: Rows,
+    description: "Sessions stacked vertically in rows",
+  },
+  {
+    id: "grid",
+    mode: "grid",
+    label: "Grid",
+    icon: GridFour,
+    description: "Multiple sessions in a responsive grid layout",
+  },
 ];
 
 // ── Glass Pill ────────────────────────────────────────────────────────────
@@ -131,7 +191,8 @@ function PanelsContent() {
   const setRightPanelMode = useUiStore((s) => s.setRightPanelMode);
   const [hovered, setHovered] = useState<string | null>(null);
 
-  const active = PANEL_ITEMS.find((p) => p.id === hovered) ?? PANEL_ITEMS.find((p) => p.id === rightPanelMode);
+  const active =
+    PANEL_ITEMS.find((p) => p.id === hovered) ?? PANEL_ITEMS.find((p) => p.id === rightPanelMode);
 
   return (
     <div className="flex gap-2 items-start">
@@ -144,7 +205,9 @@ function PanelsContent() {
             label={item.label}
             isActive={rightPanelMode === item.id}
             index={i}
-            onClick={() => setRightPanelMode(rightPanelMode === item.id ? "none" : item.id as PanelMode)}
+            onClick={() =>
+              setRightPanelMode(rightPanelMode === item.id ? "none" : (item.id as PanelMode))
+            }
             onHover={() => setHovered(item.id)}
             onLeave={() => setHovered(null)}
           />
@@ -157,18 +220,42 @@ function PanelsContent() {
             <active.icon
               size={16}
               weight={rightPanelMode === active.id ? "fill" : "regular"}
-              style={{ color: rightPanelMode === active.id ? "var(--color-accent)" : "var(--color-text-secondary)" }}
+              style={{
+                color:
+                  rightPanelMode === active.id
+                    ? "var(--color-accent)"
+                    : "var(--color-text-secondary)",
+              }}
             />
-            <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>{active.label}</span>
+            <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+              {active.label}
+            </span>
             {rightPanelMode === active.id && (
-              <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5" style={{ borderRadius: "var(--radius-pill)", background: "color-mix(in srgb, var(--color-success) 15%, transparent)", color: "var(--color-success)" }}>
+              <span
+                className="flex items-center gap-1 text-xs font-medium px-2 py-0.5"
+                style={{
+                  borderRadius: "var(--radius-pill)",
+                  background: "color-mix(in srgb, var(--color-success) 15%, transparent)",
+                  color: "var(--color-success)",
+                }}
+              >
                 <Check size={10} weight="bold" /> Active
               </span>
             )}
           </div>
-          <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-muted)" }}>{active.description}</p>
+          <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
+            {active.description}
+          </p>
           {active.shortcut && (
-            <span className="inline-block text-xs font-mono px-2 py-1 mt-3" style={{ borderRadius: "var(--radius-sm)", background: "var(--color-bg-elevated)", border: "1px solid var(--glass-border)", color: "var(--color-text-muted)" }}>
+            <span
+              className="inline-block text-xs font-mono px-2 py-1 mt-3"
+              style={{
+                borderRadius: "var(--radius-sm)",
+                background: "var(--color-bg-elevated)",
+                border: "1px solid var(--glass-border)",
+                color: "var(--color-text-muted)",
+              }}
+            >
               {active.shortcut}
             </span>
           )}
@@ -187,13 +274,13 @@ function AIContent() {
   const setStatsBarOpen = useUiStore((s) => s.setStatsBarOpen);
   const [hovered, setHovered] = useState<string | null>(null);
 
-  const isItemActive = (id: string) => id === "stats" ? statsBarOpen : rightPanelMode === id;
+  const isItemActive = (id: string) => (id === "stats" ? statsBarOpen : rightPanelMode === id);
 
   const handleClick = (id: string) => {
     if (id === "stats") {
       setStatsBarOpen(!statsBarOpen);
     } else {
-      setRightPanelMode(rightPanelMode === id ? "none" : id as AiPanelMode);
+      setRightPanelMode(rightPanelMode === id ? "none" : (id as AiPanelMode));
     }
   };
 
@@ -218,15 +305,30 @@ function AIContent() {
       {active && (
         <DetailCard index={AI_ITEMS.length}>
           <div className="flex items-center gap-2 mb-3">
-            <active.icon size={16} weight={isItemActive(active.id) ? "fill" : "regular"} style={{ color: "var(--color-accent)" }} />
-            <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>{active.label}</span>
+            <active.icon
+              size={16}
+              weight={isItemActive(active.id) ? "fill" : "regular"}
+              style={{ color: "var(--color-accent)" }}
+            />
+            <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+              {active.label}
+            </span>
             {isItemActive(active.id) && (
-              <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5" style={{ borderRadius: "var(--radius-pill)", background: "color-mix(in srgb, var(--color-success) 15%, transparent)", color: "var(--color-success)" }}>
+              <span
+                className="flex items-center gap-1 text-xs font-medium px-2 py-0.5"
+                style={{
+                  borderRadius: "var(--radius-pill)",
+                  background: "color-mix(in srgb, var(--color-success) 15%, transparent)",
+                  color: "var(--color-success)",
+                }}
+              >
                 <Check size={10} weight="bold" /> Active
               </span>
             )}
           </div>
-          <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-muted)" }}>{active.description}</p>
+          <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
+            {active.description}
+          </p>
         </DetailCard>
       )}
     </div>
@@ -293,7 +395,10 @@ function LayoutContent() {
       <div className="flex gap-4 mb-4">
         {/* Layout presets */}
         <div className="flex-1">
-          <span className="text-[10px] font-semibold uppercase tracking-wider mb-2 block" style={{ color: "var(--color-text-muted)" }}>
+          <span
+            className="text-[10px] font-semibold uppercase tracking-wider mb-2 block"
+            style={{ color: "var(--color-text-muted)" }}
+          >
             Layout
           </span>
           <div className="grid grid-cols-2 gap-1.5">
@@ -308,7 +413,9 @@ function LayoutContent() {
                     borderRadius: "var(--radius-md)",
                     background: isActive ? "var(--color-accent)" : "transparent",
                     color: isActive ? "#fff" : "var(--color-text-secondary)",
-                    border: isActive ? "1px solid var(--color-accent)" : "1px solid var(--glass-border)",
+                    border: isActive
+                      ? "1px solid var(--color-accent)"
+                      : "1px solid var(--glass-border)",
                   }}
                 >
                   <item.icon size={13} weight={isActive ? "fill" : "regular"} />
@@ -322,9 +429,13 @@ function LayoutContent() {
               className="flex items-center gap-2 px-3 py-2 text-[11px] font-medium cursor-pointer transition-all col-span-2"
               style={{
                 borderRadius: "var(--radius-md)",
-                background: activityTerminalOpen ? "color-mix(in srgb, var(--color-accent) 12%, transparent)" : "transparent",
+                background: activityTerminalOpen
+                  ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
+                  : "transparent",
                 color: activityTerminalOpen ? "var(--color-accent)" : "var(--color-text-muted)",
-                border: activityTerminalOpen ? "1px solid color-mix(in srgb, var(--color-accent) 25%, transparent)" : "1px solid var(--glass-border)",
+                border: activityTerminalOpen
+                  ? "1px solid color-mix(in srgb, var(--color-accent) 25%, transparent)"
+                  : "1px solid var(--glass-border)",
               }}
             >
               <Terminal size={13} weight={activityTerminalOpen ? "fill" : "regular"} />
@@ -335,15 +446,18 @@ function LayoutContent() {
 
         {/* Mode toggle */}
         <div style={{ width: 120 }}>
-          <span className="text-[10px] font-semibold uppercase tracking-wider mb-2 block" style={{ color: "var(--color-text-muted)" }}>
+          <span
+            className="text-[10px] font-semibold uppercase tracking-wider mb-2 block"
+            style={{ color: "var(--color-text-muted)" }}
+          >
             Mode
           </span>
           <div className="flex flex-col gap-1">
-            {([
+            {[
               { id: "system" as const, label: "System", icon: Desktop },
               { id: "dark" as const, label: "Dark", icon: Moon },
               { id: "light" as const, label: "Light", icon: Sun },
-            ]).map((m) => {
+            ].map((m) => {
               const isActive = themeMode === m.id;
               return (
                 <button
@@ -354,7 +468,9 @@ function LayoutContent() {
                     borderRadius: "var(--radius-md)",
                     background: isActive ? "var(--color-accent)" : "transparent",
                     color: isActive ? "#fff" : "var(--color-text-secondary)",
-                    border: isActive ? "1px solid var(--color-accent)" : "1px solid var(--glass-border)",
+                    border: isActive
+                      ? "1px solid var(--color-accent)"
+                      : "1px solid var(--glass-border)",
                   }}
                 >
                   <m.icon size={12} weight={isActive ? "fill" : "regular"} />
@@ -371,7 +487,10 @@ function LayoutContent() {
 
       {/* Theme palette row */}
       <div>
-        <span className="text-[10px] font-semibold uppercase tracking-wider mb-2 block" style={{ color: "var(--color-text-muted)" }}>
+        <span
+          className="text-[10px] font-semibold uppercase tracking-wider mb-2 block"
+          style={{ color: "var(--color-text-muted)" }}
+        >
           Theme
         </span>
         <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
@@ -398,7 +517,9 @@ function LayoutContent() {
                       ? `2px solid ${colors.accent}`
                       : "1px solid var(--glass-border)",
                     overflow: "hidden",
-                    boxShadow: isActive ? `0 0 0 2px color-mix(in srgb, ${colors.accent} 30%, transparent)` : "none",
+                    boxShadow: isActive
+                      ? `0 0 0 2px color-mix(in srgb, ${colors.accent} 30%, transparent)`
+                      : "none",
                   }}
                 >
                   {/* Accent stripe */}
@@ -414,14 +535,20 @@ function LayoutContent() {
                   />
                   {/* Mini dots: success, danger */}
                   <div className="flex gap-1 absolute top-1.5 left-1.5">
-                    <div style={{ width: 4, height: 4, borderRadius: 2, background: colors.success }} />
-                    <div style={{ width: 4, height: 4, borderRadius: 2, background: colors.danger }} />
+                    <div
+                      style={{ width: 4, height: 4, borderRadius: 2, background: colors.success }}
+                    />
+                    <div
+                      style={{ width: 4, height: 4, borderRadius: 2, background: colors.danger }}
+                    />
                   </div>
                 </div>
                 {/* Label */}
                 <span
                   className="text-[9px] font-medium"
-                  style={{ color: isActive ? "var(--color-text-primary)" : "var(--color-text-muted)" }}
+                  style={{
+                    color: isActive ? "var(--color-text-primary)" : "var(--color-text-muted)",
+                  }}
                 >
                   {t.name}
                 </span>

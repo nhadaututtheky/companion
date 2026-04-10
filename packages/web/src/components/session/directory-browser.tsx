@@ -43,15 +43,10 @@ function Breadcrumbs({ path, onNavigate }: { path: string; onNavigate: (p: strin
   };
 
   return (
-    <div
-      className="flex items-center gap-1 flex-wrap text-xs overflow-x-auto"
-     
-    >
+    <div className="flex items-center gap-1 flex-wrap text-xs overflow-x-auto">
       {parts.map((part, idx) => (
         <span key={idx} className="flex items-center gap-1 flex-shrink-0">
-          {idx > 0 && (
-            <CaretRight size={10} aria-hidden="true" />
-          )}
+          {idx > 0 && <CaretRight size={10} aria-hidden="true" />}
           <button
             onClick={() => onNavigate(getSegPath(idx))}
             className="hover:underline cursor-pointer truncate max-w-32"
@@ -203,10 +198,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
   return (
     <div className="flex flex-col" style={{ height: 360 }}>
       {/* Toolbar */}
-      <div
-        className="flex items-center gap-2 px-3 py-2 flex-shrink-0 border-b"
-       
-      >
+      <div className="flex items-center gap-2 px-3 py-2 flex-shrink-0 border-b">
         {canGoBack && (
           <button
             onClick={navigateBack}
@@ -244,9 +236,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
           {currentPath ? (
             <Breadcrumbs path={currentPath} onNavigate={navigateTo} />
           ) : (
-            <span className="text-xs font-semibold">
-              Select a root folder
-            </span>
+            <span className="text-xs font-semibold">Select a root folder</span>
           )}
         </div>
       </div>
@@ -286,28 +276,15 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
                 }}
               >
                 <House size={16} style={{ color: "#4285F4", flexShrink: 0 }} aria-hidden="true" />
-                <span
-                  className="text-sm font-medium flex-1 truncate"
-                 
-                >
-                  {root.label}
-                </span>
-                <span
-                  className="text-xs font-mono truncate max-w-36"
-                 
-                >
-                  {root.path}
-                </span>
+                <span className="text-sm font-medium flex-1 truncate">{root.label}</span>
+                <span className="text-xs font-mono truncate max-w-36">{root.path}</span>
               </button>
             ))}
           </div>
         )}
 
         {!loading && !error && currentPath !== null && entries.length === 0 && (
-          <div
-            className="flex flex-col items-center justify-center h-full gap-2"
-           
-          >
+          <div className="flex flex-col items-center justify-center h-full gap-2">
             <FolderSimple size={28} aria-hidden="true" />
             <p className="text-sm">Empty folder</p>
           </div>
@@ -333,12 +310,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
                   style={{ color: "#FBBC04", flexShrink: 0 }}
                   aria-hidden="true"
                 />
-                <span
-                  className="text-sm flex-1 truncate"
-                 
-                >
-                  {entry.name}
-                </span>
+                <span className="text-sm flex-1 truncate">{entry.name}</span>
                 {entry.hasGit && (
                   <span
                     className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full flex-shrink-0"
@@ -359,13 +331,8 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
 
       {/* Footer: select this folder */}
       {currentPath !== null && !loading && (
-        <div
-          className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-t"
-         
-        >
-          <span className="text-xs truncate max-w-xs">
-            {currentPath}
-          </span>
+        <div className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-t">
+          <span className="text-xs truncate max-w-xs">{currentPath}</span>
           <button
             onClick={() => onSelect(currentPath)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors cursor-pointer flex-shrink-0"

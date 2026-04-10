@@ -113,18 +113,13 @@ export default function ErrorsPage() {
           <Link
             href="/settings"
             className="p-1.5 rounded-lg transition-colors cursor-pointer"
-           
             aria-label="Back to settings"
           >
             <ArrowLeft size={18} weight="bold" />
           </Link>
           <Bug size={22} weight="bold" />
-          <h1 className="text-lg font-bold">
-            Error Log
-          </h1>
-          <span className="text-sm">
-            {total} errors tracked
-          </span>
+          <h1 className="text-lg font-bold">Error Log</h1>
+          <span className="text-sm">{total} errors tracked</span>
         </div>
 
         {/* Toolbar */}
@@ -205,9 +200,7 @@ export default function ErrorsPage() {
               weight="light"
               style={{ color: "var(--color-text-muted)", margin: "0 auto 8px" }}
             />
-            <p className="text-sm">
-              No errors recorded
-            </p>
+            <p className="text-sm">No errors recorded</p>
           </div>
         ) : (
           <div
@@ -255,10 +248,7 @@ export default function ErrorsPage() {
                   >
                     {err.message}
                   </span>
-                  <span
-                    className="text-xs whitespace-nowrap"
-                   
-                  >
+                  <span className="text-xs whitespace-nowrap">
                     {new Date(err.timestamp).toLocaleString(undefined, {
                       month: "short",
                       day: "numeric",

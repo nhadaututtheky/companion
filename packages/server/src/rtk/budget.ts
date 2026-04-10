@@ -41,7 +41,11 @@ export function applyBudget(
   level: RTKLevel,
 ): { output: string; budgetTruncated: boolean; tokensAfterBudget: number } {
   if (level === "unlimited") {
-    return { output: compressed, budgetTruncated: false, tokensAfterBudget: estimateTokens(compressed) };
+    return {
+      output: compressed,
+      budgetTruncated: false,
+      tokensAfterBudget: estimateTokens(compressed),
+    };
   }
 
   const config = BUDGET_CONFIGS[level];
@@ -56,8 +60,13 @@ export function applyBudget(
   if (lines.length <= config.headLines + config.tailLines + 3) {
     // Too few lines to truncate meaningfully — just char-truncate
     const maxChars = config.maxTokensPerOutput * 4;
-    const truncated = compressed.slice(0, maxChars) + "\n\n... (output truncated to fit token budget)";
-    return { output: truncated, budgetTruncated: true, tokensAfterBudget: estimateTokens(truncated) };
+    const truncated =
+      compressed.slice(0, maxChars) + "\n\n... (output truncated to fit token budget)";
+    return {
+      output: truncated,
+      budgetTruncated: true,
+      tokensAfterBudget: estimateTokens(truncated),
+    };
   }
 
   const head = lines.slice(0, config.headLines);

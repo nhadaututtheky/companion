@@ -134,15 +134,8 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
       {/* CDP Connection */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
-          <Plugs
-            size={14}
-            weight="bold"
-           
-            aria-hidden="true"
-          />
-          <span className="text-xs font-semibold">
-            CDP Connection
-          </span>
+          <Plugs size={14} weight="bold" aria-hidden="true" />
+          <span className="text-xs font-semibold">CDP Connection</span>
           <StatusDot status={cdpStatus} />
         </div>
 
@@ -187,15 +180,8 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
       {/* Chat Watcher */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <ChatCircleText
-            size={14}
-            weight="bold"
-           
-            aria-hidden="true"
-          />
-          <span className="text-xs font-semibold">
-            Chat Watcher
-          </span>
+          <ChatCircleText size={14} weight="bold" aria-hidden="true" />
+          <span className="text-xs font-semibold">Chat Watcher</span>
         </div>
         <ToggleRow
           label="Auto-start chat watcher when Anti mode activates"
@@ -215,15 +201,8 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
       {/* Task Watcher */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <ListChecks
-            size={14}
-            weight="bold"
-           
-            aria-hidden="true"
-          />
-          <span className="text-xs font-semibold">
-            Task Watcher
-          </span>
+          <ListChecks size={14} weight="bold" aria-hidden="true" />
+          <span className="text-xs font-semibold">Task Watcher</span>
         </div>
         <ToggleRow
           label="Enable task watcher (poll IDE task list)"
@@ -243,15 +222,8 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
       {/* Auto-approve */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <Timer
-            size={14}
-            weight="bold"
-           
-            aria-hidden="true"
-          />
-          <span className="text-xs font-semibold">
-            Auto-approve
-          </span>
+          <Timer size={14} weight="bold" aria-hidden="true" />
+          <span className="text-xs font-semibold">Auto-approve</span>
         </div>
         <ToggleRow
           label="Auto-approve permission requests after delay"
@@ -316,9 +288,7 @@ function FieldInput({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs">
-        {label}
-      </label>
+      <label className="text-xs">{label}</label>
       <input
         type="text"
         value={value}
@@ -352,9 +322,7 @@ function ToggleRow({
         className="cursor-pointer"
         style={{ accentColor: "var(--color-accent)" }}
       />
-      <span className="text-xs">
-        {label}
-      </span>
+      <span className="text-xs">{label}</span>
     </label>
   );
 }

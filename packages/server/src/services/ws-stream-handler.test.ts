@@ -26,7 +26,11 @@ import type { ActiveSession } from "./session-store.js";
 function createMockSession(id = "test-session"): ActiveSession {
   return {
     id,
-    state: { session_id: id, model: "claude-sonnet-4-6", status: "running" } as ActiveSession["state"],
+    state: {
+      session_id: id,
+      model: "claude-sonnet-4-6",
+      status: "running",
+    } as ActiveSession["state"],
     cliSend: null,
     browserSockets: new Set(),
     subscribers: new Map(),

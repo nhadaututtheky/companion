@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  FloppyDisk,
-  Eye,
-  EyeSlash,
-} from "@phosphor-icons/react";
+import { FloppyDisk, Eye, EyeSlash } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { SettingSection, InputField } from "./settings-tabs";
@@ -128,12 +124,7 @@ export function AIProviderTab() {
     }
   }
 
-  if (loading)
-    return (
-      <div className="text-xs py-8 text-center">
-        Loading...
-      </div>
-    );
+  if (loading) return <div className="text-xs py-8 text-center">Loading...</div>;
 
   const currentPreset = PRESET_PROVIDERS.find((p) => p.name === selectedPreset);
   const suggestedModels = currentPreset?.models ?? [];
@@ -147,9 +138,7 @@ export function AIProviderTab() {
         <div className="flex flex-col gap-4">
           {/* Preset selector */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium">
-              Provider Preset
-            </label>
+            <label className="text-xs font-medium">Provider Preset</label>
             <div className="flex flex-wrap gap-2">
               {PRESET_PROVIDERS.map((p) => (
                 <button
@@ -181,9 +170,7 @@ export function AIProviderTab() {
 
           {/* API Key */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium">
-              API Key
-            </label>
+            <label className="text-xs font-medium">API Key</label>
             <div className="relative">
               <input
                 type={showKey ? "text" : "password"}
@@ -200,7 +187,6 @@ export function AIProviderTab() {
                 type="button"
                 onClick={() => setShowKey(!showKey)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-pointer"
-
                 aria-label={showKey ? "Hide" : "Show"}
               >
                 {showKey ? <EyeSlash size={14} /> : <Eye size={14} />}
@@ -210,9 +196,7 @@ export function AIProviderTab() {
 
           {/* Model */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium">
-              Default Model
-            </label>
+            <label className="text-xs font-medium">Default Model</label>
             {suggestedModels.length > 0 ? (
               <select
                 value={model}
@@ -280,12 +264,8 @@ export function AIProviderTab() {
         <div className="flex flex-col gap-3">
           <label className="flex items-center justify-between cursor-pointer">
             <div>
-              <p className="text-xs font-medium">
-                Auto-Summary
-              </p>
-              <p className="text-xs">
-                Generate session summary when session ends
-              </p>
+              <p className="text-xs font-medium">Auto-Summary</p>
+              <p className="text-xs">Generate session summary when session ends</p>
             </div>
             <button
               onClick={() => setAutoSummary(!autoSummary)}
@@ -311,9 +291,7 @@ export function AIProviderTab() {
 
           <label className="flex items-center justify-between cursor-pointer">
             <div>
-              <p className="text-xs font-medium">
-                Inject Previous Summaries
-              </p>
+              <p className="text-xs font-medium">Inject Previous Summaries</p>
               <p className="text-xs">
                 Prepend last 3 session summaries to new sessions in same project
               </p>

@@ -1,7 +1,16 @@
 "use client";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
-import { ArrowsIn, X, Circle, Info, ChatTeardropDots, DownloadSimple, CaretDown, Check } from "@phosphor-icons/react";
+import {
+  ArrowsIn,
+  X,
+  Circle,
+  Info,
+  ChatTeardropDots,
+  DownloadSimple,
+  CaretDown,
+  Check,
+} from "@phosphor-icons/react";
 import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useAnimatePresence } from "@/lib/animation";
@@ -101,10 +110,13 @@ function ExpandedModelSwitcher({
   }, [open]);
 
   const modelName = model.includes("/") ? model.split("/").pop()! : model;
-  const modelShort = modelName.includes("opus") ? "Opus"
-    : modelName.includes("haiku") ? "Haiku"
-    : modelName.includes("sonnet") ? "Sonnet"
-    : modelName;
+  const modelShort = modelName.includes("opus")
+    ? "Opus"
+    : modelName.includes("haiku")
+      ? "Haiku"
+      : modelName.includes("sonnet")
+        ? "Sonnet"
+        : modelName;
 
   return (
     <div ref={ref} className="relative hidden sm:block flex-shrink-0">
@@ -146,19 +158,35 @@ function ExpandedModelSwitcher({
             return (
               <button
                 key={opt.id}
-                onClick={() => { onSetModel(opt.id); setOpen(false); }}
+                onClick={() => {
+                  onSetModel(opt.id);
+                  setOpen(false);
+                }}
                 className="flex items-center gap-2 w-full px-3 py-2 text-xs rounded-md transition-colors cursor-pointer"
                 style={{
-                  background: isCurrent ? "color-mix(in srgb, var(--color-accent) 10%, transparent)" : "transparent",
+                  background: isCurrent
+                    ? "color-mix(in srgb, var(--color-accent) 10%, transparent)"
+                    : "transparent",
                   color: isCurrent ? "var(--color-accent)" : "var(--color-text-primary)",
                 }}
-                onMouseEnter={(e) => { if (!isCurrent) e.currentTarget.style.background = "var(--color-bg-hover)"; }}
-                onMouseLeave={(e) => { if (!isCurrent) e.currentTarget.style.background = "transparent"; }}
+                onMouseEnter={(e) => {
+                  if (!isCurrent) e.currentTarget.style.background = "var(--color-bg-hover)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!isCurrent) e.currentTarget.style.background = "transparent";
+                }}
               >
                 <span>{opt.emoji}</span>
                 <span className="font-semibold">{opt.label}</span>
                 <span style={{ color: "var(--color-text-muted)" }}>{opt.desc}</span>
-                {isCurrent && <Check size={12} weight="bold" className="ml-auto" style={{ color: "var(--color-accent)" }} />}
+                {isCurrent && (
+                  <Check
+                    size={12}
+                    weight="bold"
+                    className="ml-auto"
+                    style={{ color: "var(--color-accent)" }}
+                  />
+                )}
               </button>
             );
           })}
@@ -184,7 +212,8 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
   const parentHook = useSession(sessionId);
   const childHook = useSession(activeTab !== sessionId ? activeTab : "");
   const activeHook = activeTab === sessionId ? parentHook : childHook;
-  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel } = activeHook;
+  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel } =
+    activeHook;
 
   const session = useSessionStore((s) => s.sessions[sessionId]);
   const childIds = useSessionStore((s) => s.sessions[sessionId]?.childSessionIds);
@@ -370,10 +399,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             <StatusBadge status={session?.status ?? "idle"} />
 
             {/* Cost — hidden on mobile */}
-            <span
-              className="hidden sm:inline text-xs font-mono font-semibold flex-shrink-0"
-             
-            >
+            <span className="hidden sm:inline text-xs font-mono font-semibold flex-shrink-0">
               ${cost.toFixed(4)}
             </span>
 
@@ -497,7 +523,8 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                   onClick={() => setSidebarTab("details")}
                   className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium cursor-pointer transition-colors flex-1 justify-center"
                   style={{
-                    color: sidebarTab === "details" ? "var(--color-accent)" : "var(--color-text-muted)",
+                    color:
+                      sidebarTab === "details" ? "var(--color-accent)" : "var(--color-text-muted)",
                     borderBottom:
                       sidebarTab === "details" ? "2px solid #4285F4" : "2px solid transparent",
                     background: "transparent",
@@ -512,7 +539,8 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                   onClick={() => setSidebarTab("context")}
                   className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium cursor-pointer transition-colors flex-1 justify-center"
                   style={{
-                    color: sidebarTab === "context" ? "var(--color-accent)" : "var(--color-text-muted)",
+                    color:
+                      sidebarTab === "context" ? "var(--color-accent)" : "var(--color-text-muted)",
                     borderBottom:
                       sidebarTab === "context" ? "2px solid #4285F4" : "2px solid transparent",
                     background: "transparent",

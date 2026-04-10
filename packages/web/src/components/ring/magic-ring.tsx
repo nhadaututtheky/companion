@@ -206,7 +206,7 @@ export function MagicRing() {
         setSelecting(true);
       } else {
         setExpanded(!isExpanded);
-      if (!isExpanded) clearUnread();
+        if (!isExpanded) clearUnread();
       }
     } else {
       setPosition(pos);

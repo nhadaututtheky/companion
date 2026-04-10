@@ -42,7 +42,10 @@ export function createBot(config: BotConfig): Bot {
   // Self-hosted: when no whitelist is configured, allow all (open access)
   const openAccess = config.allowedChatIds.length === 0 && config.allowedUserIds.length === 0;
   if (openAccess) {
-    log.info("No allowedChatIds or allowedUserIds configured — bot accepts all messages (self-hosted mode). Restrict in Settings → Telegram if needed.", { botId: config.botId });
+    log.info(
+      "No allowedChatIds or allowedUserIds configured — bot accepts all messages (self-hosted mode). Restrict in Settings → Telegram if needed.",
+      { botId: config.botId },
+    );
   }
 
   bot.use(async (ctx, next) => {

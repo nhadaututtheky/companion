@@ -286,12 +286,11 @@ function BashOutput({ content, truncated }: { content: string; truncated: boolea
       className="rounded-md max-h-[300px] overflow-y-auto font-mono text-xs"
       style={{ background: "rgba(0,0,0,0.25)" }}
     >
-      <pre
-        className="whitespace-pre-wrap m-0 px-3 py-2"
-        style={{ color: "#e0e0e0" }}
-      >
+      <pre className="whitespace-pre-wrap m-0 px-3 py-2" style={{ color: "#e0e0e0" }}>
         {content}
-        {truncated && <span style={{ color: "var(--color-text-muted)" }}>{"\n... (truncated)"}</span>}
+        {truncated && (
+          <span style={{ color: "var(--color-text-muted)" }}>{"\n... (truncated)"}</span>
+        )}
       </pre>
     </div>
   );
@@ -315,7 +314,9 @@ function ReadOutput({ content, truncated }: { content: string; truncated: boolea
           style={{ color: "var(--color-text-primary)" }}
         >
           {content}
-          {truncated && <span style={{ color: "var(--color-text-muted)" }}>{"\n... (truncated)"}</span>}
+          {truncated && (
+            <span style={{ color: "var(--color-text-muted)" }}>{"\n... (truncated)"}</span>
+          )}
         </pre>
       </div>
     );
@@ -345,10 +346,7 @@ function ReadOutput({ content, truncated }: { content: string; truncated: boolea
               >
                 {lineNum}
               </span>
-              <span
-                className="whitespace-pre pr-3"
-                style={{ color: "var(--color-text-primary)" }}
-              >
+              <span className="whitespace-pre pr-3" style={{ color: "var(--color-text-primary)" }}>
                 {code}
               </span>
             </div>
@@ -373,7 +371,9 @@ function GrepOutput({ content, truncated }: { content: string; truncated: boolea
 
   if (!hasFileMatches) {
     // Fallback: might be files_with_matches mode (just file paths)
-    const isFileList = lines.every((l) => !l.includes("\t") && (l.includes("/") || l.includes("\\")));
+    const isFileList = lines.every(
+      (l) => !l.includes("\t") && (l.includes("/") || l.includes("\\")),
+    );
     if (isFileList && lines.length > 0) {
       return <GlobOutput content={content} truncated={truncated} />;
     }
@@ -452,7 +452,11 @@ function GlobOutput({ content, truncated }: { content: string; truncated: boolea
             key={idx}
             className="flex items-center gap-1.5 px-2 py-0.5 font-mono text-xs hover:bg-white/5"
           >
-            <FileText size={11} weight="regular" style={{ color: "var(--color-text-muted)", flexShrink: 0 }} />
+            <FileText
+              size={11}
+              weight="regular"
+              style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
+            />
             <span style={{ color: "var(--color-text-muted)" }}>{dir}</span>
             <span style={{ color: "var(--color-text-primary)" }}>{name}</span>
           </div>

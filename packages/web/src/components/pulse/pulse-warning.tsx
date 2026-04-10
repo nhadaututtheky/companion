@@ -36,16 +36,19 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
     setShowDetails(false);
   }, [reading]);
 
-  const logPulseAction = useCallback((action: string, content: string) => {
-    useContextFeedStore.getState().pushEvent({
-      sessionId,
-      injectionType: "pulse_guidance",
-      summary: `[pulse] ${action}: "${content.slice(0, 80)}${content.length > 80 ? "…" : ""}"`,
-      charCount: content.length,
-      tokenEstimate: Math.ceil(content.length / 4),
-      timestamp: Date.now(),
-    });
-  }, [sessionId]);
+  const logPulseAction = useCallback(
+    (action: string, content: string) => {
+      useContextFeedStore.getState().pushEvent({
+        sessionId,
+        injectionType: "pulse_guidance",
+        summary: `[pulse] ${action}: "${content.slice(0, 80)}${content.length > 80 ? "…" : ""}"`,
+        charCount: content.length,
+        tokenEstimate: Math.ceil(content.length / 4),
+        timestamp: Date.now(),
+      });
+    },
+    [sessionId],
+  );
 
   const handleSendGuidance = useCallback(() => {
     const text = guidanceText.trim();
@@ -288,7 +291,13 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
 }
 
 /** Signal bar visualization */
-function SignalBars({ signals, topSignal }: { signals: Record<string, number>; topSignal: string }) {
+function SignalBars({
+  signals,
+  topSignal,
+}: {
+  signals: Record<string, number>;
+  topSignal: string;
+}) {
   const sorted = Object.entries(signals).sort((a, b) => b[1] - a[1]);
 
   return (

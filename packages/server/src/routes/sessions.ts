@@ -91,7 +91,10 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
   const app = new Hono();
 
   /** In-memory debate participants per session — cleaned up on session delete */
-  const sessionDebateParticipants = new Map<string, Array<{ modelId: string; provider: string; name: string; personaId?: string }>>();
+  const sessionDebateParticipants = new Map<
+    string,
+    Array<{ modelId: string; provider: string; name: string; personaId?: string }>
+  >();
 
   app.get("/", (c) => {
     const projectSlug = c.req.query("project");
@@ -227,9 +230,10 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     const cliPlatform = body.cliPlatform ?? "claude";
     const model = body.model ?? project?.defaultModel ?? "claude-sonnet-4-6";
     // permissionMode only applies to Claude — other CLIs don't support it
-    const permissionMode = cliPlatform === "claude"
-      ? (body.permissionMode ?? project?.permissionMode ?? "default")
-      : "default";
+    const permissionMode =
+      cliPlatform === "claude"
+        ? (body.permissionMode ?? project?.permissionMode ?? "default")
+        : "default";
 
     // Resolve template variables if a templateId and templateVars are provided
     let resolvedPrompt = body.prompt;
@@ -258,10 +262,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     // Resolve persona → identityPrompt
     const persona = body.personaId ? resolvePersona(body.personaId) : undefined;
     if (body.personaId && !persona) {
-      return c.json(
-        { success: false, error: "Unknown persona ID" } satisfies ApiResponse,
-        400,
-      );
+      return c.json({ success: false, error: "Unknown persona ID" } satisfies ApiResponse, 400);
     }
 
     try {
@@ -270,7 +271,10 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         const validClaude = ALLOWED_MODELS as readonly string[];
         if (body.model && !validClaude.includes(body.model)) {
           return c.json(
-            { success: false, error: `Invalid model for Claude: ${body.model}` } satisfies ApiResponse,
+            {
+              success: false,
+              error: `Invalid model for Claude: ${body.model}`,
+            } satisfies ApiResponse,
             400,
           );
         }
@@ -755,7 +759,10 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     const busyStatuses = new Set(["busy", "compacting", "starting"]);
     if (busyStatuses.has(session.state.status)) {
       return c.json(
-        { success: false, error: "Session is busy — wait for idle before switching persona" } satisfies ApiResponse,
+        {
+          success: false,
+          error: "Session is busy — wait for idle before switching persona",
+        } satisfies ApiResponse,
         409,
       );
     }
@@ -765,16 +772,16 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     // Validate persona ID if provided
     const persona = personaId ? resolvePersona(personaId) : null;
     if (personaId && !persona) {
-      return c.json(
-        { success: false, error: "Unknown persona ID" } satisfies ApiResponse,
-        400,
-      );
+      return c.json({ success: false, error: "Unknown persona ID" } satisfies ApiResponse, 400);
     }
 
     // Update identity prompt on in-memory session
     if (persona) {
       session.identityPrompt = persona.systemPrompt;
-      bridge.sendUserMessage(sessionId, `[Persona switched to: ${persona.name}]\n\n${persona.systemPrompt}`);
+      bridge.sendUserMessage(
+        sessionId,
+        `[Persona switched to: ${persona.name}]\n\n${persona.systemPrompt}`,
+      );
     } else {
       session.identityPrompt = undefined;
       bridge.sendUserMessage(sessionId, "[Persona cleared] Returning to default Claude behavior.");
@@ -827,7 +834,10 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       .join("\n\n");
     if (!content.trim()) {
       return c.json(
-        { success: false, error: "Session has no messages yet — send a message first" } satisfies ApiResponse,
+        {
+          success: false,
+          error: "Session has no messages yet — send a message first",
+        } satisfies ApiResponse,
         400,
       );
     }
@@ -930,12 +940,21 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     // Resolve model via registry
     const resolved = resolveModelProvider(body.model);
     if (!resolved) {
-      return c.json({ success: false, error: `Model "${body.model}" not found in provider registry` } satisfies ApiResponse, 404);
+      return c.json(
+        {
+          success: false,
+          error: `Model "${body.model}" not found in provider registry`,
+        } satisfies ApiResponse,
+        404,
+      );
     }
 
     const participants = sessionDebateParticipants.get(sessionId) ?? [];
     if (participants.some((p) => p.modelId === body.model)) {
-      return c.json({ success: false, error: "Model already in debate" } satisfies ApiResponse, 409);
+      return c.json(
+        { success: false, error: "Model already in debate" } satisfies ApiResponse,
+        409,
+      );
     }
 
     participants.push({
@@ -951,17 +970,33 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     if (session) {
       const msg = JSON.stringify({
         type: "debate_participant_added",
-        model: { id: resolved.model.id, name: resolved.model.name, provider: resolved.provider.id, personaId: body.personaId },
+        model: {
+          id: resolved.model.id,
+          name: resolved.model.name,
+          provider: resolved.provider.id,
+          personaId: body.personaId,
+        },
       });
       for (const ws of session.browserSockets) {
-        try { ws.send(msg); } catch { /* socket error */ }
+        try {
+          ws.send(msg);
+        } catch {
+          /* socket error */
+        }
       }
     }
 
-    return c.json({
-      success: true,
-      data: { modelId: resolved.model.id, name: resolved.model.name, provider: resolved.provider.id },
-    } satisfies ApiResponse, 201);
+    return c.json(
+      {
+        success: true,
+        data: {
+          modelId: resolved.model.id,
+          name: resolved.model.name,
+          provider: resolved.provider.id,
+        },
+      } satisfies ApiResponse,
+      201,
+    );
   });
 
   /** DELETE /sessions/:id/debate/participants/:modelId — remove model from debate */
@@ -983,7 +1018,11 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     if (session) {
       const msg = JSON.stringify({ type: "debate_participant_removed", modelId });
       for (const ws of session.browserSockets) {
-        try { ws.send(msg); } catch { /* socket error */ }
+        try {
+          ws.send(msg);
+        } catch {
+          /* socket error */
+        }
       }
     }
 
@@ -1015,7 +1054,10 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
 
     const participants = sessionDebateParticipants.get(sessionId) ?? [];
     if (participants.length === 0) {
-      return c.json({ success: false, error: "No debate participants tagged" } satisfies ApiResponse, 400);
+      return c.json(
+        { success: false, error: "No debate participants tagged" } satisfies ApiResponse,
+        400,
+      );
     }
 
     const topic = body.topic;
@@ -1057,27 +1099,34 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
             costUsd,
           });
           for (const ws of session.browserSockets) {
-            try { ws.send(msg); } catch { /* socket error */ }
+            try {
+              ws.send(msg);
+            } catch {
+              /* socket error */
+            }
           }
         },
       );
 
-      return c.json({
-        success: true,
-        data: {
-          channelId: state.channelId,
-          topic: state.topic,
-          format: state.format,
-          agents: state.agents.map((a) => ({
-            id: a.id,
-            label: a.label,
-            model: a.model,
-            modelLabel: a.modelLabel,
-            personaId: a.personaId,
-            personaLabel: a.personaLabel,
-          })),
-        },
-      } satisfies ApiResponse, 201);
+      return c.json(
+        {
+          success: true,
+          data: {
+            channelId: state.channelId,
+            topic: state.topic,
+            format: state.format,
+            agents: state.agents.map((a) => ({
+              id: a.id,
+              label: a.label,
+              model: a.model,
+              modelLabel: a.modelLabel,
+              personaId: a.personaId,
+              personaLabel: a.personaLabel,
+            })),
+          },
+        } satisfies ApiResponse,
+        201,
+      );
     } catch (err) {
       log.error("Failed to start session debate round", { sessionId, error: String(err) });
       return c.json({ success: false, error: "Failed to start debate" } satisfies ApiResponse, 500);
@@ -1101,18 +1150,27 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
 
     const parentSession = bridge.getSession(parentId);
     if (!parentSession) {
-      return c.json({ success: false, error: "Parent session not active" } satisfies ApiResponse, 404);
+      return c.json(
+        { success: false, error: "Parent session not active" } satisfies ApiResponse,
+        404,
+      );
     }
 
     const parentRecord = getSessionRecord(parentId);
     if (!parentRecord) {
-      return c.json({ success: false, error: "Parent session not found" } satisfies ApiResponse, 404);
+      return c.json(
+        { success: false, error: "Parent session not found" } satisfies ApiResponse,
+        404,
+      );
     }
 
     const activeCount = countActiveSessions();
     if (activeCount >= getMaxSessions()) {
       return c.json(
-        { success: false, error: `Session limit reached (${getMaxSessions()} active)` } satisfies ApiResponse,
+        {
+          success: false,
+          error: `Session limit reached (${getMaxSessions()} active)`,
+        } satisfies ApiResponse,
         429,
       );
     }
@@ -1166,39 +1224,62 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         childModel,
       });
 
-      log.info("Child session spawned", { parentId, childSessionId, name: body.name, role: body.role });
-      return c.json({
-        success: true,
-        data: { sessionId: childSessionId, shortId: childShortId, name: body.name, role: body.role },
-      } satisfies ApiResponse, 201);
+      log.info("Child session spawned", {
+        parentId,
+        childSessionId,
+        name: body.name,
+        role: body.role,
+      });
+      return c.json(
+        {
+          success: true,
+          data: {
+            sessionId: childSessionId,
+            shortId: childShortId,
+            name: body.name,
+            role: body.role,
+          },
+        } satisfies ApiResponse,
+        201,
+      );
     } catch (err) {
       log.error("Failed to spawn child session", { parentId, error: String(err) });
-      return c.json({ success: false, error: "Failed to spawn child session" } satisfies ApiResponse, 500);
+      return c.json(
+        { success: false, error: "Failed to spawn child session" } satisfies ApiResponse,
+        500,
+      );
     }
   });
 
   // Wake an idle child session with a message
-  app.post("/:id/wake", zValidator("json", z.object({ message: z.string().min(1).max(10000) })), (c) => {
-    const sessionId = c.req.param("id");
-    const { message } = c.req.valid("json");
+  app.post(
+    "/:id/wake",
+    zValidator("json", z.object({ message: z.string().min(1).max(10000) })),
+    (c) => {
+      const sessionId = c.req.param("id");
+      const { message } = c.req.valid("json");
 
-    const session = bridge.getSession(sessionId);
-    if (!session) {
-      return c.json({ success: false, error: "Session not active" } satisfies ApiResponse, 404);
-    }
+      const session = bridge.getSession(sessionId);
+      if (!session) {
+        return c.json({ success: false, error: "Session not active" } satisfies ApiResponse, 404);
+      }
 
-    const status = session.state.status;
-    if (status === "ended" || status === "error") {
-      return c.json(
-        { success: false, error: `Session is ${status} — cannot wake. Consider re-spawning.` } satisfies ApiResponse,
-        400,
-      );
-    }
+      const status = session.state.status;
+      if (status === "ended" || status === "error") {
+        return c.json(
+          {
+            success: false,
+            error: `Session is ${status} — cannot wake. Consider re-spawning.`,
+          } satisfies ApiResponse,
+          400,
+        );
+      }
 
-    bridge.sendUserMessage(sessionId, message, "wake");
-    log.info("Session woken with message", { sessionId, messageLength: message.length });
-    return c.json({ success: true } satisfies ApiResponse);
-  });
+      bridge.sendUserMessage(sessionId, message, "wake");
+      log.info("Session woken with message", { sessionId, messageLength: message.length });
+      return c.json({ success: true } satisfies ApiResponse);
+    },
+  );
 
   // List child sessions of a parent
   app.get("/:id/children", (c) => {

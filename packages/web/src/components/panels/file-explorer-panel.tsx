@@ -87,10 +87,7 @@ function CodeViewer({ content, ext }: { content: string; ext: string }) {
       </div>
 
       {/* Code content */}
-      <pre
-        className="flex-1 m-0 py-2 pl-3 whitespace-pre overflow-x-auto"
-       
-      >
+      <pre className="flex-1 m-0 py-2 pl-3 whitespace-pre overflow-x-auto">
         {lines.map((line, i) => (
           <div key={i}>
             <SyntaxLine line={line} ext={ext} />
@@ -308,11 +305,7 @@ function TreeNode({
               onSelect={onSelect}
             />
           ))}
-          {children.length === 0 && (
-            <div className="text-xs pl-8 py-0.5">
-              (empty)
-            </div>
-          )}
+          {children.length === 0 && <div className="text-xs pl-8 py-0.5">(empty)</div>}
         </div>
       )}
     </div>
@@ -542,7 +535,6 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
         <button
           onClick={onClose}
           className="p-1 rounded cursor-pointer"
-         
           aria-label="Close file explorer"
         >
           <X size={14} weight="bold" />
@@ -598,12 +590,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
               >
                 <div className="flex items-center gap-2 min-w-0">
                   {fileIcon(activeTab.ext)}
-                  <span
-                    className="text-xs font-mono font-semibold truncate"
-                   
-                  >
-                    {activeTab.name}
-                  </span>
+                  <span className="text-xs font-mono font-semibold truncate">{activeTab.name}</span>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button
@@ -632,9 +619,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
               <div className="flex-1 overflow-auto">
                 {fileLoading && (
                   <div className="flex items-center justify-center h-full">
-                    <span className="text-xs">
-                      Loading...
-                    </span>
+                    <span className="text-xs">Loading...</span>
                   </div>
                 )}
                 {fileError && (
@@ -668,9 +653,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
             </>
           ) : (
             <div className="flex items-center justify-center h-full">
-              <span className="text-xs">
-                Select a file to view
-              </span>
+              <span className="text-xs">Select a file to view</span>
             </div>
           )}
         </div>

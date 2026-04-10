@@ -278,7 +278,11 @@ export function MessageComposer({
             disabled={!hasContent || disabled}
             className="flex-shrink-0 p-1.5 rounded-lg transition-all cursor-pointer disabled:opacity-40"
             style={{
-              background: hasContent ? (isRunning ? "#D97706" : "#34A853") : "var(--color-bg-elevated)",
+              background: hasContent
+                ? isRunning
+                  ? "#D97706"
+                  : "#34A853"
+                : "var(--color-bg-elevated)",
               color: hasContent ? "#fff" : "var(--color-text-muted)",
             }}
             aria-label={isRunning ? "Interrupt and send" : "Send message"}

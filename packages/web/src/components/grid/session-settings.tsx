@@ -192,16 +192,10 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
         className="flex items-center justify-between px-3 py-2"
         style={{ borderBottom: "1px solid var(--color-border)" }}
       >
-        <span
-          className="text-xs font-semibold uppercase"
-         
-        >
-          Session Settings
-        </span>
+        <span className="text-xs font-semibold uppercase">Session Settings</span>
         <button
           onClick={onClose}
           className="p-0.5 rounded cursor-pointer"
-         
           aria-label="Close settings"
         >
           <X size={12} weight="bold" aria-hidden="true" />
@@ -209,26 +203,15 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
       </div>
 
       {loading ? (
-        <div className="px-3 py-4 text-xs">
-          Loading...
-        </div>
+        <div className="px-3 py-4 text-xs">Loading...</div>
       ) : (
         <div className="flex flex-col">
           {/* Idle Timeout */}
           <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--color-border)" }}>
             <div className="flex items-center gap-1.5 mb-2">
               <Timer size={12} aria-hidden="true" />
-              <span
-                className="text-xs font-semibold"
-               
-              >
-                Idle Timeout
-              </span>
-              {saving && (
-                <span className="ml-auto text-xs">
-                  Saving...
-                </span>
-              )}
+              <span className="text-xs font-semibold">Idle Timeout</span>
+              {saving && <span className="ml-auto text-xs">Saving...</span>}
             </div>
             <div className="flex flex-wrap gap-1">
               {TIMEOUT_OPTIONS.map((opt) => {
@@ -262,12 +245,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
                 aria-hidden="true"
               />
               <div className="flex flex-col gap-0.5">
-                <span
-                  className="text-xs font-semibold"
-                 
-                >
-                  Stream to Telegram
-                </span>
+                <span className="text-xs font-semibold">Stream to Telegram</span>
                 <span className="text-xs">
                   Use <code style={{ fontFamily: "var(--font-mono)" }}>/stream</code> in Telegram to
                   attach to this session and see messages in real time.
@@ -298,15 +276,8 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
                 )}
               </div>
               <div className="flex flex-col">
-                <span
-                  className="text-xs font-semibold"
-                 
-                >
-                  Keep Alive
-                </span>
-                <span className="text-xs">
-                  Prevents auto-kill on idle
-                </span>
+                <span className="text-xs font-semibold">Keep Alive</span>
+                <span className="text-xs">Prevents auto-kill on idle</span>
               </div>
             </button>
           </div>
@@ -314,17 +285,8 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
           {/* Compact Mode */}
           <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--color-border)" }}>
             <div className="flex items-center gap-1.5 mb-2">
-              <ArrowsClockwise
-                size={12}
-               
-                aria-hidden="true"
-              />
-              <span
-                className="text-xs font-semibold"
-               
-              >
-                Auto-Compact
-              </span>
+              <ArrowsClockwise size={12} aria-hidden="true" />
+              <span className="text-xs font-semibold">Auto-Compact</span>
             </div>
             <div className="flex flex-wrap gap-1">
               {(["manual", "smart", "aggressive"] as CompactMode[]).map((mode) => {
@@ -363,22 +325,11 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
           {/* Cost Budget */}
           <div className="px-3 py-2.5">
             <div className="flex items-center gap-1.5 mb-2">
-              <CurrencyDollar
-                size={12}
-               
-                aria-hidden="true"
-              />
-              <span
-                className="text-xs font-semibold"
-               
-              >
-                Cost Budget
-              </span>
+              <CurrencyDollar size={12} aria-hidden="true" />
+              <span className="text-xs font-semibold">Cost Budget</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs">
-                $
-              </span>
+              <span className="text-xs">$</span>
               <input
                 type="number"
                 min="0"

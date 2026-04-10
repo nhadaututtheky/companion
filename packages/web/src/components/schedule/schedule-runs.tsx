@@ -88,9 +88,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
         >
           <div className="flex items-center gap-2">
             <ClockCounterClockwise size={14} style={{ color: "#4285F4" }} />
-            <span className="text-sm font-semibold">
-              Run History
-            </span>
+            <span className="text-sm font-semibold">Run History</span>
             <span
               className="text-xs px-1.5 py-0.5 rounded"
               style={{
@@ -104,7 +102,6 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
           <button
             onClick={loadRuns}
             className="p-1 rounded cursor-pointer"
-           
             aria-label="Refresh"
             title="Refresh"
           >
@@ -129,9 +126,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
           ) : runs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 gap-1">
               <ClockCounterClockwise size={24} />
-              <p className="text-xs">
-                No runs yet
-              </p>
+              <p className="text-xs">No runs yet</p>
             </div>
           ) : (
             <div className="flex flex-col">
@@ -151,12 +146,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
                     {/* Details */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span
-                          className="text-xs font-medium"
-                         
-                        >
-                          {cfg.label}
-                        </span>
+                        <span className="text-xs font-medium">{cfg.label}</span>
                         {run.sessionId && (
                           <span
                             className="text-xs font-mono truncate max-w-24"
@@ -204,11 +194,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
           className="px-4 py-2 flex justify-end"
           style={{ borderTop: "1px solid var(--color-border)" }}
         >
-          <button
-            onClick={onClose}
-            className="px-3 py-1.5 rounded-lg text-xs cursor-pointer"
-           
-          >
+          <button onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs cursor-pointer">
             Close
           </button>
         </div>

@@ -83,7 +83,7 @@ describe("DebouncedWriter", () => {
 
     writer.push(1);
     await sleep(DELAY / 2); // halfway through first timer
-    writer.push(2);         // resets timer
+    writer.push(2); // resets timer
     await sleep(DELAY / 2); // still before the new deadline
 
     expect(calls).toHaveLength(0); // no flush yet
@@ -116,7 +116,9 @@ describe("DebouncedWriter", () => {
   test("flush() on empty buffer does not call flushFn", () => {
     let called = false;
     const writer = new DebouncedWriter<number>({
-      flushFn: () => { called = true; },
+      flushFn: () => {
+        called = true;
+      },
       delayMs: DELAY,
     });
 
@@ -148,7 +150,9 @@ describe("DebouncedWriter", () => {
   // ── 9. flushFn error is caught and does not throw ────────────────────────
   test("errors thrown by flushFn are caught and do not propagate", () => {
     const writer = new DebouncedWriter<number>({
-      flushFn: () => { throw new Error("write failed"); },
+      flushFn: () => {
+        throw new Error("write failed");
+      },
       delayMs: DELAY,
     });
 

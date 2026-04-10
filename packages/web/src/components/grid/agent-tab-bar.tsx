@@ -25,7 +25,12 @@ interface AgentTabBarProps {
   onSpawnClick?: () => void;
 }
 
-export function AgentTabBar({ parentSessionId, activeTab, onTabChange, onSpawnClick }: AgentTabBarProps) {
+export function AgentTabBar({
+  parentSessionId,
+  activeTab,
+  onTabChange,
+  onSpawnClick,
+}: AgentTabBarProps) {
   const childIds = useSessionStore((s) => s.sessions[parentSessionId]?.childSessionIds ?? []);
   const sessions = useSessionStore((s) => s.sessions);
 
@@ -123,8 +128,12 @@ export function AgentTabBar({ parentSessionId, activeTab, onTabChange, onSpawnCl
           onClick={onSpawnClick}
           className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs cursor-pointer flex-shrink-0 transition-colors"
           style={{ color: "var(--color-text-muted)" }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = "var(--color-accent)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = "var(--color-text-muted)"; }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "var(--color-accent)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "var(--color-text-muted)";
+          }}
           aria-label="Spawn new agent"
           title="Spawn new agent"
         >

@@ -152,10 +152,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
             <div>
               {Object.entries(grouped).map(([category, tmpls]) => (
                 <div key={category} className="mb-5">
-                  <h3
-                    className="text-xs font-bold uppercase tracking-wider mb-2"
-                   
-                  >
+                  <h3 className="text-xs font-bold uppercase tracking-wider mb-2">
                     {CATEGORY_LABELS[category] ?? category}
                   </h3>
                   <div
@@ -185,12 +182,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <span style={{ fontSize: 18 }}>{t.icon}</span>
-                          <span
-                            className="text-sm font-semibold"
-                           
-                          >
-                            {t.name}
-                          </span>
+                          <span className="text-sm font-semibold">{t.name}</span>
                         </div>
                         <span
                           className="text-xs"
@@ -224,12 +216,8 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
               <div className="flex items-center gap-2 mb-4">
                 <span style={{ fontSize: 24 }}>{selected.icon}</span>
                 <div>
-                  <h3 className="text-sm font-bold">
-                    {selected.name}
-                  </h3>
-                  <p className="text-xs">
-                    {selected.description}
-                  </p>
+                  <h3 className="text-sm font-bold">{selected.name}</h3>
+                  <p className="text-xs">{selected.description}</p>
                 </div>
               </div>
 
@@ -254,12 +242,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
               </div>
 
               {/* Topic */}
-              <label
-                className="block mb-1 text-xs font-medium"
-               
-              >
-                Topic / Description *
-              </label>
+              <label className="block mb-1 text-xs font-medium">Topic / Description *</label>
               <textarea
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
@@ -280,10 +263,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
               />
 
               {/* Cost cap */}
-              <label
-                className="block mb-1 text-xs font-medium"
-               
-              >
+              <label className="block mb-1 text-xs font-medium">
                 Cost Cap: ${costCap.toFixed(2)}
               </label>
               <input

@@ -10,7 +10,12 @@ import {
   EXIT_PLAN_MAX_RETRIES,
   EXIT_PLAN_RETRY_DELAY_MS,
 } from "@companion/shared";
-import type { CLIPlatform, CLIProcess, AdapterLaunchOptions, NormalizedMessage } from "@companion/shared";
+import type {
+  CLIPlatform,
+  CLIProcess,
+  AdapterLaunchOptions,
+  NormalizedMessage,
+} from "@companion/shared";
 import { getAdapter } from "./adapters/adapter-registry.js";
 
 const log = createLogger("cli-launcher");

@@ -129,8 +129,21 @@ export function hasGrammar(language: string): boolean {
  */
 export function getAvailableGrammars(): string[] {
   return [
-    "typescript", "tsx", "javascript", "python", "rust", "go", "java",
-    "c", "cpp", "c_sharp", "ruby", "php", "swift", "css", "vue",
+    "typescript",
+    "tsx",
+    "javascript",
+    "python",
+    "rust",
+    "go",
+    "java",
+    "c",
+    "cpp",
+    "c_sharp",
+    "ruby",
+    "php",
+    "swift",
+    "css",
+    "vue",
   ].filter(hasGrammar);
 }
 

@@ -83,7 +83,6 @@ function ThinkingSection({ blocks }: { blocks: ThinkingBlock[] }) {
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-2 w-full px-3 py-2 text-xs cursor-pointer"
-       
         aria-expanded={expanded}
       >
         <Brain size={14} weight="bold" style={{ color: "#a855f7" }} />
@@ -136,17 +135,21 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
   // Separate file-change tools (Edit/Write) from other tools
   const fileChangeTools = tools.filter(
     (t) =>
-      (t.name === "Edit" && t.input.file_path && t.input.old_string !== undefined && t.input.new_string !== undefined) ||
-      (t.name === "Write" && (t.input.file_path || t.input.path) && t.input.content !== undefined && t.input.old_string === undefined),
+      (t.name === "Edit" &&
+        t.input.file_path &&
+        t.input.old_string !== undefined &&
+        t.input.new_string !== undefined) ||
+      (t.name === "Write" &&
+        (t.input.file_path || t.input.path) &&
+        t.input.content !== undefined &&
+        t.input.old_string === undefined),
   );
   const otherTools = tools.filter((t) => !fileChangeTools.includes(t));
 
   return (
     <div className="my-2 space-y-1.5">
       {/* Aggregated diff summary for Edit/Write tools */}
-      {fileChangeTools.length > 0 && (
-        <DiffSummaryBlock tools={fileChangeTools} />
-      )}
+      {fileChangeTools.length > 0 && <DiffSummaryBlock tools={fileChangeTools} />}
 
       {otherTools.map((tool) => {
         const result = results?.find((r) => r.toolUseId === tool.id);
@@ -416,12 +419,7 @@ function MessageBubble({
         }}
       >
         <Wrench size={14} weight="bold" style={{ color: "#4285F4", flexShrink: 0, marginTop: 2 }} />
-        <pre
-          className="text-xs font-mono m-0 whitespace-pre-wrap"
-         
-        >
-          {msg.content}
-        </pre>
+        <pre className="text-xs font-mono m-0 whitespace-pre-wrap">{msg.content}</pre>
       </div>
     );
   }
@@ -568,9 +566,7 @@ export function MessageFeed({ messages, sessionId = "", onScrollToRef }: Message
     return (
       <div className="flex flex-col items-center justify-center flex-1 gap-3">
         <Robot size={36} />
-        <p className="text-sm">
-          Send a message to start the session
-        </p>
+        <p className="text-sm">Send a message to start the session</p>
       </div>
     );
   }

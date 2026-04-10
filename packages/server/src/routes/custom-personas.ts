@@ -124,31 +124,27 @@ export function customPersonaRoutes(): Hono {
   });
 
   // POST /clone/:builtInId — clone a built-in persona
-  routes.post(
-    "/clone/:builtInId",
-    zValidator("json", cloneOverridesSchema),
-    (c) => {
-      const builtInId = c.req.param("builtInId");
-      const body = c.req.valid("json");
+  routes.post("/clone/:builtInId", zValidator("json", cloneOverridesSchema), (c) => {
+    const builtInId = c.req.param("builtInId");
+    const body = c.req.valid("json");
 
-      try {
-        const persona = cloneBuiltInPersona(builtInId, body ?? undefined);
-        return c.json({ success: true, data: persona } satisfies ApiResponse, 201);
-      } catch (err) {
-        const msg = String(err);
-        if (msg.includes("not found")) {
-          return c.json({ success: false, error: msg } satisfies ApiResponse, 404);
-        }
-        if (msg.includes("Maximum")) {
-          return c.json({ success: false, error: msg } satisfies ApiResponse, 409);
-        }
-        return c.json(
-          { success: false, error: "Failed to clone persona" } satisfies ApiResponse,
-          500,
-        );
+    try {
+      const persona = cloneBuiltInPersona(builtInId, body ?? undefined);
+      return c.json({ success: true, data: persona } satisfies ApiResponse, 201);
+    } catch (err) {
+      const msg = String(err);
+      if (msg.includes("not found")) {
+        return c.json({ success: false, error: msg } satisfies ApiResponse, 404);
       }
-    },
-  );
+      if (msg.includes("Maximum")) {
+        return c.json({ success: false, error: msg } satisfies ApiResponse, 409);
+      }
+      return c.json(
+        { success: false, error: "Failed to clone persona" } satisfies ApiResponse,
+        500,
+      );
+    }
+  });
 
   return routes;
 }

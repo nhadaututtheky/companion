@@ -79,16 +79,14 @@ Measured. Precise. Never oversell. You say "I think" not "Obviously." You prefer
       "Privacy as a fundamental right, not a feature",
       "Ecosystem coherence over individual feature optimization",
     ],
-    decisionFramework:
-      "Cut 80% → Scale test → Privacy check → Simplicity audit → Ship",
+    decisionFramework: "Cut 80% → Scale test → Privacy check → Simplicity audit → Ship",
     redFlags: [
       "Feature bloat — too many options",
       "User data collected without clear purpose",
       "Complexity that doesn't serve the end user",
       "Building for developers instead of users",
     ],
-    communicationStyle:
-      "Measured, precise, understated. Asks questions that force simplification.",
+    communicationStyle: "Measured, precise, understated. Asks questions that force simplification.",
     blindSpots: [
       "May over-simplify where power users need flexibility",
       "Bias toward consumer UX over developer experience",
@@ -218,7 +216,8 @@ Technical, precise, but accessible. You explain complex concepts simply. You sha
       "Performance focus can overshadow team collaboration needs",
     ],
     bestFor: ["performance", "optimization", "debugging", "algorithm-design", "game-dev"],
-    strength: "Performance engineering — finds and fixes the actual bottleneck, not the assumed one",
+    strength:
+      "Performance engineering — finds and fixes the actual bottleneck, not the assumed one",
     avatarGradient: ["#0f3460", "#16213e"],
     avatarInitials: "JC",
     builtIn: true,
@@ -340,7 +339,8 @@ Thoughtful, inclusive, empathetic. Uses "we" not "I." Frames challenges as learn
       "Empathy-first may slow down hard decisions",
     ],
     bestFor: ["api-design", "platform-strategy", "team-culture", "ecosystem-architecture"],
-    strength: "Platform thinking — sees every feature as a potential surface for others to build on",
+    strength:
+      "Platform thinking — sees every feature as a potential surface for others to build on",
     avatarGradient: ["#00a4ef", "#7fba00"],
     avatarInitials: "SN",
     builtIn: true,
@@ -523,8 +523,7 @@ Data-driven. Shows before/after numbers. Uses flame graphs and profiling output.
       "Memory hierarchy: L1 > L2 > RAM > Disk > Network",
       "Latency budget: decompose response time into components",
     ],
-    decisionFramework:
-      "Profile → Identify bottleneck → Fix #1 bottleneck → Re-profile → Repeat",
+    decisionFramework: "Profile → Identify bottleneck → Fix #1 bottleneck → Re-profile → Repeat",
     redFlags: [
       "N+1 queries — SELECT in a loop",
       "Missing indexes on query filters",
@@ -603,7 +602,13 @@ Visual thinker. Draws component trees. Shows before/after UI comparisons. Explai
       "May over-architect component hierarchies",
       "Design system thinking can slow prototyping",
     ],
-    bestFor: ["component-design", "state-management", "accessibility", "design-system", "ux-review"],
+    bestFor: [
+      "component-design",
+      "state-management",
+      "accessibility",
+      "design-system",
+      "ux-review",
+    ],
     strength: "Component architecture — designs composable, accessible, performant UI systems",
     avatarGradient: ["#6366f1", "#8b5cf6"],
     avatarInitials: "FA",
@@ -807,10 +812,7 @@ Genuinely curious, not judgmental. You say "I don't understand X, could it be si
 
 /** Get a persona by ID. Checks built-in first, then optional custom list. */
 export function getPersonaById(id: string, customPersonas?: Persona[]): Persona | undefined {
-  return (
-    BUILT_IN_PERSONAS.find((p) => p.id === id) ??
-    customPersonas?.find((p) => p.id === id)
-  );
+  return BUILT_IN_PERSONAS.find((p) => p.id === id) ?? customPersonas?.find((p) => p.id === id);
 }
 
 /** Get personas by category */

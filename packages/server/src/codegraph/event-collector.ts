@@ -73,7 +73,9 @@ class SessionActivityTracker {
     }
   }
 
-  getHotFiles(limit = 10): Array<{ filePath: string; touchCount: number; nodeIds: string[]; toolAction: string }> {
+  getHotFiles(
+    limit = 10,
+  ): Array<{ filePath: string; touchCount: number; nodeIds: string[]; toolAction: string }> {
     return [...this.touches.entries()]
       .sort((a, b) => b[1].count - a[1].count)
       .slice(0, limit)
@@ -216,16 +218,16 @@ export function matchNodesToFiles(
           .select({ id: codeNodes.id })
           .from(codeNodes)
           .where(
-            and(
-              eq(codeNodes.projectSlug, projectSlug),
-              like(codeNodes.filePath, `%${relPath}`),
-            ),
+            and(eq(codeNodes.projectSlug, projectSlug), like(codeNodes.filePath, `%${relPath}`)),
           )
           .all();
       }
 
       if (nodes.length > 0) {
-        result.set(relPath, nodes.map((n) => String(n.id)));
+        result.set(
+          relPath,
+          nodes.map((n) => String(n.id)),
+        );
       }
     }
   } catch (err) {
@@ -276,7 +278,10 @@ export function processToolEvent(
 
   // Queue newly discovered nodes for semantic description (Phase 4)
   if (allNodeIds.length > 0) {
-    queueNodeDescription(projectSlug, allNodeIds.map(Number).filter((n) => !isNaN(n)));
+    queueNodeDescription(
+      projectSlug,
+      allNodeIds.map(Number).filter((n) => !isNaN(n)),
+    );
   }
 
   return {

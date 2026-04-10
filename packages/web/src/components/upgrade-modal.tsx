@@ -24,8 +24,10 @@ const BANK_ID = "tpbank";
 const BANK_ACCOUNT = "04162263666";
 const BANK_NAME = "NGUYEN VIET NAM";
 
-const POLAR_MONTHLY_URL = "https://buy.polar.sh/polar_cl_bH3oM1b9ub5rugiUyeV4NvdHQf3IhkhtZBRkb0h2bmr";
-const POLAR_YEARLY_URL = "https://buy.polar.sh/polar_cl_CGWIyshnh7Xkodt1CaLkYPG0Z5jL1wjmLmD7Q4CEACZ";
+const POLAR_MONTHLY_URL =
+  "https://buy.polar.sh/polar_cl_bH3oM1b9ub5rugiUyeV4NvdHQf3IhkhtZBRkb0h2bmr";
+const POLAR_YEARLY_URL =
+  "https://buy.polar.sh/polar_cl_CGWIyshnh7Xkodt1CaLkYPG0Z5jL1wjmLmD7Q4CEACZ";
 
 const PRO_FEATURE_HIGHLIGHTS = [
   { icon: <Lightning size={14} weight="fill" />, label: "Unlimited sessions", color: "#f59e0b" },
@@ -91,7 +93,11 @@ export function UpgradeModal() {
       try {
         const res = await fetch(`${PAY_API}/order/${code}`);
         const data = (await res.json()) as { status: string; licenseKey?: string };
-        if (data.status === "fulfilled" || data.status === "delivered" || data.status === "completed") {
+        if (
+          data.status === "fulfilled" ||
+          data.status === "delivered" ||
+          data.status === "completed"
+        ) {
           if (pollRef.current) clearInterval(pollRef.current);
           pollRef.current = null;
           setLicenseKey(data.licenseKey ?? "");
@@ -110,9 +116,18 @@ export function UpgradeModal() {
       const res = await fetch(`${PAY_API}/order/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product: "CMP-PRO", email: email.trim(), name: name.trim() || undefined }),
+        body: JSON.stringify({
+          product: "CMP-PRO",
+          email: email.trim(),
+          name: name.trim() || undefined,
+        }),
       });
-      const data = (await res.json()) as { success: boolean; orderCode: string; amount: number; error?: string };
+      const data = (await res.json()) as {
+        success: boolean;
+        orderCode: string;
+        amount: number;
+        error?: string;
+      };
       if (!data.success) throw new Error(data.error ?? "Order creation failed");
 
       setOrderCode(data.orderCode);
@@ -126,10 +141,9 @@ export function UpgradeModal() {
     }
   }, [email, name, startPolling]);
 
-  const qrUrl =
-    orderCode
-      ? `https://img.vietqr.io/image/${BANK_ID}-${BANK_ACCOUNT}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(orderCode)}&accountName=${encodeURIComponent(BANK_NAME)}`
-      : "";
+  const qrUrl = orderCode
+    ? `https://img.vietqr.io/image/${BANK_ID}-${BANK_ACCOUNT}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(orderCode)}&accountName=${encodeURIComponent(BANK_NAME)}`
+    : "";
 
   if (!showUpgrade || tier === "pro") return null;
 
@@ -194,15 +208,26 @@ export function UpgradeModal() {
             <div className="px-6 pb-4">
               <div
                 className="flex items-center justify-between p-4 rounded-xl"
-                style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
+                style={{
+                  background: "var(--color-bg-elevated)",
+                  border: "1px solid var(--color-border)",
+                }}
               >
                 <div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold" style={{ color: "var(--color-text-primary)" }}>$5</span>
-                    <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>/month</span>
+                    <span
+                      className="text-2xl font-bold"
+                      style={{ color: "var(--color-text-primary)" }}
+                    >
+                      $5
+                    </span>
+                    <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                      /month
+                    </span>
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
-                    or <strong>$39/year</strong> <span style={{ color: "#34A853" }}>(save 35%)</span>
+                    or <strong>$39/year</strong>{" "}
+                    <span style={{ color: "#34A853" }}>(save 35%)</span>
                   </div>
                 </div>
                 <Check size={20} weight="bold" style={{ color: "#34A853" }} />
@@ -275,7 +300,10 @@ export function UpgradeModal() {
 
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+                <label
+                  className="text-xs font-medium"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
                   Email (to receive license key)
                 </label>
                 <input
@@ -294,7 +322,10 @@ export function UpgradeModal() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+                <label
+                  className="text-xs font-medium"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
                   Name (optional)
                 </label>
                 <input
@@ -370,7 +401,10 @@ export function UpgradeModal() {
             {/* Details */}
             <div
               className="flex flex-col gap-2 p-3 rounded-xl text-xs"
-              style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
+              style={{
+                background: "var(--color-bg-elevated)",
+                border: "1px solid var(--color-border)",
+              }}
             >
               <div className="flex items-center justify-between">
                 <span style={{ color: "var(--color-text-muted)" }}>Amount</span>
@@ -402,7 +436,9 @@ export function UpgradeModal() {
               </div>
               <div className="flex items-center justify-between">
                 <span style={{ color: "var(--color-text-muted)" }}>Bank</span>
-                <span style={{ color: "var(--color-text-secondary)" }}>TPBank — {BANK_ACCOUNT}</span>
+                <span style={{ color: "var(--color-text-secondary)" }}>
+                  TPBank — {BANK_ACCOUNT}
+                </span>
               </div>
             </div>
 

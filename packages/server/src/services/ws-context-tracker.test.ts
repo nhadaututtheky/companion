@@ -215,7 +215,7 @@ describe("ws-context-tracker", () => {
 
       checkCostBudget(session);
 
-      const msgs = mockBroadcastToAll.mock.calls.map((c) => (c[1] as any));
+      const msgs = mockBroadcastToAll.mock.calls.map((c) => c[1] as any);
       const critical = msgs.find((m) => m.type === "cost_warning" && m.level === "critical");
       expect(critical).toBeDefined();
       expect(session.state.cost_warned).toBe(2);

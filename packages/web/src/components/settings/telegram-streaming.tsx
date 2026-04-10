@@ -140,9 +140,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
         }}
       >
         <span className="flex items-center gap-2">
-          <span className="text-sm font-medium">
-            {botLabel}
-          </span>
+          <span className="text-sm font-medium">{botLabel}</span>
           {streamEnabled && (
             <span
               className="text-xs px-1.5 py-0.5 rounded-full font-medium"
@@ -152,9 +150,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
             </span>
           )}
         </span>
-        <span className="text-sm font-medium px-2">
-          {collapsed ? "Configure ▸" : "▾ Close"}
-        </span>
+        <span className="text-sm font-medium px-2">{collapsed ? "Configure ▸" : "▾ Close"}</span>
       </button>
 
       {collapsed ? null : (
@@ -171,12 +167,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
             <>
               {/* Target Chat ID */}
               <div className="flex flex-col gap-1.5">
-                <label
-                  className="text-xs font-medium"
-                 
-                >
-                  Target Chat ID
-                </label>
+                <label className="text-xs font-medium">Target Chat ID</label>
                 <input
                   type="text"
                   value={targetChatId}
@@ -192,14 +183,8 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
 
               {/* Target Topic/Thread ID */}
               <div className="flex flex-col gap-1.5">
-                <label
-                  className="text-xs font-medium"
-                 
-                >
-                  Topic / Thread ID{" "}
-                  <span>
-                    (optional, for forum groups)
-                  </span>
+                <label className="text-xs font-medium">
+                  Topic / Thread ID <span>(optional, for forum groups)</span>
                 </label>
                 <input
                   type="text"
@@ -216,12 +201,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
 
               {/* Message format */}
               <div className="flex flex-col gap-1.5">
-                <label
-                  className="text-xs font-medium"
-                 
-                >
-                  Message Format
-                </label>
+                <label className="text-xs font-medium">Message Format</label>
                 <select
                   value={messageFormat}
                   onChange={(e) =>
@@ -241,12 +221,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
 
               {/* Events to stream */}
               <div className="flex flex-col gap-2">
-                <label
-                  className="text-xs font-medium"
-                 
-                >
-                  Events to Stream
-                </label>
+                <label className="text-xs font-medium">Events to Stream</label>
                 <div className="flex flex-wrap gap-2">
                   {EVENT_OPTIONS.map(({ key, label, icon }) => (
                     <button
@@ -331,14 +306,8 @@ function ToggleRow({
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex flex-col gap-0.5">
-        <span className="text-sm font-medium">
-          {label}
-        </span>
-        {description && (
-          <span className="text-xs">
-            {description}
-          </span>
-        )}
+        <span className="text-sm font-medium">{label}</span>
+        {description && <span className="text-xs">{description}</span>}
       </div>
       <button
         role="switch"

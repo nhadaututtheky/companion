@@ -1,12 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
-import {
-  Robot,
-  Wrench,
-  Stop,
-  ChatTeardropDots,
-  ArrowClockwise,
-} from "@phosphor-icons/react";
+import { Robot, Wrench, Stop, ChatTeardropDots, ArrowClockwise } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 
@@ -58,14 +52,14 @@ const ROLE_COLORS: Record<string, string> = {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 /** Extract tool use annotations from debate message content */
-function parseToolBlocks(content: string): Array<{ type: "text" | "tool"; text: string; toolName?: string }> {
+function parseToolBlocks(
+  content: string,
+): Array<{ type: "text" | "tool"; text: string; toolName?: string }> {
   const blocks: Array<{ type: "text" | "tool"; text: string; toolName?: string }> = [];
 
   // Look for tool summary pattern: "---\n*Tools used: X, Y*"
   const toolSummaryMatch = content.match(/\n---\n\*Tools used: (.+)\*$/);
-  const mainContent = toolSummaryMatch
-    ? content.slice(0, toolSummaryMatch.index)
-    : content;
+  const mainContent = toolSummaryMatch ? content.slice(0, toolSummaryMatch.index) : content;
 
   if (mainContent.trim()) {
     blocks.push({ type: "text", text: mainContent.trim() });
@@ -118,13 +112,16 @@ function DebateMessageBubble({ msg }: { msg: DebateMessage }) {
         >
           {msg.role}
         </span>
-        <span className="text-xs ml-auto" style={{ color: "var(--color-text-muted)", fontSize: 10 }}>
+        <span
+          className="text-xs ml-auto"
+          style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+        >
           R{msg.round}
         </span>
       </div>
 
       {/* Content blocks */}
-      {blocks.map((block, i) => (
+      {blocks.map((block, i) =>
         block.type === "text" ? (
           <p
             key={i}
@@ -143,12 +140,15 @@ function DebateMessageBubble({ msg }: { msg: DebateMessage }) {
             }}
           >
             <Wrench size={11} style={{ color: "var(--color-text-muted)" }} aria-hidden="true" />
-            <span className="text-xs font-mono" style={{ color: "var(--color-text-secondary)", fontSize: 10 }}>
+            <span
+              className="text-xs font-mono"
+              style={{ color: "var(--color-text-secondary)", fontSize: 10 }}
+            >
               {block.toolName}
             </span>
           </div>
-        )
-      ))}
+        ),
+      )}
     </div>
   );
 }
@@ -223,7 +223,11 @@ export function DebateFeed({ channelId }: DebateFeedProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <ArrowClockwise size={20} className="animate-spin" style={{ color: "var(--color-text-muted)" }} />
+        <ArrowClockwise
+          size={20}
+          className="animate-spin"
+          style={{ color: "var(--color-text-muted)" }}
+        />
       </div>
     );
   }
@@ -286,17 +290,19 @@ export function DebateFeed({ channelId }: DebateFeedProps) {
           </div>
         ) : (
           <>
-            {[...rounds].sort((a, b) => a - b).map((round) => {
-              const roundMsgs = messages.filter((m) => m.round === round);
-              return (
-                <div key={round} className="flex flex-col gap-2">
-                  <RoundDivider round={round} maxRounds={channel.maxRounds} />
-                  {roundMsgs.map((msg) => (
-                    <DebateMessageBubble key={msg.id} msg={msg} />
-                  ))}
-                </div>
-              );
-            })}
+            {[...rounds]
+              .sort((a, b) => a - b)
+              .map((round) => {
+                const roundMsgs = messages.filter((m) => m.round === round);
+                return (
+                  <div key={round} className="flex flex-col gap-2">
+                    <RoundDivider round={round} maxRounds={channel.maxRounds} />
+                    {roundMsgs.map((msg) => (
+                      <DebateMessageBubble key={msg.id} msg={msg} />
+                    ))}
+                  </div>
+                );
+              })}
           </>
         )}
 

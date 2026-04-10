@@ -214,11 +214,7 @@ describe("DedupStrategy", () => {
   });
 
   it("preserves non-duplicate lines", () => {
-    const lines = [
-      "first unique",
-      ...Array(5).fill("duplicate line"),
-      "second unique",
-    ];
+    const lines = ["first unique", ...Array(5).fill("duplicate line"), "second unique"];
     const input = lines.join("\n");
     const result = strategy.transform(input);
     expect(result).not.toBeNull();
@@ -227,13 +223,7 @@ describe("DedupStrategy", () => {
   });
 
   it("handles blank lines without grouping them", () => {
-    const lines = [
-      "line1",
-      "",
-      "",
-      "",
-      "line2",
-    ];
+    const lines = ["line1", "", "", "", "line2"];
     const input = lines.join("\n");
     const result = strategy.transform(input);
     // Blank lines should not be grouped as duplicates
@@ -409,8 +399,10 @@ describe("RTKPipeline", () => {
 
   it("handles real-world TypeScript error output", () => {
     const pipeline = createDefaultPipeline();
-    const errors = Array.from({ length: 30 }, (_, i) =>
-      `src/components/Widget${i}.tsx(${10 + i},5): error TS2304: Cannot find name 'React'.`
+    const errors = Array.from(
+      { length: 30 },
+      (_, i) =>
+        `src/components/Widget${i}.tsx(${10 + i},5): error TS2304: Cannot find name 'React'.`,
     );
     const input = errors.join("\n");
 

@@ -59,10 +59,17 @@ export function createWikiRoutes(): Hono {
   /** Create a new domain */
   app.post(
     "/",
-    zValidator("json", z.object({
-      slug: z.string().min(2).max(50).regex(/^[a-z0-9][a-z0-9-]*$/),
-      name: z.string().min(1).max(100),
-    })),
+    zValidator(
+      "json",
+      z.object({
+        slug: z
+          .string()
+          .min(2)
+          .max(50)
+          .regex(/^[a-z0-9][a-z0-9-]*$/),
+        name: z.string().min(1).max(100),
+      }),
+    ),
     (c) => {
       const { slug, name } = c.req.valid("json");
       try {
@@ -117,11 +124,14 @@ export function createWikiRoutes(): Hono {
   /** Update an article */
   app.put(
     "/:domain/articles/:slug",
-    zValidator("json", z.object({
-      title: z.string().optional(),
-      content: z.string(),
-      tags: z.array(z.string()).optional(),
-    })),
+    zValidator(
+      "json",
+      z.object({
+        title: z.string().optional(),
+        content: z.string(),
+        tags: z.array(z.string()).optional(),
+      }),
+    ),
     (c) => {
       const { domain, slug } = c.req.param();
       const body = c.req.valid("json");
@@ -176,30 +186,31 @@ export function createWikiRoutes(): Hono {
   });
 
   /** Write core rules */
-  app.put(
-    "/:domain/core",
-    zValidator("json", z.object({ content: z.string() })),
-    (c) => {
-      const { domain } = c.req.param();
-      const { content } = c.req.valid("json");
-      try {
-        writeCore(domain, content);
-        return c.json<ApiResponse>({ success: true });
-      } catch (err) {
-        return c.json<ApiResponse>({ success: false, error: String(err) }, 400);
-      }
-    },
-  );
+  app.put("/:domain/core", zValidator("json", z.object({ content: z.string() })), (c) => {
+    const { domain } = c.req.param();
+    const { content } = c.req.valid("json");
+    try {
+      writeCore(domain, content);
+      return c.json<ApiResponse>({ success: true });
+    } catch (err) {
+      return c.json<ApiResponse>({ success: false, error: String(err) }, 400);
+    }
+  });
 
   // ─── Compilation ────────────────────────────────────────────────────
 
   /** Trigger compilation */
   app.post(
     "/:domain/compile",
-    zValidator("json", z.object({
-      rawFiles: z.array(z.string()).optional(),
-      overwrite: z.boolean().optional(),
-    }).optional()),
+    zValidator(
+      "json",
+      z
+        .object({
+          rawFiles: z.array(z.string()).optional(),
+          overwrite: z.boolean().optional(),
+        })
+        .optional(),
+    ),
     async (c) => {
       const { domain } = c.req.param();
       const body = c.req.valid("json") ?? {};
@@ -222,12 +233,15 @@ export function createWikiRoutes(): Hono {
   /** Search or retrieve relevant articles */
   app.post(
     "/:domain/query",
-    zValidator("json", z.object({
-      query: z.string().min(1),
-      tokenBudget: z.number().int().positive().optional(),
-      includeCore: z.boolean().optional(),
-      mode: z.enum(["search", "retrieve"]).optional(),
-    })),
+    zValidator(
+      "json",
+      z.object({
+        query: z.string().min(1),
+        tokenBudget: z.number().int().positive().optional(),
+        includeCore: z.boolean().optional(),
+        mode: z.enum(["search", "retrieve"]).optional(),
+      }),
+    ),
     (c) => {
       const { domain } = c.req.param();
       const body = c.req.valid("json");
@@ -273,10 +287,13 @@ export function createWikiRoutes(): Hono {
   /** Upload raw content */
   app.post(
     "/:domain/raw",
-    zValidator("json", z.object({
-      filename: z.string().min(1).max(200),
-      content: z.string().min(1),
-    })),
+    zValidator(
+      "json",
+      z.object({
+        filename: z.string().min(1).max(200),
+        content: z.string().min(1),
+      }),
+    ),
     (c) => {
       const { domain } = c.req.param();
       const { filename, content } = c.req.valid("json");

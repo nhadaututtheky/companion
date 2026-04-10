@@ -27,23 +27,23 @@ type LineType = "pass" | "fail" | "summary" | "other";
 
 /** Pass patterns */
 const PASS_PATTERNS = [
-  /^\s*[✓✔☑⦿●]\s/,              // ✓ test name
-  /^\s*\(pass\)/i,               // (pass)
-  /^\s*PASS\s/,                  // PASS src/test.ts
-  /^\s*ok\s+\d+/,               // TAP: ok 1 - test name
+  /^\s*[✓✔☑⦿●]\s/, // ✓ test name
+  /^\s*\(pass\)/i, // (pass)
+  /^\s*PASS\s/, // PASS src/test.ts
+  /^\s*ok\s+\d+/, // TAP: ok 1 - test name
   /^\s*test\s+.+\s+\.\.\.\s+ok/i, // Rust: test foo ... ok
-  /^\s*√\s/,                     // √ test name (Windows)
+  /^\s*√\s/, // √ test name (Windows)
 ];
 
 /** Fail patterns */
 const FAIL_PATTERNS = [
-  /^\s*[✗✘☒✖×]\s/,              // ✗ test name
-  /^\s*\(fail\)/i,               // (fail)
-  /^\s*FAIL\s/,                  // FAIL src/test.ts
-  /^\s*not\s+ok\s+\d+/,         // TAP: not ok 1
+  /^\s*[✗✘☒✖×]\s/, // ✗ test name
+  /^\s*\(fail\)/i, // (fail)
+  /^\s*FAIL\s/, // FAIL src/test.ts
+  /^\s*not\s+ok\s+\d+/, // TAP: not ok 1
   /^\s*test\s+.+\s+\.\.\.\s+FAILED/i, // Rust: test foo ... FAILED
-  /^\s*×\s/,                     // × test name
-  /^\(fail\)\s/,                 // (fail) test name
+  /^\s*×\s/, // × test name
+  /^\(fail\)\s/, // (fail) test name
 ];
 
 /** Summary patterns (keep as-is) */

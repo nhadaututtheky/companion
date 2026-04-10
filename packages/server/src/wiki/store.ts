@@ -8,7 +8,16 @@
  *   wiki/<domain>/raw/         — source material
  */
 
-import { readFileSync, writeFileSync, readdirSync, statSync, mkdirSync, unlinkSync, existsSync, rmSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  readdirSync,
+  statSync,
+  mkdirSync,
+  unlinkSync,
+  existsSync,
+  rmSync,
+} from "node:fs";
 import { join, basename, extname, resolve, sep } from "node:path";
 import { createLogger } from "../logger.js";
 import {
@@ -299,7 +308,10 @@ export function writeCore(domain: string, content: string, cwd?: string): void {
   }
 
   writeFileSync(filePath, content, "utf-8");
-  log.info("Wrote wiki core rules", { domain, tokens: Math.ceil(content.length / CHARS_PER_TOKEN) });
+  log.info("Wrote wiki core rules", {
+    domain,
+    tokens: Math.ceil(content.length / CHARS_PER_TOKEN),
+  });
 }
 
 // ─── Index Management ───────────────────────────────────────────────────────
@@ -367,7 +379,9 @@ function buildIndexContent(domain: string, name: string, articles: ArticleRef[])
   return lines.join("\n") + "\n";
 }
 
-function readIndexMeta(domainPath: string): { domain: string; lastCompiledAt: string | null } | null {
+function readIndexMeta(
+  domainPath: string,
+): { domain: string; lastCompiledAt: string | null } | null {
   const indexPath = join(domainPath, "_index.md");
   if (!existsSync(indexPath)) return null;
 
@@ -390,7 +404,12 @@ function readIndexMeta(domainPath: string): { domain: string; lastCompiledAt: st
  * A raw file is "compiled" if an article lists it in compiledFrom
  * and the article's compiledAt is newer than the raw file's modification time.
  */
-function isRawFileCompiled(domain: string, filename: string, rawModified: Date, cwd?: string): boolean {
+function isRawFileCompiled(
+  domain: string,
+  filename: string,
+  rawModified: Date,
+  cwd?: string,
+): boolean {
   try {
     const root = resolveWikiRoot(cwd);
     const domainPath = safePath(root, domain);
@@ -405,7 +424,11 @@ function isRawFileCompiled(domain: string, filename: string, rawModified: Date, 
       const compiledFrom = (meta.compiled_from ?? meta.compiledFrom ?? []) as string[];
 
       // Check if this raw file is listed in compiledFrom
-      if (compiledFrom.some((src) => src === filename || src === `raw/${filename}` || src.endsWith(`/${filename}`))) {
+      if (
+        compiledFrom.some(
+          (src) => src === filename || src === `raw/${filename}` || src.endsWith(`/${filename}`),
+        )
+      ) {
         // Compare timestamps — compiled if article was compiled after raw file was modified
         const compiledAt = String(meta.compiled_at ?? meta.compiledAt ?? "");
         if (compiledAt) {
@@ -461,7 +484,12 @@ export function readRawFile(domain: string, filename: string, cwd?: string): str
 }
 
 /** Write a raw file */
-export function writeRawFile(domain: string, filename: string, content: string, cwd?: string): void {
+export function writeRawFile(
+  domain: string,
+  filename: string,
+  content: string,
+  cwd?: string,
+): void {
   validateRawFilename(filename);
   const root = resolveWikiRoot(cwd);
   const rawPath = safePath(root, domain, "raw");
@@ -601,7 +629,11 @@ function parseFrontmatter(rawInput: string): { meta: Record<string, unknown>; co
       currentArray = [];
     } else if (value.startsWith("[") && value.endsWith("]")) {
       // Inline array
-      meta[key] = value.slice(1, -1).split(",").map((s) => s.trim()).filter(Boolean);
+      meta[key] = value
+        .slice(1, -1)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
     } else if (value === "true") {
       meta[key] = true;
     } else if (value === "false") {

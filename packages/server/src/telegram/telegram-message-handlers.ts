@@ -161,9 +161,7 @@ export async function handlePhotoMessage(bridge: TelegramBridge, ctx: Context): 
     const blocks: Array<
       | { type: "text"; text: string }
       | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
-    > = [
-      { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
-    ];
+    > = [{ type: "image", source: { type: "base64", media_type: mediaType, data: base64 } }];
 
     if (caption.trim()) {
       blocks.push({ type: "text", text: caption.trim() });

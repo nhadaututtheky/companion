@@ -136,10 +136,7 @@ export function LayoutSelector() {
         title="Layout Presets"
       >
         <ModeIcon size={14} weight={activePresetId ? "fill" : "regular"} />
-        <span
-          className="text-xs font-medium hidden lg:inline"
-         
-        >
+        <span className="text-xs font-medium hidden lg:inline">
           {activePreset?.name ?? "Custom"}
         </span>
         <CaretDown size={10} weight="bold" />
@@ -234,7 +231,6 @@ export function LayoutSelector() {
                         deleteCustomPreset(preset.id);
                       }}
                       className="opacity-0 group-hover:opacity-100 p-0.5 rounded cursor-pointer transition-opacity"
-                     
                       aria-label={`Delete ${preset.name}`}
                     >
                       <Trash size={12} />
@@ -285,7 +281,6 @@ export function LayoutSelector() {
             <button
               onClick={() => setSaving(true)}
               className="flex items-center gap-2 w-full px-3 py-2 cursor-pointer transition-colors text-left"
-             
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "var(--color-bg-elevated)";
               }}

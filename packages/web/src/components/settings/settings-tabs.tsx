@@ -33,14 +33,8 @@ export function SettingSection({
         boxShadow: "var(--shadow-soft)",
       }}
     >
-      <h2 className="text-sm font-semibold mb-1">
-        {title}
-      </h2>
-      {description && (
-        <p className="text-xs mb-4">
-          {description}
-        </p>
-      )}
+      <h2 className="text-sm font-semibold mb-1">{title}</h2>
+      {description && <p className="text-xs mb-4">{description}</p>}
       {children}
     </div>
   );
@@ -61,9 +55,7 @@ export function InputField({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium">
-        {label}
-      </label>
+      <label className="text-xs font-medium">{label}</label>
       <input
         type={type}
         value={value}
@@ -121,12 +113,8 @@ export function AppearanceTab() {
       <SettingSection title="Appearance">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-medium">
-              Theme
-            </span>
-            <span className="text-xs">
-              Switch between light and dark mode
-            </span>
+            <span className="text-sm font-medium">Theme</span>
+            <span className="text-xs">Switch between light and dark mode</span>
           </div>
           <button
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}

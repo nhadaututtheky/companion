@@ -7,12 +7,7 @@
 
 import { existsSync } from "node:fs";
 import { createLogger } from "../logger.js";
-import {
-  listArticles,
-  listRawFiles,
-  readArticle,
-  resolveWikiRoot,
-} from "./store.js";
+import { listArticles, listRawFiles, readArticle, resolveWikiRoot } from "./store.js";
 
 const log = createLogger("wiki:linter");
 
@@ -108,9 +103,7 @@ export function lintDomain(domain: string, cwd?: string): LintResult {
     }
 
     // 3. Check for missing source files (raw deleted after compilation)
-    const missingSourceFiles = compiledFrom.filter(
-      (name) => !rawModTimes.has(name),
-    );
+    const missingSourceFiles = compiledFrom.filter((name) => !rawModTimes.has(name));
 
     if (missingSourceFiles.length > 0) {
       issues.push({

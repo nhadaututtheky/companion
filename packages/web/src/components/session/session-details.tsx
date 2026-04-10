@@ -78,15 +78,8 @@ function StatCard({
     >
       <span style={{ color }}>{icon}</span>
       <div>
-        <p className="text-xs">
-          {label}
-        </p>
-        <p
-          className="text-sm font-semibold font-mono"
-         
-        >
-          {value}
-        </p>
+        <p className="text-xs">{label}</p>
+        <p className="text-sm font-semibold font-mono">{value}</p>
       </div>
     </div>
   );
@@ -185,7 +178,10 @@ function CompactModeControl({ sessionId }: { sessionId: string }) {
                 }}
                 className="flex-1"
               />
-              <span className="text-xs font-mono w-8 text-right" style={{ color: "var(--color-text-primary)" }}>
+              <span
+                className="text-xs font-mono w-8 text-right"
+                style={{ color: "var(--color-text-primary)" }}
+              >
                 {threshold}%
               </span>
             </div>
@@ -239,53 +235,26 @@ function RTKSavingsCard({
     >
       <div className="flex items-center gap-2 mb-2">
         <span style={{ color: "var(--color-success)", fontSize: 14 }}>⚡</span>
-        <span
-          className="text-xs font-semibold"
-         
-        >
-          RTK Savings
-        </span>
+        <span className="text-xs font-semibold">RTK Savings</span>
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div>
-          <p className="text-xs">
-            Tokens
-          </p>
-          <p
-            className="text-sm font-semibold font-mono"
-            style={{ color: "var(--color-success)" }}
-          >
+          <p className="text-xs">Tokens</p>
+          <p className="text-sm font-semibold font-mono" style={{ color: "var(--color-success)" }}>
             {formatTokens(tokensSaved)}
           </p>
         </div>
         <div>
-          <p className="text-xs">
-            Est. Saved
-          </p>
-          <p
-            className="text-sm font-semibold font-mono"
-            style={{ color: "var(--color-success)" }}
-          >
+          <p className="text-xs">Est. Saved</p>
+          <p className="text-sm font-semibold font-mono" style={{ color: "var(--color-success)" }}>
             ${costSaved < 0.01 ? "<0.01" : costSaved.toFixed(2)}
           </p>
         </div>
         <div>
-          <p className="text-xs">
-            Compressed
-          </p>
-          <p
-            className="text-sm font-semibold font-mono"
-           
-          >
+          <p className="text-xs">Compressed</p>
+          <p className="text-sm font-semibold font-mono">
             {compressions}
-            {cacheHits > 0 && (
-              <span
-                className="text-xs ml-1"
-               
-              >
-                ({cacheHits} cached)
-              </span>
-            )}
+            {cacheHits > 0 && <span className="text-xs ml-1">({cacheHits} cached)</span>}
           </p>
         </div>
       </div>
@@ -305,9 +274,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 px-4">
         <Robot size={36} />
-        <p className="text-sm text-center">
-          Select a session to view details
-        </p>
+        <p className="text-sm text-center">Select a session to view details</p>
       </div>
     );
   }
@@ -345,7 +312,8 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
             className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold cursor-pointer transition-colors flex-1 justify-center"
             style={{
               color: activeTab === tab.id ? "var(--color-accent)" : "var(--color-text-muted)",
-              borderBottom: activeTab === tab.id ? "2px solid var(--color-accent)" : "2px solid transparent",
+              borderBottom:
+                activeTab === tab.id ? "2px solid var(--color-accent)" : "2px solid transparent",
               background: "transparent",
             }}
           >
@@ -363,12 +331,8 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
         <>
           {/* Session header */}
           <div className="px-4 py-4 border-b">
-            <p className="text-sm font-semibold">
-              {session.projectName}
-            </p>
-            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-              {session.model}
-            </p>
+            <p className="text-sm font-semibold">{session.projectName}</p>
+            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{session.model}</p>
             <div className="flex items-center gap-2 mt-2">
               <StatusBadge status={session.status} />
               <span className="text-xs text-[var(--color-text-muted)] font-mono">
@@ -430,12 +394,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
             s.files_modified.length > 0 ||
             s.files_created.length > 0) && (
             <div className="px-4 pb-4">
-              <p
-                className="text-xs font-semibold mb-2"
-               
-              >
-                Files
-              </p>
+              <p className="text-xs font-semibold mb-2">Files</p>
               <div className="flex flex-col gap-1">
                 {s.files_created.map((f) => (
                   <button
@@ -453,12 +412,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
                     <span className="text-xs" style={{ color: "#34A853" }}>
                       +
                     </span>
-                    <span
-                      className="text-xs font-mono truncate"
-                     
-                    >
-                      {f.split("/").pop()}
-                    </span>
+                    <span className="text-xs font-mono truncate">{f.split("/").pop()}</span>
                   </button>
                 ))}
                 {s.files_modified.map((f) => (
@@ -477,12 +431,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
                     <span className="text-xs" style={{ color: "var(--color-warning)" }}>
                       ~
                     </span>
-                    <span
-                      className="text-xs font-mono truncate"
-                     
-                    >
-                      {f.split("/").pop()}
-                    </span>
+                    <span className="text-xs font-mono truncate">{f.split("/").pop()}</span>
                   </button>
                 ))}
                 {s.files_read
@@ -503,12 +452,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
                       <span className="text-xs" style={{ color: "var(--color-accent)" }}>
                         ○
                       </span>
-                      <span
-                        className="text-xs font-mono truncate"
-                       
-                      >
-                        {f.split("/").pop()}
-                      </span>
+                      <span className="text-xs font-mono truncate">{f.split("/").pop()}</span>
                     </button>
                   ))}
               </div>
@@ -518,10 +462,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
           {/* Project file browser */}
           {s.cwd && (
             <div className="px-4 pb-4">
-              <p
-                className="text-xs font-semibold mb-2"
-               
-              >
+              <p className="text-xs font-semibold mb-2">
                 <FolderSimple
                   size={12}
                   weight="bold"
@@ -625,11 +566,7 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
   if (viewingContent !== null) {
     return (
       <div className="px-4 pb-3">
-        <button
-          onClick={() => setViewingContent(null)}
-          className="text-xs mb-2 cursor-pointer"
-         
-        >
+        <button onClick={() => setViewingContent(null)} className="text-xs mb-2 cursor-pointer">
           &larr; Back to snapshots
         </button>
         <pre
@@ -654,14 +591,8 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
           className="flex items-center gap-2 flex-1 text-left cursor-pointer"
         >
           <Camera size={14} weight="bold" />
-          <span className="text-xs font-semibold">
-            Snapshots
-          </span>
-          {snapshots.length > 0 && (
-            <span className="text-xs">
-              ({snapshots.length})
-            </span>
-          )}
+          <span className="text-xs font-semibold">Snapshots</span>
+          {snapshots.length > 0 && <span className="text-xs">({snapshots.length})</span>}
           <span className="text-xs ml-auto">
             {expanded ? <CaretDown size={12} /> : <CaretRight size={12} />}
           </span>
@@ -690,7 +621,6 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
               key={snap.id}
               onClick={() => handleView(snap.id)}
               className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-2 py-1.5 transition-colors"
-             
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.background = "var(--color-bg-card)";
               }}
@@ -704,25 +634,16 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
                 aria-hidden="true"
               />
               <div className="flex-1 min-w-0">
-                <p
-                  className="text-xs font-mono truncate"
-                 
-                >
+                <p className="text-xs font-mono truncate">
                   {snap.label || new Date(snap.createdAt).toLocaleTimeString()}
                 </p>
-                <p className="text-xs truncate">
-                  {snap.contentPreview.slice(0, 60)}...
-                </p>
+                <p className="text-xs truncate">{snap.contentPreview.slice(0, 60)}...</p>
               </div>
             </button>
           ))}
         </div>
       )}
-      {expanded && loading && (
-        <p className="mt-2 text-xs">
-          Loading...
-        </p>
-      )}
+      {expanded && loading && <p className="mt-2 text-xs">Loading...</p>}
       {expanded && !loading && snapshots.length === 0 && (
         <p className="mt-2 text-xs">
           No snapshots yet. {isActive ? "Click Capture to take one." : ""}
@@ -820,8 +741,12 @@ function StreamToTelegramButton({ sessionId }: { sessionId: string }) {
       title={notConfigured ? "Configure in Settings → Session Streaming" : undefined}
       className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       style={{
-        background: streaming ? "color-mix(in srgb, var(--color-accent) 8%, transparent)" : "var(--color-bg-elevated)",
-        border: streaming ? "1px solid color-mix(in srgb, var(--color-accent) 25%, transparent)" : "1px solid var(--color-border)",
+        background: streaming
+          ? "color-mix(in srgb, var(--color-accent) 8%, transparent)"
+          : "var(--color-bg-elevated)",
+        border: streaming
+          ? "1px solid color-mix(in srgb, var(--color-accent) 25%, transparent)"
+          : "1px solid var(--color-border)",
         color: streaming
           ? "var(--color-accent)"
           : notConfigured
@@ -867,12 +792,8 @@ function SessionSummaryPanel({ sessionId }: { sessionId: string }) {
         className="flex items-center gap-2 w-full text-left cursor-pointer"
       >
         <Notebook size={14} weight="bold" />
-        <span className="text-xs font-semibold">
-          Summary
-        </span>
-        <span className="text-xs ml-auto">
-          {expanded ? "▲" : "▼"}
-        </span>
+        <span className="text-xs font-semibold">Summary</span>
+        <span className="text-xs ml-auto">{expanded ? "▲" : "▼"}</span>
       </button>
       {expanded && (
         <div
@@ -886,9 +807,7 @@ function SessionSummaryPanel({ sessionId }: { sessionId: string }) {
           <p>{summary.summary}</p>
           {summary.keyDecisions.length > 0 && (
             <div className="mt-2">
-              <p className="font-semibold">
-                Decisions
-              </p>
+              <p className="font-semibold">Decisions</p>
               <ul className="list-disc pl-4 mt-1">
                 {summary.keyDecisions.map((d, i) => (
                   <li key={i}>{d}</li>

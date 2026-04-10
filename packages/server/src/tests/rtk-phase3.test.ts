@@ -85,7 +85,9 @@ describe("applyBudget", () => {
 
   it("truncates output exceeding budget", () => {
     // balanced = 4000 tokens = ~16K chars
-    const longOutput = Array.from({ length: 500 }, (_, i) => `line ${i}: ${"x".repeat(50)}`).join("\n");
+    const longOutput = Array.from({ length: 500 }, (_, i) => `line ${i}: ${"x".repeat(50)}`).join(
+      "\n",
+    );
     const result = applyBudget(longOutput, "aggressive"); // 2000 tokens = ~8K chars
     expect(result.budgetTruncated).toBe(true);
     expect(result.output.length).toBeLessThan(longOutput.length);
@@ -100,7 +102,9 @@ describe("applyBudget", () => {
   });
 
   it("aggressive level has lower budget than balanced", () => {
-    const lines = Array.from({ length: 300 }, (_, i) => `line ${i}: ${"data".repeat(20)}`).join("\n");
+    const lines = Array.from({ length: 300 }, (_, i) => `line ${i}: ${"data".repeat(20)}`).join(
+      "\n",
+    );
     const aggressive = applyBudget(lines, "aggressive");
     const balanced = applyBudget(lines, "balanced");
     // Aggressive should truncate more

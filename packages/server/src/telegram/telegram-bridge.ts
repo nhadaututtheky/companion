@@ -32,7 +32,11 @@ import type { WsBridge } from "../services/ws-bridge.js";
 import type { BrowserIncomingMessage } from "@companion/shared";
 
 // Extracted handlers
-import { handleTextMessage, handlePhotoMessage, handleDocumentMessage } from "./telegram-message-handlers.js";
+import {
+  handleTextMessage,
+  handlePhotoMessage,
+  handleDocumentMessage,
+} from "./telegram-message-handlers.js";
 import {
   handlePermissionRequest,
   cancelAutoApproveCountdown as cancelAutoApproveCountdownFn,
@@ -962,7 +966,6 @@ export class TelegramBridge {
     this.subscriptions.set(sessionId, unsub);
   }
 
-
   /**
    * Attach a chat to an existing session for stream-only observation.
    * Does NOT create a new CLI process. Does NOT set a full mapping.
@@ -1109,7 +1112,9 @@ export class TelegramBridge {
   }
 
   /** List all forum topics for a group chat. */
-  listForumTopics(chatId: number): Array<{ projectSlug: string; topicId: number; topicName: string }> {
+  listForumTopics(
+    chatId: number,
+  ): Array<{ projectSlug: string; topicId: number; topicName: string }> {
     const db = getDb();
     return db
       .select({
@@ -1192,9 +1197,7 @@ export class TelegramBridge {
           // Only store breakdown silently — don't send a message.
           // Users access it via the 📊 button shown in session_init or /context command.
           if ("breakdown" in msg) {
-            const { formatBreakdownDetailed } = await import(
-              "../services/context-estimator.js"
-            );
+            const { formatBreakdownDetailed } = await import("../services/context-estimator.js");
             const bd = msg.breakdown as import("../services/context-estimator.js").ContextBreakdown;
             this.contextBreakdowns.set(sessionId, formatBreakdownDetailed(bd));
           }
@@ -1347,7 +1350,6 @@ export class TelegramBridge {
   }
 
   // Tool feed (upsertToolFeed, cleanupToolFeed) moved to accessor section above
-
 
   // Message handlers, permission handlers, session event handlers
   // extracted to telegram-message-handlers.ts, telegram-permission-handler.ts,

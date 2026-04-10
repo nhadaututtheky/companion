@@ -106,9 +106,7 @@ export function ChangesPanel({ messages }: ChangesPanelProps) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 gap-2">
         <GitDiff size={28} />
-        <p className="text-xs text-center">
-          No file changes yet
-        </p>
+        <p className="text-xs text-center">No file changes yet</p>
       </div>
     );
   }
@@ -119,10 +117,7 @@ export function ChangesPanel({ messages }: ChangesPanelProps) {
   return (
     <div className="flex flex-col gap-0">
       {/* Summary header */}
-      <div
-        className="px-4 py-3 border-b flex items-center gap-3"
-       
-      >
+      <div className="px-4 py-3 border-b flex items-center gap-3">
         <GitDiff size={14} weight="bold" style={{ color: "#4285F4" }} />
         <span className="text-xs font-semibold">
           {grouped.size} file{grouped.size !== 1 ? "s" : ""} changed
@@ -161,37 +156,23 @@ export function ChangesPanel({ messages }: ChangesPanelProps) {
                 }}
                 aria-expanded={expanded}
               >
-                {expanded ? (
-                  <CaretDown size={10} />
-                ) : (
-                  <CaretRight size={10} />
-                )}
+                {expanded ? <CaretDown size={10} /> : <CaretRight size={10} />}
                 {hasCreate ? (
                   <FilePlus size={13} weight="bold" style={{ color: "#34A853" }} />
                 ) : (
                   <File size={13} weight="bold" style={{ color: "#FBBC04" }} />
                 )}
-                <span
-                  className="text-xs font-mono truncate flex-1"
-                 
-                  title={filePath}
-                >
+                <span className="text-xs font-mono truncate flex-1" title={filePath}>
                   {fileName}
                 </span>
-                <span
-                  className="text-xs font-mono shrink-0"
-                 
-                >
+                <span className="text-xs font-mono shrink-0">
                   {editCount > 0 ? `${editCount}×` : "new"}
                 </span>
               </button>
 
               {/* Expanded diffs */}
               {expanded && (
-                <div
-                  className="px-2 py-2 flex flex-col gap-2"
-                 
-                >
+                <div className="px-2 py-2 flex flex-col gap-2">
                   {fileChanges.map((change, i) => (
                     <InlineDiff
                       key={`${change.filePath}-${i}`}

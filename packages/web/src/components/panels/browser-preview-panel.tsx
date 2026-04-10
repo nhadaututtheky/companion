@@ -183,13 +183,8 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
               onChange={(e) => setInputUrl(e.target.value)}
               placeholder="http://localhost:3000"
               className="flex-1 text-xs outline-none bg-transparent font-mono"
-             
             />
-            {loading && (
-              <span className="text-xs">
-                ...
-              </span>
-            )}
+            {loading && <span className="text-xs">...</span>}
           </div>
         </form>
 
@@ -291,9 +286,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
             />
           ) : (
             <div className="flex items-center justify-center h-full">
-              <span className="text-sm">
-                Enter a URL to preview
-              </span>
+              <span className="text-sm">Enter a URL to preview</span>
             </div>
           )}
         </div>

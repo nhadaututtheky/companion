@@ -344,30 +344,60 @@ p {
   }
 
   @keyframes floatingMenuIn {
-    from { opacity: 1; }
-    to { opacity: 1; }
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes slideUpFade {
-    from { opacity: 1; transform: translateX(-50%); }
-    to { opacity: 1; transform: translateX(-50%); }
+    from {
+      opacity: 1;
+      transform: translateX(-50%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%);
+    }
   }
 
   @keyframes navSidebarSlideIn {
-    from { opacity: 1; transform: translateY(-50%); }
-    to { opacity: 1; transform: translateY(-50%); }
+    from {
+      opacity: 1;
+      transform: translateY(-50%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(-50%);
+    }
   }
   @keyframes navPillStaggerIn {
-    from { opacity: 1; }
-    to { opacity: 1; }
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
+    }
   }
   @keyframes navDetailFadeIn {
-    from { opacity: 1; }
-    to { opacity: 1; }
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 1;
+    }
   }
   @keyframes guideContentSlideUp {
-    from { opacity: 1; max-height: 360px; }
-    to { opacity: 1; max-height: 360px; }
+    from {
+      opacity: 1;
+      max-height: 360px;
+    }
+    to {
+      opacity: 1;
+      max-height: 360px;
+    }
   }
 
   .session-slide-page {
@@ -406,7 +436,6 @@ p {
   border-radius: var(--radius-pill);
   box-shadow: var(--shadow-soft);
 }
-
 
 /* Soft focus glow — adds glow ring alongside browser outline for inputs */
 .focus-glow:focus-visible {
@@ -502,7 +531,9 @@ select:focus:not(:focus-visible) {
 .input-bordered {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .input-bordered:focus-visible {
@@ -515,7 +546,9 @@ select:focus:not(:focus-visible) {
 .input-wrapper {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .input-wrapper:focus-within {
@@ -542,7 +575,10 @@ select:focus:not(:focus-visible) {
   background: transparent;
   color: var(--color-text-secondary);
   border: 2px solid transparent;
-  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease;
 }
 
 .project-icon-btn[data-active] {
@@ -611,7 +647,10 @@ select:focus:not(:focus-visible) {
 /* ── Persona cards ────────────────────────────────────────────────────────── */
 
 .persona-card {
-  transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .persona-card:hover {

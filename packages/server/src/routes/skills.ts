@@ -39,7 +39,10 @@ function parseFrontmatter(content: string): { name?: string; description?: strin
     const colonIdx = line.indexOf(":");
     if (colonIdx === -1) continue;
     const key = line.slice(0, colonIdx).trim();
-    const value = line.slice(colonIdx + 1).trim().replace(/^["']|["']$/g, "");
+    const value = line
+      .slice(colonIdx + 1)
+      .trim()
+      .replace(/^["']|["']$/g, "");
     if (key && value) result[key] = value;
   }
 
@@ -276,17 +279,26 @@ skillsRoutes.get("/content", (c) => {
   }
 
   if (!isPathWithinRoots(resolved, allowedRoots)) {
-    return c.json({ success: false, error: "Path not within allowed skill directories" } satisfies ApiResponse, 403);
+    return c.json(
+      { success: false, error: "Path not within allowed skill directories" } satisfies ApiResponse,
+      403,
+    );
   }
 
   if (!resolved.toLowerCase().endsWith(".md")) {
-    return c.json({ success: false, error: "Only .md files are allowed" } satisfies ApiResponse, 403);
+    return c.json(
+      { success: false, error: "Only .md files are allowed" } satisfies ApiResponse,
+      403,
+    );
   }
 
   try {
     const stat = statSync(resolved);
     if (stat.size > MAX_SKILL_FILE_SIZE) {
-      return c.json({ success: false, error: "File too large (max 512KB)" } satisfies ApiResponse, 413);
+      return c.json(
+        { success: false, error: "File too large (max 512KB)" } satisfies ApiResponse,
+        413,
+      );
     }
     const content = readFileSync(resolved, "utf-8");
     return c.json({ success: true, data: { content, path: resolved } } satisfies ApiResponse);

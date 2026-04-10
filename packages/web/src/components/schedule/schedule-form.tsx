@@ -167,15 +167,8 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
           className="flex items-center justify-between px-5 py-3"
           style={{ borderBottom: "1px solid var(--color-border)" }}
         >
-          <h2 className="text-sm font-semibold">
-            {isEdit ? "Edit Schedule" : "New Schedule"}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg cursor-pointer"
-           
-            aria-label="Close"
-          >
+          <h2 className="text-sm font-semibold">{isEdit ? "Edit Schedule" : "New Schedule"}</h2>
+          <button onClick={onClose} className="p-1 rounded-lg cursor-pointer" aria-label="Close">
             <X size={16} />
           </button>
         </div>
@@ -349,11 +342,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
           className="flex items-center justify-between px-5 py-3"
           style={{ borderTop: "1px solid var(--color-border)" }}
         >
-          <button
-            onClick={onClose}
-            className="px-4 py-1.5 rounded-lg text-xs cursor-pointer"
-           
-          >
+          <button onClick={onClose} className="px-4 py-1.5 rounded-lg text-xs cursor-pointer">
             Cancel
           </button>
           <button
@@ -388,9 +377,7 @@ const inputStyle = {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium">
-        {label}
-      </label>
+      <label className="text-xs font-medium">{label}</label>
       {children}
     </div>
   );

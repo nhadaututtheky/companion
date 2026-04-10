@@ -68,7 +68,7 @@ export function WikiPanel({ onClose }: WikiPanelProps) {
       ? activeArticle.meta.title
       : view === "raw"
         ? "Raw Material"
-        : activeDomain ?? "Wiki KB";
+        : (activeDomain ?? "Wiki KB");
 
   return (
     <div className="flex flex-col h-full" style={{ background: "var(--color-bg-base)" }}>
@@ -203,7 +203,10 @@ function BrowseView() {
 
   if (loading && domains.length === 0 && !activeDomain) {
     return (
-      <div className="flex items-center justify-center p-8 gap-2 text-xs" style={{ color: "var(--color-text-secondary)" }}>
+      <div
+        className="flex items-center justify-center p-8 gap-2 text-xs"
+        style={{ color: "var(--color-text-secondary)" }}
+      >
         <CircleNotch size={14} className="animate-spin" /> Loading...
       </div>
     );
@@ -220,7 +223,10 @@ function BrowseView() {
           <button
             onClick={() => setShowNewDomain(true)}
             className="flex items-center gap-1 text-xs px-2 py-1 rounded cursor-pointer"
-            style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
+            style={{
+              background: "var(--color-bg-elevated)",
+              border: "1px solid var(--color-border)",
+            }}
           >
             <Plus size={12} /> New
           </button>
@@ -254,7 +260,10 @@ function BrowseView() {
           >
             <BookOpen size={18} style={{ color: WIKI_ACCENT, flexShrink: 0 }} />
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium truncate" style={{ color: "var(--color-text-primary)" }}>
+              <div
+                className="text-sm font-medium truncate"
+                style={{ color: "var(--color-text-primary)" }}
+              >
                 {d.name}
               </div>
               <div className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
@@ -274,7 +283,10 @@ function BrowseView() {
   return (
     <div className="flex flex-col gap-0">
       {/* Domain header + actions */}
-      <div className="p-3 flex flex-col gap-2" style={{ borderBottom: "1px solid var(--color-border)" }}>
+      <div
+        className="p-3 flex flex-col gap-2"
+        style={{ borderBottom: "1px solid var(--color-border)" }}
+      >
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveDomain(null)}
@@ -283,7 +295,9 @@ function BrowseView() {
           >
             All domains
           </button>
-          <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>/</span>
+          <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+            /
+          </span>
           <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
             {activeDomain}
           </span>
@@ -292,7 +306,10 @@ function BrowseView() {
         {/* Search */}
         <div
           className="flex items-center gap-2 rounded px-2 py-1"
-          style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
+          style={{
+            background: "var(--color-bg-elevated)",
+            border: "1px solid var(--color-border)",
+          }}
         >
           <MagnifyingGlass size={12} style={{ color: "var(--color-text-secondary)" }} />
           <input
@@ -311,7 +328,10 @@ function BrowseView() {
           <button
             onClick={() => setView("raw")}
             className="flex items-center gap-1 text-xs px-2 py-1 rounded cursor-pointer"
-            style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
+            style={{
+              background: "var(--color-bg-elevated)",
+              border: "1px solid var(--color-border)",
+            }}
           >
             <Upload size={12} /> Raw Files
           </button>
@@ -322,7 +342,10 @@ function BrowseView() {
 
       {/* Loading articles */}
       {loading && (
-        <div className="flex items-center justify-center p-4 gap-2 text-xs" style={{ color: "var(--color-text-secondary)" }}>
+        <div
+          className="flex items-center justify-center p-4 gap-2 text-xs"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
           <CircleNotch size={14} className="animate-spin" /> Loading articles...
         </div>
       )}
@@ -354,7 +377,10 @@ function BrowseView() {
           }}
         >
           <ShieldCheck size={14} style={{ color: "#10b981" }} weight="fill" />
-          <span className="text-xs font-medium flex-1" style={{ color: "var(--color-text-primary)" }}>
+          <span
+            className="text-xs font-medium flex-1"
+            style={{ color: "var(--color-text-primary)" }}
+          >
             Core Rules (L0)
           </span>
           <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
@@ -372,37 +398,50 @@ function BrowseView() {
         </div>
       )}
 
-      {!loading && filteredArticles.map((a) => (
-        <button
-          key={a.slug}
-          onClick={() => openArticle(a.slug)}
-          className="flex items-start gap-2 px-3 py-2 text-left cursor-pointer hover:bg-[var(--color-bg-elevated)]"
-          style={{ borderBottom: "1px solid var(--color-border)" }}
-        >
-          <File size={14} style={{ color: "var(--color-text-secondary)", marginTop: 1, flexShrink: 0 }} />
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-medium truncate" style={{ color: "var(--color-text-primary)" }}>
-              {a.title}
-            </div>
-            {a.tags.length > 0 && (
-              <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                {a.tags.slice(0, 4).map((t) => (
-                  <span
-                    key={t}
-                    className="text-[10px] px-1.5 py-0.5 rounded"
-                    style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-secondary)" }}
-                  >
-                    {t}
-                  </span>
-                ))}
+      {!loading &&
+        filteredArticles.map((a) => (
+          <button
+            key={a.slug}
+            onClick={() => openArticle(a.slug)}
+            className="flex items-start gap-2 px-3 py-2 text-left cursor-pointer hover:bg-[var(--color-bg-elevated)]"
+            style={{ borderBottom: "1px solid var(--color-border)" }}
+          >
+            <File
+              size={14}
+              style={{ color: "var(--color-text-secondary)", marginTop: 1, flexShrink: 0 }}
+            />
+            <div className="flex-1 min-w-0">
+              <div
+                className="text-xs font-medium truncate"
+                style={{ color: "var(--color-text-primary)" }}
+              >
+                {a.title}
               </div>
-            )}
-          </div>
-          <span className="text-[10px] shrink-0 mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
-            {fmtTokens(a.tokens)}
-          </span>
-        </button>
-      ))}
+              {a.tags.length > 0 && (
+                <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                  {a.tags.slice(0, 4).map((t) => (
+                    <span
+                      key={t}
+                      className="text-[10px] px-1.5 py-0.5 rounded"
+                      style={{
+                        background: "var(--color-bg-elevated)",
+                        color: "var(--color-text-secondary)",
+                      }}
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <span
+              className="text-[10px] shrink-0 mt-0.5"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
+              {fmtTokens(a.tokens)}
+            </span>
+          </button>
+        ))}
     </div>
   );
 }
@@ -414,7 +453,10 @@ function NewDomainForm({ onCreated, onCancel }: { onCreated: () => void; onCance
   const [slug, setSlug] = useState("");
   const [creating, setCreating] = useState(false);
 
-  const autoSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const autoSlug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 
   const handleCreate = async () => {
     const finalSlug = slug || autoSlug;
@@ -486,7 +528,12 @@ function CompileButton({ domain, onDone }: { domain: string; onDone: () => void 
   const setCompiling = useWikiStore((s) => s.setCompiling);
 
   // Reset compiling state on unmount (prevents stuck spinner)
-  useEffect(() => () => { setCompiling(false); }, [setCompiling]);
+  useEffect(
+    () => () => {
+      setCompiling(false);
+    },
+    [setCompiling],
+  );
 
   const handleCompile = useCallback(async () => {
     if (compiling) return;
@@ -512,11 +559,7 @@ function CompileButton({ domain, onDone }: { domain: string; onDone: () => void 
         border: compiling ? "1px solid var(--color-border)" : "none",
       }}
     >
-      {compiling ? (
-        <CircleNotch size={12} className="animate-spin" />
-      ) : (
-        <Lightning size={12} />
-      )}
+      {compiling ? <CircleNotch size={12} className="animate-spin" /> : <Lightning size={12} />}
       {compiling ? "Compiling..." : "Compile"}
     </button>
   );
@@ -563,11 +606,7 @@ function LintButton({ domain }: { domain: string }) {
         style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
         title="Check for stale articles"
       >
-        {linting ? (
-          <CircleNotch size={12} className="animate-spin" />
-        ) : (
-          <Warning size={12} />
-        )}
+        {linting ? <CircleNotch size={12} className="animate-spin" /> : <Warning size={12} />}
         Lint
         {issues !== null && warningCount > 0 && (
           <span
@@ -615,7 +654,11 @@ function LintButton({ domain }: { domain: string }) {
                 className="text-[11px] flex items-start gap-1.5"
                 style={{ color: "var(--color-text-secondary)" }}
               >
-                <span style={{ color: issue.severity === "warning" ? "#f59e0b" : "var(--color-text-secondary)" }}>
+                <span
+                  style={{
+                    color: issue.severity === "warning" ? "#f59e0b" : "var(--color-text-secondary)",
+                  }}
+                >
                   {issue.severity === "warning" ? "⚠" : "ℹ"}
                 </span>
                 <span>{issue.message}</span>
@@ -669,7 +712,10 @@ function ArticleView() {
       {/* Meta bar */}
       <div
         className="px-3 py-2 flex flex-wrap gap-x-4 gap-y-1"
-        style={{ borderBottom: "1px solid var(--color-border)", background: "var(--color-bg-elevated)" }}
+        style={{
+          borderBottom: "1px solid var(--color-border)",
+          background: "var(--color-bg-elevated)",
+        }}
       >
         <span className="text-[10px]" style={{ color: "var(--color-text-secondary)" }}>
           {fmtTokens(article.meta.tokens)} tokens
@@ -688,7 +734,11 @@ function ArticleView() {
           <div className="flex items-center gap-1">
             <Tag size={10} style={{ color: "var(--color-text-secondary)" }} />
             {article.meta.tags.map((t) => (
-              <span key={t} className="text-[10px]" style={{ color: "var(--color-text-secondary)" }}>
+              <span
+                key={t}
+                className="text-[10px]"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
                 {t}
               </span>
             ))}
@@ -740,12 +790,19 @@ function ArticleView() {
       {/* Source files */}
       {article.meta.compiledFrom.length > 0 && (
         <div className="px-3 py-2" style={{ borderTop: "1px solid var(--color-border)" }}>
-          <span className="text-[10px] font-medium" style={{ color: "var(--color-text-secondary)" }}>
+          <span
+            className="text-[10px] font-medium"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
             Compiled from:
           </span>
           <div className="flex flex-col gap-0.5 mt-1">
             {article.meta.compiledFrom.map((f) => (
-              <span key={f} className="text-[10px] font-mono" style={{ color: "var(--color-text-secondary)" }}>
+              <span
+                key={f}
+                className="text-[10px] font-mono"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
                 {f}
               </span>
             ))}
@@ -859,8 +916,12 @@ function RawView() {
 
       {/* Paste form */}
       {pasteMode && (
-        <div className="mx-3 mb-3 flex flex-col gap-2 p-3 rounded-lg"
-          style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
+        <div
+          className="mx-3 mb-3 flex flex-col gap-2 p-3 rounded-lg"
+          style={{
+            background: "var(--color-bg-elevated)",
+            border: "1px solid var(--color-border)",
+          }}
         >
           <input
             type="text"
@@ -882,7 +943,11 @@ function RawView() {
           />
           <div className="flex gap-2 justify-end">
             <button
-              onClick={() => { setPasteMode(false); setPasteContent(""); setPasteName(""); }}
+              onClick={() => {
+                setPasteMode(false);
+                setPasteContent("");
+                setPasteName("");
+              }}
               className="text-xs px-2 py-1 rounded cursor-pointer"
               style={{ color: "var(--color-text-secondary)" }}
             >
@@ -892,7 +957,11 @@ function RawView() {
               onClick={handlePaste}
               disabled={!pasteContent || !pasteName}
               className="text-xs px-2 py-1 rounded cursor-pointer font-medium"
-              style={{ background: WIKI_ACCENT, color: "#fff", opacity: !pasteContent || !pasteName ? 0.5 : 1 }}
+              style={{
+                background: WIKI_ACCENT,
+                color: "#fff",
+                opacity: !pasteContent || !pasteName ? 0.5 : 1,
+              }}
             >
               Save
             </button>
@@ -902,7 +971,10 @@ function RawView() {
 
       {/* File list */}
       {loading ? (
-        <div className="flex items-center justify-center p-4 gap-2 text-xs" style={{ color: "var(--color-text-secondary)" }}>
+        <div
+          className="flex items-center justify-center p-4 gap-2 text-xs"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
           <CircleNotch size={14} className="animate-spin" /> Loading...
         </div>
       ) : rawFiles.length === 0 ? (

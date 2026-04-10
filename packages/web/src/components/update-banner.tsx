@@ -1,10 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import {
-  ArrowSquareUpRight,
-  X,
-  Rocket,
-} from "@phosphor-icons/react";
+import { ArrowSquareUpRight, X, Rocket } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -34,11 +30,15 @@ interface TauriUpdatePayload {
  * Access Tauri's global event listener (available when withGlobalTauri: true).
  * Returns undefined in browser / Docker mode.
  */
-function getTauriListen(): ((event: string, handler: (e: TauriEvent<TauriUpdatePayload>) => void) => Promise<() => void>) | undefined {
+function getTauriListen():
+  | ((event: string, handler: (e: TauriEvent<TauriUpdatePayload>) => void) => Promise<() => void>)
+  | undefined {
   const w = globalThis as unknown as Record<string, unknown>;
   const tauri = w.__TAURI__ as Record<string, unknown> | undefined;
   const eventModule = tauri?.event as Record<string, unknown> | undefined;
-  return eventModule?.listen as ((event: string, handler: (e: TauriEvent<TauriUpdatePayload>) => void) => Promise<() => void>) | undefined;
+  return eventModule?.listen as
+    | ((event: string, handler: (e: TauriEvent<TauriUpdatePayload>) => void) => Promise<() => void>)
+    | undefined;
 }
 
 // ── Hook ───────────────────────────────────────────────────────────────────
@@ -63,14 +63,17 @@ function useUpdateCheck() {
     setUpdate(info);
   }, []);
 
-  const checkNow = useCallback(async (force = false) => {
-    try {
-      const info = await api.updateCheck.check(force);
-      applyUpdate(info);
-    } catch {
-      // Silently fail — update check is non-critical
-    }
-  }, [applyUpdate]);
+  const checkNow = useCallback(
+    async (force = false) => {
+      try {
+        const info = await api.updateCheck.check(force);
+        applyUpdate(info);
+      } catch {
+        // Silently fail — update check is non-critical
+      }
+    },
+    [applyUpdate],
+  );
 
   const dismiss = useCallback((version: string) => {
     localStorage.setItem(DISMISS_KEY, version);
@@ -93,9 +96,13 @@ function useUpdateCheck() {
         releaseNotes: body,
         publishedAt: "",
       });
-    }).then((fn) => { unlisten = fn; });
+    }).then((fn) => {
+      unlisten = fn;
+    });
 
-    return () => { unlisten?.(); };
+    return () => {
+      unlisten?.();
+    };
   }, [applyUpdate]);
 
   // Server-side check on mount + interval (works for both Docker and Tauri)
@@ -124,9 +131,7 @@ export function UpdateBanner() {
 
   if (!update?.available || dismissed) return null;
 
-  const relativeTime = update.publishedAt
-    ? formatRelativeDate(update.publishedAt)
-    : "";
+  const relativeTime = update.publishedAt ? formatRelativeDate(update.publishedAt) : "";
 
   return (
     <div

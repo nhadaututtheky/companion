@@ -106,12 +106,7 @@ export default function SchedulesPage() {
         }}
       >
         <div className="flex items-center gap-3">
-          <a
-            href="/"
-            className="p-1.5 rounded-lg transition-colors"
-           
-            aria-label="Back to dashboard"
-          >
+          <a href="/" className="p-1.5 rounded-lg transition-colors" aria-label="Back to dashboard">
             <ArrowLeft size={16} weight="bold" />
           </a>
           <div className="flex items-center gap-2">
@@ -182,12 +177,7 @@ export default function SchedulesPage() {
                 >
                   <div className="flex items-center gap-1.5 mb-2">
                     <CalendarBlank size={12} style={{ color: "#4285F4" }} />
-                    <span
-                      className="text-xs font-semibold"
-                     
-                    >
-                      Upcoming
-                    </span>
+                    <span className="text-xs font-semibold">Upcoming</span>
                   </div>
                   <div className="flex flex-col gap-1.5">
                     {upcoming.slice(0, 5).map((run, i) => (
@@ -195,12 +185,7 @@ export default function SchedulesPage() {
                         key={`${run.scheduleId}-${i}`}
                         className="flex items-center justify-between"
                       >
-                        <span
-                          className="text-xs truncate max-w-32"
-                         
-                        >
-                          {run.name}
-                        </span>
+                        <span className="text-xs truncate max-w-32">{run.name}</span>
                         <span
                           className="text-xs font-mono"
                           style={{ color: "var(--color-text-muted)", fontSize: 10 }}

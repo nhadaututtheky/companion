@@ -23,19 +23,20 @@ export function MagicRingMount() {
 
     // Prune linked sessions that no longer exist on server
     if (linkedSessionIds.length > 0) {
-      api.sessions.list().then((res) => {
-        const activeIds = new Set(
-          (res.data.sessions as Array<{ id: string }>).map((s) => s.id),
-        );
-        const store = useRingStore.getState();
-        for (const sid of store.linkedSessionIds) {
-          if (!activeIds.has(sid)) {
-            store.unlinkSession(sid);
+      api.sessions
+        .list()
+        .then((res) => {
+          const activeIds = new Set((res.data.sessions as Array<{ id: string }>).map((s) => s.id));
+          const store = useRingStore.getState();
+          for (const sid of store.linkedSessionIds) {
+            if (!activeIds.has(sid)) {
+              store.unlinkSession(sid);
+            }
           }
-        }
-      }).catch(() => {
-        // Server not reachable — keep stale IDs, will resolve on next poll
-      });
+        })
+        .catch(() => {
+          // Server not reachable — keep stale IDs, will resolve on next poll
+        });
     }
   }, []);
 

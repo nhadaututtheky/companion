@@ -88,7 +88,16 @@ export const useWikiStore = create<WikiStore>((set) => ({
 
   setView: (view) => set({ view }),
   setDomains: (domains) => set({ domains }),
-  setActiveDomain: (slug) => set({ activeDomain: slug, articles: [], activeArticle: null, rawFiles: [], coreContent: null, searchQuery: "", view: "browse" }),
+  setActiveDomain: (slug) =>
+    set({
+      activeDomain: slug,
+      articles: [],
+      activeArticle: null,
+      rawFiles: [],
+      coreContent: null,
+      searchQuery: "",
+      view: "browse",
+    }),
   setArticles: (articles) => set({ articles }),
   setActiveArticle: (article) => set({ activeArticle: article }),
   setRawFiles: (files) => set({ rawFiles: files }),

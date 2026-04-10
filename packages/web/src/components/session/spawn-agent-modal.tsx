@@ -25,7 +25,13 @@ interface SpawnAgentModalProps {
   onSpawned: (childSessionId: string, childShortId: string, name: string, role: string) => void;
 }
 
-export function SpawnAgentModal({ parentSessionId, parentModel, open, onClose, onSpawned }: SpawnAgentModalProps) {
+export function SpawnAgentModal({
+  parentSessionId,
+  parentModel,
+  open,
+  onClose,
+  onSpawned,
+}: SpawnAgentModalProps) {
   const [name, setName] = useState("");
   const [role, setRole] = useState<string>("specialist");
   const [model, setModel] = useState<string>(parentModel);
@@ -42,7 +48,10 @@ export function SpawnAgentModal({ parentSessionId, parentModel, open, onClose, o
     setSpawningTemplate(templateId);
     try {
       for (const agent of template.agents) {
-        const res = await api.post<{ success: boolean; data: { sessionId: string; shortId: string } }>(`/api/sessions/${parentSessionId}/spawn`, {
+        const res = await api.post<{
+          success: boolean;
+          data: { sessionId: string; shortId: string };
+        }>(`/api/sessions/${parentSessionId}/spawn`, {
           name: agent.name,
           role: agent.role,
           model: agent.model,
@@ -67,7 +76,10 @@ export function SpawnAgentModal({ parentSessionId, parentModel, open, onClose, o
 
     setLoading(true);
     try {
-      const res = await api.post<{ success: boolean; data: { sessionId: string; shortId: string } }>(`/api/sessions/${parentSessionId}/spawn`, {
+      const res = await api.post<{
+        success: boolean;
+        data: { sessionId: string; shortId: string };
+      }>(`/api/sessions/${parentSessionId}/spawn`, {
         name: trimmedName,
         role,
         model: model !== parentModel ? model : undefined,
@@ -93,7 +105,9 @@ export function SpawnAgentModal({ parentSessionId, parentModel, open, onClose, o
     <div
       className="fixed inset-0 flex items-center justify-center"
       style={{ zIndex: 60, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         className="flex flex-col gap-4 p-5"
@@ -125,7 +139,10 @@ export function SpawnAgentModal({ parentSessionId, parentModel, open, onClose, o
 
         {/* Quick Templates */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium flex items-center gap-1" style={{ color: "var(--color-text-secondary)" }}>
+          <label
+            className="text-xs font-medium flex items-center gap-1"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
             <Lightning size={12} weight="bold" /> Quick Templates
           </label>
           <div className="grid grid-cols-2 gap-1.5">
@@ -143,10 +160,20 @@ export function SpawnAgentModal({ parentSessionId, parentModel, open, onClose, o
               >
                 <span className="text-base">{t.icon}</span>
                 <div className="flex flex-col min-w-0">
-                  <span className="font-medium truncate" style={{ color: spawningTemplate === t.id ? "var(--color-accent)" : "var(--color-text-primary)" }}>
+                  <span
+                    className="font-medium truncate"
+                    style={{
+                      color:
+                        spawningTemplate === t.id
+                          ? "var(--color-accent)"
+                          : "var(--color-text-primary)",
+                    }}
+                  >
                     {spawningTemplate === t.id ? "Spawning..." : t.name}
                   </span>
-                  <span className="truncate" style={{ fontSize: 10 }}>{t.agents.length} agents</span>
+                  <span className="truncate" style={{ fontSize: 10 }}>
+                    {t.agents.length} agents
+                  </span>
                 </div>
               </button>
             ))}
@@ -191,12 +218,14 @@ export function SpawnAgentModal({ parentSessionId, parentModel, open, onClose, o
                 onClick={() => setRole(r.id)}
                 className="flex-1 flex flex-col items-center gap-1 px-2 py-2 rounded-lg text-xs cursor-pointer transition-colors"
                 style={{
-                  background: role === r.id
-                    ? "color-mix(in srgb, var(--color-accent) 10%, transparent)"
-                    : "var(--color-bg-elevated)",
-                  border: role === r.id
-                    ? "1px solid var(--color-accent)"
-                    : "1px solid var(--glass-border)",
+                  background:
+                    role === r.id
+                      ? "color-mix(in srgb, var(--color-accent) 10%, transparent)"
+                      : "var(--color-bg-elevated)",
+                  border:
+                    role === r.id
+                      ? "1px solid var(--color-accent)"
+                      : "1px solid var(--glass-border)",
                   color: role === r.id ? "var(--color-accent)" : "var(--color-text-secondary)",
                 }}
               >
@@ -219,12 +248,14 @@ export function SpawnAgentModal({ parentSessionId, parentModel, open, onClose, o
                 onClick={() => setModel(m.id)}
                 className="flex-1 px-2 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
                 style={{
-                  background: model === m.id
-                    ? "color-mix(in srgb, var(--color-accent) 10%, transparent)"
-                    : "var(--color-bg-elevated)",
-                  border: model === m.id
-                    ? "1px solid var(--color-accent)"
-                    : "1px solid var(--glass-border)",
+                  background:
+                    model === m.id
+                      ? "color-mix(in srgb, var(--color-accent) 10%, transparent)"
+                      : "var(--color-bg-elevated)",
+                  border:
+                    model === m.id
+                      ? "1px solid var(--color-accent)"
+                      : "1px solid var(--glass-border)",
                   color: model === m.id ? "var(--color-accent)" : "var(--color-text-secondary)",
                 }}
               >

@@ -152,16 +152,32 @@ export function BottomStatsBar() {
 
           {loading && (
             <div className="flex items-center gap-2 px-4 py-2">
-              <CircleNotch size={14} className="animate-spin" style={{ color: "var(--color-text-muted)" }} />
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>Loading...</span>
+              <CircleNotch
+                size={14}
+                className="animate-spin"
+                style={{ color: "var(--color-text-muted)" }}
+              />
+              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                Loading...
+              </span>
             </div>
           )}
 
           {data && (
             <>
-              <StatBlock label="Today" value={String(data.today.sessions)} sub={`${fmtCost(data.today.cost)} · ${fmtTokens(data.today.tokens)} tok`} accent="#FBBC04" />
+              <StatBlock
+                label="Today"
+                value={String(data.today.sessions)}
+                sub={`${fmtCost(data.today.cost)} · ${fmtTokens(data.today.tokens)} tok`}
+                accent="#FBBC04"
+              />
               <Sep />
-              <StatBlock label="Week" value={String(data.week.sessions)} sub={`${fmtCost(data.week.cost)} · ${fmtTokens(data.week.tokens)} tok`} accent="#34A853" />
+              <StatBlock
+                label="Week"
+                value={String(data.week.sessions)}
+                sub={`${fmtCost(data.week.cost)} · ${fmtTokens(data.week.tokens)} tok`}
+                accent="#34A853"
+              />
               <Sep />
               <StatBlock label="Streak" value={`${data.streak}d`} accent="#EA4335" />
               <Sep />
@@ -171,13 +187,23 @@ export function BottomStatsBar() {
               {data.dailyActivity.length > 0 && (
                 <>
                   <div className="flex flex-col items-center gap-1 px-3 py-2">
-                    <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>14-day</span>
+                    <span
+                      className="text-[10px] font-medium uppercase tracking-wider"
+                      style={{ color: "var(--color-text-muted)" }}
+                    >
+                      14-day
+                    </span>
                     <div className="flex gap-[2px]">
                       {data.dailyActivity.slice(-14).map((day) => (
                         <div
                           key={day.date}
                           title={`${day.date}: ${day.sessions} sessions`}
-                          style={{ width: 8, height: 20, borderRadius: 2, background: heatmapColor(day.sessions) }}
+                          style={{
+                            width: 8,
+                            height: 20,
+                            borderRadius: 2,
+                            background: heatmapColor(day.sessions),
+                          }}
                         />
                       ))}
                     </div>
@@ -272,12 +298,36 @@ export function BottomStatsBar() {
 
 // ── Shared sub-components ─────────────────────────────────────────────────
 
-function StatBlock({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: string }) {
+function StatBlock({
+  label,
+  value,
+  sub,
+  accent,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  accent?: string;
+}) {
   return (
     <div className="flex flex-col items-center gap-0.5 px-4 py-2 min-w-[80px]">
-      <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>{label}</span>
-      <span className="text-lg font-bold tabular-nums leading-none" style={{ fontFamily: "var(--font-mono)", color: accent ?? "var(--color-text-primary)" }}>{value}</span>
-      {sub && <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{sub}</span>}
+      <span
+        className="text-[10px] font-medium uppercase tracking-wider"
+        style={{ color: "var(--color-text-muted)" }}
+      >
+        {label}
+      </span>
+      <span
+        className="text-lg font-bold tabular-nums leading-none"
+        style={{ fontFamily: "var(--font-mono)", color: accent ?? "var(--color-text-primary)" }}
+      >
+        {value}
+      </span>
+      {sub && (
+        <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+          {sub}
+        </span>
+      )}
     </div>
   );
 }

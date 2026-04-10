@@ -187,9 +187,7 @@ export function McpSettings() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold">
-            MCP Servers
-          </h3>
+          <h3 className="text-sm font-semibold">MCP Servers</h3>
           <p className="text-xs mt-0.5">
             Manage Model Context Protocol servers for your AI sessions
           </p>
@@ -198,7 +196,6 @@ export function McpSettings() {
           <button
             onClick={loadServers}
             className="p-1.5 rounded-full cursor-pointer transition-colors"
-
             aria-label="Refresh"
           >
             <ArrowsClockwise size={14} />
@@ -215,7 +212,10 @@ export function McpSettings() {
       </div>
 
       {/* Two-column layout */}
-      <div className="grid gap-3" style={{ gridTemplateColumns: "minmax(200px, 280px) 1fr", minHeight: 320 }}>
+      <div
+        className="grid gap-3"
+        style={{ gridTemplateColumns: "minmax(200px, 280px) 1fr", minHeight: 320 }}
+      >
         {/* Left: Server list */}
         <div
           className="rounded-xl overflow-hidden"
@@ -226,18 +226,11 @@ export function McpSettings() {
           }}
         >
           {loading ? (
-            <div
-              className="flex items-center justify-center py-8 text-xs"
-             
-            >
-              Loading...
-            </div>
+            <div className="flex items-center justify-center py-8 text-xs">Loading...</div>
           ) : servers.length === 0 && !isNew ? (
             <div className="flex flex-col items-center justify-center py-8 gap-2 px-4">
               <Plugs size={24} />
-              <p className="text-xs text-center">
-                No MCP servers configured yet
-              </p>
+              <p className="text-xs text-center">No MCP servers configured yet</p>
             </div>
           ) : (
             <div className="flex flex-col">
@@ -318,10 +311,7 @@ export function McpSettings() {
               onDelete={() => editing.id && handleDelete(editing.id)}
             />
           ) : (
-            <div
-              className="flex items-center justify-center h-full text-xs"
-             
-            >
+            <div className="flex items-center justify-center h-full text-xs">
               Select a server to edit
             </div>
           )}
@@ -329,11 +319,7 @@ export function McpSettings() {
       </div>
 
       {/* Detected from Claude Config */}
-      <DetectedServersSection
-        servers={detected}
-        importing={importing}
-        onImport={handleImport}
-      />
+      <DetectedServersSection servers={detected} importing={importing} onImport={handleImport} />
     </div>
   );
 }
@@ -409,7 +395,11 @@ function DetectedServersSection({
                         fontSize: 10,
                       }}
                     >
-                      {server.type === "stdio" ? "stdio" : server.type === "streamableHttp" ? "HTTP" : "SSE"}
+                      {server.type === "stdio"
+                        ? "stdio"
+                        : server.type === "streamableHttp"
+                          ? "HTTP"
+                          : "SSE"}
                     </span>
                   </div>
                   <div
@@ -627,16 +617,10 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
               >
                 {key}
               </span>
-              <span
-                className="text-xs font-mono flex-1 truncate"
-               
-              >
-                {val}
-              </span>
+              <span className="text-xs font-mono flex-1 truncate">{val}</span>
               <button
                 onClick={() => removeEnvVar(key)}
                 className="p-0.5 rounded cursor-pointer"
-               
                 aria-label={`Remove ${key}`}
               >
                 <Trash size={12} />
@@ -701,16 +685,10 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 >
                   {key}
                 </span>
-                <span
-                  className="text-xs font-mono flex-1 truncate"
-                 
-                >
-                  {val}
-                </span>
+                <span className="text-xs font-mono flex-1 truncate">{val}</span>
                 <button
                   onClick={() => removeHeader(key)}
                   className="p-0.5 rounded cursor-pointer"
-                 
                   aria-label={`Remove ${key}`}
                 >
                   <Trash size={12} />
@@ -758,9 +736,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
 
         {/* Enabled toggle */}
         <div className="flex items-center justify-between py-1">
-          <span className="text-xs">
-            Enabled
-          </span>
+          <span className="text-xs">Enabled</span>
           <button
             onClick={() => update({ enabled: !server.enabled })}
             className="relative cursor-pointer"
@@ -835,9 +811,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
 function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-medium">
-        {label}
-      </label>
+      <label className="text-xs font-medium">{label}</label>
       {children}
     </div>
   );
@@ -861,7 +835,6 @@ function CollapsibleSection({
       <button
         onClick={onToggle}
         className="flex items-center gap-1.5 w-full text-left cursor-pointer py-1"
-       
       >
         {open ? <CaretDown size={10} /> : <CaretRight size={10} />}
         <span className="text-xs font-medium">{title}</span>

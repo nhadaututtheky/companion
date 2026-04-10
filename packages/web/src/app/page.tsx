@@ -37,7 +37,10 @@ const OnboardingWizard = dynamic(
   { ssr: false },
 );
 const FeatureGuideModal = dynamic(
-  () => import("@/components/feature-guide/feature-guide-modal").then((m) => ({ default: m.FeatureGuideModal })),
+  () =>
+    import("@/components/feature-guide/feature-guide-modal").then((m) => ({
+      default: m.FeatureGuideModal,
+    })),
   { ssr: false },
 );
 
@@ -120,7 +123,12 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
     >
       {/* Summary row */}
       <div className="flex items-center gap-2 px-4 py-2">
-        <ArrowCounterClockwise size={14} style={{ color: "var(--color-accent)" }} weight="bold" aria-hidden="true" />
+        <ArrowCounterClockwise
+          size={14}
+          style={{ color: "var(--color-accent)" }}
+          weight="bold"
+          aria-hidden="true"
+        />
         <span className="text-xs font-semibold flex-1" style={{ color: "var(--color-accent)" }}>
           {sessions.length === 1
             ? "1 session can be resumed"
@@ -149,12 +157,19 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
 
       {/* Expanded session list */}
       {expanded && (
-        <div className="flex flex-col" style={{ borderTop: "1px solid color-mix(in srgb, var(--color-accent) 12%, transparent)" }}>
+        <div
+          className="flex flex-col"
+          style={{
+            borderTop: "1px solid color-mix(in srgb, var(--color-accent) 12%, transparent)",
+          }}
+        >
           {sessions.map((s) => (
             <div
               key={s.id}
               className="flex items-center gap-3 px-4 py-2"
-              style={{ borderBottom: "1px solid color-mix(in srgb, var(--color-accent) 8%, transparent)" }}
+              style={{
+                borderBottom: "1px solid color-mix(in srgb, var(--color-accent) 8%, transparent)",
+              }}
             >
               <SourceIcon source={s.source} />
               <div className="flex flex-col flex-1 min-w-0">
@@ -280,8 +295,9 @@ export default function DashboardPage() {
     // Use gridOrder for ordering, fallback to insertion order
     const ordered = gridOrder
       .map((id) => sessions[id])
-      .filter((s): s is NonNullable<typeof s> =>
-        !!s && ACTIVE_STATUSES.includes(s.status) && !s.parentSessionId,
+      .filter(
+        (s): s is NonNullable<typeof s> =>
+          !!s && ACTIVE_STATUSES.includes(s.status) && !s.parentSessionId,
       );
 
     // Add any active sessions not yet in gridOrder (unless user closed them)
@@ -504,7 +520,8 @@ export default function DashboardPage() {
       className="flex flex-col"
       style={{
         height: "100vh",
-        background: "linear-gradient(135deg, var(--color-bg-base) 0%, color-mix(in srgb, var(--color-accent) 3%, var(--color-bg-base)) 50%, var(--color-bg-base) 100%)",
+        background:
+          "linear-gradient(135deg, var(--color-bg-base) 0%, color-mix(in srgb, var(--color-accent) 3%, var(--color-bg-base)) 50%, var(--color-bg-base) 100%)",
       }}
     >
       {/* Expanded session overlay (Phase 3) */}
@@ -515,8 +532,25 @@ export default function DashboardPage() {
 
       <Header onMenuToggle={() => setMobileSidebarOpen(true)} />
 
-      <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", padding: "8px 12px 12px 12px", gap: 8 }}>
-        <div style={{ flex: 1, overflow: "hidden", display: "flex", gap: 8, borderRadius: "var(--radius-xl)" }}>
+      <div
+        style={{
+          flex: 1,
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          padding: "8px 12px 12px 12px",
+          gap: 8,
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            overflow: "hidden",
+            display: "flex",
+            gap: 8,
+            borderRadius: "var(--radius-xl)",
+          }}
+        >
           {/* Mobile sidebar overlay backdrop */}
           {mobileSidebarOpen && (
             <div

@@ -476,7 +476,10 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
                 <button
                   onClick={() => setTagFilter(null)}
                   className="px-1.5 py-0.5 rounded-full text-xs font-medium cursor-pointer"
-                  style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-secondary)" }}
+                  style={{
+                    background: "var(--color-bg-elevated)",
+                    color: "var(--color-text-secondary)",
+                  }}
                   aria-label="Clear tag filter"
                 >
                   All
@@ -512,9 +515,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
         {displayed.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 gap-2">
             <FolderOpen size={28} />
-            <p className="text-xs">
-              {filter === "active" ? "No active sessions" : "No sessions"}
-            </p>
+            <p className="text-xs">{filter === "active" ? "No active sessions" : "No sessions"}</p>
           </div>
         )}
 
@@ -544,25 +545,18 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
                 {s.shortId && (
                   <span
                     className="text-xs font-mono px-1.5 py-0.5 rounded shrink-0"
-                    style={{ background: "var(--color-bg-elevated)", color: "var(--color-success)" }}
+                    style={{
+                      background: "var(--color-bg-elevated)",
+                      color: "var(--color-success)",
+                    }}
                     title={`@${s.shortId} — use in chat to mention this session`}
                   >
                     @{s.shortId}
                   </span>
                 )}
-                <span
-                  className="text-sm font-medium truncate flex-1"
-                 
-                >
-                  {s.projectName}
-                </span>
+                <span className="text-sm font-medium truncate flex-1">{s.projectName}</span>
                 {s.totalCostUsd > 0 && (
-                  <span
-                    className="text-xs font-mono shrink-0"
-                   
-                  >
-                    {formatCost(s.totalCostUsd)}
-                  </span>
+                  <span className="text-xs font-mono shrink-0">{formatCost(s.totalCostUsd)}</span>
                 )}
               </div>
               {/* Row 2: model badge · turns · time */}
@@ -582,9 +576,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
                 >
                   {badge.label}
                 </span>
-                <span className="text-xs text-[var(--color-text-muted)]">
-                  {s.numTurns} turns
-                </span>
+                <span className="text-xs text-[var(--color-text-muted)]">{s.numTurns} turns</span>
                 <span className="text-xs text-[var(--color-text-muted)] ml-auto">
                   {formatTime(s.createdAt)}
                 </span>

@@ -199,19 +199,23 @@ export const api = {
       }),
     debate: {
       addParticipant: (id: string, model: string, personaId?: string) =>
-        request<{ success: boolean; data: { modelId: string; name: string; provider: string; personaId?: string } }>(
-          `/api/sessions/${id}/debate/participants`,
-          { method: "POST", body: JSON.stringify({ model, personaId }) },
-        ),
+        request<{
+          success: boolean;
+          data: { modelId: string; name: string; provider: string; personaId?: string };
+        }>(`/api/sessions/${id}/debate/participants`, {
+          method: "POST",
+          body: JSON.stringify({ model, personaId }),
+        }),
       removeParticipant: (id: string, modelId: string) =>
         request<{ success: boolean }>(
           `/api/sessions/${id}/debate/participants/${encodeURIComponent(modelId)}`,
           { method: "DELETE" },
         ),
       listParticipants: (id: string) =>
-        request<{ success: boolean; data: Array<{ modelId: string; provider: string; name: string; personaId?: string }> }>(
-          `/api/sessions/${id}/debate/participants`,
-        ),
+        request<{
+          success: boolean;
+          data: Array<{ modelId: string; provider: string; name: string; personaId?: string }>;
+        }>(`/api/sessions/${id}/debate/participants`),
       startRound: (id: string, topic: string, format?: string) =>
         request<{ success: boolean; data: { channelId: string } }>(
           `/api/sessions/${id}/debate/round`,
@@ -429,7 +433,13 @@ export const api = {
           channelId: string;
           topic: string;
           format: string;
-          agents: Array<{ id: string; label: string; role: string; model?: string; modelLabel?: string }>;
+          agents: Array<{
+            id: string;
+            label: string;
+            role: string;
+            model?: string;
+            modelLabel?: string;
+          }>;
         };
       }>("/api/channels/debate", { method: "POST", body: JSON.stringify(body) }),
     startCLIDebate: (body: {
@@ -454,7 +464,13 @@ export const api = {
           channelId: string;
           topic: string;
           format: string;
-          agents: Array<{ id: string; label: string; role: string; platform: string; model: string }>;
+          agents: Array<{
+            id: string;
+            label: string;
+            role: string;
+            platform: string;
+            model: string;
+          }>;
         };
       }>("/api/channels/cli-debate", { method: "POST", body: JSON.stringify(body) }),
     abortCLIDebate: (id: string) =>
@@ -1180,25 +1196,47 @@ export const api = {
         success: boolean;
         data: {
           free: Array<{
-            provider: { id: string; name: string; type: string; enabled: boolean; healthStatus?: string };
+            provider: {
+              id: string;
+              name: string;
+              type: string;
+              enabled: boolean;
+              healthStatus?: string;
+            };
             models: Array<{
               id: string;
               name: string;
               provider: string;
               contextWindow: number;
               free: boolean;
-              capabilities: { toolUse: boolean; streaming: boolean; vision: boolean; reasoning: boolean };
+              capabilities: {
+                toolUse: boolean;
+                streaming: boolean;
+                vision: boolean;
+                reasoning: boolean;
+              };
             }>;
           }>;
           configured: Array<{
-            provider: { id: string; name: string; type: string; enabled: boolean; healthStatus?: string };
+            provider: {
+              id: string;
+              name: string;
+              type: string;
+              enabled: boolean;
+              healthStatus?: string;
+            };
             models: Array<{
               id: string;
               name: string;
               provider: string;
               contextWindow: number;
               free: boolean;
-              capabilities: { toolUse: boolean; streaming: boolean; vision: boolean; reasoning: boolean };
+              capabilities: {
+                toolUse: boolean;
+                streaming: boolean;
+                vision: boolean;
+                reasoning: boolean;
+              };
             }>;
           }>;
         };
@@ -1244,13 +1282,16 @@ export const api = {
         body: JSON.stringify(body),
       }),
 
-    update: (id: string, body: {
-      name?: string;
-      content?: string;
-      projectSlug?: string | null;
-      tags?: string[];
-      sortOrder?: number;
-    }) =>
+    update: (
+      id: string,
+      body: {
+        name?: string;
+        content?: string;
+        projectSlug?: string | null;
+        tags?: string[];
+        sortOrder?: number;
+      },
+    ) =>
       request<{ success: boolean }>(`/api/saved-prompts/${encodeURIComponent(id)}`, {
         method: "PUT",
         body: JSON.stringify(body),
@@ -1323,10 +1364,9 @@ export const api = {
       ),
 
     delete: (id: string) =>
-      request<{ success: boolean }>(
-        `/api/custom-personas/${encodeURIComponent(id)}`,
-        { method: "DELETE" },
-      ),
+      request<{ success: boolean }>(`/api/custom-personas/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      }),
 
     clone: (builtInId: string, overrides?: { name?: string }) =>
       request<{ success: boolean; data: import("@companion/shared").Persona }>(
@@ -1373,45 +1413,126 @@ export const api = {
   // Wiki Knowledge Base
   wiki: {
     listDomains: () =>
-      request<{ success: boolean; data: Array<{ slug: string; name: string; articleCount: number; totalTokens: number; lastCompiledAt: string | null; hasCore: boolean }> }>("/api/wiki"),
+      request<{
+        success: boolean;
+        data: Array<{
+          slug: string;
+          name: string;
+          articleCount: number;
+          totalTokens: number;
+          lastCompiledAt: string | null;
+          hasCore: boolean;
+        }>;
+      }>("/api/wiki"),
     createDomain: (slug: string, name: string) =>
-      request<{ success: boolean; data: unknown }>("/api/wiki", { method: "POST", body: JSON.stringify({ slug, name }) }),
+      request<{ success: boolean; data: unknown }>("/api/wiki", {
+        method: "POST",
+        body: JSON.stringify({ slug, name }),
+      }),
     deleteDomain: (domain: string) =>
       request<{ success: boolean }>(`/api/wiki/${domain}`, { method: "DELETE" }),
     getIndex: (domain: string) =>
       request<{ success: boolean; data: unknown }>(`/api/wiki/${domain}`),
     listArticles: (domain: string) =>
-      request<{ success: boolean; data: Array<{ slug: string; title: string; tokens: number; tags: string[]; compiledAt: string }> }>(`/api/wiki/${domain}/articles`),
+      request<{
+        success: boolean;
+        data: Array<{
+          slug: string;
+          title: string;
+          tokens: number;
+          tags: string[];
+          compiledAt: string;
+        }>;
+      }>(`/api/wiki/${domain}/articles`),
     getArticle: (domain: string, slug: string) =>
-      request<{ success: boolean; data: { slug: string; meta: { title: string; domain: string; compiledFrom: string[]; compiledBy: string; compiledAt: string; tokens: number; tags: string[]; manuallyEdited: boolean }; content: string } }>(`/api/wiki/${domain}/articles/${slug}`),
+      request<{
+        success: boolean;
+        data: {
+          slug: string;
+          meta: {
+            title: string;
+            domain: string;
+            compiledFrom: string[];
+            compiledBy: string;
+            compiledAt: string;
+            tokens: number;
+            tags: string[];
+            manuallyEdited: boolean;
+          };
+          content: string;
+        };
+      }>(`/api/wiki/${domain}/articles/${slug}`),
     updateArticle: (domain: string, slug: string, body: { content: string; tags?: string[] }) =>
-      request<{ success: boolean }>(`/api/wiki/${domain}/articles/${slug}`, { method: "PUT", body: JSON.stringify(body) }),
+      request<{ success: boolean }>(`/api/wiki/${domain}/articles/${slug}`, {
+        method: "PUT",
+        body: JSON.stringify(body),
+      }),
     deleteArticle: (domain: string, slug: string) =>
       request<{ success: boolean }>(`/api/wiki/${domain}/articles/${slug}`, { method: "DELETE" }),
     getCore: (domain: string) =>
       request<{ success: boolean; data: { content: string } }>(`/api/wiki/${domain}/core`),
     updateCore: (domain: string, content: string) =>
-      request<{ success: boolean }>(`/api/wiki/${domain}/core`, { method: "PUT", body: JSON.stringify({ content }) }),
+      request<{ success: boolean }>(`/api/wiki/${domain}/core`, {
+        method: "PUT",
+        body: JSON.stringify({ content }),
+      }),
     compile: (domain: string, opts?: { overwrite?: boolean }) =>
-      request<{ success: boolean; data: { articlesCreated: number; articlesSkipped: number; errors: string[] } }>(`/api/wiki/${domain}/compile`, { method: "POST", body: JSON.stringify(opts ?? {}) }),
+      request<{
+        success: boolean;
+        data: { articlesCreated: number; articlesSkipped: number; errors: string[] };
+      }>(`/api/wiki/${domain}/compile`, { method: "POST", body: JSON.stringify(opts ?? {}) }),
     listRawFiles: (domain: string) =>
-      request<{ success: boolean; data: Array<{ name: string; ext: string; sizeBytes: number; modifiedAt: string; compiled: boolean }> }>(`/api/wiki/${domain}/raw`),
+      request<{
+        success: boolean;
+        data: Array<{
+          name: string;
+          ext: string;
+          sizeBytes: number;
+          modifiedAt: string;
+          compiled: boolean;
+        }>;
+      }>(`/api/wiki/${domain}/raw`),
     uploadRaw: (domain: string, filename: string, content: string) =>
-      request<{ success: boolean }>(`/api/wiki/${domain}/raw`, { method: "POST", body: JSON.stringify({ filename, content }) }),
+      request<{ success: boolean }>(`/api/wiki/${domain}/raw`, {
+        method: "POST",
+        body: JSON.stringify({ filename, content }),
+      }),
     deleteRaw: (domain: string, filename: string) =>
-      request<{ success: boolean }>(`/api/wiki/${domain}/raw/${encodeURIComponent(filename)}`, { method: "DELETE" }),
+      request<{ success: boolean }>(`/api/wiki/${domain}/raw/${encodeURIComponent(filename)}`, {
+        method: "DELETE",
+      }),
     search: (domain: string, query: string) =>
-      request<{ success: boolean; data: Array<{ slug: string; title: string; score: number; snippet: string }> }>(`/api/wiki/${domain}/query`, { method: "POST", body: JSON.stringify({ mode: "search", query }) }),
+      request<{
+        success: boolean;
+        data: Array<{ slug: string; title: string; score: number; snippet: string }>;
+      }>(`/api/wiki/${domain}/query`, {
+        method: "POST",
+        body: JSON.stringify({ mode: "search", query }),
+      }),
     lint: (domain: string) =>
-      request<{ success: boolean; data: { domain: string; issues: Array<{ target: string; severity: string; code: string; message: string }>; articlesChecked: number; rawFilesChecked: number; lintedAt: string } }>(`/api/wiki/${domain}/lint`),
+      request<{
+        success: boolean;
+        data: {
+          domain: string;
+          issues: Array<{ target: string; severity: string; code: string; message: string }>;
+          articlesChecked: number;
+          rawFilesChecked: number;
+          lintedAt: string;
+        };
+      }>(`/api/wiki/${domain}/lint`),
   },
 
   // Feature toggles
   features: {
     getToggles: () =>
-      request<{ success: boolean; data: Record<string, boolean> }>("/api/settings/features/toggles"),
+      request<{ success: boolean; data: Record<string, boolean> }>(
+        "/api/settings/features/toggles",
+      ),
     setToggle: (feature: string, enabled: boolean) =>
-      request<{ success: boolean }>(`/api/settings/features/toggles/${feature}`, { method: "PUT", body: JSON.stringify({ enabled }) }),
+      request<{ success: boolean }>(`/api/settings/features/toggles/${feature}`, {
+        method: "PUT",
+        body: JSON.stringify({ enabled }),
+      }),
   },
 
   // Update check

@@ -48,10 +48,16 @@ const sessionCreateRateLimit = createRateLimit({
 
 /** Middleware: require a specific feature to be unlocked */
 function requireFeature(feature: string) {
-  return async (c: { json: (body: ApiResponse, status: number) => Response }, next: () => Promise<void>) => {
+  return async (
+    c: { json: (body: ApiResponse, status: number) => Response },
+    next: () => Promise<void>,
+  ) => {
     if (!hasFeature(feature)) {
       return c.json(
-        { success: false, error: `This feature requires Companion Pro. Upgrade to unlock.` } satisfies ApiResponse,
+        {
+          success: false,
+          error: `This feature requires Companion Pro. Upgrade to unlock.`,
+        } satisfies ApiResponse,
         403,
       );
     }

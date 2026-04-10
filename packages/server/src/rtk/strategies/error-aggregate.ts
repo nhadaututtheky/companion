@@ -144,8 +144,7 @@ export class ErrorAggregateStrategy implements RTKStrategy {
         emittedGroups.add(match.code);
 
         if (group.count >= AGGREGATE_THRESHOLD) {
-          const filesInfo =
-            group.files.size > 0 ? ` — in ${group.files.size} file(s)` : "";
+          const filesInfo = group.files.size > 0 ? ` — in ${group.files.size} file(s)` : "";
           outputLines.push(`[${group.count}x] ${group.match.message}${filesInfo}`);
         } else {
           // Below threshold — keep original line(s)

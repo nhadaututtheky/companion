@@ -106,9 +106,7 @@ function KpiCard({
       }}
     >
       <div className="flex items-center justify-between gap-1">
-        <span className="text-xs">
-          {label}
-        </span>
+        <span className="text-xs">{label}</span>
         <span style={{ color: accent, opacity: 0.7 }}>{icon}</span>
       </div>
       <span
@@ -120,11 +118,7 @@ function KpiCard({
       >
         {value}
       </span>
-      {sub && (
-        <span className="text-xs truncate">
-          {sub}
-        </span>
-      )}
+      {sub && <span className="text-xs truncate">{sub}</span>}
     </div>
   );
 }
@@ -205,42 +199,12 @@ function SessionTable({ sessions }: { sessions: StatsData["recentSessions"] }) {
         <table className="w-full text-xs">
           <thead>
             <tr>
-              <th
-                className="text-left px-3 py-2 font-semibold"
-               
-              >
-                Session
-              </th>
-              <th
-                className="text-left px-3 py-2 font-semibold"
-               
-              >
-                Model
-              </th>
-              <th
-                className="text-right px-3 py-2 font-semibold"
-               
-              >
-                Turns
-              </th>
-              <th
-                className="text-right px-3 py-2 font-semibold"
-               
-              >
-                Tokens
-              </th>
-              <th
-                className="text-right px-3 py-2 font-semibold"
-               
-              >
-                Cost
-              </th>
-              <th
-                className="text-right px-3 py-2 font-semibold"
-               
-              >
-                Duration
-              </th>
+              <th className="text-left px-3 py-2 font-semibold">Session</th>
+              <th className="text-left px-3 py-2 font-semibold">Model</th>
+              <th className="text-right px-3 py-2 font-semibold">Turns</th>
+              <th className="text-right px-3 py-2 font-semibold">Tokens</th>
+              <th className="text-right px-3 py-2 font-semibold">Cost</th>
+              <th className="text-right px-3 py-2 font-semibold">Duration</th>
             </tr>
           </thead>
           <tbody>
@@ -251,21 +215,10 @@ function SessionTable({ sessions }: { sessions: StatsData["recentSessions"] }) {
                 style={{ borderTop: "1px solid var(--color-border)" }}
               >
                 <td className="px-3 py-2">
-                  <Link
-                    href={`/sessions/${s.id}`}
-                    className="hover:underline"
-                   
-                  >
+                  <Link href={`/sessions/${s.id}`} className="hover:underline">
                     {s.name ?? s.id.slice(0, 8)}
                   </Link>
-                  {s.projectSlug && (
-                    <span
-                      className="ml-1.5 text-[10px]"
-                     
-                    >
-                      {s.projectSlug}
-                    </span>
-                  )}
+                  {s.projectSlug && <span className="ml-1.5 text-[10px]">{s.projectSlug}</span>}
                 </td>
                 <td className="px-3 py-2">
                   <span
@@ -361,7 +314,6 @@ export default function AnalyticsPage() {
         <Link
           href="/"
           className="p-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
-         
           aria-label="Back to home"
         >
           <ArrowLeft size={16} weight="bold" />
@@ -373,10 +325,7 @@ export default function AnalyticsPage() {
       {/* Content */}
       <main className="flex-1 overflow-y-auto px-6 py-5 max-w-5xl mx-auto w-full">
         {loading && (
-          <div
-            className="flex items-center justify-center py-20 gap-2"
-           
-          >
+          <div className="flex items-center justify-center py-20 gap-2">
             <CircleNotch size={20} className="animate-spin" aria-hidden="true" />
             <span className="text-sm">Loading analytics...</span>
           </div>
@@ -445,10 +394,7 @@ export default function AnalyticsPage() {
             {/* Charts row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <span
-                  className="text-xs font-semibold uppercase tracking-wide"
-                 
-                >
+                <span className="text-xs font-semibold uppercase tracking-wide">
                   Daily Sessions (30d)
                 </span>
                 <BarChart
@@ -459,10 +405,7 @@ export default function AnalyticsPage() {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <span
-                  className="text-xs font-semibold uppercase tracking-wide"
-                 
-                >
+                <span className="text-xs font-semibold uppercase tracking-wide">
                   Daily Cost (30d)
                 </span>
                 <BarChart
@@ -478,10 +421,7 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {data.modelBreakdown.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <span
-                    className="text-xs font-semibold uppercase tracking-wide"
-                   
-                  >
+                  <span className="text-xs font-semibold uppercase tracking-wide">
                     Model Usage (30d)
                   </span>
                   <div
@@ -531,10 +471,7 @@ export default function AnalyticsPage() {
 
               {data.topProjects.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <span
-                    className="text-xs font-semibold uppercase tracking-wide"
-                   
-                  >
+                  <span className="text-xs font-semibold uppercase tracking-wide">
                     Top Projects (30d)
                   </span>
                   <div
@@ -549,11 +486,7 @@ export default function AnalyticsPage() {
                       const pct = max > 0 ? Math.round((p.sessions / max) * 100) : 0;
                       return (
                         <div key={p.name} className="flex items-center gap-3">
-                          <span
-                            className="text-xs truncate flex-1"
-                           
-                            title={p.name}
-                          >
+                          <span className="text-xs truncate flex-1" title={p.name}>
                             {p.name}
                           </span>
                           <div
@@ -592,10 +525,7 @@ export default function AnalyticsPage() {
             {/* Recent sessions table */}
             {data.recentSessions.length > 0 && (
               <div className="flex flex-col gap-2">
-                <span
-                  className="text-xs font-semibold uppercase tracking-wide"
-                 
-                >
+                <span className="text-xs font-semibold uppercase tracking-wide">
                   Recent Sessions
                 </span>
                 <SessionTable sessions={data.recentSessions} />

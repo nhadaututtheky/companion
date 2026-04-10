@@ -64,9 +64,7 @@ export function FeatureGuideModal() {
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
-        (f) =>
-          f.name.toLowerCase().includes(q) ||
-          f.description.toLowerCase().includes(q),
+        (f) => f.name.toLowerCase().includes(q) || f.description.toLowerCase().includes(q),
       );
     }
     return list;
@@ -78,7 +76,9 @@ export function FeatureGuideModal() {
         if (feature.panel === "stats") {
           useUiStore.getState().setStatsBarOpen(true);
         } else {
-          setRightPanelMode(feature.panel as "wiki" | "terminal" | "files" | "browser" | "ai-context");
+          setRightPanelMode(
+            feature.panel as "wiki" | "terminal" | "files" | "browser" | "ai-context",
+          );
         }
         setOpen(false);
       } else if (feature.settingsTab) {
@@ -135,10 +135,7 @@ export function FeatureGuideModal() {
             >
               {CATEGORY_LABELS[activeCategory]}
             </span>
-            <span
-              className="text-[10px] tabular-nums"
-              style={{ color: "var(--color-text-muted)" }}
-            >
+            <span className="text-[10px] tabular-nums" style={{ color: "var(--color-text-muted)" }}>
               {filteredFeatures.length}
             </span>
             <div className="flex-1" />
@@ -163,7 +160,10 @@ export function FeatureGuideModal() {
               />
             </div>
             <button
-              onClick={() => { setActiveCategory(null); setSearch(""); }}
+              onClick={() => {
+                setActiveCategory(null);
+                setSearch("");
+              }}
               className="p-1 cursor-pointer rounded"
               style={{ color: "var(--color-text-muted)" }}
               aria-label="Close category"
@@ -175,12 +175,19 @@ export function FeatureGuideModal() {
           {/* Feature list */}
           <div className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-1.5">
             {filteredFeatures.length === 0 && (
-              <div className="text-xs py-4 text-center" style={{ color: "var(--color-text-muted)" }}>
+              <div
+                className="text-xs py-4 text-center"
+                style={{ color: "var(--color-text-muted)" }}
+              >
                 No features match
               </div>
             )}
             {filteredFeatures.map((feature) => (
-              <FeatureRow key={feature.id} feature={feature} onAction={() => handleAction(feature)} />
+              <FeatureRow
+                key={feature.id}
+                feature={feature}
+                onAction={() => handleAction(feature)}
+              />
             ))}
           </div>
         </div>
@@ -198,10 +205,7 @@ export function FeatureGuideModal() {
           boxShadow: "var(--shadow-float)",
         }}
       >
-        <span
-          className="text-xs font-semibold px-2"
-          style={{ color: "var(--color-text-primary)" }}
-        >
+        <span className="text-xs font-semibold px-2" style={{ color: "var(--color-text-primary)" }}>
           Guide
         </span>
 
@@ -249,13 +253,7 @@ export function FeatureGuideModal() {
 
 // ── Feature Row (compact) ────────────────────────────────────────────────
 
-function FeatureRow({
-  feature,
-  onAction,
-}: {
-  feature: FeatureDef;
-  onAction: () => void;
-}) {
+function FeatureRow({ feature, onAction }: { feature: FeatureDef; onAction: () => void }) {
   const hasAction = feature.panel || feature.settingsTab;
 
   return (
@@ -283,9 +281,8 @@ function FeatureRow({
             className="text-[9px] px-1.5 py-0.5 font-medium"
             style={{
               borderRadius: "var(--radius-pill)",
-              background: feature.tier === "pro"
-                ? "rgba(234, 179, 8, 0.12)"
-                : "rgba(16, 185, 129, 0.12)",
+              background:
+                feature.tier === "pro" ? "rgba(234, 179, 8, 0.12)" : "rgba(16, 185, 129, 0.12)",
               color: feature.tier === "pro" ? "#eab308" : "#10b981",
             }}
           >
@@ -293,7 +290,9 @@ function FeatureRow({
               <span className="flex items-center gap-0.5">
                 <Crown size={8} weight="fill" /> PRO
               </span>
-            ) : "FREE"}
+            ) : (
+              "FREE"
+            )}
           </span>
         </div>
         <p className="text-[11px] mt-0.5 truncate" style={{ color: "var(--color-text-muted)" }}>
@@ -312,9 +311,13 @@ function FeatureRow({
           }}
         >
           {feature.panel ? (
-            <>Open <ArrowRight size={9} /></>
+            <>
+              Open <ArrowRight size={9} />
+            </>
           ) : (
-            <><Gear size={9} /> Settings</>
+            <>
+              <Gear size={9} /> Settings
+            </>
           )}
         </button>
       )}

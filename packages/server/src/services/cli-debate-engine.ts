@@ -85,13 +85,23 @@ function buildDebatePrompt(opts: {
   previousRounds: Array<{ agentId: string; content: string; round: number }>;
   round: number;
 }): string {
-  const { topic, format, role, agentLabel, opponentLabel, opponentPlatform, previousRounds, round } = opts;
+  const {
+    topic,
+    format,
+    role,
+    agentLabel,
+    opponentLabel,
+    opponentPlatform,
+    previousRounds,
+    round,
+  } = opts;
 
   const formatInstructions: Record<string, string> = {
     pro_con: `You are ${agentLabel}, arguing ${role === "advocate" ? "FOR" : "AGAINST"} this approach.`,
-    code_review: role === "builder"
-      ? `You are ${agentLabel}. Write or improve the code for the task described below.`
-      : `You are ${agentLabel}. Review the code written by your opponent and suggest improvements.`,
+    code_review:
+      role === "builder"
+        ? `You are ${agentLabel}. Write or improve the code for the task described below.`
+        : `You are ${agentLabel}. Review the code written by your opponent and suggest improvements.`,
     architecture: `You are ${agentLabel}. Propose and defend your architectural approach with real code examples.`,
     benchmark: `You are ${agentLabel}. Solve the task below. Your solution will be compared against ${opponentLabel}'s.`,
   };
@@ -163,7 +173,13 @@ function _collectCLIResponse(
 
 export async function startCLIDebate(
   config: CLIDebateConfig,
-  onMessage: (msg: { type: string; agentId?: string; round?: number; content?: string; channelId?: string }) => void,
+  onMessage: (msg: {
+    type: string;
+    agentId?: string;
+    round?: number;
+    content?: string;
+    channelId?: string;
+  }) => void,
 ): Promise<CLIDebateState> {
   if (config.agents.length < 2) {
     throw new Error("CLI debate requires at least 2 agents");
@@ -217,7 +233,13 @@ export async function startCLIDebate(
 
 async function runCLIDebateLoop(
   state: CLIDebateState,
-  onMessage: (msg: { type: string; agentId?: string; round?: number; content?: string; channelId?: string }) => void,
+  onMessage: (msg: {
+    type: string;
+    agentId?: string;
+    round?: number;
+    content?: string;
+    channelId?: string;
+  }) => void,
 ): Promise<void> {
   for (let round = 1; round <= state.maxRounds; round++) {
     if (state.status !== "active") break;
@@ -231,8 +253,11 @@ async function runCLIDebateLoop(
     });
 
     // Get previous messages for context
-    const previousMessages = getChannelMessages(state.channelId)
-      .map((m) => ({ agentId: m.agentId, content: m.content, round: m.round }));
+    const previousMessages = getChannelMessages(state.channelId).map((m) => ({
+      agentId: m.agentId,
+      content: m.content,
+      round: m.round,
+    }));
 
     // Each agent responds sequentially (avoids file conflicts in shared workspace)
     for (const agent of state.agents) {
@@ -288,7 +313,9 @@ async function runCLIDebateLoop(
               }
             }
           },
-          (_exitCode) => { /* handled via proc.exited */ },
+          (_exitCode) => {
+            /* handled via proc.exited */
+          },
         );
 
         state.processes.set(agent.id, proc);

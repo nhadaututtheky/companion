@@ -81,40 +81,40 @@ function SkillTreeGroup({
       {expanded && (
         <div id={`skill-group-${group.id}`} role="group" aria-label={group.label}>
           {/* Source path */}
-          <div
-            className="text-xs px-3 pl-9 pb-1"
-            style={{ color: "var(--color-text-muted)" }}
-          >
+          <div className="text-xs px-3 pl-9 pb-1" style={{ color: "var(--color-text-muted)" }}>
             {group.source}
           </div>
 
           <div className="pl-4">
-          {group.skills.map((skill) => {
-            const isSelected = selectedPath === skill.filePath;
-            return (
-              <button
-                key={skill.filePath}
-                onClick={() => onSelect(skill)}
-                title={skill.description || skill.name}
-                aria-label={`${skill.name}${skill.description ? ` — ${skill.description}` : ""}`}
-                className="flex items-center gap-2 w-full px-3 py-1.5 text-sm transition-colors cursor-pointer rounded-lg"
-                style={{
-                  color: isSelected ? "var(--color-accent)" : "var(--color-text-secondary)",
-                  background: isSelected
-                    ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
-                    : "transparent",
-                  fontWeight: isSelected ? 500 : 400,
-                }}
-              >
-                <FileText
-                  size={14}
-                  weight={isSelected ? "fill" : "regular"}
-                  style={{ color: isSelected ? "var(--color-accent)" : "var(--color-text-muted)", flexShrink: 0 }}
-                />
-                <span className="truncate">{skill.name}</span>
-              </button>
-            );
-          })}
+            {group.skills.map((skill) => {
+              const isSelected = selectedPath === skill.filePath;
+              return (
+                <button
+                  key={skill.filePath}
+                  onClick={() => onSelect(skill)}
+                  title={skill.description || skill.name}
+                  aria-label={`${skill.name}${skill.description ? ` — ${skill.description}` : ""}`}
+                  className="flex items-center gap-2 w-full px-3 py-1.5 text-sm transition-colors cursor-pointer rounded-lg"
+                  style={{
+                    color: isSelected ? "var(--color-accent)" : "var(--color-text-secondary)",
+                    background: isSelected
+                      ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
+                      : "transparent",
+                    fontWeight: isSelected ? 500 : 400,
+                  }}
+                >
+                  <FileText
+                    size={14}
+                    weight={isSelected ? "fill" : "regular"}
+                    style={{
+                      color: isSelected ? "var(--color-accent)" : "var(--color-text-muted)",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span className="truncate">{skill.name}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -206,8 +206,14 @@ function EmptyState() {
           No skills found
         </p>
         <p className="text-xs mt-1">
-          Skills are loaded from <code className="px-1 py-0.5 rounded" style={{ background: "var(--color-bg-elevated)" }}>~/.claude/skills/</code> and{" "}
-          <code className="px-1 py-0.5 rounded" style={{ background: "var(--color-bg-elevated)" }}>~/.rune/skills/</code>
+          Skills are loaded from{" "}
+          <code className="px-1 py-0.5 rounded" style={{ background: "var(--color-bg-elevated)" }}>
+            ~/.claude/skills/
+          </code>{" "}
+          and{" "}
+          <code className="px-1 py-0.5 rounded" style={{ background: "var(--color-bg-elevated)" }}>
+            ~/.rune/skills/
+          </code>
         </p>
       </div>
     </div>
@@ -273,7 +279,9 @@ export function SkillsTab() {
     }
 
     fetchSkills();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Fetch skill content on selection (race-safe via generation counter)

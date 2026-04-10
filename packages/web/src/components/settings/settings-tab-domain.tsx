@@ -1,14 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  Globe,
-  FloppyDisk,
-  Check,
-  Eye,
-  EyeSlash,
-  ArrowsClockwise,
-} from "@phosphor-icons/react";
+import { Globe, FloppyDisk, Check, Eye, EyeSlash, ArrowsClockwise } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { SettingSection, InputField } from "./settings-tabs";
@@ -31,7 +24,15 @@ export function DomainTab() {
   // Load current config
   useEffect(() => {
     api
-      .get<{ data: { mode: string; hostname: string; hasTunnelToken: boolean; sslMode?: string; letsencryptEmail?: string } }>("/api/domain")
+      .get<{
+        data: {
+          mode: string;
+          hostname: string;
+          hasTunnelToken: boolean;
+          sslMode?: string;
+          letsencryptEmail?: string;
+        };
+      }>("/api/domain")
       .then((res) => {
         if (res.data) {
           setMode((res.data.mode as "off" | "tunnel" | "nginx") ?? "off");
@@ -71,7 +72,8 @@ export function DomainTab() {
         hostname: hostname.trim(),
         tunnelToken: tunnelToken.trim() || undefined,
         sslMode: mode === "nginx" ? sslMode : undefined,
-        letsencryptEmail: sslMode === "letsencrypt" ? letsencryptEmail.trim() || undefined : undefined,
+        letsencryptEmail:
+          sslMode === "letsencrypt" ? letsencryptEmail.trim() || undefined : undefined,
       });
       setSaved(true);
       toast.success("Domain config saved — files generated");
@@ -119,12 +121,7 @@ export function DomainTab() {
     }
   }, [checkStatus]);
 
-  if (loading)
-    return (
-      <div className="text-xs py-8 text-center">
-        Loading...
-      </div>
-    );
+  if (loading) return <div className="text-xs py-8 text-center">Loading...</div>;
 
   return (
     <div className="flex flex-col gap-5">
@@ -136,9 +133,7 @@ export function DomainTab() {
         <div className="flex flex-col gap-4">
           {/* Mode buttons */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium">
-              Mode
-            </label>
+            <label className="text-xs font-medium">Mode</label>
             <div className="flex gap-2">
               {(["off", "tunnel", "nginx"] as const).map((m) => (
                 <button
@@ -170,12 +165,7 @@ export function DomainTab() {
               {/* Tunnel token (only for tunnel mode) */}
               {mode === "tunnel" && (
                 <div className="flex flex-col gap-1.5">
-                  <label
-                    className="text-xs font-medium"
-
-                  >
-                    Tunnel Token
-                  </label>
+                  <label className="text-xs font-medium">Tunnel Token</label>
                   <div className="relative">
                     <input
                       type={showToken ? "text" : "password"}
@@ -192,7 +182,6 @@ export function DomainTab() {
                       type="button"
                       onClick={() => setShowToken(!showToken)}
                       className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-pointer"
-
                       aria-label={showToken ? "Hide" : "Show"}
                     >
                       {showToken ? <EyeSlash size={14} /> : <Eye size={14} />}
@@ -208,9 +197,7 @@ export function DomainTab() {
               {mode === "nginx" && (
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-medium">
-                      SSL Certificate
-                    </label>
+                    <label className="text-xs font-medium">SSL Certificate</label>
                     <div className="flex gap-2">
                       {(["letsencrypt", "manual"] as const).map((m) => (
                         <button
@@ -218,7 +205,8 @@ export function DomainTab() {
                           onClick={() => setSslMode(m)}
                           className="px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer flex-1"
                           style={{
-                            background: sslMode === m ? "var(--color-accent)" : "var(--color-bg-elevated)",
+                            background:
+                              sslMode === m ? "var(--color-accent)" : "var(--color-bg-elevated)",
                             color: sslMode === m ? "#fff" : "var(--color-text-secondary)",
                             border: `1px solid ${sslMode === m ? "var(--color-accent)" : "var(--color-border)"}`,
                           }}
@@ -295,9 +283,7 @@ export function DomainTab() {
                             : "#FBBC04",
                     }}
                   />
-                  <span>
-                    Gateway: {status.gateway}
-                  </span>
+                  <span>Gateway: {status.gateway}</span>
                 </div>
                 {mode === "tunnel" && (
                   <div className="flex items-center gap-1.5">
@@ -307,9 +293,7 @@ export function DomainTab() {
                         background: status.tunnel === "configured" ? "#34A853" : "#FBBC04",
                       }}
                     />
-                    <span>
-                      Tunnel: {status.tunnel}
-                    </span>
+                    <span>Tunnel: {status.tunnel}</span>
                   </div>
                 )}
               </div>

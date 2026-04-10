@@ -88,9 +88,7 @@ function KpiCard({ label, value, sub, icon, accent = "#4285f4" }: KpiCardProps) 
       }}
     >
       <div className="flex items-center justify-between gap-1">
-        <span className="text-xs">
-          {label}
-        </span>
+        <span className="text-xs">{label}</span>
         <span style={{ color: accent, opacity: 0.7 }}>{icon}</span>
       </div>
       <span
@@ -102,11 +100,7 @@ function KpiCard({ label, value, sub, icon, accent = "#4285f4" }: KpiCardProps) 
       >
         {value}
       </span>
-      {sub && (
-        <span className="text-xs truncate">
-          {sub}
-        </span>
-      )}
+      {sub && <span className="text-xs truncate">{sub}</span>}
     </div>
   );
 }
@@ -114,14 +108,7 @@ function KpiCard({ label, value, sub, icon, accent = "#4285f4" }: KpiCardProps) 
 // ── Section header ────────────────────────────────────────────────────────
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      className="text-xs font-semibold uppercase tracking-wide"
-     
-    >
-      {children}
-    </span>
-  );
+  return <span className="text-xs font-semibold uppercase tracking-wide">{children}</span>;
 }
 
 // ── Main component ────────────────────────────────────────────────────────
@@ -165,7 +152,6 @@ export function StatsPanel({ onClose }: StatsPanelProps) {
         <button
           onClick={onClose}
           className="p-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
-         
           aria-label="Close stats panel"
         >
           <X size={14} weight="bold" aria-hidden="true" />
@@ -175,10 +161,7 @@ export function StatsPanel({ onClose }: StatsPanelProps) {
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-5">
         {loading && (
-          <div
-            className="flex items-center justify-center py-12 gap-2"
-           
-          >
+          <div className="flex items-center justify-center py-12 gap-2">
             <CircleNotch size={18} className="animate-spin" aria-hidden="true" />
             <span className="text-sm">Loading stats…</span>
           </div>
@@ -314,9 +297,7 @@ function ActivityHeatmap({ data }: { data: StatsData["dailyActivity"] }) {
       </div>
       {/* Legend */}
       <div className="flex items-center justify-end gap-2 mt-2">
-        <span className="text-xs">
-          Less
-        </span>
+        <span className="text-xs">Less</span>
         {[0, 1, 3, 5, 7].map((n) => (
           <div
             key={n}
@@ -331,9 +312,7 @@ function ActivityHeatmap({ data }: { data: StatsData["dailyActivity"] }) {
             aria-hidden="true"
           />
         ))}
-        <span className="text-xs">
-          More
-        </span>
+        <span className="text-xs">More</span>
       </div>
     </div>
   );

@@ -127,9 +127,7 @@ export function parseMentions(
  * Resolve a mention as a debate agent ID.
  * Checks active debates for matching agent IDs (e.g. "advocate", "challenger").
  */
-function resolveDebateAgentMention(
-  shortId: string,
-): { channelId: string; agentId: string } | null {
+function resolveDebateAgentMention(shortId: string): { channelId: string; agentId: string } | null {
   const debates = listActiveDebates();
   for (const debate of debates) {
     const agent = debate.agents.find((a) => a.id === shortId);

@@ -1,12 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import {
-  MagnifyingGlass,
-  Moon,
-  Sun,
-  Gear,
-  List,
-} from "@phosphor-icons/react";
+import { MagnifyingGlass, Moon, Sun, Gear, List } from "@phosphor-icons/react";
 import { TemplateQuickPicker } from "./template-quick-picker";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
@@ -30,7 +24,9 @@ export function HeaderStats() {
       <div className="flex items-center gap-1.5">
         <span
           className="inline-block w-1.5 h-1.5 rounded-full"
-          style={{ background: activeCount > 0 ? "var(--color-success)" : "var(--color-text-muted)" }}
+          style={{
+            background: activeCount > 0 ? "var(--color-success)" : "var(--color-text-muted)",
+          }}
         />
         <span className="text-sm font-semibold tabular-nums">{activeCount}</span>
         <span className="text-xs text-[var(--color-text-muted)]">active</span>
@@ -131,11 +127,11 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
       {/* Right: Nav menu triggers — desktop only */}
       <div className="hidden md:flex items-center gap-1">
-        {([
+        {[
           { id: "panels" as const, label: "Panels", isActive: hasPanelActive },
           { id: "ai" as const, label: "AI", isActive: hasAiActive },
           { id: "layout" as const, label: "View", isActive: false },
-        ]).map((item) => {
+        ].map((item) => {
           const isOpen = activeNavMenu === item.id;
           return (
             <button
@@ -155,9 +151,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
                   : item.isActive
                     ? "var(--color-accent)"
                     : "var(--color-text-secondary)",
-                border: isOpen
-                  ? "1px solid var(--color-text-primary)"
-                  : "1px solid transparent",
+                border: isOpen ? "1px solid var(--color-text-primary)" : "1px solid transparent",
                 fontWeight: isOpen ? 600 : 400,
               }}
               aria-expanded={isOpen}
@@ -186,9 +180,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
             borderRadius: "var(--radius-pill)",
             background: featureGuideOpen ? "var(--color-accent)" : "transparent",
             color: featureGuideOpen ? "#fff" : "var(--color-text-secondary)",
-            border: featureGuideOpen
-              ? "1px solid var(--color-accent)"
-              : "1px solid transparent",
+            border: featureGuideOpen ? "1px solid var(--color-accent)" : "1px solid transparent",
           }}
           aria-label="Feature Guide"
           title="Feature Guide (Ctrl+/)"
@@ -199,7 +191,11 @@ export function Header({ onMenuToggle }: HeaderProps) {
           onClick={() => useUiStore.getState().setSettingsModalOpen(true)}
           className="p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
           aria-label="Settings"
-          title={typeof navigator !== "undefined" && /Mac/.test(navigator.platform) ? "Settings (⌘,)" : "Settings (Ctrl+,)"}
+          title={
+            typeof navigator !== "undefined" && /Mac/.test(navigator.platform)
+              ? "Settings (⌘,)"
+              : "Settings (Ctrl+,)"
+          }
         >
           <Gear size={16} weight="bold" />
         </button>

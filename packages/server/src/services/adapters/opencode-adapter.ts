@@ -54,10 +54,8 @@ function parseOpenCodeMessage(line: string): NormalizedMessage | null {
 
   // Text/content event
   if (kind === "content" || kind === "text" || kind === "assistant.text") {
-    const text = (parsed.content as string)
-      ?? (parsed.text as string)
-      ?? (parsed.delta as string)
-      ?? "";
+    const text =
+      (parsed.content as string) ?? (parsed.text as string) ?? (parsed.delta as string) ?? "";
     return {
       type: "assistant",
       platform: "opencode",
@@ -70,9 +68,7 @@ function parseOpenCodeMessage(line: string): NormalizedMessage | null {
 
   // Full assistant message (non-streaming)
   if (kind === "message" || kind === "assistant") {
-    const content = (parsed.content as string)
-      ?? (parsed.text as string)
-      ?? "";
+    const content = (parsed.content as string) ?? (parsed.text as string) ?? "";
     return {
       type: "assistant",
       platform: "opencode",
@@ -89,18 +85,22 @@ function parseOpenCodeMessage(line: string): NormalizedMessage | null {
     return {
       type: "assistant",
       platform: "opencode",
-      contentBlocks: [{
-        type: "tool_use",
-        id: (parsed.id as string) ?? (tool?.id as string) ?? crypto.randomUUID(),
-        name: (parsed.name as string)
-          ?? (tool?.name as string)
-          ?? (parsed.tool_name as string)
-          ?? "unknown",
-        input: (parsed.input as Record<string, unknown>)
-          ?? (tool?.input as Record<string, unknown>)
-          ?? (parsed.args as Record<string, unknown>)
-          ?? {},
-      }],
+      contentBlocks: [
+        {
+          type: "tool_use",
+          id: (parsed.id as string) ?? (tool?.id as string) ?? crypto.randomUUID(),
+          name:
+            (parsed.name as string) ??
+            (tool?.name as string) ??
+            (parsed.tool_name as string) ??
+            "unknown",
+          input:
+            (parsed.input as Record<string, unknown>) ??
+            (tool?.input as Record<string, unknown>) ??
+            (parsed.args as Record<string, unknown>) ??
+            {},
+        },
+      ],
       raw: parsed,
     };
   }
@@ -111,10 +111,12 @@ function parseOpenCodeMessage(line: string): NormalizedMessage | null {
       type: "tool_result",
       platform: "opencode",
       content: (parsed.output as string) ?? (parsed.result as string) ?? "",
-      contentBlocks: [{
-        type: "text",
-        text: (parsed.output as string) ?? (parsed.result as string) ?? "",
-      }],
+      contentBlocks: [
+        {
+          type: "text",
+          text: (parsed.output as string) ?? (parsed.result as string) ?? "",
+        },
+      ],
       raw: parsed,
     };
   }
@@ -136,9 +138,7 @@ function parseOpenCodeMessage(line: string): NormalizedMessage | null {
     return {
       type: "error",
       platform: "opencode",
-      errorMessage: (parsed.message as string)
-        ?? (parsed.error as string)
-        ?? "Unknown error",
+      errorMessage: (parsed.message as string) ?? (parsed.error as string) ?? "Unknown error",
       raw: parsed,
     };
   }
@@ -321,11 +321,25 @@ export class OpenCodeAdapter implements CLIAdapter {
     return {
       pid,
       send: (_data: string) => {
-        log.warn("OpenCode run mode is non-interactive — send() is a no-op. Use a new session instead.");
+        log.warn(
+          "OpenCode run mode is non-interactive — send() is a no-op. Use a new session instead.",
+        );
       },
-      kill: () => { try { proc.kill(); } catch { /* dead */ } },
+      kill: () => {
+        try {
+          proc.kill();
+        } catch {
+          /* dead */
+        }
+      },
       exited,
-      isAlive: () => { try { return proc.exitCode === null; } catch { return false; } },
+      isAlive: () => {
+        try {
+          return proc.exitCode === null;
+        } catch {
+          return false;
+        }
+      },
       getStderrLines: () => [...stderrLines],
     };
   }

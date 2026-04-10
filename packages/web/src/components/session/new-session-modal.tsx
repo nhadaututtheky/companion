@@ -8,7 +8,11 @@ import { api } from "@/lib/api-client";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { usePersonas } from "@/hooks/use-personas";
-import { useCLIPlatforms, getModelsForPlatform, getDefaultModelForPlatform } from "@/hooks/use-cli-platforms";
+import {
+  useCLIPlatforms,
+  getModelsForPlatform,
+  getDefaultModelForPlatform,
+} from "@/hooks/use-cli-platforms";
 import { StepProject, type ProjectItem, type ResumableSession } from "./modal/step-project";
 import { StepConfig } from "./modal/step-config";
 import { StepReview } from "./modal/step-review";
@@ -46,7 +50,8 @@ function StepPills({ current }: { current: Step }) {
           {idx > 0 && (
             <div
               style={{
-                width: 16, height: 1,
+                width: 16,
+                height: 1,
                 background: current > idx ? "var(--color-accent)" : "var(--color-border)",
                 borderRadius: 1,
               }}
@@ -72,8 +77,14 @@ function StepPills({ current }: { current: Step }) {
             <div
               className="flex items-center justify-center rounded-full text-xs font-bold flex-shrink-0"
               style={{
-                width: 20, height: 20,
-                background: current === n ? "var(--color-accent)" : current > n ? "var(--color-success)" : "var(--color-bg-elevated)",
+                width: 20,
+                height: 20,
+                background:
+                  current === n
+                    ? "var(--color-accent)"
+                    : current > n
+                      ? "var(--color-success)"
+                      : "var(--color-bg-elevated)",
                 color: current >= n ? "#fff" : "var(--color-text-muted)",
               }}
             >
@@ -82,7 +93,12 @@ function StepPills({ current }: { current: Step }) {
             <span
               className="text-xs font-medium"
               style={{
-                color: current === n ? "var(--color-accent)" : current > n ? "var(--color-success)" : "var(--color-text-muted)",
+                color:
+                  current === n
+                    ? "var(--color-accent)"
+                    : current > n
+                      ? "var(--color-success)"
+                      : "var(--color-text-muted)",
               }}
             >
               {label}
@@ -133,7 +149,9 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
   const [templateVars, setTemplateVars] = useState<Record<string, string>>({});
 
   // CLI Platform
-  const [selectedPlatform, setSelectedPlatform] = useState<"claude" | "codex" | "gemini" | "opencode">("claude");
+  const [selectedPlatform, setSelectedPlatform] = useState<
+    "claude" | "codex" | "gemini" | "opencode"
+  >("claude");
   const { platforms: detectedPlatforms, loading: platformsLoading } = useCLIPlatforms();
 
   useEffect(() => {
@@ -170,7 +188,10 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   const sessionCount = useSessionStore(
-    (s) => Object.values(s.sessions).filter((sess) => ["running", "waiting", "idle"].includes(sess.status)).length,
+    (s) =>
+      Object.values(s.sessions).filter((sess) =>
+        ["running", "waiting", "idle"].includes(sess.status),
+      ).length,
   );
   const atLimit = sessionCount >= 6;
 
@@ -191,16 +212,26 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
   // Esc to close + focus trap
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { e.preventDefault(); onClose(); return; }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+        return;
+      }
       if (e.key === "Tab" && dialogRef.current) {
         const focusable = getFocusable(dialogRef.current);
         if (focusable.length === 0) return;
         const first = focusable[0]!;
         const last = focusable[focusable.length - 1]!;
         if (e.shiftKey) {
-          if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
         } else {
-          if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
         }
       }
     };
@@ -212,46 +243,62 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, []);
 
   // ── Handlers ────────────────────────────────────────────────────────────
 
-  const handleResumeSession = useCallback(async (s: ResumableSession) => {
-    if (atLimit) return;
-    setResumingId(s.id);
-    try {
-      const res = await api.sessions.resume(s.id, { idleTimeoutMs: idleTimeout, keepAlive: idleTimeout === 0 });
-      const sessionId = res.data.sessionId;
-      const label = s.projectSlug ?? s.cwd.replace(/\\/g, "/").split("/").filter(Boolean).pop() ?? "session";
-      useSessionStore.getState().setSession(sessionId, {
-        id: sessionId, projectSlug: s.projectSlug ?? label, projectName: label,
-        model: s.model, status: "starting", createdAt: Date.now(),
-      });
-      useSessionStore.getState().addToGrid(sessionId);
-      useSessionStore.getState().setActiveSession(sessionId);
-      toast.success(`Resuming session: ${label}`);
-      onClose();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to resume session");
-    } finally {
-      setResumingId(null);
-    }
-  }, [atLimit, onClose, idleTimeout]);
+  const handleResumeSession = useCallback(
+    async (s: ResumableSession) => {
+      if (atLimit) return;
+      setResumingId(s.id);
+      try {
+        const res = await api.sessions.resume(s.id, {
+          idleTimeoutMs: idleTimeout,
+          keepAlive: idleTimeout === 0,
+        });
+        const sessionId = res.data.sessionId;
+        const label =
+          s.projectSlug ?? s.cwd.replace(/\\/g, "/").split("/").filter(Boolean).pop() ?? "session";
+        useSessionStore.getState().setSession(sessionId, {
+          id: sessionId,
+          projectSlug: s.projectSlug ?? label,
+          projectName: label,
+          model: s.model,
+          status: "starting",
+          createdAt: Date.now(),
+        });
+        useSessionStore.getState().addToGrid(sessionId);
+        useSessionStore.getState().setActiveSession(sessionId);
+        toast.success(`Resuming session: ${label}`);
+        onClose();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to resume session");
+      } finally {
+        setResumingId(null);
+      }
+    },
+    [atLimit, onClose, idleTimeout],
+  );
 
-  const handleSelectProject = useCallback((p: ProjectItem) => {
-    setSelectedDir(p.dir);
-    setProjectName(p.name);
-    const platformModels = getModelsForPlatform(selectedPlatform);
-    const validValues = platformModels.map((m) => m.value);
-    if (selectedPlatform === "claude") {
-      setModel(validValues.includes(p.defaultModel) ? p.defaultModel : "claude-sonnet-4-6");
-    } else {
-      setModel(platformModels[0]?.value ?? "");
-    }
-    setPermissionMode((p.permissionMode as PermissionMode) || "default");
-    setStep(2);
-  }, [selectedPlatform]);
+  const handleSelectProject = useCallback(
+    (p: ProjectItem) => {
+      setSelectedDir(p.dir);
+      setProjectName(p.name);
+      const platformModels = getModelsForPlatform(selectedPlatform);
+      const validValues = platformModels.map((m) => m.value);
+      if (selectedPlatform === "claude") {
+        setModel(validValues.includes(p.defaultModel) ? p.defaultModel : "claude-sonnet-4-6");
+      } else {
+        setModel(platformModels[0]?.value ?? "");
+      }
+      setPermissionMode((p.permissionMode as PermissionMode) || "default");
+      setStep(2);
+    },
+    [selectedPlatform],
+  );
 
   const handleDirSelected = useCallback((path: string) => {
     setShowDirBrowser(false);
@@ -274,24 +321,27 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
   const selectedTemplate = templates.find((t) => t.id === selectedTemplateId) ?? null;
   const templateVariables = selectedTemplate?.variables ?? [];
 
-  const handleSelectTemplate = useCallback((tpl: TemplateItem) => {
-    if (selectedTemplateId === tpl.id) {
-      setSelectedTemplateId(null);
+  const handleSelectTemplate = useCallback(
+    (tpl: TemplateItem) => {
+      if (selectedTemplateId === tpl.id) {
+        setSelectedTemplateId(null);
+        setTemplateVars({});
+        setInitialPrompt("");
+        return;
+      }
+      setSelectedTemplateId(tpl.id);
       setTemplateVars({});
-      setInitialPrompt("");
-      return;
-    }
-    setSelectedTemplateId(tpl.id);
-    setTemplateVars({});
-    setInitialPrompt(tpl.prompt);
-    if (tpl.model) {
-      const validModels = getModelsForPlatform(selectedPlatform).map((m) => m.value);
-      if (validModels.includes(tpl.model)) setModel(tpl.model);
-    }
-    if (tpl.permissionMode) {
-      setPermissionMode((tpl.permissionMode as PermissionMode) || "default");
-    }
-  }, [selectedTemplateId]); // eslint-disable-line react-hooks/exhaustive-deps
+      setInitialPrompt(tpl.prompt);
+      if (tpl.model) {
+        const validModels = getModelsForPlatform(selectedPlatform).map((m) => m.value);
+        if (validModels.includes(tpl.model)) setModel(tpl.model);
+      }
+      if (tpl.permissionMode) {
+        setPermissionMode((tpl.permissionMode as PermissionMode) || "default");
+      }
+    },
+    [selectedTemplateId],
+  ); // eslint-disable-line react-hooks/exhaustive-deps
 
   const templateVarsValid =
     templateVariables.length === 0 ||
@@ -319,12 +369,15 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
 
       const res = await api.sessions.start({
         projectDir: selectedDir,
-        projectSlug: projectName ? projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-") : undefined,
+        projectSlug: projectName
+          ? projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-")
+          : undefined,
         model,
         permissionMode: selectedPlatform === "claude" ? permissionMode : undefined,
         prompt: initialPrompt.trim() || undefined,
         templateId: selectedTemplateId ?? undefined,
-        templateVars: selectedTemplateId && Object.keys(templateVars).length > 0 ? templateVars : undefined,
+        templateVars:
+          selectedTemplateId && Object.keys(templateVars).length > 0 ? templateVars : undefined,
         idleTimeoutMs: idleTimeout,
         keepAlive: idleTimeout === 0,
         personaId: selectedPlatform === "claude" ? (selectedPersonaId ?? undefined) : undefined,
@@ -337,8 +390,12 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
       const slug = projectName ? projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-") : "session";
 
       useSessionStore.getState().setSession(sessionId, {
-        id: sessionId, projectSlug: slug, projectName: projectName || slug,
-        model, status: "starting", createdAt: Date.now(),
+        id: sessionId,
+        projectSlug: slug,
+        projectName: projectName || slug,
+        model,
+        status: "starting",
+        createdAt: Date.now(),
         personaId: selectedPersonaId ?? undefined,
       });
       useSessionStore.getState().addToGrid(sessionId);
@@ -346,7 +403,9 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
 
       toast.success(`Session started: ${projectName || selectedDir}`);
       if (projectCreated) {
-        toast.info(`Project "${projectName}" saved — now available in Telegram /start`, { duration: 5000 });
+        toast.info(`Project "${projectName}" saved — now available in Telegram /start`, {
+          duration: 5000,
+        });
       }
       onClose();
     } catch (err) {
@@ -354,9 +413,23 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
     } finally {
       setLaunching(false);
     }
-  }, [atLimit, selectedDir, projectName, model, permissionMode, initialPrompt, idleTimeout,
-    selectedTemplateId, templateVars, selectedPersonaId, selectedPlatform,
-    codexApprovalMode, geminiSandbox, geminiYolo, onClose]);
+  }, [
+    atLimit,
+    selectedDir,
+    projectName,
+    model,
+    permissionMode,
+    initialPrompt,
+    idleTimeout,
+    selectedTemplateId,
+    templateVars,
+    selectedPersonaId,
+    selectedPlatform,
+    codexApprovalMode,
+    geminiSandbox,
+    geminiYolo,
+    onClose,
+  ]);
 
   const handlePlatformSelect = useCallback((id: "claude" | "codex" | "gemini" | "opencode") => {
     setSelectedPlatform(id);
@@ -368,50 +441,95 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
 
   return (
     <>
-      <div onClick={onClose} aria-hidden="true" style={{
-        position: "fixed", inset: 0, zIndex: 60,
-        background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
-      }} />
+      <div
+        onClick={onClose}
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 60,
+          background: "rgba(0,0,0,0.45)",
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(4px)",
+        }}
+      />
 
-      <div style={{
-        position: "fixed", inset: 0, zIndex: 61,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "16px", pointerEvents: "none",
-      }} aria-hidden="false">
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 61,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "16px",
+          pointerEvents: "none",
+        }}
+        aria-hidden="false"
+      >
         <div
-          ref={dialogRef} role="dialog" aria-modal="true" aria-label="New Session"
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="New Session"
           style={{
-            width: "100%", maxWidth: 600, borderRadius: 16, overflow: "hidden",
+            width: "100%",
+            maxWidth: 600,
+            borderRadius: 16,
+            overflow: "hidden",
             pointerEvents: "auto",
-            background: "rgba(255,255,255,0.92)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+            background: "rgba(255,255,255,0.92)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
             border: "1px solid rgba(255,255,255,0.18)",
             boxShadow: "0 8px 40px rgba(0,0,0,0.18), inset 0 0 0 1px rgba(255,255,255,0.1)",
           }}
           className="dark:bg-glass-dark"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid var(--color-border)" }}>
+          <div
+            className="flex items-center justify-between px-5 py-4 flex-shrink-0"
+            style={{ borderBottom: "1px solid var(--color-border)" }}
+          >
             <div>
-              <h2 className="text-base font-bold" style={{ fontFamily: "var(--font-display)", color: "var(--color-text-primary)" }}>
+              <h2
+                className="text-base font-bold"
+                style={{ fontFamily: "var(--font-display)", color: "var(--color-text-primary)" }}
+              >
                 New Session
               </h2>
               <p className="text-xs mt-0.5">
-                {atLimit ? "Maximum 6 sessions active — stop one to continue" : "Launch a coding session in a project"}
+                {atLimit
+                  ? "Maximum 6 sessions active — stop one to continue"
+                  : "Launch a coding session in a project"}
               </p>
             </div>
             <div className="flex items-center gap-3">
               <StepPills current={step} />
-              <button onClick={onClose} className="flex items-center justify-center p-2 rounded-lg transition-colors cursor-pointer"
-                style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-secondary)", border: "1px solid var(--color-border)" }}
-                aria-label="Close modal">
+              <button
+                onClick={onClose}
+                className="flex items-center justify-center p-2 rounded-lg transition-colors cursor-pointer"
+                style={{
+                  background: "var(--color-bg-elevated)",
+                  color: "var(--color-text-secondary)",
+                  border: "1px solid var(--color-border)",
+                }}
+                aria-label="Close modal"
+              >
                 <X size={14} weight="bold" aria-hidden="true" />
               </button>
             </div>
           </div>
 
           {atLimit && (
-            <div className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium"
-              style={{ background: "#EA433510", color: "#EA4335", borderBottom: "1px solid #EA433530" }}>
+            <div
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium"
+              style={{
+                background: "#EA433510",
+                color: "#EA4335",
+                borderBottom: "1px solid #EA433530",
+              }}
+            >
               <Warning size={16} aria-hidden="true" />
               Maximum 6 sessions active. Stop an existing session first.
             </div>
@@ -478,7 +596,10 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
               resume={resume}
               onResumeChange={setResume}
               selectedDir={selectedDir}
-              onBack={() => { setStep(1); setShowDirBrowser(false); }}
+              onBack={() => {
+                setStep(1);
+                setShowDirBrowser(false);
+              }}
               onNext={() => setStep(3)}
             />
           )}

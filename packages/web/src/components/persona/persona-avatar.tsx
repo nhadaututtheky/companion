@@ -42,25 +42,14 @@ export function PersonaAvatar({
         role="img"
       >
         <defs>
-          <linearGradient
-            id={gradId}
-            x1="0%"
-            y1="0%"
-            x2="100%"
-            y2="100%"
-          >
+          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor={color1} />
             <stop offset="100%" stopColor={color2} />
           </linearGradient>
         </defs>
 
         {/* Background circle */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={size / 2 - 1}
-          fill={`url(#${gradId})`}
-        />
+        <circle cx={size / 2} cy={size / 2} r={size / 2 - 1} fill={`url(#${gradId})`} />
 
         {/* Subtle inner ring for depth */}
         <circle

@@ -265,9 +265,14 @@ describe("TerminalLock — timeout", () => {
     await lock.acquire("s1", "ownerA");
 
     let settled = false;
-    lock.acquire("s1", "ownerB")
-      .then(() => { settled = true; })
-      .catch(() => { settled = true; });
+    lock
+      .acquire("s1", "ownerB")
+      .then(() => {
+        settled = true;
+      })
+      .catch(() => {
+        settled = true;
+      });
 
     // Wait for both timers to have fired
     await new Promise<void>((res) => setTimeout(res, FAST_TIMEOUT_MS * 2 + 20));

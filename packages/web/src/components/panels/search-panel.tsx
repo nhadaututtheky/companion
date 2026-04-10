@@ -143,16 +143,10 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
           style={{ color: "var(--color-accent)", flexShrink: 0 }}
           aria-hidden="true"
         />
-        <span
-          className="text-sm font-semibold flex-1"
-         
-        >
-          Search Files
-        </span>
+        <span className="text-sm font-semibold flex-1">Search Files</span>
         <button
           onClick={onClose}
           className="p-1 rounded transition-colors cursor-pointer"
-         
           aria-label="Close search panel"
         >
           <X size={15} weight="bold" aria-hidden="true" />
@@ -197,7 +191,6 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
             <button
               onClick={() => setQuery("")}
               className="absolute right-2 cursor-pointer"
-             
               aria-label="Clear query"
             >
               <X size={13} aria-hidden="true" />
@@ -227,10 +220,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
       <div className="flex-1 overflow-y-auto">
         {/* Loading */}
         {loading && (
-          <div
-            className="flex items-center justify-center gap-2 py-8"
-           
-          >
+          <div className="flex items-center justify-center gap-2 py-8">
             <CircleNotch size={16} className="animate-spin" aria-hidden="true" />
             <span className="text-sm">Searching...</span>
           </div>
@@ -238,10 +228,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
 
         {/* Error */}
         {!loading && error && (
-          <div
-            className="flex flex-col items-center justify-center gap-2 py-8 px-4 text-center"
-           
-          >
+          <div className="flex flex-col items-center justify-center gap-2 py-8 px-4 text-center">
             <WarningCircle size={24} weight="regular" aria-hidden="true" />
             <span className="text-sm">{error}</span>
           </div>
@@ -249,10 +236,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
 
         {/* Empty state */}
         {!loading && !error && hasSearched && matches.length === 0 && (
-          <div
-            className="flex flex-col items-center justify-center gap-2 py-8"
-           
-          >
+          <div className="flex flex-col items-center justify-center gap-2 py-8">
             <MagnifyingGlass size={24} weight="regular" aria-hidden="true" />
             <span className="text-sm">No results found</span>
           </div>
@@ -295,25 +279,15 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
                       />
                       <span
                         className="text-xs font-semibold truncate"
-                       
                         title={fileRelative(match.file, searchRoot)}
                       >
                         {fileRelative(match.file, searchRoot)}
                       </span>
-                      <span
-                        className="text-xs flex-shrink-0 font-mono"
-                       
-                      >
-                        :{match.line}
-                      </span>
+                      <span className="text-xs flex-shrink-0 font-mono">:{match.line}</span>
                     </div>
 
                     {/* Matching line text */}
-                    <div
-                      className="text-xs font-mono truncate"
-                     
-                      title={match.text.trim()}
-                    >
+                    <div className="text-xs font-mono truncate" title={match.text.trim()}>
                       <HighlightedText text={match.text.trim()} query={query} />
                     </div>
                   </button>

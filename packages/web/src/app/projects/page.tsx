@@ -83,20 +83,12 @@ function ProjectCard({
           <FolderOpen size={22} style={{ color: "#4285F4" }} weight="fill" />
         </div>
         <div className="min-w-0">
-          <h3
-            className="text-sm font-semibold mb-0.5 truncate"
-           
-          >
-            {project.name}
-          </h3>
+          <h3 className="text-sm font-semibold mb-0.5 truncate">{project.name}</h3>
           <div className="flex items-center gap-1 mb-2 group">
-            <p className="text-xs font-mono truncate">
-              {project.dir}
-            </p>
+            <p className="text-xs font-mono truncate">{project.dir}</p>
             <button
               onClick={copyDir}
               className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 cursor-pointer"
-             
               aria-label="Copy directory path"
             >
               {copied ? <Check size={12} /> : <Copy size={12} />}
@@ -129,7 +121,6 @@ function ProjectCard({
         <button
           onClick={() => onEdit(project)}
           className="p-2 rounded-lg transition-colors cursor-pointer hover:bg-[var(--color-bg-elevated)]"
-         
           aria-label="Edit project"
         >
           <PencilSimple size={14} weight="bold" />
@@ -137,7 +128,6 @@ function ProjectCard({
         <button
           onClick={onDelete}
           className="p-2 rounded-lg transition-colors cursor-pointer hover:bg-[var(--color-bg-elevated)]"
-         
           aria-label="Delete project"
         >
           <Trash size={14} weight="bold" />
@@ -206,12 +196,7 @@ function ProjectDialog({
           <h2 className="text-lg font-bold" style={{ fontFamily: "Outfit, sans-serif" }}>
             {isEdit ? "Edit Project" : "New Project"}
           </h2>
-          <button
-            type="button"
-            onClick={onClose}
-           
-            className="cursor-pointer"
-          >
+          <button type="button" onClick={onClose} className="cursor-pointer">
             <X size={18} />
           </button>
         </div>
@@ -239,11 +224,7 @@ function ProjectDialog({
         <label className="flex flex-col gap-1">
           <span className="text-xs font-medium">
             Slug
-            {autoSlug && (
-              <span className="ml-1 text-[10px]">
-                (auto from name)
-              </span>
-            )}
+            {autoSlug && <span className="ml-1 text-[10px]">(auto from name)</span>}
           </span>
           <input
             type="text"
@@ -278,16 +259,12 @@ function ProjectDialog({
               color: "var(--color-text-primary)",
             }}
           />
-          <span className="text-[11px]">
-            Absolute path to the project folder on this machine
-          </span>
+          <span className="text-[11px]">Absolute path to the project folder on this machine</span>
         </label>
 
         {/* Model */}
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium">
-            Default Model
-          </span>
+          <span className="text-xs font-medium">Default Model</span>
           <select
             value={form.defaultModel ?? "claude-sonnet-4-6"}
             onChange={(e) => updateField("defaultModel", e.target.value)}
@@ -307,9 +284,7 @@ function ProjectDialog({
 
         {/* Permission Mode */}
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium">
-            Permission Mode
-          </span>
+          <span className="text-xs font-medium">Permission Mode</span>
           <select
             value={form.permissionMode ?? "default"}
             onChange={(e) => updateField("permissionMode", e.target.value)}
@@ -387,12 +362,8 @@ function DeleteConfirmDialog({
             <Warning size={20} style={{ color: "#ef4444" }} weight="fill" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold">
-              Delete project
-            </h3>
-            <p className="text-xs mt-0.5">
-              This will also remove it from Telegram.
-            </p>
+            <h3 className="text-sm font-semibold">Delete project</h3>
+            <p className="text-xs mt-0.5">This will also remove it from Telegram.</p>
           </div>
         </div>
 
@@ -491,7 +462,6 @@ export default function ProjectsPage() {
             <button
               onClick={load}
               className="p-2 rounded-lg transition-colors cursor-pointer hover:bg-[var(--color-bg-elevated)]"
-             
               aria-label="Refresh"
             >
               <ArrowClockwise size={16} weight="bold" />
@@ -553,12 +523,7 @@ export default function ProjectsPage() {
               <FolderOpen size={32} style={{ color: "#4285F4" }} weight="duotone" />
             </div>
             <div className="text-center">
-              <p
-                className="text-sm font-semibold mb-1"
-               
-              >
-                No projects yet
-              </p>
+              <p className="text-sm font-semibold mb-1">No projects yet</p>
               <p className="text-xs max-w-xs">
                 Add your project folders to start Claude Code sessions from both the web UI and
                 Telegram.

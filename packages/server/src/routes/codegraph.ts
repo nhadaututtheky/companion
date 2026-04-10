@@ -64,7 +64,10 @@ codegraphRoutes.post("/scan", async (c) => {
   const parsed = projectSlugSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     return c.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid body",
+      } satisfies ApiResponse,
       400,
     );
   }
@@ -83,7 +86,10 @@ codegraphRoutes.post("/rescan", async (c) => {
   const parsed = rescanSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     return c.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid body",
+      } satisfies ApiResponse,
       400,
     );
   }
@@ -102,7 +108,10 @@ codegraphRoutes.post("/describe", async (c) => {
   const parsed = projectSlugSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     return c.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid body",
+      } satisfies ApiResponse,
       400,
     );
   }
@@ -121,7 +130,10 @@ codegraphRoutes.post("/cancel", async (c) => {
   const parsed = projectSlugSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     return c.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid body",
+      } satisfies ApiResponse,
       400,
     );
   }
@@ -312,9 +324,7 @@ codegraphRoutes.get("/graph", (c) => {
       success: true,
       data: {
         nodes: truncatedNodes,
-        edges: edges.filter(
-          (e) => nodeIdSet.has(e.sourceNodeId) && nodeIdSet.has(e.targetNodeId),
-        ),
+        edges: edges.filter((e) => nodeIdSet.has(e.sourceNodeId) && nodeIdSet.has(e.targetNodeId)),
         truncated: true,
         totalNodes: nodes.length,
       },
@@ -341,15 +351,15 @@ codegraphRoutes.get("/risk", (c) => {
     );
   }
 
-  const filePaths = filesParam.split(",").map((f) => f.trim()).filter(Boolean);
+  const filePaths = filesParam
+    .split(",")
+    .map((f) => f.trim())
+    .filter(Boolean);
   if (filePaths.length === 0) {
     return c.json({ success: true, data: [] } satisfies ApiResponse);
   }
   if (filePaths.length > 100) {
-    return c.json(
-      { success: false, error: "Too many files (max 100)" } satisfies ApiResponse,
-      400,
-    );
+    return c.json({ success: false, error: "Too many files (max 100)" } satisfies ApiResponse, 400);
   }
 
   const scores = computeRiskScores(project, filePaths);
@@ -430,7 +440,10 @@ codegraphRoutes.put("/config", async (c) => {
   const parsed = configSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     return c.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid body",
+      } satisfies ApiResponse,
       400,
     );
   }

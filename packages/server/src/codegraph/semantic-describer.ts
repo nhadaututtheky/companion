@@ -138,12 +138,7 @@ async function flushPendingDescriptions(): Promise<void> {
         filePath: codeNodes.filePath,
       })
       .from(codeNodes)
-      .where(
-        and(
-          eq(codeNodes.projectSlug, projectSlug),
-          isNull(codeNodes.description),
-        ),
-      )
+      .where(and(eq(codeNodes.projectSlug, projectSlug), isNull(codeNodes.description)))
       .all()
       .filter((n) => ids.includes(n.id));
 
@@ -200,18 +195,18 @@ async function describeBatch(
 
   const response = await callAI({
     systemPrompt: [
-      'You are a code documentation assistant. For each symbol, write a description in the format:',
+      "You are a code documentation assistant. For each symbol, write a description in the format:",
       '"Feature Area — what it does" (max 80 characters total).',
-      '',
-      'Examples:',
+      "",
+      "Examples:",
       '- "Session Lifecycle — spawns and monitors CLI processes"',
       '- "Debate Engine — orchestrates multi-agent conversation rounds"',
       '- "Auth Middleware — validates API keys and rate limits"',
-      '',
-      'The Feature Area should be 1-3 words identifying the domain/subsystem.',
+      "",
+      "The Feature Area should be 1-3 words identifying the domain/subsystem.",
       'Return ONLY a JSON array of objects with "index" (1-based) and "description" fields.',
-      'No markdown, no explanation.',
-    ].join('\n'),
+      "No markdown, no explanation.",
+    ].join("\n"),
     messages: [{ role: "user", content: `Describe these code symbols:\n\n${symbolList}` }],
     tier: "fast",
     maxTokens: 1024,

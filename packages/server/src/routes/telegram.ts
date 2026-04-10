@@ -70,7 +70,10 @@ export function telegramRoutes(registry: BotRegistry) {
     const existingBots = registry.listBotConfigs();
     if (existingBots.length >= 1 && !hasFeature("multi_bot_telegram")) {
       return c.json(
-        { success: false, error: "Multiple bots require Companion Pro. Upgrade to add more bots." } satisfies ApiResponse,
+        {
+          success: false,
+          error: "Multiple bots require Companion Pro. Upgrade to add more bots.",
+        } satisfies ApiResponse,
         403,
       );
     }

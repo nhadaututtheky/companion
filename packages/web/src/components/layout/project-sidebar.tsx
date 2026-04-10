@@ -1,10 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import {
-  Plus,
-  DotsThree,
-  NotePencil,
-} from "@phosphor-icons/react";
+import { Plus, DotsThree, NotePencil } from "@phosphor-icons/react";
 import { useShallow } from "zustand/react/shallow";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { SessionList } from "@/components/session/session-list";
@@ -43,8 +39,14 @@ interface ProjectSidebarProps {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 const PROJECT_COLORS = [
-  "#9C27B0", "#4285F4", "#34A853", "#FF9800",
-  "#E91E63", "#00BCD4", "#FF5722", "#607D8B",
+  "#9C27B0",
+  "#4285F4",
+  "#34A853",
+  "#FF9800",
+  "#E91E63",
+  "#00BCD4",
+  "#FF5722",
+  "#607D8B",
 ];
 
 function getProjectColor(slug: string): string {
@@ -151,16 +153,16 @@ export function ProjectSidebar({
               aria-selected={isActive}
               data-active={isActive || undefined}
               data-has-active-session={containsActiveSession || undefined}
-              style={{
-                "--project-color": group.color,
-              } as React.CSSProperties}
+              style={
+                {
+                  "--project-color": group.color,
+                } as React.CSSProperties
+              }
               title={`${group.name} (${group.sessions.length} session${group.sessions.length !== 1 ? "s" : ""})`}
               aria-label={`${group.name} project`}
             >
               {group.initial}
-              {hasActiveSessions && !isActive && (
-                <span className="project-icon-dot" />
-              )}
+              {hasActiveSessions && !isActive && <span className="project-icon-dot" />}
             </button>
           );
         })}
@@ -181,10 +183,7 @@ export function ProjectSidebar({
 
       {/* Expanded panel — shows when a project is selected */}
       {sidebarExpanded && activeGroup && (
-        <div
-          className="flex flex-col flex-1 min-w-0 overflow-hidden project-panel"
-          role="tabpanel"
-        >
+        <div className="flex flex-col flex-1 min-w-0 overflow-hidden project-panel" role="tabpanel">
           {/* Project header */}
           <div
             className="flex items-center gap-2 px-3 py-2.5"

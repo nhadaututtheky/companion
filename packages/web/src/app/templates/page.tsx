@@ -213,16 +213,9 @@ function TemplateCard({
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-lg flex-shrink-0">{template.icon}</span>
           <div className="min-w-0">
-            <h3
-              className="text-sm font-semibold truncate"
-             
-            >
-              {template.name}
-            </h3>
+            <h3 className="text-sm font-semibold truncate">{template.name}</h3>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-xs font-mono">
-                {template.slug}
-              </span>
+              <span className="text-xs font-mono">{template.slug}</span>
               {template.projectSlug && (
                 <span
                   className="text-xs px-1.5 py-0.5 rounded"
@@ -257,7 +250,6 @@ function TemplateCard({
           <button
             onClick={onEdit}
             className="p-1.5 rounded-md cursor-pointer transition-colors"
-           
             aria-label={`Edit ${template.name}`}
           >
             <PencilSimple size={14} />
@@ -274,9 +266,7 @@ function TemplateCard({
         </div>
       </div>
 
-      <p className="text-xs mt-2 line-clamp-2">
-        {template.prompt}
-      </p>
+      <p className="text-xs mt-2 line-clamp-2">{template.prompt}</p>
     </div>
   );
 }
@@ -290,13 +280,7 @@ const CATEGORY_META: Record<string, { label: string; description: string }> = {
   wildcard: { label: "Wild Cards", description: "Unconventional review angles" },
 };
 
-function PersonaCard({
-  persona,
-  onClone,
-}: {
-  persona: Persona;
-  onClone?: (id: string) => void;
-}) {
+function PersonaCard({ persona, onClone }: { persona: Persona; onClone?: (id: string) => void }) {
   return (
     <PersonaTooltip persona={persona} placement="bottom">
       <div
@@ -314,10 +298,7 @@ function PersonaCard({
           >
             {persona.name}
           </span>
-          <span
-            className="text-xs truncate"
-            style={{ color: "var(--color-text-muted)" }}
-          >
+          <span className="text-xs truncate" style={{ color: "var(--color-text-muted)" }}>
             {persona.strength}
           </span>
         </div>
@@ -354,10 +335,7 @@ function PersonaSection({ onClone }: { onClone?: (id: string) => void }) {
         return (
           <div key={cat}>
             <div className="flex items-center gap-2 mb-2.5">
-              <h2
-                className="text-sm font-semibold"
-                style={{ color: "var(--color-text-primary)" }}
-              >
+              <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                 {meta.label}
               </h2>
               <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
@@ -412,10 +390,7 @@ function CustomPersonaCard({
         >
           {persona.name} {persona.icon}
         </span>
-        <span
-          className="text-xs truncate"
-          style={{ color: "var(--color-text-muted)" }}
-        >
+        <span className="text-xs truncate" style={{ color: "var(--color-text-muted)" }}>
           {persona.title}
         </span>
       </div>
@@ -597,12 +572,7 @@ export default function TemplatesPage() {
         }}
       >
         <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            className="p-2 rounded-lg transition-colors"
-           
-            aria-label="Back"
-          >
+          <Link href="/" className="p-2 rounded-lg transition-colors" aria-label="Back">
             <ArrowLeft size={18} />
           </Link>
           <div>
@@ -610,9 +580,7 @@ export default function TemplatesPage() {
               <Lightning size={20} className="inline mr-1" weight="fill" />
               Expert Modes
             </h1>
-            <p className="text-xs">
-              Personas that change how Claude thinks, not just what it does
-            </p>
+            <p className="text-xs">Personas that change how Claude thinks, not just what it does</p>
           </div>
         </div>
 
@@ -671,10 +639,7 @@ export default function TemplatesPage() {
         {customPersonas.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-2.5">
-              <h2
-                className="text-sm font-semibold"
-                style={{ color: "var(--color-text-primary)" }}
-              >
+              <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
                 Your Custom Personas
               </h2>
               <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
@@ -718,10 +683,7 @@ export default function TemplatesPage() {
               border: "1px solid var(--color-accent)",
             }}
           >
-            <h2
-              className="text-sm font-semibold mb-3"
-             
-            >
+            <h2 className="text-sm font-semibold mb-3">
               {editingTemplate ? "Edit Template" : "New Template"}
             </h2>
             <TemplateForm
@@ -737,9 +699,7 @@ export default function TemplatesPage() {
 
         {/* Template List */}
         {loading ? (
-          <div className="text-center py-12">
-            Loading templates...
-          </div>
+          <div className="text-center py-12">Loading templates...</div>
         ) : templates.length === 0 ? (
           <div className="text-center py-12">
             <Lightning size={32} className="mx-auto mb-3 opacity-50" />

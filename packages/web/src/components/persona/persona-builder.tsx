@@ -1,14 +1,6 @@
 "use client";
 import { useState, useCallback } from "react";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  FloppyDisk,
-  X,
-  Plus,
-  Trash,
-} from "@phosphor-icons/react";
+import { ArrowLeft, ArrowRight, Check, FloppyDisk, X, Plus, Trash } from "@phosphor-icons/react";
 import { PersonaAvatar } from "./persona-avatar";
 import type { Persona } from "@companion/shared";
 
@@ -69,8 +61,22 @@ const DEFAULT_FORM: PersonaFormData = {
 };
 
 const ICON_OPTIONS = [
-  "🧠", "🎯", "🔥", "⚡", "🛡️", "🔬", "🎨", "🏗️",
-  "🚀", "💡", "🔮", "🦊", "🐺", "🦅", "🌊", "⭐",
+  "🧠",
+  "🎯",
+  "🔥",
+  "⚡",
+  "🛡️",
+  "🔬",
+  "🎨",
+  "🏗️",
+  "🚀",
+  "💡",
+  "🔮",
+  "🦊",
+  "🐺",
+  "🦅",
+  "🌊",
+  "⭐",
 ];
 
 const GRADIENT_PRESETS: [string, string][] = [
@@ -160,8 +166,7 @@ export function PersonaBuilder({
   const [form, setForm] = useState<PersonaFormData>(() => ({
     ...DEFAULT_FORM,
     ...initial,
-    mentalModels:
-      initial?.mentalModels?.length ? initial.mentalModels : [""],
+    mentalModels: initial?.mentalModels?.length ? initial.mentalModels : [""],
     redFlags: initial?.redFlags?.length ? initial.redFlags : [""],
     blindSpots: initial?.blindSpots?.length ? initial.blindSpots : [""],
     bestFor: initial?.bestFor?.length ? initial.bestFor : [""],
@@ -194,8 +199,7 @@ export function PersonaBuilder({
       redFlags: form.redFlags.filter((s) => s.trim()),
       blindSpots: form.blindSpots.filter((s) => s.trim()),
       bestFor: form.bestFor.filter((s) => s.trim()),
-      avatarInitials:
-        form.avatarInitials.trim() || form.name.slice(0, 2).toUpperCase(),
+      avatarInitials: form.avatarInitials.trim() || form.name.slice(0, 2).toUpperCase(),
     };
     onSave(cleaned);
   };
@@ -232,10 +236,7 @@ export function PersonaBuilder({
     >
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3
-          className="text-sm font-semibold"
-          style={{ color: "var(--color-text-primary)" }}
-        >
+        <h3 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
           {editing ? "Edit Persona" : "Create Custom Persona"}
         </h3>
         <button
@@ -281,31 +282,20 @@ export function PersonaBuilder({
 
       {/* Step content */}
       <div className="min-h-[200px]">
-        {step === 0 && (
-          <StepIdentity form={form} update={update} />
-        )}
-        {step === 1 && (
-          <StepAvatar form={form} update={update} preview={previewPersona} />
-        )}
-        {step === 2 && (
-          <StepSystemPrompt form={form} update={update} />
-        )}
-        {step === 3 && (
-          <StepMentalModels form={form} update={update} />
-        )}
-        {step === 4 && (
-          <StepFrameworkStyle form={form} update={update} />
-        )}
-        {step === 5 && (
-          <StepRedFlagsBlindSpots form={form} update={update} />
-        )}
-        {step === 6 && (
-          <StepReview persona={previewPersona} />
-        )}
+        {step === 0 && <StepIdentity form={form} update={update} />}
+        {step === 1 && <StepAvatar form={form} update={update} preview={previewPersona} />}
+        {step === 2 && <StepSystemPrompt form={form} update={update} />}
+        {step === 3 && <StepMentalModels form={form} update={update} />}
+        {step === 4 && <StepFrameworkStyle form={form} update={update} />}
+        {step === 5 && <StepRedFlagsBlindSpots form={form} update={update} />}
+        {step === 6 && <StepReview persona={previewPersona} />}
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between pt-2" style={{ borderTop: "1px solid var(--color-border)" }}>
+      <div
+        className="flex items-center justify-between pt-2"
+        style={{ borderTop: "1px solid var(--color-border)" }}
+      >
         <button
           onClick={() => step > 0 && setStep(step - 1)}
           disabled={step === 0}
@@ -362,7 +352,10 @@ function StepIdentity({ form, update }: StepProps) {
           value={form.name}
           onChange={(e) => {
             update("name", e.target.value);
-            if (!form.avatarInitials || form.avatarInitials === form.name.slice(0, 2).toUpperCase()) {
+            if (
+              !form.avatarInitials ||
+              form.avatarInitials === form.name.slice(0, 2).toUpperCase()
+            ) {
               update("avatarInitials", e.target.value.slice(0, 2).toUpperCase());
             }
           }}
@@ -494,9 +487,7 @@ function StepAvatar({ form, update, preview }: StepProps & { preview: Persona })
             <input
               type="color"
               value={form.avatarGradient[0]}
-              onChange={(e) =>
-                update("avatarGradient", [e.target.value, form.avatarGradient[1]])
-              }
+              onChange={(e) => update("avatarGradient", [e.target.value, form.avatarGradient[1]])}
               className="w-8 h-8 rounded cursor-pointer"
             />
             <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
@@ -512,9 +503,7 @@ function StepAvatar({ form, update, preview }: StepProps & { preview: Persona })
             <input
               type="color"
               value={form.avatarGradient[1]}
-              onChange={(e) =>
-                update("avatarGradient", [form.avatarGradient[0], e.target.value])
-              }
+              onChange={(e) => update("avatarGradient", [form.avatarGradient[0], e.target.value])}
               className="w-8 h-8 rounded cursor-pointer"
             />
             <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>

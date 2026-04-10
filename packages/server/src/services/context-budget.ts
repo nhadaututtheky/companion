@@ -72,13 +72,62 @@ export interface BudgetSource {
 
 /** Priority-ordered budget sources */
 export const BUDGET_SOURCES: BudgetSource[] = [
-  { id: "system_prompt", label: "System Prompt", priority: 1, feature: null, maxTokens: 12_000, sessionStart: true },
-  { id: "claude_md", label: "CLAUDE.md", priority: 2, feature: null, maxTokens: 6_000, sessionStart: true },
-  { id: "wiki_l0", label: "Wiki Core Rules", priority: 3, feature: "wiki", maxTokens: 3_000, sessionStart: true },
-  { id: "codegraph_map", label: "Code Intelligence", priority: 4, feature: "codegraph", maxTokens: 2_000, sessionStart: true },
-  { id: "wiki_l1", label: "Wiki Articles", priority: 5, feature: "wiki", maxTokens: 5_000, sessionStart: false },
-  { id: "neural_memory", label: "Neural Memory", priority: 6, feature: null, maxTokens: 1_500, sessionStart: false },
-  { id: "agent_context", label: "Agent Context", priority: 7, feature: "agentContext", maxTokens: 2_000, sessionStart: false },
+  {
+    id: "system_prompt",
+    label: "System Prompt",
+    priority: 1,
+    feature: null,
+    maxTokens: 12_000,
+    sessionStart: true,
+  },
+  {
+    id: "claude_md",
+    label: "CLAUDE.md",
+    priority: 2,
+    feature: null,
+    maxTokens: 6_000,
+    sessionStart: true,
+  },
+  {
+    id: "wiki_l0",
+    label: "Wiki Core Rules",
+    priority: 3,
+    feature: "wiki",
+    maxTokens: 3_000,
+    sessionStart: true,
+  },
+  {
+    id: "codegraph_map",
+    label: "Code Intelligence",
+    priority: 4,
+    feature: "codegraph",
+    maxTokens: 2_000,
+    sessionStart: true,
+  },
+  {
+    id: "wiki_l1",
+    label: "Wiki Articles",
+    priority: 5,
+    feature: "wiki",
+    maxTokens: 5_000,
+    sessionStart: false,
+  },
+  {
+    id: "neural_memory",
+    label: "Neural Memory",
+    priority: 6,
+    feature: null,
+    maxTokens: 1_500,
+    sessionStart: false,
+  },
+  {
+    id: "agent_context",
+    label: "Agent Context",
+    priority: 7,
+    feature: "agentContext",
+    maxTokens: 2_000,
+    sessionStart: false,
+  },
 ];
 
 /** Budget allocation result */
@@ -143,10 +192,7 @@ export function allocateBudget(
  *
  * Considers: feature toggle, budget allocation, current usage.
  */
-export function shouldInject(
-  sourceId: string,
-  currentUsagePercent: number,
-): boolean {
+export function shouldInject(sourceId: string, currentUsagePercent: number): boolean {
   const source = BUDGET_SOURCES.find((s) => s.id === sourceId);
   if (!source) return false;
 

@@ -203,7 +203,10 @@ function injectHooksConfig(
         writeFileSync(settingsPath, JSON.stringify(restored, null, 2), "utf-8");
       } else {
         if (existsSync(settingsPath)) {
-          const current = JSON.parse(readFileSync(settingsPath, "utf-8")) as Record<string, unknown>;
+          const current = JSON.parse(readFileSync(settingsPath, "utf-8")) as Record<
+            string,
+            unknown
+          >;
           delete current.hooks;
           if (Object.keys(current).length === 0) {
             unlinkSync(settingsPath);
@@ -266,21 +269,31 @@ function parseClaudeMessage(line: string): NormalizedMessage | null {
       const assist = msg as CLIAssistantMessage;
       const blocks: ContentBlockNorm[] = assist.message.content.map((b) => {
         if (b.type === "text") return { type: "text" as const, text: b.text };
-        if (b.type === "tool_use") return { type: "tool_use" as const, id: b.id, name: b.name, input: b.input };
-        if (b.type === "tool_result") return {
-          type: "tool_result" as const,
-          tool_use_id: b.tool_use_id,
-          content: typeof b.content === "string" ? b.content : JSON.stringify(b.content),
-          is_error: b.is_error,
-        };
-        if (b.type === "thinking") return { type: "thinking" as const, thinking: b.thinking, budget_tokens: b.budget_tokens };
+        if (b.type === "tool_use")
+          return { type: "tool_use" as const, id: b.id, name: b.name, input: b.input };
+        if (b.type === "tool_result")
+          return {
+            type: "tool_result" as const,
+            tool_use_id: b.tool_use_id,
+            content: typeof b.content === "string" ? b.content : JSON.stringify(b.content),
+            is_error: b.is_error,
+          };
+        if (b.type === "thinking")
+          return {
+            type: "thinking" as const,
+            thinking: b.thinking,
+            budget_tokens: b.budget_tokens,
+          };
         return { type: "text" as const, text: JSON.stringify(b) };
       });
 
       return {
         type: "assistant",
         platform: "claude",
-        content: blocks.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join(""),
+        content: blocks
+          .filter((b) => b.type === "text")
+          .map((b) => (b as { text: string }).text)
+          .join(""),
         contentBlocks: blocks,
         stopReason: assist.message.stop_reason,
         model: assist.message.model,
@@ -402,15 +415,19 @@ export class ClaudeAdapter implements CLIAdapter {
 
     const args: string[] = [
       "--print",
-      "--output-format", "stream-json",
-      "--input-format", "stream-json",
+      "--output-format",
+      "stream-json",
+      "--input-format",
+      "stream-json",
       "--include-partial-messages",
       "--verbose",
-      "--model", opts.model ?? "claude-sonnet-4-6",
+      "--model",
+      opts.model ?? "claude-sonnet-4-6",
     ];
 
     if (opts.bare) args.push("--bare");
-    if (opts.thinkingBudget !== undefined) args.push("--thinking-budget", String(opts.thinkingBudget));
+    if (opts.thinkingBudget !== undefined)
+      args.push("--thinking-budget", String(opts.thinkingBudget));
     if (opts.permissionMode) args.push("--permission-mode", opts.permissionMode);
     if (opts.resume && opts.cliSessionId) {
       args.push("--resume", opts.cliSessionId, "--replay-user-messages");
@@ -419,7 +436,12 @@ export class ClaudeAdapter implements CLIAdapter {
     // Inject hooks config
     let hooksCleanup: (() => void) | undefined;
     if (opts.hooksUrl) {
-      hooksCleanup = injectHooksConfig(opts.cwd, opts.hooksUrl, opts.sessionId, opts.hookSecret ?? "");
+      hooksCleanup = injectHooksConfig(
+        opts.cwd,
+        opts.hooksUrl,
+        opts.sessionId,
+        opts.hookSecret ?? "",
+      );
     }
 
     log.info("Launching Claude CLI", {
@@ -487,7 +509,13 @@ export class ClaudeAdapter implements CLIAdapter {
                 onMessage({
                   type: "keep_alive",
                   platform: "claude",
-                  raw: (() => { try { return JSON.parse(trimmed); } catch { return trimmed; } })(),
+                  raw: (() => {
+                    try {
+                      return JSON.parse(trimmed);
+                    } catch {
+                      return trimmed;
+                    }
+                  })(),
                 });
               }
             } else {
@@ -532,16 +560,26 @@ export class ClaudeAdapter implements CLIAdapter {
     };
 
     const kill = () => {
-      try { proc.kill(); } catch { /* already dead */ }
+      try {
+        proc.kill();
+      } catch {
+        /* already dead */
+      }
     };
 
     // Early exit detection
     setTimeout(() => {
       try {
         if (proc.exitCode !== null) {
-          log.warn("CLI process exited early", { pid, code: proc.exitCode, sessionId: opts.sessionId });
+          log.warn("CLI process exited early", {
+            pid,
+            code: proc.exitCode,
+            sessionId: opts.sessionId,
+          });
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }, 2000);
 
     return {
@@ -549,7 +587,13 @@ export class ClaudeAdapter implements CLIAdapter {
       send,
       kill,
       exited,
-      isAlive: () => { try { return proc.exitCode === null; } catch { return false; } },
+      isAlive: () => {
+        try {
+          return proc.exitCode === null;
+        } catch {
+          return false;
+        }
+      },
       getStderrLines: () => [...stderrLines],
     };
   }

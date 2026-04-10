@@ -50,9 +50,7 @@ export function TelegramStatus() {
             </span>
           )}
           {lastUpdated && (
-            <span className="text-xs">
-              &middot; Updated {lastUpdated.toLocaleTimeString()}
-            </span>
+            <span className="text-xs">&middot; Updated {lastUpdated.toLocaleTimeString()}</span>
           )}
         </div>
         <button
@@ -100,12 +98,7 @@ export function TelegramStatus() {
                 aria-hidden="true"
               />
               <div className="flex-1 min-w-0">
-                <div
-                  className="text-xs font-semibold truncate"
-                 
-                >
-                  {bot.label}
-                </div>
+                <div className="text-xs font-semibold truncate">{bot.label}</div>
                 <div className="text-xs">
                   {bot.role} &middot; {bot.botId}
                 </div>
@@ -119,12 +112,7 @@ export function TelegramStatus() {
                     aria-label="Running"
                   />
                 ) : (
-                  <XCircle
-                    size={16}
-                    weight="fill"
-                   
-                    aria-label="Stopped"
-                  />
+                  <XCircle size={16} weight="fill" aria-label="Stopped" />
                 )}
                 <span
                   className="text-xs font-medium"
@@ -139,10 +127,7 @@ export function TelegramStatus() {
           ))}
         </div>
       ) : (
-        <div
-          className="flex items-center gap-2 py-4 text-xs justify-center"
-         
-        >
+        <div className="flex items-center gap-2 py-4 text-xs justify-center">
           <Clock size={14} aria-hidden="true" />
           No bots running
         </div>

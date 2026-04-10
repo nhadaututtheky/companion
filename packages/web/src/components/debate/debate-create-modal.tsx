@@ -1,14 +1,7 @@
 "use client";
 import { useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import {
-  X,
-  Plus,
-  Rocket,
-  CaretDown,
-  FolderSimple,
-  CircleNotch,
-} from "@phosphor-icons/react";
+import { X, Plus, Rocket, CaretDown, FolderSimple, CircleNotch } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useAnimatePresence } from "@/lib/animation";
 import { useCLIPlatforms, getDefaultModelForPlatform } from "@/hooks/use-cli-platforms";
@@ -60,9 +53,7 @@ export function DebateCreateModal({
   const { shouldRender, animationState } = useAnimatePresence(open);
   const { platforms, loading: platformsLoading } = useCLIPlatforms();
 
-  const availablePlatforms = platforms
-    .filter((p) => p.available)
-    .map((p) => p.id);
+  const availablePlatforms = platforms.filter((p) => p.available).map((p) => p.id);
 
   const defaultPlatform = availablePlatforms[0] ?? "claude";
 
@@ -79,7 +70,7 @@ export function DebateCreateModal({
 
   // Agent management
   const updateAgent = useCallback((index: number, updated: DebateAgentConfig) => {
-    setAgents((prev) => prev.map((a, i) => i === index ? updated : a));
+    setAgents((prev) => prev.map((a, i) => (i === index ? updated : a)));
   }, []);
 
   const removeAgent = useCallback((index: number) => {
@@ -88,13 +79,9 @@ export function DebateCreateModal({
 
   const addAgent = useCallback(() => {
     if (agents.length >= 4) return;
-    const nextPlatform = availablePlatforms.find(
-      (p) => !agents.some((a) => a.platform === p),
-    ) ?? defaultPlatform;
-    setAgents((prev) => [
-      ...prev,
-      makeDefaultAgent(prev.length, nextPlatform),
-    ]);
+    const nextPlatform =
+      availablePlatforms.find((p) => !agents.some((a) => a.platform === p)) ?? defaultPlatform;
+    setAgents((prev) => [...prev, makeDefaultAgent(prev.length, nextPlatform)]);
   }, [agents, availablePlatforms, defaultPlatform]);
 
   // Start debate
@@ -141,7 +128,9 @@ export function DebateCreateModal({
         opacity: animationState === "entering" || animationState === "entered" ? 1 : 0,
         transition: "opacity 250ms ease",
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       role="dialog"
       aria-modal="true"
       aria-label="Start Debate"
@@ -176,7 +165,10 @@ export function DebateCreateModal({
         <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4">
           {/* Topic */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+            <label
+              className="text-xs font-semibold"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
               Topic
             </label>
             <input
@@ -196,7 +188,10 @@ export function DebateCreateModal({
           {/* Format + Working Dir row */}
           <div className="flex gap-3">
             <div className="flex flex-col gap-1 flex-1">
-              <label className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+              <label
+                className="text-xs font-semibold"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
                 Format
               </label>
               <div className="relative">
@@ -210,18 +205,30 @@ export function DebateCreateModal({
                   }}
                 >
                   {FORMAT_OPTIONS.map((f) => (
-                    <option key={f.value} value={f.value}>{f.label}</option>
+                    <option key={f.value} value={f.value}>
+                      {f.label}
+                    </option>
                   ))}
                 </select>
-                <CaretDown size={12} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
+                <CaretDown
+                  size={12}
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
+                />
               </div>
             </div>
             <div className="flex flex-col gap-1 flex-1">
-              <label className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+              <label
+                className="text-xs font-semibold"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
                 Working Directory
               </label>
               <div className="flex items-center gap-1">
-                <FolderSimple size={14} style={{ color: "var(--color-text-muted)", flexShrink: 0 }} aria-hidden="true" />
+                <FolderSimple
+                  size={14}
+                  style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
+                  aria-hidden="true"
+                />
                 <input
                   type="text"
                   value={workingDir}
@@ -245,7 +252,10 @@ export function DebateCreateModal({
           {/* Agents */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+              <label
+                className="text-xs font-semibold"
+                style={{ color: "var(--color-text-secondary)" }}
+              >
                 Agents ({agents.length}/4)
               </label>
               {agents.length < 4 && (
@@ -265,7 +275,11 @@ export function DebateCreateModal({
 
             {platformsLoading ? (
               <div className="flex items-center gap-2 py-4 justify-center">
-                <CircleNotch size={16} className="animate-spin" style={{ color: "var(--color-text-muted)" }} />
+                <CircleNotch
+                  size={16}
+                  className="animate-spin"
+                  style={{ color: "var(--color-text-muted)" }}
+                />
                 <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                   Detecting CLI platforms...
                 </span>
@@ -289,7 +303,10 @@ export function DebateCreateModal({
 
           {/* Max rounds */}
           <div className="flex items-center gap-3">
-            <label className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+            <label
+              className="text-xs font-semibold"
+              style={{ color: "var(--color-text-secondary)" }}
+            >
               Max Rounds
             </label>
             <input
@@ -330,7 +347,8 @@ export function DebateCreateModal({
             disabled={!canStart || starting}
             className="flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold cursor-pointer transition-all disabled:opacity-40"
             style={{
-              background: canStart && !starting ? "var(--color-accent)" : "var(--color-bg-elevated)",
+              background:
+                canStart && !starting ? "var(--color-accent)" : "var(--color-bg-elevated)",
               color: canStart && !starting ? "#fff" : "var(--color-text-muted)",
             }}
           >

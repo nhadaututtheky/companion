@@ -45,7 +45,9 @@ function cbData(prefix: string, ...parts: string[]): string {
 function sanitizeError(err: unknown): string {
   const msg = String(err);
   // Remove absolute paths like /app/wiki/... or C:\Users\...
-  return msg.replace(/[A-Z]:\\[^\s"']+/gi, "[path]").replace(/\/(?:app|home|root|usr|tmp|var)[^\s"']*/g, "[path]");
+  return msg
+    .replace(/[A-Z]:\\[^\s"']+/gi, "[path]")
+    .replace(/\/(?:app|home|root|usr|tmp|var)[^\s"']*/g, "[path]");
 }
 
 export function registerWikiCommands(bridge: TelegramBridge): void {
@@ -87,7 +89,9 @@ export function registerWikiCommands(bridge: TelegramBridge): void {
       return handleReadArticle(ctx, arg0, arg1);
     }
 
-    await ctx.reply("Usage: /wiki [domain] [article] | compile <domain> | search <query> | lint <domain>");
+    await ctx.reply(
+      "Usage: /wiki [domain] [article] | compile <domain> | search <query> | lint <domain>",
+    );
   });
 
   // ── Callback queries for inline buttons ──────────────────────────────

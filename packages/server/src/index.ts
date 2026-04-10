@@ -74,7 +74,9 @@ if (startupCleaned > 0) {
 // Cleanup orphan hooks from previous runs (prevents ECONNREFUSED in standalone Claude Code)
 try {
   const sqlite = getSqlite();
-  const rows = sqlite.prepare("SELECT DISTINCT cwd FROM sessions WHERE cwd IS NOT NULL").all() as Array<{ cwd: string }>;
+  const rows = sqlite
+    .prepare("SELECT DISTINCT cwd FROM sessions WHERE cwd IS NOT NULL")
+    .all() as Array<{ cwd: string }>;
   const dirs = rows.map((r) => r.cwd).filter(Boolean);
   if (dirs.length > 0) {
     const orphansCleaned = cleanupOrphanHooks(dirs);
@@ -251,10 +253,7 @@ app.onError((err, c) => {
     error: err.message,
     reqId,
   });
-  return c.json(
-    { success: false, error: "Internal server error" },
-    500,
-  );
+  return c.json({ success: false, error: "Internal server error" }, 500);
 });
 
 // Mount routes
@@ -271,7 +270,10 @@ const WEB_OUT_CANDIDATES: string[] = [
   join(dirname(process.execPath), "web"), // compiled: <install>/web/
   join(import.meta.dir, "../../../packages/web/out"), // dev: source tree
 ].filter((d) => d.length > 0);
-const WEB_OUT_DIR = WEB_OUT_CANDIDATES.find((d) => existsSync(d)) ?? WEB_OUT_CANDIDATES[WEB_OUT_CANDIDATES.length - 1] ?? "";
+const WEB_OUT_DIR =
+  WEB_OUT_CANDIDATES.find((d) => existsSync(d)) ??
+  WEB_OUT_CANDIDATES[WEB_OUT_CANDIDATES.length - 1] ??
+  "";
 const WEB_ENABLED = WEB_OUT_DIR.length > 0 && existsSync(WEB_OUT_DIR);
 
 if (WEB_ENABLED) {

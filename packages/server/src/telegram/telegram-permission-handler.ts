@@ -253,10 +253,7 @@ export function startAutoApproveCountdown(
 }
 
 /** Cancel auto-approve countdown for a specific message (on manual allow/deny) */
-export function cancelAutoApproveCountdown(
-  ctx: PermissionBridgeContext,
-  messageId: number,
-): void {
+export function cancelAutoApproveCountdown(ctx: PermissionBridgeContext, messageId: number): void {
   const timer = ctx.autoApproveTimers.get(messageId);
   if (timer) {
     clearInterval(timer);

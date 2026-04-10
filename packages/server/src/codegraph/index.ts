@@ -9,7 +9,13 @@ import { createLogger } from "../logger.js";
 import { getDb } from "../db/client.js";
 import { projects, codeFiles as codeFilesTable } from "../db/schema.js";
 import { eq, and } from "drizzle-orm";
-import { discoverFiles, hashFile, detectLanguage, countLines, MAX_SCAN_FILE_SIZE } from "./utils.js";
+import {
+  discoverFiles,
+  hashFile,
+  detectLanguage,
+  countLines,
+  MAX_SCAN_FILE_SIZE,
+} from "./utils.js";
 import { scanFileAsync, type ScannedEdge } from "./scanner.js";
 import { calculateTrustWeight, type EdgeType } from "./trust-calculator.js";
 import {
@@ -250,7 +256,7 @@ async function runScan(
 
     const allNodes = getProjectNodes(projectSlug);
     const nodesByName = new Map<string, (typeof allNodes)[0]>();
-    const nodesByFile = new Map<string, (typeof allNodes)>();
+    const nodesByFile = new Map<string, typeof allNodes>();
     for (const node of allNodes) {
       nodesByName.set(node.symbolName, node);
       const arr = nodesByFile.get(node.filePath);

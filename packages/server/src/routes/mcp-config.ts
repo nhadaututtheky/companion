@@ -276,10 +276,7 @@ mcpConfigRoutes.get("/detected", (c) => {
     if (projects && typeof projects === "object") {
       for (const [projectPath, projectConfig] of Object.entries(projects)) {
         if (!projectConfig || typeof projectConfig !== "object") continue;
-        const projectServers = extractMcpServers(
-          projectConfig,
-          `project: ${projectPath}`,
-        );
+        const projectServers = extractMcpServers(projectConfig, `project: ${projectPath}`);
         for (const s of projectServers) {
           // Skip duplicates already found in global
           if (detected.some((d) => d.id === s.id)) continue;
@@ -372,7 +369,9 @@ mcpConfigRoutes.post("/import/:id", (c) => {
     if (projects) {
       for (const projectConfig of Object.values(projects)) {
         if (!projectConfig || typeof projectConfig !== "object") continue;
-        const projMcp = (projectConfig as Record<string, unknown>).mcpServers as Record<string, Record<string, unknown>> | undefined;
+        const projMcp = (projectConfig as Record<string, unknown>).mcpServers as
+          | Record<string, Record<string, unknown>>
+          | undefined;
         if (projMcp?.[id]) {
           const config = projMcp[id];
           const serverConfig = {
@@ -397,5 +396,8 @@ mcpConfigRoutes.post("/import/:id", (c) => {
     }
   }
 
-  return c.json({ success: false, error: "Server not found in Claude config" } satisfies ApiResponse, 404);
+  return c.json(
+    { success: false, error: "Server not found in Claude config" } satisfies ApiResponse,
+    404,
+  );
 });

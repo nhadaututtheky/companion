@@ -198,8 +198,6 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
     const state = get();
     const parent = state.sessions[parentId];
     if (!parent?.childSessionIds) return [];
-    return parent.childSessionIds
-      .map((id) => state.sessions[id])
-      .filter((s): s is Session => !!s);
+    return parent.childSessionIds.map((id) => state.sessions[id]).filter((s): s is Session => !!s);
   },
 }));

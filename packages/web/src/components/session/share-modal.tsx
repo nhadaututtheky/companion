@@ -125,20 +125,12 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <QrCode
-              size={18}
-              weight="bold"
-             
-              aria-hidden="true"
-            />
-            <span className="text-sm font-semibold">
-              Share Session
-            </span>
+            <QrCode size={18} weight="bold" aria-hidden="true" />
+            <span className="text-sm font-semibold">Share Session</span>
           </div>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
-           
             aria-label="Close share modal"
           >
             <X size={14} weight="bold" />
@@ -153,12 +145,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
             border: "1px solid var(--color-border)",
           }}
         >
-          <span
-            className="text-xs font-semibold uppercase tracking-wide"
-           
-          >
-            New Share Link
-          </span>
+          <span className="text-xs font-semibold uppercase tracking-wide">New Share Link</span>
           <div className="flex items-center gap-3">
             <select
               value={permission}
@@ -250,27 +237,19 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
                 )}
               </button>
             </div>
-            <span className="text-[10px]">
-              Scan QR or share the link — no login required
-            </span>
+            <span className="text-[10px]">Scan QR or share the link — no login required</span>
           </div>
         )}
 
         {/* Active shares list */}
         {loading ? (
-          <div
-            className="flex items-center justify-center py-4 gap-2"
-           
-          >
+          <div className="flex items-center justify-center py-4 gap-2">
             <CircleNotch size={14} className="animate-spin" />
             <span className="text-xs">Loading shares...</span>
           </div>
         ) : shares.length > 0 ? (
           <div className="flex flex-col gap-1.5">
-            <span
-              className="text-xs font-semibold uppercase tracking-wide"
-             
-            >
+            <span className="text-xs font-semibold uppercase tracking-wide">
               Active Shares ({shares.length})
             </span>
             {shares.map((s) => (
@@ -307,7 +286,6 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
                 <button
                   onClick={() => generateQR(s.token)}
                   className="p-1 rounded cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
-                 
                   aria-label="Show QR code"
                   title="Show QR code"
                 >

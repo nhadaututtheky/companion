@@ -110,12 +110,7 @@ function StatBlock({
 }
 
 function Separator() {
-  return (
-    <span
-      className="w-px self-stretch my-2"
-      style={{ background: "var(--glass-border)" }}
-    />
-  );
+  return <span className="w-px self-stretch my-2" style={{ background: "var(--glass-border)" }} />;
 }
 
 // ── Mini Heatmap ───────────────────────────────────────────────────────────
@@ -227,10 +222,7 @@ export function FloatingStatsBar() {
       {/* Title + close */}
       <div className="flex items-center gap-1.5 px-3 py-2">
         <ChartBar size={14} weight="bold" style={{ color: "var(--color-accent)" }} />
-        <span
-          className="text-xs font-semibold"
-          style={{ color: "var(--color-text-primary)" }}
-        >
+        <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
           Stats
         </span>
       </div>
@@ -239,8 +231,14 @@ export function FloatingStatsBar() {
 
       {loading && (
         <div className="flex items-center gap-2 px-4 py-2">
-          <CircleNotch size={14} className="animate-spin" style={{ color: "var(--color-text-muted)" }} />
-          <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>Loading...</span>
+          <CircleNotch
+            size={14}
+            className="animate-spin"
+            style={{ color: "var(--color-text-muted)" }}
+          />
+          <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            Loading...
+          </span>
         </div>
       )}
 

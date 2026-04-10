@@ -31,7 +31,14 @@ import dynamic from "next/dynamic";
 
 const GraphVisualization = dynamic(
   () => import("./graph-visualization").then((m) => ({ default: m.GraphVisualization })),
-  { ssr: false, loading: () => <div className="flex items-center justify-center h-64 text-text-muted text-sm">Loading graph...</div> },
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-64 text-text-muted text-sm">
+        Loading graph...
+      </div>
+    ),
+  },
 );
 import type { ContextInjectionEvent } from "@/lib/stores/context-feed-store";
 
@@ -112,9 +119,7 @@ function SourceCard({
     >
       <div className="flex items-center gap-2 mb-1">
         <Icon size={14} weight="bold" style={{ color }} />
-        <span className="text-xs font-semibold">
-          {label}
-        </span>
+        <span className="text-xs font-semibold">{label}</span>
         <div
           className="rounded-full ml-auto"
           style={{
@@ -125,9 +130,7 @@ function SourceCard({
           }}
         />
       </div>
-      <div className="text-xs">
-        {statusText}
-      </div>
+      <div className="text-xs">{statusText}</div>
       {detail && (
         <div
           className="text-xs mt-0.5 font-mono"
@@ -165,9 +168,7 @@ function ScanProgress({ job }: { job: ScanJob }) {
           {job.status === "done" && "Scan complete"}
           {job.status === "error" && "Scan failed"}
         </span>
-        <span className="text-xs">
-          {pct}%
-        </span>
+        <span className="text-xs">{pct}%</span>
       </div>
       <div
         className="h-1.5 rounded-full overflow-hidden"
@@ -178,10 +179,7 @@ function ScanProgress({ job }: { job: ScanJob }) {
           style={{ width: `${pct}%`, background: job.status === "error" ? "#EA4335" : "#A855F7" }}
         />
       </div>
-      <div
-        className="flex justify-between mt-1.5 text-xs"
-       
-      >
+      <div className="flex justify-between mt-1.5 text-xs">
         <span>
           {job.scannedFiles}/{job.totalFiles} files
         </span>
@@ -204,12 +202,7 @@ function HotFilesList({ files }: { files: HotFile[] }) {
 
   return (
     <div>
-      <h4
-        className="text-xs font-medium mb-2 uppercase tracking-wider"
-       
-      >
-        Most coupled files
-      </h4>
+      <h4 className="text-xs font-medium mb-2 uppercase tracking-wider">Most coupled files</h4>
       <div className="flex flex-col gap-1">
         {files.map((f) => {
           const total = f.incomingEdges + f.outgoingEdges;
@@ -229,12 +222,7 @@ function HotFilesList({ files }: { files: HotFile[] }) {
               />
               <div className="relative flex items-center justify-between px-2 py-1.5">
                 <div className="min-w-0">
-                  <span
-                    className="text-xs font-medium truncate block"
-                   
-                  >
-                    {name}
-                  </span>
+                  <span className="text-xs font-medium truncate block">{name}</span>
                   <span
                     className="text-xs truncate block"
                     style={{ color: "var(--color-text-secondary)", fontSize: 10 }}
@@ -242,10 +230,7 @@ function HotFilesList({ files }: { files: HotFile[] }) {
                     {dir}
                   </span>
                 </div>
-                <div
-                  className="flex gap-2 text-xs shrink-0"
-                 
-                >
+                <div className="flex gap-2 text-xs shrink-0">
                   <span>{f.incomingEdges} in</span>
                   <span>{f.outgoingEdges} out</span>
                 </div>
@@ -286,36 +271,14 @@ function SymbolResults({ results }: { results: SearchResult[] }) {
             >
               {r.symbolType}
             </span>
-            <span
-              className="text-sm font-medium truncate"
-             
-            >
-              {r.symbolName}
-            </span>
-            {r.isExported && (
-              <span className="text-xs">
-                exported
-              </span>
-            )}
+            <span className="text-sm font-medium truncate">{r.symbolName}</span>
+            {r.isExported && <span className="text-xs">exported</span>}
           </button>
           {expanded === r.id && (
             <div className="px-3 pb-2 space-y-1.5">
-              <div className="text-xs">
-                {r.filePath}
-              </div>
-              {r.description && (
-                <div className="text-xs">
-                  {r.description}
-                </div>
-              )}
-              {r.signature && (
-                <div
-                  className="text-xs font-mono truncate"
-                 
-                >
-                  {r.signature}
-                </div>
-              )}
+              <div className="text-xs">{r.filePath}</div>
+              {r.description && <div className="text-xs">{r.description}</div>}
+              {r.signature && <div className="text-xs font-mono truncate">{r.signature}</div>}
               {r.incoming.length > 0 && (
                 <div className="text-xs">
                   <span>Used by: </span>
@@ -381,12 +344,7 @@ function QuickScrape() {
 
   return (
     <div className="rounded-lg p-3">
-      <span
-        className="text-xs font-semibold block mb-2"
-       
-      >
-        Quick Scrape
-      </span>
+      <span className="text-xs font-semibold block mb-2">Quick Scrape</span>
       <div className="flex gap-1.5">
         <input
           type="url"
@@ -422,7 +380,6 @@ function QuickScrape() {
           <button
             onClick={() => setExpanded(!expanded)}
             className="flex items-center gap-1.5 text-xs font-medium cursor-pointer w-full"
-           
             aria-expanded={expanded}
           >
             {expanded ? <CaretDown size={10} /> : <CaretRight size={10} />}
@@ -485,12 +442,7 @@ function QuickResearch() {
 
   return (
     <div className="rounded-lg p-3">
-      <span
-        className="text-xs font-semibold block mb-2"
-       
-      >
-        Web Research
-      </span>
+      <span className="text-xs font-semibold block mb-2">Web Research</span>
       <div className="flex gap-1.5">
         <input
           type="text"
@@ -530,7 +482,6 @@ function QuickResearch() {
           <button
             onClick={() => setExpanded(!expanded)}
             className="flex items-center gap-1.5 text-xs font-medium cursor-pointer w-full"
-           
             aria-expanded={expanded}
           >
             {expanded ? <CaretDown size={10} /> : <CaretRight size={10} />}
@@ -637,11 +588,7 @@ function FeedTab({ filterSessionId }: { filterSessionId?: string }) {
             const meta = INJECTION_META[evt.injectionType];
             const Icon = meta.icon;
             return (
-              <div
-                key={evt.id}
-                className="flex items-start gap-2.5 px-2.5 py-2 rounded-lg"
-               
-              >
+              <div key={evt.id} className="flex items-start gap-2.5 px-2.5 py-2 rounded-lg">
                 <div className="mt-0.5 rounded p-1" style={{ background: meta.color + "15" }}>
                   <Icon size={12} weight="bold" style={{ color: meta.color }} />
                 </div>
@@ -657,12 +604,7 @@ function FeedTab({ filterSessionId }: { filterSessionId?: string }) {
                       ~{evt.tokenEstimate} tokens
                     </span>
                   </div>
-                  <div
-                    className="text-xs mt-0.5 truncate"
-                   
-                  >
-                    {evt.summary}
-                  </div>
+                  <div className="text-xs mt-0.5 truncate">{evt.summary}</div>
                   <div
                     className="text-xs mt-0.5"
                     style={{ color: "var(--color-text-muted)", fontSize: 10 }}
@@ -697,9 +639,7 @@ function ToggleRow({
       className="flex items-center justify-between py-1.5 cursor-pointer"
       style={{ opacity: disabled ? 0.4 : 1 }}
     >
-      <span className="text-xs">
-        {label}
-      </span>
+      <span className="text-xs">{label}</span>
       <button
         role="switch"
         aria-checked={checked}
@@ -773,21 +713,13 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
   );
 
   if (!projectSlug) {
-    return (
-      <div className="text-center py-6 text-sm">
-        Select a project to configure
-      </div>
-    );
+    return <div className="text-center py-6 text-sm">Select a project to configure</div>;
   }
 
   if (!config) {
     return (
       <div className="flex justify-center py-6">
-        <CircleNotch
-          size={20}
-          className="animate-spin"
-         
-        />
+        <CircleNotch size={20} className="animate-spin" />
       </div>
     );
   }
@@ -798,16 +730,8 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
       <div className="rounded-lg p-3">
         <div className="flex items-center gap-2 mb-2">
           <Gear size={14} weight="bold" style={{ color: "#A855F7" }} />
-          <span className="text-xs font-semibold">
-            Context Injection
-          </span>
-          {saving && (
-            <CircleNotch
-              size={10}
-              className="animate-spin ml-auto"
-             
-            />
-          )}
+          <span className="text-xs font-semibold">Context Injection</span>
+          {saving && <CircleNotch size={10} className="animate-spin ml-auto" />}
         </div>
         <ToggleRow
           label="Enable all context injection"
@@ -818,12 +742,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
 
       {/* Per-type toggles */}
       <div className="rounded-lg p-3">
-        <span
-          className="text-xs font-semibold block mb-2"
-         
-        >
-          Injection Types
-        </span>
+        <span className="text-xs font-semibold block mb-2">Injection Types</span>
         <div className="flex flex-col">
           <ToggleRow
             label="Project map (session start)"
@@ -860,12 +779,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
 
       {/* Token budget */}
       <div className="rounded-lg p-3">
-        <span
-          className="text-xs font-semibold block mb-2"
-         
-        >
-          Token Budget (per message context)
-        </span>
+        <span className="text-xs font-semibold block mb-2">Token Budget (per message context)</span>
         <div className="flex items-center gap-3">
           <input
             type="range"
@@ -883,12 +797,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
             style={{ accentColor: "#A855F7" }}
             aria-label="Max context tokens"
           />
-          <span
-            className="text-xs font-mono w-14 text-right"
-           
-          >
-            {config.maxContextTokens}
-          </span>
+          <span className="text-xs font-mono w-14 text-right">{config.maxContextTokens}</span>
         </div>
         <div
           className="flex justify-between text-xs mt-1"
@@ -901,12 +810,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
 
       {/* Exclude patterns */}
       <div className="rounded-lg p-3">
-        <span
-          className="text-xs font-semibold block mb-2"
-         
-        >
-          Exclude Patterns
-        </span>
+        <span className="text-xs font-semibold block mb-2">Exclude Patterns</span>
         <div className="flex gap-1.5 mb-2">
           <input
             type="text"
@@ -944,23 +848,12 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
           </button>
         </div>
         {config.excludePatterns.length === 0 ? (
-          <div className="text-xs">
-            No exclude patterns set
-          </div>
+          <div className="text-xs">No exclude patterns set</div>
         ) : (
           <div className="flex flex-col gap-1">
             {config.excludePatterns.map((pattern, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between px-2 py-1 rounded"
-               
-              >
-                <span
-                  className="text-xs font-mono truncate"
-                 
-                >
-                  {pattern}
-                </span>
+              <div key={idx} className="flex items-center justify-between px-2 py-1 rounded">
+                <span className="text-xs font-mono truncate">{pattern}</span>
                 <button
                   onClick={() => {
                     const updated = config.excludePatterns.filter((_, i) => i !== idx);
@@ -1026,24 +919,18 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
     <div className="rounded-lg p-3">
       <div className="flex items-center gap-2 mb-2">
         <Package size={14} weight="bold" style={{ color: "#4285F4" }} />
-        <span className="text-xs font-semibold">
-          Docs Engine Setup
-        </span>
+        <span className="text-xs font-semibold">Docs Engine Setup</span>
       </div>
 
       <p className="text-xs mb-3" style={{ color: "var(--color-text-secondary)" }}>
-        Docs Engine auto-injects library documentation into your AI sessions.
-        Works out of the box — <strong style={{ color: "var(--color-text-primary)" }}>no API key needed</strong> for
+        Docs Engine auto-injects library documentation into your AI sessions. Works out of the box —{" "}
+        <strong style={{ color: "var(--color-text-primary)" }}>no API key needed</strong> for
         scraping, docs, and crawling.
       </p>
 
       {dockerStatus === null ? (
         <div className="flex justify-center py-2">
-          <CircleNotch
-            size={16}
-            className="animate-spin"
-           
-          />
+          <CircleNotch size={16} className="animate-spin" />
         </div>
       ) : dockerStatus.dockerAvailable ? (
         <div className="flex flex-col gap-2">
@@ -1075,8 +962,11 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
             </summary>
             <div className="mt-1.5 flex flex-col gap-1.5">
               <p style={{ color: "var(--color-text-muted)", fontSize: 11 }}>
-                Only needed for <code className="px-1 rounded" style={{ background: "var(--color-bg-base)" }}>/research</code> command.
-                Scraping, docs, and crawling work without it.
+                Only needed for{" "}
+                <code className="px-1 rounded" style={{ background: "var(--color-bg-base)" }}>
+                  /research
+                </code>{" "}
+                command. Scraping, docs, and crawling work without it.
               </p>
               <input
                 type="text"
@@ -1296,9 +1186,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
       >
         <div className="flex items-center gap-2">
           <Brain size={18} weight="bold" style={{ color: "#A855F7" }} />
-          <span className="text-sm font-semibold">
-            AI Context
-          </span>
+          <span className="text-sm font-semibold">AI Context</span>
           {injectionCount > 0 && (
             <span
               className="text-xs font-mono px-1.5 py-0.5 rounded-full"
@@ -1317,7 +1205,6 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
               loadWiStatus();
             }}
             className="p-1.5 rounded cursor-pointer"
-           
             aria-label="Refresh"
           >
             <ArrowClockwise size={14} weight="bold" />
@@ -1325,7 +1212,6 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
           <button
             onClick={onClose}
             className="p-1.5 rounded cursor-pointer"
-           
             aria-label="Close panel"
           >
             <X size={14} weight="bold" />
@@ -1420,10 +1306,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
           <div className="flex flex-col gap-3">
             {/* No project selected */}
             {!slug && (
-              <div
-                className="text-center py-6 text-sm"
-               
-              >
+              <div className="text-center py-6 text-sm">
                 Select a project above to explore code and docs
               </div>
             )}
@@ -1436,7 +1319,6 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                     <MagnifyingGlass
                       size={14}
                       className="absolute left-2.5 top-1/2 -translate-y-1/2"
-                     
                     />
                     <input
                       type="text"
@@ -1486,15 +1368,8 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                         }}
                       >
                         <Icon size={14} className="mx-auto mb-0.5" style={{ color }} />
-                        <div
-                          className="text-sm font-mono font-bold"
-                         
-                        >
-                          {value.toLocaleString()}
-                        </div>
-                        <div className="text-xs">
-                          {label}
-                        </div>
+                        <div className="text-sm font-mono font-bold">{value.toLocaleString()}</div>
+                        <div className="text-xs">{label}</div>
                       </div>
                     ))}
                   </div>
@@ -1537,10 +1412,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
               <>
                 {wiCache && (
                   <div className="flex items-center justify-between">
-                    <span
-                      className="text-xs font-semibold"
-                     
-                    >
+                    <span className="text-xs font-semibold">
                       Docs Cache: {wiCache.size} entries
                     </span>
                     <button

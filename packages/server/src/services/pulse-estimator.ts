@@ -54,12 +54,12 @@ const DECAY_WEIGHTS = [1.0, 0.7, 0.5, 0.3, 0.15] as const;
 
 const SIGNAL_WEIGHTS: Record<keyof SignalValues, number> = {
   failureRate: 0.25,
-  editChurn: 0.20,
+  editChurn: 0.2,
   costAccel: 0.15,
-  contextPressure: 0.10,
-  thinkingDepth: 0.10,
-  toolDiversity: 0.10,
-  completionTone: 0.10,
+  contextPressure: 0.1,
+  thinkingDepth: 0.1,
+  toolDiversity: 0.1,
+  completionTone: 0.1,
 };
 
 // ─── Per-Turn Snapshot ──────────────────────────────────────────────────
@@ -243,7 +243,10 @@ class SessionPulse {
 
     for (const snap of this.snapshots) {
       for (const tu of snap.toolUses) {
-        if ((tu.toolName === "Edit" || tu.toolName === "Write" || tu.toolName === "MultiEdit") && tu.filePath) {
+        if (
+          (tu.toolName === "Edit" || tu.toolName === "Write" || tu.toolName === "MultiEdit") &&
+          tu.filePath
+        ) {
           fileEditCounts.set(tu.filePath, (fileEditCounts.get(tu.filePath) ?? 0) + 1);
         }
       }
@@ -350,29 +353,52 @@ class SessionPulse {
 
     // Hedging signals
     const hedging = [
-      "i apologize", "let me try again", "i'm not sure",
-      "i made a mistake", "that was incorrect", "my apologies",
+      "i apologize",
+      "let me try again",
+      "i'm not sure",
+      "i made a mistake",
+      "that was incorrect",
+      "my apologies",
     ];
     for (const phrase of hedging) {
-      if (text.includes(phrase)) { score += 0.3; break; }
+      if (text.includes(phrase)) {
+        score += 0.3;
+        break;
+      }
     }
 
     // Failure signals
     const failure = [
-      "i cannot", "error occurred", "failed to", "unable to",
-      "doesn't work", "still failing", "same error",
+      "i cannot",
+      "error occurred",
+      "failed to",
+      "unable to",
+      "doesn't work",
+      "still failing",
+      "same error",
     ];
     for (const phrase of failure) {
-      if (text.includes(phrase)) { score += 0.5; break; }
+      if (text.includes(phrase)) {
+        score += 0.5;
+        break;
+      }
     }
 
     // Recovery signals (reduce score)
     const recovery = [
-      "fixed", "resolved", "working now", "passes", "successfully",
-      "compiles clean", "all tests pass",
+      "fixed",
+      "resolved",
+      "working now",
+      "passes",
+      "successfully",
+      "compiles clean",
+      "all tests pass",
     ];
     for (const phrase of recovery) {
-      if (text.includes(phrase)) { score -= 0.3; break; }
+      if (text.includes(phrase)) {
+        score -= 0.3;
+        break;
+      }
     }
 
     return Math.max(0, Math.min(1, score));

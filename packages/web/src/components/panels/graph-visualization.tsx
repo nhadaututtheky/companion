@@ -12,7 +12,16 @@ import {
   useEdgesState,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { CircleNotch, WarningCircle, TreeStructure, Lightning, Eye, EyeSlash, TextAa, Sparkle } from "@phosphor-icons/react";
+import {
+  CircleNotch,
+  WarningCircle,
+  TreeStructure,
+  Lightning,
+  Eye,
+  EyeSlash,
+  TextAa,
+  Sparkle,
+} from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import {
   useGraphActivityStore,
@@ -57,7 +66,7 @@ const TYPE_COLORS: Record<string, string> = {
 const ACTION_COLORS: Record<string, string> = {
   modify: "#3B82F6", // blue
   create: "#10B981", // green
-  read: "#F59E0B",   // amber (dimmer)
+  read: "#F59E0B", // amber (dimmer)
 };
 
 function getNodeColor(type: string): string {
@@ -100,9 +109,7 @@ function layoutNodes(
       const n = group[i];
       const color = getNodeColor(n.symbolType);
       // Feature mode: show description if available, otherwise symbol name with indicator
-      const featureLabel = n.description
-        ? truncateLabel(n.description, 40)
-        : n.symbolName;
+      const featureLabel = n.description ? truncateLabel(n.description, 40) : n.symbolName;
       const label = labelMode === "feature" ? featureLabel : n.symbolName;
       nodes.push({
         id: String(n.id),
@@ -313,7 +320,11 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
   // Re-layout when data or label mode changes (no API call)
   useEffect(() => {
     if (!rawData) return;
-    const layout = layoutNodes(rawData.nodes as GraphNode[], rawData.edges as GraphEdge[], labelMode);
+    const layout = layoutNodes(
+      rawData.nodes as GraphNode[],
+      rawData.edges as GraphEdge[],
+      labelMode,
+    );
     baseNodesRef.current = layout.nodes;
     baseEdgesRef.current = layout.edges;
     setNodes(layout.nodes);
@@ -370,7 +381,13 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
 
       if (changed.size === 0 && nowHighlighted.size === 0) return;
 
-      const highlighted = applyHighlights(baseNodesRef.current, touchedNodes, currentImpacts, fogEnabled, revealStates);
+      const highlighted = applyHighlights(
+        baseNodesRef.current,
+        touchedNodes,
+        currentImpacts,
+        fogEnabled,
+        revealStates,
+      );
       setNodes(highlighted);
 
       // Schedule next decay tick if there are still active highlights
@@ -477,14 +494,21 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
               border: `1px solid ${labelMode === "feature" ? "#10B981" : "var(--color-border)"}`,
             }}
             aria-label={labelMode === "feature" ? "Show symbol names" : "Show feature labels"}
-            title={labelMode === "feature" ? "Labels: Feature — click for Symbol" : "Labels: Symbol — click for Feature"}
+            title={
+              labelMode === "feature"
+                ? "Labels: Feature — click for Symbol"
+                : "Labels: Symbol — click for Feature"
+            }
           >
             {labelMode === "feature" ? (
               <Sparkle size={12} style={{ color: "#10B981" }} />
             ) : (
               <TextAa size={12} style={{ color: "var(--color-text-muted)" }} />
             )}
-            <span className="text-xs" style={{ color: labelMode === "feature" ? "#10B981" : "var(--color-text-muted)" }}>
+            <span
+              className="text-xs"
+              style={{ color: labelMode === "feature" ? "#10B981" : "var(--color-text-muted)" }}
+            >
               {labelMode === "feature" ? "Feature" : "Symbol"}
             </span>
           </button>
@@ -506,7 +530,10 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
             ) : (
               <Eye size={12} style={{ color: "var(--color-text-muted)" }} />
             )}
-            <span className="text-xs" style={{ color: fogEnabled ? "#6366F1" : "var(--color-text-muted)" }}>
+            <span
+              className="text-xs"
+              style={{ color: fogEnabled ? "#6366F1" : "var(--color-text-muted)" }}
+            >
               Fog
             </span>
           </button>

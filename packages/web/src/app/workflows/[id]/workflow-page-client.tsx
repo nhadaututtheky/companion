@@ -113,10 +113,7 @@ export function WorkflowPageClient({ params }: PageProps) {
         style={{ height: "100vh", background: "var(--color-bg-base)" }}
       >
         <Header />
-        <div
-          className="flex flex-col items-center justify-center flex-1 gap-3"
-         
-        >
+        <div className="flex flex-col items-center justify-center flex-1 gap-3">
           <XCircle size={32} weight="light" />
           <p>Workflow not found</p>
           <Link href="/workflows" className="text-sm">
@@ -139,19 +136,12 @@ export function WorkflowPageClient({ params }: PageProps) {
       >
         {/* Back + Title */}
         <div className="flex items-center gap-3 mb-6">
-          <Link
-            href="/workflows"
-            className="p-1.5 rounded-lg cursor-pointer"
-           
-            aria-label="Back"
-          >
+          <Link href="/workflows" className="p-1.5 rounded-lg cursor-pointer" aria-label="Back">
             <ArrowLeft size={18} weight="bold" />
           </Link>
           <Lightning size={20} weight="bold" />
           <div className="flex-1">
-            <h1 className="text-base font-bold">
-              {state.templateName}
-            </h1>
+            <h1 className="text-base font-bold">{state.templateName}</h1>
             <p className="text-xs">
               {state.topic.length > 100 ? state.topic.slice(0, 100) + "..." : state.topic}
             </p>
@@ -205,12 +195,7 @@ export function WorkflowPageClient({ params }: PageProps) {
                   >
                     {STEP_STATUS_ICON[step.status]}
                   </div>
-                  <span
-                    className="text-xs font-semibold"
-                   
-                  >
-                    {step.role}
-                  </span>
+                  <span className="text-xs font-semibold">{step.role}</span>
                   <span
                     className="text-xs"
                     style={{ color: "var(--color-text-muted)", fontSize: 10 }}
@@ -251,10 +236,7 @@ export function WorkflowPageClient({ params }: PageProps) {
             >
               <div className="flex items-center gap-2 mb-1">
                 {STEP_STATUS_ICON[step.status]}
-                <span
-                  className="text-sm font-semibold"
-                 
-                >
+                <span className="text-sm font-semibold">
                   Step {i + 1}: {step.role}
                 </span>
                 {step.sessionId && (
@@ -298,10 +280,7 @@ export function WorkflowPageClient({ params }: PageProps) {
           className="rounded-xl px-4 py-3 mt-4"
           style={{ background: "var(--color-bg-card)", border: "1px solid var(--color-border)" }}
         >
-          <div
-            className="flex items-center gap-4 text-xs"
-           
-          >
+          <div className="flex items-center gap-4 text-xs">
             <span>
               Cost: <strong className="font-mono">${state.totalCostUsd.toFixed(3)}</strong> / $
               {state.costCapUsd.toFixed(2)}

@@ -19,7 +19,10 @@ interface PanelErrorBoundaryState {
  * without taking down the entire app. Shows a compact fallback
  * with a retry button.
  */
-export class PanelErrorBoundary extends Component<PanelErrorBoundaryProps, PanelErrorBoundaryState> {
+export class PanelErrorBoundary extends Component<
+  PanelErrorBoundaryProps,
+  PanelErrorBoundaryState
+> {
   constructor(props: PanelErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };

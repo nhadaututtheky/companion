@@ -121,7 +121,6 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
         <button
           onClick={prevMonth}
           className="p-1 rounded-lg cursor-pointer transition-colors"
-         
           aria-label="Previous month"
         >
           <CaretLeft size={14} weight="bold" />
@@ -132,7 +131,6 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
         <button
           onClick={nextMonth}
           className="p-1 rounded-lg cursor-pointer transition-colors"
-         
           aria-label="Next month"
         >
           <CaretRight size={14} weight="bold" />

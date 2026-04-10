@@ -108,22 +108,8 @@ export function ThinkingModeSelector({
                   }}
                 />
                 <span>{m.label}</span>
-                {m.value === "adaptive" && (
-                  <span
-                    className="ml-auto text-[10px]"
-                   
-                  >
-                    default
-                  </span>
-                )}
-                {m.value === "deep" && (
-                  <span
-                    className="ml-auto text-[10px]"
-                   
-                  >
-                    50k tokens
-                  </span>
-                )}
+                {m.value === "adaptive" && <span className="ml-auto text-[10px]">default</span>}
+                {m.value === "deep" && <span className="ml-auto text-[10px]">50k tokens</span>}
                 {isActive && (
                   <span className="ml-auto text-xs" style={{ color: "#F59E0B" }}>
                     ●

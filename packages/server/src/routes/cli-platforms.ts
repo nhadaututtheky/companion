@@ -13,11 +13,16 @@ app.get("/", async (c) => {
 
   const platforms = results.map(({ platform, adapter, detection }) => ({
     id: platform,
-    name: platform === "claude" ? "Claude Code"
-      : platform === "codex" ? "Codex"
-      : platform === "gemini" ? "Gemini CLI"
-      : platform === "opencode" ? "OpenCode"
-      : platform,
+    name:
+      platform === "claude"
+        ? "Claude Code"
+        : platform === "codex"
+          ? "Codex"
+          : platform === "gemini"
+            ? "Gemini CLI"
+            : platform === "opencode"
+              ? "OpenCode"
+              : platform,
     available: detection.available,
     version: detection.version,
     path: detection.path,

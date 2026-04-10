@@ -547,7 +547,12 @@ export function useSession(sessionId: string): UseSessionReturn {
           if (exitCode !== undefined && exitCode !== 0) {
             setSession(sessionId, { status: "error", shortId: undefined });
             // Error always shows toast (safety override in sessionNotify)
-            sessionNotify(sessionId, "error", exitReason ?? `Session crashed (exit code ${exitCode})`, { duration: 8000 });
+            sessionNotify(
+              sessionId,
+              "error",
+              exitReason ?? `Session crashed (exit code ${exitCode})`,
+              { duration: 8000 },
+            );
           } else {
             setSession(sessionId, { status: "ended", shortId: undefined });
           }
@@ -575,7 +580,9 @@ export function useSession(sessionId: string): UseSessionReturn {
             type: "warning",
             content: warningText,
           });
-          sessionNotify(sessionId, "info", `Idle timeout: ${getSessionName()}`, { duration: 30_000 });
+          sessionNotify(sessionId, "info", `Idle timeout: ${getSessionName()}`, {
+            duration: 30_000,
+          });
           break;
         }
 
@@ -605,7 +612,12 @@ export function useSession(sessionId: string): UseSessionReturn {
             spent: number;
             percentage: number;
           };
-          sessionNotify(sessionId, "info", `Budget at ${bwMsg.percentage}%: $${bwMsg.spent.toFixed(2)} / $${bwMsg.budget.toFixed(2)}`, { duration: 8000 });
+          sessionNotify(
+            sessionId,
+            "info",
+            `Budget at ${bwMsg.percentage}%: $${bwMsg.spent.toFixed(2)} / $${bwMsg.budget.toFixed(2)}`,
+            { duration: 8000 },
+          );
           addLog({
             sessionId,
             sessionName: getSessionName(),
@@ -618,7 +630,11 @@ export function useSession(sessionId: string): UseSessionReturn {
 
         case "budget_exceeded": {
           const beMsg = msg as { type: "budget_exceeded"; budget: number; spent: number };
-          sessionNotify(sessionId, "error", `Budget exceeded — $${beMsg.spent.toFixed(2)} / $${beMsg.budget.toFixed(2)}`);
+          sessionNotify(
+            sessionId,
+            "error",
+            `Budget exceeded — $${beMsg.spent.toFixed(2)} / $${beMsg.budget.toFixed(2)}`,
+          );
           addLog({
             sessionId,
             sessionName: getSessionName(),
@@ -692,9 +708,16 @@ export function useSession(sessionId: string): UseSessionReturn {
             blocked: boolean;
           };
           if (scan.blocked) {
-            sessionNotify(sessionId, "error", "Prompt blocked by security scanner", { duration: 8000 });
+            sessionNotify(sessionId, "error", "Prompt blocked by security scanner", {
+              duration: 8000,
+            });
           } else {
-            sessionNotify(sessionId, "info", `Security scan: ${scan.risks.map((r) => r.description).join(", ")}`, { duration: 6000 });
+            sessionNotify(
+              sessionId,
+              "info",
+              `Security scan: ${scan.risks.map((r) => r.description).join(", ")}`,
+              { duration: 6000 },
+            );
           }
           setLastScanResult(scan);
           break;
@@ -783,7 +806,13 @@ export function useSession(sessionId: string): UseSessionReturn {
       if (rawMsg.type === "pulse:update" && typeof rawMsg.score === "number") {
         usePulseStore.getState().pushReading(rawMsg.sessionId as string, {
           score: rawMsg.score as number,
-          state: rawMsg.state as "flow" | "focused" | "cautious" | "struggling" | "spiraling" | "blocked",
+          state: rawMsg.state as
+            | "flow"
+            | "focused"
+            | "cautious"
+            | "struggling"
+            | "spiraling"
+            | "blocked",
           trend: rawMsg.trend as "improving" | "stable" | "degrading",
           signals: rawMsg.signals as Record<string, number>,
           topSignal: rawMsg.topSignal as string,

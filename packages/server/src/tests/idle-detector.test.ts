@@ -48,7 +48,9 @@ describe("IdleDetector", () => {
   // ── 4. idleDurationMs passed to callback is positive ─────────────────────
   test("idle callback receives a positive idleDurationMs", async () => {
     let duration = -1;
-    detector.setCallback((_, ms) => { duration = ms; });
+    detector.setCallback((_, ms) => {
+      duration = ms;
+    });
 
     detector.recordOutput("s-dur");
     await sleep(THRESHOLD + 40);

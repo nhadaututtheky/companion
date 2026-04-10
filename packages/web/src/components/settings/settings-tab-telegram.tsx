@@ -1,12 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  Plus,
-  Eye,
-  EyeSlash,
-  ArrowsClockwise,
-} from "@phosphor-icons/react";
+import { Plus, Eye, EyeSlash, ArrowsClockwise } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { TelegramBotCard } from "@/components/settings/telegram-bot-card";
@@ -27,7 +22,9 @@ export function TelegramTab() {
   // Add bot form state
   const [showAddForm, setShowAddForm] = useState(false);
   const [newLabel, setNewLabel] = useState("");
-  const [newRole, setNewRole] = useState<"claude" | "codex" | "gemini" | "opencode" | "general">("claude");
+  const [newRole, setNewRole] = useState<"claude" | "codex" | "gemini" | "opencode" | "general">(
+    "claude",
+  );
   const [newToken, setNewToken] = useState("");
   const [showNewToken, setShowNewToken] = useState(false);
   const [newChatIds, setNewChatIds] = useState("");
@@ -178,20 +175,10 @@ export function TelegramTab() {
                     border: "1px solid var(--glass-border)",
                   }}
                 >
-                  <h3
-                    className="text-xs font-semibold"
-
-                  >
-                    New Bot
-                  </h3>
+                  <h3 className="text-xs font-semibold">New Bot</h3>
 
                   <div className="flex flex-col gap-1.5">
-                    <label
-                      className="text-xs font-medium"
-
-                    >
-                      Label
-                    </label>
+                    <label className="text-xs font-medium">Label</label>
                     <input
                       type="text"
                       value={newLabel}
@@ -206,15 +193,14 @@ export function TelegramTab() {
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label
-                      className="text-xs font-medium"
-
-                    >
-                      Role
-                    </label>
+                    <label className="text-xs font-medium">Role</label>
                     <select
                       value={newRole}
-                      onChange={(e) => setNewRole(e.target.value as "claude" | "codex" | "gemini" | "opencode" | "general")}
+                      onChange={(e) =>
+                        setNewRole(
+                          e.target.value as "claude" | "codex" | "gemini" | "opencode" | "general",
+                        )
+                      }
                       className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
                       style={{
                         background: "var(--color-bg-card)",
@@ -230,12 +216,7 @@ export function TelegramTab() {
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label
-                      className="text-xs font-medium"
-
-                    >
-                      Bot Token
-                    </label>
+                    <label className="text-xs font-medium">Bot Token</label>
                     <div className="relative">
                       <input
                         type={showNewToken ? "text" : "password"}
@@ -252,7 +233,6 @@ export function TelegramTab() {
                         type="button"
                         onClick={() => setShowNewToken(!showNewToken)}
                         className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-pointer"
-
                         aria-label={showNewToken ? "Hide token" : "Show token"}
                       >
                         {showNewToken ? <EyeSlash size={14} /> : <Eye size={14} />}
@@ -261,14 +241,8 @@ export function TelegramTab() {
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label
-                      className="text-xs font-medium"
-
-                    >
-                      Allowed Chat IDs{" "}
-                      <span>
-                        (comma-separated, optional)
-                      </span>
+                    <label className="text-xs font-medium">
+                      Allowed Chat IDs <span>(comma-separated, optional)</span>
                     </label>
                     <input
                       type="text"
@@ -284,14 +258,8 @@ export function TelegramTab() {
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label
-                      className="text-xs font-medium"
-
-                    >
-                      Admin User IDs{" "}
-                      <span>
-                        (comma-separated, only these users can use bot)
-                      </span>
+                    <label className="text-xs font-medium">
+                      Admin User IDs <span>(comma-separated, only these users can use bot)</span>
                     </label>
                     <input
                       type="text"
@@ -337,17 +305,12 @@ export function TelegramTab() {
 
               {/* Bot list */}
               {loading ? (
-                <div
-                  className="flex items-center gap-2 py-3"
-
-                >
+                <div className="flex items-center gap-2 py-3">
                   <ArrowsClockwise size={14} className="animate-spin" aria-hidden="true" />
                   <span className="text-xs">Loading bots...</span>
                 </div>
               ) : configs.length === 0 ? (
-                <p className="text-xs py-2">
-                  No bots configured. Add one above.
-                </p>
+                <p className="text-xs py-2">No bots configured. Add one above.</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {configs.map((config) => (

@@ -14,8 +14,13 @@ mock.module("../db/client.js", () => ({
   getDb: () => testDbResult.db,
 }));
 
-const { createShareToken, validateShareToken, revokeShareToken, listActiveShares, revokeAllForSession } =
-  await import("../services/share-manager.js");
+const {
+  createShareToken,
+  validateShareToken,
+  revokeShareToken,
+  listActiveShares,
+  revokeAllForSession,
+} = await import("../services/share-manager.js");
 
 const SESSION_ID = "test-session-1";
 const SESSION_ID_2 = "test-session-2";

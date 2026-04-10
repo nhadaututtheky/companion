@@ -4,12 +4,7 @@
  */
 
 import { describe, test, expect } from "bun:test";
-import {
-  escapeHTML,
-  toTelegramHTML,
-  splitMessage,
-  wrapExpandable,
-} from "../telegram/formatter.js";
+import { escapeHTML, toTelegramHTML, splitMessage, wrapExpandable } from "../telegram/formatter.js";
 
 // ─── escapeHTML ───────────────────────────────────────────────────────────────
 
@@ -52,7 +47,7 @@ describe("toTelegramHTML", () => {
   });
 
   test("fenced code block with language → pre/code with class, content HTML-escaped", () => {
-    const md = "```js\nconsole.log(\"hi\");\n```";
+    const md = '```js\nconsole.log("hi");\n```';
     const result = toTelegramHTML(md);
     expect(result).toBe('<pre><code class="language-js">console.log("hi");</code></pre>');
   });

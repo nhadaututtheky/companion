@@ -51,9 +51,7 @@ function PermissionCard({
     >
       <div className="flex items-center gap-2">
         <Lock size={14} weight="bold" style={{ color: "#FBBC04", flexShrink: 0 }} />
-        <span className="text-sm font-semibold">
-          {req.toolName}
-        </span>
+        <span className="text-sm font-semibold">{req.toolName}</span>
         {autoApproveSeconds && countdown > 0 && (
           <span
             className="ml-auto text-xs font-mono px-1.5 py-0.5 rounded"
@@ -64,11 +62,7 @@ function PermissionCard({
         )}
       </div>
 
-      {req.description && (
-        <p className="text-xs leading-relaxed">
-          {req.description}
-        </p>
-      )}
+      {req.description && <p className="text-xs leading-relaxed">{req.description}</p>}
 
       <div className="flex gap-2 pt-1">
         <button

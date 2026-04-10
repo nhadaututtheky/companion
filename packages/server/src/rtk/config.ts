@@ -40,7 +40,12 @@ export function getRTKConfig(): RTKConfig {
       enabled: enabled !== "false", // default true
       level: level && VALID_LEVELS.includes(level) ? level : "balanced",
       disabledStrategies: disabled
-        ? new Set(disabled.split(",").map((s) => s.trim()).filter(Boolean))
+        ? new Set(
+            disabled
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean),
+          )
         : new Set(),
     };
   } catch {

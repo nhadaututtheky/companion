@@ -67,7 +67,11 @@ export async function detectAllPlatforms(): Promise<
       try {
         const detection = await adapter.detect();
         detectionCache.set(platform, detection);
-        log.info("Platform detected", { platform, available: detection.available, version: detection.version });
+        log.info("Platform detected", {
+          platform,
+          available: detection.available,
+          version: detection.version,
+        });
         return { platform, adapter, detection };
       } catch (err) {
         const detection: CLIDetectResult = { available: false };

@@ -13,9 +13,17 @@ const RTK_LEVELS = [
 ];
 
 const RTK_STRATEGIES = [
-  { name: "ansi-strip", label: "ANSI Strip", desc: "Remove terminal color codes and control characters" },
+  {
+    name: "ansi-strip",
+    label: "ANSI Strip",
+    desc: "Remove terminal color codes and control characters",
+  },
   { name: "boilerplate", label: "Boilerplate", desc: "Collapse npm/cargo/pip install noise" },
-  { name: "stack-trace", label: "Stack Trace", desc: "Compress long stack traces (keep top + bottom)" },
+  {
+    name: "stack-trace",
+    label: "Stack Trace",
+    desc: "Compress long stack traces (keep top + bottom)",
+  },
   { name: "error-aggregate", label: "Error Aggregate", desc: "Group repeated errors by code" },
   { name: "test-summary", label: "Test Summary", desc: "Collapse passed tests, keep failures" },
   { name: "diff-summary", label: "Diff Summary", desc: "Summarize large git diffs" },
@@ -74,10 +82,7 @@ export function RTKSettings() {
     try {
       await api.settings.set("rtk.enabled", String(enabled));
       await api.settings.set("rtk.level", level);
-      await api.settings.set(
-        "rtk.disabled",
-        Array.from(disabledStrategies).join(","),
-      );
+      await api.settings.set("rtk.disabled", Array.from(disabledStrategies).join(","));
       toast.success("RTK settings saved");
     } catch (err) {
       toast.error(String(err));
@@ -87,14 +92,7 @@ export function RTKSettings() {
   }
 
   if (loading) {
-    return (
-      <div
-        className="text-xs py-8 text-center"
-       
-      >
-        Loading...
-      </div>
-    );
+    return <div className="text-xs py-8 text-center">Loading...</div>;
   }
 
   return (
@@ -110,10 +108,7 @@ export function RTKSettings() {
       >
         <div className="flex items-center justify-between">
           <div>
-            <h2
-              className="text-sm font-semibold flex items-center gap-2"
-             
-            >
+            <h2 className="text-sm font-semibold flex items-center gap-2">
               Runtime Token Keeper (RTK)
               {!isPro && (
                 <span
@@ -124,10 +119,7 @@ export function RTKSettings() {
                 </span>
               )}
             </h2>
-            <p
-              className="text-xs mt-1"
-             
-            >
+            <p className="text-xs mt-1">
               Compresses tool outputs to save LLM context tokens.
               {!isPro && " Upgrade to Pro for smart compressors, cache, and budget control."}
             </p>
@@ -161,32 +153,17 @@ export function RTKSettings() {
             border: "1px solid var(--color-border)",
           }}
         >
-          <h2
-            className="text-sm font-semibold mb-1"
-           
-          >
-            Compression Level
-          </h2>
-          <p
-            className="text-xs mb-4"
-           
-          >
-            Controls the maximum token budget per tool output.
-          </p>
+          <h2 className="text-sm font-semibold mb-1">Compression Level</h2>
+          <p className="text-xs mb-4">Controls the maximum token budget per tool output.</p>
           <div className="flex flex-col gap-2">
             {RTK_LEVELS.map((l) => (
               <label
                 key={l.value}
                 className="flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors"
                 style={{
-                  background:
-                    level === l.value
-                      ? "var(--color-bg-elevated)"
-                      : "transparent",
+                  background: level === l.value ? "var(--color-bg-elevated)" : "transparent",
                   border:
-                    level === l.value
-                      ? "1px solid var(--color-accent)"
-                      : "1px solid transparent",
+                    level === l.value ? "1px solid var(--color-accent)" : "1px solid transparent",
                 }}
               >
                 <input
@@ -198,18 +175,8 @@ export function RTKSettings() {
                   className="mt-0.5"
                 />
                 <div>
-                  <span
-                    className="text-sm font-medium"
-                   
-                  >
-                    {l.label}
-                  </span>
-                  <p
-                    className="text-xs mt-0.5"
-                   
-                  >
-                    {l.desc}
-                  </p>
+                  <span className="text-sm font-medium">{l.label}</span>
+                  <p className="text-xs mt-0.5">{l.desc}</p>
                 </div>
               </label>
             ))}
@@ -226,18 +193,9 @@ export function RTKSettings() {
             border: "1px solid var(--color-border)",
           }}
         >
-          <h2
-            className="text-sm font-semibold mb-1"
-           
-          >
-            Compression Strategies
-          </h2>
-          <p
-            className="text-xs mb-4"
-           
-          >
-            Enable or disable individual compression strategies. All are enabled
-            by default.
+          <h2 className="text-sm font-semibold mb-1">Compression Strategies</h2>
+          <p className="text-xs mb-4">
+            Enable or disable individual compression strategies. All are enabled by default.
           </p>
           <div className="flex flex-col gap-1">
             {RTK_STRATEGIES.map((s) => {
@@ -258,8 +216,7 @@ export function RTKSettings() {
                         "var(--color-bg-elevated)";
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.background =
-                      "transparent";
+                    (e.currentTarget as HTMLElement).style.background = "transparent";
                   }}
                 >
                   <input
@@ -270,23 +227,11 @@ export function RTKSettings() {
                     className="rounded"
                   />
                   <div className="flex-1">
-                    <span
-                      className="text-sm font-mono flex items-center gap-1.5"
-                     
-                    >
+                    <span className="text-sm font-mono flex items-center gap-1.5">
                       {s.label}
-                      {isLocked && (
-                        <Lock
-                          size={12}
-                          weight="bold"
-                          style={{ color: "#FBBC04" }}
-                        />
-                      )}
+                      {isLocked && <Lock size={12} weight="bold" style={{ color: "#FBBC04" }} />}
                     </span>
-                    <p
-                      className="text-xs"
-                     
-                    >
+                    <p className="text-xs">
                       {s.desc}
                       {isLocked && " (Pro)"}
                     </p>
@@ -310,11 +255,7 @@ export function RTKSettings() {
             opacity: saving ? 0.7 : 1,
           }}
         >
-          {saving ? (
-            <Check size={16} weight="bold" />
-          ) : (
-            <FloppyDisk size={16} weight="bold" />
-          )}
+          {saving ? <Check size={16} weight="bold" /> : <FloppyDisk size={16} weight="bold" />}
           {saving ? "Saving..." : "Save RTK Settings"}
         </button>
       </div>

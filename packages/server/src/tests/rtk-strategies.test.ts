@@ -23,8 +23,9 @@ describe("StackTraceStrategy", () => {
   it("compresses a long Node.js stack trace", () => {
     const lines = [
       "TypeError: Cannot read properties of undefined",
-      ...Array.from({ length: 15 }, (_, i) =>
-        `    at Function${i} (src/module${i}.ts:${10 + i}:${5 + i})`
+      ...Array.from(
+        { length: 15 },
+        (_, i) => `    at Function${i} (src/module${i}.ts:${10 + i}:${5 + i})`,
       ),
     ];
     const input = lines.join("\n");
@@ -56,8 +57,9 @@ describe("StackTraceStrategy", () => {
   it("handles Python stack traces", () => {
     const lines = [
       "Traceback (most recent call last):",
-      ...Array.from({ length: 10 }, (_, i) =>
-        `  File "module${i}.py", line ${10 + i}, in func${i}`
+      ...Array.from(
+        { length: 10 },
+        (_, i) => `  File "module${i}.py", line ${10 + i}, in func${i}`,
       ),
       "ValueError: invalid literal",
     ];
@@ -71,9 +73,7 @@ describe("StackTraceStrategy", () => {
     const lines = [
       "thread 'main' panicked at 'index out of bounds'",
       "stack backtrace:",
-      ...Array.from({ length: 12 }, (_, i) =>
-        `   ${i}: std::rt::lang_start_internal::${i}`
-      ),
+      ...Array.from({ length: 12 }, (_, i) => `   ${i}: std::rt::lang_start_internal::${i}`),
     ];
     const input = lines.join("\n");
     const result = strategy.transform(input);
@@ -87,9 +87,7 @@ describe("StackTraceStrategy", () => {
       "Compilation successful",
       "Running tests...",
       "Error: test failed",
-      ...Array.from({ length: 10 }, (_, i) =>
-        `    at test${i} (test.ts:${i}:1)`
-      ),
+      ...Array.from({ length: 10 }, (_, i) => `    at test${i} (test.ts:${i}:1)`),
       "1 test failed, 5 passed",
     ];
     const input = lines.join("\n");
@@ -112,8 +110,9 @@ describe("ErrorAggregateStrategy", () => {
   const strategy = new ErrorAggregateStrategy();
 
   it("aggregates TypeScript errors by code", () => {
-    const errors = Array.from({ length: 10 }, (_, i) =>
-      `src/comp${i}.tsx(${10 + i},5): error TS2304: Cannot find name 'React'`
+    const errors = Array.from(
+      { length: 10 },
+      (_, i) => `src/comp${i}.tsx(${10 + i},5): error TS2304: Cannot find name 'React'`,
     );
     const input = errors.join("\n");
     const result = strategy.transform(input);
@@ -125,11 +124,13 @@ describe("ErrorAggregateStrategy", () => {
 
   it("groups multiple error types separately", () => {
     const errors = [
-      ...Array.from({ length: 5 }, (_, i) =>
-        `src/a${i}.ts(${i},1): error TS2304: Cannot find name 'X'`
+      ...Array.from(
+        { length: 5 },
+        (_, i) => `src/a${i}.ts(${i},1): error TS2304: Cannot find name 'X'`,
       ),
-      ...Array.from({ length: 4 }, (_, i) =>
-        `src/b${i}.ts(${i},1): error TS2345: Type 'string' not assignable`
+      ...Array.from(
+        { length: 4 },
+        (_, i) => `src/b${i}.ts(${i},1): error TS2345: Type 'string' not assignable`,
       ),
     ];
     const input = errors.join("\n");
@@ -142,11 +143,7 @@ describe("ErrorAggregateStrategy", () => {
   });
 
   it("handles Rust errors", () => {
-    const errors = [
-      ...Array.from({ length: 5 }, () =>
-        `error[E0308]: mismatched types`
-      ),
-    ];
+    const errors = [...Array.from({ length: 5 }, () => `error[E0308]: mismatched types`)];
     const input = errors.join("\n");
     const result = strategy.transform(input);
     expect(result).not.toBeNull();
@@ -164,8 +161,9 @@ describe("ErrorAggregateStrategy", () => {
     const lines = [
       "Running type check...",
       "",
-      ...Array.from({ length: 6 }, (_, i) =>
-        `src/file${i}.ts(1,1): error TS2304: Cannot find name 'X'`
+      ...Array.from(
+        { length: 6 },
+        (_, i) => `src/file${i}.ts(1,1): error TS2304: Cannot find name 'X'`,
       ),
       "",
       "Found 6 errors.",
@@ -493,11 +491,13 @@ describe("Full Pipeline (Phase 1+2)", () => {
     const pipeline = buildFullPipeline();
     const input = [
       "\x1b[1m\x1b[32m  Downloading\x1b[0m crates ...",
-      ...Array.from({ length: 20 }, (_, i) =>
-        `\x1b[1m\x1b[32m   Downloaded\x1b[0m dep-${i} v0.${i}.0`
+      ...Array.from(
+        { length: 20 },
+        (_, i) => `\x1b[1m\x1b[32m   Downloaded\x1b[0m dep-${i} v0.${i}.0`,
       ),
-      ...Array.from({ length: 30 }, (_, i) =>
-        `\x1b[1m\x1b[32m   Compiling\x1b[0m dep-${i} v0.${i}.0`
+      ...Array.from(
+        { length: 30 },
+        (_, i) => `\x1b[1m\x1b[32m   Compiling\x1b[0m dep-${i} v0.${i}.0`,
       ),
       "\x1b[1m\x1b[32m   Compiling\x1b[0m companion v0.6.0",
       "\x1b[1m\x1b[32m    Finished\x1b[0m release in 3m 26s",
@@ -509,9 +509,7 @@ describe("Full Pipeline (Phase 1+2)", () => {
       "failures:",
       "  test_broken: assertion failed",
       "Error: expected 42, got 0",
-      ...Array.from({ length: 10 }, (_, i) =>
-        `    at frame${i} (src/test.rs:${i + 1}:1)`
-      ),
+      ...Array.from({ length: 10 }, (_, i) => `    at frame${i} (src/test.rs:${i + 1}:1)`),
       "",
       "test result: FAILED. 8 passed; 1 failed",
     ].join("\n");
@@ -535,8 +533,9 @@ describe("Full Pipeline (Phase 1+2)", () => {
       "\x1b[33mnpm warn\x1b[0m deprecated pkg3@1.0.0: use pkg3@2.0.0",
       "\x1b[33mnpm warn\x1b[0m deprecated pkg4@1.0.0: use pkg4@2.0.0",
       "",
-      ...Array.from({ length: 15 }, (_, i) =>
-        `src/comp${i}.tsx(${i},1): error TS2304: Cannot find name 'React'`
+      ...Array.from(
+        { length: 15 },
+        (_, i) => `src/comp${i}.tsx(${i},1): error TS2304: Cannot find name 'React'`,
       ),
       "",
       "Found 15 errors.",

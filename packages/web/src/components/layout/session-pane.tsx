@@ -66,15 +66,10 @@ export function SessionPane({ sessionId, onClose }: SessionPaneProps) {
           }}
           aria-hidden="true"
         />
-        <span
-          className="text-xs font-semibold truncate flex-1"
-         
-        >
+        <span className="text-xs font-semibold truncate flex-1">
           {session?.projectName ?? sessionId.slice(0, 8)}
         </span>
-        <span className="text-xs font-mono">
-          #{sessionId.slice(0, 6)}
-        </span>
+        <span className="text-xs font-mono">#{sessionId.slice(0, 6)}</span>
 
         {wsStatus !== "connected" && (
           <span
@@ -92,7 +87,6 @@ export function SessionPane({ sessionId, onClose }: SessionPaneProps) {
         <Link
           href={`/sessions/${sessionId}`}
           className="p-1 rounded cursor-pointer transition-colors"
-         
           aria-label="Open full session page"
           title="Open full page"
         >

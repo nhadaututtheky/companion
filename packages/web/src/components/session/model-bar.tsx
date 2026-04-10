@@ -110,9 +110,7 @@ export function ModelBar({
             }}
             title={`${p.name} (${p.providerName})${persona ? ` — ${persona.name}` : ""} — Context: ${formatContextWindow(p.contextWindow)}`}
           >
-            {persona && (
-              <PersonaAvatar persona={persona} size={14} showBadge={false} />
-            )}
+            {persona && <PersonaAvatar persona={persona} size={14} showBadge={false} />}
             {p.free && (
               <span
                 style={{

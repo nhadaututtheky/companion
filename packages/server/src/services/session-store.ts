@@ -548,15 +548,15 @@ export function listResumableSessions(opts?: {
       .all();
 
     return rows.map((r) => ({
-        id: r.id,
-        name: r.name ?? undefined,
-        projectSlug: r.projectSlug,
-        model: r.model,
-        source: r.source,
-        cwd: r.cwd,
-        cliSessionId: r.cliSessionId as string,
-        endedAt: r.endedAt?.getTime() ?? 0,
-      }));
+      id: r.id,
+      name: r.name ?? undefined,
+      projectSlug: r.projectSlug,
+      model: r.model,
+      source: r.source,
+      cwd: r.cwd,
+      cliSessionId: r.cliSessionId as string,
+      endedAt: r.endedAt?.getTime() ?? 0,
+    }));
   } catch (err) {
     log.error("Failed to list resumable sessions", { error: String(err) });
     return [];

@@ -6,12 +6,7 @@
  */
 
 import { createLogger } from "../logger.js";
-import {
-  readIndex,
-  readCore,
-  readArticle,
-  listArticles,
-} from "./store.js";
+import { readIndex, readCore, readArticle, listArticles } from "./store.js";
 import {
   type WikiIndex,
   type WikiArticle,
@@ -40,7 +35,11 @@ export function getCore(domain: string, cwd?: string): string | null {
  * Get the "always-loaded" context for session injection.
  * Returns index + core combined, within budget.
  */
-export function getSessionContext(domain: string, tokenBudget: number, cwd?: string): {
+export function getSessionContext(
+  domain: string,
+  tokenBudget: number,
+  cwd?: string,
+): {
   content: string;
   tokens: number;
 } | null {
@@ -74,7 +73,9 @@ export function getSessionContext(domain: string, tokenBudget: number, cwd?: str
       // Truncate core to fit
       const remaining = (tokenBudget - tokens) * CHARS_PER_TOKEN;
       if (remaining > 200) {
-        parts.push(`\n## Core Rules (truncated)\n\n${core.slice(0, remaining)}\n\n[...truncated, use wiki_read for full content]`);
+        parts.push(
+          `\n## Core Rules (truncated)\n\n${core.slice(0, remaining)}\n\n[...truncated, use wiki_read for full content]`,
+        );
         tokens = tokenBudget;
       }
     }

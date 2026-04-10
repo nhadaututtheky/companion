@@ -265,7 +265,8 @@ export function extractTypeScript(tree: TSTree, code: string, filePath: string):
       const name = nameNode.text;
       const params = childOfType(arrowNode, "formal_parameters");
       const isComponent = /^[A-Z]/.test(name);
-      const isHook = name.startsWith("use") && name.length > 3 && name[3]! === name[3]!.toUpperCase();
+      const isHook =
+        name.startsWith("use") && name.length > 3 && name[3]! === name[3]!.toUpperCase();
       const exported = isExported(lex);
 
       nodes.push({
@@ -506,18 +507,66 @@ export function extractTypeScript(tree: TSTree, code: string, filePath: string):
 
 /** Built-in objects/functions to skip — not cross-file calls */
 const BUILTIN_CALLEES = new Set([
-  "console", "Math", "JSON", "Object", "Array", "String", "Number",
-  "Boolean", "Promise", "Map", "Set", "Date", "Error", "RegExp",
-  "setTimeout", "setInterval", "clearTimeout", "clearInterval",
-  "parseInt", "parseFloat", "fetch", "require", "Symbol",
-  "Proxy", "Reflect", "WeakMap", "WeakSet", "Buffer", "process",
-  "globalThis", "window", "document", "navigator",
-  "Intl", "URL", "URLSearchParams", "AbortController",
-  "TextEncoder", "TextDecoder", "Bun",
+  "console",
+  "Math",
+  "JSON",
+  "Object",
+  "Array",
+  "String",
+  "Number",
+  "Boolean",
+  "Promise",
+  "Map",
+  "Set",
+  "Date",
+  "Error",
+  "RegExp",
+  "setTimeout",
+  "setInterval",
+  "clearTimeout",
+  "clearInterval",
+  "parseInt",
+  "parseFloat",
+  "fetch",
+  "require",
+  "Symbol",
+  "Proxy",
+  "Reflect",
+  "WeakMap",
+  "WeakSet",
+  "Buffer",
+  "process",
+  "globalThis",
+  "window",
+  "document",
+  "navigator",
+  "Intl",
+  "URL",
+  "URLSearchParams",
+  "AbortController",
+  "TextEncoder",
+  "TextDecoder",
+  "Bun",
   // Node.js built-in modules (avoid false positive edges to local files)
-  "fs", "path", "os", "crypto", "http", "https", "net", "child_process",
-  "util", "events", "stream", "assert", "zlib", "dns", "tls",
-  "structuredClone", "queueMicrotask", "performance", "EventEmitter",
+  "fs",
+  "path",
+  "os",
+  "crypto",
+  "http",
+  "https",
+  "net",
+  "child_process",
+  "util",
+  "events",
+  "stream",
+  "assert",
+  "zlib",
+  "dns",
+  "tls",
+  "structuredClone",
+  "queueMicrotask",
+  "performance",
+  "EventEmitter",
 ]);
 
 /**
@@ -574,7 +623,14 @@ function extractCallEdges(
       calleeName = funcNode.text;
       if (BUILTIN_CALLEES.has(calleeName)) continue;
       // Skip if a local function with the same name exists (local shadows import)
-      if (extractedNodes.some((n) => n.symbolName === calleeName && (n.symbolType === "function" || n.symbolType === "method"))) continue;
+      if (
+        extractedNodes.some(
+          (n) =>
+            n.symbolName === calleeName &&
+            (n.symbolType === "function" || n.symbolType === "method"),
+        )
+      )
+        continue;
       importEntry = importMap.get(calleeName);
     } else if (funcNode.type === "member_expression") {
       // Method call: obj.method()
@@ -667,7 +723,8 @@ export function extractPython(tree: TSTree, code: string, _filePath: string): Sc
 
     const name = nameNode.text;
     const params = func.childForFieldName("parameters");
-    const isMethod = func.parent?.type === "block" && func.parent?.parent?.type === "class_definition";
+    const isMethod =
+      func.parent?.type === "block" && func.parent?.parent?.type === "class_definition";
 
     // Qualify method names with class name to avoid collisions
     let symbolName = name;
@@ -695,7 +752,8 @@ export function extractPython(tree: TSTree, code: string, _filePath: string): Sc
 
     const name = nameNode.text;
     // tree-sitter-python: base classes are in `superclasses` or `argument_list` field
-    const superclasses = cls.childForFieldName("superclasses") ?? cls.childForFieldName("argument_list");
+    const superclasses =
+      cls.childForFieldName("superclasses") ?? cls.childForFieldName("argument_list");
     let extendsName: string | null = null;
 
     if (superclasses) {
@@ -732,11 +790,38 @@ export function extractPython(tree: TSTree, code: string, _filePath: string): Sc
   // Call graph for Python
   if (pyImportMap.size > 0) {
     const PYTHON_BUILTINS = new Set([
-      "print", "len", "range", "enumerate", "zip", "map", "filter",
-      "sorted", "reversed", "list", "dict", "set", "tuple", "str",
-      "int", "float", "bool", "type", "isinstance", "issubclass",
-      "super", "property", "staticmethod", "classmethod", "hasattr",
-      "getattr", "setattr", "open", "input", "abs", "min", "max",
+      "print",
+      "len",
+      "range",
+      "enumerate",
+      "zip",
+      "map",
+      "filter",
+      "sorted",
+      "reversed",
+      "list",
+      "dict",
+      "set",
+      "tuple",
+      "str",
+      "int",
+      "float",
+      "bool",
+      "type",
+      "isinstance",
+      "issubclass",
+      "super",
+      "property",
+      "staticmethod",
+      "classmethod",
+      "hasattr",
+      "getattr",
+      "setattr",
+      "open",
+      "input",
+      "abs",
+      "min",
+      "max",
     ]);
 
     const pyCalls = collectNodes(root, new Set(["call"]));
@@ -793,7 +878,12 @@ export function extractPython(tree: TSTree, code: string, _filePath: string): Sc
  * Best-effort extractor for languages without dedicated support.
  * Uses common AST patterns shared across many languages.
  */
-export function extractGeneric(tree: TSTree, code: string, _filePath: string, language: string): ScanResult {
+export function extractGeneric(
+  tree: TSTree,
+  code: string,
+  _filePath: string,
+  language: string,
+): ScanResult {
   const nodes: ScannedNode[] = [];
   const edges: ScannedEdge[] = [];
   const root = tree.rootNode;
@@ -866,7 +956,10 @@ export function extractGeneric(tree: TSTree, code: string, _filePath: string, la
   // Extract classes/structs
   const classes = collectNodes(root, classTypes);
   for (const cls of classes) {
-    const nameNode = cls.childForFieldName("name") ?? childOfType(cls, "type_identifier") ?? childOfType(cls, "identifier");
+    const nameNode =
+      cls.childForFieldName("name") ??
+      childOfType(cls, "type_identifier") ??
+      childOfType(cls, "identifier");
     if (!nameNode) continue;
 
     nodes.push({

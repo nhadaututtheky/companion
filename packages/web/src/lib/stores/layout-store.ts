@@ -3,7 +3,15 @@ import { persist } from "zustand/middleware";
 
 export type LayoutMode = "single" | "side-by-side" | "stacked" | "grid";
 
-type RightPanel = "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context" | "wiki";
+type RightPanel =
+  | "none"
+  | "files"
+  | "browser"
+  | "search"
+  | "terminal"
+  | "stats"
+  | "ai-context"
+  | "wiki";
 
 export interface LayoutPreset {
   id: string;

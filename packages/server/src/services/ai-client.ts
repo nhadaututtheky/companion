@@ -194,10 +194,15 @@ async function callAnthropic(
 
     if (res.status === 429 && attempt < MAX_RETRIES) {
       const retryAfter = parseInt(res.headers.get("retry-after") ?? "0", 10);
-      const backoffMs = retryAfter > 0
-        ? retryAfter * 1000
-        : Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 15000);
-      log.warn("Anthropic rate limited, retrying", { model, attempt: attempt + 1, backoffMs: Math.round(backoffMs) });
+      const backoffMs =
+        retryAfter > 0
+          ? retryAfter * 1000
+          : Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 15000);
+      log.warn("Anthropic rate limited, retrying", {
+        model,
+        attempt: attempt + 1,
+        backoffMs: Math.round(backoffMs),
+      });
       await delay(backoffMs);
       continue;
     }
@@ -357,10 +362,15 @@ async function callOpenAICompatible(
     if (res.status === 429 && attempt < MAX_RETRIES) {
       // Rate limited — exponential backoff with jitter
       const retryAfter = parseInt(res.headers.get("retry-after") ?? "0", 10);
-      const backoffMs = retryAfter > 0
-        ? retryAfter * 1000
-        : Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 15000);
-      log.warn("Rate limited, retrying", { model, attempt: attempt + 1, backoffMs: Math.round(backoffMs) });
+      const backoffMs =
+        retryAfter > 0
+          ? retryAfter * 1000
+          : Math.min(1000 * Math.pow(2, attempt) + Math.random() * 500, 15000);
+      log.warn("Rate limited, retrying", {
+        model,
+        attempt: attempt + 1,
+        backoffMs: Math.round(backoffMs),
+      });
       await delay(backoffMs);
       continue;
     }

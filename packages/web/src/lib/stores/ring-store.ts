@@ -162,7 +162,8 @@ export const useRingStore = create<RingStore>()(
 
       setMode: (mode) => set({ mode }),
 
-      setDebateChannelId: (id) => set({ debateChannelId: id, unreadCount: 0, lastSeenMessageCount: 0 }),
+      setDebateChannelId: (id) =>
+        set({ debateChannelId: id, unreadCount: 0, lastSeenMessageCount: 0 }),
 
       setDebateAgentModel: (agentId, model, label) =>
         set((s) => {
@@ -176,7 +177,8 @@ export const useRingStore = create<RingStore>()(
       updateDebateMessageCount: (count) =>
         set((s) => {
           // Count decreased (channel reset/changed) — reset unread
-          if (count <= s.lastSeenMessageCount) return { lastSeenMessageCount: count, unreadCount: 0 };
+          if (count <= s.lastSeenMessageCount)
+            return { lastSeenMessageCount: count, unreadCount: 0 };
           const newMessages = count - s.lastSeenMessageCount;
           // Only increment unread if Ring is collapsed
           return {

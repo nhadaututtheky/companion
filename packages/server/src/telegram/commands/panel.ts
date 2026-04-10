@@ -466,17 +466,16 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     const sessionId = ctx.match[1]!;
     await ctx.answerCallbackQuery();
 
-    const detailed = (bridge as unknown as { contextBreakdowns: Map<string, string> })
-      .contextBreakdowns.get(sessionId);
+    const detailed = (
+      bridge as unknown as { contextBreakdowns: Map<string, string> }
+    ).contextBreakdowns.get(sessionId);
 
     if (!detailed) {
       await ctx.editMessageText("Context breakdown no longer available.").catch(() => {});
       return;
     }
 
-    await ctx
-      .editMessageText(detailed, { parse_mode: "HTML" })
-      .catch(() => {});
+    await ctx.editMessageText(detailed, { parse_mode: "HTML" }).catch(() => {});
   });
 
   // ── Resume / Start Fresh flow ───────────────────────────────────────────

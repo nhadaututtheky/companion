@@ -18,11 +18,27 @@ interface Session {
 
 function StatusBadge({ status }: { status: string }) {
   const configs: Record<string, { bg: string; color: string; label: string }> = {
-    running: { bg: "color-mix(in srgb, var(--color-accent) 12%, transparent)", color: "var(--color-accent)", label: "Running" },
-    waiting: { bg: "color-mix(in srgb, var(--color-warning) 12%, transparent)", color: "var(--color-warning)", label: "Waiting" },
-    idle: { bg: "color-mix(in srgb, var(--color-success) 12%, transparent)", color: "var(--color-success)", label: "Idle" },
+    running: {
+      bg: "color-mix(in srgb, var(--color-accent) 12%, transparent)",
+      color: "var(--color-accent)",
+      label: "Running",
+    },
+    waiting: {
+      bg: "color-mix(in srgb, var(--color-warning) 12%, transparent)",
+      color: "var(--color-warning)",
+      label: "Waiting",
+    },
+    idle: {
+      bg: "color-mix(in srgb, var(--color-success) 12%, transparent)",
+      color: "var(--color-success)",
+      label: "Idle",
+    },
     ended: { bg: "var(--color-bg-elevated)", color: "var(--color-text-muted)", label: "Ended" },
-    error: { bg: "color-mix(in srgb, var(--color-danger) 12%, transparent)", color: "var(--color-danger)", label: "Error" },
+    error: {
+      bg: "color-mix(in srgb, var(--color-danger) 12%, transparent)",
+      color: "var(--color-danger)",
+      label: "Error",
+    },
   };
 
   const c = configs[status] ?? configs.ended!;
@@ -96,7 +112,6 @@ export default function SessionsPage() {
           <button
             onClick={load}
             className="p-2 rounded-lg transition-colors cursor-pointer"
-           
             aria-label="Refresh"
           >
             <ArrowClockwise size={16} weight="bold" />
@@ -166,17 +181,9 @@ export default function SessionsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
                     <StatusBadge status={s.status} />
-                    <span
-                      className="text-sm font-semibold truncate"
-                     
-                    >
-                      {s.projectSlug}
-                    </span>
+                    <span className="text-sm font-semibold truncate">{s.projectSlug}</span>
                   </div>
-                  <div
-                    className="flex items-center gap-4 text-xs"
-                   
-                  >
+                  <div className="flex items-center gap-4 text-xs">
                     <span>{s.model}</span>
                     <span>{s.numTurns} turns</span>
                     <span>{new Date(s.createdAt).toLocaleString()}</span>

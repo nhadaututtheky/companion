@@ -42,12 +42,7 @@ function CompactPermissionGate({
       }}
     >
       <Lock size={11} weight="bold" style={{ color: "#FBBC04", flexShrink: 0 }} />
-      <span
-        className="text-xs font-medium truncate flex-1"
-       
-      >
-        {req.toolName}
-      </span>
+      <span className="text-xs font-medium truncate flex-1">{req.toolName}</span>
       <button
         onClick={() => onRespond(req.requestId, "allow")}
         className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold cursor-pointer flex-shrink-0"
@@ -69,9 +64,7 @@ function CompactPermissionGate({
         <XCircle size={10} weight="bold" /> Deny
       </button>
       {permissions.length > 1 && (
-        <span className="text-xs flex-shrink-0">
-          +{permissions.length - 1}
-        </span>
+        <span className="text-xs flex-shrink-0">+{permissions.length - 1}</span>
       )}
     </div>
   );
@@ -147,7 +140,11 @@ function CompactComposer({
           disabled={!text.trim()}
           className="flex-shrink-0 p-1 rounded-full transition-all cursor-pointer disabled:opacity-40"
           style={{
-            background: text.trim() ? (isRunning ? "#D97706" : "#34A853") : "var(--color-bg-elevated)",
+            background: text.trim()
+              ? isRunning
+                ? "#D97706"
+                : "#34A853"
+              : "var(--color-bg-elevated)",
             color: text.trim() ? "#fff" : "var(--color-text-muted)",
           }}
           aria-label="Send message"
@@ -185,7 +182,8 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
 
   // Use the active tab's hook for display
   const activeHook = activeTab === sessionId ? parentHook : childHook;
-  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel } = activeHook;
+  const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel } =
+    activeHook;
 
   const session = useSessionStore((s) => s.sessions[sessionId]);
   const childIds = useSessionStore((s) => s.sessions[sessionId]?.childSessionIds);
@@ -266,9 +264,12 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
-        border: session?.status === "error"
-          ? "1px solid var(--color-danger)"
-          : hasSharedContext ? `2px dashed ${sessionColor}` : "1px solid var(--glass-border)",
+        border:
+          session?.status === "error"
+            ? "1px solid var(--color-danger)"
+            : hasSharedContext
+              ? `2px dashed ${sessionColor}`
+              : "1px solid var(--glass-border)",
         borderRadius: "var(--radius-xl)",
         boxShadow: flashType
           ? `0 0 0 3px ${flashType === "error" ? "#EA4335" : flashType === "success" ? "#34A853" : "var(--color-accent)"}60, var(--shadow-float)`

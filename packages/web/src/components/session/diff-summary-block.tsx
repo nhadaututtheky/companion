@@ -1,12 +1,6 @@
 "use client";
 import { useState, useMemo } from "react";
-import {
-  GitDiff,
-  CaretDown,
-  CaretRight,
-  FilePlus,
-  PencilSimple,
-} from "@phosphor-icons/react";
+import { GitDiff, CaretDown, CaretRight, FilePlus, PencilSimple } from "@phosphor-icons/react";
 import { InlineDiff } from "./inline-diff";
 import { computeDiff } from "@/lib/diff-utils";
 
@@ -131,12 +125,8 @@ export function DiffSummaryBlock({ tools }: DiffSummaryBlockProps) {
           </span>
         </span>
         <span className="flex items-center gap-1.5 ml-auto font-mono text-xs">
-          {totalAdditions > 0 && (
-            <span style={{ color: "#34A853" }}>+{totalAdditions}</span>
-          )}
-          {totalDeletions > 0 && (
-            <span style={{ color: "#ef4444" }}>-{totalDeletions}</span>
-          )}
+          {totalAdditions > 0 && <span style={{ color: "#34A853" }}>+{totalAdditions}</span>}
+          {totalDeletions > 0 && <span style={{ color: "#ef4444" }}>-{totalDeletions}</span>}
         </span>
         {/* Mini bar chart */}
         <DiffBar additions={totalAdditions} deletions={totalDeletions} />
@@ -154,8 +144,7 @@ export function DiffSummaryBlock({ tools }: DiffSummaryBlockProps) {
                 borderBottom: expanded ? "1px solid var(--color-border)" : "none",
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background =
-                  "var(--color-bg-base)";
+                (e.currentTarget as HTMLElement).style.background = "var(--color-bg-base)";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -183,9 +172,17 @@ export function DiffSummaryBlock({ tools }: DiffSummaryBlockProps) {
               </span>
               <DiffBar additions={entry.additions} deletions={entry.deletions} />
               {expanded ? (
-                <CaretDown size={10} className="shrink-0" style={{ color: "var(--color-text-muted)" }} />
+                <CaretDown
+                  size={10}
+                  className="shrink-0"
+                  style={{ color: "var(--color-text-muted)" }}
+                />
               ) : (
-                <CaretRight size={10} className="shrink-0" style={{ color: "var(--color-text-muted)" }} />
+                <CaretRight
+                  size={10}
+                  className="shrink-0"
+                  style={{ color: "var(--color-text-muted)" }}
+                />
               )}
             </button>
 
@@ -212,7 +209,10 @@ function DiffBar({ additions, deletions }: { additions: number; deletions: numbe
   if (total === 0) return null;
 
   const maxBlocks = 5;
-  const addBlocks = Math.max(total > 0 ? Math.round((additions / total) * maxBlocks) : 0, additions > 0 ? 1 : 0);
+  const addBlocks = Math.max(
+    total > 0 ? Math.round((additions / total) * maxBlocks) : 0,
+    additions > 0 ? 1 : 0,
+  );
   const delBlocks = Math.max(maxBlocks - addBlocks, deletions > 0 ? 1 : 0);
   const neutralBlocks = maxBlocks - addBlocks - delBlocks;
 

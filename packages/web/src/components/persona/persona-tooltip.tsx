@@ -20,11 +20,7 @@ const CATEGORY_LABELS: Record<string, { label: string; color: string }> = {
  * Hover tooltip showing persona details:
  * avatar, name, title, intro, strengths, best-for tags
  */
-export function PersonaTooltip({
-  persona,
-  children,
-  placement = "bottom",
-}: PersonaTooltipProps) {
+export function PersonaTooltip({ persona, children, placement = "bottom" }: PersonaTooltipProps) {
   const [visible, setVisible] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 

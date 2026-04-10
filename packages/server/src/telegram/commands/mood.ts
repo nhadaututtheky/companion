@@ -89,7 +89,12 @@ const SIGNAL_LABELS: Record<string, string> = {
   completionTone: "Tone",
 };
 
-function formatCompactPulse(name: string, shortId: string, reading: PulseReading, costUsd: number): string {
+function formatCompactPulse(
+  name: string,
+  shortId: string,
+  reading: PulseReading,
+  costUsd: number,
+): string {
   const emoji = STATE_EMOJI[reading.state] ?? "⚪";
   const arrow = TREND_ARROW[reading.trend] ?? "";
   const stateLabel = reading.state.charAt(0).toUpperCase() + reading.state.slice(1);
@@ -109,7 +114,11 @@ function formatCompactPulse(name: string, shortId: string, reading: PulseReading
   return line + "\n";
 }
 
-function formatDetailedPulse(sessionId: string, shortId: string | undefined, reading: PulseReading): string {
+function formatDetailedPulse(
+  sessionId: string,
+  shortId: string | undefined,
+  reading: PulseReading,
+): string {
   const emoji = STATE_EMOJI[reading.state] ?? "⚪";
   const arrow = TREND_ARROW[reading.trend] ?? "";
   const stateLabel = reading.state.charAt(0).toUpperCase() + reading.state.slice(1);

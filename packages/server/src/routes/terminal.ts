@@ -41,10 +41,7 @@ terminalRoutes.post("/", async (c) => {
   }
   const parsed = spawnSchema.safeParse(body);
   if (!parsed.success) {
-    return c.json(
-      { success: false, error: "Invalid body" } satisfies ApiResponse,
-      400,
-    );
+    return c.json({ success: false, error: "Invalid body" } satisfies ApiResponse, 400);
   }
 
   const homedir = process.env.HOME ?? process.env.USERPROFILE ?? "/";
@@ -57,10 +54,7 @@ terminalRoutes.post("/", async (c) => {
     const id = terminalManager.spawn(cwdCheck.resolved);
     return c.json({ success: true, data: { terminalId: id } } satisfies ApiResponse);
   } catch (err) {
-    return c.json(
-      { success: false, error: String(err) } satisfies ApiResponse,
-      500,
-    );
+    return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
   }
 });
 

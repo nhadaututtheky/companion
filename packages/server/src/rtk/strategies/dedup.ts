@@ -27,12 +27,12 @@ const DEDUP_THRESHOLD = 3;
  */
 function normalizeForComparison(line: string): string {
   return line
-    .replace(/\b[0-9a-f]{8,}\b/gi, "<HEX>")           // hex strings
+    .replace(/\b[0-9a-f]{8,}\b/gi, "<HEX>") // hex strings
     .replace(/\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/g, "<TS>") // timestamps
-    .replace(/\b\d+(\.\d+)?\b/g, "<N>")                // numbers
-    .replace(/['"][^'"]{0,80}['"]/g, "<STR>")           // quoted strings
+    .replace(/\b\d+(\.\d+)?\b/g, "<N>") // numbers
+    .replace(/['"][^'"]{0,80}['"]/g, "<STR>") // quoted strings
     .replace(/\b\w+\.(tsx?|jsx?|py|rs|go|java|c|cpp|h|css|html|json|md|yml|yaml)\b/g, "<FILE>") // file names
-    .replace(/[A-Z]:\\[^\s:]+|\/[^\s:]+/g, "<PATH>")   // full paths
+    .replace(/[A-Z]:\\[^\s:]+|\/[^\s:]+/g, "<PATH>") // full paths
     .trim();
 }
 

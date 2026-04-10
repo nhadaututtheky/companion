@@ -199,7 +199,7 @@ async function sendTokenBar(
     return "█".repeat(filled) + "░".repeat(15 - filled);
   };
 
-  const fmtK = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}M` : `${v.toFixed(1)}K`;
+  const fmtK = (v: number) => (v >= 1000 ? `${(v / 1000).toFixed(1)}M` : `${v.toFixed(1)}K`);
 
   const cost = result.total_cost_usd > 0 ? `$${result.total_cost_usd.toFixed(3)}` : "";
   const turns = result.num_turns > 0 ? `T${result.num_turns}` : "";
@@ -309,8 +309,8 @@ export async function handleChildSpawned(
     await bridge.bot.api.sendMessage(
       chatId,
       `${emoji} <b>${escapeHTML(childName)}</b> (@${escapeHTML(childShortId ?? "?")}) spawned\n` +
-      `Model: <code>${escapeHTML(childModel)}</code> | Role: ${childRole}\n` +
-      `Parent: <code>${escapeHTML(parentSessionId.slice(0, 8))}</code>`,
+        `Model: <code>${escapeHTML(childModel)}</code> | Role: ${childRole}\n` +
+        `Parent: <code>${escapeHTML(parentSessionId.slice(0, 8))}</code>`,
       { parse_mode: "HTML", message_thread_id: agentTopicId },
     );
 
@@ -322,12 +322,17 @@ export async function handleChildSpawned(
 
     log.info("Created agent topic", { chatId, childSessionId, childName, agentTopicId });
   } catch (err) {
-    log.warn("Could not create agent topic, falling back to inline", { chatId, error: String(err) });
-    await bridge.bot.api.sendMessage(
+    log.warn("Could not create agent topic, falling back to inline", {
       chatId,
-      `${emoji} Spawned agent <b>${escapeHTML(childName)}</b> (@${escapeHTML(childShortId ?? "?")})\nModel: ${escapeHTML(childModel)}`,
-      { parse_mode: "HTML", message_thread_id: parentTopicId },
-    ).catch(() => {});
+      error: String(err),
+    });
+    await bridge.bot.api
+      .sendMessage(
+        chatId,
+        `${emoji} Spawned agent <b>${escapeHTML(childName)}</b> (@${escapeHTML(childShortId ?? "?")})\nModel: ${escapeHTML(childModel)}`,
+        { parse_mode: "HTML", message_thread_id: parentTopicId },
+      )
+      .catch(() => {});
   }
 }
 
@@ -341,11 +346,13 @@ export async function handleChildEnded(
   const statusIcon = status === "ended" ? "✅" : "❌";
   const label = childName ?? childSessionId.slice(0, 8);
 
-  await bridge.bot.api.sendMessage(
-    chatId,
-    `${statusIcon} Agent <b>${escapeHTML(label)}</b> ${status === "ended" ? "completed" : "errored"}`,
-    { parse_mode: "HTML", message_thread_id: parentTopicId },
-  ).catch(() => {});
+  await bridge.bot.api
+    .sendMessage(
+      chatId,
+      `${statusIcon} Agent <b>${escapeHTML(label)}</b> ${status === "ended" ? "completed" : "errored"}`,
+      { parse_mode: "HTML", message_thread_id: parentTopicId },
+    )
+    .catch(() => {});
 
   // Try to close the agent's topic (optional — nice cleanup)
   try {

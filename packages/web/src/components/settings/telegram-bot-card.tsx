@@ -206,12 +206,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
         {/* Name and role */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span
-              className="text-sm font-semibold truncate"
-             
-            >
-              {config.label}
-            </span>
+            <span className="text-sm font-semibold truncate">{config.label}</span>
             <span
               className="text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0"
               style={{
@@ -328,9 +323,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
         >
           {/* Label */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium">
-              Label
-            </label>
+            <label className="text-xs font-medium">Label</label>
             <input
               type="text"
               value={label}
@@ -345,9 +338,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
 
           {/* Role */}
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium">
-              Role
-            </label>
+            <label className="text-xs font-medium">Role</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as BotRole)}
@@ -368,10 +359,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
           {/* Bot Token */}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium">
-              Bot Token{" "}
-              <span>
-                (leave blank to keep existing)
-              </span>
+              Bot Token <span>(leave blank to keep existing)</span>
             </label>
             <div className="relative">
               <input
@@ -389,7 +377,6 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
                 type="button"
                 onClick={() => setShowToken(!showToken)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-pointer"
-               
                 aria-label={showToken ? "Hide token" : "Show token"}
               >
                 {showToken ? <EyeSlash size={14} /> : <Eye size={14} />}
@@ -400,10 +387,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
           {/* Allowed Chat IDs */}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium">
-              Allowed Chat/Group IDs{" "}
-              <span>
-                (comma-separated, empty = allow all)
-              </span>
+              Allowed Chat/Group IDs <span>(comma-separated, empty = allow all)</span>
             </label>
             <input
               type="text"
@@ -421,10 +405,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
           {/* Admin User IDs */}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium">
-              Admin User IDs{" "}
-              <span>
-                (comma-separated, only these users can use bot)
-              </span>
+              Admin User IDs <span>(comma-separated, only these users can use bot)</span>
             </label>
             <input
               type="text"
@@ -437,19 +418,14 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
                 color: "var(--color-text-primary)",
               }}
             />
-            <span className="text-xs">
-              Get your ID: send /start to @userinfobot on Telegram
-            </span>
+            <span className="text-xs">Get your ID: send /start to @userinfobot on Telegram</span>
           </div>
 
           {/* Notification Group ID */}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium">
               <Bell size={12} weight="fill" className="inline mr-1" aria-hidden="true" />
-              Notification Group ID{" "}
-              <span>
-                (receive alerts when sessions complete or error)
-              </span>
+              Notification Group ID <span>(receive alerts when sessions complete or error)</span>
             </label>
             <input
               type="text"
@@ -535,20 +511,14 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
 
       {/* Notification badge (when not editing) */}
       {!editing && config.notificationGroupId && (
-        <div
-          className="flex items-center gap-1.5 text-xs"
-         
-        >
+        <div className="flex items-center gap-1.5 text-xs">
           <Bell size={12} weight="fill" aria-hidden="true" />
           Notifications → <span className="font-mono">{config.notificationGroupId}</span>
         </div>
       )}
 
       {config.allowedChatIds.length === 0 && !editing && (
-        <div
-          className="flex items-center gap-1.5 text-xs"
-         
-        >
+        <div className="flex items-center gap-1.5 text-xs">
           <WarningCircle size={12} aria-hidden="true" />
           No allowed chats — bot will reject all messages
         </div>

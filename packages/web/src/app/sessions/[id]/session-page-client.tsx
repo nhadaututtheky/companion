@@ -36,7 +36,10 @@ import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 
 const DesignPreviewPanel = dynamic(
-  () => import("@/components/panels/design-preview-panel").then((m) => ({ default: m.DesignPreviewPanel })),
+  () =>
+    import("@/components/panels/design-preview-panel").then((m) => ({
+      default: m.DesignPreviewPanel,
+    })),
   { ssr: false },
 );
 
@@ -123,9 +126,7 @@ function ContextStatusBar({
       <span className="text-xs font-mono">
         {formatK(totalTokens)} / {formatK(maxTokens)}
       </span>
-      <span className="text-xs">
-        · {formatK(remaining)} remaining
-      </span>
+      <span className="text-xs">· {formatK(remaining)} remaining</span>
     </div>
   );
 }
@@ -254,311 +255,309 @@ export function SessionPageClient({ params }: PageProps) {
     <div className="session-slide-container" data-preview-open={previewPanelOpen || undefined}>
       {/* ── Chat Page (slides left when preview opens) ── */}
       <div className="session-slide-page session-slide-chat">
-      <div className="flex flex-col" style={{ height: "100vh", background: "var(--color-bg-base)" }}>
-      <Header />
+        <div
+          className="flex flex-col"
+          style={{ height: "100vh", background: "var(--color-bg-base)" }}
+        >
+          <Header />
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Main terminal */}
-        <div className="flex flex-col flex-1 min-w-0">
-          {/* Sub-header */}
-          <div
-            className="flex items-center gap-3 px-4 py-2.5 border-b"
-            style={{
-              background: "var(--color-bg-card)",
-              borderColor: "var(--color-border)",
-            }}
-          >
-            <button
-              onClick={() => router.back()}
-              className="p-1.5 rounded-lg transition-colors cursor-pointer"
-             
-              aria-label="Back"
-            >
-              <ArrowLeft size={16} weight="bold" />
-            </button>
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <span
-                className="text-sm font-semibold truncate"
-               
-              >
-                {session?.projectName ?? id.slice(0, 8)}
-              </span>
-              <span className="text-xs font-mono">
-                #{id.slice(0, 8)}
-              </span>
-              <TelegramStreamBadge sessionId={id} />
-              {lockStatus.locked && (
-                <span
-                  className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
-                  style={{ background: "#FBBC0420", color: "#FBBC04" }}
-                  title={`Writing: ${lockStatus.owner}${lockStatus.queueSize > 0 ? ` (${lockStatus.queueSize} queued)` : ""}`}
-                >
-                  <PencilSimple size={12} weight="bold" aria-hidden="true" />
-                  Writing...
-                </span>
-              )}
-              {lastScanResult && (
-                <span
-                  className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
-                  style={{
-                    background: lastScanResult.blocked ? "#EF444420" : "#F59E0B20",
-                    color: lastScanResult.blocked ? "#EF4444" : "#F59E0B",
-                  }}
-                  title={lastScanResult.risks
-                    .map((r) => `[${r.severity}] ${r.description}`)
-                    .join("\n")}
-                >
-                  <ShieldWarning size={12} weight="bold" aria-hidden="true" />
-                  {lastScanResult.blocked
-                    ? "Blocked"
-                    : `${lastScanResult.risks.length} risk${lastScanResult.risks.length > 1 ? "s" : ""}`}
-                </span>
-              )}
-              {spectatorCount > 0 && (
-                <span
-                  className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
-                  style={{ background: "#4285f420", color: "#4285f4" }}
-                  title={`${spectatorCount} spectator${spectatorCount > 1 ? "s" : ""} watching`}
-                >
-                  <Users size={12} weight="bold" aria-hidden="true" />
-                  {spectatorCount}
-                </span>
-              )}
-              <button
-                onClick={() => setShareModalOpen(true)}
-                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
+          <div className="flex flex-1 overflow-hidden">
+            {/* Main terminal */}
+            <div className="flex flex-col flex-1 min-w-0">
+              {/* Sub-header */}
+              <div
+                className="flex items-center gap-3 px-4 py-2.5 border-b"
                 style={{
-                  color: "var(--color-text-muted)",
-                  border: "1px solid var(--color-border)",
+                  background: "var(--color-bg-card)",
+                  borderColor: "var(--color-border)",
                 }}
-                aria-label="Share session"
-                title="Share session"
               >
-                <ShareNetwork size={12} weight="bold" aria-hidden="true" />
-                Share
-              </button>
+                <button
+                  onClick={() => router.back()}
+                  className="p-1.5 rounded-lg transition-colors cursor-pointer"
+                  aria-label="Back"
+                >
+                  <ArrowLeft size={16} weight="bold" />
+                </button>
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span className="text-sm font-semibold truncate">
+                    {session?.projectName ?? id.slice(0, 8)}
+                  </span>
+                  <span className="text-xs font-mono">#{id.slice(0, 8)}</span>
+                  <TelegramStreamBadge sessionId={id} />
+                  {lockStatus.locked && (
+                    <span
+                      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                      style={{ background: "#FBBC0420", color: "#FBBC04" }}
+                      title={`Writing: ${lockStatus.owner}${lockStatus.queueSize > 0 ? ` (${lockStatus.queueSize} queued)` : ""}`}
+                    >
+                      <PencilSimple size={12} weight="bold" aria-hidden="true" />
+                      Writing...
+                    </span>
+                  )}
+                  {lastScanResult && (
+                    <span
+                      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                      style={{
+                        background: lastScanResult.blocked ? "#EF444420" : "#F59E0B20",
+                        color: lastScanResult.blocked ? "#EF4444" : "#F59E0B",
+                      }}
+                      title={lastScanResult.risks
+                        .map((r) => `[${r.severity}] ${r.description}`)
+                        .join("\n")}
+                    >
+                      <ShieldWarning size={12} weight="bold" aria-hidden="true" />
+                      {lastScanResult.blocked
+                        ? "Blocked"
+                        : `${lastScanResult.risks.length} risk${lastScanResult.risks.length > 1 ? "s" : ""}`}
+                    </span>
+                  )}
+                  {spectatorCount > 0 && (
+                    <span
+                      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                      style={{ background: "#4285f420", color: "#4285f4" }}
+                      title={`${spectatorCount} spectator${spectatorCount > 1 ? "s" : ""} watching`}
+                    >
+                      <Users size={12} weight="bold" aria-hidden="true" />
+                      {spectatorCount}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => setShareModalOpen(true)}
+                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
+                    style={{
+                      color: "var(--color-text-muted)",
+                      border: "1px solid var(--color-border)",
+                    }}
+                    aria-label="Share session"
+                    title="Share session"
+                  >
+                    <ShareNetwork size={12} weight="bold" aria-hidden="true" />
+                    Share
+                  </button>
+                </div>
+
+                {/* Mid-session model + thinking mode + persona selectors */}
+                {session?.status !== "ended" && session?.status !== "error" && (
+                  <>
+                    <ModelSelector
+                      currentModel={session?.model ?? "claude-sonnet-4-6"}
+                      onModelChange={setModel}
+                      disabled={session?.status === "starting"}
+                    />
+                    <ThinkingModeSelector
+                      currentMode={session?.state?.thinking_mode ?? "adaptive"}
+                      onModeChange={setThinkingMode}
+                      disabled={session?.status === "starting"}
+                    />
+                    {session?.personaId && (
+                      <PersonaChip
+                        personaId={session.personaId}
+                        onSwitch={handlePersonaSwitch}
+                        disabled={session?.status === "starting"}
+                      />
+                    )}
+                  </>
+                )}
+
+                {wsStatus !== "connected" && (
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-full"
+                    style={{
+                      background: wsStatus === "connecting" ? "#FBBC0420" : "#EA433520",
+                      color: wsStatus === "connecting" ? "#FBBC04" : "#EA4335",
+                    }}
+                  >
+                    {wsStatus}
+                  </span>
+                )}
+
+                {/* Design Preview toggle — always visible */}
+                <button
+                  onClick={() => openPreviewPanel()}
+                  className="relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+                  style={{
+                    color: previewArtifactCount > 0 ? "#a855f7" : "var(--color-text-muted)",
+                    background: previewArtifactCount > 0 ? "#a855f710" : "transparent",
+                    border: `1px solid ${previewArtifactCount > 0 ? "#a855f730" : "var(--color-border)"}`,
+                  }}
+                  aria-label="Open design preview"
+                  title="Open design preview"
+                >
+                  <PaintBrush size={14} weight="bold" />
+                  Preview
+                  {previewArtifactCount > 0 && (
+                    <span
+                      className="font-mono font-bold px-1 rounded-full leading-tight"
+                      style={{
+                        background: "#a855f7",
+                        color: "#fff",
+                        fontSize: 9,
+                        minWidth: 16,
+                        textAlign: "center",
+                      }}
+                    >
+                      {previewArtifactCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Terminal toggle */}
+                <button
+                  onClick={toggleTerminal}
+                  className="p-1.5 rounded-lg transition-colors cursor-pointer"
+                  style={{
+                    color: terminalOpen ? "#34A853" : "var(--color-text-muted)",
+                    background: terminalOpen ? "#34A85310" : "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!terminalOpen)
+                      (e.currentTarget as HTMLElement).style.background =
+                        "var(--color-bg-elevated)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!terminalOpen)
+                      (e.currentTarget as HTMLElement).style.background = "transparent";
+                  }}
+                  aria-label="Toggle terminal (Ctrl+`)"
+                  title="Toggle terminal (Ctrl+`)"
+                >
+                  <TerminalWindow size={16} weight={terminalOpen ? "fill" : "bold"} />
+                </button>
+
+                {/* Prompt history toggle */}
+                <button
+                  onClick={() => setPromptHistoryOpen(true)}
+                  className="p-1.5 rounded-lg transition-colors cursor-pointer"
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "transparent";
+                  }}
+                  aria-label="Prompt history"
+                  title="Prompt history"
+                >
+                  <ClockCounterClockwise size={16} weight="bold" />
+                </button>
+
+                {/* Pinned messages toggle */}
+                <button
+                  onClick={() => setPinnedDrawerOpen(true)}
+                  className="relative p-1.5 rounded-lg transition-colors cursor-pointer"
+                  style={{ color: pinCount > 0 ? "#FBBC04" : "var(--color-text-muted)" }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = "transparent";
+                  }}
+                  aria-label={`Pinned messages${pinCount > 0 ? ` (${pinCount})` : ""}`}
+                  title="Pinned messages"
+                >
+                  <PushPin size={16} weight={pinCount > 0 ? "fill" : "bold"} />
+                  {pinCount > 0 && (
+                    <span
+                      className="absolute -top-0.5 -right-0.5 text-xs font-mono font-bold px-1 rounded-full leading-tight"
+                      style={{
+                        background: "#FBBC04",
+                        color: "#000",
+                        fontSize: 9,
+                        minWidth: 14,
+                        textAlign: "center",
+                      }}
+                    >
+                      {pinCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              <ContextStatusBar session={session} />
+
+              {/* Messages */}
+              <PanelErrorBoundary name="Message Feed">
+                <MessageFeed messages={messages} sessionId={id} onScrollToRef={handleScrollToRef} />
+              </PanelErrorBoundary>
+
+              {/* Terminal panel — collapsible bottom section */}
+              {terminalOpen && (
+                <div
+                  style={{
+                    height: 240,
+                    minHeight: 120,
+                    borderTop: "1px solid var(--color-border)",
+                    flexShrink: 0,
+                  }}
+                >
+                  <PanelErrorBoundary name="Terminal">
+                    <TerminalPanel defaultCwd={session?.state?.cwd} onClose={toggleTerminal} />
+                  </PanelErrorBoundary>
+                </div>
+              )}
+
+              <PermissionGate permissions={pendingPermissions} onRespond={respondPermission} />
+              <MessageComposer
+                onSend={sendMessage}
+                onStop={handleStop}
+                isRunning={session?.status === "running"}
+                projectSlug={session?.projectSlug ?? undefined}
+                sessionModel={session?.model}
+                debateParticipants={debateParticipants}
+                onAddDebateParticipant={(model) => addDebateParticipant(id, model)}
+                onRemoveDebateParticipant={(modelId) => removeDebateParticipant(id, modelId)}
+              />
             </div>
 
-            {/* Mid-session model + thinking mode + persona selectors */}
-            {session?.status !== "ended" && session?.status !== "error" && (
-              <>
-                <ModelSelector
-                  currentModel={session?.model ?? "claude-sonnet-4-6"}
-                  onModelChange={setModel}
-                  disabled={session?.status === "starting"}
-                />
-                <ThinkingModeSelector
-                  currentMode={session?.state?.thinking_mode ?? "adaptive"}
-                  onModeChange={setThinkingMode}
-                  disabled={session?.status === "starting"}
-                />
-                {session?.personaId && (
-                  <PersonaChip
-                    personaId={session.personaId}
-                    onSwitch={handlePersonaSwitch}
-                    disabled={session?.status === "starting"}
-                  />
-                )}
-              </>
-            )}
-
-            {wsStatus !== "connected" && (
-              <span
-                className="text-xs px-2 py-0.5 rounded-full"
-                style={{
-                  background: wsStatus === "connecting" ? "#FBBC0420" : "#EA433520",
-                  color: wsStatus === "connecting" ? "#FBBC04" : "#EA4335",
-                }}
-              >
-                {wsStatus}
-              </span>
-            )}
-
-            {/* Design Preview toggle — always visible */}
-            <button
-              onClick={() => openPreviewPanel()}
-              className="relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+            {/* Right panel */}
+            <aside
+              className="flex flex-col flex-shrink-0 overflow-y-auto border-l"
               style={{
-                color: previewArtifactCount > 0 ? "#a855f7" : "var(--color-text-muted)",
-                background: previewArtifactCount > 0 ? "#a855f710" : "transparent",
-                border: `1px solid ${previewArtifactCount > 0 ? "#a855f730" : "var(--color-border)"}`,
+                width: 300,
+                background: "var(--color-bg-sidebar)",
+                borderColor: "var(--color-border)",
               }}
-              aria-label="Open design preview"
-              title="Open design preview"
             >
-              <PaintBrush size={14} weight="bold" />
-              Preview
-              {previewArtifactCount > 0 && (
-                <span
-                  className="font-mono font-bold px-1 rounded-full leading-tight"
-                  style={{
-                    background: "#a855f7",
-                    color: "#fff",
-                    fontSize: 9,
-                    minWidth: 16,
-                    textAlign: "center",
-                  }}
-                >
-                  {previewArtifactCount}
-                </span>
-              )}
-            </button>
-
-            {/* Terminal toggle */}
-            <button
-              onClick={toggleTerminal}
-              className="p-1.5 rounded-lg transition-colors cursor-pointer"
-              style={{
-                color: terminalOpen ? "#34A853" : "var(--color-text-muted)",
-                background: terminalOpen ? "#34A85310" : "transparent",
-              }}
-              onMouseEnter={(e) => {
-                if (!terminalOpen)
-                  (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
-              }}
-              onMouseLeave={(e) => {
-                if (!terminalOpen)
-                  (e.currentTarget as HTMLElement).style.background = "transparent";
-              }}
-              aria-label="Toggle terminal (Ctrl+`)"
-              title="Toggle terminal (Ctrl+`)"
-            >
-              <TerminalWindow size={16} weight={terminalOpen ? "fill" : "bold"} />
-            </button>
-
-            {/* Prompt history toggle */}
-            <button
-              onClick={() => setPromptHistoryOpen(true)}
-              className="p-1.5 rounded-lg transition-colors cursor-pointer"
-             
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "transparent";
-              }}
-              aria-label="Prompt history"
-              title="Prompt history"
-            >
-              <ClockCounterClockwise size={16} weight="bold" />
-            </button>
-
-            {/* Pinned messages toggle */}
-            <button
-              onClick={() => setPinnedDrawerOpen(true)}
-              className="relative p-1.5 rounded-lg transition-colors cursor-pointer"
-              style={{ color: pinCount > 0 ? "#FBBC04" : "var(--color-text-muted)" }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "transparent";
-              }}
-              aria-label={`Pinned messages${pinCount > 0 ? ` (${pinCount})` : ""}`}
-              title="Pinned messages"
-            >
-              <PushPin size={16} weight={pinCount > 0 ? "fill" : "bold"} />
-              {pinCount > 0 && (
-                <span
-                  className="absolute -top-0.5 -right-0.5 text-xs font-mono font-bold px-1 rounded-full leading-tight"
-                  style={{
-                    background: "#FBBC04",
-                    color: "#000",
-                    fontSize: 9,
-                    minWidth: 14,
-                    textAlign: "center",
-                  }}
-                >
-                  {pinCount}
-                </span>
-              )}
-            </button>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <SessionDetails session={session as any} messages={messages as any} />
+            </aside>
           </div>
 
-          <ContextStatusBar session={session} />
-
-          {/* Messages */}
-          <PanelErrorBoundary name="Message Feed">
-            <MessageFeed messages={messages} sessionId={id} onScrollToRef={handleScrollToRef} />
-          </PanelErrorBoundary>
-
-          {/* Terminal panel — collapsible bottom section */}
-          {terminalOpen && (
+          {/* Pinned messages drawer */}
+          {pinnedDrawerOpen && (
+            <PinnedMessagesDrawer
+              sessionId={id}
+              messages={messages}
+              onJumpTo={handleJumpTo}
+              onClose={() => setPinnedDrawerOpen(false)}
+            />
+          )}
+          {shareModalOpen && <ShareModal sessionId={id} onClose={() => setShareModalOpen(false)} />}
+          {promptHistoryOpen && (
             <div
               style={{
-                height: 240,
-                minHeight: 120,
-                borderTop: "1px solid var(--color-border)",
-                flexShrink: 0,
+                position: "fixed",
+                top: 0,
+                right: 0,
+                bottom: 0,
+                width: 400,
+                zIndex: 50,
+                boxShadow: "-4px 0 24px rgba(0,0,0,0.2)",
               }}
             >
-              <PanelErrorBoundary name="Terminal">
-                <TerminalPanel defaultCwd={session?.state?.cwd} onClose={toggleTerminal} />
-              </PanelErrorBoundary>
+              <PromptHistoryPanel
+                sessionId={id}
+                onResend={(content) => {
+                  sendMessage(content);
+                  setPromptHistoryOpen(false);
+                }}
+                onClose={() => setPromptHistoryOpen(false)}
+              />
             </div>
           )}
-
-          <PermissionGate permissions={pendingPermissions} onRespond={respondPermission} />
-          <MessageComposer
-            onSend={sendMessage}
-            onStop={handleStop}
-            isRunning={session?.status === "running"}
-            projectSlug={session?.projectSlug ?? undefined}
-            sessionModel={session?.model}
-            debateParticipants={debateParticipants}
-            onAddDebateParticipant={(model) => addDebateParticipant(id, model)}
-            onRemoveDebateParticipant={(modelId) => removeDebateParticipant(id, modelId)}
-          />
         </div>
-
-        {/* Right panel */}
-        <aside
-          className="flex flex-col flex-shrink-0 overflow-y-auto border-l"
-          style={{
-            width: 300,
-            background: "var(--color-bg-sidebar)",
-            borderColor: "var(--color-border)",
-          }}
-        >
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <SessionDetails session={session as any} messages={messages as any} />
-        </aside>
       </div>
-
-      {/* Pinned messages drawer */}
-      {pinnedDrawerOpen && (
-        <PinnedMessagesDrawer
-          sessionId={id}
-          messages={messages}
-          onJumpTo={handleJumpTo}
-          onClose={() => setPinnedDrawerOpen(false)}
-        />
-      )}
-      {shareModalOpen && <ShareModal sessionId={id} onClose={() => setShareModalOpen(false)} />}
-      {promptHistoryOpen && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            right: 0,
-            bottom: 0,
-            width: 400,
-            zIndex: 50,
-            boxShadow: "-4px 0 24px rgba(0,0,0,0.2)",
-          }}
-        >
-          <PromptHistoryPanel
-            sessionId={id}
-            onResend={(content) => {
-              sendMessage(content);
-              setPromptHistoryOpen(false);
-            }}
-            onClose={() => setPromptHistoryOpen(false)}
-          />
-        </div>
-      )}
-    </div>
-    </div>{/* close session-slide-chat */}
+      {/* close session-slide-chat */}
 
       {/* ── Design Preview Page (slides in from right) ── */}
       <div className="session-slide-page session-slide-preview">

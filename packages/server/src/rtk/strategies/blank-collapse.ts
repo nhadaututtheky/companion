@@ -15,9 +15,7 @@ export class BlankCollapseStrategy implements RTKStrategy {
   readonly name = "blank-collapse";
 
   transform(input: string, _context?: RTKContext): RTKResult | null {
-    const output = input
-      .replace(MULTI_BLANK_RE, "\n\n")
-      .trim();
+    const output = input.replace(MULTI_BLANK_RE, "\n\n").trim();
 
     if (output === input) return null;
 

@@ -72,9 +72,7 @@ export default function WorkflowsPage() {
         {/* Title */}
         <div className="flex items-center gap-3 mb-6">
           <Lightning size={22} weight="bold" />
-          <h1 className="text-lg font-bold flex-1">
-            Workflows
-          </h1>
+          <h1 className="text-lg font-bold flex-1">Workflows</h1>
           <button
             onClick={() => load()}
             className="p-2 rounded-lg cursor-pointer"
@@ -129,9 +127,7 @@ export default function WorkflowsPage() {
               weight="light"
               style={{ color: "var(--color-text-muted)", margin: "0 auto 8px" }}
             />
-            <p className="text-sm">
-              No workflows yet. Start one from a template.
-            </p>
+            <p className="text-sm">No workflows yet. Start one from a template.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
@@ -153,19 +149,12 @@ export default function WorkflowsPage() {
                     textDecoration: "none",
                   }}
                 >
-                  {STATUS_ICONS[w.status] ?? (
-                    <Clock size={14} />
-                  )}
+                  {STATUS_ICONS[w.status] ?? <Clock size={14} />}
                   <div className="flex-1 min-w-0">
-                    <div
-                      className="text-sm font-medium truncate"
-                     
-                    >
+                    <div className="text-sm font-medium truncate">
                       {state?.templateName ?? "Workflow"}
                     </div>
-                    <div className="text-xs truncate">
-                      {w.topic}
-                    </div>
+                    <div className="text-xs truncate">{w.topic}</div>
                   </div>
 
                   {/* Progress bar */}

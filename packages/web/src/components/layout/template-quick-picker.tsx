@@ -77,8 +77,15 @@ export function TemplateQuickPicker() {
   );
 
   // Show top 6 personas (2 per category)
-  const quickPersonas = BUILT_IN_PERSONAS.filter(
-    (p) => ["tim-cook", "elon-musk", "staff-sre", "security-auditor", "devils-advocate", "junior-dev"].includes(p.id),
+  const quickPersonas = BUILT_IN_PERSONAS.filter((p) =>
+    [
+      "tim-cook",
+      "elon-musk",
+      "staff-sre",
+      "security-auditor",
+      "devils-advocate",
+      "junior-dev",
+    ].includes(p.id),
   );
 
   return (
@@ -120,14 +127,8 @@ export function TemplateQuickPicker() {
           role="menu"
         >
           {/* Expert Modes section */}
-          <div
-            className="px-3 py-2"
-            style={{ borderBottom: "1px solid var(--color-border)" }}
-          >
-            <span
-              className="text-xs font-semibold"
-              style={{ color: "var(--color-text-primary)" }}
-            >
+          <div className="px-3 py-2" style={{ borderBottom: "1px solid var(--color-border)" }}>
+            <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
               Expert Modes
             </span>
           </div>
@@ -171,10 +172,7 @@ export function TemplateQuickPicker() {
             {/* Custom templates section */}
             {(loading || templates.length > 0) && (
               <>
-                <div
-                  className="px-3 py-1.5"
-                  style={{ borderTop: "1px solid var(--color-border)" }}
-                >
+                <div className="px-3 py-1.5" style={{ borderTop: "1px solid var(--color-border)" }}>
                   <span
                     className="text-xs font-semibold"
                     style={{ color: "var(--color-text-muted)" }}

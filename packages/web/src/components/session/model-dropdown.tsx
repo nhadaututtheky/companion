@@ -211,9 +211,21 @@ function ModelRow({
 
       {/* Capability hints */}
       <span className="flex items-center gap-1" style={{ color: "var(--color-text-muted)" }}>
-        {(model.capabilities as Record<string, boolean>).reasoning && <span title="Reasoning"><Lightning size={10} weight="fill" style={{ color: "#f59e0b" }} /></span>}
-        {model.capabilities.vision && <span title="Vision"><Eye size={10} weight="bold" /></span>}
-        {model.capabilities.toolUse && <span title="Tool use"><Brain size={10} weight="bold" /></span>}
+        {(model.capabilities as Record<string, boolean>).reasoning && (
+          <span title="Reasoning">
+            <Lightning size={10} weight="fill" style={{ color: "#f59e0b" }} />
+          </span>
+        )}
+        {model.capabilities.vision && (
+          <span title="Vision">
+            <Eye size={10} weight="bold" />
+          </span>
+        )}
+        {model.capabilities.toolUse && (
+          <span title="Tool use">
+            <Brain size={10} weight="bold" />
+          </span>
+        )}
         <span className="font-mono" style={{ fontSize: 9 }}>
           {contextLabel}
         </span>
@@ -236,15 +248,10 @@ function ModelRow({
       )}
 
       {/* Active indicator */}
-      {isActive && (
-        <span style={{ color: "#10b981", fontSize: 11 }}>✓</span>
-      )}
+      {isActive && <span style={{ color: "#10b981", fontSize: 11 }}>✓</span>}
 
       {isMainModel && (
-        <span
-          className="font-medium"
-          style={{ fontSize: 9, color: "var(--color-text-muted)" }}
-        >
+        <span className="font-medium" style={{ fontSize: 9, color: "var(--color-text-muted)" }}>
           main
         </span>
       )}

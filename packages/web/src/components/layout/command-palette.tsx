@@ -534,9 +534,7 @@ export function CommandPalette() {
                         )}
                       </span>
                       <span style={labelStyle}>{t.name}</span>
-                      {t.author && (
-                        <span style={{ ...metaStyle, marginLeft: 4 }}>{t.author}</span>
-                      )}
+                      {t.author && <span style={{ ...metaStyle, marginLeft: 4 }}>{t.author}</span>}
                     </div>
                     {isActive && <ActiveBadge active />}
                   </Command.Item>

@@ -151,7 +151,9 @@ function scanRules(cwd: string): ContextSource {
 function scanMemory(cwd: string): ContextSource {
   const home = homedir();
   // Claude Code uses drive letter + path as project key, e.g. "D--Project-Companion"
-  const projectKey = resolve(cwd).replace(/[:/\\]/g, "-").replace(/^-+/, "");
+  const projectKey = resolve(cwd)
+    .replace(/[:/\\]/g, "-")
+    .replace(/^-+/, "");
   const memDir = join(home, ".claude", "projects", projectKey, "memory");
 
   const files: Array<{ name: string; tokens: number }> = [];
@@ -191,14 +193,12 @@ function scanMemory(cwd: string): ContextSource {
  * Estimate MCP server instructions from session state.
  * Each MCP server typically injects ~500-1500 tokens of instructions.
  */
-function estimateMcpServers(
-  mcpServers: Array<{ name: string; status: string }>,
-): ContextSource {
+function estimateMcpServers(mcpServers: Array<{ name: string; status: string }>): ContextSource {
   // Average MCP instruction size varies by server
   const MCP_INSTRUCTION_ESTIMATE: Record<string, number> = {
     "neural-memory": 1500,
     playwright: 800,
-    "context7": 500,
+    context7: 500,
     firebase: 400,
   };
   const DEFAULT_MCP_TOKENS = 600;

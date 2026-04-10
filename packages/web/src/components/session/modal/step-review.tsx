@@ -26,10 +26,20 @@ export interface StepReviewProps {
 
 export function StepReview(props: StepReviewProps) {
   const {
-    projectName, selectedDir, model, permissionMode,
-    selectedPlatform, selectedPersonaId, allPersonas,
-    resume, initialPrompt, launching, atLimit,
-    templateVarsValid, onLaunch, onBack,
+    projectName,
+    selectedDir,
+    model,
+    permissionMode,
+    selectedPlatform,
+    selectedPersonaId,
+    allPersonas,
+    resume,
+    initialPrompt,
+    launching,
+    atLimit,
+    templateVarsValid,
+    onLaunch,
+    onBack,
   } = props;
 
   const selectedPersona = allPersonas.find((p) => p.id === selectedPersonaId);
@@ -61,20 +71,33 @@ export function StepReview(props: StepReviewProps) {
           </div>
           <div className="flex items-center gap-2">
             <span className="w-24 flex-shrink-0 text-xs font-semibold uppercase">Platform</span>
-            <span className="text-xs font-semibold" style={{
-              color: selectedPlatform === "claude" ? "#D97706"
-                : selectedPlatform === "codex" ? "#10B981"
-                : selectedPlatform === "gemini" ? "#4285F4" : "#8B5CF6"
-            }}>
-              {selectedPlatform === "claude" ? "◈ Claude Code"
-                : selectedPlatform === "codex" ? "◇ Codex"
-                : selectedPlatform === "gemini" ? "◆ Gemini CLI" : "☁ OpenCode"}
+            <span
+              className="text-xs font-semibold"
+              style={{
+                color:
+                  selectedPlatform === "claude"
+                    ? "#D97706"
+                    : selectedPlatform === "codex"
+                      ? "#10B981"
+                      : selectedPlatform === "gemini"
+                        ? "#4285F4"
+                        : "#8B5CF6",
+              }}
+            >
+              {selectedPlatform === "claude"
+                ? "◈ Claude Code"
+                : selectedPlatform === "codex"
+                  ? "◇ Codex"
+                  : selectedPlatform === "gemini"
+                    ? "◆ Gemini CLI"
+                    : "☁ OpenCode"}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-24 flex-shrink-0 text-xs font-semibold uppercase">Model</span>
             <span className="text-xs font-mono">
-              {getModelsForPlatform(selectedPlatform).find((m) => m.value === model)?.label ?? model}
+              {getModelsForPlatform(selectedPlatform).find((m) => m.value === model)?.label ??
+                model}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -95,7 +118,9 @@ export function StepReview(props: StepReviewProps) {
           {resume && (
             <div className="flex items-center gap-2">
               <span className="w-24 flex-shrink-0 text-xs font-semibold uppercase">Resume</span>
-              <span className="text-xs" style={{ color: "#34A853" }}>Yes</span>
+              <span className="text-xs" style={{ color: "#34A853" }}>
+                Yes
+              </span>
             </div>
           )}
           {initialPrompt.trim() && (

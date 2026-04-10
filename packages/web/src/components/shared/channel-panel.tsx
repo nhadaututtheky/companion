@@ -90,10 +90,7 @@ function ChannelFeed({ messages }: { messages: ChannelMessage[] }) {
 
   if (messages.length === 0) {
     return (
-      <div
-        className="flex flex-col items-center justify-center py-8 gap-2"
-       
-      >
+      <div className="flex flex-col items-center justify-center py-8 gap-2">
         <ChatTeardropDots size={28} />
         <p className="text-xs text-center">No messages yet. Post the first one.</p>
       </div>
@@ -127,15 +124,8 @@ function ChannelFeed({ messages }: { messages: ChannelMessage[] }) {
               <span className="text-xs font-semibold capitalize" style={{ color: roleColor }}>
                 {msg.role}
               </span>
-              <span
-                className="text-xs font-mono truncate flex-1"
-               
-              >
-                {msg.agentId}
-              </span>
-              <span className="text-xs flex-shrink-0">
-                {formatRelativeTime(msg.timestamp)}
-              </span>
+              <span className="text-xs font-mono truncate flex-1">{msg.agentId}</span>
+              <span className="text-xs flex-shrink-0">{formatRelativeTime(msg.timestamp)}</span>
             </div>
             <p
               className="text-xs leading-relaxed"
@@ -264,17 +254,11 @@ function CreateChannelForm({
 
   return (
     <div className="flex flex-col gap-3 p-3">
-      <p className="text-xs font-semibold">
-        New Shared Context
-      </p>
+      <p className="text-xs font-semibold">New Shared Context</p>
 
       {/* Topic */}
       <div className="flex flex-col gap-1">
-        <label
-          className="text-xs"
-         
-          htmlFor="channel-topic"
-        >
+        <label className="text-xs" htmlFor="channel-topic">
           Topic
         </label>
         <input
@@ -298,11 +282,7 @@ function CreateChannelForm({
 
       {/* Type */}
       <div className="flex flex-col gap-1">
-        <label
-          className="text-xs"
-         
-          htmlFor="channel-type"
-        >
+        <label className="text-xs" htmlFor="channel-type">
           Type
         </label>
         <div className="relative">
@@ -327,7 +307,6 @@ function CreateChannelForm({
           <CaretDown
             size={12}
             className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2"
-           
           />
         </div>
       </div>
@@ -437,7 +416,6 @@ function LinkSessionSelector({ channelId, alreadyLinked, onLinked }: LinkSession
         <CaretDown
           size={12}
           className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2"
-         
         />
       </div>
       <button
@@ -479,16 +457,19 @@ export function ChannelPanel({
   const [showCreate, setShowCreate] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchChannel = useCallback(async (id: string) => {
-    try {
-      const res = await api.channels.get(id);
-      setChannel(res.data);
-    } catch {
-      // channel may have been deleted
-      setChannel(null);
-      onChannelLost?.();
-    }
-  }, [onChannelLost]);
+  const fetchChannel = useCallback(
+    async (id: string) => {
+      try {
+        const res = await api.channels.get(id);
+        setChannel(res.data);
+      } catch {
+        // channel may have been deleted
+        setChannel(null);
+        onChannelLost?.();
+      }
+    },
+    [onChannelLost],
+  );
 
   // Initial load + poll every 5 seconds
   useEffect(() => {
@@ -545,14 +526,8 @@ export function ChannelPanel({
 
     return (
       <div className="flex flex-col items-center justify-center gap-3 p-4">
-        <ChatTeardropDots
-          size={28}
-         
-          aria-hidden="true"
-        />
-        <p className="text-xs text-center">
-          No shared context channel linked to this session.
-        </p>
+        <ChatTeardropDots size={28} aria-hidden="true" />
+        <p className="text-xs text-center">No shared context channel linked to this session.</p>
         <button
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all"
@@ -567,10 +542,7 @@ export function ChannelPanel({
 
   if (loading) {
     return (
-      <div
-        className="flex items-center justify-center py-8"
-       
-      >
+      <div className="flex items-center justify-center py-8">
         <p className="text-xs">Loading channel…</p>
       </div>
     );
@@ -578,10 +550,7 @@ export function ChannelPanel({
 
   if (!channel) {
     return (
-      <div
-        className="flex items-center justify-center py-8"
-       
-      >
+      <div className="flex items-center justify-center py-8">
         <p className="text-xs">Channel not found.</p>
       </div>
     );
@@ -599,11 +568,7 @@ export function ChannelPanel({
       >
         <div className="flex items-center gap-2">
           <LinkSimple size={13} style={{ color: statusColor, flexShrink: 0 }} aria-hidden="true" />
-          <span
-            className="text-xs font-semibold flex-1 truncate"
-           
-            title={channel.topic}
-          >
+          <span className="text-xs font-semibold flex-1 truncate" title={channel.topic}>
             {channel.topic}
           </span>
           <span

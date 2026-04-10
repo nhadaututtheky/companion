@@ -78,7 +78,10 @@ export async function compileWiki(request: CompileRequest, cwd?: string): Promis
     if (totalChars + content.length > MAX_RAW_CHARS) {
       const remaining = MAX_RAW_CHARS - totalChars;
       if (remaining > 500) {
-        rawContents.push({ name: file.name, content: content.slice(0, remaining) + "\n\n[...truncated]" });
+        rawContents.push({
+          name: file.name,
+          content: content.slice(0, remaining) + "\n\n[...truncated]",
+        });
       }
       break;
     }
@@ -230,7 +233,12 @@ Output as many articles as the content warrants. Typical: 2-5 articles from a ba
 
   const response = await callAI({
     systemPrompt,
-    messages: [{ role: "user", content: `Compile the following raw material into wiki articles:\n\n${rawSection}` }],
+    messages: [
+      {
+        role: "user",
+        content: `Compile the following raw material into wiki articles:\n\n${rawSection}`,
+      },
+    ],
     tier: "default",
     maxTokens: 8000,
   });
@@ -272,13 +280,22 @@ function parseCompilerOutput(output: string): ParsedArticle[] {
       const line = lines[i]?.trim() ?? "";
 
       if (line.startsWith("slug:")) {
-        slug = line.slice(5).trim().toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-");
+        slug = line
+          .slice(5)
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9-]/g, "-")
+          .replace(/-+/g, "-");
         bodyStartIdx = i + 1;
       } else if (line.startsWith("title:")) {
         title = line.slice(6).trim();
         bodyStartIdx = i + 1;
       } else if (line.startsWith("tags:")) {
-        tags = line.slice(5).split(",").map((t) => t.trim()).filter(Boolean);
+        tags = line
+          .slice(5)
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
         bodyStartIdx = i + 1;
       } else if (line === "") {
         bodyStartIdx = i + 1;
@@ -290,7 +307,10 @@ function parseCompilerOutput(output: string): ParsedArticle[] {
 
     // Generate slug from title if missing
     if (!slug && title) {
-      slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
     }
 
     if (!slug || !body) continue;

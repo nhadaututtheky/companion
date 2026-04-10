@@ -90,12 +90,7 @@ export function StepProject(props: StepProjectProps) {
   );
 
   if (showDirBrowser) {
-    return (
-      <DirectoryBrowser
-        onSelect={onDirSelected}
-        onCancel={() => onShowDirBrowser(false)}
-      />
-    );
+    return <DirectoryBrowser onSelect={onDirSelected} onCancel={() => onShowDirBrowser(false)} />;
   }
 
   return (
@@ -152,14 +147,19 @@ export function StepProject(props: StepProjectProps) {
                   className="w-full flex flex-col gap-1 px-4 py-3 text-left transition-colors cursor-pointer"
                   style={{ background: "transparent" }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.background = "var(--color-bg-hover)";
+                    (e.currentTarget as HTMLButtonElement).style.background =
+                      "var(--color-bg-hover)";
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLButtonElement).style.background = "transparent";
                   }}
                 >
                   <div className="flex items-center gap-2">
-                    <FolderSimple size={15} style={{ color: "#FBBC04", flexShrink: 0 }} aria-hidden="true" />
+                    <FolderSimple
+                      size={15}
+                      style={{ color: "#FBBC04", flexShrink: 0 }}
+                      aria-hidden="true"
+                    />
                     <span className="text-sm font-semibold truncate">{p.name}</span>
                     <span className="ml-auto text-xs font-mono flex-shrink-0">
                       {p.defaultModel?.split("-")[1] ?? "sonnet"}
@@ -270,7 +270,10 @@ export function StepProject(props: StepProjectProps) {
       </div>
 
       {/* Platform picker */}
-      <div className="px-4 pb-3" style={{ borderTop: "1px solid var(--color-border)", paddingTop: 12 }}>
+      <div
+        className="px-4 pb-3"
+        style={{ borderTop: "1px solid var(--color-border)", paddingTop: 12 }}
+      >
         <PlatformPicker
           platforms={detectedPlatforms}
           loading={platformsLoading}

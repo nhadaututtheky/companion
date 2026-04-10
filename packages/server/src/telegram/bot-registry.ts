@@ -122,7 +122,13 @@ export class BotRegistry {
         token: envToken,
         botId: "bot1",
         label: process.env.TELEGRAM_BOT_LABEL ?? "Claude",
-        role: (process.env.TELEGRAM_BOT_ROLE as "claude" | "codex" | "gemini" | "opencode" | "general") ?? "claude",
+        role:
+          (process.env.TELEGRAM_BOT_ROLE as
+            | "claude"
+            | "codex"
+            | "gemini"
+            | "opencode"
+            | "general") ?? "claude",
         allowedChatIds: envChatIds,
         allowedUserIds: envUserIds,
       });

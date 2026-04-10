@@ -293,7 +293,13 @@ async function callDebateAI(
  */
 export async function startDebate(
   config: DebateConfig,
-  onMessage?: (channelId: string, agent: DebateAgent, content: string, round: number, costUsd: number) => void,
+  onMessage?: (
+    channelId: string,
+    agent: DebateAgent,
+    content: string,
+    round: number,
+    costUsd: number,
+  ) => void,
 ): Promise<DebateState> {
   const agents = getAgentsForFormat(config.format, config.topic);
 
@@ -403,7 +409,10 @@ export async function startDebate(
     channelId: channel.id,
     topic: config.topic,
     format: config.format,
-    agents: agents.map((a) => `${a.label}${a.model ? ` [${a.modelLabel ?? a.model}]` : ""}${a.personaLabel ? ` <${a.personaLabel}>` : ""}`),
+    agents: agents.map(
+      (a) =>
+        `${a.label}${a.model ? ` [${a.modelLabel ?? a.model}]` : ""}${a.personaLabel ? ` <${a.personaLabel}>` : ""}`,
+    ),
   });
 
   // Run first round (non-blocking)
@@ -417,7 +426,13 @@ export async function startDebate(
  */
 async function runDebateLoop(
   state: DebateState,
-  onMessage?: (channelId: string, agent: DebateAgent, content: string, round: number, costUsd: number) => void,
+  onMessage?: (
+    channelId: string,
+    agent: DebateAgent,
+    content: string,
+    round: number,
+    costUsd: number,
+  ) => void,
 ): Promise<void> {
   try {
     while (state.status === "active" && state.currentRound < state.maxRounds) {
@@ -653,7 +668,13 @@ Rules:
  */
 export async function concludeDebate(
   channelId: string,
-  onMessage?: (channelId: string, agent: DebateAgent, content: string, round: number, costUsd: number) => void,
+  onMessage?: (
+    channelId: string,
+    agent: DebateAgent,
+    content: string,
+    round: number,
+    costUsd: number,
+  ) => void,
 ): Promise<Verdict | null> {
   const state = activeDebates.get(channelId);
   if (!state) return null;

@@ -52,11 +52,7 @@ function slugify(name: string): string {
 
 export function listCustomPersonas(): Persona[] {
   const db = getDb();
-  const rows = db
-    .select()
-    .from(customPersonas)
-    .orderBy(desc(customPersonas.createdAt))
-    .all();
+  const rows = db.select().from(customPersonas).orderBy(desc(customPersonas.createdAt)).all();
   return rows.map(rowToPersona);
 }
 
@@ -216,9 +212,10 @@ export function cloneBuiltInPersona(
     blindSpots: overrides?.blindSpots ?? [...source.blindSpots],
     bestFor: overrides?.bestFor ?? [...source.bestFor],
     strength: overrides?.strength ?? source.strength,
-    avatarGradient: overrides?.avatarGradient ?? [...source.avatarGradient] as [string, string],
+    avatarGradient: overrides?.avatarGradient ?? ([...source.avatarGradient] as [string, string]),
     avatarInitials: overrides?.avatarInitials ?? source.avatarInitials,
-    combinableWith: overrides?.combinableWith ?? (source.combinableWith ? [...source.combinableWith] : undefined),
+    combinableWith:
+      overrides?.combinableWith ?? (source.combinableWith ? [...source.combinableWith] : undefined),
     clonedFrom: builtInId,
   });
 }

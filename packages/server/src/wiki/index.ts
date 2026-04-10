@@ -35,13 +35,7 @@ export { lintDomain } from "./linter.js";
 export type { LintIssue, LintResult, LintSeverity } from "./linter.js";
 
 // Retriever (context-loading)
-export {
-  getIndex,
-  getCore,
-  getSessionContext,
-  searchArticles,
-  retrieve,
-} from "./retriever.js";
+export { getIndex, getCore, getSessionContext, searchArticles, retrieve } from "./retriever.js";
 
 // Types
 export type {

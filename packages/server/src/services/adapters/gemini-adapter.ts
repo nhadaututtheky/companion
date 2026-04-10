@@ -55,10 +55,11 @@ function parseGeminiMessage(line: string): NormalizedMessage | null {
   }
 
   if (type === "assistant" || type === "response") {
-    const content = (parsed.content as string)
-      ?? (parsed.text as string)
-      ?? (parsed.message as { content?: string })?.content
-      ?? "";
+    const content =
+      (parsed.content as string) ??
+      (parsed.text as string) ??
+      (parsed.message as { content?: string })?.content ??
+      "";
     return {
       type: "assistant",
       platform: "gemini",
@@ -93,12 +94,14 @@ function parseGeminiMessage(line: string): NormalizedMessage | null {
     return {
       type: "assistant",
       platform: "gemini",
-      contentBlocks: [{
-        type: "tool_use",
-        id: (parsed.id as string) ?? crypto.randomUUID(),
-        name: (parsed.name as string) ?? (parsed.tool_name as string) ?? "unknown",
-        input: (parsed.input as Record<string, unknown>) ?? {},
-      }],
+      contentBlocks: [
+        {
+          type: "tool_use",
+          id: (parsed.id as string) ?? crypto.randomUUID(),
+          name: (parsed.name as string) ?? (parsed.tool_name as string) ?? "unknown",
+          input: (parsed.input as Record<string, unknown>) ?? {},
+        },
+      ],
       raw: parsed,
     };
   }
@@ -264,9 +267,21 @@ export class GeminiAdapter implements CLIAdapter {
           log.error("Failed to write to Gemini stdin", { error: String(err) });
         }
       },
-      kill: () => { try { proc.kill(); } catch { /* dead */ } },
+      kill: () => {
+        try {
+          proc.kill();
+        } catch {
+          /* dead */
+        }
+      },
       exited,
-      isAlive: () => { try { return proc.exitCode === null; } catch { return false; } },
+      isAlive: () => {
+        try {
+          return proc.exitCode === null;
+        } catch {
+          return false;
+        }
+      },
       getStderrLines: () => [...stderrLines],
     };
   }

@@ -51,9 +51,7 @@ export function PulseIndicator({ sessionId }: PulseIndicatorProps) {
         >
           {reading.score}
         </span>
-        {reading.trend !== "stable" && (
-          <span style={{ color, fontSize: 9 }}>{arrow}</span>
-        )}
+        {reading.trend !== "stable" && <span style={{ color, fontSize: 9 }}>{arrow}</span>}
       </button>
 
       {/* Sparkline popover */}
@@ -115,12 +113,22 @@ function Sparkline({ readings, sessionId }: { readings: PulseReading[]; sessionI
       </defs>
       {/* Threshold lines */}
       <line
-        x1={2} y1={28 - 2 - (40 / 100) * 24} x2={138} y2={28 - 2 - (40 / 100) * 24}
-        stroke="var(--color-border)" strokeWidth={0.5} strokeDasharray="2,2"
+        x1={2}
+        y1={28 - 2 - (40 / 100) * 24}
+        x2={138}
+        y2={28 - 2 - (40 / 100) * 24}
+        stroke="var(--color-border)"
+        strokeWidth={0.5}
+        strokeDasharray="2,2"
       />
       <line
-        x1={2} y1={28 - 2 - (60 / 100) * 24} x2={138} y2={28 - 2 - (60 / 100) * 24}
-        stroke="#EF444440" strokeWidth={0.5} strokeDasharray="2,2"
+        x1={2}
+        y1={28 - 2 - (60 / 100) * 24}
+        x2={138}
+        y2={28 - 2 - (60 / 100) * 24}
+        stroke="#EF444440"
+        strokeWidth={0.5}
+        strokeDasharray="2,2"
       />
       <polyline
         fill="none"

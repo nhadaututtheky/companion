@@ -19,7 +19,9 @@ export function ApiKeyIndicator() {
     const base = process.env.NEXT_PUBLIC_API_URL ?? "";
     fetch(`${base}/api/setup-status`)
       .then((r) => r.json())
-      .then((d) => { if (d.version) setVersion(d.version); })
+      .then((d) => {
+        if (d.version) setVersion(d.version);
+      })
       .catch(() => {});
   }, []);
 
@@ -29,10 +31,7 @@ export function ApiKeyIndicator() {
   }, [router]);
 
   return (
-    <div
-      className="flex flex-col gap-0"
-      style={{ borderTop: "1px solid var(--color-border)" }}
-    >
+    <div className="flex flex-col gap-0" style={{ borderTop: "1px solid var(--color-border)" }}>
       {/* Version badge */}
       {version && (
         <div
@@ -61,10 +60,7 @@ export function ApiKeyIndicator() {
             }}
             aria-hidden="true"
           />
-          <span
-            className="text-xs font-mono flex-1 truncate"
-            title="Connected — API key active"
-          >
+          <span className="text-xs font-mono flex-1 truncate" title="Connected — API key active">
             {keyHint}
           </span>
           <button

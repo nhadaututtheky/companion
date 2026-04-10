@@ -90,14 +90,26 @@ export function DebateAgentCard({
         </div>
         <div className="flex items-center gap-1.5">
           {isCLI ? (
-            <span className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full"
-              style={{ background: "var(--color-success)20", color: "var(--color-success)", fontSize: 10 }}>
+            <span
+              className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full"
+              style={{
+                background: "var(--color-success)20",
+                color: "var(--color-success)",
+                fontSize: 10,
+              }}
+            >
               <Wrench size={10} aria-hidden="true" />
               Tool access
             </span>
           ) : (
-            <span className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full"
-              style={{ background: "var(--color-text-muted)20", color: "var(--color-text-muted)", fontSize: 10 }}>
+            <span
+              className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full"
+              style={{
+                background: "var(--color-text-muted)20",
+                color: "var(--color-text-muted)",
+                fontSize: 10,
+              }}
+            >
               <ChatText size={10} aria-hidden="true" />
               Text only
             </span>
@@ -138,7 +150,10 @@ export function DebateAgentCard({
                 </option>
               ))}
             </select>
-            <CaretDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" />
+            <CaretDown
+              size={10}
+              className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2"
+            />
           </div>
         </div>
 
@@ -159,10 +174,15 @@ export function DebateAgentCard({
               aria-label="Select model"
             >
               {models.map((m) => (
-                <option key={m.value} value={m.value}>{m.label}</option>
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
               ))}
             </select>
-            <CaretDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" />
+            <CaretDown
+              size={10}
+              className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2"
+            />
           </div>
         </div>
       </div>
@@ -184,10 +204,15 @@ export function DebateAgentCard({
             aria-label="Select role"
           >
             {ROLE_OPTIONS.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
             ))}
           </select>
-          <CaretDown size={10} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" />
+          <CaretDown
+            size={10}
+            className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2"
+          />
         </div>
       </div>
     </div>

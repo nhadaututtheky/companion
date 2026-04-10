@@ -57,16 +57,13 @@ export async function checkForUpdate(force = false): Promise<UpdateInfo> {
   const currentVersion = APP_VERSION;
 
   try {
-    const res = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`,
-      {
-        headers: {
-          Accept: "application/vnd.github.v3+json",
-          "User-Agent": `Companion/${currentVersion}`,
-        },
-        signal: AbortSignal.timeout(10_000),
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`, {
+      headers: {
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": `Companion/${currentVersion}`,
       },
-    );
+      signal: AbortSignal.timeout(10_000),
+    });
 
     if (!res.ok) {
       log.warn("GitHub API returned non-OK", { status: res.status });

@@ -41,9 +41,7 @@ describe("TypeScript imports", () => {
 
   test("namespace import sets targetSymbol to '*'", () => {
     const { edges } = scanFile(code, "file.ts", "typescript");
-    const nsEdge = edges.find(
-      (e) => e.targetFilePath === "./namespace" && e.targetSymbol === "*",
-    );
+    const nsEdge = edges.find((e) => e.targetFilePath === "./namespace" && e.targetSymbol === "*");
     expect(nsEdge).toBeDefined();
     expect(nsEdge!.edgeType).toBe("imports");
   });
@@ -152,18 +150,14 @@ describe("Classes", () => {
 
   test("extends produces edge with edgeType 'extends'", () => {
     const { edges } = scanFile(code, "file.ts", "typescript");
-    const extendsEdge = edges.find(
-      (e) => e.sourceSymbol === "Dog" && e.edgeType === "extends",
-    );
+    const extendsEdge = edges.find((e) => e.sourceSymbol === "Dog" && e.edgeType === "extends");
     expect(extendsEdge).toBeDefined();
     expect(extendsEdge!.targetSymbol).toBe("Animal");
   });
 
   test("implements produces one edge per interface with edgeType 'implements'", () => {
     const { edges } = scanFile(code, "file.ts", "typescript");
-    const implEdges = edges.filter(
-      (e) => e.sourceSymbol === "Dog" && e.edgeType === "implements",
-    );
+    const implEdges = edges.filter((e) => e.sourceSymbol === "Dog" && e.edgeType === "implements");
     expect(implEdges.length).toBe(2);
     const targets = implEdges.map((e) => e.targetSymbol);
     expect(targets).toContain("Walkable");
@@ -273,9 +267,7 @@ describe("Python scanner", () => {
 
   test("from-import produces edge with sourceSymbol '__file__'", () => {
     const { edges } = scanFile(code, "app.py", "python");
-    const flaskEdge = edges.find(
-      (e) => e.targetFilePath === "flask" && e.targetSymbol === "Flask",
-    );
+    const flaskEdge = edges.find((e) => e.targetFilePath === "flask" && e.targetSymbol === "Flask");
     expect(flaskEdge).toBeDefined();
     expect(flaskEdge!.sourceSymbol).toBe("__file__");
     expect(flaskEdge!.edgeType).toBe("imports");

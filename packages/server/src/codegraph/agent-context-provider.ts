@@ -63,7 +63,8 @@ export function getCodeGraphConfig(projectSlug: string): CodeGraphConfig {
       planReviewEnabled: row.planReviewEnabled,
       breakCheckEnabled: row.breakCheckEnabled,
       webDocsEnabled: row.webDocsEnabled,
-      activityFeedEnabled: (row as Record<string, unknown>).activityFeedEnabled as boolean ?? true,
+      activityFeedEnabled:
+        ((row as Record<string, unknown>).activityFeedEnabled as boolean) ?? true,
       excludePatterns: (row.excludePatterns as string[]) ?? [],
       maxContextTokens: row.maxContextTokens,
     };
@@ -443,9 +444,7 @@ export function buildActivityContext(
     }
 
     lines.push(`  </hot_nodes>`);
-    lines.push(
-      `  <summary touched_files="${touchedFiles}" total_edits="${totalTouches}" />`,
-    );
+    lines.push(`  <summary touched_files="${touchedFiles}" total_edits="${totalTouches}" />`);
 
     // Add hint for high-touch files
     const highTouchFiles = hotFiles.filter((f) => f.touchCount >= 3);

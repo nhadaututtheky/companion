@@ -96,7 +96,10 @@ export async function incrementalRescan(
   const task = (pending ?? Promise.resolve()).then(() =>
     doIncrementalRescan(projectSlug, changedFiles),
   );
-  rescanLocks.set(projectSlug, task.catch(() => {})); // swallow to not block next
+  rescanLocks.set(
+    projectSlug,
+    task.catch(() => {}),
+  ); // swallow to not block next
   return task;
 }
 
@@ -276,7 +279,7 @@ async function doIncrementalRescan(
     // Build full node index (needed for target resolution)
     const allNodes = getProjectNodes(projectSlug);
     const nodesByName = new Map<string, (typeof allNodes)[0]>();
-    const nodesByFile = new Map<string, (typeof allNodes)>();
+    const nodesByFile = new Map<string, typeof allNodes>();
     for (const node of allNodes) {
       nodesByName.set(node.symbolName, node);
       const arr = nodesByFile.get(node.filePath);

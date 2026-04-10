@@ -363,7 +363,11 @@ export async function checkProvidersHealth(): Promise<
   Array<{ id: string; status: "ok" | "degraded" | "down"; latencyMs: number }>
 > {
   const providers = getProviders().filter((p) => p.enabled);
-  const healthResults: Array<{ id: string; status: "ok" | "degraded" | "down"; latencyMs: number }> = [];
+  const healthResults: Array<{
+    id: string;
+    status: "ok" | "degraded" | "down";
+    latencyMs: number;
+  }> = [];
 
   const checks = providers.map(async (p, _idx) => {
     const start = Date.now();
@@ -393,7 +397,7 @@ export async function checkProvidersHealth(): Promise<
       });
 
       const latencyMs = Date.now() - start;
-      const status = res.ok ? "ok" as const : "degraded" as const;
+      const status = res.ok ? ("ok" as const) : ("degraded" as const);
       return { id: p.id, status, latencyMs };
     } catch {
       const latencyMs = Date.now() - start;
@@ -406,9 +410,10 @@ export async function checkProvidersHealth(): Promise<
   for (let i = 0; i < results.length; i++) {
     const r = results[i]!;
     const p = providers[i]!;
-    const result = r.status === "fulfilled"
-      ? r.value
-      : { id: p.id, status: "down" as const, latencyMs: HEALTH_CHECK_TIMEOUT_MS };
+    const result =
+      r.status === "fulfilled"
+        ? r.value
+        : { id: p.id, status: "down" as const, latencyMs: HEALTH_CHECK_TIMEOUT_MS };
 
     healthResults.push(result);
 

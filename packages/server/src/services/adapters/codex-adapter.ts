@@ -63,7 +63,11 @@ function parseCodexMessage(line: string): NormalizedMessage | null {
             let blockInput: Record<string, unknown> = {};
             const blockArgs = block.arguments ?? block.input;
             if (typeof blockArgs === "string") {
-              try { blockInput = JSON.parse(blockArgs); } catch { blockInput = { raw: blockArgs }; }
+              try {
+                blockInput = JSON.parse(blockArgs);
+              } catch {
+                blockInput = { raw: blockArgs };
+              }
             } else if (blockArgs && typeof blockArgs === "object") {
               blockInput = blockArgs as Record<string, unknown>;
             }
@@ -82,7 +86,7 @@ function parseCodexMessage(line: string): NormalizedMessage | null {
 
         const textContent = blocks
           .filter((b) => b.type === "text")
-          .map((b) => "text" in b ? b.text : "")
+          .map((b) => ("text" in b ? b.text : ""))
           .join("");
 
         return {
@@ -103,7 +107,11 @@ function parseCodexMessage(line: string): NormalizedMessage | null {
     let input: Record<string, unknown> = {};
     const rawArgs = parsed.arguments ?? parsed.input;
     if (typeof rawArgs === "string") {
-      try { input = JSON.parse(rawArgs); } catch { input = { raw: rawArgs }; }
+      try {
+        input = JSON.parse(rawArgs);
+      } catch {
+        input = { raw: rawArgs };
+      }
     } else if (rawArgs && typeof rawArgs === "object") {
       input = rawArgs as Record<string, unknown>;
     }
@@ -111,12 +119,14 @@ function parseCodexMessage(line: string): NormalizedMessage | null {
     return {
       type: "assistant",
       platform: "codex",
-      contentBlocks: [{
-        type: "tool_use",
-        id: (parsed.call_id as string) ?? (parsed.id as string) ?? crypto.randomUUID(),
-        name: (parsed.name as string) ?? (parsed.function as string) ?? "unknown",
-        input,
-      }],
+      contentBlocks: [
+        {
+          type: "tool_use",
+          id: (parsed.call_id as string) ?? (parsed.id as string) ?? crypto.randomUUID(),
+          name: (parsed.name as string) ?? (parsed.function as string) ?? "unknown",
+          input,
+        },
+      ],
       raw: parsed,
     };
   }
@@ -127,10 +137,12 @@ function parseCodexMessage(line: string): NormalizedMessage | null {
       type: "tool_result",
       platform: "codex",
       content: (parsed.output as string) ?? (parsed.result as string) ?? "",
-      contentBlocks: [{
-        type: "text",
-        text: (parsed.output as string) ?? (parsed.result as string) ?? "",
-      }],
+      contentBlocks: [
+        {
+          type: "text",
+          text: (parsed.output as string) ?? (parsed.result as string) ?? "",
+        },
+      ],
       raw: parsed,
     };
   }
@@ -318,11 +330,25 @@ export class CodexAdapter implements CLIAdapter {
     return {
       pid,
       send: (_data: string) => {
-        log.warn("Codex exec mode is non-interactive — send() is a no-op. Use a new session instead.");
+        log.warn(
+          "Codex exec mode is non-interactive — send() is a no-op. Use a new session instead.",
+        );
       },
-      kill: () => { try { proc.kill(); } catch { /* dead */ } },
+      kill: () => {
+        try {
+          proc.kill();
+        } catch {
+          /* dead */
+        }
+      },
       exited,
-      isAlive: () => { try { return proc.exitCode === null; } catch { return false; } },
+      isAlive: () => {
+        try {
+          return proc.exitCode === null;
+        } catch {
+          return false;
+        }
+      },
       getStderrLines: () => [...stderrLines],
     };
   }

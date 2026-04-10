@@ -196,6 +196,15 @@ export const RESERVED_FILES = ["_index.md", "_core.md"] as const;
 
 /** Supported raw file extensions */
 export const RAW_EXTENSIONS = new Set([
-  ".md", ".txt", ".json", ".csv", ".yaml", ".yml",
-  ".log", ".xml", ".html", ".pdf", ".url",
+  ".md",
+  ".txt",
+  ".json",
+  ".csv",
+  ".yaml",
+  ".yml",
+  ".log",
+  ".xml",
+  ".html",
+  ".pdf",
+  ".url",
 ]);

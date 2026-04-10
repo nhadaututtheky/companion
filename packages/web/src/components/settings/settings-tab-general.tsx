@@ -1,14 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  Key,
-  Globe,
-  FloppyDisk,
-  Check,
-  PaintBrush,
-  Bug,
-} from "@phosphor-icons/react";
+import { Key, Globe, FloppyDisk, Check, PaintBrush, Bug } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -79,7 +72,12 @@ function LicenseSection() {
       // Try to parse server error JSON from the response text
       const jsonMatch = msg.match(/\{[^}]*"error"\s*:\s*"([^"]+)"/);
       const serverError = jsonMatch?.[1];
-      toast.error(serverError ?? (msg.includes("Cannot reach") ? "Cannot reach license server — check network" : "License activation failed"));
+      toast.error(
+        serverError ??
+          (msg.includes("Cannot reach")
+            ? "Cannot reach license server — check network"
+            : "License activation failed"),
+      );
     } finally {
       setActivating(false);
     }
@@ -97,7 +95,11 @@ function LicenseSection() {
   return (
     <SettingSection
       title="License"
-      description={isPro ? "You have full access to all Companion features." : "Upgrade to Pro to unlock all features."}
+      description={
+        isPro
+          ? "You have full access to all Companion features."
+          : "Upgrade to Pro to unlock all features."
+      }
     >
       {/* Current status */}
       {license && (
@@ -118,7 +120,9 @@ function LicenseSection() {
             </span>
             <span style={{ color: "var(--color-text-secondary)" }}>
               {isPro
-                ? license.maxSessions < 0 ? "Unlimited sessions" : `${license.maxSessions} sessions`
+                ? license.maxSessions < 0
+                  ? "Unlimited sessions"
+                  : `${license.maxSessions} sessions`
                 : isTrial
                   ? `${license.daysLeft ?? 0} days left — all features unlocked`
                   : "2 sessions · 1 Telegram bot"}
@@ -151,7 +155,10 @@ function LicenseSection() {
               </span>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-1.5 mb-3 text-xs" style={{ color: "var(--color-text-secondary)" }}>
+          <div
+            className="grid grid-cols-2 gap-1.5 mb-3 text-xs"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
             <span>Unlimited sessions</span>
             <span>Multi-bot Telegram</span>
             <span>WebIntel research</span>
@@ -274,9 +281,7 @@ export function GeneralTab() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <Globe size={14} weight="bold" />
-            <span className="text-xs">
-              Status:
-            </span>
+            <span className="text-xs">Status:</span>
             <span
               className="text-xs font-semibold"
               style={{
@@ -351,9 +356,7 @@ export function GeneralTab() {
       <SettingSection title="Security" description="Configure prompt scanning and risk detection.">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-medium">
-              Prompt Scanner
-            </span>
+            <span className="text-sm font-medium">Prompt Scanner</span>
             <span className="text-xs">
               Scan user prompts for risky patterns before forwarding to CLI
             </span>

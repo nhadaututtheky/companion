@@ -53,325 +53,344 @@ const paginationSchema = z.object({
 });
 
 export function channelRoutes(bridge: WsBridge): Hono {
-const router = new Hono();
+  const router = new Hono();
 
-// GET /channels — list all channels
-router.get("/", (c) => {
-  const projectSlug = c.req.query("project");
-  const status = c.req.query("status");
-  const { limit, offset } = paginationSchema.parse({
-    limit: c.req.query("limit"),
-    offset: c.req.query("offset"),
+  // GET /channels — list all channels
+  router.get("/", (c) => {
+    const projectSlug = c.req.query("project");
+    const status = c.req.query("status");
+    const { limit, offset } = paginationSchema.parse({
+      limit: c.req.query("limit"),
+      offset: c.req.query("offset"),
+    });
+
+    const { items, total } = listChannels({ projectSlug, status, limit, offset });
+
+    return c.json({
+      success: true,
+      data: items,
+      meta: { total, page: Math.floor(offset / limit) + 1, limit },
+    } satisfies ApiResponse);
   });
 
-  const { items, total } = listChannels({ projectSlug, status, limit, offset });
+  // POST /channels — create channel
+  router.post("/", zValidator("json", createChannelSchema), (c) => {
+    const body = c.req.valid("json");
 
-  return c.json({
-    success: true,
-    data: items,
-    meta: { total, page: Math.floor(offset / limit) + 1, limit },
-  } satisfies ApiResponse);
-});
+    try {
+      const channel = createChannel({
+        projectSlug: body.projectSlug,
+        type: body.type,
+        topic: body.topic,
+        maxRounds: body.maxRounds,
+      });
 
-// POST /channels — create channel
-router.post("/", zValidator("json", createChannelSchema), (c) => {
-  const body = c.req.valid("json");
+      log.info("Channel created via API", { id: channel.id, type: body.type });
+      return c.json({ success: true, data: channel } satisfies ApiResponse, 201);
+    } catch (err) {
+      log.error("Failed to create channel", { error: String(err) });
+      return c.json(
+        { success: false, error: "Failed to create channel" } satisfies ApiResponse,
+        500,
+      );
+    }
+  });
 
-  try {
-    const channel = createChannel({
-      projectSlug: body.projectSlug,
-      type: body.type,
-      topic: body.topic,
-      maxRounds: body.maxRounds,
-    });
+  // GET /channels/:id — get channel with messages and linked sessions
+  router.get("/:id", (c) => {
+    const id = c.req.param("id");
+    const channel = getChannel(id);
 
-    log.info("Channel created via API", { id: channel.id, type: body.type });
-    return c.json({ success: true, data: channel } satisfies ApiResponse, 201);
-  } catch (err) {
-    log.error("Failed to create channel", { error: String(err) });
-    return c.json({ success: false, error: "Failed to create channel" } satisfies ApiResponse, 500);
-  }
-});
+    if (!channel) {
+      return c.json({ success: false, error: "Channel not found" } satisfies ApiResponse, 404);
+    }
 
-// GET /channels/:id — get channel with messages and linked sessions
-router.get("/:id", (c) => {
-  const id = c.req.param("id");
-  const channel = getChannel(id);
+    return c.json({ success: true, data: channel } satisfies ApiResponse);
+  });
 
-  if (!channel) {
-    return c.json({ success: false, error: "Channel not found" } satisfies ApiResponse, 404);
-  }
+  // POST /channels/:id/messages — post message to channel
+  router.post("/:id/messages", zValidator("json", postMessageSchema), (c) => {
+    const id = c.req.param("id");
+    const body = c.req.valid("json");
 
-  return c.json({ success: true, data: channel } satisfies ApiResponse);
-});
+    const channel = getChannel(id);
+    if (!channel) {
+      return c.json({ success: false, error: "Channel not found" } satisfies ApiResponse, 404);
+    }
 
-// POST /channels/:id/messages — post message to channel
-router.post("/:id/messages", zValidator("json", postMessageSchema), (c) => {
-  const id = c.req.param("id");
-  const body = c.req.valid("json");
+    try {
+      const message = postMessage({
+        channelId: id,
+        agentId: body.agentId,
+        role: body.role,
+        content: body.content,
+        round: body.round,
+        personaId: body.personaId,
+      });
 
-  const channel = getChannel(id);
-  if (!channel) {
-    return c.json({ success: false, error: "Channel not found" } satisfies ApiResponse, 404);
-  }
+      return c.json({ success: true, data: message } satisfies ApiResponse, 201);
+    } catch (err) {
+      log.error("Failed to post message", { channelId: id, error: String(err) });
+      return c.json({ success: false, error: "Failed to post message" } satisfies ApiResponse, 500);
+    }
+  });
 
-  try {
-    const message = postMessage({
-      channelId: id,
-      agentId: body.agentId,
-      role: body.role,
-      content: body.content,
-      round: body.round,
-      personaId: body.personaId,
-    });
+  // PATCH /channels/:id — update channel status
+  router.patch("/:id", zValidator("json", patchChannelSchema), (c) => {
+    const id = c.req.param("id");
+    const { status } = c.req.valid("json");
 
-    return c.json({ success: true, data: message } satisfies ApiResponse, 201);
-  } catch (err) {
-    log.error("Failed to post message", { channelId: id, error: String(err) });
-    return c.json({ success: false, error: "Failed to post message" } satisfies ApiResponse, 500);
-  }
-});
+    const channel = getChannel(id);
+    if (!channel) {
+      return c.json({ success: false, error: "Channel not found" } satisfies ApiResponse, 404);
+    }
 
-// PATCH /channels/:id — update channel status
-router.patch("/:id", zValidator("json", patchChannelSchema), (c) => {
-  const id = c.req.param("id");
-  const { status } = c.req.valid("json");
+    try {
+      updateChannelStatus(id, status);
+      return c.json({ success: true } satisfies ApiResponse);
+    } catch (err) {
+      log.error("Failed to update channel status", { id, error: String(err) });
+      return c.json(
+        { success: false, error: "Failed to update channel status" } satisfies ApiResponse,
+        500,
+      );
+    }
+  });
 
-  const channel = getChannel(id);
-  if (!channel) {
-    return c.json({ success: false, error: "Channel not found" } satisfies ApiResponse, 404);
-  }
+  // POST /channels/:id/link — link a session to this channel
+  router.post("/:id/link", zValidator("json", linkSessionSchema), (c) => {
+    const id = c.req.param("id");
+    const { sessionId } = c.req.valid("json");
 
-  try {
-    updateChannelStatus(id, status);
-    return c.json({ success: true } satisfies ApiResponse);
-  } catch (err) {
-    log.error("Failed to update channel status", { id, error: String(err) });
-    return c.json(
-      { success: false, error: "Failed to update channel status" } satisfies ApiResponse,
-      500,
-    );
-  }
-});
+    try {
+      linkSession(id, sessionId);
+      return c.json({ success: true } satisfies ApiResponse);
+    } catch (err) {
+      log.error("Failed to link session", { channelId: id, sessionId, error: String(err) });
+      return c.json({ success: false, error: "Failed to link session" } satisfies ApiResponse, 400);
+    }
+  });
 
-// POST /channels/:id/link — link a session to this channel
-router.post("/:id/link", zValidator("json", linkSessionSchema), (c) => {
-  const id = c.req.param("id");
-  const { sessionId } = c.req.valid("json");
+  // DELETE /channels/:id/sessions/:sessionId — unlink session from channel
+  router.delete("/:id/sessions/:sessionId", (c) => {
+    const sessionId = c.req.param("sessionId");
 
-  try {
-    linkSession(id, sessionId);
-    return c.json({ success: true } satisfies ApiResponse);
-  } catch (err) {
-    log.error("Failed to link session", { channelId: id, sessionId, error: String(err) });
-    return c.json({ success: false, error: "Failed to link session" } satisfies ApiResponse, 400);
-  }
-});
+    try {
+      unlinkSession(sessionId);
+      return c.json({ success: true } satisfies ApiResponse);
+    } catch (err) {
+      log.error("Failed to unlink session", { sessionId, error: String(err) });
+      return c.json(
+        { success: false, error: "Failed to unlink session" } satisfies ApiResponse,
+        500,
+      );
+    }
+  });
 
-// DELETE /channels/:id/sessions/:sessionId — unlink session from channel
-router.delete("/:id/sessions/:sessionId", (c) => {
-  const sessionId = c.req.param("sessionId");
+  // POST /channels/debate — start a debate (API)
+  const agentModelSchema = z.object({
+    agentId: z.string().min(1),
+    model: z.string().min(1),
+    label: z.string().optional(),
+    personaId: z.string().max(100).optional(),
+  });
 
-  try {
-    unlinkSession(sessionId);
-    return c.json({ success: true } satisfies ApiResponse);
-  } catch (err) {
-    log.error("Failed to unlink session", { sessionId, error: String(err) });
-    return c.json({ success: false, error: "Failed to unlink session" } satisfies ApiResponse, 500);
-  }
-});
+  const debateSchema = z.object({
+    topic: z.string().min(1).max(500),
+    format: z.enum(["pro_con", "red_team", "review", "brainstorm"]).default("pro_con"),
+    projectSlug: z.string().optional(),
+    maxRounds: z.number().int().min(1).max(20).optional(),
+    agentModels: z
+      .array(agentModelSchema)
+      .max(4)
+      .refine((arr) => !arr || new Set(arr.map((a) => a.agentId)).size === arr.length, {
+        message: "Duplicate agentId in agentModels",
+      })
+      .optional(),
+  });
 
-// POST /channels/debate — start a debate (API)
-const agentModelSchema = z.object({
-  agentId: z.string().min(1),
-  model: z.string().min(1),
-  label: z.string().optional(),
-  personaId: z.string().max(100).optional(),
-});
+  router.post("/debate", zValidator("json", debateSchema), async (c) => {
+    const body = c.req.valid("json");
 
-const debateSchema = z.object({
-  topic: z.string().min(1).max(500),
-  format: z.enum(["pro_con", "red_team", "review", "brainstorm"]).default("pro_con"),
-  projectSlug: z.string().optional(),
-  maxRounds: z.number().int().min(1).max(20).optional(),
-  agentModels: z
-    .array(agentModelSchema)
-    .max(4)
-    .refine((arr) => !arr || new Set(arr.map((a) => a.agentId)).size === arr.length, {
-      message: "Duplicate agentId in agentModels",
-    })
-    .optional(),
-});
-
-router.post("/debate", zValidator("json", debateSchema), async (c) => {
-  const body = c.req.valid("json");
-
-  try {
-    const state = await startDebate({
-      topic: body.topic,
-      format: body.format,
-      projectSlug: body.projectSlug,
-      maxRounds: body.maxRounds,
-      agentModels: body.agentModels,
-    });
-
-    return c.json(
-      {
-        success: true,
-        data: {
-          channelId: state.channelId,
-          topic: state.topic,
-          format: state.format,
-          agents: state.agents.map((a) => ({
-            id: a.id,
-            label: a.label,
-            role: a.role,
-            model: a.model,
-            modelLabel: a.modelLabel,
-            personaId: a.personaId,
-            personaLabel: a.personaLabel,
-          })),
-        },
-      } satisfies ApiResponse,
-      201,
-    );
-  } catch {
-    return c.json({ success: false, error: "Failed to start debate" } satisfies ApiResponse, 500);
-  }
-});
-
-// ── CLI Debate ─────────────────────────────────────────────────────────────
-
-const cliDebateAgentSchema = z.object({
-  id: z.string().min(1),
-  role: z.string().min(1),
-  label: z.string().min(1),
-  emoji: z.string().default("🤖"),
-  platform: z.enum(["claude", "codex", "gemini", "opencode"]),
-  model: z.string().min(1),
-  platformOptions: z.record(z.unknown()).optional(),
-});
-
-const cliDebateSchema = z.object({
-  topic: z.string().min(1).max(500),
-  format: z.enum(["pro_con", "code_review", "architecture", "benchmark"]).default("pro_con"),
-  agents: z.array(cliDebateAgentSchema).min(2).max(4),
-  workingDir: z.string().min(1).max(500),
-  projectSlug: z.string().optional(),
-  maxRounds: z.number().int().min(1).max(10).optional(),
-});
-
-router.post("/cli-debate", zValidator("json", cliDebateSchema), async (c) => {
-  if (!hasFeature("debate_multiplatform")) {
-    return c.json(
-      { success: false, error: "Multi-platform debate requires Companion Pro." } satisfies ApiResponse,
-      403,
-    );
-  }
-  const body = c.req.valid("json");
-
-  try {
-    const state = await startCLIDebate(
-      {
+    try {
+      const state = await startDebate({
         topic: body.topic,
         format: body.format,
-        agents: body.agents.map((a) => ({
-          ...a,
-          platform: a.platform as CLIPlatform,
-        })),
-        workingDir: body.workingDir,
         projectSlug: body.projectSlug,
         maxRounds: body.maxRounds,
-      },
-      (msg) => {
-        log.info("CLI debate event", msg);
-        // Broadcast debate events to linked session browser sockets
-        if (msg && typeof msg === "object" && "channelId" in msg) {
-          const channel = getChannel(String(msg.channelId));
-          if (channel?.linkedSessions) {
-            for (const linked of channel.linkedSessions) {
-              const session = bridge.getSession(linked.id);
-              if (session) {
-                const payload = JSON.stringify({
-                  type: "debate_event",
-                  data: msg,
-                });
-                for (const ws of session.browserSockets) {
-                  try { ws.send(payload); } catch { /* socket closed */ }
+        agentModels: body.agentModels,
+      });
+
+      return c.json(
+        {
+          success: true,
+          data: {
+            channelId: state.channelId,
+            topic: state.topic,
+            format: state.format,
+            agents: state.agents.map((a) => ({
+              id: a.id,
+              label: a.label,
+              role: a.role,
+              model: a.model,
+              modelLabel: a.modelLabel,
+              personaId: a.personaId,
+              personaLabel: a.personaLabel,
+            })),
+          },
+        } satisfies ApiResponse,
+        201,
+      );
+    } catch {
+      return c.json({ success: false, error: "Failed to start debate" } satisfies ApiResponse, 500);
+    }
+  });
+
+  // ── CLI Debate ─────────────────────────────────────────────────────────────
+
+  const cliDebateAgentSchema = z.object({
+    id: z.string().min(1),
+    role: z.string().min(1),
+    label: z.string().min(1),
+    emoji: z.string().default("🤖"),
+    platform: z.enum(["claude", "codex", "gemini", "opencode"]),
+    model: z.string().min(1),
+    platformOptions: z.record(z.unknown()).optional(),
+  });
+
+  const cliDebateSchema = z.object({
+    topic: z.string().min(1).max(500),
+    format: z.enum(["pro_con", "code_review", "architecture", "benchmark"]).default("pro_con"),
+    agents: z.array(cliDebateAgentSchema).min(2).max(4),
+    workingDir: z.string().min(1).max(500),
+    projectSlug: z.string().optional(),
+    maxRounds: z.number().int().min(1).max(10).optional(),
+  });
+
+  router.post("/cli-debate", zValidator("json", cliDebateSchema), async (c) => {
+    if (!hasFeature("debate_multiplatform")) {
+      return c.json(
+        {
+          success: false,
+          error: "Multi-platform debate requires Companion Pro.",
+        } satisfies ApiResponse,
+        403,
+      );
+    }
+    const body = c.req.valid("json");
+
+    try {
+      const state = await startCLIDebate(
+        {
+          topic: body.topic,
+          format: body.format,
+          agents: body.agents.map((a) => ({
+            ...a,
+            platform: a.platform as CLIPlatform,
+          })),
+          workingDir: body.workingDir,
+          projectSlug: body.projectSlug,
+          maxRounds: body.maxRounds,
+        },
+        (msg) => {
+          log.info("CLI debate event", msg);
+          // Broadcast debate events to linked session browser sockets
+          if (msg && typeof msg === "object" && "channelId" in msg) {
+            const channel = getChannel(String(msg.channelId));
+            if (channel?.linkedSessions) {
+              for (const linked of channel.linkedSessions) {
+                const session = bridge.getSession(linked.id);
+                if (session) {
+                  const payload = JSON.stringify({
+                    type: "debate_event",
+                    data: msg,
+                  });
+                  for (const ws of session.browserSockets) {
+                    try {
+                      ws.send(payload);
+                    } catch {
+                      /* socket closed */
+                    }
+                  }
                 }
               }
             }
           }
-        }
-      },
-    );
-
-    return c.json(
-      {
-        success: true,
-        data: {
-          channelId: state.channelId,
-          topic: state.topic,
-          format: state.format,
-          agents: state.agents.map((a) => ({
-            id: a.id,
-            label: a.label,
-            role: a.role,
-            platform: a.platform,
-            model: a.model,
-          })),
         },
-      } satisfies ApiResponse,
-      201,
-    );
-  } catch (err) {
-    return c.json(
-      { success: false, error: err instanceof Error ? err.message : "Failed to start CLI debate" } satisfies ApiResponse,
-      500,
-    );
-  }
-});
+      );
 
-// POST /channels/:id/abort-cli — abort CLI debate (kills processes)
-router.post("/:id/abort-cli", (c) => {
-  const id = c.req.param("id");
-  const aborted = abortCLIDebate(id);
-
-  if (!aborted) {
-    // Try regular debate conclude
-    const debate = getActiveDebate(id);
-    if (!debate) {
-      return c.json({ success: false, error: "No active CLI debate found" } satisfies ApiResponse, 404);
+      return c.json(
+        {
+          success: true,
+          data: {
+            channelId: state.channelId,
+            topic: state.topic,
+            format: state.format,
+            agents: state.agents.map((a) => ({
+              id: a.id,
+              label: a.label,
+              role: a.role,
+              platform: a.platform,
+              model: a.model,
+            })),
+          },
+        } satisfies ApiResponse,
+        201,
+      );
+    } catch (err) {
+      return c.json(
+        {
+          success: false,
+          error: err instanceof Error ? err.message : "Failed to start CLI debate",
+        } satisfies ApiResponse,
+        500,
+      );
     }
-  }
+  });
 
-  return c.json({ success: true, data: { aborted: true } } satisfies ApiResponse);
-});
+  // POST /channels/:id/abort-cli — abort CLI debate (kills processes)
+  router.post("/:id/abort-cli", (c) => {
+    const id = c.req.param("id");
+    const aborted = abortCLIDebate(id);
 
-// POST /channels/:id/conclude — force conclude a debate
-router.post("/:id/conclude", async (c) => {
-  const id = c.req.param("id");
-  const debate = getActiveDebate(id);
+    if (!aborted) {
+      // Try regular debate conclude
+      const debate = getActiveDebate(id);
+      if (!debate) {
+        return c.json(
+          { success: false, error: "No active CLI debate found" } satisfies ApiResponse,
+          404,
+        );
+      }
+    }
 
-  if (!debate) {
-    return c.json({ success: false, error: "No active debate found" } satisfies ApiResponse, 404);
-  }
+    return c.json({ success: true, data: { aborted: true } } satisfies ApiResponse);
+  });
 
-  const verdict = await concludeDebate(id);
-  return c.json({ success: true, data: { verdict } } satisfies ApiResponse);
-});
+  // POST /channels/:id/conclude — force conclude a debate
+  router.post("/:id/conclude", async (c) => {
+    const id = c.req.param("id");
+    const debate = getActiveDebate(id);
 
-// DELETE /channels/:id — delete channel
-router.delete("/:id", (c) => {
-  const id = c.req.param("id");
-  const deleted = deleteChannel(id);
+    if (!debate) {
+      return c.json({ success: false, error: "No active debate found" } satisfies ApiResponse, 404);
+    }
 
-  if (!deleted) {
-    return c.json({ success: false, error: "Channel not found" } satisfies ApiResponse, 404);
-  }
+    const verdict = await concludeDebate(id);
+    return c.json({ success: true, data: { verdict } } satisfies ApiResponse);
+  });
 
-  return c.json({ success: true } satisfies ApiResponse);
-});
+  // DELETE /channels/:id — delete channel
+  router.delete("/:id", (c) => {
+    const id = c.req.param("id");
+    const deleted = deleteChannel(id);
 
-return router;
+    if (!deleted) {
+      return c.json({ success: false, error: "Channel not found" } satisfies ApiResponse, 404);
+    }
+
+    return c.json({ success: true } satisfies ApiResponse);
+  });
+
+  return router;
 }

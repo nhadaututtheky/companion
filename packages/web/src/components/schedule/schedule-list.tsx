@@ -50,12 +50,8 @@ export function ScheduleList({
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-2">
         <Timer size={32} />
-        <p className="text-sm">
-          No schedules yet
-        </p>
-        <p className="text-xs">
-          Create a schedule to run sessions automatically
-        </p>
+        <p className="text-sm">No schedules yet</p>
+        <p className="text-xs">Create a schedule to run sessions automatically</p>
       </div>
     );
   }
@@ -128,10 +124,7 @@ export function ScheduleList({
                     ) : (
                       <Clock size={12} style={{ color: "#FBBC04" }} />
                     )}
-                    <span
-                      className="text-xs font-mono"
-                     
-                    >
+                    <span className="text-xs font-mono">
                       {s.triggerType === "cron" ? (s.cronExpression ?? "—") : "once"}
                     </span>
                   </div>
@@ -146,9 +139,7 @@ export function ScheduleList({
 
                 {/* Run count */}
                 <td className="px-3 py-2.5">
-                  <span className="text-xs font-mono">
-                    {s.runCount}
-                  </span>
+                  <span className="text-xs font-mono">{s.runCount}</span>
                 </td>
 
                 {/* Status toggle */}
@@ -207,7 +198,6 @@ export function ScheduleList({
                     <button
                       onClick={() => onEdit(s)}
                       className="p-1 rounded cursor-pointer"
-                     
                       aria-label="Edit"
                       title="Edit"
                     >

@@ -9,7 +9,15 @@ interface UiStore {
   settingsModalOpen: boolean;
   settingsActiveTab: SettingsTab;
   activityTerminalOpen: boolean;
-  rightPanelMode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context" | "wiki";
+  rightPanelMode:
+    | "none"
+    | "files"
+    | "browser"
+    | "search"
+    | "terminal"
+    | "stats"
+    | "ai-context"
+    | "wiki";
   rightPanelPath: string | null;
   browserPreviewUrl: string | null;
   featureGuideOpen: boolean;
@@ -106,7 +114,8 @@ export const useUiStore = create<UiStore>((set) => ({
 
   setSidebarExpanded: (expanded) => set({ sidebarExpanded: expanded }),
 
-  setSidebarActiveProject: (slug) => set({ sidebarActiveProject: slug, sidebarExpanded: slug !== null }),
+  setSidebarActiveProject: (slug) =>
+    set({ sidebarActiveProject: slug, sidebarExpanded: slug !== null }),
 
   toggleSidebarProject: (slug) =>
     set((s) => {
@@ -118,6 +127,5 @@ export const useUiStore = create<UiStore>((set) => ({
 
   setActiveNavMenu: (menu) => set({ activeNavMenu: menu }),
 
-  toggleNavMenu: (menu) =>
-    set((s) => ({ activeNavMenu: s.activeNavMenu === menu ? null : menu })),
+  toggleNavMenu: (menu) => set((s) => ({ activeNavMenu: s.activeNavMenu === menu ? null : menu })),
 }));

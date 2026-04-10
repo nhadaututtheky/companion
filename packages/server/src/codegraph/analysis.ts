@@ -79,11 +79,33 @@ export interface FusedSearchResult {
 // ── Security Keywords (for risk scoring) ────────────────────────────
 
 const SECURITY_KEYWORDS = new Set([
-  "auth", "login", "password", "token", "session", "cookie",
-  "jwt", "oauth", "secret", "key", "credential", "permission",
-  "role", "admin", "root", "sudo", "encrypt", "decrypt",
-  "hash", "salt", "csrf", "xss", "sql", "inject", "sanitize",
-  "validate", "escape",
+  "auth",
+  "login",
+  "password",
+  "token",
+  "session",
+  "cookie",
+  "jwt",
+  "oauth",
+  "secret",
+  "key",
+  "credential",
+  "permission",
+  "role",
+  "admin",
+  "root",
+  "sudo",
+  "encrypt",
+  "decrypt",
+  "hash",
+  "salt",
+  "csrf",
+  "xss",
+  "sql",
+  "inject",
+  "sanitize",
+  "validate",
+  "escape",
 ]);
 
 // ═══════════════════════════════════════════════════════════════════
@@ -98,20 +120,26 @@ export function populateFtsIndex(projectSlug: string): void {
   const sqlite = getSqlite();
 
   // Delete existing FTS entries for this project's nodes
-  sqlite.run(`
+  sqlite.run(
+    `
     DELETE FROM code_nodes_fts
     WHERE rowid IN (
       SELECT id FROM code_nodes WHERE project_slug = ?
     )
-  `, [projectSlug]);
+  `,
+    [projectSlug],
+  );
 
   // Re-insert all nodes
-  sqlite.run(`
+  sqlite.run(
+    `
     INSERT INTO code_nodes_fts(rowid, symbol_name, description, file_path, body_preview)
     SELECT id, symbol_name, COALESCE(description, ''), file_path, COALESCE(body_preview, '')
     FROM code_nodes
     WHERE project_slug = ?
-  `, [projectSlug]);
+  `,
+    [projectSlug],
+  );
 }
 
 /**
@@ -125,22 +153,22 @@ export function syncFtsForNodes(nodeIds: number[]): void {
   for (let i = 0; i < nodeIds.length; i += 100) {
     const batch = nodeIds.slice(i, i + 100);
     const placeholders = batch.map(() => "?").join(",");
-    sqlite.run(
-      `DELETE FROM code_nodes_fts WHERE rowid IN (${placeholders})`,
-      batch,
-    );
+    sqlite.run(`DELETE FROM code_nodes_fts WHERE rowid IN (${placeholders})`, batch);
   }
 
   // Re-insert current node data
   for (let i = 0; i < nodeIds.length; i += 100) {
     const batch = nodeIds.slice(i, i + 100);
     const placeholders = batch.map(() => "?").join(",");
-    sqlite.run(`
+    sqlite.run(
+      `
       INSERT INTO code_nodes_fts(rowid, symbol_name, description, file_path, body_preview)
       SELECT id, symbol_name, COALESCE(description, ''), file_path, COALESCE(body_preview, '')
       FROM code_nodes
       WHERE id IN (${placeholders})
-    `, batch);
+    `,
+      batch,
+    );
   }
 }
 
@@ -154,21 +182,14 @@ export function deleteFtsForNodes(nodeIds: number[]): void {
   for (let i = 0; i < nodeIds.length; i += 100) {
     const batch = nodeIds.slice(i, i + 100);
     const placeholders = batch.map(() => "?").join(",");
-    sqlite.run(
-      `DELETE FROM code_nodes_fts WHERE rowid IN (${placeholders})`,
-      batch,
-    );
+    sqlite.run(`DELETE FROM code_nodes_fts WHERE rowid IN (${placeholders})`, batch);
   }
 }
 
 /**
  * FTS5 search with ranking and snippet extraction.
  */
-export function ftsSearch(
-  projectSlug: string,
-  query: string,
-  limit = 20,
-): FtsSearchResult[] {
+export function ftsSearch(projectSlug: string, query: string, limit = 20): FtsSearchResult[] {
   const sqlite = getSqlite();
 
   // Sanitize query: remove ALL FTS special chars including double quotes
@@ -183,7 +204,8 @@ export function ftsSearch(
   if (!terms) return [];
 
   const rows = sqlite
-    .prepare(`
+    .prepare(
+      `
       SELECT
         n.id as nodeId,
         n.symbol_name as symbolName,
@@ -200,7 +222,8 @@ export function ftsSearch(
         AND n.project_slug = ?
       ORDER BY fts.rank
       LIMIT ?
-    `)
+    `,
+    )
     .all(terms, projectSlug, limit) as FtsSearchResult[];
 
   return rows.map((r) => ({
@@ -220,10 +243,7 @@ export function ftsSearch(
  * risk = callerRatio(0.15) + crossFileCallers(0.15) + testCoverage(0.30)
  *      + securitySensitivity(0.20) + flowParticipation(0.20)
  */
-export function computeRiskScores(
-  projectSlug: string,
-  filePaths: string[],
-): RiskScore[] {
+export function computeRiskScores(projectSlug: string, filePaths: string[]): RiskScore[] {
   if (filePaths.length === 0) return [];
 
   const db = getDb();
@@ -232,12 +252,7 @@ export function computeRiskScores(
   const changedNodes = db
     .select()
     .from(codeNodes)
-    .where(
-      and(
-        eq(codeNodes.projectSlug, projectSlug),
-        inArray(codeNodes.filePath, filePaths),
-      ),
-    )
+    .where(and(eq(codeNodes.projectSlug, projectSlug), inArray(codeNodes.filePath, filePaths)))
     .all();
 
   if (changedNodes.length === 0) return [];
@@ -252,12 +267,7 @@ export function computeRiskScores(
       edgeType: codeEdges.edgeType,
     })
     .from(codeEdges)
-    .where(
-      and(
-        eq(codeEdges.projectSlug, projectSlug),
-        inArray(codeEdges.targetNodeId, nodeIds),
-      ),
-    )
+    .where(and(eq(codeEdges.projectSlug, projectSlug), inArray(codeEdges.targetNodeId, nodeIds)))
     .all();
 
   // Build caller map: nodeId → { callerNodeIds, callerFileSet }
@@ -340,10 +350,10 @@ export function computeRiskScores(
     // Weighted sum
     const riskScore = Math.min(
       callerRatio * 0.15 +
-      crossFileFactor * 0.15 +
-      testCoverage * 0.30 +
-      securitySensitivity * 0.20 +
-      flowParticipation * 0.20,
+        crossFileFactor * 0.15 +
+        testCoverage * 0.3 +
+        securitySensitivity * 0.2 +
+        flowParticipation * 0.2,
       1.0,
     );
 
@@ -417,12 +427,7 @@ export function traceExecutionFlows(
       targetNodeId: codeEdges.targetNodeId,
     })
     .from(codeEdges)
-    .where(
-      and(
-        eq(codeEdges.projectSlug, projectSlug),
-        eq(codeEdges.edgeType, "calls"),
-      ),
-    )
+    .where(and(eq(codeEdges.projectSlug, projectSlug), eq(codeEdges.edgeType, "calls")))
     .all();
 
   // Build adjacency list
@@ -551,11 +556,7 @@ export function detectCommunities(projectSlug: string): Community[] {
     const parts = filePath.replace(/\\/g, "/").split("/");
     // Use first 2 meaningful segments as community key
     const key =
-      parts.length >= 3
-        ? `${parts[0]}/${parts[1]}`
-        : parts.length >= 2
-          ? parts[0]!
-          : "root";
+      parts.length >= 3 ? `${parts[0]}/${parts[1]}` : parts.length >= 2 ? parts[0]! : "root";
 
     const entry = communityMap.get(key) ?? { files: [], nodeCount: 0 };
     entry.files.push(filePath);
@@ -631,17 +632,16 @@ const RRF_K = 60; // Standard RRF constant
  * Reciprocal Rank Fusion — merge FTS5 and symbol-name search results.
  * Score = 1/(k + rank_fts + 1) + 1/(k + rank_symbol + 1)
  */
-export function fusedSearch(
-  projectSlug: string,
-  query: string,
-  limit = 15,
-): FusedSearchResult[] {
+export function fusedSearch(projectSlug: string, query: string, limit = 15): FusedSearchResult[] {
   // Run both searches
   const ftsResults = ftsSearch(projectSlug, query, limit * 2);
 
   // Symbol name search (existing LIKE-based)
   const db = getDb();
-  const keywords = query.split(/\s+/).filter((k) => k.length >= 2).slice(0, 10);
+  const keywords = query
+    .split(/\s+/)
+    .filter((k) => k.length >= 2)
+    .slice(0, 10);
   const symbolResults: Array<{ id: number; score: number }> = [];
 
   for (const kw of keywords) {
@@ -681,7 +681,10 @@ export function fusedSearch(
   symbolResults.sort((a, b) => b.score - a.score);
 
   // RRF fusion
-  const fusedScores = new Map<number, { ftsRank: number | null; symbolRank: number | null; score: number }>();
+  const fusedScores = new Map<
+    number,
+    { ftsRank: number | null; symbolRank: number | null; score: number }
+  >();
 
   // FTS rankings
   for (let i = 0; i < ftsResults.length; i++) {
@@ -712,9 +715,7 @@ export function fusedSearch(
   }
 
   // Sort by fused score and fetch node details
-  const sorted = [...fusedScores.entries()]
-    .sort((a, b) => b[1].score - a[1].score)
-    .slice(0, limit);
+  const sorted = [...fusedScores.entries()].sort((a, b) => b[1].score - a[1].score).slice(0, limit);
 
   if (sorted.length === 0) return [];
 

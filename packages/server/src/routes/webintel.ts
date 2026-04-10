@@ -65,7 +65,10 @@ webintelRoutes.post("/scrape", async (c) => {
   const parsed = scrapeSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     return c.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid body",
+      } satisfies ApiResponse,
       400,
     );
   }
@@ -107,7 +110,10 @@ webintelRoutes.post("/docs", async (c) => {
   const parsed = docsSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     return c.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid body",
+      } satisfies ApiResponse,
       400,
     );
   }
@@ -145,7 +151,10 @@ webintelRoutes.post("/search", async (c) => {
   const parsed = searchSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     return c.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid body",
+      } satisfies ApiResponse,
       400,
     );
   }
@@ -171,7 +180,10 @@ webintelRoutes.post("/research", async (c) => {
   const parsed = researchSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     return c.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid body",
+      } satisfies ApiResponse,
       400,
     );
   }
@@ -198,7 +210,10 @@ webintelRoutes.post("/crawl", async (c) => {
   const parsed = crawlSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     return c.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid body",
+      } satisfies ApiResponse,
       400,
     );
   }
@@ -314,7 +329,10 @@ webintelRoutes.post("/start-webclaw", async (c) => {
   const parsed = startWebclawSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) {
     return c.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid body",
+      } satisfies ApiResponse,
       400,
     );
   }

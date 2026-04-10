@@ -29,9 +29,7 @@ export function ContextMeter({
   return (
     <div className="px-4 py-3">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs font-medium">
-          Context
-        </span>
+        <span className="text-xs font-medium">Context</span>
         <span className="text-xs font-mono">
           {formatK(total)} / {formatK(maxTokens)}
         </span>
@@ -64,9 +62,7 @@ export function ContextMeter({
               display: "inline-block",
             }}
           />
-          <span className="text-xs font-mono">
-            {formatK(inputTokens)} in
-          </span>
+          <span className="text-xs font-mono">{formatK(inputTokens)} in</span>
         </div>
         <div className="flex items-center gap-1">
           <span
@@ -78,9 +74,7 @@ export function ContextMeter({
               display: "inline-block",
             }}
           />
-          <span className="text-xs font-mono">
-            {formatK(outputTokens)} out
-          </span>
+          <span className="text-xs font-mono">{formatK(outputTokens)} out</span>
         </div>
         {pct > 0 && (
           <span className="text-xs font-mono ml-auto" style={{ color }}>
