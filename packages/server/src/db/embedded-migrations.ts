@@ -121,4 +121,8 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0029_session_role.sql",
     sql: "-- Add agent role for multi-brain workspace\n-- Values: coordinator, specialist, researcher, reviewer\nALTER TABLE sessions ADD COLUMN role TEXT;\n",
   },
+  {
+    name: "0030_session_insights.sql",
+    sql: "-- Session Insights — cross-session learning from patterns, mistakes, preferences\nCREATE TABLE IF NOT EXISTS session_insights (\n  id TEXT PRIMARY KEY,\n  project_slug TEXT NOT NULL DEFAULT '',\n  type TEXT NOT NULL CHECK (type IN ('pattern', 'mistake', 'preference', 'hotspot')),\n  content TEXT NOT NULL,\n  source_session_id TEXT NOT NULL DEFAULT '',\n  source_files TEXT NOT NULL DEFAULT '[]',\n  relevance_score REAL NOT NULL DEFAULT 0.5,\n  hit_count INTEGER NOT NULL DEFAULT 1,\n  content_hash TEXT NOT NULL DEFAULT '',\n  created_at TEXT NOT NULL DEFAULT (datetime('now')),\n  last_used_at TEXT NOT NULL DEFAULT (datetime('now'))\n);\n\nCREATE INDEX IF NOT EXISTS idx_insights_project ON session_insights(project_slug);\nCREATE INDEX IF NOT EXISTS idx_insights_type ON session_insights(type);\nCREATE INDEX IF NOT EXISTS idx_insights_hash ON session_insights(content_hash);\n",
+  },
 ];

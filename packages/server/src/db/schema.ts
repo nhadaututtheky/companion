@@ -641,3 +641,31 @@ export const savedPrompts = sqliteTable(
   },
   (table) => [index("idx_saved_prompts_project").on(table.projectSlug)],
 );
+
+// ─── Session Insights (cross-session learning) ────────────────────────────
+
+export const sessionInsights = sqliteTable(
+  "session_insights",
+  {
+    id: text("id").primaryKey(),
+    projectSlug: text("project_slug").notNull().default(""),
+    type: text("type").notNull(), // pattern | mistake | preference | hotspot
+    content: text("content").notNull(),
+    sourceSessionId: text("source_session_id").notNull().default(""),
+    sourceFiles: text("source_files", { mode: "json" }).$type<string[]>().default([]),
+    relevanceScore: real("relevance_score").notNull().default(0.5),
+    hitCount: integer("hit_count").notNull().default(1),
+    contentHash: text("content_hash").notNull().default(""),
+    createdAt: text("created_at")
+      .notNull()
+      .$defaultFn(() => new Date().toISOString()),
+    lastUsedAt: text("last_used_at")
+      .notNull()
+      .$defaultFn(() => new Date().toISOString()),
+  },
+  (table) => [
+    index("idx_insights_project").on(table.projectSlug),
+    index("idx_insights_type").on(table.type),
+    index("idx_insights_hash").on(table.contentHash),
+  ],
+);
