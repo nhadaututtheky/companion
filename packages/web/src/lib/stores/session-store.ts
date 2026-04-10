@@ -63,12 +63,26 @@ interface SessionStore {
   getChildSessions: (parentId: string) => Session[];
 }
 
+function loadClosedIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem("companion:closedIds");
+    if (raw) return new Set(JSON.parse(raw));
+  } catch { /* ignore */ }
+  return new Set();
+}
+
+function saveClosedIds(ids: Set<string>) {
+  try {
+    localStorage.setItem("companion:closedIds", JSON.stringify([...ids]));
+  } catch { /* ignore */ }
+}
+
 export const useSessionStore = create<SessionStore>((set, get) => ({
   sessions: {},
   activeSessionId: null,
   expandedSessionId: null,
   gridOrder: [],
-  closedIds: new Set(),
+  closedIds: loadClosedIds(),
 
   setSession: (id, data) =>
     set((s) => ({
@@ -83,6 +97,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       const { [id]: _, ...rest } = s.sessions;
       const newClosed = new Set(s.closedIds);
       newClosed.add(id);
+      saveClosedIds(newClosed);
       return {
         sessions: rest,
         gridOrder: s.gridOrder.filter((gid) => gid !== id),
@@ -101,6 +116,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       // Remove from closedIds if user explicitly re-opens
       const newClosed = new Set(s.closedIds);
       newClosed.delete(id);
+      saveClosedIds(newClosed);
       return {
         gridOrder: s.gridOrder.includes(id) ? s.gridOrder : [...s.gridOrder, id],
         closedIds: newClosed,
@@ -111,6 +127,7 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
     set((s) => {
       const newClosed = new Set(s.closedIds);
       newClosed.add(id);
+      saveClosedIds(newClosed);
       return {
         gridOrder: s.gridOrder.filter((gid) => gid !== id),
         closedIds: newClosed,

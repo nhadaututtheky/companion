@@ -11,6 +11,7 @@ import type { QuickAction } from "@/lib/stores/composer-store";
 import { AttachmentChip } from "./attachment-chip";
 import { QuickActions } from "./quick-actions";
 import { SavedPromptsPicker } from "./saved-prompts-picker";
+import { SlashCommandMenu } from "./slash-commands";
 import { ModelBar, type ModelInfo } from "./model-bar";
 import { api } from "@/lib/api-client";
 
@@ -48,7 +49,10 @@ export function MessageComposer({
 }: MessageComposerProps) {
   const [text, setText] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
+  const [slashMenuOpen, setSlashMenuOpen] = useState(false);
+  const [slashQuery, setSlashQuery] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const composerWrapperRef = useRef<HTMLDivElement>(null);
 
   // Composer store — use individual selectors to avoid infinite loops
   const attachments = useComposerStore((s) => s.attachments);
@@ -101,7 +105,32 @@ export function MessageComposer({
     clearAttachments();
   };
 
+  // Detect slash commands in text
+  const updateSlashMenu = useCallback((value: string) => {
+    // Only show menu if text starts with "/" and is a single line
+    const match = value.match(/^\/(\S*)$/);
+    if (match) {
+      setSlashMenuOpen(true);
+      setSlashQuery("/" + match[1]);
+    } else {
+      setSlashMenuOpen(false);
+    }
+  }, []);
+
+  const handleSlashSelect = useCallback((command: string) => {
+    setText(command + " ");
+    setSlashMenuOpen(false);
+    textareaRef.current?.focus();
+  }, []);
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Let slash menu handle navigation keys
+    if (slashMenuOpen && ["ArrowUp", "ArrowDown", "Tab", "Escape"].includes(e.key)) {
+      return; // handled by SlashCommandMenu via document listener
+    }
+    if (slashMenuOpen && e.key === "Enter" && !e.shiftKey) {
+      return; // let slash menu handle Enter for selection
+    }
     // Enter (without shift) or Ctrl+Enter both send
     const isSendCombo = (e.key === "Enter" && !e.shiftKey) || (e.key === "Enter" && e.ctrlKey);
     if (isSendCombo) {
@@ -119,7 +148,8 @@ export function MessageComposer({
 
   return (
     <div
-      className="message-composer-wrapper px-4 py-3"
+      ref={composerWrapperRef}
+      className="message-composer-wrapper px-4 py-3 relative"
       style={{ borderTop: "1px solid var(--color-border)" }}
       onDragOver={(e) => {
         if (e.dataTransfer.types.includes("application/x-companion-file")) {
@@ -208,6 +238,15 @@ export function MessageComposer({
           </div>
         )}
 
+        {/* Slash command autocomplete */}
+        <SlashCommandMenu
+          query={slashQuery}
+          visible={slashMenuOpen}
+          onSelect={handleSlashSelect}
+          onClose={() => setSlashMenuOpen(false)}
+          anchorRef={composerWrapperRef}
+        />
+
         {/* Input row */}
         <div className="flex items-end gap-2">
           <textarea
@@ -218,7 +257,10 @@ export function MessageComposer({
                 : text
             }
             onChange={(e) => {
-              if (!listening) setText(e.target.value);
+              if (!listening) {
+                setText(e.target.value);
+                updateSlashMenu(e.target.value);
+              }
             }}
             onKeyDown={handleKeyDown}
             onInput={handleInput}

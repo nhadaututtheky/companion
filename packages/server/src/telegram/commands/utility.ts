@@ -372,9 +372,32 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
       const projectName =
         (session.state as unknown as { projectSlug?: string })?.projectSlug ?? "Session";
       await ctx.reply(
-        `Streaming <b>${escapeHTML(projectName)}</b> <code>${escapeHTML(arg.slice(0, 8))}</code>\n\nEvents will be forwarded here. Use /detach to stop.`,
+        `Streaming <b>${escapeHTML(projectName)}</b> <code>${escapeHTML(arg.slice(0, 8))}</code>\n\nEvents will be forwarded here. You can also send messages. Use /detach to stop.`,
         { parse_mode: "HTML" },
       );
+
+      // Send brief history summary so user knows context
+      const history = bridge.wsBridge.getMessageHistory(arg);
+      if (history.length > 0) {
+        const userMsgs = history.filter((m) => m.type === "user_message").length;
+        const assistantMsgs = history.filter((m) => m.type === "assistant").length;
+        const lastMsg = history[history.length - 1];
+        const lastContent =
+          lastMsg?.type === "assistant"
+            ? ((lastMsg as unknown as { message?: { content?: Array<{ type: string; text?: string }> } }).message?.content
+                ?.filter((b): b is { type: "text"; text: string } => b.type === "text")
+                .map((b) => b.text)
+                .join("")
+                ?.slice(0, 200) ?? "")
+            : lastMsg?.type === "user_message"
+              ? ((lastMsg as unknown as { content?: string }).content ?? "").slice(0, 200)
+              : "";
+
+        await ctx.reply(
+          `📋 <b>History:</b> ${userMsgs} user + ${assistantMsgs} assistant messages${lastContent ? `\n\n<b>Last:</b> <i>${escapeHTML(lastContent)}${lastContent.length >= 200 ? "…" : ""}</i>` : ""}`,
+          { parse_mode: "HTML" },
+        );
+      }
       return;
     }
 
@@ -464,7 +487,7 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
     await ctx.answerCallbackQuery("Streaming started");
     await ctx
       .editMessageText(
-        `Streaming <b>${escapeHTML(projectName)}</b> <code>${escapeHTML(sessionId.slice(0, 8))}</code>\n\nEvents will be forwarded here. Use /detach to stop.`,
+        `Streaming <b>${escapeHTML(projectName)}</b> <code>${escapeHTML(sessionId.slice(0, 8))}</code>\n\nEvents will be forwarded here. You can also send messages. Use /detach to stop.`,
         { parse_mode: "HTML" },
       )
       .catch(() => {});

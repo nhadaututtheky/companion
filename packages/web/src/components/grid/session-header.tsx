@@ -2,6 +2,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
   ArrowsOut,
+  Minus,
   X,
   LinkSimple,
   CaretDown,
@@ -10,6 +11,7 @@ import {
   BellSlash,
   BellRinging,
   Plus,
+  TelegramLogo,
 } from "@phosphor-icons/react";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { SessionSettingsButton } from "./session-settings";
@@ -32,8 +34,10 @@ interface SessionHeaderProps {
   model: string;
   status: string;
   cliPlatform?: string;
+  source?: string;
   onExpand: () => void;
   onClose: () => void;
+  onMinimize?: () => void;
   onSpawnClick?: () => void;
   onRename?: (name: string | null) => void;
   onSetModel?: (model: string) => void;
@@ -69,9 +73,11 @@ export function SessionHeader({
   status,
   onExpand,
   onClose,
+  onMinimize,
   onSpawnClick,
   onRename,
   onSetModel,
+  source,
   channelId,
   channelTopic,
   channelStatus,
@@ -215,6 +221,14 @@ export function SessionHeader({
             onDoubleClick={startEditing}
           >
             {displayName}
+            {source === "telegram" && (
+              <TelegramLogo
+                size={13}
+                weight="fill"
+                style={{ color: "#2AABEE", flexShrink: 0 }}
+                aria-label="Telegram session"
+              />
+            )}
             {isThinking && (
               <span
                 className="text-xs font-normal flex-shrink-0"
@@ -384,7 +398,23 @@ export function SessionHeader({
           </button>
         )}
 
-        {/* Right: expand + close */}
+        {/* Right: minimize + expand + close */}
+        {onMinimize && (
+          <button
+            onClick={onMinimize}
+            className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"
+            aria-label="Minimize session"
+            title="Hide from grid (session keeps running)"
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--color-warning)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.color = "var(--color-text-muted)";
+            }}
+          >
+            <Minus size={14} weight="bold" />
+          </button>
+        )}
         <button
           onClick={onExpand}
           className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"

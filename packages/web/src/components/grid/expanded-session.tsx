@@ -11,6 +11,7 @@ import {
   CaretDown,
   Check,
   Plus,
+  TelegramLogo,
 } from "@phosphor-icons/react";
 import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
@@ -382,6 +383,14 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
               }}
             >
               {session?.projectName ?? sessionId}
+              {session?.state?.source === "telegram" && (
+                <TelegramLogo
+                  size={16}
+                  weight="fill"
+                  style={{ color: "#2AABEE", flexShrink: 0 }}
+                  aria-label="Telegram session"
+                />
+              )}
               {isRunning && (
                 <span
                   className="text-xs font-normal flex-shrink-0"
@@ -510,9 +519,26 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
               {/* Pulse warning — agent health alert with action buttons */}
               <PulseWarning sessionId={sessionId} onSendMessage={sendMessage} onStop={handleStop} />
 
-              {/* Message feed */}
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                <MessageFeed messages={messages} sessionId={sessionId} />
+              {/* Message feed with Telegram watermark */}
+              <div className="flex-1 min-h-0 relative">
+                {session?.state?.source === "telegram" && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      pointerEvents: "none",
+                      zIndex: 1,
+                    }}
+                  >
+                    <TelegramLogo size={200} weight="thin" style={{ color: "var(--color-text-muted)", opacity: 0.04 }} />
+                  </div>
+                )}
+                <div className="h-full overflow-y-auto">
+                  <MessageFeed messages={messages} sessionId={sessionId} />
+                </div>
               </div>
 
               {/* Permissions */}

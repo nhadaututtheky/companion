@@ -996,6 +996,18 @@ export class TelegramBridge {
     const unsubKey = `stream:${chatKey}:${sessionId}`;
     this.subscriptions.set(unsubKey, unsub);
 
+    // Create a lightweight mapping so Telegram can send messages to this session
+    const projectSlug = session.state.name ?? session.state.session_id ?? sessionId.slice(0, 8);
+    const model = session.state.model ?? "claude-sonnet-4-6";
+    if (!this.getMapping(chatId, topicId)) {
+      this.mappings.set(this.mapKey(chatId, topicId), {
+        sessionId,
+        projectSlug,
+        model,
+        topicId,
+      });
+    }
+
     log.info("Stream subscriber attached", { sessionId, chatId, topicId });
     return true;
   }
@@ -1017,6 +1029,14 @@ export class TelegramBridge {
     }
 
     this.streamSubscriptions.delete(chatKey);
+
+    // Remove the lightweight mapping created by attachStreamToSession
+    // (only if the mapping was created for stream, not for a full /start session)
+    const mapping = this.getMapping(chatId, topicId);
+    if (mapping?.sessionId === sessionId) {
+      this.removeMapping(chatId, topicId);
+    }
+
     log.info("Stream subscriber detached", { sessionId, chatId, topicId });
     return sessionId;
   }
@@ -1260,6 +1280,25 @@ export class TelegramBridge {
             })
             .catch(() => {});
           break;
+
+        case "user_message": {
+          // Show messages sent from Web/API in the Telegram chat
+          const userSource = (msg as unknown as { source?: string }).source;
+          if (userSource && userSource !== "telegram") {
+            const userText = (msg as unknown as { content?: string }).content ?? "";
+            if (userText.trim()) {
+              const label = userSource === "web" ? "🌐 Web" : "📡 API";
+              await this.bot.api
+                .sendMessage(
+                  chatId,
+                  `<i>${label}:</i>\n${escapeHTML(userText.slice(0, 2000))}`,
+                  { parse_mode: "HTML", message_thread_id: topicId },
+                )
+                .catch(() => {});
+            }
+          }
+          break;
+        }
 
         case "child_spawned":
           await handleChildSpawned(this, chatId, topicId, sessionId, msg);

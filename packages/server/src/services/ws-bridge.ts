@@ -891,6 +891,11 @@ export class WsBridge {
     return getAllActiveSessions();
   }
 
+  getMessageHistory(sessionId: string): BrowserIncomingMessage[] {
+    const session = getActiveSession(sessionId);
+    return session ? (session.messageHistory as BrowserIncomingMessage[]) : [];
+  }
+
   /** Update per-session timeout/keep-alive settings. Resets the idle timer with the new value. */
   setSessionSettings(sessionId: string, settings: Partial<SessionSettings>): void {
     const current = this.sessionSettings.get(sessionId) ?? { ...DEFAULT_SESSION_SETTINGS };

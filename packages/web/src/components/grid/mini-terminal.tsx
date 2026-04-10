@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useCallback, useState, type KeyboardEvent } from "react";
-import { PaperPlaneTilt, Lock, CheckCircle, XCircle, Warning } from "@phosphor-icons/react";
+import { PaperPlaneTilt, Lock, CheckCircle, XCircle, Warning, TelegramLogo } from "@phosphor-icons/react";
 import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { api } from "@/lib/api-client";
@@ -9,6 +9,7 @@ import { SessionHeader } from "./session-header";
 import { CompactMessageFeed } from "./compact-message";
 import { AgentTabBar } from "./agent-tab-bar";
 import { SpawnAgentModal } from "@/components/session/spawn-agent-modal";
+import { SlashCommandMenu } from "@/components/session/slash-commands";
 
 interface ChannelInfo {
   id: string;
@@ -78,7 +79,10 @@ function CompactComposer({
   isRunning: boolean;
 }) {
   const [text, setText] = useState("");
+  const [slashMenuOpen, setSlashMenuOpen] = useState(false);
+  const [slashQuery, setSlashQuery] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const handleSend = () => {
     const trimmed = text.trim();
@@ -90,7 +94,29 @@ function CompactComposer({
     }
   };
 
+  const updateSlashMenu = useCallback((value: string) => {
+    const match = value.match(/^\/(\S*)$/);
+    if (match) {
+      setSlashMenuOpen(true);
+      setSlashQuery("/" + match[1]);
+    } else {
+      setSlashMenuOpen(false);
+    }
+  }, []);
+
+  const handleSlashSelect = useCallback((command: string) => {
+    setText(command + " ");
+    setSlashMenuOpen(false);
+    textareaRef.current?.focus();
+  }, []);
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (slashMenuOpen && ["ArrowUp", "ArrowDown", "Tab", "Escape"].includes(e.key)) {
+      return;
+    }
+    if (slashMenuOpen && e.key === "Enter" && !e.shiftKey) {
+      return;
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -106,9 +132,17 @@ function CompactComposer({
 
   return (
     <div
-      className="flex items-end gap-2 px-3 py-2.5 flex-shrink-0"
+      ref={wrapperRef}
+      className="flex items-end gap-2 px-3 py-2.5 flex-shrink-0 relative"
       style={{ borderTop: "1px solid var(--glass-border)" }}
     >
+      <SlashCommandMenu
+        query={slashQuery}
+        visible={slashMenuOpen}
+        onSelect={handleSlashSelect}
+        onClose={() => setSlashMenuOpen(false)}
+        anchorRef={wrapperRef}
+      />
       <div
         className="flex items-end gap-1 flex-1 px-2.5 py-1.5"
         style={{
@@ -120,7 +154,10 @@ function CompactComposer({
         <textarea
           ref={textareaRef}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            updateSlashMenu(e.target.value);
+          }}
           onKeyDown={handleKeyDown}
           onInput={handleInput}
           placeholder={isRunning ? "Type to interrupt…" : "Message…"}
@@ -241,6 +278,11 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
     onExpand(sessionId);
   }, [sessionId, onExpand]);
 
+  const handleMinimize = useCallback(() => {
+    useSessionStore.getState().removeFromGrid(sessionId);
+    toast.success("Session minimized — find it in the sidebar");
+  }, [sessionId]);
+
   const handleClose = useCallback(async () => {
     const session = useSessionStore.getState().sessions[sessionId];
     const isActive = session && ["starting", "running", "waiting", "idle", "busy"].includes(session.status);
@@ -325,7 +367,9 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
         cacheCreationTokens={session?.state?.cache_creation_tokens}
         cacheReadTokens={session?.state?.cache_read_tokens}
         cliPlatform={session?.state?.cli_platform}
+        source={session?.state?.source}
         onSetModel={setModel}
+        onMinimize={handleMinimize}
       />
 
       {/* WS Status banner */}
@@ -365,8 +409,25 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
         </div>
       ) : (
         <>
-          {/* Message feed */}
-          <CompactMessageFeed messages={messages} feedRef={feedRef} />
+          {/* Message feed with Telegram watermark */}
+          <div className="flex flex-col flex-1 min-h-0 relative">
+            {session?.state?.source === "telegram" && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  pointerEvents: "none",
+                  zIndex: 1,
+                }}
+              >
+                <TelegramLogo size={120} weight="thin" style={{ color: "var(--color-text-muted)", opacity: 0.06 }} />
+              </div>
+            )}
+            <CompactMessageFeed messages={messages} feedRef={feedRef} />
+          </div>
 
           {/* Permission gate */}
           <CompactPermissionGate permissions={pendingPermissions} onRespond={respondPermission} />
