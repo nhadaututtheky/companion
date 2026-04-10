@@ -11,6 +11,7 @@
 
 import { createLogger } from "../logger.js";
 import { getSetting } from "./settings-helpers.js";
+import type { TaskComplexity } from "@companion/shared/types";
 import { getSessionContext as getWikiSessionContext } from "../wiki/retriever.js";
 import { getWikiConfig } from "../wiki/store.js";
 import {
@@ -182,6 +183,47 @@ export function allocateBudget(
     totalAllocated: available - remaining,
     remaining,
     disabled,
+  };
+}
+
+// ─── Task-Aware Budget ──────────────────────────────────────────────────────
+
+/** Complexity-based context budget multipliers */
+const COMPLEXITY_MULTIPLIERS: Record<TaskComplexity, number> = {
+  simple: 0.6,   // Less context for simple tasks (explanations, searches)
+  medium: 1.0,   // Default
+  complex: 1.4,  // More context for complex tasks (architecture, multi-file)
+};
+
+/**
+ * Allocate budget with task complexity adjustment.
+ * Simple tasks get less context (fewer distractions).
+ * Complex tasks get more context (broader understanding).
+ */
+export function allocateBudgetForTask(
+  maxContextTokens: number,
+  complexity: TaskComplexity,
+  reservePercent: number = 0.65,
+): BudgetAllocation {
+  const multiplier = COMPLEXITY_MULTIPLIERS[complexity];
+  const base = allocateBudget(maxContextTokens, reservePercent);
+
+  // Apply multiplier to each allocation (except system_prompt and claude_md which are fixed)
+  const adjusted = new Map<string, number>();
+  for (const [id, tokens] of base.allocations) {
+    if (id === "system_prompt" || id === "claude_md") {
+      adjusted.set(id, tokens);
+    } else {
+      adjusted.set(id, Math.floor(tokens * multiplier));
+    }
+  }
+
+  const totalAllocated = [...adjusted.values()].reduce((a, b) => a + b, 0);
+  return {
+    allocations: adjusted,
+    totalAllocated,
+    remaining: Math.floor(maxContextTokens * (1 - reservePercent)) - totalAllocated,
+    disabled: base.disabled,
   };
 }
 

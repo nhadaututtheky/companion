@@ -4,6 +4,7 @@
 
 import { eq } from "drizzle-orm";
 import { createLogger } from "../logger.js";
+import type { TaskClassification } from "@companion/shared/types";
 import { isGraphReady, getProjectStats } from "./index.js";
 import { getLatestScanJob } from "./graph-store.js";
 import { getTracker } from "./event-collector.js";
@@ -75,70 +76,66 @@ export function getCodeGraphConfig(projectSlug: string): CodeGraphConfig {
 
 // ─── Keyword Extraction ─────────────────────────────────────────────────
 
+const STOP_WORDS = new Set([
+  // English
+  "the", "this", "that", "with", "from", "into", "have", "been", "will",
+  "would", "could", "should", "about", "what", "when", "where", "which",
+  "file", "code", "function", "class", "type", "import", "export",
+  "create", "update", "delete", "add", "remove", "fix", "change", "make",
+  "need", "want", "like", "use", "using", "can", "how", "please", "just",
+  "also", "then", "some", "more", "check", "look", "see", "try",
+  // Vietnamese
+  "cái", "này", "của", "cho", "các", "được", "trong", "với", "không",
+  "đã", "sẽ", "bro", "nhé", "luôn", "rồi", "thì", "mà", "hay",
+]);
+
+/** Split camelCase/PascalCase into constituent words */
+function splitCamelCase(word: string): string[] {
+  return word
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length >= 3);
+}
+
 function extractKeywords(text: string): string[] {
-  // Extract file paths
+  // Extract file paths first
   const filePaths = extractFilePaths(text);
 
-  // Extract identifiers (camelCase, PascalCase, snake_case)
-  const identifiers = text.match(/[a-zA-Z_]\w{2,}/g) ?? [];
+  // Extract identifiers (camelCase, PascalCase, snake_case, kebab-case)
+  const identifiers = text.match(/[a-zA-Z_][\w-]{2,}/g) ?? [];
 
-  // Filter noise words
-  const noise = new Set([
-    "the",
-    "this",
-    "that",
-    "with",
-    "from",
-    "into",
-    "have",
-    "been",
-    "will",
-    "would",
-    "could",
-    "should",
-    "about",
-    "what",
-    "when",
-    "where",
-    "which",
-    "file",
-    "code",
-    "function",
-    "class",
-    "type",
-    "import",
-    "export",
-    "create",
-    "update",
-    "delete",
-    "add",
-    "remove",
-    "fix",
-    "change",
-    "make",
-    "need",
-    "want",
-    "like",
-    "use",
-    "using",
-    "can",
-    "how",
-  ]);
+  const keywords: string[] = [];
 
-  const keywords = identifiers
-    .filter((w) => !noise.has(w.toLowerCase()) && w.length >= 3)
-    .slice(0, 10);
+  for (const word of identifiers) {
+    const lower = word.toLowerCase();
+    if (STOP_WORDS.has(lower)) continue;
+    if (word.length < 3) continue;
 
-  // Add file path basenames as keywords
-  for (const fp of filePaths) {
-    const base = fp
-      .split("/")
-      .pop()
-      ?.replace(/\.\w+$/, "");
-    if (base && base.length >= 3) keywords.push(base);
+    keywords.push(word);
+
+    // Also add camelCase parts as individual keywords
+    if (/[A-Z]/.test(word) && word.length > 6) {
+      for (const part of splitCamelCase(word)) {
+        if (!STOP_WORDS.has(part)) keywords.push(part);
+      }
+    }
   }
 
-  return [...new Set(keywords)];
+  // Add file path basenames as high-value keywords
+  for (const fp of filePaths) {
+    const base = fp.split("/").pop()?.replace(/\.\w+$/, "");
+    if (base && base.length >= 3) keywords.push(base);
+    // Also add parent directory name (domain indicator)
+    const parts = fp.split("/");
+    if (parts.length >= 2) {
+      const dir = parts[parts.length - 2];
+      if (dir && dir.length >= 3 && !STOP_WORDS.has(dir)) keywords.push(dir);
+    }
+  }
+
+  return [...new Set(keywords)].slice(0, 15);
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────
@@ -263,21 +260,42 @@ function cacheSet(key: string, value: { result: string | null; expires: number }
 
 /**
  * Build relevant code context for a user message.
- * Returns null if no relevant nodes found. Max ~800 tokens.
+ * Returns null if no relevant nodes found.
+ *
+ * When classification is provided, adjusts result count and focus:
+ * - simple tasks: max 3 symbols (less noise)
+ * - complex tasks: max 8 symbols (broader view)
+ * - review tasks: include reverse dependencies
  */
-export function buildMessageContext(projectSlug: string, userMessage: string): string | null {
+export function buildMessageContext(
+  projectSlug: string,
+  userMessage: string,
+  classification?: TaskClassification,
+): string | null {
   if (!isGraphReady(projectSlug)) return null;
 
-  const keywords = extractKeywords(userMessage);
+  // Merge keywords from message + classification's relevant files
+  const messageKeywords = extractKeywords(userMessage);
+  const classificationFiles = classification?.relevantFiles ?? [];
+  const fileKeywords = classificationFiles.flatMap((fp) => {
+    const base = fp.split("/").pop()?.replace(/\.\w+$/, "");
+    return base && base.length >= 3 ? [base] : [];
+  });
+  const keywords = [...new Set([...messageKeywords, ...fileKeywords])];
   if (keywords.length === 0) return null;
 
+  // Adjust result count by task complexity
+  const resultLimit = classification?.complexity === "simple" ? 3
+    : classification?.complexity === "complex" ? 8
+    : 5;
+
   // Check cache (60s TTL)
-  const cacheKey = `${projectSlug}:${keywords.sort().join(",")}`;
+  const cacheKey = `${projectSlug}:${keywords.sort().join(",")}:${resultLimit}`;
   const cached = contextCache.get(cacheKey);
   if (cached && cached.expires > Date.now()) return cached.result;
 
   try {
-    const related = getRelatedNodes(projectSlug, keywords, 5);
+    const related = getRelatedNodes(projectSlug, keywords, resultLimit);
     if (related.length === 0) {
       cacheSet(cacheKey, { result: null, expires: Date.now() + 60_000 });
       return null;

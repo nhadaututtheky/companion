@@ -277,6 +277,19 @@ export function getRelatedNodes(
     // Penalty for very short names (likely noise)
     if (node.symbolName.length <= 2) score *= 0.5;
 
+    // Edge connectivity bonus: nodes with more connections are more central
+    const edgeCount = db
+      .select({ count: sql<number>`count(*)` })
+      .from(codeEdges)
+      .where(
+        sql`${codeEdges.sourceNodeId} = ${node.id} OR ${codeEdges.targetNodeId} = ${node.id}`,
+      )
+      .get();
+    const connections = edgeCount?.count ?? 0;
+    if (connections > 0) {
+      score += Math.min(0.5, connections * 0.05); // max +0.5 from edges
+    }
+
     return { node, score };
   });
 
