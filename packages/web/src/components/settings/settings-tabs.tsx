@@ -9,8 +9,13 @@ import {
   Plugs,
   Bug,
   BookOpen,
+  Crown,
+  CheckCircle,
 } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
+import { useMascotStore, MASCOT_OPTIONS, type MascotId } from "@/lib/stores/mascot-store";
+import { useLicenseStore } from "@/lib/stores/license-store";
+import { MascotViewer } from "@/components/mascot/mascot-viewer";
 import type { SettingsTab } from "@/types/settings";
 
 // ── Shared primitives ─────────────────────────────────────────────────────────
@@ -107,14 +112,33 @@ export interface RunningBot {
 export function AppearanceTab() {
   const theme = useUiStore((s) => s.theme);
   const setTheme = useUiStore((s) => s.setTheme);
+  const selected = useMascotStore((s) => s.selected);
+  const setSelected = useMascotStore((s) => s.setSelected);
+  const isPro = useLicenseStore((s) => s.isPro());
+  const promptUpgrade = useLicenseStore((s) => s.promptUpgrade);
+
+  const handleMascotSelect = (id: MascotId) => {
+    const option = MASCOT_OPTIONS.find((m) => m.id === id);
+    if (!option) return;
+    if (option.proOnly && !isPro) {
+      promptUpgrade("Mascot customization requires Pro tier");
+      return;
+    }
+    setSelected(id);
+  };
+
+  const mascotOptions = MASCOT_OPTIONS;
 
   return (
     <div className="flex flex-col gap-5">
-      <SettingSection title="Appearance">
+      {/* Theme */}
+      <SettingSection title="Theme">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-medium">Theme</span>
-            <span className="text-xs">Switch between light and dark mode</span>
+            <span className="text-sm font-medium">Color mode</span>
+            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              Switch between light and dark mode
+            </span>
           </div>
           <button
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}
@@ -128,6 +152,95 @@ export function AppearanceTab() {
             <Robot size={14} weight="bold" aria-hidden="true" />
             {theme === "light" ? "Dark" : "Light"}
           </button>
+        </div>
+      </SettingSection>
+
+      {/* Mascot Picker */}
+      <SettingSection
+        title="Companion Mascot"
+        description="Choose your floating companion avatar"
+      >
+        <div className="grid grid-cols-3 gap-3">
+          {mascotOptions.map((option) => {
+            const isSelected = selected === option.id;
+            const isLocked = option.proOnly && !isPro;
+
+            return (
+              <button
+                key={option.id}
+                onClick={() => handleMascotSelect(option.id)}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all cursor-pointer relative"
+                style={{
+                  background: isSelected
+                    ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
+                    : "var(--color-bg-elevated)",
+                  border: isSelected
+                    ? "2px solid var(--color-accent)"
+                    : "2px solid var(--glass-border)",
+                  opacity: isLocked ? 0.6 : 1,
+                }}
+                aria-label={`Select ${option.label} mascot`}
+              >
+                {/* Pro badge */}
+                {option.proOnly && (
+                  <div
+                    className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-semibold"
+                    style={{
+                      background: isLocked ? "#FBBC0420" : "#34A85320",
+                      color: isLocked ? "#FBBC04" : "#34A853",
+                    }}
+                  >
+                    <Crown size={10} weight="fill" />
+                    Pro
+                  </div>
+                )}
+
+                {/* Preview */}
+                <div
+                  className="flex items-center justify-center"
+                  style={{ width: 64, height: 64 }}
+                >
+                  {option.lottieFile ? (
+                    <MascotViewer lottieFile={option.lottieFile} size={64} />
+                  ) : (
+                    <div
+                      className="rounded-full"
+                      style={{
+                        width: 48,
+                        height: 48,
+                        background:
+                          "radial-gradient(circle at 40% 35%, #4285F4, #34A853, #FBBC04, #EA4335)",
+                        boxShadow: "0 0 20px rgba(66,133,244,0.4)",
+                      }}
+                    />
+                  )}
+                </div>
+
+                {/* Label */}
+                <span className="text-xs font-semibold">{option.label}</span>
+                <span
+                  className="text-xs text-center leading-tight"
+                  style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                >
+                  {option.description}
+                </span>
+
+                {/* Selected check */}
+                {isSelected && (
+                  <CheckCircle
+                    size={16}
+                    weight="fill"
+                    style={{
+                      color: "var(--color-accent)",
+                      position: "absolute",
+                      bottom: 8,
+                      right: 8,
+                    }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
       </SettingSection>
     </div>

@@ -19,7 +19,7 @@
     },
     "packages/server": {
       "name": "@companion/server",
-      "version": "0.7.0",
+      "version": "0.14.0",
       "dependencies": {
         "@anthropic-ai/claude-agent-sdk": "^0.2.81",
         "@companion/shared": "workspace:*",
@@ -43,11 +43,11 @@
     },
     "packages/shared": {
       "name": "@companion/shared",
-      "version": "0.7.0",
+      "version": "0.13.0",
     },
     "packages/web": {
       "name": "@companion/web",
-      "version": "0.7.0",
+      "version": "0.14.0",
       "dependencies": {
         "@codemirror/lang-css": "^6.3.1",
         "@codemirror/lang-html": "^6.4.11",
@@ -59,6 +59,7 @@
         "@codemirror/state": "^6.6.0",
         "@codemirror/view": "^6.41.0",
         "@companion/shared": "workspace:*",
+        "@lottiefiles/dotlottie-react": "^0.18.10",
         "@phosphor-icons/react": "^2.1.10",
         "@tailwindcss/postcss": "^4.2.1",
         "@tanstack/react-virtual": "^3.13.23",
@@ -331,6 +332,10 @@
     "@lezer/python": ["@lezer/python@1.1.18", "", { "dependencies": { "@lezer/common": "^1.2.0", "@lezer/highlight": "^1.0.0", "@lezer/lr": "^1.0.0" } }, "sha512-31FiUrU7z9+d/ElGQLJFXl+dKOdx0jALlP3KEOsGTex8mvj+SoE1FgItcHWK/axkxCHGUSpqIHt6JAWfWu9Rhg=="],
 
     "@lezer/rust": ["@lezer/rust@1.0.2", "", { "dependencies": { "@lezer/common": "^1.2.0", "@lezer/highlight": "^1.0.0", "@lezer/lr": "^1.0.0" } }, "sha512-Lz5sIPBdF2FUXcWeCu1//ojFAZqzTQNRga0aYv6dYXqJqPfMdCAI0NzajWUd4Xijj1IKJLtjoXRPMvTKWBcqKg=="],
+
+    "@lottiefiles/dotlottie-react": ["@lottiefiles/dotlottie-react@0.18.10", "", { "dependencies": { "@lottiefiles/dotlottie-web": "0.70.0" }, "peerDependencies": { "react": "^17 || ^18 || ^19" } }, "sha512-7ZquvmoH+KrotNw2n65GHgOjP/tirFwqgGOHQWA5Qxt7wkA6gs1Y7j43DrPqcyIm69+kecsoJb+CtOS26UoKlw=="],
+
+    "@lottiefiles/dotlottie-web": ["@lottiefiles/dotlottie-web@0.70.0", "", {}, "sha512-30IpEJ778MvR6/EglrBKZg1ZSXog86mbTBIZ6WrIHse3k1vIHqbIo9hyofMFQ8vF/JkLy4niih/zlsRC5kyrAg=="],
 
     "@marijn/find-cluster-break": ["@marijn/find-cluster-break@1.0.2", "", {}, "sha512-l0h88YhZFyKdXIFNfSWpyjStDjGHwZ/U7iobcK1cQQD8sejsONdQtTVU+1wVN1PBw40PiiHB1vA5S7VTfQiP9g=="],
 

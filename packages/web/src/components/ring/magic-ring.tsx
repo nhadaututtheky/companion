@@ -1,11 +1,14 @@
 "use client";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useRingStore } from "@/lib/stores/ring-store";
+import { useMascotStore, MASCOT_OPTIONS } from "@/lib/stores/mascot-store";
+import { MascotViewer } from "@/components/mascot/mascot-viewer";
 import { api } from "@/lib/api-client";
 import { RingSelector } from "./ring-selector";
 import { RingWindow } from "./ring-window";
 
 const RING_SIZE = 52;
+const MASCOT_SIZE = 80;
 const GOOGLE_COLORS = ["#4285F4", "#EA4335", "#FBBC04", "#34A853"];
 
 function getSessionColor(id: string): string {
@@ -122,6 +125,11 @@ export function MagicRing() {
   const clearUnread = useRingStore((s) => s.clearUnread);
   const debateChannelId = useRingStore((s) => s.debateChannelId);
 
+  const selectedMascot = useMascotStore((s) => s.selected);
+  const mascotOption = MASCOT_OPTIONS.find((m) => m.id === selectedMascot);
+  const useLottie = !!mascotOption?.lottieFile;
+  const activeSize = useLottie ? MASCOT_SIZE : RING_SIZE;
+
   const hasLinked = linkedSessionIds.length > 0;
   const isDraggingRef = useRef(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
@@ -133,8 +141,8 @@ export function MagicRing() {
   // Intentionally runs once on mount to initialize position from store
   useEffect(() => {
     if (position.x === -1) {
-      const defaultX = window.innerWidth - 80;
-      const defaultY = window.innerHeight - 80;
+      const defaultX = window.innerWidth - activeSize - 24;
+      const defaultY = window.innerHeight - activeSize - 24;
       setPos({ x: defaultX, y: defaultY });
       setPosition({ x: defaultX, y: defaultY });
     } else {
@@ -186,11 +194,11 @@ export function MagicRing() {
 
       const newX = Math.max(
         0,
-        Math.min(window.innerWidth - RING_SIZE, e.clientX - dragOffsetRef.current.x),
+        Math.min(window.innerWidth - activeSize, e.clientX - dragOffsetRef.current.x),
       );
       const newY = Math.max(
         0,
-        Math.min(window.innerHeight - RING_SIZE, e.clientY - dragOffsetRef.current.y),
+        Math.min(window.innerHeight - activeSize, e.clientY - dragOffsetRef.current.y),
       );
       setPos({ x: newX, y: newY });
     },
@@ -215,8 +223,8 @@ export function MagicRing() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- dragging is included to re-evaluate after drag ends
   }, [dragging, hasLinked, isExpanded, isSelecting, pos, setExpanded, setSelecting, setPosition]);
 
-  const ringCenterX = pos.x + RING_SIZE / 2;
-  const ringCenterY = pos.y + RING_SIZE / 2;
+  const ringCenterX = pos.x + activeSize / 2;
+  const ringCenterY = pos.y + activeSize / 2;
 
   return (
     <>
@@ -233,8 +241,8 @@ export function MagicRing() {
           position: "fixed",
           left: pos.x,
           top: pos.y,
-          width: RING_SIZE,
-          height: RING_SIZE,
+          width: activeSize,
+          height: activeSize,
           borderRadius: "50%",
           border: "none",
           zIndex: 50,
@@ -244,13 +252,17 @@ export function MagicRing() {
           alignItems: "center",
           justifyContent: "center",
           background: "transparent",
-          animation: "siri-glow 3s ease-in-out infinite",
+          animation: useLottie ? undefined : "siri-glow 3s ease-in-out infinite",
           userSelect: "none",
           touchAction: "none",
           outline: "none",
         }}
       >
-        <SiriOrb sessionIds={linkedSessionIds} size={RING_SIZE} />
+        {useLottie ? (
+          <MascotViewer lottieFile={mascotOption!.lottieFile!} size={activeSize} />
+        ) : (
+          <SiriOrb sessionIds={linkedSessionIds} size={RING_SIZE} />
+        )}
 
         {/* Unread badge — shows when debate has new messages while collapsed */}
         {unreadCount > 0 && !isExpanded && (

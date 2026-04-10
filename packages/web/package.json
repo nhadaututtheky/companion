@@ -22,6 +22,7 @@
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.41.0",
     "@companion/shared": "workspace:*",
+    "@lottiefiles/dotlottie-react": "^0.18.10",
     "@phosphor-icons/react": "^2.1.10",
     "@tailwindcss/postcss": "^4.2.1",
     "@tanstack/react-virtual": "^3.13.23",
