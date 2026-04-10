@@ -36,8 +36,6 @@ jobs:
       - name: Checkout companion source
         uses: actions/checkout@v4
         with:
-          repository: nhadaututtheky/companion
-          token: ${{ secrets.SOURCE_REPO_TOKEN }}
           ref: ${{ inputs.tag }}
 
       - name: Setup Bun
@@ -113,7 +111,7 @@ jobs:
       - name: Upload to release
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_REPO_TOKEN }}
         run: |
           TAG="${{ inputs.tag }}"
           REPO="${{ env.RELEASE_REPO }}"
