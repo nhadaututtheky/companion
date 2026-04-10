@@ -474,12 +474,15 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
   });
 
   // Resume an ended session
+  const resumeSchema = z.object({
+    idleTimeoutMs: z.number().int().min(0).optional(),
+    keepAlive: z.boolean().optional(),
+  });
+
   app.post("/:id/resume", async (c) => {
     const id = c.req.param("id");
-    const body = await c.req.json<{
-      idleTimeoutMs?: number;
-      keepAlive?: boolean;
-    }>().catch((): { idleTimeoutMs?: number; keepAlive?: boolean } => ({}));
+    const parsed = resumeSchema.safeParse(await c.req.json().catch(() => ({})));
+    const body = parsed.success ? parsed.data : {};
     const record = getSessionRecord(id);
     if (!record) {
       return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);

@@ -13,6 +13,8 @@ import {
   Trash,
   Code,
   Eye,
+  ShieldCheck,
+  ShieldSlash,
 } from "@phosphor-icons/react";
 import { usePreviewStore, type PreviewArtifact } from "@/lib/stores/preview-store";
 
@@ -24,7 +26,7 @@ const VIEWPORTS = [
 
 const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
-function ArtifactRenderer({ artifact, zoom }: { artifact: PreviewArtifact; zoom: number }) {
+function ArtifactRenderer({ artifact, zoom, safeMode }: { artifact: PreviewArtifact; zoom: number; safeMode: boolean }) {
   if (artifact.type === "image") {
     return (
       <div className="flex items-center justify-center h-full p-8">
@@ -64,7 +66,7 @@ function ArtifactRenderer({ artifact, zoom }: { artifact: PreviewArtifact; zoom:
         height: `${100 / zoom}%`,
         transition: "transform 200ms ease, width 200ms ease, height 200ms ease",
       }}
-      sandbox="allow-scripts allow-forms"
+      sandbox={safeMode ? "" : "allow-scripts allow-forms"}
       title={artifact.label}
     />
   );
@@ -99,6 +101,7 @@ export function DesignPreviewPanel() {
   const [viewport, setViewport] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [zoomIndex, setZoomIndex] = useState(2); // default 1x
   const [showSource, setShowSource] = useState(false);
+  const [safeMode, setSafeMode] = useState(true); // Safe Mode: no scripts by default
 
   // Auto-focus panel on mount so keyboard shortcuts work immediately
   useEffect(() => {
@@ -331,6 +334,20 @@ export function DesignPreviewPanel() {
         {/* Divider */}
         <div style={{ width: 1, height: 20, background: "var(--color-border)" }} />
 
+        {/* Safe mode toggle */}
+        <button
+          onClick={() => setSafeMode((v) => !v)}
+          className="p-1.5 rounded cursor-pointer transition-colors"
+          style={{
+            color: safeMode ? "#10B981" : "#F59E0B",
+            background: safeMode ? "#10B98115" : "#F59E0B15",
+          }}
+          aria-label={safeMode ? "Safe mode on — scripts blocked" : "Interactive mode — scripts allowed"}
+          title={safeMode ? "Safe mode (scripts blocked)" : "Interactive mode (scripts allowed)"}
+        >
+          {safeMode ? <ShieldCheck size={14} weight="bold" /> : <ShieldSlash size={14} weight="bold" />}
+        </button>
+
         {/* Toggle source / preview */}
         <button
           onClick={() => setShowSource((v) => !v)}
@@ -390,7 +407,7 @@ export function DesignPreviewPanel() {
           {showSource ? (
             <SourceViewer artifact={artifact} />
           ) : (
-            <ArtifactRenderer artifact={artifact} zoom={zoom} />
+            <ArtifactRenderer artifact={artifact} zoom={zoom} safeMode={safeMode} />
           )}
         </div>
       </div>

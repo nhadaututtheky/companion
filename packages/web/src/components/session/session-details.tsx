@@ -589,8 +589,8 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
     try {
       const res = await api.snapshots.list(sessionId);
       setSnapshots(res.data);
-    } catch (err) {
-      console.error("Failed to load snapshots:", err);
+    } catch {
+      // Silently fail — snapshot loading is non-critical
     } finally {
       setLoading(false);
     }

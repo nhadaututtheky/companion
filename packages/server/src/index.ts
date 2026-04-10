@@ -16,7 +16,7 @@ import { seedDefaultTemplates } from "./services/templates.js";
 import { seedWorkflowTemplates } from "./services/workflow-templates.js";
 import { DEFAULT_PORT, APP_VERSION } from "@companion/shared";
 import { timingSafeEqual } from "node:crypto";
-import { getAccessCredential } from "./middleware/auth.js";
+import { getAccessCredential, warnIfNoAuth } from "./middleware/auth.js";
 import { terminalManager } from "./services/terminal-manager.js";
 import { cleanupAllHooks, cleanupOrphanHooks } from "./services/adapters/claude-adapter.js";
 import * as spectatorBridge from "./services/spectator-bridge.js";
@@ -61,6 +61,9 @@ seedWorkflowTemplates();
 
 // Register global error handlers for tracking
 registerGlobalErrorHandlers();
+
+// Warn if no auth credentials configured
+warnIfNoAuth();
 
 // On startup, mark all non-terminal sessions as ended (server restarted, all in-memory state gone)
 const startupCleaned = bulkEndSessions();

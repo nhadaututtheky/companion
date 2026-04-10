@@ -7,6 +7,7 @@
  */
 
 import { Hono } from "hono";
+import { z } from "zod";
 import {
   getModelsGrouped,
   checkProvidersHealth,
@@ -78,16 +79,20 @@ modelRoutes.get("/health", async (c) => {
 });
 
 /** POST /models/providers/:id/toggle — enable/disable a provider */
+const toggleSchema = z.object({ enabled: z.boolean() });
+
 modelRoutes.post("/providers/:id/toggle", async (c) => {
   const providerId = c.req.param("id");
-  const body = await c.req.json<{ enabled: boolean }>().catch(() => null);
+  const parsed = toggleSchema.safeParse(await c.req.json().catch(() => null));
 
-  if (body === null || typeof body.enabled !== "boolean") {
+  if (!parsed.success) {
     return c.json(
-      { success: false, error: "Body must include { enabled: boolean }" } satisfies ApiResponse,
+      { success: false, error: parsed.error.issues[0]?.message ?? "Body must include { enabled: boolean }" } satisfies ApiResponse,
       400,
     );
   }
+
+  const body = parsed.data;
 
   const key = `provider.${providerId}.disabled`;
   const db = getDb();

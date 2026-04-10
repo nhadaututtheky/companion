@@ -4,6 +4,7 @@
 
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 import {
   scanProject,
   getScanStatus,
@@ -34,17 +35,43 @@ import type { ApiResponse } from "@companion/shared";
 
 export const codegraphRoutes = new Hono();
 
+// ─── Validation Schemas ─────────────────────────────────────────────────
+
+/** Shared schema for routes that only need projectSlug */
+const projectSlugSchema = z.object({ projectSlug: z.string().min(1) });
+
+const rescanSchema = z.object({
+  projectSlug: z.string().min(1),
+  files: z.array(z.string()).optional(),
+});
+
+const configSchema = z.object({
+  projectSlug: z.string().min(1),
+  injectionEnabled: z.boolean().optional(),
+  projectMapEnabled: z.boolean().optional(),
+  messageContextEnabled: z.boolean().optional(),
+  planReviewEnabled: z.boolean().optional(),
+  breakCheckEnabled: z.boolean().optional(),
+  webDocsEnabled: z.boolean().optional(),
+  excludePatterns: z.array(z.string()).optional(),
+  maxContextTokens: z.number().int().positive().optional(),
+});
+
 // ─── Scan Control ───────────────────────────────────────────────────────
 
 /** POST /codegraph/scan — start a full scan */
 codegraphRoutes.post("/scan", async (c) => {
-  const body = await c.req.json<{ projectSlug?: string }>();
-  if (!body.projectSlug) {
-    return c.json({ success: false, error: "projectSlug is required" } satisfies ApiResponse, 400);
+  const parsed = projectSlugSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
+    return c.json(
+      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      400,
+    );
   }
+  const { projectSlug } = parsed.data;
 
   try {
-    const jobId = await scanProject(body.projectSlug);
+    const jobId = await scanProject(projectSlug);
     return c.json({ success: true, data: { jobId } } satisfies ApiResponse);
   } catch {
     return c.json({ success: false, error: "Operation failed" } satisfies ApiResponse, 400);
@@ -53,13 +80,17 @@ codegraphRoutes.post("/scan", async (c) => {
 
 /** POST /codegraph/rescan — incremental rescan */
 codegraphRoutes.post("/rescan", async (c) => {
-  const body = await c.req.json<{ projectSlug?: string; files?: string[] }>();
-  if (!body.projectSlug) {
-    return c.json({ success: false, error: "projectSlug is required" } satisfies ApiResponse, 400);
+  const parsed = rescanSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
+    return c.json(
+      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      400,
+    );
   }
+  const { projectSlug, files } = parsed.data;
 
   try {
-    const result = await incrementalRescan(body.projectSlug, body.files);
+    const result = await incrementalRescan(projectSlug, files);
     return c.json({ success: true, data: result } satisfies ApiResponse);
   } catch {
     return c.json({ success: false, error: "Operation failed" } satisfies ApiResponse, 400);
@@ -68,13 +99,17 @@ codegraphRoutes.post("/rescan", async (c) => {
 
 /** POST /codegraph/describe — generate semantic descriptions */
 codegraphRoutes.post("/describe", async (c) => {
-  const body = await c.req.json<{ projectSlug?: string }>();
-  if (!body.projectSlug) {
-    return c.json({ success: false, error: "projectSlug is required" } satisfies ApiResponse, 400);
+  const parsed = projectSlugSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
+    return c.json(
+      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      400,
+    );
   }
+  const { projectSlug } = parsed.data;
 
   try {
-    const described = await describeNodes(body.projectSlug);
+    const described = await describeNodes(projectSlug);
     return c.json({ success: true, data: { described } } satisfies ApiResponse);
   } catch {
     return c.json({ success: false, error: "Operation failed" } satisfies ApiResponse, 400);
@@ -83,12 +118,16 @@ codegraphRoutes.post("/describe", async (c) => {
 
 /** POST /codegraph/cancel — cancel active scan */
 codegraphRoutes.post("/cancel", async (c) => {
-  const body = await c.req.json<{ projectSlug?: string }>();
-  if (!body.projectSlug) {
-    return c.json({ success: false, error: "projectSlug is required" } satisfies ApiResponse, 400);
+  const parsed = projectSlugSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
+    return c.json(
+      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      400,
+    );
   }
+  const { projectSlug } = parsed.data;
 
-  const cancelled = cancelScan(body.projectSlug);
+  const cancelled = cancelScan(projectSlug);
   return c.json({ success: true, data: { cancelled } } satisfies ApiResponse);
 });
 
@@ -388,21 +427,14 @@ codegraphRoutes.get("/config", (c) => {
 
 /** PUT /codegraph/config — update injection config */
 codegraphRoutes.put("/config", async (c) => {
-  const body = await c.req.json<{
-    projectSlug?: string;
-    injectionEnabled?: boolean;
-    projectMapEnabled?: boolean;
-    messageContextEnabled?: boolean;
-    planReviewEnabled?: boolean;
-    breakCheckEnabled?: boolean;
-    webDocsEnabled?: boolean;
-    excludePatterns?: string[];
-    maxContextTokens?: number;
-  }>();
-
-  if (!body.projectSlug) {
-    return c.json({ success: false, error: "projectSlug is required" } satisfies ApiResponse, 400);
+  const parsed = configSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
+    return c.json(
+      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      400,
+    );
   }
+  const body = parsed.data;
 
   const db = getDb();
   const existing = db

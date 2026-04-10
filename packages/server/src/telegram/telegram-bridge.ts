@@ -1,6 +1,12 @@
 /**
- * TelegramBridge — Core bridge between Telegram and WsBridge/CLI.
+ * TelegramBridge — Core orchestrator between Telegram and WsBridge/CLI.
  * Manages chat-to-session mappings, routes messages, handles streaming.
+ *
+ * Message handlers, permission handlers, and session event handlers are
+ * extracted to separate modules for maintainability:
+ * - telegram-message-handlers.ts — user input (text, photo, document)
+ * - telegram-permission-handler.ts — permission batching + auto-approve
+ * - telegram-session-events.ts — CLI output (assistant, stream, result, child agents)
  */
 
 import { type Bot, type Context } from "grammy";
@@ -9,13 +15,7 @@ import { getDb } from "../db/client.js";
 import { telegramSessionMappings, telegramForumTopics } from "../db/schema.js";
 import { createBot, registerCommands, type BotConfig } from "./bot-factory.js";
 import { StreamHandler } from "./stream-handler.js";
-import {
-  escapeHTML,
-  formatPermission,
-  formatToolFeed,
-  isPermissionDangerous,
-} from "./formatter.js";
-import { getSessionSummary } from "../services/session-summarizer.js";
+import { escapeHTML } from "./formatter.js";
 import { registerSessionCommands } from "./commands/session.js";
 import { registerControlCommands } from "./commands/control.js";
 import { registerInfoCommands } from "./commands/info.js";
@@ -27,56 +27,29 @@ import { registerWikiCommands } from "./commands/wiki.js";
 import { registerMoodCommands } from "./commands/mood.js";
 import { getLatestReading, type OperationalState } from "../services/pulse-estimator.js";
 import { createLogger } from "../logger.js";
-import { storeMessage } from "../services/session-store.js";
-import { getProject, listProjects } from "../services/project-profiles.js";
-import { randomUUID } from "crypto";
+import { getProject } from "../services/project-profiles.js";
 import type { WsBridge } from "../services/ws-bridge.js";
-import type {
-  BrowserIncomingMessage,
-  CLIResultMessage,
-  PermissionRequest,
-} from "@companion/shared";
+import type { BrowserIncomingMessage } from "@companion/shared";
+
+// Extracted handlers
+import { handleTextMessage, handlePhotoMessage, handleDocumentMessage } from "./telegram-message-handlers.js";
+import {
+  handlePermissionRequest,
+  cancelAutoApproveCountdown as cancelAutoApproveCountdownFn,
+  cancelAllAutoApproveCountdowns as cancelAllAutoApproveCountdownsFn,
+  type PermBatch,
+} from "./telegram-permission-handler.js";
+import {
+  handleAssistantMessage,
+  handleStreamEvent,
+  handleResultMessage,
+  handleContextUpdate,
+  sendSessionSummary,
+  handleChildSpawned,
+  handleChildEnded,
+} from "./telegram-session-events.js";
 
 const log = createLogger("telegram-bridge");
-
-// ─── Vietnamese detection ────────────────────────────────────────────────────
-
-const VI_REGEX = /[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ]/gi;
-
-function isVietnamese(text: string): boolean {
-  const matches = text.match(VI_REGEX);
-  return (matches?.length ?? 0) >= 3;
-}
-
-// ─── File path detection (Phase 14) ─────────────────────────────────────────
-
-/**
- * Extract backtick-wrapped file paths from assistant message text.
- * Matches patterns like `src/index.ts`, `.rune/plan.md`, `packages/foo/bar.ts`.
- * Returns unique paths only, limited to 5.
- */
-function extractFilePaths(text: string): string[] {
-  // Match backtick-wrapped tokens that look like file paths (contain / or . with extension)
-  const regex = /`([^`\n]+\.[a-zA-Z0-9]{1,10}[^`\n]*)`/g;
-  const seen = new Set<string>();
-  const results: string[] = [];
-  let match: RegExpExecArray | null;
-
-  while ((match = regex.exec(text)) !== null) {
-    const candidate = match[1]!.trim();
-    // Must contain a path separator or start with . to be a file path
-    if ((candidate.includes("/") || candidate.startsWith(".")) && !seen.has(candidate)) {
-      // Skip URLs and other non-file patterns
-      if (!candidate.startsWith("http") && candidate.length < 200) {
-        seen.add(candidate);
-        results.push(candidate);
-        if (results.length >= 5) break;
-      }
-    }
-  }
-
-  return results;
-}
 
 // ─── Chat-Session Mapping ───────────────────────────────────────────────────
 
@@ -115,17 +88,7 @@ export interface DeadSessionInfo {
   diedAt: number;
 }
 
-/** Permission batch to avoid spamming */
-interface PermBatch {
-  perms: Array<{
-    requestId: string;
-    toolName: string;
-    input: Record<string, unknown>;
-    description?: string;
-  }>;
-  timer: ReturnType<typeof setTimeout>;
-  sessionId: string;
-}
+// PermBatch type imported from telegram-permission-handler.ts
 
 // ─── Status emoji helpers ────────────────────────────────────────────────────
 
@@ -155,28 +118,29 @@ export class TelegramBridge {
   readonly bot: Bot;
   readonly wsBridge: WsBridge;
   readonly config: BotConfig;
-  private streamHandler: StreamHandler;
+  /** @internal — used by extracted session-events module */
+  readonly streamHandler: StreamHandler;
 
   /** chatId:topicId → mapping */
   private mappings = new Map<string, ChatMapping>();
   /** sessionId → per-session config (panel msg id, idle timeout, etc.) */
   private sessionConfigs = new Map<string, SessionConfig>();
-  /** chatId:topicId → permission batch */
-  private permBatches = new Map<string, PermBatch>();
+  /** chatId:topicId → permission batch — @internal for permission-handler */
+  permBatches = new Map<string, PermBatch>();
   /** sessionId → unsubscribe function */
   private subscriptions = new Map<string, () => void>();
-  /** sessionIds that already received a compact warning (prevent spam) */
-  private compactWarningSent = new Set<string>();
+  /** sessionIds that already received a compact warning (prevent spam) — @internal */
+  compactWarningSent = new Set<string>();
   /** sessionId → detailed context breakdown HTML (for expand callback) */
   private contextBreakdowns = new Map<string, string>();
   /** sessionId → stream-only subscriber key (chatId:topicId) — for /stream without owning the session */
   private streamSubscriptions = new Map<string, string>();
   /** Dead sessions available for resume (keyed by "chatId:topicId") */
   private deadSessions = new Map<string, DeadSessionInfo>();
-  /** chatId:topicId → user message ID locked at first response chunk (for reaction update) */
-  private lastUserMsgId = new Map<string, number>();
-  /** chatId:topicId → locked origin message ID (set on first stream chunk, prevents race condition) */
-  private responseOriginMsg = new Map<string, number>();
+  /** chatId:topicId → user message ID locked at first response chunk — @internal */
+  lastUserMsgId = new Map<string, number>();
+  /** chatId:topicId → locked origin message ID — @internal */
+  responseOriginMsg = new Map<string, number>();
   /** chatId:topicId → tool feed message ID (the "Thinking..." / "Running..." message) */
   private toolFeedMsgId = new Map<string, number>();
   /** chatId:topicId → accumulated tool feed lines */
@@ -185,15 +149,15 @@ export class TelegramBridge {
   private activeDebateChannels = new Map<string, string>();
 
   // Pulse auto-alert state
-  private pulseAlertCooldowns = new Map<string, number>(); // sessionId → last alert timestamp
-  private pulsePrevState = new Map<string, OperationalState>(); // sessionId → previous state
-  /** viewfile callback cache: short key → { sessionId, filePath } (avoids 64-byte callback_data limit) */
+  private pulseAlertCooldowns = new Map<string, number>();
+  private pulsePrevState = new Map<string, OperationalState>();
+  /** viewfile callback cache: short key → { sessionId, filePath } */
   viewFileCache = new Map<string, { sessionId: string; filePath: string }>();
   private viewFileCounter = 0;
-  /** Active auto-approve countdowns: messageId → timer */
-  private autoApproveTimers = new Map<number, ReturnType<typeof setInterval>>();
-  /** Reverse index: sessionId → Set of messageIds with active countdowns */
-  private sessionAutoApproveMessages = new Map<string, Set<number>>();
+  /** Active auto-approve countdowns — @internal for permission-handler */
+  autoApproveTimers = new Map<number, ReturnType<typeof setInterval>>();
+  /** Reverse index: sessionId → Set of messageIds — @internal for permission-handler */
+  sessionAutoApproveMessages = new Map<string, Set<number>>();
 
   constructor(wsBridge: WsBridge, config: BotConfig) {
     this.wsBridge = wsBridge;
@@ -211,20 +175,20 @@ export class TelegramBridge {
     registerTemplateCommands(this);
     registerMoodCommands(this);
     registerWikiCommands(this);
-    // Handle text messages (not commands)
+    // Handle text messages (not commands) — delegated to telegram-message-handlers
     this.bot.on("message:text", async (ctx) => {
-      if (ctx.message.text.startsWith("/")) return; // Skip unregistered commands
-      await this.handleTextMessage(ctx);
+      if (ctx.message.text.startsWith("/")) return;
+      await handleTextMessage(this, ctx);
     });
 
-    // Handle photo messages
+    // Handle photo messages — delegated to telegram-message-handlers
     this.bot.on("message:photo", async (ctx) => {
-      await this.handlePhotoMessage(ctx);
+      await handlePhotoMessage(this, ctx);
     });
 
-    // Handle document messages
+    // Handle document messages — delegated to telegram-message-handlers
     this.bot.on("message:document", async (ctx) => {
-      await this.handleDocumentMessage(ctx);
+      await handleDocumentMessage(this, ctx);
     });
 
     // Handle voice messages (placeholder)
@@ -474,7 +438,8 @@ export class TelegramBridge {
 
   // ── Mapping management ────────────────────────────────────────────────
 
-  private mapKey(chatId: number, topicId?: number): string {
+  /** @internal — used by extracted handler modules */
+  mapKey(chatId: number, topicId?: number): string {
     return `${chatId}:${topicId ?? 0}`;
   }
 
@@ -893,24 +858,23 @@ export class TelegramBridge {
     return this.bot.api;
   }
 
-  // ── Subscribe to CLI output ───────────────────────────────────────────
+  // ── Accessors for extracted handler modules ──────────────────────────
 
-  subscribeToSession(sessionId: string, chatId: number, topicId?: number): void {
-    const subscriberId = `telegram:${this.config.botId}:${chatId}:${topicId ?? 0}`;
-
-    const unsub = this.wsBridge.subscribe(sessionId, subscriberId, (msg) => {
-      this.handleSessionMessage(chatId, topicId, sessionId, msg as BrowserIncomingMessage);
-    });
-
-    this.subscriptions.set(sessionId, unsub);
+  /** @internal — generate unique key for viewFile callback cache */
+  nextViewFileKey(): string {
+    return `vf${++this.viewFileCounter}`;
   }
 
+  /** @internal — iterate mappings (for child-ended topic lookup) */
+  getMappingsEntries(): IterableIterator<[string, ChatMapping]> {
+    return this.mappings.entries();
+  }
 
   /**
    * Wait for a session to reach "idle" status (CLI initialized).
    * Polls every 500ms up to maxWaitMs. Returns true if ready.
    */
-  private waitForSessionReady(sessionId: string, maxWaitMs: number): Promise<boolean> {
+  waitForSessionReady(sessionId: string, maxWaitMs: number): Promise<boolean> {
     return new Promise((resolve) => {
       const start = Date.now();
       const check = () => {
@@ -932,6 +896,72 @@ export class TelegramBridge {
       check();
     });
   }
+
+  /** @internal — Create or update the tool feed message */
+  async upsertToolFeed(
+    chatId: number,
+    topicId: number | undefined,
+    newLine: string,
+  ): Promise<void> {
+    const k = this.mapKey(chatId, topicId);
+
+    let msgId = this.toolFeedMsgId.get(k);
+    if (!msgId) {
+      try {
+        const sent = await this.bot.api.sendMessage(chatId, "🤔 <i>Thinking…</i>", {
+          parse_mode: "HTML",
+          message_thread_id: topicId,
+        });
+        msgId = sent.message_id;
+        this.toolFeedMsgId.set(k, msgId);
+        this.toolFeedLines.set(k, ["🤔 <i>Thinking…</i>"]);
+      } catch {
+        return;
+      }
+    }
+
+    const lines = this.toolFeedLines.get(k) ?? [];
+    const trimmed = [...lines, newLine].slice(-15);
+    this.toolFeedLines.set(k, trimmed);
+
+    this.bot.api
+      .editMessageText(chatId, msgId, trimmed.join("\n"), {
+        parse_mode: "HTML",
+      })
+      .catch(() => {});
+  }
+
+  /** @internal — Clean up tool feed state after result */
+  cleanupToolFeed(chatId: number, topicId: number | undefined): void {
+    const k = this.mapKey(chatId, topicId);
+    this.toolFeedMsgId.delete(k);
+    this.toolFeedLines.delete(k);
+  }
+
+  // ── Permission handler delegation ──────────────────────────────────────
+
+  /** Cancel auto-approve countdown for a specific message (on manual allow/deny) */
+  cancelAutoApproveCountdown(messageId: number): void {
+    cancelAutoApproveCountdownFn(this, messageId);
+  }
+
+  /** Cancel all active auto-approve countdowns (on /allow or /deny commands) */
+  cancelAllAutoApproveCountdowns(): void {
+    cancelAllAutoApproveCountdownsFn(this);
+  }
+
+  // ── Subscribe to CLI output ───────────────────────────────────────────
+
+  subscribeToSession(sessionId: string, chatId: number, topicId?: number): void {
+    const subscriberId = `telegram:${this.config.botId}:${chatId}:${topicId ?? 0}`;
+
+    const unsub = this.wsBridge.subscribe(sessionId, subscriberId, (msg) => {
+      this.handleSessionMessage(chatId, topicId, sessionId, msg as BrowserIncomingMessage);
+    });
+
+    this.subscriptions.set(sessionId, unsub);
+  }
+
 
   /**
    * Attach a chat to an existing session for stream-only observation.
@@ -1118,104 +1148,7 @@ export class TelegramBridge {
     return undefined;
   }
 
-  // ── Multi-Brain: Agent Topic Management ────────────────────────────────
-
-  /**
-   * When a parent session spawns a child agent, create a forum topic for the child
-   * and subscribe it so messages flow to the new topic.
-   */
-  private async handleChildSpawned(
-    chatId: number,
-    _parentTopicId: number | undefined,
-    parentSessionId: string,
-    msg: BrowserIncomingMessage & { type: "child_spawned" },
-  ): Promise<void> {
-    const { childSessionId, childShortId, childName, childRole, childModel } = msg;
-
-    const ROLE_EMOJI: Record<string, string> = {
-      specialist: "🔧",
-      researcher: "🔍",
-      reviewer: "🧪",
-    };
-    const emoji = ROLE_EMOJI[childRole] ?? "🤖";
-
-    // Try to create a forum topic for this agent
-    try {
-      const topicName = `${emoji} ${childName}`;
-      const forumTopic = await this.bot.api.createForumTopic(chatId, topicName);
-      const agentTopicId = forumTopic.message_thread_id;
-
-      // Map child session to this topic
-      const mapping: ChatMapping = {
-        sessionId: childSessionId,
-        projectSlug: this.getMapping(chatId, _parentTopicId)?.projectSlug ?? "",
-        model: childModel,
-        topicId: agentTopicId,
-      };
-      this.setMapping(chatId, agentTopicId, mapping);
-      this.subscribeToSession(childSessionId, chatId, agentTopicId);
-
-      // Send intro message in the new topic
-      await this.bot.api.sendMessage(
-        chatId,
-        `${emoji} <b>${escapeHTML(childName)}</b> (@${escapeHTML(childShortId ?? "?")}) spawned\n` +
-        `Model: <code>${escapeHTML(childModel)}</code> | Role: ${childRole}\n` +
-        `Parent: <code>${escapeHTML(parentSessionId.slice(0, 8))}</code>`,
-        { parse_mode: "HTML", message_thread_id: agentTopicId },
-      );
-
-      // Notify in parent topic
-      await this.bot.api.sendMessage(
-        chatId,
-        `${emoji} Spawned agent <b>${escapeHTML(childName)}</b> → topic "${escapeHTML(topicName)}"`,
-        { parse_mode: "HTML", message_thread_id: _parentTopicId },
-      );
-
-      log.info("Created agent topic", { chatId, childSessionId, childName, agentTopicId });
-    } catch (err) {
-      // Forum topics not available — send inline notification instead
-      log.warn("Could not create agent topic, falling back to inline", { chatId, error: String(err) });
-      await this.bot.api.sendMessage(
-        chatId,
-        `${emoji} Spawned agent <b>${escapeHTML(childName)}</b> (@${escapeHTML(childShortId ?? "?")})\nModel: ${escapeHTML(childModel)}`,
-        { parse_mode: "HTML", message_thread_id: _parentTopicId },
-      ).catch(() => {});
-    }
-  }
-
-  /** When a child agent session ends, notify in parent topic and close agent topic. */
-  private async handleChildEnded(
-    chatId: number,
-    parentTopicId: number | undefined,
-    msg: BrowserIncomingMessage & { type: "child_ended" },
-  ): Promise<void> {
-    const { childSessionId, childName, status } = msg;
-    const statusEmoji = status === "ended" ? "✅" : "❌";
-    const label = childName ?? childSessionId.slice(0, 8);
-
-    // Notify in parent topic
-    await this.bot.api.sendMessage(
-      chatId,
-      `${statusEmoji} Agent <b>${escapeHTML(label)}</b> ${status === "ended" ? "completed" : "errored"}`,
-      { parse_mode: "HTML", message_thread_id: parentTopicId },
-    ).catch(() => {});
-
-    // Try to close the agent's topic (optional — nice cleanup)
-    try {
-      // Find the child's topic
-      for (const [key, mapping] of this.mappings.entries()) {
-        if (mapping.sessionId === childSessionId && key.startsWith(`${chatId}:`)) {
-          const childTopicId = mapping.topicId;
-          if (childTopicId) {
-            await this.bot.api.closeForumTopic(chatId, childTopicId);
-          }
-          break;
-        }
-      }
-    } catch {
-      // Closing topic is best-effort
-    }
-  }
+  // ── Session message router (delegates to extracted handlers) ──────────
 
   private async handleSessionMessage(
     chatId: number,
@@ -1231,19 +1164,19 @@ export class TelegramBridge {
 
       switch (msg.type) {
         case "assistant":
-          await this.handleAssistantMessage(chatId, topicId, msg);
+          await handleAssistantMessage(this, chatId, topicId, msg);
           break;
 
         case "stream_event":
-          await this.handleStreamEvent(chatId, topicId, msg);
+          await handleStreamEvent(this, chatId, topicId, msg);
           break;
 
         case "result":
-          await this.handleResultMessage(chatId, topicId, sessionId, msg.data);
+          await handleResultMessage(this, chatId, topicId, sessionId, msg.data);
           break;
 
         case "permission_request":
-          await this.handlePermissionRequest(chatId, topicId, sessionId, msg.request);
+          await handlePermissionRequest(this, chatId, topicId, sessionId, msg.request);
           break;
 
         case "session_init": {
@@ -1269,7 +1202,7 @@ export class TelegramBridge {
         }
 
         case "context_update":
-          await this.handleContextUpdate(chatId, topicId, sessionId, msg.contextUsedPercent);
+          await handleContextUpdate(this, chatId, topicId, sessionId, msg.contextUsedPercent);
           break;
 
         case "cost_warning": {
@@ -1312,7 +1245,7 @@ export class TelegramBridge {
             this.pulseAlertCooldowns.delete(sessionId);
             this.pulsePrevState.delete(sessionId);
             // Send summary after a delay (wait for summarizer to finish)
-            void this.sendSessionSummary(chatId, topicId, sessionId);
+            void sendSessionSummary(this, chatId, topicId, sessionId);
           }
           break;
 
@@ -1326,11 +1259,11 @@ export class TelegramBridge {
           break;
 
         case "child_spawned":
-          await this.handleChildSpawned(chatId, topicId, sessionId, msg);
+          await handleChildSpawned(this, chatId, topicId, sessionId, msg);
           break;
 
         case "child_ended":
-          await this.handleChildEnded(chatId, topicId, msg);
+          await handleChildEnded(this, chatId, topicId, msg);
           break;
 
         case "pulse:update": {
@@ -1413,748 +1346,12 @@ export class TelegramBridge {
     }
   }
 
-  // ── Tool feed (progress indicators) ──────────────────────────────────
+  // Tool feed (upsertToolFeed, cleanupToolFeed) moved to accessor section above
 
-  /** Create or update the tool feed message ("Thinking...", "Running...") */
-  private async upsertToolFeed(
-    chatId: number,
-    topicId: number | undefined,
-    newLine: string,
-  ): Promise<void> {
-    const k = this.mapKey(chatId, topicId);
 
-    // Create initial feed message if none exists
-    let msgId = this.toolFeedMsgId.get(k);
-    if (!msgId) {
-      try {
-        const sent = await this.bot.api.sendMessage(chatId, "🤔 <i>Thinking…</i>", {
-          parse_mode: "HTML",
-          message_thread_id: topicId,
-        });
-        msgId = sent.message_id;
-        this.toolFeedMsgId.set(k, msgId);
-        this.toolFeedLines.set(k, ["🤔 <i>Thinking…</i>"]);
-      } catch {
-        return;
-      }
-    }
-
-    // Accumulate lines (keep last 15 to stay under Telegram 4096 char limit)
-    const lines = this.toolFeedLines.get(k) ?? [];
-    const trimmed = [...lines, newLine].slice(-15);
-    this.toolFeedLines.set(k, trimmed);
-
-    // Edit the feed message
-    this.bot.api
-      .editMessageText(chatId, msgId, trimmed.join("\n"), {
-        parse_mode: "HTML",
-      })
-      .catch(() => {});
-  }
-
-  /** Clean up tool feed state after result */
-  private cleanupToolFeed(chatId: number, topicId: number | undefined): void {
-    const k = this.mapKey(chatId, topicId);
-    this.toolFeedMsgId.delete(k);
-    this.toolFeedLines.delete(k);
-  }
-
-  // ── Message handlers ──────────────────────────────────────────────────
-
-  private async handleTextMessage(ctx: Context): Promise<void> {
-    const chatId = ctx.chat!.id;
-    const topicId = ctx.message?.message_thread_id;
-    const text = ctx.message?.text ?? "";
-
-    if (!text.trim()) return;
-
-
-    const mapping = this.getMapping(chatId, topicId);
-
-    if (!mapping) {
-      // Auto-connect: if only 1 project, start session automatically
-      const projects = listProjects();
-      if (projects.length === 1) {
-        await this.startSessionForChat(ctx, projects[0]!.slug);
-        // Wait for the CLI to be ready before sending the queued message
-        const newMapping = this.getMapping(chatId, topicId);
-        if (newMapping) {
-          const ready = await this.waitForSessionReady(newMapping.sessionId, 30_000);
-          if (ready) {
-            this.wsBridge.sendUserMessage(newMapping.sessionId, text, "telegram");
-          }
-        }
-        return;
-      }
-
-      await ctx.reply("No active session. Use /start to select a project.");
-      return;
-    }
-
-    // Check if session is still alive
-    const activeSession = this.wsBridge.getSession(mapping.sessionId);
-    if (!activeSession) {
-      // Session died — clear stale mapping and notify user
-      this.removeMapping(chatId, topicId);
-      await ctx.reply("⚠️ Session expired. Use /start to begin a new session.");
-      return;
-    }
-
-    // Auto-translate Vietnamese → English to save tokens
-    let messageToSend = text;
-    if (isVietnamese(text) && text.length > 10) {
-      try {
-        const { translateViToEn } = await import("../services/ai-client.js");
-        const translated = await translateViToEn(text);
-        if (translated) {
-          messageToSend = translated;
-          // Echo the translated text so the user sees what was sent
-          await this.bot.api
-            .sendMessage(chatId, `🔄 <i>${escapeHTML(translated)}</i>`, {
-              parse_mode: "HTML",
-              message_thread_id: topicId,
-            })
-            .catch(() => {});
-        }
-      } catch {
-        // Translation failed — send original text
-      }
-    }
-
-    // Acknowledge receipt with 👀 reaction + track for result reaction
-    const userMsgId = ctx.message?.message_id;
-    const k = this.mapKey(chatId, topicId);
-    if (userMsgId) {
-      this.bot.api
-        .setMessageReaction(chatId, userMsgId, [{ type: "emoji", emoji: "👀" }])
-        .catch(() => {});
-      this.lastUserMsgId.set(k, userMsgId);
-    }
-
-    // Store message
-    storeMessage({
-      id: randomUUID(),
-      sessionId: mapping.sessionId,
-      role: "user",
-      content: messageToSend,
-      source: "telegram",
-      sourceId: String(userMsgId),
-    });
-
-    // Send to CLI
-    this.wsBridge.sendUserMessage(mapping.sessionId, messageToSend, "telegram");
-
-    // User is active — clear idle timer
-    const sessionCfg = this.getSessionConfig(mapping.sessionId);
-    if (sessionCfg.idleTimer) {
-      clearTimeout(sessionCfg.idleTimer);
-      sessionCfg.idleTimer = undefined;
-    }
-
-    // Stream will lazy-start on first appendText (no startStream needed)
-  }
-
-  private async handlePhotoMessage(ctx: Context): Promise<void> {
-    const chatId = ctx.chat!.id;
-    const topicId = ctx.message?.message_thread_id;
-
-    const mapping = this.getMapping(chatId, topicId);
-    if (!mapping) {
-      await ctx.reply("No active session. Use /new to start one.");
-      return;
-    }
-
-    const activeSession = this.wsBridge.getSession(mapping.sessionId);
-    if (!activeSession) {
-      this.removeMapping(chatId, topicId);
-      await ctx.reply("⚠️ Session expired. Use /start to begin a new session.");
-      return;
-    }
-
-    const photos = ctx.message?.photo;
-    if (!photos || photos.length === 0) return;
-
-    // Take highest resolution (last element)
-    const photo = photos[photos.length - 1]!;
-    const caption = ctx.message?.caption ?? "";
-
-    await ctx.reply("📸 Image received, forwarding to Claude...");
-
-    try {
-      const file = await ctx.api.getFile(photo.file_id);
-      if (!file.file_path) throw new Error("No file_path returned");
-
-      const token = this.config.token;
-      const url = `https://api.telegram.org/file/bot${token}/${file.file_path}`;
-
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-
-      const buffer = Buffer.from(await response.arrayBuffer());
-      const ext = file.file_path.split(".").pop() ?? "jpg";
-      const mediaType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
-      const base64 = buffer.toString("base64");
-
-      // Build multimodal content blocks (same format as Claude API)
-      const blocks: Array<
-        | { type: "text"; text: string }
-        | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
-      > = [
-        { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
-      ];
-
-      if (caption.trim()) {
-        blocks.push({ type: "text", text: caption.trim() });
-      } else {
-        blocks.push({ type: "text", text: "What do you see in this image?" });
-      }
-
-      this.wsBridge.sendMultimodalMessage(mapping.sessionId, blocks, "telegram");
-    } catch (err) {
-      log.error("Failed to download/forward photo", { error: String(err) });
-      await ctx.reply("❌ Failed to download image. Please try again.");
-    }
-  }
-
-  private async handleDocumentMessage(ctx: Context): Promise<void> {
-    const chatId = ctx.chat!.id;
-    const topicId = ctx.message?.message_thread_id;
-
-    const mapping = this.getMapping(chatId, topicId);
-    if (!mapping) {
-      await ctx.reply("No active session. Use /new to start one.");
-      return;
-    }
-
-    const activeSession = this.wsBridge.getSession(mapping.sessionId);
-    if (!activeSession) {
-      this.removeMapping(chatId, topicId);
-      await ctx.reply("⚠️ Session expired. Use /start to begin a new session.");
-      return;
-    }
-
-    const doc = ctx.message?.document;
-    if (!doc) return;
-
-    const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
-    if (doc.file_size && doc.file_size > MAX_SIZE) {
-      await ctx.reply("❌ File too large. Maximum allowed size is 10 MB.");
-      return;
-    }
-
-    const mime = doc.mime_type ?? "";
-    const isAllowed =
-      mime.startsWith("text/") ||
-      mime.startsWith("image/") ||
-      mime === "application/json" ||
-      mime === "application/xml" ||
-      mime === "application/pdf";
-
-    if (!isAllowed) {
-      await ctx.reply(
-        `❌ Unsupported file type (${mime || "unknown"}). Supported: text files, images, JSON, XML, PDF.`,
-      );
-      return;
-    }
-
-    const filename = doc.file_name ?? "file";
-    await ctx.reply(`📄 File received: ${filename}`);
-
-    try {
-      const file = await ctx.api.getFile(doc.file_id);
-      if (!file.file_path) throw new Error("No file_path returned");
-
-      const token = this.config.token;
-      const url = `https://api.telegram.org/file/bot${token}/${file.file_path}`;
-
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-
-      const buffer = Buffer.from(await response.arrayBuffer());
-
-      // Save to temp dir
-      const { tmpdir } = await import("os");
-      const { join, basename, resolve: resolvePath, sep } = await import("path");
-      const { writeFile, mkdir } = await import("fs/promises");
-
-      const tempDir = join(tmpdir(), "companion-uploads");
-      await mkdir(tempDir, { recursive: true });
-      // Sanitize filename to prevent path traversal — keep only the basename
-      const safeFilename = basename(filename).replace(/[/\\]/g, "_") || "file";
-      const savePath = join(tempDir, `${Date.now()}-${safeFilename}`);
-      // Verify the resolved path stays inside tempDir
-      const resolvedSave = resolvePath(savePath);
-      const resolvedTemp = resolvePath(tempDir);
-      if (!resolvedSave.startsWith(resolvedTemp + sep) && resolvedSave !== resolvedTemp) {
-        throw new Error("Invalid file path");
-      }
-      await writeFile(savePath, buffer);
-
-      const sizeKb = Math.round(buffer.length / 1024);
-      const message = `User uploaded file: ${filename} (${sizeKb} KB, ${mime}). File saved at: ${savePath}`;
-      this.wsBridge.sendUserMessage(mapping.sessionId, message, "telegram");
-    } catch (err) {
-      log.error("Failed to download/forward document", { error: String(err) });
-      await ctx.reply("❌ Failed to download file. Please try again.");
-    }
-  }
-
-  private async handleAssistantMessage(
-    chatId: number,
-    topicId: number | undefined,
-    msg: BrowserIncomingMessage & { type: "assistant" },
-  ): Promise<void> {
-    const content = msg.message?.content ?? [];
-    if (!Array.isArray(content) || content.length === 0) return;
-
-    // ── Tool progress: show tool_use blocks in the feed message ──
-    const toolFeed = formatToolFeed(
-      content as Array<{ type: string; name?: string; input?: unknown }>,
-    );
-    if (toolFeed) {
-      await this.upsertToolFeed(chatId, topicId, toolFeed);
-    }
-
-    // NOTE: Do NOT call streamHandler.appendText here.
-    // stream_event deltas feed the stream incrementally.
-    // assistant message contains the SAME full text — handled by stream handler.
-
-    // ── File path detection: show "View File" buttons ──
-    const textParts: string[] = [];
-    for (const block of content) {
-      if (block.type === "text" && block.text) {
-        textParts.push(block.text);
-      }
-    }
-    if (textParts.length === 0) return;
-
-    const text = textParts.join("\n");
-    const filePaths = extractFilePaths(text);
-    if (filePaths.length > 0) {
-      const mapping = this.getMapping(chatId, topicId);
-      if (mapping) {
-        const sessionId = mapping.sessionId;
-        const session = this.wsBridge.getSession(sessionId);
-        const cwd = session?.state.cwd;
-        if (cwd) {
-          const rows = filePaths.slice(0, 5).map((fp) => {
-            const key = `vf${++this.viewFileCounter}`;
-            this.viewFileCache.set(key, { sessionId, filePath: fp });
-            if (this.viewFileCache.size > 1000) {
-              // Evict oldest 200 entries to keep memory bounded
-              const evict = [...this.viewFileCache.keys()].slice(0, 200);
-              evict.forEach((k) => this.viewFileCache.delete(k));
-            }
-            return [{ text: `📂 ${fp}`, callback_data: `vf:${key}` }];
-          });
-
-          await this.bot.api
-            .sendMessage(chatId, "📂 <b>Referenced files:</b>", {
-              parse_mode: "HTML",
-              message_thread_id: topicId,
-              reply_markup: { inline_keyboard: rows } as unknown as import("grammy").InlineKeyboard,
-            })
-            .catch(() => {});
-        }
-      }
-    }
-  }
-
-  private async handleStreamEvent(
-    chatId: number,
-    topicId: number | undefined,
-    msg: BrowserIncomingMessage & { type: "stream_event" },
-  ): Promise<void> {
-    // Only accept delta (incremental) text to avoid duplication
-    const event = msg.event as { type?: string; text?: string; delta?: { text?: string } };
-    const text = event?.delta?.text;
-
-    if (text) {
-      const k = this.mapKey(chatId, topicId);
-
-      // Lock origin message ID on first chunk (prevents race with multi-message)
-      const replyTo = this.lastUserMsgId.get(k);
-      if (replyTo && !this.responseOriginMsg.has(k)) {
-        this.responseOriginMsg.set(k, replyTo);
-      }
-
-      await this.streamHandler.appendText(chatId, text, topicId);
-    }
-  }
-
-  private async handleResultMessage(
-    chatId: number,
-    topicId: number | undefined,
-    sessionId: string,
-    result: CLIResultMessage,
-  ): Promise<void> {
-    // Complete the stream (sends final message)
-    await this.streamHandler.completeStream(chatId, topicId);
-
-    // Clean up tool feed
-    this.cleanupToolFeed(chatId, topicId);
-
-    // React on original user message: 👍 success / 👎 error
-    const k = this.mapKey(chatId, topicId);
-    const originMsgId = this.responseOriginMsg.get(k) ?? this.lastUserMsgId.get(k);
-    if (originMsgId) {
-      const emoji = result.is_error ? "👎" : "👍";
-      this.bot.api
-        .setMessageReaction(chatId, originMsgId, [{ type: "emoji", emoji }])
-        .catch(() => {});
-    }
-    // Clean up turn-scoped state
-    this.responseOriginMsg.delete(k);
-    this.lastUserMsgId.delete(k);
-
-    // Reset idle timer — session is now idle, start countdown
-    this.resetIdleTimer(sessionId, chatId, topicId);
-
-    // Send result summary if it was an error
-    if (result.is_error) {
-      const errorText = result.result ?? result.errors?.join("\n") ?? "Unknown error";
-      await this.bot.api.sendMessage(chatId, `⚠️ <b>Error:</b> ${escapeHTML(errorText)}`, {
-        parse_mode: "HTML",
-        message_thread_id: topicId,
-      });
-    }
-
-    // Inline token bar — compact 1-line after each turn
-    this.sendTokenBar(chatId, topicId, sessionId, result).catch(() => {});
-  }
-
-  /** Send compact token usage bar after each Claude turn */
-  private async sendTokenBar(
-    chatId: number,
-    topicId: number | undefined,
-    sessionId: string,
-    result: CLIResultMessage,
-  ): Promise<void> {
-    const session = this.wsBridge.getSession(sessionId);
-    if (!session) return;
-
-    const model = session.state.model;
-    const isHaiku = model.includes("haiku");
-    const isOpus = model.includes("opus");
-
-    // Per-turn tokens from result (= actual context window usage this turn)
-    const inputK = result.usage.input_tokens / 1000;
-    const outputK = result.usage.output_tokens / 1000;
-
-    // Context window limits
-    const inputMaxK = isHaiku ? 200 : 1000;  // Haiku: 200K, Opus/Sonnet: 1M
-    const outputMaxK = isOpus ? 128 : 64;    // Opus: 128K, Sonnet/Haiku: 64K
-
-    const inputPct = Math.min(100, Math.round((inputK / inputMaxK) * 100));
-
-    // Progress bar: 15 chars
-    const bar = (pct: number) => {
-      const filled = Math.round((pct / 100) * 15);
-      return "█".repeat(filled) + "░".repeat(15 - filled);
-    };
-
-    const fmtK = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}M` : `${v.toFixed(1)}K`;
-
-    const cost = result.total_cost_usd > 0 ? `$${result.total_cost_usd.toFixed(3)}` : "";
-    const turns = result.num_turns > 0 ? `T${result.num_turns}` : "";
-    const meta = [turns, cost].filter(Boolean).join(" · ");
-
-    // Single bar for context window (what matters for compaction)
-    // Output shown as plain number (no bar — no meaningful session-level max)
-    const text = `<code>[${bar(inputPct)}]</code> ${fmtK(inputK)}/${fmtK(inputMaxK)} · out ${fmtK(outputK)}${meta ? ` · ${meta}` : ""}`;
-
-    await this.bot.api
-      .sendMessage(chatId, text, {
-        parse_mode: "HTML",
-        message_thread_id: topicId,
-      })
-      .catch(() => {});
-  }
-
-  private async handleContextUpdate(
-    chatId: number,
-    topicId: number | undefined,
-    sessionId: string,
-    contextUsedPercent: number,
-  ): Promise<void> {
-    if (contextUsedPercent < 80) return;
-    if (this.compactWarningSent.has(sessionId)) return;
-
-    this.compactWarningSent.add(sessionId);
-    await this.bot.api
-      .sendMessage(
-        chatId,
-        `⚠️ <b>Context ${Math.round(contextUsedPercent)}% full</b> — consider running <code>/compact</code> to compress history.`,
-        { parse_mode: "HTML", message_thread_id: topicId },
-      )
-      .catch(() => {});
-  }
-
-  private async sendSessionSummary(
-    chatId: number,
-    topicId: number | undefined,
-    sessionId: string,
-  ): Promise<void> {
-    // Wait for summarizer to finish (it runs async after session end)
-    const maxWait = 15_000;
-    const pollInterval = 2_000;
-    const start = Date.now();
-
-    while (Date.now() - start < maxWait) {
-      await new Promise((r) => setTimeout(r, pollInterval));
-      const summary = getSessionSummary(sessionId);
-      if (summary) {
-        const files =
-          summary.filesModified.length > 0
-            ? `\n\n📁 <b>Files:</b> ${summary.filesModified.map((f) => `<code>${escapeHTML(f)}</code>`).join(", ")}`
-            : "";
-        const decisions =
-          summary.keyDecisions.length > 0
-            ? `\n\n🎯 <b>Decisions:</b>\n${summary.keyDecisions.map((d) => `• ${escapeHTML(d)}`).join("\n")}`
-            : "";
-
-        await this.bot.api
-          .sendMessage(
-            chatId,
-            `📝 <b>Session Summary</b>\n\n${escapeHTML(summary.summary)}${decisions}${files}`,
-            { parse_mode: "HTML", message_thread_id: topicId },
-          )
-          .catch(() => {});
-        return;
-      }
-    }
-    // If no summary generated after timeout, skip silently
-  }
-
-  private async handlePermissionRequest(
-    chatId: number,
-    topicId: number | undefined,
-    sessionId: string,
-    request: PermissionRequest,
-  ): Promise<void> {
-    const key = this.mapKey(chatId, topicId);
-
-    // Batch permissions: collect in 2s window
-    const existing = this.permBatches.get(key);
-    if (existing && existing.sessionId === sessionId) {
-      existing.perms.push({
-        requestId: request.request_id,
-        toolName: request.tool_name,
-        input: request.input,
-        description: request.description,
-      });
-      return;
-    }
-
-    // Start new batch
-    const batch: PermBatch = {
-      perms: [
-        {
-          requestId: request.request_id,
-          toolName: request.tool_name,
-          input: request.input,
-          description: request.description,
-        },
-      ],
-      sessionId,
-      timer: setTimeout(() => {
-        this.flushPermBatch(chatId, topicId, key);
-      }, 2000),
-    };
-
-    this.permBatches.set(key, batch);
-  }
-
-  private async flushPermBatch(
-    chatId: number,
-    topicId: number | undefined,
-    key: string,
-  ): Promise<void> {
-    const batch = this.permBatches.get(key);
-    if (!batch) return;
-    this.permBatches.delete(key);
-
-    const { perms, sessionId } = batch;
-
-    // Check auto-approve config
-    const session = this.wsBridge.getSession(sessionId);
-    const aa = session?.autoApproveConfig;
-    const autoApproveSeconds = aa?.enabled ? (aa.timeoutSeconds ?? 0) : 0;
-
-    // Format permission message — annotate each perm with danger flag
-    const permsWithFlags = perms.map((p) => ({
-      ...p,
-      dangerous: isPermissionDangerous(p.toolName, p.input),
-    }));
-    const lines = permsWithFlags.map((p) => formatPermission(p.toolName, p.input, p.description));
-    const baseText = lines.join("\n\n");
-
-    // Add countdown suffix if auto-approve is on
-    const countdownSuffix =
-      autoApproveSeconds > 0 ? `\n\n⏱️ Auto-approve in <b>${autoApproveSeconds}s</b>` : "";
-
-    // Build keyboard with styled allow/deny buttons (Telegram Bot API style field)
-    type PermBtn = { text: string; callback_data: string; style?: string };
-    const permRows: PermBtn[][] = [];
-
-    if (perms.length === 1) {
-      permRows.push([
-        {
-          text: "✅ Allow",
-          callback_data: `perm:allow:${sessionId}:${perms[0]!.requestId}`,
-          style: "success",
-        },
-        {
-          text: "❌ Deny",
-          callback_data: `perm:deny:${sessionId}:${perms[0]!.requestId}`,
-          style: "danger",
-        },
-      ]);
-    } else {
-      for (const p of permsWithFlags) {
-        const icon = p.dangerous ? "⚠️" : "✅";
-        permRows.push([
-          {
-            text: `${icon} ${p.toolName}`,
-            callback_data: `perm:allow:${sessionId}:${p.requestId}`,
-            style: "success",
-          },
-          { text: "❌", callback_data: `perm:deny:${sessionId}:${p.requestId}`, style: "danger" },
-        ]);
-      }
-      // If any dangerous perms exist, add bulk-action row for safe-only approval
-      const hasDangerous = permsWithFlags.some((p) => p.dangerous);
-      if (hasDangerous) {
-        // Build compact callback — only sessionId needed; safe IDs resolved server-side
-        // Keep callback_data under 64 bytes: "perm:allowsafe:<sessionId(36)>"
-        permRows.push([
-          {
-            text: "✅ Allow All Safe",
-            callback_data: `perm:allowsafe:${sessionId}`,
-            style: "success",
-          },
-          {
-            text: "⚠️ Review Dangerous",
-            callback_data: `perm:reviewdanger:${sessionId}`,
-            style: "warning",
-          },
-        ]);
-      }
-    }
-
-    const sentMsg = await this.bot.api
-      .sendMessage(chatId, baseText + countdownSuffix, {
-        parse_mode: "HTML",
-        reply_markup: { inline_keyboard: permRows } as unknown as import("grammy").InlineKeyboard,
-        message_thread_id: topicId,
-      })
-      .catch((err) => {
-        log.error("Failed to send permission batch", { error: String(err) });
-        return undefined;
-      });
-
-    // Start auto-approve countdown if enabled
-    if (sentMsg && autoApproveSeconds > 0) {
-      this.startAutoApproveCountdown(
-        chatId,
-        topicId,
-        sentMsg.message_id,
-        sessionId,
-        perms,
-        baseText,
-        permRows,
-        autoApproveSeconds,
-      );
-    }
-  }
-
-  private startAutoApproveCountdown(
-    chatId: number,
-    topicId: number | undefined,
-    messageId: number,
-    sessionId: string,
-    perms: Array<{
-      requestId: string;
-      toolName: string;
-      input: Record<string, unknown>;
-      description?: string;
-    }>,
-    baseText: string,
-    permRows: Array<Array<{ text: string; callback_data: string; style?: string }>>,
-    totalSeconds: number,
-  ): void {
-    let remaining = totalSeconds;
-
-    // Track this countdown under the session for cleanup on killSession
-    if (!this.sessionAutoApproveMessages.has(sessionId)) {
-      this.sessionAutoApproveMessages.set(sessionId, new Set());
-    }
-    this.sessionAutoApproveMessages.get(sessionId)!.add(messageId);
-
-    const interval = setInterval(async () => {
-      remaining -= 3;
-
-      if (remaining <= 0) {
-        // Time's up — auto-approve all
-        clearInterval(interval);
-        this.autoApproveTimers.delete(messageId);
-        this.sessionAutoApproveMessages.get(sessionId)?.delete(messageId);
-
-        for (const p of perms) {
-          this.wsBridge.handleBrowserMessage(
-            sessionId,
-            JSON.stringify({
-              type: "permission_response",
-              request_id: p.requestId,
-              behavior: "allow",
-            }),
-          );
-        }
-
-        // Edit message to show approved (no keyboard)
-        await this.bot.api
-          .editMessageText(chatId, messageId, baseText + "\n\n✅ <b>Auto-approved</b>", {
-            parse_mode: "HTML",
-          })
-          .catch(() => {});
-        return;
-      }
-
-      // Update countdown text, keep existing keyboard
-      await this.bot.api
-        .editMessageText(
-          chatId,
-          messageId,
-          baseText + `\n\n⏱️ Auto-approve in <b>${remaining}s</b>`,
-          {
-            parse_mode: "HTML",
-            reply_markup: {
-              inline_keyboard: permRows,
-            } as unknown as import("grammy").InlineKeyboard,
-          },
-        )
-        .catch(() => {});
-    }, 3000);
-
-    this.autoApproveTimers.set(messageId, interval);
-  }
-
-  /** Cancel auto-approve countdown for a specific message (on manual allow/deny) */
-  cancelAutoApproveCountdown(messageId: number): void {
-    const timer = this.autoApproveTimers.get(messageId);
-    if (timer) {
-      clearInterval(timer);
-      this.autoApproveTimers.delete(messageId);
-    }
-  }
-
-  /** Cancel all active auto-approve countdowns (on /allow or /deny commands) */
-  cancelAllAutoApproveCountdowns(): void {
-    for (const timer of this.autoApproveTimers.values()) {
-      clearInterval(timer);
-    }
-    this.autoApproveTimers.clear();
-  }
+  // Message handlers, permission handlers, session event handlers
+  // extracted to telegram-message-handlers.ts, telegram-permission-handler.ts,
+  // telegram-session-events.ts
 
   // ── Persistence ───────────────────────────────────────────────────────
 

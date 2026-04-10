@@ -3,10 +3,49 @@
  */
 
 import { Hono } from "hono";
+import { z } from "zod";
 import * as webIntel from "../services/web-intel.js";
 import { assertSafeUrl } from "../services/web-intel.js";
 import * as webIntelJobs from "../services/web-intel-jobs.js";
 import type { ApiResponse } from "@companion/shared";
+
+// ─── Request Schemas ────────────────────────────────────────────────────────
+
+const scrapeSchema = z.object({
+  url: z.string().min(1).max(2048),
+  formats: z.array(z.string()).optional(),
+  includeSelectors: z.array(z.string()).optional(),
+  excludeSelectors: z.array(z.string()).optional(),
+  onlyMainContent: z.boolean().optional(),
+  skipCache: z.boolean().optional(),
+});
+
+const docsSchema = z.object({
+  url: z.string().min(1).max(2048),
+  maxTokens: z.number().int().positive().optional(),
+  refresh: z.boolean().optional(),
+});
+
+const searchSchema = z.object({
+  query: z.string().min(1).max(500),
+  num: z.number().int().positive().optional(),
+});
+
+const researchSchema = z.object({
+  query: z.string().min(1).max(500),
+  maxTokens: z.number().int().positive().optional(),
+});
+
+const crawlSchema = z.object({
+  url: z.string().min(1).max(2048),
+  maxDepth: z.number().int().min(1).optional(),
+  maxPages: z.number().int().min(1).optional(),
+  sessionId: z.string().optional(),
+});
+
+const startWebclawSchema = z.object({
+  apiKey: z.string().optional(),
+});
 
 export const webintelRoutes = new Hono();
 
@@ -23,25 +62,14 @@ webintelRoutes.get("/status", async (c) => {
 
 /** POST /webintel/scrape — scrape a single URL */
 webintelRoutes.post("/scrape", async (c) => {
-  const body = await c.req.json<{
-    url?: string;
-    formats?: string[];
-    includeSelectors?: string[];
-    excludeSelectors?: string[];
-    onlyMainContent?: boolean;
-    skipCache?: boolean;
-  }>();
-
-  if (!body.url || typeof body.url !== "string") {
-    return c.json({ success: false, error: "url is required" } satisfies ApiResponse, 400);
-  }
-
-  if (body.url.length > 2048) {
+  const parsed = scrapeSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
     return c.json(
-      { success: false, error: "URL too long (max 2048 chars)" } satisfies ApiResponse,
+      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
       400,
     );
   }
+  const body = parsed.data;
 
   // URL validation + SSRF protection
   try {
@@ -76,15 +104,14 @@ webintelRoutes.post("/scrape", async (c) => {
 
 /** POST /webintel/docs — fetch URL in LLM format for agent context */
 webintelRoutes.post("/docs", async (c) => {
-  const body = await c.req.json<{
-    url?: string;
-    maxTokens?: number;
-    refresh?: boolean;
-  }>();
-
-  if (!body.url || typeof body.url !== "string") {
-    return c.json({ success: false, error: "url is required" } satisfies ApiResponse, 400);
+  const parsed = docsSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
+    return c.json(
+      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      400,
+    );
   }
+  const body = parsed.data;
 
   try {
     assertSafeUrl(body.url);
@@ -115,18 +142,14 @@ webintelRoutes.post("/docs", async (c) => {
 
 /** POST /webintel/search — web search (requires WEBCLAW_API_KEY) */
 webintelRoutes.post("/search", async (c) => {
-  const body = await c.req.json<{ query?: string; num?: number }>();
-
-  if (!body.query || typeof body.query !== "string") {
-    return c.json({ success: false, error: "query is required" } satisfies ApiResponse, 400);
-  }
-
-  if (body.query.length > 500) {
+  const parsed = searchSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
     return c.json(
-      { success: false, error: "Query too long (max 500 chars)" } satisfies ApiResponse,
+      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
       400,
     );
   }
+  const body = parsed.data;
 
   const results = await webIntel.search(body.query, body.num ?? 5);
 
@@ -145,18 +168,14 @@ webintelRoutes.post("/search", async (c) => {
 
 /** POST /webintel/research — web research (search + scrape + synthesize) */
 webintelRoutes.post("/research", async (c) => {
-  const body = await c.req.json<{ query?: string; maxTokens?: number }>();
-
-  if (!body.query || typeof body.query !== "string") {
-    return c.json({ success: false, error: "query is required" } satisfies ApiResponse, 400);
-  }
-
-  if (body.query.length > 500) {
+  const parsed = researchSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
     return c.json(
-      { success: false, error: "Query too long (max 500 chars)" } satisfies ApiResponse,
+      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
       400,
     );
   }
+  const body = parsed.data;
 
   const maxTokens = Math.min(body.maxTokens ?? 3000, 8000);
   const result = await webIntel.research(body.query, maxTokens);
@@ -176,16 +195,14 @@ webintelRoutes.post("/research", async (c) => {
 
 /** POST /webintel/crawl — start async crawl job */
 webintelRoutes.post("/crawl", async (c) => {
-  const body = await c.req.json<{
-    url?: string;
-    maxDepth?: number;
-    maxPages?: number;
-    sessionId?: string;
-  }>();
-
-  if (!body.url || typeof body.url !== "string") {
-    return c.json({ success: false, error: "url is required" } satisfies ApiResponse, 400);
+  const parsed = crawlSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
+    return c.json(
+      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      400,
+    );
   }
+  const body = parsed.data;
 
   try {
     assertSafeUrl(body.url);
@@ -294,7 +311,14 @@ webintelRoutes.get("/docker-status", async (c) => {
 
 /** POST /webintel/start-webclaw — start webclaw Docker container */
 webintelRoutes.post("/start-webclaw", async (c) => {
-  const body = await c.req.json<{ apiKey?: string }>().catch(() => ({ apiKey: undefined }));
+  const parsed = startWebclawSchema.safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) {
+    return c.json(
+      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body" } satisfies ApiResponse,
+      400,
+    );
+  }
+  const body = parsed.data;
 
   // Check Docker first
   try {

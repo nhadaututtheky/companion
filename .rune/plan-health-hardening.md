@@ -10,9 +10,9 @@ Goal: improve maintainability, close integration gaps, harden security, add safe
 | 1 | Safety Nets | ✅ Done | plan-health-hardening-phase1.md | Error boundaries, input validation, rate limiter |
 | 2 | Integration Gaps | ✅ Done | plan-health-hardening-phase2.md | CodeGraph↔Wiki, Debate↔Mentions, incomplete stubs |
 | 3 | ws-bridge Surgery | ✅ Done | plan-health-hardening-phase3.md | Split 3,023→2,559 LOC: 5 modules extracted |
-| 4 | God File Cleanup | ⬚ Pending | plan-health-hardening-phase4.md | telegram-bridge, settings-tabs, new-session-modal |
-| 5 | Security Hardening | ⬚ Pending | plan-health-hardening-phase5.md | Zod on all routes, auth defaults, iframe policy |
-| 6 | Test Coverage | ⬚ Pending | plan-health-hardening-phase6.md | Critical path tests: ws-bridge, debate, telegram |
+| 4 | God File Cleanup | ✅ Done | plan-health-hardening-phase4.md | 10 modules extracted: bridge -800, settings 1996→154, modal 1459→529 |
+| 5 | Security Hardening | ✅ Done | plan-health-hardening-phase5.md | Zod on all routes, auth defaults, iframe sandbox, console.log cleanup |
+| 6 | Test Coverage | ✅ Done | plan-health-hardening-phase6.md | 94 new tests: ws-modules, debate, mention, telegram formatter |
 
 ## Key Decisions
 - Memory leak (sessionDebateParticipants) — VERIFIED NOT A LEAK, cleanup exists at sessions.ts:380

@@ -27,6 +27,21 @@ export function getAccessCredential(): string | undefined {
   return getSetting("access_pin") || process.env.API_KEY || undefined;
 }
 
+/**
+ * Log a warning at startup if no auth credentials are configured.
+ * Called once during server initialization.
+ */
+export function warnIfNoAuth(): void {
+  const credential = getAccessCredential();
+  if (!credential) {
+    log.warn(
+      "No authentication configured (no access_pin in DB, no API_KEY env). " +
+      "All API requests will be allowed. Set a PIN in Settings > General, " +
+      "or set API_KEY env var to secure your instance.",
+    );
+  }
+}
+
 export const apiKeyAuth = () =>
   createMiddleware(async (c, next) => {
     const configuredKey = getAccessCredential();
