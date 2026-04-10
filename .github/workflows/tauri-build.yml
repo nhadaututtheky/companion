@@ -1,0 +1,158 @@
+name: Tauri Desktop Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.8.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RELEASE_REPO: nhadaututtheky/companion-release
+  APPIMAGE_EXTRACT_AND_RUN: "1"
+
+jobs:
+  build:
+    name: Build (${{ matrix.platform }})
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            artifact_name: "companion-windows"
+          - platform: macos-latest
+            artifact_name: "companion-macos"
+          - platform: ubuntu-24.04
+            artifact_name: "companion-linux"
+
+    steps:
+      - name: Checkout companion source
+        uses: actions/checkout@v4
+        with:
+          repository: nhadaututtheky/companion
+          token: ${{ secrets.SOURCE_REPO_TOKEN }}
+          ref: ${{ inputs.tag }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install JS dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install Linux deps
+        if: matrix.platform == 'ubuntu-24.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            libgtk-3-dev \
+            libfuse3-dev
+
+      - name: Setup Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2" --locked
+
+      - name: Build Next.js web export
+        shell: bash
+        run: |
+          cd packages/web
+          bun run build
+          cp -r out ../../src-tauri/web
+          echo "Web export files:"
+          ls -la ../../src-tauri/web/ | head -20
+
+      - name: Build Bun server sidecar
+        shell: bash
+        run: |
+          TARGET_TRIPLE=$(rustc -Vv | grep '^host:' | awk '{print $2}')
+          OUTFILE="src-tauri/bun-server-${TARGET_TRIPLE}"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            OUTFILE="${OUTFILE}.exe"
+          fi
+          bun build packages/server/src/index.ts \
+            --compile --target bun --outfile "$OUTFILE"
+          ls -lh src-tauri/bun-server-*
+
+      - name: Build Tauri app
+        shell: bash
+        env:
+          NO_STRIP: "true"
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          cd src-tauri
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            # Skip AppImage (linuxdeploy broken on GH runners)
+            # Temporarily patch out updater artifacts (no AppImage = no updater target for Linux)
+            sed -i 's/"createUpdaterArtifacts":.*/"createUpdaterArtifacts": false,/' tauri.conf.json
+            cargo tauri build --bundles deb,rpm
+          else
+            cargo tauri build
+          fi
+
+      - name: Upload to release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ inputs.tag }}"
+          REPO="${{ env.RELEASE_REPO }}"
+          BUNDLE_DIR="src-tauri/target/release/bundle"
+
+          gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1 || \
+            gh release create "$TAG" --repo "$REPO" --title "Companion $TAG" \
+              --notes "## Companion $TAG
+          Download the installer for your platform below.
+          More info: https://companion.theio.vn"
+
+          for f in $(find "$BUNDLE_DIR" \( -name "*.msi" -o -name "*.exe" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.sig" -o -name "*.minisig" \) 2>/dev/null); do
+            echo "Uploading: $(basename $f)"
+            gh release upload "$TAG" "$f" --repo "$REPO" --clobber || true
+          done
+
+          DMG=$(find "$BUNDLE_DIR" -name "*.dmg" | head -1)
+          [ -n "$DMG" ] && cp "$DMG" "Companion_aarch64.dmg" && \
+            gh release upload "$TAG" "Companion_aarch64.dmg" --repo "$REPO" --clobber || true
+
+          MSI=$(find "$BUNDLE_DIR" -name "*.msi" | head -1)
+          [ -n "$MSI" ] && cp "$MSI" "Companion_x64-setup.msi" && \
+            gh release upload "$TAG" "Companion_x64-setup.msi" --repo "$REPO" --clobber || true
+
+          APPIMAGE=$(find "$BUNDLE_DIR" -name "*.AppImage" | head -1)
+          [ -n "$APPIMAGE" ] && cp "$APPIMAGE" "Companion_amd64.AppImage" && \
+            gh release upload "$TAG" "Companion_amd64.AppImage" --repo "$REPO" --clobber || true
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            src-tauri/target/release/bundle/**/*.msi
+            src-tauri/target/release/bundle/**/*.exe
+            src-tauri/target/release/bundle/**/*.dmg
+            src-tauri/target/release/bundle/**/*.AppImage
+            src-tauri/target/release/bundle/**/*.deb
+            src-tauri/target/release/bundle/**/*.sig
+          retention-days: 7
+          if-no-files-found: warn
