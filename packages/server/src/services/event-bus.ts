@@ -24,6 +24,25 @@ export interface EventMap {
     decision?: string;
   };
   "system:error": { source: string; error: string };
+
+  // ── Dispatch events ──────────────────────────────────────────────────────
+  "dispatch:classified": {
+    sessionId: string;
+    classification: {
+      intent: string;
+      pattern: string;
+      complexity: string;
+      confidence: number;
+    };
+  };
+  "dispatch:started": { sessionId: string; pattern: string; intent: string };
+  "dispatch:completed": {
+    sessionId: string;
+    pattern: string;
+    targetSessionIds: string[];
+    channelId?: string;
+  };
+  "dispatch:error": { sessionId: string; pattern: string; error: string };
 }
 
 type EventName = keyof EventMap;
