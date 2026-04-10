@@ -108,13 +108,6 @@ export const MASCOT_OPTIONS: MascotOption[] = [
     lottieFile: "/mascots/Heroanimation.lottie",
     proOnly: false,
   },
-  {
-    id: "pulse",
-    label: "Pulse",
-    description: "Glowing energy pulse",
-    lottieFile: "/mascots/pulse.lottie",
-    proOnly: false,
-  },
 ];
 
 interface MascotStore {

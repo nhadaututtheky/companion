@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Rocket, X } from "@phosphor-icons/react";
+import { createPortal } from "react-dom";
+import { Rocket, X, PencilSimple } from "@phosphor-icons/react";
+import { useRouter } from "next/navigation";
 import { BUILT_IN_PERSONAS, type Persona } from "@companion/shared";
 import { PersonaAvatar } from "@/components/persona/persona-avatar";
 import { api } from "@/lib/api-client";
@@ -22,6 +24,7 @@ export function TemplateQuickPicker() {
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const setNewSessionModalOpen = useUiStore((s) => s.setNewSessionModalOpen);
+  const router = useRouter();
 
   // Lazy-load custom templates on first open
   useEffect(() => {
@@ -78,12 +81,11 @@ export function TemplateQuickPicker() {
         aria-label="Expert Modes"
         title="Expert Modes & Quick Start"
       >
-        <Rocket size={14} weight="bold" />
-        <span className="hidden sm:inline">Expert</span>
+        Expert
       </button>
 
-      {/* Modal */}
-      {open && (
+      {/* Modal — portal to body to escape header's backdrop-filter containing block */}
+      {open && createPortal(
         <>
           {/* Backdrop */}
           <div
@@ -134,14 +136,31 @@ export function TemplateQuickPicker() {
                   {BUILT_IN_PERSONAS.length} experts
                 </span>
               </div>
-              <button
-                onClick={() => setOpen(false)}
-                className="p-1.5 rounded-lg cursor-pointer transition-colors"
-                style={{ color: "var(--color-text-muted)" }}
-                aria-label="Close expert modes"
-              >
-                <X size={16} weight="bold" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    router.push("/templates");
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+                  style={{
+                    background: "var(--color-bg-elevated)",
+                    border: "1px solid var(--glass-border)",
+                    color: "var(--color-text-secondary)",
+                  }}
+                >
+                  <PencilSimple size={12} weight="bold" aria-hidden="true" />
+                  Manage
+                </button>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="p-1.5 rounded-lg cursor-pointer transition-colors"
+                  style={{ color: "var(--color-text-muted)" }}
+                  aria-label="Close expert modes"
+                >
+                  <X size={16} weight="bold" />
+                </button>
+              </div>
             </div>
 
             {/* Content */}
@@ -223,7 +242,8 @@ export function TemplateQuickPicker() {
               )}
             </div>
           </div>
-        </>
+        </>,
+        document.body,
       )}
     </>
   );

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { X, LinkSimple } from "@phosphor-icons/react";
 import { useRingStore } from "@/lib/stores/ring-store";
 import { useSessionStore } from "@/lib/stores/session-store";
+import { MascotViewer } from "@/components/mascot/mascot-viewer";
 
 const GOOGLE_COLORS = ["#4285F4", "#EA4335", "#FBBC04", "#34A853"];
 const MAX_SESSIONS = 4;
@@ -160,7 +161,10 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
             }}
             title={session.projectName ?? session.id}
           >
-            <div style={{ width: 9, height: 9, borderRadius: "50%", background: color }} />
+            <div style={{ position: "absolute", inset: 0, opacity: 0.35, pointerEvents: "none" }}>
+              <MascotViewer lottieFile="/mascots/pulse.lottie" size={size} />
+            </div>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: color, zIndex: 1 }} />
             <span
               style={{
                 fontSize: isHovered ? 8 : 7,
@@ -170,6 +174,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
+                zIndex: 1,
               }}
             >
               {(session.projectName ?? session.id).slice(0, 6)}
