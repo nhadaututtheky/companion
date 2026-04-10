@@ -1245,14 +1245,40 @@ export class TelegramBridge {
           await this.streamHandler.completeStream(chatId, topicId);
           this.cleanupToolFeed(chatId, topicId);
 
-          // Notify user about the disconnect
+          // Build user-friendly disconnect message
           const exitCode = (msg as unknown as { exitCode?: number }).exitCode;
           const reason = (msg as unknown as { reason?: string }).reason;
-          const reasonText = reason ? `\n<code>${escapeHTML(reason.slice(0, 300))}</code>` : "";
+
+          let icon = "⚠️";
+          let title = "Session ended";
+          let detail = "";
+
+          if (exitCode === 143 || exitCode === 137) {
+            // SIGTERM / SIGKILL — normal stop
+            icon = "🔴";
+            title = "Session stopped";
+            detail = "The session was terminated normally.";
+          } else if (exitCode === 0 || exitCode === null || exitCode === undefined) {
+            icon = "✅";
+            title = "Session completed";
+            detail = "Task finished successfully.";
+          } else if (reason?.includes("crashed on startup")) {
+            icon = "❌";
+            title = "Session failed to start";
+            detail = "Check that Claude Code CLI is installed and authenticated.";
+          } else {
+            icon = "⚠️";
+            title = "Session disconnected";
+            detail = reason
+              ? escapeHTML(reason.slice(0, 300))
+              : `Unexpected exit (code ${exitCode ?? "unknown"})`;
+          }
+
+          const hint = "\n\nUse /start to begin a new session.";
           await this.bot.api
             .sendMessage(
               chatId,
-              `⚠️ <b>Session disconnected</b> (exit ${exitCode ?? "?"})${reasonText}`,
+              `${icon} <b>${title}</b>\n${detail}${hint}`,
               { parse_mode: "HTML", message_thread_id: topicId },
             )
             .catch(() => {});

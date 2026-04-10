@@ -1949,6 +1949,11 @@ export class WsBridge {
     } else if (isEarlyExit && exitCode === 0) {
       reason =
         "CLI exited immediately — this may indicate a --print mode issue. Session can be retried.";
+    } else if (exitCode === 143 || exitCode === 137) {
+      // SIGTERM (143) or SIGKILL (137) — normal termination
+      reason = "Session was stopped";
+    } else if (exitCode === 0 || exitCode === null || exitCode === undefined) {
+      reason = "Session completed";
     } else if (exitCode !== 0) {
       reason = `CLI exited unexpectedly (exit code ${exitCode})`;
     }
