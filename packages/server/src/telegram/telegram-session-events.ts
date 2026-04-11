@@ -4,7 +4,7 @@
  * Extracted from TelegramBridge to reduce god-file complexity.
  */
 
-import { escapeHTML, formatToolFeed } from "./formatter.js";
+import { escapeHTML, formatToolFeed, shortModelName } from "./formatter.js";
 import { getSessionSummary } from "../services/session-summarizer.js";
 import { createLogger } from "../logger.js";
 import type { TelegramBridge } from "./telegram-bridge.js";
@@ -309,7 +309,7 @@ export async function handleChildSpawned(
     await bridge.bot.api.sendMessage(
       chatId,
       `${emoji} <b>${escapeHTML(childName)}</b> (@${escapeHTML(childShortId ?? "?")}) spawned\n` +
-        `Model: <code>${escapeHTML(childModel)}</code> | Role: ${childRole}\n` +
+        `Model: <b>${shortModelName(childModel)}</b> | Role: ${childRole}\n` +
         `Parent: <code>${escapeHTML(parentSessionId.slice(0, 8))}</code>`,
       { parse_mode: "HTML", message_thread_id: agentTopicId },
     );
@@ -329,7 +329,7 @@ export async function handleChildSpawned(
     await bridge.bot.api
       .sendMessage(
         chatId,
-        `${emoji} Spawned agent <b>${escapeHTML(childName)}</b> (@${escapeHTML(childShortId ?? "?")})\nModel: ${escapeHTML(childModel)}`,
+        `${emoji} Spawned agent <b>${escapeHTML(childName)}</b> (@${escapeHTML(childShortId ?? "?")})\nModel: <b>${shortModelName(childModel)}</b>`,
         { parse_mode: "HTML", message_thread_id: parentTopicId },
       )
       .catch(() => {});

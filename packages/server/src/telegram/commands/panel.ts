@@ -16,7 +16,7 @@
  */
 
 import { InlineKeyboard } from "grammy";
-import { escapeHTML } from "../formatter.js";
+import { escapeHTML, shortModelName, modelStrength } from "../formatter.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
 import { getProject } from "../../services/project-profiles.js";
 import { getSessionRecord } from "../../services/session-store.js";
@@ -24,9 +24,11 @@ import { getSessionRecord } from "../../services/session-store.js";
 // ─── Model options ───────────────────────────────────────────────────────────
 
 const MODELS = [
-  { label: "Sonnet", value: "claude-sonnet-4-6" },
-  { label: "Opus", value: "claude-opus-4-6" },
-  { label: "Haiku", value: "claude-haiku-4-5" },
+  { label: "Opus 4.6", emoji: "🧠", value: "claude-opus-4-6" },
+  { label: "Sonnet 4.6", emoji: "🎯", value: "claude-sonnet-4-6" },
+  { label: "Opus 4.5", emoji: "🧠", value: "claude-opus-4-5" },
+  { label: "Sonnet 4.5", emoji: "🎯", value: "claude-sonnet-4-5" },
+  { label: "Haiku 4.5", emoji: "⚡", value: "claude-haiku-4-5" },
 ];
 
 // ─── Thinking mode options ──────────────────────────────────────────────────
@@ -52,13 +54,16 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     const currentModel = session?.state.model ?? "";
     const currentThinking = session?.state.thinking_mode ?? "adaptive";
 
+    const currentShort = shortModelName(currentModel);
+    const strength = modelStrength(currentModel);
+
     const keyboard = new InlineKeyboard();
-    // Model buttons
     for (const m of MODELS) {
-      const checkmark = currentModel.includes(m.label.toLowerCase()) ? " ✓" : "";
-      keyboard.text(`${m.label}${checkmark}`, `panel:setmodel:${m.value}:${sessionId}`).row();
+      const isCurrent = currentShort === m.label;
+      const check = isCurrent ? " ✓" : "";
+      keyboard.text(`${m.emoji} ${m.label}${check}`, `panel:setmodel:${m.value}:${sessionId}`).row();
     }
-    // Thinking mode buttons (same row)
+    keyboard.row();
     for (const t of THINKING_MODES) {
       const checkmark = currentThinking === t.value ? " ✓" : "";
       keyboard.text(`${t.label}${checkmark}`, `panel:thinking:${t.value}:${sessionId}`);
@@ -66,15 +71,16 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     keyboard.row();
     keyboard.text("↩ Back", `panel:status:${sessionId}`);
 
+    const header = `<b>${escapeHTML(currentShort)}</b>${strength ? ` — <i>${escapeHTML(strength)}</i>` : ""}`;
     await ctx
-      .editMessageText("Select model & thinking mode:", { reply_markup: keyboard })
+      .editMessageText(`${header}\n\nSelect model & thinking mode:`, { parse_mode: "HTML", reply_markup: keyboard })
       .catch(() => {});
   });
 
   bot.callbackQuery(/^panel:setmodel:([^:]+):(.+)$/, async (ctx) => {
     const model = ctx.match[1]!;
     const sessionId = ctx.match[2]!;
-    await ctx.answerCallbackQuery(`Model set to ${model}`);
+    await ctx.answerCallbackQuery(`Model: ${shortModelName(model)}`);
 
     bridge.wsBridge.handleBrowserMessage(sessionId, JSON.stringify({ type: "set_model", model }));
 
@@ -112,15 +118,18 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
       JSON.stringify({ type: "set_thinking_mode", mode }),
     );
 
-    // Refresh model+thinking keyboard
     const session = bridge.wsBridge.getSession(sessionId);
     const currentModel = session?.state.model ?? "";
+    const currentShort = shortModelName(currentModel);
+    const strength = modelStrength(currentModel);
 
     const keyboard = new InlineKeyboard();
     for (const m of MODELS) {
-      const checkmark = currentModel.includes(m.label.toLowerCase()) ? " ✓" : "";
-      keyboard.text(`${m.label}${checkmark}`, `panel:setmodel:${m.value}:${sessionId}`).row();
+      const isCurrent = currentShort === m.label;
+      const check = isCurrent ? " ✓" : "";
+      keyboard.text(`${m.emoji} ${m.label}${check}`, `panel:setmodel:${m.value}:${sessionId}`).row();
     }
+    keyboard.row();
     for (const t of THINKING_MODES) {
       const checkmark = mode === t.value ? " ✓" : "";
       keyboard.text(`${t.label}${checkmark}`, `panel:thinking:${t.value}:${sessionId}`);
@@ -128,8 +137,9 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     keyboard.row();
     keyboard.text("↩ Back", `panel:status:${sessionId}`);
 
+    const header = `<b>${escapeHTML(currentShort)}</b>${strength ? ` — <i>${escapeHTML(strength)}</i>` : ""}`;
     await ctx
-      .editMessageText("Select model & thinking mode:", { reply_markup: keyboard })
+      .editMessageText(`${header}\n\nSelect model & thinking mode:`, { parse_mode: "HTML", reply_markup: keyboard })
       .catch(() => {});
   });
 

@@ -15,7 +15,7 @@ import { getDb } from "../db/client.js";
 import { telegramSessionMappings, telegramForumTopics } from "../db/schema.js";
 import { createBot, registerCommands, type BotConfig } from "./bot-factory.js";
 import { StreamHandler } from "./stream-handler.js";
-import { escapeHTML } from "./formatter.js";
+import { escapeHTML, shortModelName, modelStrength } from "./formatter.js";
 import { registerSessionCommands } from "./commands/session.js";
 import { registerControlCommands } from "./commands/control.js";
 import { registerInfoCommands } from "./commands/info.js";
@@ -646,10 +646,14 @@ export class TelegramBridge {
     const thinkingLabel =
       thinkingMode === "adaptive" ? "⚡Adaptive" : thinkingMode === "off" ? "💤Off" : "🧠Deep";
 
+    const modelShort = shortModelName(model);
+    const strength = modelStrength(model);
+    const strengthStr = strength ? ` · <i>${escapeHTML(strength)}</i>` : "";
+
     const text = [
-      `<b>${escapeHTML(projectName)}</b> · <code>${escapeHTML(model)}</code> · ${statusEmoji(status)} ${status}${shortIdStr}`,
+      `<b>${escapeHTML(projectName)}</b> · <b>${escapeHTML(modelShort)}</b> · ${statusEmoji(status)} ${status}${shortIdStr}`,
       `$${cost.toFixed(4)} · ${turns} turns · Updated ${updatedAt}${contextStr}`,
-      `Auto-Approve: <b>${aaLabel}</b> · Auto-stop: <b>${idleLabel}</b> · Think: <b>${thinkingLabel}</b>`,
+      `${strengthStr ? `${strengthStr}\n` : ""}Auto-Approve: <b>${aaLabel}</b> · Auto-stop: <b>${idleLabel}</b> · Think: <b>${thinkingLabel}</b>`,
     ].join("\n");
 
     // Build keyboard with styled buttons (Telegram Bot API style field)
@@ -677,7 +681,7 @@ export class TelegramBridge {
       inline_keyboard: [
         // Row 1: Model + Status
         [
-          btn(`Model: ${model}`, `panel:model:${sessionId}`, "primary"),
+          btn(`Model: ${modelShort}`, `panel:model:${sessionId}`, "primary"),
           btn("Status", `panel:status:${sessionId}`),
         ],
         // Row 2: Auto-approve timeout

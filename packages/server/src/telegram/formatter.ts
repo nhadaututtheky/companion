@@ -285,6 +285,24 @@ export function stripHtmlTags(html: string): string {
 
 // ─── Formatting Helpers ─────────────────────────────────────────────────────
 
+export function shortModelName(model: string): string {
+  if (model.includes("opus") && model.includes("4-6")) return "Opus 4.6";
+  if (model.includes("opus") && model.includes("4-5")) return "Opus 4.5";
+  if (model.includes("sonnet") && model.includes("4-6")) return "Sonnet 4.6";
+  if (model.includes("sonnet") && model.includes("4-5")) return "Sonnet 4.5";
+  if (model.includes("haiku")) return "Haiku 4.5";
+  return model.replace("claude-", "").replace(/-\d{8}$/, "");
+}
+
+export function modelStrength(model: string): string {
+  if (model.includes("opus") && model.includes("4-6")) return "Deepest reasoning, complex architecture";
+  if (model.includes("opus") && model.includes("4-5")) return "Strong reasoning, balanced cost";
+  if (model.includes("sonnet") && model.includes("4-6")) return "Best coding, fast, cost-effective";
+  if (model.includes("sonnet") && model.includes("4-5")) return "Reliable coding, well-rounded";
+  if (model.includes("haiku")) return "Ultra-fast, search, simple tasks";
+  return "";
+}
+
 export function formatCost(costUsd: number): string {
   return `<code>$${costUsd.toFixed(4)}</code>`;
 }
@@ -316,7 +334,7 @@ export function formatSessionStatus(opts: {
 }): string {
   const lines = [
     `<b>Session Status</b>`,
-    `Model: <code>${escapeHTML(opts.model)}</code>`,
+    `Model: <b>${escapeHTML(shortModelName(opts.model))}</b>`,
     `Status: <code>${opts.status}</code>`,
     `Turns: <code>${opts.numTurns}</code>`,
     `Cost: ${formatCost(opts.totalCost)}`,

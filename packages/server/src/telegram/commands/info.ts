@@ -10,6 +10,7 @@ import {
   formatTokens,
   formatDuration,
   formatSessionStatus,
+  shortModelName,
 } from "../formatter.js";
 import { getDb } from "../../db/client.js";
 import { sessions, dailyCosts } from "../../db/schema.js";
@@ -153,14 +154,24 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
       return;
     }
 
-    // Show model selection keyboard
-    const keyboard = new InlineKeyboard()
-      .text("⚡ Haiku 4.5", `model:${mapping.sessionId}:claude-haiku-4-5`)
-      .text("🎯 Sonnet 4.6", `model:${mapping.sessionId}:claude-sonnet-4-6`)
-      .row()
-      .text("🧠 Opus 4.6", `model:${mapping.sessionId}:claude-opus-4-6`);
+    const session = bridge.wsBridge.getSession(mapping.sessionId);
+    const current = shortModelName(session?.state.model ?? mapping.model);
 
-    await ctx.reply("Select model:", { reply_markup: keyboard });
+    const models = [
+      { emoji: "🧠", label: "Opus 4.6", value: "claude-opus-4-6" },
+      { emoji: "🎯", label: "Sonnet 4.6", value: "claude-sonnet-4-6" },
+      { emoji: "🧠", label: "Opus 4.5", value: "claude-opus-4-5" },
+      { emoji: "🎯", label: "Sonnet 4.5", value: "claude-sonnet-4-5" },
+      { emoji: "⚡", label: "Haiku 4.5", value: "claude-haiku-4-5" },
+    ];
+
+    const keyboard = new InlineKeyboard();
+    for (const m of models) {
+      const check = current === m.label ? " ✓" : "";
+      keyboard.text(`${m.emoji} ${m.label}${check}`, `model:${mapping.sessionId}:${m.value}`).row();
+    }
+
+    await ctx.reply(`Current: <b>${escapeHTML(current)}</b>\nSelect model:`, { parse_mode: "HTML", reply_markup: keyboard });
   });
 
   // ── /todo — Forward to Claude's built-in task list ────────────────────
@@ -507,8 +518,9 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
       }),
     );
 
-    await ctx.answerCallbackQuery(`Model: ${model}`);
-    await ctx.editMessageText(`Model set to <code>${escapeHTML(model)}</code>`, {
+    const name = shortModelName(model);
+    await ctx.answerCallbackQuery(`Model: ${name}`);
+    await ctx.editMessageText(`Model set to <b>${escapeHTML(name)}</b>`, {
       parse_mode: "HTML",
     });
   });
