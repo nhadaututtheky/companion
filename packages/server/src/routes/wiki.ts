@@ -46,6 +46,7 @@ import {
   archiveQuery,
   flagStale,
   getFlaggedArticles,
+  writeNote,
   getWikiConfig,
   setWikiConfig,
 } from "../wiki/index.js";
@@ -227,6 +228,34 @@ export function createWikiRoutes(): Hono {
       return c.json<ApiResponse>({ success: false, error: String(err) }, 400);
     }
   });
+
+  // ─── Quick Notes ────────────────────────────────────────────────────
+
+  /** Agent writes a quick note directly — no compile cycle needed */
+  app.post(
+    "/:domain/note",
+    zValidator(
+      "json",
+      z.object({
+        content: z.string().min(1).max(20000),
+        title: z.string().max(100).optional(),
+        tags: z.array(z.string()).optional(),
+        confidence: z.enum(["extracted", "inferred", "ambiguous"]).optional(),
+        sourceUrl: z.string().optional(),
+      }),
+    ),
+    (c) => {
+      const { domain } = c.req.param();
+      const body = c.req.valid("json");
+      const ref = writeNote(domain, body.content, {
+        title: body.title,
+        tags: body.tags,
+        confidence: body.confidence,
+        sourceUrl: body.sourceUrl,
+      });
+      return c.json<ApiResponse>({ success: true, data: ref }, 201);
+    },
+  );
 
   // ─── Compilation ────────────────────────────────────────────────────
 

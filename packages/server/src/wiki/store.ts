@@ -21,6 +21,7 @@ import {
 import { join, basename, extname, resolve, sep } from "node:path";
 import { createLogger } from "../logger.js";
 import {
+  type ArticleConfidence,
   type WikiDomain,
   type WikiArticle,
   type ArticleMeta,
@@ -286,6 +287,53 @@ export function deleteArticle(domain: string, slug: string, cwd?: string): void 
 
   unlinkSync(filePath);
   log.info("Deleted wiki article", { domain, slug });
+}
+
+/** Quick note — agent writes directly without compile cycle */
+export function writeNote(
+  domain: string,
+  content: string,
+  options?: { title?: string; tags?: string[]; confidence?: ArticleConfidence; sourceUrl?: string },
+  cwd?: string,
+): ArticleRef {
+  const root = resolveWikiRoot(cwd);
+  const domainPath = safePath(root, domain);
+
+  if (!existsSync(domainPath)) {
+    mkdirSync(domainPath, { recursive: true });
+  }
+
+  const title =
+    options?.title ??
+    content
+      .slice(0, 60)
+      .replace(/[^a-zA-Z0-9\s-]/g, "")
+      .trim();
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 50);
+
+  const now = new Date().toISOString();
+  const tokens = Math.ceil(content.length / CHARS_PER_TOKEN);
+
+  const meta: ArticleMeta = {
+    title,
+    domain,
+    compiledFrom: [],
+    compiledBy: "agent-note",
+    compiledAt: now,
+    tokens,
+    tags: options?.tags ?? [],
+    confidence: options?.confidence ?? "inferred",
+    sourceUrl: options?.sourceUrl,
+  };
+
+  writeArticle(domain, slug, meta, content, cwd);
+  rebuildIndex(domain, cwd);
+
+  return { slug, title, tokens, tags: meta.tags, compiledAt: now, confidence: meta.confidence };
 }
 
 /** List all articles in a domain */

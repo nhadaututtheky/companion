@@ -22,6 +22,7 @@ export {
   readRawFile,
   writeRawFile,
   deleteRawFile,
+  writeNote,
   flagStale,
   getFlaggedArticles,
   clearFlags,
