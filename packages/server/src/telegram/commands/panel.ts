@@ -24,12 +24,14 @@ import { getSessionRecord } from "../../services/session-store.js";
 // ─── Model options ───────────────────────────────────────────────────────────
 
 const MODELS = [
-  { label: "Opus 4.6", emoji: "🧠", value: "claude-opus-4-6" },
-  { label: "Sonnet 4.6", emoji: "🎯", value: "claude-sonnet-4-6" },
-  { label: "Opus 4.5", emoji: "🧠", value: "claude-opus-4-5" },
-  { label: "Sonnet 4.5", emoji: "🎯", value: "claude-sonnet-4-5" },
-  { label: "Haiku 4.5", emoji: "⚡", value: "claude-haiku-4-5" },
+  { label: "Opus 4.6", emoji: "🧠", key: "o46", value: "claude-opus-4-6" },
+  { label: "Sonnet 4.6", emoji: "🎯", key: "s46", value: "claude-sonnet-4-6" },
+  { label: "Opus 4.5", emoji: "🧠", key: "o45", value: "claude-opus-4-5" },
+  { label: "Sonnet 4.5", emoji: "🎯", key: "s45", value: "claude-sonnet-4-5" },
+  { label: "Haiku 4.5", emoji: "⚡", key: "h45", value: "claude-haiku-4-5" },
 ];
+
+const MODEL_KEY_MAP = new Map(MODELS.map((m) => [m.key, m.value]));
 
 // ─── Thinking mode options ──────────────────────────────────────────────────
 
@@ -61,12 +63,12 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     for (const m of MODELS) {
       const isCurrent = currentShort === m.label;
       const check = isCurrent ? " ✓" : "";
-      keyboard.text(`${m.emoji} ${m.label}${check}`, `panel:setmodel:${m.value}:${sessionId}`).row();
+      keyboard.text(`${m.emoji} ${m.label}${check}`, `pm:${m.key}:${sessionId}`).row();
     }
     keyboard.row();
     for (const t of THINKING_MODES) {
       const checkmark = currentThinking === t.value ? " ✓" : "";
-      keyboard.text(`${t.label}${checkmark}`, `panel:thinking:${t.value}:${sessionId}`);
+      keyboard.text(`${t.label}${checkmark}`, `pt:${t.value}:${sessionId}`);
     }
     keyboard.row();
     keyboard.text("↩ Back", `panel:status:${sessionId}`);
@@ -77,9 +79,10 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
       .catch(() => {});
   });
 
-  bot.callbackQuery(/^panel:setmodel:([^:]+):(.+)$/, async (ctx) => {
-    const model = ctx.match[1]!;
+  bot.callbackQuery(/^pm:([^:]+):(.+)$/, async (ctx) => {
+    const key = ctx.match[1]!;
     const sessionId = ctx.match[2]!;
+    const model = MODEL_KEY_MAP.get(key) ?? key;
     await ctx.answerCallbackQuery(`Model: ${shortModelName(model)}`);
 
     bridge.wsBridge.handleBrowserMessage(sessionId, JSON.stringify({ type: "set_model", model }));
@@ -108,7 +111,7 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
 
   // ── Thinking mode selector ──────────────────────────────────────────────
 
-  bot.callbackQuery(/^panel:thinking:([^:]+):(.+)$/, async (ctx) => {
+  bot.callbackQuery(/^pt:([^:]+):(.+)$/, async (ctx) => {
     const mode = ctx.match[1]! as "adaptive" | "off" | "deep";
     const sessionId = ctx.match[2]!;
     await ctx.answerCallbackQuery(`Thinking: ${mode}`);
@@ -127,12 +130,12 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     for (const m of MODELS) {
       const isCurrent = currentShort === m.label;
       const check = isCurrent ? " ✓" : "";
-      keyboard.text(`${m.emoji} ${m.label}${check}`, `panel:setmodel:${m.value}:${sessionId}`).row();
+      keyboard.text(`${m.emoji} ${m.label}${check}`, `pm:${m.key}:${sessionId}`).row();
     }
     keyboard.row();
     for (const t of THINKING_MODES) {
       const checkmark = mode === t.value ? " ✓" : "";
-      keyboard.text(`${t.label}${checkmark}`, `panel:thinking:${t.value}:${sessionId}`);
+      keyboard.text(`${t.label}${checkmark}`, `pt:${t.value}:${sessionId}`);
     }
     keyboard.row();
     keyboard.text("↩ Back", `panel:status:${sessionId}`);
