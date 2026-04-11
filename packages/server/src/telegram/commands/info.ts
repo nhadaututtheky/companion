@@ -156,22 +156,29 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
 
     const session = bridge.wsBridge.getSession(mapping.sessionId);
     const current = shortModelName(session?.state.model ?? mapping.model);
+    const sid = mapping.sessionId;
 
     const models = [
-      { emoji: "🧠", label: "Opus 4.6", value: "claude-opus-4-6" },
-      { emoji: "🎯", label: "Sonnet 4.6", value: "claude-sonnet-4-6" },
-      { emoji: "🧠", label: "Opus 4.5", value: "claude-opus-4-5" },
-      { emoji: "🎯", label: "Sonnet 4.5", value: "claude-sonnet-4-5" },
-      { emoji: "⚡", label: "Haiku 4.5", value: "claude-haiku-4-5" },
+      { label: "Opus 4.6", key: "o46" },
+      { label: "Sonnet 4.6", key: "s46" },
+      { label: "Haiku 4.5", key: "h45" },
+      { label: "Opus 4.5", key: "o45" },
+      { label: "Sonnet 4.5", key: "s45" },
     ];
 
-    const keyboard = new InlineKeyboard();
-    for (const m of models) {
-      const check = current === m.label ? " ✓" : "";
-      keyboard.text(`${m.emoji} ${m.label}${check}`, `model:${mapping.sessionId}:${m.value}`).row();
-    }
+    const btns = models.map((m) => {
+      const isCurrent = current === m.label;
+      return { text: `${isCurrent ? "🟢 " : ""}${m.label}${isCurrent ? " ✓" : ""}`, callback_data: `pm:${m.key}:${sid}` };
+    });
 
-    await ctx.reply(`Current: <b>${escapeHTML(current)}</b>\nSelect model:`, { parse_mode: "HTML", reply_markup: keyboard });
+    const keyboard = {
+      inline_keyboard: [btns.slice(0, 3), btns.slice(3)],
+    };
+
+    await ctx.reply(`Current: <b>${escapeHTML(current)}</b>\nSelect model:`, {
+      parse_mode: "HTML",
+      reply_markup: keyboard as unknown as InlineKeyboard,
+    });
   });
 
   // ── /todo — Forward to Claude's built-in task list ────────────────────
@@ -504,26 +511,6 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
     await ctx.reply(helpText, { parse_mode: "HTML" });
   });
 
-  // ── Model selection callback ──────────────────────────────────────────
-
-  bot.callbackQuery(/^model:(.+):(.+)$/, async (ctx) => {
-    const sessionId = ctx.match[1]!;
-    const model = ctx.match[2]!;
-
-    bridge.wsBridge.handleBrowserMessage(
-      sessionId,
-      JSON.stringify({
-        type: "set_model",
-        model,
-      }),
-    );
-
-    const name = shortModelName(model);
-    await ctx.answerCallbackQuery(`Model: ${name}`);
-    await ctx.editMessageText(`Model set to <b>${escapeHTML(name)}</b>`, {
-      parse_mode: "HTML",
-    });
-  });
 }
 
 // ─── Per-command Help Details ──────────────────────────────────────────────────

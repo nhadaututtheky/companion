@@ -15,23 +15,59 @@
  *   fresh:{projectSlug}:{chatId}  → create new session (skip resume)
  */
 
-import { InlineKeyboard } from "grammy";
 import { escapeHTML, shortModelName, modelStrength } from "../formatter.js";
+import { createLogger } from "../../logger.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
 import { getProject } from "../../services/project-profiles.js";
 import { getSessionRecord } from "../../services/session-store.js";
 
+const log = createLogger("telegram:panel");
+
 // ─── Model options ───────────────────────────────────────────────────────────
 
 const MODELS = [
-  { label: "Opus 4.6", emoji: "🧠", key: "o46", value: "claude-opus-4-6" },
-  { label: "Sonnet 4.6", emoji: "🎯", key: "s46", value: "claude-sonnet-4-6" },
-  { label: "Opus 4.5", emoji: "🧠", key: "o45", value: "claude-opus-4-5" },
-  { label: "Sonnet 4.5", emoji: "🎯", key: "s45", value: "claude-sonnet-4-5" },
-  { label: "Haiku 4.5", emoji: "⚡", key: "h45", value: "claude-haiku-4-5" },
+  { label: "Opus 4.6", key: "o46", value: "claude-opus-4-6" },
+  { label: "Sonnet 4.6", key: "s46", value: "claude-sonnet-4-6" },
+  { label: "Haiku 4.5", key: "h45", value: "claude-haiku-4-5" },
+  { label: "Opus 4.5", key: "o45", value: "claude-opus-4-5" },
+  { label: "Sonnet 4.5", key: "s45", value: "claude-sonnet-4-5" },
 ];
 
 const MODEL_KEY_MAP = new Map(MODELS.map((m) => [m.key, m.value]));
+
+function buildModelKeyboard(sessionId: string, currentModel: string, currentThinking: string) {
+  const currentShort = shortModelName(currentModel);
+
+  const modelButtons = MODELS.map((m) => {
+    const isCurrent = currentShort === m.label;
+    const dot = isCurrent ? "🟢 " : "";
+    return { text: `${dot}${m.label}${isCurrent ? " ✓" : ""}`, callback_data: `pm:${m.key}:${sessionId}` };
+  });
+
+  const thinkButtons = (
+    [
+      { label: "Adaptive", value: "adaptive" },
+      { label: "Off", value: "off" },
+      { label: "Deep", value: "deep" },
+    ] as const
+  ).map((t) => {
+    const isCurrent = currentThinking === t.value;
+    return { text: `${isCurrent ? "🟢 " : ""}${t.label}${isCurrent ? " ✓" : ""}`, callback_data: `pt:${t.value}:${sessionId}` };
+  });
+
+  return {
+    inline_keyboard: [
+      // Row 1: top 3 models
+      modelButtons.slice(0, 3),
+      // Row 2: remaining models
+      modelButtons.slice(3),
+      // Row 3: thinking modes
+      thinkButtons,
+      // Row 4: back
+      [{ text: "↩ Back", callback_data: `panel:status:${sessionId}` }],
+    ],
+  };
+}
 
 // ─── Thinking mode options ──────────────────────────────────────────────────
 
@@ -48,6 +84,8 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
 
   // ── Model selector ──────────────────────────────────────────────────────
 
+  // ── Open model picker ────────────────────────────────────────────────────
+
   bot.callbackQuery(/^panel:model:(.+)$/, async (ctx) => {
     const sessionId = ctx.match[1]!;
     await ctx.answerCallbackQuery();
@@ -55,29 +93,23 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     const session = bridge.wsBridge.getSession(sessionId);
     const currentModel = session?.state.model ?? "";
     const currentThinking = session?.state.thinking_mode ?? "adaptive";
-
-    const currentShort = shortModelName(currentModel);
     const strength = modelStrength(currentModel);
+    const short = shortModelName(currentModel);
 
-    const keyboard = new InlineKeyboard();
-    for (const m of MODELS) {
-      const isCurrent = currentShort === m.label;
-      const check = isCurrent ? " ✓" : "";
-      keyboard.text(`${m.emoji} ${m.label}${check}`, `pm:${m.key}:${sessionId}`).row();
-    }
-    keyboard.row();
-    for (const t of THINKING_MODES) {
-      const checkmark = currentThinking === t.value ? " ✓" : "";
-      keyboard.text(`${t.label}${checkmark}`, `pt:${t.value}:${sessionId}`);
-    }
-    keyboard.row();
-    keyboard.text("↩ Back", `panel:status:${sessionId}`);
+    const keyboard = buildModelKeyboard(sessionId, currentModel, currentThinking);
+    const header = `<b>${escapeHTML(short)}</b>${strength ? ` — <i>${escapeHTML(strength)}</i>` : ""}`;
 
-    const header = `<b>${escapeHTML(currentShort)}</b>${strength ? ` — <i>${escapeHTML(strength)}</i>` : ""}`;
-    await ctx
-      .editMessageText(`${header}\n\nSelect model & thinking mode:`, { parse_mode: "HTML", reply_markup: keyboard })
-      .catch(() => {});
+    try {
+      await ctx.editMessageText(`${header}\n\nSelect model & thinking mode:`, {
+        parse_mode: "HTML",
+        reply_markup: keyboard as unknown as import("grammy").InlineKeyboard,
+      });
+    } catch (err) {
+      log.error("Failed to show model picker", { sessionId, error: String(err) });
+    }
   });
+
+  // ── Model selected ──────────────────────────────────────────────────────
 
   bot.callbackQuery(/^pm:([^:]+):(.+)$/, async (ctx) => {
     const key = ctx.match[1]!;
@@ -87,29 +119,27 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
 
     bridge.wsBridge.handleBrowserMessage(sessionId, JSON.stringify({ type: "set_model", model }));
 
-    // Refresh panel
     const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
     const messageId = ctx.callbackQuery.message?.message_id;
     if (chatId && messageId) {
-      // Find mapping to get project info
       const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
         ?.message_thread_id;
       const mapping = bridge.getMapping(chatId, topicId);
       if (mapping) {
         const project = getProject(mapping.projectSlug);
-        await bridge.sendSettingsPanel(
-          chatId,
-          topicId,
-          sessionId,
-          project?.name ?? mapping.projectSlug,
-          model,
-          messageId,
-        );
+        try {
+          await bridge.sendSettingsPanel(
+            chatId, topicId, sessionId,
+            project?.name ?? mapping.projectSlug, model, messageId,
+          );
+        } catch (err) {
+          log.error("Failed to refresh panel after model change", { sessionId, error: String(err) });
+        }
       }
     }
   });
 
-  // ── Thinking mode selector ──────────────────────────────────────────────
+  // ── Thinking mode selected ──────────────────────────────────────────────
 
   bot.callbackQuery(/^pt:([^:]+):(.+)$/, async (ctx) => {
     const mode = ctx.match[1]! as "adaptive" | "off" | "deep";
@@ -123,27 +153,20 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
 
     const session = bridge.wsBridge.getSession(sessionId);
     const currentModel = session?.state.model ?? "";
-    const currentShort = shortModelName(currentModel);
     const strength = modelStrength(currentModel);
+    const short = shortModelName(currentModel);
 
-    const keyboard = new InlineKeyboard();
-    for (const m of MODELS) {
-      const isCurrent = currentShort === m.label;
-      const check = isCurrent ? " ✓" : "";
-      keyboard.text(`${m.emoji} ${m.label}${check}`, `pm:${m.key}:${sessionId}`).row();
-    }
-    keyboard.row();
-    for (const t of THINKING_MODES) {
-      const checkmark = mode === t.value ? " ✓" : "";
-      keyboard.text(`${t.label}${checkmark}`, `pt:${t.value}:${sessionId}`);
-    }
-    keyboard.row();
-    keyboard.text("↩ Back", `panel:status:${sessionId}`);
+    const keyboard = buildModelKeyboard(sessionId, currentModel, mode);
+    const header = `<b>${escapeHTML(short)}</b>${strength ? ` — <i>${escapeHTML(strength)}</i>` : ""}`;
 
-    const header = `<b>${escapeHTML(currentShort)}</b>${strength ? ` — <i>${escapeHTML(strength)}</i>` : ""}`;
-    await ctx
-      .editMessageText(`${header}\n\nSelect model & thinking mode:`, { parse_mode: "HTML", reply_markup: keyboard })
-      .catch(() => {});
+    try {
+      await ctx.editMessageText(`${header}\n\nSelect model & thinking mode:`, {
+        parse_mode: "HTML",
+        reply_markup: keyboard as unknown as import("grammy").InlineKeyboard,
+      });
+    } catch (err) {
+      log.error("Failed to refresh model picker after thinking change", { sessionId, error: String(err) });
+    }
   });
 
   // ── Status refresh ──────────────────────────────────────────────────────
