@@ -35,13 +35,22 @@ const MODELS = [
 
 const MODEL_KEY_MAP = new Map(MODELS.map((m) => [m.key, m.value]));
 
+type BtnStyle = "success" | "danger" | "primary" | undefined;
+
+function styledBtn(text: string, data: string, style?: BtnStyle) {
+  return { text, callback_data: data, ...(style ? { style } : {}) };
+}
+
 function buildModelKeyboard(sessionId: string, currentModel: string, currentThinking: string) {
   const currentShort = shortModelName(currentModel);
 
   const modelButtons = MODELS.map((m) => {
     const isCurrent = currentShort === m.label;
-    const dot = isCurrent ? "🟢 " : "";
-    return { text: `${dot}${m.label}${isCurrent ? " ✓" : ""}`, callback_data: `pm:${m.key}:${sessionId}` };
+    return styledBtn(
+      `${m.label}${isCurrent ? " ✓" : ""}`,
+      `pm:${m.key}:${sessionId}`,
+      isCurrent ? "success" : undefined,
+    );
   });
 
   const thinkButtons = (
@@ -52,30 +61,22 @@ function buildModelKeyboard(sessionId: string, currentModel: string, currentThin
     ] as const
   ).map((t) => {
     const isCurrent = currentThinking === t.value;
-    return { text: `${isCurrent ? "🟢 " : ""}${t.label}${isCurrent ? " ✓" : ""}`, callback_data: `pt:${t.value}:${sessionId}` };
+    return styledBtn(
+      `${t.label}${isCurrent ? " ✓" : ""}`,
+      `pt:${t.value}:${sessionId}`,
+      isCurrent ? "success" : undefined,
+    );
   });
 
   return {
     inline_keyboard: [
-      // Row 1: top 3 models
       modelButtons.slice(0, 3),
-      // Row 2: remaining models
       modelButtons.slice(3),
-      // Row 3: thinking modes
       thinkButtons,
-      // Row 4: back
-      [{ text: "↩ Back", callback_data: `panel:status:${sessionId}` }],
+      [styledBtn("↩ Back", `panel:status:${sessionId}`)],
     ],
   };
 }
-
-// ─── Thinking mode options ──────────────────────────────────────────────────
-
-const THINKING_MODES = [
-  { label: "⚡ Adaptive", value: "adaptive" },
-  { label: "💤 Off", value: "off" },
-  { label: "🧠 Deep", value: "deep" },
-] as const;
 
 // ─── Register ────────────────────────────────────────────────────────────────
 

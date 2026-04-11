@@ -168,7 +168,11 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
 
     const btns = models.map((m) => {
       const isCurrent = current === m.label;
-      return { text: `${isCurrent ? "🟢 " : ""}${m.label}${isCurrent ? " ✓" : ""}`, callback_data: `pm:${m.key}:${sid}` };
+      return {
+        text: `${m.label}${isCurrent ? " ✓" : ""}`,
+        callback_data: `pm:${m.key}:${sid}`,
+        ...(isCurrent ? { style: "success" } : {}),
+      };
     });
 
     const keyboard = {
