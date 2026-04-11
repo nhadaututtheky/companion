@@ -455,6 +455,11 @@ p {
   outline-offset: 2px;
 }
 
+/* Suppress focus ring on elements inside containers that handle their own focus state */
+.composer-textarea:focus-visible {
+  outline: none;
+}
+
 /* ── Soft Scrollbar ────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;

@@ -284,7 +284,7 @@ export function MessageComposer({
                     : placeholder
             }
             rows={1}
-            className="flex-1 resize-none bg-transparent text-sm leading-relaxed"
+            className="flex-1 resize-none bg-transparent text-sm leading-relaxed composer-textarea"
             style={{
               color: "var(--color-text-primary)",
               maxHeight: 200,
