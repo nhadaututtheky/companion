@@ -27,6 +27,9 @@ export interface WikiDomain {
 
 // ─── Article ────────────────────────────────────────────────────────────────
 
+/** How much to trust this article's content */
+export type ArticleConfidence = "extracted" | "inferred" | "ambiguous";
+
 /** Frontmatter metadata for a wiki article */
 export interface ArticleMeta {
   title: string;
@@ -43,6 +46,10 @@ export interface ArticleMeta {
   tags: string[];
   /** Whether this article was manually edited after compilation */
   manuallyEdited?: boolean;
+  /** Trust level: extracted (from source), inferred (deduced), ambiguous (uncertain) */
+  confidence?: ArticleConfidence;
+  /** Link to original source (repo URL, doc URL, etc.) */
+  sourceUrl?: string;
 }
 
 /** A complete wiki article (frontmatter + body) */
@@ -64,6 +71,7 @@ export interface ArticleRef {
   tokens: number;
   tags: string[];
   compiledAt: string;
+  confidence?: ArticleConfidence;
 }
 
 // ─── Index ──────────────────────────────────────────────────────────────────
@@ -170,6 +178,8 @@ export interface WikiConfig {
   rootPath: string;
   /** Default domain to load for sessions (null = none) */
   defaultDomain: string | null;
+  /** Secondary domains — only indexes injected in L0 for cross-domain routing */
+  secondaryDomains: string[];
   /** Whether wiki feature is enabled */
   enabled: boolean;
 }
@@ -177,6 +187,7 @@ export interface WikiConfig {
 export const DEFAULT_WIKI_CONFIG: WikiConfig = {
   rootPath: "wiki",
   defaultDomain: null,
+  secondaryDomains: [],
   enabled: true,
 };
 

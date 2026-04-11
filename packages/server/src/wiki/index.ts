@@ -22,6 +22,10 @@ export {
   readRawFile,
   writeRawFile,
   deleteRawFile,
+  flagStale,
+  getFlaggedArticles,
+  clearFlags,
+  type NeedsUpdateEntry,
 } from "./store.js";
 
 // Compiler (raw → articles)
@@ -30,15 +34,26 @@ export { compileWiki } from "./compiler.js";
 // Feedback loop (session findings → raw)
 export { saveSessionFindings } from "./feedback.js";
 
+// Query archive (self-archiving queries)
+export { archiveQuery } from "./query-archive.js";
+
 // Linter (freshness checks)
 export { lintDomain } from "./linter.js";
 export type { LintIssue, LintResult, LintSeverity } from "./linter.js";
 
 // Retriever (context-loading)
-export { getIndex, getCore, getSessionContext, searchArticles, retrieve } from "./retriever.js";
+export {
+  getIndex,
+  getCore,
+  getSessionContext,
+  searchArticles,
+  retrieve,
+  formatIndexForContext,
+} from "./retriever.js";
 
 // Types
 export type {
+  ArticleConfidence,
   WikiDomain,
   WikiArticle,
   ArticleMeta,

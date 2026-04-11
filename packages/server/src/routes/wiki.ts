@@ -43,10 +43,41 @@ import {
   lintDomain,
   type ArticleMeta,
   CHARS_PER_TOKEN,
+  archiveQuery,
+  flagStale,
+  getFlaggedArticles,
+  getWikiConfig,
+  setWikiConfig,
 } from "../wiki/index.js";
 
 export function createWikiRoutes(): Hono {
   const app = new Hono();
+
+  // ─── Config ─────────────────────────────────────────────────────────
+
+  /** Get wiki config */
+  app.get("/config", (c) => {
+    return c.json<ApiResponse>({ success: true, data: getWikiConfig() });
+  });
+
+  /** Update wiki config */
+  app.put(
+    "/config",
+    zValidator(
+      "json",
+      z.object({
+        rootPath: z.string().optional(),
+        defaultDomain: z.string().nullable().optional(),
+        secondaryDomains: z.array(z.string()).optional(),
+        enabled: z.boolean().optional(),
+      }),
+    ),
+    (c) => {
+      const updates = c.req.valid("json");
+      const config = setWikiConfig(updates);
+      return c.json<ApiResponse>({ success: true, data: config });
+    },
+  );
 
   // ─── Domain CRUD ────────────────────────────────────────────────────
 
@@ -258,9 +289,34 @@ export function createWikiRoutes(): Hono {
         tokenBudget: body.tokenBudget,
         includeCore: body.includeCore,
       });
+
+      // Self-archive: save Q&A as raw material for future compile cycles
+      archiveQuery(domain, body.query, result);
+
       return c.json<ApiResponse>({ success: true, data: result });
     },
   );
+
+  // ─── Stale Flags ────────────────────────────────────────────────────
+
+  /** Flag an article as stale (needs recompilation) */
+  app.post(
+    "/:domain/flag-stale/:slug",
+    zValidator("json", z.object({ reason: z.string().optional() }).optional()),
+    (c) => {
+      const { domain, slug } = c.req.param();
+      const body = c.req.valid("json");
+      flagStale(domain, slug, body?.reason);
+      return c.json<ApiResponse>({ success: true, data: { flagged: slug } });
+    },
+  );
+
+  /** List flagged articles for a domain */
+  app.get("/:domain/flags", (c) => {
+    const { domain } = c.req.param();
+    const flags = getFlaggedArticles(domain);
+    return c.json<ApiResponse>({ success: true, data: flags });
+  });
 
   // ─── Lint ───────────────────────────────────────────────────────────
 

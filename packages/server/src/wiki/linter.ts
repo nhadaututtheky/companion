@@ -7,7 +7,13 @@
 
 import { existsSync } from "node:fs";
 import { createLogger } from "../logger.js";
-import { listArticles, listRawFiles, readArticle, resolveWikiRoot } from "./store.js";
+import {
+  listArticles,
+  listRawFiles,
+  readArticle,
+  resolveWikiRoot,
+  getFlaggedArticles,
+} from "./store.js";
 
 const log = createLogger("wiki:linter");
 
@@ -136,7 +142,18 @@ export function lintDomain(domain: string, cwd?: string): LintResult {
     });
   }
 
-  // 6. Check for articles with no tags
+  // 6. Check for agent-flagged stale articles
+  const flagged = getFlaggedArticles(domain, cwd);
+  for (const flag of flagged) {
+    issues.push({
+      target: flag.slug,
+      severity: "warning",
+      code: "flagged-stale",
+      message: `Article "${flag.slug}" flagged as stale by ${flag.flaggedBy}${flag.reason ? `: ${flag.reason}` : ""}`,
+    });
+  }
+
+  // 7. Check for articles with no tags
   const untagged = articles.filter((a) => a.tags.length === 0);
   if (untagged.length > 0) {
     issues.push({

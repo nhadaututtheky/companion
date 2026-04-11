@@ -1575,6 +1575,18 @@ export const api = {
           lintedAt: string;
         };
       }>(`/api/wiki/${domain}/lint`),
+
+    getFlags: (domain: string) =>
+      request<{
+        success: boolean;
+        data: Array<{ slug: string; reason?: string; flaggedAt: string; flaggedBy: string }>;
+      }>(`/api/wiki/${domain}/flags`),
+
+    flagStale: (domain: string, slug: string, reason?: string) =>
+      request<{ success: boolean }>(`/api/wiki/${domain}/flag-stale/${slug}`, {
+        method: "POST",
+        body: JSON.stringify({ reason }),
+      }),
   },
 
   // Feature toggles

@@ -198,6 +198,7 @@ function listArticleFiles(domainPath: string): ArticleRef[] {
       tokens: meta?.tokens ?? estimateFileTokens(filePath),
       tags: meta?.tags ?? [],
       compiledAt: meta?.compiledAt ?? "",
+      confidence: meta?.confidence,
     });
   }
 
@@ -214,6 +215,12 @@ export function readArticle(domain: string, slug: string, cwd?: string): WikiArt
   const raw = readFileSync(filePath, "utf-8");
   const { meta, content } = parseFrontmatter(raw);
 
+  const rawConfidence = meta.confidence as string | undefined;
+  const confidence =
+    rawConfidence === "extracted" || rawConfidence === "inferred" || rawConfidence === "ambiguous"
+      ? rawConfidence
+      : undefined;
+
   const articleMeta: ArticleMeta = {
     title: String(meta.title ?? slug),
     domain: String(meta.domain ?? domain),
@@ -223,6 +230,8 @@ export function readArticle(domain: string, slug: string, cwd?: string): WikiArt
     tokens: (meta.tokens as number) ?? Math.ceil(content.length / CHARS_PER_TOKEN),
     tags: (meta.tags ?? []) as string[],
     manuallyEdited: Boolean(meta.manually_edited ?? meta.manuallyEdited ?? false),
+    confidence,
+    sourceUrl: (meta.source_url as string | undefined) ?? (meta.sourceUrl as string | undefined),
   };
 
   return { slug, meta: articleMeta, content, path: filePath };
@@ -256,6 +265,8 @@ export function writeArticle(
     `tokens: ${meta.tokens}`,
     `tags: [${meta.tags.join(", ")}]`,
     ...(meta.manuallyEdited ? ["manually_edited: true"] : []),
+    ...(meta.confidence ? [`confidence: ${meta.confidence}`] : []),
+    ...(meta.sourceUrl ? [`source_url: "${meta.sourceUrl}"`] : []),
     "---",
     "",
   ].join("\n");
@@ -578,6 +589,77 @@ export function findArticlesByRelatedFiles(
   return results.sort((a, b) => b.relevance - a.relevance);
 }
 
+// ─── Needs-Update Flags ────────────────────────────────────────────────────
+
+export interface NeedsUpdateEntry {
+  slug: string;
+  reason?: string;
+  flaggedAt: string;
+  flaggedBy: string;
+}
+
+export function flagStale(
+  domain: string,
+  slug: string,
+  reason?: string,
+  flaggedBy = "agent",
+  cwd?: string,
+): void {
+  const root = resolveWikiRoot(cwd);
+  const flagPath = join(root, domain, "needs_update.json");
+  const entries = getFlaggedArticles(domain, cwd);
+
+  const existing = entries.findIndex((e) => e.slug === slug);
+  const entry: NeedsUpdateEntry = {
+    slug,
+    reason,
+    flaggedAt: new Date().toISOString(),
+    flaggedBy,
+  };
+
+  if (existing >= 0) {
+    entries[existing] = entry;
+  } else {
+    entries.push(entry);
+  }
+
+  writeFileSync(flagPath, JSON.stringify(entries, null, 2), "utf-8");
+  log.info("Flagged article as stale", { domain, slug, reason });
+}
+
+export function getFlaggedArticles(domain: string, cwd?: string): NeedsUpdateEntry[] {
+  const root = resolveWikiRoot(cwd);
+  const flagPath = join(root, domain, "needs_update.json");
+
+  if (!existsSync(flagPath)) return [];
+
+  try {
+    const raw = readFileSync(flagPath, "utf-8");
+    return JSON.parse(raw) as NeedsUpdateEntry[];
+  } catch {
+    return [];
+  }
+}
+
+export function clearFlags(domain: string, slugs: string[], cwd?: string): void {
+  if (slugs.length === 0) return;
+
+  const root = resolveWikiRoot(cwd);
+  const flagPath = join(root, domain, "needs_update.json");
+  const entries = getFlaggedArticles(domain, cwd);
+
+  const slugSet = new Set(slugs);
+  const remaining = entries.filter((e) => !slugSet.has(e.slug));
+
+  if (remaining.length === 0 && existsSync(flagPath)) {
+    unlinkSync(flagPath);
+  } else if (remaining.length < entries.length) {
+    writeFileSync(flagPath, JSON.stringify(remaining, null, 2), "utf-8");
+  }
+
+  log.info("Cleared stale flags", { domain, cleared: slugs.length });
+}
+
 // ─── Frontmatter Parser ─────────────────────────────────────────────────────
 
 /** Parse YAML-like frontmatter from markdown (simple parser, no dependency) */
@@ -661,6 +743,12 @@ function parseArticleMeta(filePath: string): ArticleMeta | null {
     const { meta, content } = parseFrontmatter(raw);
     if (!meta.title) return null;
 
+    const rawConf = meta.confidence as string | undefined;
+    const confidence =
+      rawConf === "extracted" || rawConf === "inferred" || rawConf === "ambiguous"
+        ? rawConf
+        : undefined;
+
     return {
       title: String(meta.title),
       domain: String(meta.domain ?? ""),
@@ -670,6 +758,8 @@ function parseArticleMeta(filePath: string): ArticleMeta | null {
       tokens: (meta.tokens as number) ?? Math.ceil(content.length / CHARS_PER_TOKEN),
       tags: (meta.tags ?? []) as string[],
       manuallyEdited: (meta.manually_edited ?? meta.manuallyEdited ?? false) as boolean,
+      confidence,
+      sourceUrl: (meta.source_url as string | undefined) ?? (meta.sourceUrl as string | undefined),
     };
   } catch {
     return null;

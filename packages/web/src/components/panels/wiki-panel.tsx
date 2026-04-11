@@ -133,6 +133,7 @@ function BrowseView() {
   const searchQuery = useWikiStore((s) => s.searchQuery);
   const setSearchQuery = useWikiStore((s) => s.setSearchQuery);
   const [showNewDomain, setShowNewDomain] = useState(false);
+  const [flaggedSlugs, setFlaggedSlugs] = useState<Set<string>>(new Set());
 
   const loadDomains = useCallback(async () => {
     try {
@@ -158,15 +159,19 @@ function BrowseView() {
       setActiveDomain(slug);
       setLoading(true);
       try {
-        const [articlesRes, coreRes] = await Promise.all([
+        const [articlesRes, coreRes, flagsRes] = await Promise.all([
           api.wiki.listArticles(slug),
           api.wiki.getCore(slug).catch(() => null),
+          api.wiki.getFlags(slug).catch(() => null),
         ]);
         if (articlesRes.success && articlesRes.data) {
           setArticles(articlesRes.data as ArticleRef[]);
         }
         if (coreRes?.success && coreRes.data) {
           setCoreContent(coreRes.data.content);
+        }
+        if (flagsRes?.success && Array.isArray(flagsRes.data)) {
+          setFlaggedSlugs(new Set(flagsRes.data.map((f: { slug: string }) => f.slug)));
         }
       } catch {
         /* ignore */
@@ -411,11 +416,20 @@ function BrowseView() {
               style={{ color: "var(--color-text-secondary)", marginTop: 1, flexShrink: 0 }}
             />
             <div className="flex-1 min-w-0">
-              <div
-                className="text-xs font-medium truncate"
-                style={{ color: "var(--color-text-primary)" }}
-              >
-                {a.title}
+              <div className="flex items-center gap-1">
+                <div
+                  className="text-xs font-medium truncate"
+                  style={{ color: "var(--color-text-primary)" }}
+                >
+                  {a.title}
+                </div>
+                {flaggedSlugs.has(a.slug) && (
+                  <Warning
+                    size={12}
+                    weight="fill"
+                    style={{ color: "var(--color-warning, #f59e0b)", flexShrink: 0 }}
+                  />
+                )}
               </div>
               {a.tags.length > 0 && (
                 <div className="flex items-center gap-1 mt-0.5 flex-wrap">
@@ -434,12 +448,32 @@ function BrowseView() {
                 </div>
               )}
             </div>
-            <span
-              className="text-[10px] shrink-0 mt-0.5"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              {fmtTokens(a.tokens)}
-            </span>
+            <div className="flex flex-col items-end gap-0.5 shrink-0 mt-0.5">
+              <span className="text-[10px]" style={{ color: "var(--color-text-secondary)" }}>
+                {fmtTokens(a.tokens)}
+              </span>
+              {a.confidence && (
+                <span
+                  className="text-[9px] px-1 rounded"
+                  style={{
+                    background:
+                      a.confidence === "extracted"
+                        ? "rgba(16,185,129,0.15)"
+                        : a.confidence === "ambiguous"
+                          ? "rgba(239,68,68,0.15)"
+                          : "rgba(245,158,11,0.15)",
+                    color:
+                      a.confidence === "extracted"
+                        ? "var(--color-success, #10b981)"
+                        : a.confidence === "ambiguous"
+                          ? "var(--color-danger, #ef4444)"
+                          : "var(--color-warning, #f59e0b)",
+                  }}
+                >
+                  {a.confidence}
+                </span>
+              )}
+            </div>
           </button>
         ))}
     </div>
@@ -729,6 +763,38 @@ function ArticleView() {
           <span className="text-[10px]" style={{ color: "var(--color-text-secondary)" }}>
             {new Date(article.meta.compiledAt).toLocaleDateString()}
           </span>
+        )}
+        {article.meta.confidence && (
+          <span
+            className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+            style={{
+              background:
+                article.meta.confidence === "extracted"
+                  ? "rgba(16,185,129,0.15)"
+                  : article.meta.confidence === "ambiguous"
+                    ? "rgba(239,68,68,0.15)"
+                    : "rgba(245,158,11,0.15)",
+              color:
+                article.meta.confidence === "extracted"
+                  ? "var(--color-success, #10b981)"
+                  : article.meta.confidence === "ambiguous"
+                    ? "var(--color-danger, #ef4444)"
+                    : "var(--color-warning, #f59e0b)",
+            }}
+          >
+            {article.meta.confidence}
+          </span>
+        )}
+        {article.meta.sourceUrl && (
+          <a
+            href={article.meta.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] underline"
+            style={{ color: "var(--color-accent, #6366f1)" }}
+          >
+            source
+          </a>
         )}
         {article.meta.tags.length > 0 && (
           <div className="flex items-center gap-1">

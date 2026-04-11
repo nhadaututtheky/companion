@@ -87,7 +87,7 @@ export function getSessionContext(
   };
 }
 
-function formatIndexForContext(index: WikiIndex): string {
+export function formatIndexForContext(index: WikiIndex): string {
   const lines = [
     `## Wiki: ${index.domain} (${index.articleCount} articles, ${index.totalTokens} tokens)`,
     "",
@@ -98,7 +98,8 @@ function formatIndexForContext(index: WikiIndex): string {
   } else {
     for (const a of index.articles) {
       const tags = a.tags.length > 0 ? ` [${a.tags.join(", ")}]` : "";
-      lines.push(`- **${a.title}** (${a.slug}) — ${a.tokens}t${tags}`);
+      const conf = a.confidence ? ` {${a.confidence}}` : "";
+      lines.push(`- **${a.title}** (${a.slug}) — ${a.tokens}t${tags}${conf}`);
     }
   }
 

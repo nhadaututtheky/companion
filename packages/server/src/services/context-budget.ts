@@ -12,8 +12,12 @@
 import { createLogger } from "../logger.js";
 import { getSetting } from "./settings-helpers.js";
 import type { TaskComplexity } from "@companion/shared/types";
-import { getSessionContext as getWikiSessionContext } from "../wiki/retriever.js";
-import { getWikiConfig } from "../wiki/store.js";
+import {
+  getSessionContext as getWikiSessionContext,
+  formatIndexForContext,
+} from "../wiki/retriever.js";
+import { getWikiConfig, readIndex } from "../wiki/store.js";
+import { CHARS_PER_TOKEN } from "../wiki/types.js";
 import {
   estimateContextBreakdown,
   type ContextBreakdown,
@@ -269,6 +273,7 @@ export function getWikiStartContext(cwd?: string): {
   content: string;
   tokens: number;
   domain: string;
+  domains: string[];
 } | null {
   if (!isFeatureEnabled("wiki")) return null;
 
@@ -281,11 +286,28 @@ export function getWikiStartContext(cwd?: string): {
   const ctx = getWikiSessionContext(config.defaultDomain, wikiL0Budget, cwd);
   if (!ctx) return null;
 
-  return {
-    content: ctx.content,
-    tokens: ctx.tokens,
-    domain: config.defaultDomain,
-  };
+  let content = ctx.content;
+  let tokens = ctx.tokens;
+  const domains = [config.defaultDomain];
+
+  const secondaries = config.secondaryDomains ?? [];
+  for (const secondary of secondaries) {
+    if (secondary === config.defaultDomain) continue;
+
+    const index = readIndex(secondary, cwd);
+    if (!index) continue;
+
+    const indexContent = formatIndexForContext(index);
+    const indexTokens = Math.ceil(indexContent.length / CHARS_PER_TOKEN);
+
+    if (tokens + indexTokens > wikiL0Budget) break;
+
+    content += `\n\n${indexContent}\n*(reference only — query on-demand via /api/wiki/${secondary}/query)*`;
+    tokens += indexTokens;
+    domains.push(secondary);
+  }
+
+  return { content, tokens, domain: config.defaultDomain, domains };
 }
 
 // ─── Enhanced Breakdown (includes wiki) ─────────────────────────────────────

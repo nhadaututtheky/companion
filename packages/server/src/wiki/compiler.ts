@@ -14,10 +14,12 @@ import {
   writeArticle,
   listArticles,
   rebuildIndex,
+  clearFlags,
 } from "./store.js";
 import {
   type CompileRequest,
   type CompileResult,
+  type ArticleConfidence,
   type ArticleMeta,
   type ArticleRef,
   CHARS_PER_TOKEN,
@@ -139,6 +141,7 @@ export async function compileWiki(request: CompileRequest, cwd?: string): Promis
         compiledAt: new Date().toISOString(),
         tokens,
         tags: article.tags,
+        confidence: article.confidence ?? "inferred",
       };
 
       writeArticle(domain, article.slug, meta, article.content, cwd);
@@ -154,6 +157,15 @@ export async function compileWiki(request: CompileRequest, cwd?: string): Promis
 
     // Rebuild index after writing
     rebuildIndex(domain, cwd);
+
+    // Clear stale flags for recompiled articles
+    if (articlesWritten.length > 0) {
+      clearFlags(
+        domain,
+        articlesWritten.map((a) => a.slug),
+        cwd,
+      );
+    }
   } catch (err) {
     log.error("Compilation failed", { domain, error: String(err) });
     errors.push({ file: "compiler", error: String(err) });
@@ -212,6 +224,8 @@ async function callCompiler(
 6. If raw material contains code, include key snippets but summarize the rest
 7. Cross-reference other articles when relevant
 8. Tags should be specific and useful for search
+9. Assign confidence: "extracted" (directly from source material), "inferred" (your deduction/synthesis), "ambiguous" (uncertain, needs verification)
+10. Files prefixed with "query-" are archived agent queries. Extract recurring themes or knowledge gaps. If queries have no results, consider creating articles to fill those gaps.
 
 ## Domain: ${domain}
 ${coreSection}
@@ -225,6 +239,7 @@ For EACH article, output exactly this format (including the markers):
 slug: <url-safe-slug>
 title: <Clear Descriptive Title>
 tags: <tag1, tag2, tag3>
+confidence: <extracted|inferred|ambiguous>
 
 <article body in markdown>
 ===ARTICLE_END===
@@ -256,6 +271,7 @@ interface ParsedArticle {
   slug: string;
   title: string;
   tags: string[];
+  confidence?: ArticleConfidence;
   content: string;
 }
 
@@ -274,6 +290,7 @@ function parseCompilerOutput(output: string): ParsedArticle[] {
     let slug = "";
     let title = "";
     let tags: string[] = [];
+    let confidence: ArticleConfidence | undefined;
     let bodyStartIdx = 0;
 
     for (let i = 0; i < Math.min(lines.length, 5); i++) {
@@ -297,6 +314,12 @@ function parseCompilerOutput(output: string): ParsedArticle[] {
           .map((t) => t.trim())
           .filter(Boolean);
         bodyStartIdx = i + 1;
+      } else if (line.startsWith("confidence:")) {
+        const val = line.slice(11).trim();
+        if (val === "extracted" || val === "inferred" || val === "ambiguous") {
+          confidence = val;
+        }
+        bodyStartIdx = i + 1;
       } else if (line === "") {
         bodyStartIdx = i + 1;
         break;
@@ -319,6 +342,7 @@ function parseCompilerOutput(output: string): ParsedArticle[] {
       slug,
       title: title || slug,
       tags,
+      confidence,
       content: body,
     });
   }

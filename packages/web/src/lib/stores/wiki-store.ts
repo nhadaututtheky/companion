@@ -18,6 +18,7 @@ export interface ArticleRef {
   tokens: number;
   tags: string[];
   compiledAt: string;
+  confidence?: "extracted" | "inferred" | "ambiguous";
 }
 
 export interface WikiArticle {
@@ -31,6 +32,8 @@ export interface WikiArticle {
     tokens: number;
     tags: string[];
     manuallyEdited: boolean;
+    confidence?: "extracted" | "inferred" | "ambiguous";
+    sourceUrl?: string;
   };
   content: string;
 }
