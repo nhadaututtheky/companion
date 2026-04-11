@@ -52,6 +52,7 @@ interface SessionHeaderProps {
   totalOutputTokens?: number;
   cacheCreationTokens?: number;
   cacheReadTokens?: number;
+  sessionColor?: string;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -90,6 +91,7 @@ export function SessionHeader({
   cacheCreationTokens,
   cacheReadTokens,
   cliPlatform,
+  sessionColor,
 }: SessionHeaderProps) {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
@@ -168,10 +170,24 @@ export function SessionHeader({
 
   return (
     <>
+      {/* Top accent bar — session identity */}
+      {sessionColor && (
+        <div
+          style={{
+            height: 2,
+            background: `linear-gradient(90deg, ${sessionColor}, transparent)`,
+            flexShrink: 0,
+            borderRadius: "var(--radius-xl) var(--radius-xl) 0 0",
+          }}
+        />
+      )}
       <div
         className="flex items-center gap-2 px-3 py-2 flex-shrink-0"
         style={{
           borderBottom: contextPercent === undefined ? "1px solid var(--glass-border)" : "none",
+          background: sessionColor
+            ? `color-mix(in srgb, ${sessionColor} 4%, transparent)`
+            : undefined,
         }}
       >
         {/* Left: status dot + project name */}

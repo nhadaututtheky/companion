@@ -338,26 +338,12 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
         minHeight: 0,
       }}
     >
-      {/* Left accent stripe — session identity */}
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 8,
-          bottom: 8,
-          width: 3,
-          borderRadius: "0 2px 2px 0",
-          background: sessionColor,
-          opacity: 0.7,
-          zIndex: 1,
-        }}
-      />
-
       {/* Header */}
       <SessionHeader
         sessionId={sessionId}
         shortId={session?.shortId ?? session?.state?.short_id}
         projectName={session?.projectName ?? sessionId}
+        sessionColor={sessionColor}
         model={session?.model ?? ""}
         status={session?.status ?? "idle"}
         onExpand={handleExpand}
