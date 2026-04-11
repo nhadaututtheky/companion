@@ -86,6 +86,7 @@ function CompactComposer({
   isRunning: boolean;
 }) {
   const [text, setText] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
   const [slashMenuOpen, setSlashMenuOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -154,8 +155,14 @@ function CompactComposer({
         className="flex items-end gap-1 flex-1 px-2.5 py-1.5"
         style={{
           background: "var(--color-bg-elevated)",
-          border: "1px solid var(--glass-border)",
+          border: isFocused
+            ? "1px solid color-mix(in srgb, var(--color-accent) 50%, transparent)"
+            : "1px solid var(--glass-border)",
           borderRadius: "var(--radius-pill)",
+          boxShadow: isFocused
+            ? "0 0 0 3px color-mix(in srgb, var(--color-accent) 10%, transparent)"
+            : "none",
+          transition: "border-color 150ms ease, box-shadow 150ms ease",
         }}
       >
         <textarea
@@ -167,15 +174,18 @@ function CompactComposer({
           }}
           onKeyDown={handleKeyDown}
           onInput={handleInput}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           placeholder={isRunning ? "Type to interrupt…" : "Message…"}
           rows={1}
-          className="flex-1 resize-none bg-transparent outline-none leading-snug"
+          className="flex-1 resize-none bg-transparent leading-snug composer-textarea"
           style={{
             fontSize: 12,
             color: "var(--color-text-primary)",
             maxHeight: 72,
             minHeight: 18,
             fontFamily: "var(--font-body)",
+            outline: "none",
           }}
           aria-label="Message input"
         />
