@@ -56,6 +56,7 @@ export async function handleAssistantMessage(
   );
   if (toolFeed) {
     await bridge.upsertToolFeed(chatId, topicId, toolFeed);
+    bridge.streamHandler.markBreak(chatId, topicId);
   }
 
   // NOTE: Do NOT call streamHandler.appendText here.

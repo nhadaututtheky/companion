@@ -29,6 +29,7 @@ interface PendingResponse {
 
 export class StreamHandler {
   private pending = new Map<string, PendingResponse>();
+  private needsSeparator = new Set<string>();
   private api: Api;
 
   constructor(api: Api) {
@@ -37,6 +38,14 @@ export class StreamHandler {
 
   private key(chatId: number, topicId?: number): string {
     return `${chatId}:${topicId ?? 0}`;
+  }
+
+  /** Mark that a tool break occurred — next text append will get a line break separator */
+  markBreak(chatId: number, topicId?: number): void {
+    const k = this.key(chatId, topicId);
+    if (this.pending.has(k)) {
+      this.needsSeparator.add(k);
+    }
   }
 
   /**
@@ -71,6 +80,14 @@ export class StreamHandler {
       return;
     }
 
+    // Add separator if a tool break occurred between text blocks
+    if (this.needsSeparator.has(k)) {
+      this.needsSeparator.delete(k);
+      if (p.rawText.length > 0 && !p.rawText.endsWith("\n\n")) {
+        p.rawText += "\n\n";
+      }
+    }
+
     // Accumulate
     p.rawText += text;
   }
@@ -86,6 +103,7 @@ export class StreamHandler {
     // Stop typing
     clearInterval(p.typingTimer);
     this.pending.delete(k);
+    this.needsSeparator.delete(k);
 
     const html = toTelegramHTML(p.rawText);
     if (!html) return null;
@@ -147,6 +165,7 @@ export class StreamHandler {
     if (p) {
       clearInterval(p.typingTimer);
       this.pending.delete(k);
+      this.needsSeparator.delete(k);
     }
   }
 
