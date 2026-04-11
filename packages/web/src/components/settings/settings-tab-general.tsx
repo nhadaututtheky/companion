@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Key, Globe, FloppyDisk, Check, PaintBrush, Bug } from "@phosphor-icons/react";
+import { Key, Globe, FloppyDisk, Check, PaintBrush, Bug, Lightbulb } from "@phosphor-icons/react";
+import { areTipsEnabled, setTipsEnabled, resetDismissedTips } from "@/components/tips/tip-storage";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -237,6 +238,68 @@ function LicenseSection() {
   );
 }
 
+// ── Tips Section ────────────────────────────────────────────────────────────
+
+function TipsSection() {
+  const [enabled, setEnabled] = useState(true);
+
+  useEffect(() => {
+    setEnabled(areTipsEnabled());
+  }, []);
+
+  const handleToggle = useCallback(() => {
+    const next = !enabled;
+    setEnabled(next);
+    setTipsEnabled(next);
+    toast.success(`Tips ${next ? "enabled" : "disabled"}`);
+  }, [enabled]);
+
+  const handleReset = useCallback(() => {
+    resetDismissedTips();
+    toast.success("All dismissed tips restored");
+  }, []);
+
+  return (
+    <SettingSection
+      title="Tips & Hints"
+      description="Contextual tips to help you get the most out of Companion."
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Lightbulb size={16} weight="fill" style={{ color: "var(--color-warning)" }} />
+          <span className="text-sm font-medium">Show Tips</span>
+        </div>
+        <button
+          onClick={handleToggle}
+          className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer"
+          style={{
+            background: enabled ? "var(--color-accent)" : "var(--color-bg-elevated)",
+            border: "1px solid var(--glass-border)",
+          }}
+          role="switch"
+          aria-checked={enabled}
+          aria-label="Toggle tips"
+        >
+          <span
+            className="inline-block h-4 w-4 rounded-full transition-transform"
+            style={{
+              background: "#fff",
+              transform: enabled ? "translateX(22px)" : "translateX(4px)",
+            }}
+          />
+        </button>
+      </div>
+      <button
+        onClick={handleReset}
+        className="mt-2 text-xs cursor-pointer"
+        style={{ color: "var(--color-text-muted)", background: "none", border: "none" }}
+      >
+        Reset dismissed tips
+      </button>
+    </SettingSection>
+  );
+}
+
 // ── General Tab ─────────────────────────────────────────────────────────────
 
 export function GeneralTab() {
@@ -410,6 +473,9 @@ export function GeneralTab() {
           View Error Log ↗
         </a>
       </SettingSection>
+
+      {/* Tips & Hints */}
+      <TipsSection />
 
       {/* Save button */}
       <button

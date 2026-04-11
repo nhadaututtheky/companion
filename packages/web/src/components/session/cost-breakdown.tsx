@@ -182,9 +182,8 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
     <div
       className="rounded-xl overflow-hidden"
       style={{
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
-        borderLeft: "3px solid #34A853",
+        background: "color-mix(in srgb, #34A853 6%, var(--color-bg-card))",
+        border: "1px solid color-mix(in srgb, #34A853 15%, transparent)",
       }}
     >
       {/* Header row — click to collapse in expanded mode */}

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useCallback, type KeyboardEvent } from "react";
+import { useState, useRef, useCallback, useEffect, type KeyboardEvent } from "react";
 import { PaperPlaneTilt, Stop, Microphone, MicrophoneSlash } from "@phosphor-icons/react";
 import { useVoiceInput } from "@/hooks/use-voice-input";
 import {
@@ -49,6 +49,7 @@ export function MessageComposer({
 }: MessageComposerProps) {
   const [text, setText] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [slashMenuOpen, setSlashMenuOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -201,8 +202,14 @@ export function MessageComposer({
         style={{
           position: "relative",
           background: "var(--color-bg-elevated)",
-          border: isDragOver ? "1.5px solid var(--color-accent)" : "1.5px solid transparent",
-          boxShadow: "var(--shadow-sm)",
+          border: isDragOver
+            ? "1.5px solid var(--color-accent)"
+            : isFocused
+              ? "1.5px solid color-mix(in srgb, var(--color-accent) 50%, transparent)"
+              : "1.5px solid transparent",
+          boxShadow: isFocused
+            ? "0 0 0 3px color-mix(in srgb, var(--color-accent) 10%, transparent)"
+            : "var(--shadow-sm)",
           transition: "border-color 150ms ease, box-shadow 150ms ease",
         }}
       >
@@ -264,6 +271,8 @@ export function MessageComposer({
             }}
             onKeyDown={handleKeyDown}
             onInput={handleInput}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             disabled={disabled}
             placeholder={
               isRunning
@@ -275,12 +284,13 @@ export function MessageComposer({
                     : placeholder
             }
             rows={1}
-            className="flex-1 resize-none bg-transparent outline-none text-sm leading-relaxed"
+            className="flex-1 resize-none bg-transparent text-sm leading-relaxed"
             style={{
               color: "var(--color-text-primary)",
               maxHeight: 200,
               minHeight: 22,
               fontFamily: "var(--font-body)",
+              outline: "none",
             }}
           />
 

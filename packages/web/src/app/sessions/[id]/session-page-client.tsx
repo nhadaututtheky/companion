@@ -26,6 +26,7 @@ import { ModelSelector } from "@/components/session/model-selector";
 import { ThinkingModeSelector } from "@/components/session/thinking-mode-selector";
 import { PersonaChip } from "@/components/persona/persona-chip";
 import { PanelErrorBoundary } from "@/components/ui/panel-error-boundary";
+import { TipBanner } from "@/components/tips/tip-banner";
 import { usePinnedMessagesStore } from "@/lib/stores/pinned-messages-store";
 import { usePreviewStore } from "@/lib/stores/preview-store";
 import { useSession } from "@/hooks/use-session";
@@ -477,6 +478,13 @@ export function SessionPageClient({ params }: PageProps) {
               </div>
 
               <ContextStatusBar session={session} />
+
+              {/* Tip */}
+              {messages.length === 0 && (
+                <div className="px-3 pt-2">
+                  <TipBanner context="session" />
+                </div>
+              )}
 
               {/* Messages */}
               <PanelErrorBoundary name="Message Feed">

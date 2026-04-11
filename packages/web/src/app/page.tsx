@@ -18,6 +18,7 @@ import { SearchPanel } from "@/components/panels/search-panel";
 import { TerminalPanel } from "@/components/panels/terminal-panel";
 import { PanelErrorBoundary } from "@/components/ui/panel-error-boundary";
 import { FloatingStatsBar } from "@/components/panels/floating-stats-bar";
+import { TipBanner } from "@/components/tips/tip-banner";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useNotificationPermission } from "@/hooks/use-notifications";
@@ -61,6 +62,9 @@ function EmptyCenter() {
       <p className="text-base text-center" style={{ color: "var(--color-text-secondary)" }}>
         Select a session or start a new one
       </p>
+      <div className="w-full max-w-md mt-2">
+        <TipBanner context="dashboard" />
+      </div>
     </div>
   );
 }

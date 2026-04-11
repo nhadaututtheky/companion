@@ -69,14 +69,19 @@ function StatCard({
 }) {
   return (
     <div
-      className="flex items-center gap-3 p-3 rounded-xl"
+      className="relative flex items-center gap-3 p-3 rounded-xl overflow-hidden"
       style={{
-        background: "var(--color-bg-card)",
-        border: `1px solid var(--color-border)`,
-        borderLeft: `3px solid ${color}`,
+        background: `color-mix(in srgb, ${color} 6%, var(--color-bg-card))`,
+        border: `1px solid color-mix(in srgb, ${color} 15%, transparent)`,
       }}
     >
-      <span style={{ color }}>{icon}</span>
+      <span
+        className="absolute top-2.5 left-2.5 rounded-full"
+        style={{ width: 6, height: 6, background: color }}
+      />
+      <span className="ml-2" style={{ color }}>
+        {icon}
+      </span>
       <div>
         <p className="text-xs">{label}</p>
         <p className="text-sm font-semibold font-mono">{value}</p>
@@ -208,7 +213,6 @@ function RTKSavingsCard({
         style={{
           background: "var(--color-bg-card)",
           border: "1px solid var(--color-border)",
-          borderLeft: "3px solid var(--color-border-strong)",
         }}
       >
         <div className="flex items-center gap-2">
@@ -226,14 +230,17 @@ function RTKSavingsCard({
 
   return (
     <div
-      className="p-3 rounded-xl"
+      className="relative p-3 rounded-xl overflow-hidden"
       style={{
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
-        borderLeft: "3px solid var(--color-success)",
+        background: "color-mix(in srgb, var(--color-success) 6%, var(--color-bg-card))",
+        border: "1px solid color-mix(in srgb, var(--color-success) 15%, transparent)",
       }}
     >
       <div className="flex items-center gap-2 mb-2">
+        <span
+          className="rounded-full"
+          style={{ width: 6, height: 6, background: "var(--color-success)", flexShrink: 0 }}
+        />
         <span style={{ color: "var(--color-success)", fontSize: 14 }}>⚡</span>
         <span className="text-xs font-semibold">RTK Savings</span>
       </div>

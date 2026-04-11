@@ -430,7 +430,7 @@ function MessageBubble({
     <div
       ref={msgRef}
       className={`flex gap-3 px-4 py-2 ${isUser ? "flex-row-reverse" : "flex-row"}`}
-      style={isPinned ? { borderLeft: "3px solid #FBBC04", paddingLeft: 13 } : undefined}
+      style={isPinned ? { background: "rgba(251, 188, 4, 0.06)", borderRadius: 12 } : undefined}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

@@ -229,6 +229,16 @@ export function SettingsModal() {
 
   const handleClose = useCallback(() => setOpen(false), [setOpen]);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ tab?: SettingsTab }>).detail;
+      if (detail?.tab) useUiStore.getState().setSettingsActiveTab(detail.tab);
+      setOpen(true);
+    };
+    window.addEventListener("open-settings", handler);
+    return () => window.removeEventListener("open-settings", handler);
+  }, [setOpen]);
+
   // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional SSR hydration guard
   useEffect(() => {
     setMounted(true);
