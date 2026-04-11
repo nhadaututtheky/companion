@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   ArrowLeft,
   ChartBar,
@@ -11,11 +11,44 @@ import {
   CircleNotch,
   WarningCircle,
   Clock,
+  Globe,
+  TelegramLogo,
+  Terminal,
+  Desktop,
+  Code,
+  CaretDown,
+  CaretRight,
+  File,
+  FilePlus,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import Link from "next/link";
 
 // ── Types ──────────────────────────────────────────────────────────────────
+
+interface RecentSession {
+  id: string;
+  name: string | null;
+  model: string;
+  projectSlug: string | null;
+  source: string;
+  startedAt: number;
+  cost: number;
+  turns: number;
+  tokens: number;
+  durationMs: number | null;
+  rtkTokensSaved: number;
+  filesModified: string[];
+  filesCreated: string[];
+}
+
+interface RTKSummary {
+  totalTokensSaved: number;
+  totalCompressions: number;
+  totalCacheHits: number;
+  cacheHitRate: number;
+  estimatedCostSaved: number;
+}
 
 interface StatsData {
   today: { sessions: number; tokens: number; cost: number };
@@ -26,17 +59,9 @@ interface StatsData {
   dailyActivity: Array<{ date: string; sessions: number; tokens: number }>;
   dailyCost: Array<{ date: string; cost: number }>;
   topProjects: Array<{ name: string; sessions: number }>;
-  recentSessions: Array<{
-    id: string;
-    name: string | null;
-    model: string;
-    projectSlug: string | null;
-    cost: number;
-    turns: number;
-    tokens: number;
-    durationMs: number | null;
-  }>;
+  recentSessions: RecentSession[];
   avgDurationMs: number;
+  rtkSummary: RTKSummary;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -187,9 +212,48 @@ function BarChart({
   );
 }
 
+// ── Source Badge ──────────────────────────────────────────────────────────
+
+const SOURCE_CONFIG: Record<string, { icon: typeof Globe; label: string; color: string }> = {
+  web: { icon: Globe, label: "Web", color: "#4285f4" },
+  telegram: { icon: TelegramLogo, label: "Telegram", color: "#29B6F6" },
+  cli: { icon: Terminal, label: "CLI", color: "#34A853" },
+  desktop: { icon: Desktop, label: "Desktop", color: "#a78bfa" },
+  api: { icon: Code, label: "API", color: "#94a3b8" },
+};
+
+function SourceBadge({ source }: { source: string }) {
+  const config = SOURCE_CONFIG[source] ?? SOURCE_CONFIG.api!;
+  const Icon = config.icon;
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
+      style={{ background: `${config.color}15`, color: config.color }}
+    >
+      <Icon size={10} weight="bold" aria-hidden="true" />
+      {config.label}
+    </span>
+  );
+}
+
+function fmtTime(ts: number): string {
+  const d = new Date(ts);
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const hour = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${month}-${day} ${hour}:${min}`;
+}
+
+function basename(path: string): string {
+  return path.split(/[/\\]/).pop() ?? path;
+}
+
 // ── Session Table ─────────────────────────────────────────────────────────
 
-function SessionTable({ sessions }: { sessions: StatsData["recentSessions"] }) {
+function SessionTable({ sessions }: { sessions: RecentSession[] }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   return (
     <div
       className="rounded-xl overflow-hidden"
@@ -199,6 +263,9 @@ function SessionTable({ sessions }: { sessions: StatsData["recentSessions"] }) {
         <table className="w-full text-xs">
           <thead>
             <tr>
+              <th className="text-left px-3 py-2 font-semibold" style={{ width: 28 }} />
+              <th className="text-left px-3 py-2 font-semibold">Start</th>
+              <th className="text-left px-3 py-2 font-semibold">Source</th>
               <th className="text-left px-3 py-2 font-semibold">Session</th>
               <th className="text-left px-3 py-2 font-semibold">Model</th>
               <th className="text-right px-3 py-2 font-semibold">Turns</th>
@@ -208,71 +275,658 @@ function SessionTable({ sessions }: { sessions: StatsData["recentSessions"] }) {
             </tr>
           </thead>
           <tbody>
-            {sessions.map((s) => (
-              <tr
-                key={s.id}
-                className="transition-colors"
-                style={{ borderTop: "1px solid var(--color-border)" }}
-              >
-                <td className="px-3 py-2">
-                  <Link href={`/sessions/${s.id}`} className="hover:underline">
-                    {s.name ?? s.id.slice(0, 8)}
-                  </Link>
-                  {s.projectSlug && <span className="ml-1.5 text-[10px]">{s.projectSlug}</span>}
-                </td>
-                <td className="px-3 py-2">
-                  <span
-                    className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold"
+            {sessions.map((s) => {
+              const isExpanded = expandedId === s.id;
+              const totalFiles = s.filesModified.length + s.filesCreated.length;
+              return (
+                <React.Fragment key={s.id}>
+                  <tr
+                    className="transition-colors cursor-pointer"
                     style={{
-                      background: `${modelColor(s.model)}20`,
-                      color: modelColor(s.model),
+                      borderTop: "1px solid var(--color-border)",
+                      background: isExpanded ? "var(--color-bg-elevated)" : undefined,
                     }}
+                    onClick={() => setExpandedId(isExpanded ? null : s.id)}
                   >
-                    {modelLabel(s.model)}
-                  </span>
-                </td>
-                <td
-                  className="px-3 py-2 text-right"
-                  style={{
-                    color: "var(--color-text-secondary)",
-                    fontFamily: "var(--font-mono, monospace)",
-                  }}
-                >
-                  {s.turns}
-                </td>
-                <td
-                  className="px-3 py-2 text-right"
-                  style={{
-                    color: "var(--color-text-secondary)",
-                    fontFamily: "var(--font-mono, monospace)",
-                  }}
-                >
-                  {fmtTokens(s.tokens)}
-                </td>
-                <td
-                  className="px-3 py-2 text-right"
-                  style={{
-                    color: "var(--color-text-primary)",
-                    fontFamily: "var(--font-mono, monospace)",
-                    fontWeight: 600,
-                  }}
-                >
-                  {fmtCost(s.cost)}
-                </td>
-                <td
-                  className="px-3 py-2 text-right"
-                  style={{
-                    color: "var(--color-text-muted)",
-                    fontFamily: "var(--font-mono, monospace)",
-                  }}
-                >
-                  {fmtDuration(s.durationMs)}
-                </td>
-              </tr>
-            ))}
+                    <td className="px-2 py-2 text-center" style={{ color: "var(--color-text-muted)" }}>
+                      {isExpanded ? (
+                        <CaretDown size={12} weight="bold" />
+                      ) : (
+                        <CaretRight size={12} weight="bold" />
+                      )}
+                    </td>
+                    <td
+                      className="px-3 py-2 whitespace-nowrap"
+                      style={{
+                        color: "var(--color-text-secondary)",
+                        fontFamily: "var(--font-mono, monospace)",
+                      }}
+                    >
+                      {fmtTime(s.startedAt)}
+                    </td>
+                    <td className="px-3 py-2">
+                      <SourceBadge source={s.source} />
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className="font-medium">{s.name ?? s.id.slice(0, 8)}</span>
+                      {s.projectSlug && (
+                        <span className="ml-1.5 text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+                          {s.projectSlug}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span
+                        className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                        style={{
+                          background: `${modelColor(s.model)}20`,
+                          color: modelColor(s.model),
+                        }}
+                      >
+                        {modelLabel(s.model)}
+                      </span>
+                    </td>
+                    <td
+                      className="px-3 py-2 text-right"
+                      style={{
+                        color: "var(--color-text-secondary)",
+                        fontFamily: "var(--font-mono, monospace)",
+                      }}
+                    >
+                      {s.turns}
+                    </td>
+                    <td
+                      className="px-3 py-2 text-right"
+                      style={{
+                        color: "var(--color-text-secondary)",
+                        fontFamily: "var(--font-mono, monospace)",
+                      }}
+                    >
+                      {fmtTokens(s.tokens)}
+                    </td>
+                    <td
+                      className="px-3 py-2 text-right"
+                      style={{
+                        color: "var(--color-text-primary)",
+                        fontFamily: "var(--font-mono, monospace)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {fmtCost(s.cost)}
+                    </td>
+                    <td
+                      className="px-3 py-2 text-right"
+                      style={{
+                        color: "var(--color-text-muted)",
+                        fontFamily: "var(--font-mono, monospace)",
+                      }}
+                    >
+                      {fmtDuration(s.durationMs)}
+                    </td>
+                  </tr>
+
+                  {/* Expanded detail row */}
+                  {isExpanded && (
+                    <tr>
+                      <td
+                        colSpan={9}
+                        className="px-4 py-3"
+                        style={{
+                          background: "var(--color-bg-elevated)",
+                          borderTop: "1px solid var(--color-border)",
+                        }}
+                      >
+                        <div className="flex gap-6">
+                          {/* Files section */}
+                          <div className="flex-1 min-w-0">
+                            <p
+                              className="text-[10px] font-semibold uppercase tracking-wide mb-1.5"
+                              style={{ color: "var(--color-text-muted)" }}
+                            >
+                              Files ({totalFiles})
+                            </p>
+                            {totalFiles === 0 ? (
+                              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                                No file changes
+                              </p>
+                            ) : (
+                              <div className="flex flex-col gap-0.5 max-h-32 overflow-y-auto">
+                                {s.filesModified.map((f) => (
+                                  <div
+                                    key={`m-${f}`}
+                                    className="flex items-center gap-1.5 text-xs"
+                                    style={{ color: "var(--color-text-secondary)" }}
+                                  >
+                                    <File size={10} weight="bold" style={{ color: "#FBBC04", flexShrink: 0 }} aria-hidden="true" />
+                                    <span className="truncate" title={f}>{basename(f)}</span>
+                                  </div>
+                                ))}
+                                {s.filesCreated.map((f) => (
+                                  <div
+                                    key={`c-${f}`}
+                                    className="flex items-center gap-1.5 text-xs"
+                                    style={{ color: "var(--color-text-secondary)" }}
+                                  >
+                                    <FilePlus size={10} weight="bold" style={{ color: "#34A853", flexShrink: 0 }} aria-hidden="true" />
+                                    <span className="truncate" title={f}>{basename(f)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* RTK section */}
+                          {s.rtkTokensSaved > 0 && (
+                            <div className="flex-shrink-0">
+                              <p
+                                className="text-[10px] font-semibold uppercase tracking-wide mb-1.5"
+                                style={{ color: "var(--color-text-muted)" }}
+                              >
+                                RTK Savings
+                              </p>
+                              <p
+                                className="text-sm font-bold font-mono"
+                                style={{ color: "#34A853" }}
+                              >
+                                {fmtTokens(s.rtkTokensSaved)} tokens
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Quick link */}
+                          <div className="flex-shrink-0 flex items-end">
+                            <Link
+                              href={`/sessions/${s.id}`}
+                              className="text-xs px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                              style={{
+                                color: "var(--color-text-muted)",
+                                border: "1px solid var(--color-border)",
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Open session →
+                            </Link>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+// ── Feature Data Types ───────────────────────────────────────────────────
+
+interface FeatureData {
+  rtk: {
+    daily: Array<{ date: string; tokensSaved: number; compressions: number }>;
+    totalTokensSaved: number;
+    totalCompressions: number;
+    cacheHitRate: number;
+    estimatedCostSaved: number;
+  };
+  wiki: {
+    domains: Array<{
+      slug: string;
+      name: string;
+      articleCount: number;
+      totalTokens: number;
+      staleCount: number;
+      lastCompiledAt: string | null;
+      rawPending: number;
+    }>;
+    totalArticles: number;
+    totalTokens: number;
+  };
+  codegraph: {
+    projects: Array<{
+      slug: string;
+      files: number;
+      nodes: number;
+      edges: number;
+      lastScannedAt: string | null;
+      coveragePercent: number;
+    }>;
+  };
+  context: {
+    totalInjections: number;
+    totalTokens: number;
+    typeBreakdown: Array<{ type: string; count: number; tokens: number }>;
+    daily: Array<{ date: string; injections: number; tokens: number }>;
+    topSessions: Array<{ sessionId: string; injections: number; tokens: number }>;
+  };
+}
+
+type AnalyticsTab = "overview" | "rtk" | "wiki" | "codegraph" | "context";
+
+const TABS: Array<{ id: AnalyticsTab; label: string }> = [
+  { id: "overview", label: "Overview" },
+  { id: "rtk", label: "RTK" },
+  { id: "wiki", label: "Wiki KB" },
+  { id: "codegraph", label: "CodeGraph" },
+  { id: "context", label: "AI Context" },
+];
+
+// ── RTK Tab ──────────────────────────────────────────────────────────────
+
+function RTKTab({ data }: { data: FeatureData["rtk"] }) {
+  if (data.totalTokensSaved === 0 && data.totalCompressions === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <Lightning size={40} weight="light" style={{ color: "var(--color-text-muted)" }} />
+        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+          RTK has not processed any sessions yet
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KpiCard
+          label="Tokens Saved"
+          value={fmtTokens(data.totalTokensSaved)}
+          sub="last 30 days"
+          icon={<Lightning size={14} weight="fill" />}
+          accent="#34A853"
+        />
+        <KpiCard
+          label="Est. Cost Saved"
+          value={fmtCost(data.estimatedCostSaved)}
+          sub="based on model rates"
+          icon={<Lightning size={14} weight="fill" />}
+          accent="#4285f4"
+        />
+        <KpiCard
+          label="Compressions"
+          value={String(data.totalCompressions)}
+          sub="total transforms"
+          icon={<Stack size={14} weight="fill" />}
+          accent="#FBBC04"
+        />
+        <KpiCard
+          label="Cache Hit Rate"
+          value={`${data.cacheHitRate}%`}
+          sub="dedup efficiency"
+          icon={<Fire size={14} weight="fill" />}
+          accent="#a78bfa"
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide">
+          Daily Token Savings (30d)
+        </span>
+        <BarChart
+          data={data.daily}
+          valueKey="tokensSaved"
+          formatValue={(v) => fmtTokens(v)}
+          accentColor="#34A853"
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide">
+          Daily Compressions (30d)
+        </span>
+        <BarChart
+          data={data.daily}
+          valueKey="compressions"
+          formatValue={(v) => `${v} compressions`}
+          accentColor="#FBBC04"
+        />
+      </div>
+
+      <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        Per-strategy breakdown coming in a future update.
+      </p>
+    </div>
+  );
+}
+
+// ── Wiki KB Tab ──────────────────────────────────────────────────────────
+
+function WikiTab({ data }: { data: FeatureData["wiki"] }) {
+  if (data.domains.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <Stack size={40} weight="light" style={{ color: "var(--color-text-muted)" }} />
+        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+          No Wiki KB domains configured
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-3 gap-3">
+        <KpiCard
+          label="Domains"
+          value={String(data.domains.length)}
+          icon={<Stack size={14} weight="fill" />}
+          accent="#4285f4"
+        />
+        <KpiCard
+          label="Articles"
+          value={String(data.totalArticles)}
+          sub={`${fmtTokens(data.totalTokens)} tokens stored`}
+          icon={<Fire size={14} weight="fill" />}
+          accent="#34A853"
+        />
+        <KpiCard
+          label="Stale"
+          value={String(data.domains.reduce((s, d) => s + d.staleCount, 0))}
+          sub="need recompilation"
+          icon={<WarningCircle size={14} weight="fill" />}
+          accent={data.domains.some((d) => d.staleCount > 0) ? "#FBBC04" : "#94a3b8"}
+        />
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <span className="text-xs font-semibold uppercase tracking-wide">Domains</span>
+        {data.domains.map((d) => (
+          <div
+            key={d.slug}
+            className="flex items-center gap-4 p-3 rounded-xl"
+            style={{
+              background: "var(--color-bg-card)",
+              border: `1px solid ${d.staleCount > 0 ? "#FBBC0440" : "var(--color-border)"}`,
+            }}
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">{d.name}</p>
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                {d.articleCount} articles · {fmtTokens(d.totalTokens)} tokens
+              </p>
+            </div>
+            {d.staleCount > 0 && (
+              <span
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: "#FBBC0420", color: "#FBBC04" }}
+              >
+                {d.staleCount} stale
+              </span>
+            )}
+            {d.rawPending > 0 && (
+              <span
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: "#4285f420", color: "#4285f4" }}
+              >
+                {d.rawPending} pending
+              </span>
+            )}
+            <span
+              className="text-[10px] font-mono flex-shrink-0"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              {d.lastCompiledAt ? new Date(d.lastCompiledAt).toLocaleDateString() : "never"}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── CodeGraph Tab ────────────────────────────────────────────────────────
+
+function CodeGraphTab({ data }: { data: FeatureData["codegraph"] }) {
+  if (data.projects.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <ChartBar size={40} weight="light" style={{ color: "var(--color-text-muted)" }} />
+        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+          Run a CodeGraph scan to see intelligence metrics
+        </p>
+      </div>
+    );
+  }
+
+  const totalNodes = data.projects.reduce((s, p) => s + p.nodes, 0);
+  const totalEdges = data.projects.reduce((s, p) => s + p.edges, 0);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-3 gap-3">
+        <KpiCard
+          label="Projects"
+          value={String(data.projects.length)}
+          sub="scanned"
+          icon={<Stack size={14} weight="fill" />}
+          accent="#4285f4"
+        />
+        <KpiCard
+          label="Symbols"
+          value={fmtTokens(totalNodes)}
+          sub="functions, classes, types"
+          icon={<ChartBar size={14} weight="fill" />}
+          accent="#34A853"
+        />
+        <KpiCard
+          label="Relationships"
+          value={fmtTokens(totalEdges)}
+          sub="imports, calls, extends"
+          icon={<Fire size={14} weight="fill" />}
+          accent="#a78bfa"
+        />
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <span className="text-xs font-semibold uppercase tracking-wide">Projects</span>
+        {data.projects.map((p) => (
+          <div
+            key={p.slug}
+            className="flex items-center gap-4 p-3 rounded-xl"
+            style={{
+              background: "var(--color-bg-card)",
+              border: "1px solid var(--color-border)",
+            }}
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">{p.slug}</p>
+              <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                {p.files} files · {p.nodes} symbols · {p.edges} relationships
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div
+                className="rounded-full overflow-hidden"
+                style={{ width: 60, height: 5, background: "var(--color-bg-elevated)" }}
+              >
+                <div
+                  style={{
+                    width: `${p.coveragePercent}%`,
+                    height: "100%",
+                    background: p.coveragePercent > 70 ? "#34A853" : p.coveragePercent > 40 ? "#FBBC04" : "#EA4335",
+                    borderRadius: 9999,
+                    minWidth: p.coveragePercent > 0 ? 4 : 0,
+                  }}
+                />
+              </div>
+              <span
+                className="text-[10px] font-mono font-semibold"
+                style={{
+                  color: p.coveragePercent > 70 ? "#34A853" : p.coveragePercent > 40 ? "#FBBC04" : "#EA4335",
+                  minWidth: 28,
+                  textAlign: "right",
+                }}
+              >
+                {p.coveragePercent}%
+              </span>
+            </div>
+            <span
+              className="text-[10px] font-mono flex-shrink-0"
+              style={{ color: "var(--color-text-muted)" }}
+            >
+              {p.lastScannedAt ? new Date(p.lastScannedAt).toLocaleDateString() : "—"}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── AI Context Tab ───────────────────────────────────────────────────────
+
+const INJECTION_LABELS: Record<string, string> = {
+  project_map: "Project Map",
+  message_context: "Message Context",
+  plan_review: "Plan Review",
+  break_check: "Break Check",
+  web_docs: "Web Docs",
+  activity_feed: "Activity Feed",
+};
+
+const INJECTION_COLORS: Record<string, string> = {
+  project_map: "#4285f4",
+  message_context: "#34A853",
+  plan_review: "#FBBC04",
+  break_check: "#EA4335",
+  web_docs: "#a78bfa",
+  activity_feed: "#06b6d4",
+};
+
+function ContextTab({ data }: { data: FeatureData["context"] }) {
+  if (data.totalInjections === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <Lightning size={40} weight="light" style={{ color: "var(--color-text-muted)" }} />
+        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+          No context injections recorded yet. Injections are logged when CodeGraph enriches agent messages.
+        </p>
+      </div>
+    );
+  }
+
+  const avgTokensPerInjection = data.totalInjections > 0
+    ? Math.round(data.totalTokens / data.totalInjections)
+    : 0;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-3 gap-3">
+        <KpiCard
+          label="Injections"
+          value={fmtTokens(data.totalInjections)}
+          sub="last 30 days"
+          icon={<Lightning size={14} weight="fill" />}
+          accent="#4285f4"
+        />
+        <KpiCard
+          label="Tokens Injected"
+          value={fmtTokens(data.totalTokens)}
+          sub="total context added"
+          icon={<Stack size={14} weight="fill" />}
+          accent="#34A853"
+        />
+        <KpiCard
+          label="Avg per Injection"
+          value={`${avgTokensPerInjection}`}
+          sub="tokens"
+          icon={<ChartBar size={14} weight="fill" />}
+          accent="#a78bfa"
+        />
+      </div>
+
+      {/* Type breakdown */}
+      {data.typeBreakdown.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <span className="text-xs font-semibold uppercase tracking-wide">By Type</span>
+          {data.typeBreakdown.map((t) => {
+            const maxCount = data.typeBreakdown[0]?.count ?? 1;
+            const pct = Math.round((t.count / maxCount) * 100);
+            const color = INJECTION_COLORS[t.type] ?? "#4285f4";
+            return (
+              <div
+                key={t.type}
+                className="flex items-center gap-3 p-3 rounded-xl"
+                style={{
+                  background: "var(--color-bg-card)",
+                  border: "1px solid var(--color-border)",
+                }}
+              >
+                <div
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ background: color }}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold">{INJECTION_LABELS[t.type] ?? t.type}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div
+                      className="rounded-full overflow-hidden flex-1"
+                      style={{ height: 4, background: "var(--color-bg-elevated)" }}
+                    >
+                      <div
+                        style={{
+                          width: `${pct}%`,
+                          height: "100%",
+                          background: color,
+                          borderRadius: 9999,
+                          minWidth: pct > 0 ? 4 : 0,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end flex-shrink-0">
+                  <span className="text-sm font-mono font-bold">{t.count}</span>
+                  <span className="text-[10px] font-mono" style={{ color: "var(--color-text-muted)" }}>
+                    {fmtTokens(t.tokens)} tok
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Daily chart */}
+      <BarChart
+        data={data.daily}
+        valueKey="injections"
+        formatValue={(v) => `${v} injections`}
+        accentColor="#4285f4"
+      />
+
+      {/* Top sessions */}
+      {data.topSessions.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <span className="text-xs font-semibold uppercase tracking-wide">Top Sessions</span>
+          {data.topSessions.slice(0, 5).map((s) => (
+            <div
+              key={s.sessionId}
+              className="flex items-center gap-3 p-3 rounded-xl"
+              style={{
+                background: "var(--color-bg-card)",
+                border: "1px solid var(--color-border)",
+              }}
+            >
+              <div className="flex-1 min-w-0">
+                <Link
+                  href={`/sessions/${s.sessionId}`}
+                  className="text-sm font-mono hover:underline"
+                  style={{ color: "#4285f4" }}
+                >
+                  {s.sessionId.slice(0, 12)}...
+                </Link>
+              </div>
+              <span className="text-sm font-mono font-bold">{s.injections}</span>
+              <span className="text-[10px] font-mono" style={{ color: "var(--color-text-muted)" }}>
+                {fmtTokens(s.tokens)} tok
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -281,7 +935,10 @@ function SessionTable({ sessions }: { sessions: StatsData["recentSessions"] }) {
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<StatsData | null>(null);
+  const [featureData, setFeatureData] = useState<FeatureData | null>(null);
+  const [activeTab, setActiveTab] = useState<AnalyticsTab>("overview");
   const [loading, setLoading] = useState(true);
+  const [featureLoading, setFeatureLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchStats = useCallback(async () => {
@@ -297,9 +954,26 @@ export default function AnalyticsPage() {
     }
   }, []);
 
+  const fetchFeatures = useCallback(async () => {
+    if (featureData) return;
+    setFeatureLoading(true);
+    try {
+      const res = await api.stats.features();
+      if (res.data) setFeatureData(res.data);
+    } catch {
+      // Feature data is optional — don't block page
+    } finally {
+      setFeatureLoading(false);
+    }
+  }, [featureData]);
+
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
+
+  useEffect(() => {
+    if (activeTab !== "overview") fetchFeatures();
+  }, [activeTab, fetchFeatures]);
 
   return (
     <div
@@ -322,9 +996,36 @@ export default function AnalyticsPage() {
         <span className="text-base font-semibold">Analytics</span>
       </header>
 
+      {/* Tab bar */}
+      <nav
+        className="flex gap-0 px-6 flex-shrink-0"
+        style={{ borderBottom: "1px solid var(--color-border)" }}
+      >
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className="px-4 py-2.5 text-xs font-semibold cursor-pointer transition-colors relative"
+            style={{
+              color: activeTab === tab.id ? "var(--color-text-primary)" : "var(--color-text-muted)",
+              background: "transparent",
+              border: "none",
+            }}
+          >
+            {tab.label}
+            {activeTab === tab.id && (
+              <span
+                className="absolute bottom-0 left-2 right-2"
+                style={{ height: 2, background: "#4285f4", borderRadius: 1 }}
+              />
+            )}
+          </button>
+        ))}
+      </nav>
+
       {/* Content */}
       <main className="flex-1 overflow-y-auto px-6 py-5 max-w-5xl mx-auto w-full">
-        {loading && (
+        {loading && activeTab === "overview" && (
           <div className="flex items-center justify-center py-20 gap-2">
             <CircleNotch size={20} className="animate-spin" aria-hidden="true" />
             <span className="text-sm">Loading analytics...</span>
@@ -341,7 +1042,7 @@ export default function AnalyticsPage() {
           </div>
         )}
 
-        {data && data.totalSessions === 0 && (
+        {activeTab === "overview" && data && data.totalSessions === 0 && (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <ChartBar size={40} weight="light" style={{ color: "var(--color-text-muted)" }} />
             <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
@@ -350,10 +1051,10 @@ export default function AnalyticsPage() {
           </div>
         )}
 
-        {data && data.totalSessions > 0 && (
+        {activeTab === "overview" && data && data.totalSessions > 0 && (
           <div className="flex flex-col gap-6">
             {/* KPI row */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
               <KpiCard
                 label="Today"
                 value={String(data.today.sessions)}
@@ -389,6 +1090,15 @@ export default function AnalyticsPage() {
                 icon={<Clock size={14} weight="fill" />}
                 accent="#9b59b6"
               />
+              {data.rtkSummary.totalTokensSaved > 0 && (
+                <KpiCard
+                  label="RTK Saved"
+                  value={fmtCost(data.rtkSummary.estimatedCostSaved)}
+                  sub={`${fmtTokens(data.rtkSummary.totalTokensSaved)} tokens · ${data.rtkSummary.cacheHitRate}% cache`}
+                  icon={<Lightning size={14} weight="fill" />}
+                  accent="#34A853"
+                />
+              )}
             </div>
 
             {/* Charts row */}
@@ -533,6 +1243,19 @@ export default function AnalyticsPage() {
             )}
           </div>
         )}
+
+        {/* Feature tabs */}
+        {activeTab !== "overview" && featureLoading && (
+          <div className="flex items-center justify-center py-20 gap-2">
+            <CircleNotch size={20} className="animate-spin" aria-hidden="true" />
+            <span className="text-sm">Loading feature data...</span>
+          </div>
+        )}
+
+        {activeTab === "rtk" && featureData && <RTKTab data={featureData.rtk} />}
+        {activeTab === "wiki" && featureData && <WikiTab data={featureData.wiki} />}
+        {activeTab === "codegraph" && featureData && <CodeGraphTab data={featureData.codegraph} />}
+        {activeTab === "context" && featureData?.context && <ContextTab data={featureData.context} />}
       </main>
     </div>
   );

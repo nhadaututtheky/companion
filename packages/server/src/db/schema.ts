@@ -101,6 +101,11 @@ export const sessions = sqliteTable(
     totalLinesAdded: integer("total_lines_added").notNull().default(0),
     totalLinesRemoved: integer("total_lines_removed").notNull().default(0),
 
+    // RTK (Runtime Token Keeper) metrics
+    rtkTokensSaved: integer("rtk_tokens_saved").notNull().default(0),
+    rtkCompressions: integer("rtk_compressions").notNull().default(0),
+    rtkCacheHits: integer("rtk_cache_hits").notNull().default(0),
+
     // File tracking (JSON arrays)
     filesRead: text("files_read", { mode: "json" }).$type<string[]>().default([]),
     filesModified: text("files_modified", { mode: "json" }).$type<string[]>().default([]),
@@ -676,6 +681,27 @@ export const savedPrompts = sqliteTable(
       .$defaultFn(() => new Date()),
   },
   (table) => [index("idx_saved_prompts_project").on(table.projectSlug)],
+);
+
+// ─── Context Injection Log ──────────────────────────────────────────────────
+
+export const contextInjectionLog = sqliteTable(
+  "context_injection_log",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    sessionId: text("session_id").notNull(),
+    projectSlug: text("project_slug").notNull().default(""),
+    injectionType: text("injection_type").notNull(),
+    tokenCount: integer("token_count").notNull().default(0),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [
+    index("idx_ctx_injection_session").on(table.sessionId),
+    index("idx_ctx_injection_type").on(table.injectionType),
+    index("idx_ctx_injection_created").on(table.createdAt),
+  ],
 );
 
 // ─── Session Insights (cross-session learning) ────────────────────────────

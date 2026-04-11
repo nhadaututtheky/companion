@@ -15,6 +15,9 @@ import { getMaxContextTokens } from "@companion/shared";
 import { updateSessionCostWarned } from "./session-store.js";
 import type { ActiveSession } from "./session-store.js";
 import type { BrowserIncomingMessage } from "@companion/shared";
+import { eq } from "drizzle-orm";
+import { getDb } from "../db/client.js";
+import { contextInjectionLog, sessions } from "../db/schema.js";
 
 const _log = createLogger("ws-context");
 
@@ -152,15 +155,43 @@ export function emitContextInjection(
   summary: string,
   charCount: number,
 ): void {
+  const tokenEstimate = Math.ceil(charCount / 4);
   broadcastToAll(session, {
     type: "context:injection",
     sessionId: session.id,
     injectionType,
     summary,
     charCount,
-    tokenEstimate: Math.ceil(charCount / 4),
+    tokenEstimate,
     timestamp: Date.now(),
   } as unknown as BrowserIncomingMessage);
+
+  logContextInjection(session.id, injectionType, tokenEstimate);
+}
+
+function logContextInjection(
+  sessionId: string,
+  injectionType: string,
+  tokenCount: number,
+): void {
+  try {
+    const db = getDb();
+    const row = db
+      .select({ projectSlug: sessions.projectSlug })
+      .from(sessions)
+      .where(eq(sessions.id, sessionId))
+      .get();
+    db.insert(contextInjectionLog)
+      .values({
+        sessionId,
+        projectSlug: row?.projectSlug ?? "",
+        injectionType,
+        tokenCount,
+      })
+      .run();
+  } catch {
+    // fire-and-forget
+  }
 }
 
 // ─── Cost Budget ────────────────────────────────────────────────────────────

@@ -32,6 +32,7 @@ import { useSession } from "@/hooks/use-session";
 import { useArtifactExtractor } from "@/hooks/use-artifact-extractor";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useDebateStore } from "@/lib/stores/debate-store";
+import type { ModelInfo } from "@/components/session/model-bar";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 
@@ -47,6 +48,8 @@ const TerminalPanel = dynamic(
   () => import("@/components/panels/terminal-panel").then((m) => ({ default: m.TerminalPanel })),
   { ssr: false },
 );
+
+const EMPTY_PARTICIPANTS: ModelInfo[] = [];
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -184,7 +187,7 @@ export function SessionPageClient({ params }: PageProps) {
     setThinkingMode,
   } = useSession(id);
   const session = useSessionStore((s) => s.sessions[id]);
-  const debateParticipants = useDebateStore((s) => s.getParticipants(id));
+  const debateParticipants = useDebateStore((s) => s.participants[id] ?? EMPTY_PARTICIPANTS);
   const addDebateParticipant = useDebateStore((s) => s.addParticipant);
   const removeDebateParticipant = useDebateStore((s) => s.removeParticipant);
   const [pinnedDrawerOpen, setPinnedDrawerOpen] = useState(false);

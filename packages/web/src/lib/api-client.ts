@@ -767,14 +767,69 @@ export const api = {
             name: string | null;
             model: string;
             projectSlug: string | null;
+            source: string;
+            startedAt: number;
             cost: number;
             turns: number;
             tokens: number;
             durationMs: number | null;
+            rtkTokensSaved: number;
+            filesModified: string[];
+            filesCreated: string[];
           }>;
           avgDurationMs: number;
+          rtkSummary: {
+            totalTokensSaved: number;
+            totalCompressions: number;
+            totalCacheHits: number;
+            cacheHitRate: number;
+            estimatedCostSaved: number;
+          };
         };
       }>("/api/stats"),
+    features: () =>
+      request<{
+        success: boolean;
+        data: {
+          rtk: {
+            daily: Array<{ date: string; tokensSaved: number; compressions: number }>;
+            totalTokensSaved: number;
+            totalCompressions: number;
+            cacheHitRate: number;
+            estimatedCostSaved: number;
+          };
+          wiki: {
+            domains: Array<{
+              slug: string;
+              name: string;
+              articleCount: number;
+              totalTokens: number;
+              staleCount: number;
+              lastCompiledAt: string | null;
+              rawPending: number;
+            }>;
+            totalArticles: number;
+            totalTokens: number;
+          };
+          codegraph: {
+            projects: Array<{
+              slug: string;
+              files: number;
+              nodes: number;
+              edges: number;
+              lastScannedAt: string | null;
+              coveragePercent: number;
+            }>;
+          };
+          context: {
+            totalInjections: number;
+            totalTokens: number;
+            typeBreakdown: Array<{ type: string; count: number; tokens: number }>;
+            daily: Array<{ date: string; injections: number; tokens: number }>;
+            topSessions: Array<{ sessionId: string; injections: number; tokens: number }>;
+          };
+        };
+      }>("/api/stats/features"),
   },
 
   // Templates

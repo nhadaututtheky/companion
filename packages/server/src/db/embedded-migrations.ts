@@ -129,4 +129,12 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0031_workspaces.sql",
     sql: "-- Workspaces: multi-CLI project hub\nCREATE TABLE `workspaces` (\n  `id` text PRIMARY KEY NOT NULL,\n  `name` text NOT NULL,\n  `project_slug` text NOT NULL REFERENCES `projects`(`slug`),\n  `cli_slots` text NOT NULL DEFAULT '[\"claude\"]',\n  `default_expert` text,\n  `auto_connect` integer NOT NULL DEFAULT 0,\n  `wiki_domain` text,\n  `created_at` integer NOT NULL,\n  `updated_at` integer NOT NULL\n);\nCREATE INDEX `idx_workspaces_project` ON `workspaces` (`project_slug`);\nALTER TABLE `sessions` ADD COLUMN `workspace_id` text REFERENCES `workspaces`(`id`);\nCREATE INDEX `idx_sessions_workspace` ON `sessions` (`workspace_id`);\n",
   },
+  {
+    name: "0032_rtk_columns.sql",
+    sql: "ALTER TABLE sessions ADD COLUMN rtk_tokens_saved INTEGER NOT NULL DEFAULT 0;\nALTER TABLE sessions ADD COLUMN rtk_compressions INTEGER NOT NULL DEFAULT 0;\nALTER TABLE sessions ADD COLUMN rtk_cache_hits INTEGER NOT NULL DEFAULT 0;\n",
+  },
+  {
+    name: "0033_context_injection_log.sql",
+    sql: "CREATE TABLE IF NOT EXISTS context_injection_log (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  session_id TEXT NOT NULL,\n  project_slug TEXT NOT NULL DEFAULT '',\n  injection_type TEXT NOT NULL,\n  token_count INTEGER NOT NULL DEFAULT 0,\n  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)\n);\n\nCREATE INDEX IF NOT EXISTS idx_ctx_injection_session ON context_injection_log(session_id);\nCREATE INDEX IF NOT EXISTS idx_ctx_injection_type ON context_injection_log(injection_type);\nCREATE INDEX IF NOT EXISTS idx_ctx_injection_created ON context_injection_log(created_at);\n",
+  },
 ];
