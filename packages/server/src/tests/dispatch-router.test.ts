@@ -74,9 +74,7 @@ function createCtx() {
   };
 }
 
-function makeClassification(
-  overrides: Partial<TaskClassification>,
-): TaskClassification {
+function makeClassification(overrides: Partial<TaskClassification>): TaskClassification {
   return {
     intent: "test",
     pattern: "single",

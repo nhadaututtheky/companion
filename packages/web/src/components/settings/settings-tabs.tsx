@@ -156,10 +156,7 @@ export function AppearanceTab() {
       </SettingSection>
 
       {/* Mascot Picker */}
-      <SettingSection
-        title="Companion Mascot"
-        description="Choose your floating companion avatar"
-      >
+      <SettingSection title="Companion Mascot" description="Choose your floating companion avatar">
         <div className="grid grid-cols-3 gap-3">
           {mascotOptions.map((option) => {
             const isSelected = selected === option.id;
@@ -196,10 +193,7 @@ export function AppearanceTab() {
                 )}
 
                 {/* Preview */}
-                <div
-                  className="flex items-center justify-center"
-                  style={{ width: 64, height: 64 }}
-                >
+                <div className="flex items-center justify-center" style={{ width: 64, height: 64 }}>
                   {option.lottieFile ? (
                     <MascotViewer lottieFile={option.lottieFile} size={64} />
                   ) : (

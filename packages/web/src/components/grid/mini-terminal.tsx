@@ -1,6 +1,13 @@
 "use client";
 import { useEffect, useRef, useCallback, useState, type KeyboardEvent } from "react";
-import { PaperPlaneTilt, Lock, CheckCircle, XCircle, Warning, TelegramLogo } from "@phosphor-icons/react";
+import {
+  PaperPlaneTilt,
+  Lock,
+  CheckCircle,
+  XCircle,
+  Warning,
+  TelegramLogo,
+} from "@phosphor-icons/react";
 import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { api } from "@/lib/api-client";
@@ -285,7 +292,8 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
 
   const handleClose = useCallback(async () => {
     const session = useSessionStore.getState().sessions[sessionId];
-    const isActive = session && ["starting", "running", "waiting", "idle", "busy"].includes(session.status);
+    const isActive =
+      session && ["starting", "running", "waiting", "idle", "busy"].includes(session.status);
 
     if (isActive) {
       const confirmed = window.confirm(
@@ -423,7 +431,11 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
                   zIndex: 1,
                 }}
               >
-                <TelegramLogo size={120} weight="thin" style={{ color: "var(--color-text-muted)", opacity: 0.06 }} />
+                <TelegramLogo
+                  size={120}
+                  weight="thin"
+                  style={{ color: "var(--color-text-muted)", opacity: 0.06 }}
+                />
               </div>
             )}
             <CompactMessageFeed messages={messages} feedRef={feedRef} />

@@ -1634,10 +1634,10 @@ export const api = {
       }),
 
     connect: (id: string, platform: string, sessionId: string) =>
-      request<{ success: boolean }>(
-        `/api/workspaces/${encodeURIComponent(id)}/connect`,
-        { method: "POST", body: JSON.stringify({ platform, sessionId }) },
-      ),
+      request<{ success: boolean }>(`/api/workspaces/${encodeURIComponent(id)}/connect`, {
+        method: "POST",
+        body: JSON.stringify({ platform, sessionId }),
+      }),
 
     disconnect: (id: string, cli: string) =>
       request<{ success: boolean }>(

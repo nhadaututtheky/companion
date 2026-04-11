@@ -514,7 +514,6 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
 
     await ctx.reply(helpText, { parse_mode: "HTML" });
   });
-
 }
 
 // ─── Per-command Help Details ──────────────────────────────────────────────────

@@ -73,12 +73,22 @@ import {
   type ContextBridge,
 } from "./ws-context-tracker.js";
 import { revokeAllForSession } from "./share-manager.js";
-import { connectCli, disconnectCli, getWorkspaceForSession, getWorkspace as getWorkspaceById } from "./workspace-store.js";
+import {
+  connectCli,
+  disconnectCli,
+  getWorkspaceForSession,
+  getWorkspace as getWorkspaceById,
+} from "./workspace-store.js";
 import { getWorkspaceContext } from "./workspace-context.js";
 import { eventBus } from "./event-bus.js";
 import { generateSessionName } from "./session-namer.js";
 import { processToolEvent, removeTracker } from "../codegraph/event-collector.js";
-import { getOrCreatePulse, cleanupPulse, finalizePulseTurn, getLatestReading } from "./pulse-estimator.js";
+import {
+  getOrCreatePulse,
+  cleanupPulse,
+  finalizePulseTurn,
+  getLatestReading,
+} from "./pulse-estimator.js";
 import {
   createActiveSession,
   getActiveSession,

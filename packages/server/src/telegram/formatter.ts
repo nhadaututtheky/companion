@@ -295,7 +295,8 @@ export function shortModelName(model: string): string {
 }
 
 export function modelStrength(model: string): string {
-  if (model.includes("opus") && model.includes("4-6")) return "Deepest reasoning, complex architecture";
+  if (model.includes("opus") && model.includes("4-6"))
+    return "Deepest reasoning, complex architecture";
   if (model.includes("opus") && model.includes("4-5")) return "Strong reasoning, balanced cost";
   if (model.includes("sonnet") && model.includes("4-6")) return "Best coding, fast, cost-effective";
   if (model.includes("sonnet") && model.includes("4-5")) return "Reliable coding, well-rounded";

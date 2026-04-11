@@ -67,14 +67,18 @@ function loadClosedIds(): Set<string> {
   try {
     const raw = localStorage.getItem("companion:closedIds");
     if (raw) return new Set(JSON.parse(raw));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return new Set();
 }
 
 function saveClosedIds(ids: Set<string>) {
   try {
     localStorage.setItem("companion:closedIds", JSON.stringify([...ids]));
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 export const useSessionStore = create<SessionStore>((set, get) => ({

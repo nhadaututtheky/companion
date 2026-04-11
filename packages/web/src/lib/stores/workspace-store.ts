@@ -137,8 +137,7 @@ export const useWorkspaceStore = create<WorkspaceStore>((set, get) => ({
       set((s) => ({
         workspaces: s.workspaces.filter((w) => w.id !== id),
         activeWorkspaceId: s.activeWorkspaceId === id ? null : s.activeWorkspaceId,
-        activeWorkspaceDetail:
-          s.activeWorkspaceDetail?.id === id ? null : s.activeWorkspaceDetail,
+        activeWorkspaceDetail: s.activeWorkspaceDetail?.id === id ? null : s.activeWorkspaceDetail,
       }));
     } catch {
       toast.error("Failed to delete workspace");

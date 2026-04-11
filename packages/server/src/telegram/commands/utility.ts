@@ -384,7 +384,11 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
         const lastMsg = history[history.length - 1];
         const lastContent =
           lastMsg?.type === "assistant"
-            ? ((lastMsg as unknown as { message?: { content?: Array<{ type: string; text?: string }> } }).message?.content
+            ? ((
+                lastMsg as unknown as {
+                  message?: { content?: Array<{ type: string; text?: string }> };
+                }
+              ).message?.content
                 ?.filter((b): b is { type: "text"; text: string } => b.type === "text")
                 .map((b) => b.text)
                 .join("")
@@ -414,10 +418,11 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
         : s.state.model.includes("haiku")
           ? "Haiku"
           : "Sonnet";
-      const label = s.state.name
-        ?? (s.state as unknown as { projectSlug?: string })?.projectSlug
-        ?? s.state.short_id
-        ?? s.id.slice(0, 6);
+      const label =
+        s.state.name ??
+        (s.state as unknown as { projectSlug?: string })?.projectSlug ??
+        s.state.short_id ??
+        s.id.slice(0, 6);
       const statusDot =
         s.state.status === "idle"
           ? "🟢"

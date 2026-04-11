@@ -1280,11 +1280,10 @@ export class TelegramBridge {
 
           const hint = "\n\nUse /start to begin a new session.";
           await this.bot.api
-            .sendMessage(
-              chatId,
-              `${icon} <b>${title}</b>\n${detail}${hint}`,
-              { parse_mode: "HTML", message_thread_id: topicId },
-            )
+            .sendMessage(chatId, `${icon} <b>${title}</b>\n${detail}${hint}`, {
+              parse_mode: "HTML",
+              message_thread_id: topicId,
+            })
             .catch(() => {});
           break;
         }
@@ -1319,11 +1318,10 @@ export class TelegramBridge {
             if (userText.trim()) {
               const label = userSource === "web" ? "🌐 Web" : "📡 API";
               await this.bot.api
-                .sendMessage(
-                  chatId,
-                  `<i>${label}:</i>\n${escapeHTML(userText.slice(0, 2000))}`,
-                  { parse_mode: "HTML", message_thread_id: topicId },
-                )
+                .sendMessage(chatId, `<i>${label}:</i>\n${escapeHTML(userText.slice(0, 2000))}`, {
+                  parse_mode: "HTML",
+                  message_thread_id: topicId,
+                })
                 .catch(() => {});
             }
           }

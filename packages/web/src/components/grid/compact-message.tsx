@@ -21,7 +21,11 @@ function CompactThinking({ blocks }: { blocks: ThinkingBlock[] }) {
   const text = blocks.map((b) => b.text).join("\n");
   if (!text.trim()) return null;
 
-  const firstLine = text.split("\n").find((l) => l.trim())?.trim() ?? "";
+  const firstLine =
+    text
+      .split("\n")
+      .find((l) => l.trim())
+      ?.trim() ?? "";
   const summary = firstLine.length > 80 ? firstLine.slice(0, 80) + "..." : firstLine;
 
   return (
@@ -123,35 +127,35 @@ function CompactBubble({ msg }: { msg: Message }) {
         <CompactThinking blocks={msg.thinkingBlocks} />
       )}
       <div className={`flex px-3 py-1 ${isUser ? "justify-end" : "justify-start"} w-full`}>
-      <div
-        className="px-3 py-2 rounded-2xl leading-relaxed"
-        style={{
-          background: isUser ? "#4285F4" : "var(--color-bg-card)",
-          color: isUser ? "#fff" : "var(--color-text-primary)",
-          border: isUser ? "none" : "1px solid var(--color-border)",
-          fontSize: 14,
-          maxWidth: "85%",
-          wordBreak: "break-word",
-          borderBottomRightRadius: isUser ? 4 : 16,
-          borderBottomLeftRadius: isUser ? 16 : 4,
-        }}
-      >
-        {isUser ? msg.content : <MarkdownMessage content={msg.content} compact />}
-        {msg.isStreaming && (
-          <span
-            style={{
-              display: "inline-block",
-              width: 6,
-              height: 14,
-              background: "currentColor",
-              opacity: 0.7,
-              marginLeft: 2,
-              verticalAlign: "text-bottom",
-              animation: "blink 1s step-end infinite",
-            }}
-          />
-        )}
-      </div>
+        <div
+          className="px-3 py-2 rounded-2xl leading-relaxed"
+          style={{
+            background: isUser ? "#4285F4" : "var(--color-bg-card)",
+            color: isUser ? "#fff" : "var(--color-text-primary)",
+            border: isUser ? "none" : "1px solid var(--color-border)",
+            fontSize: 14,
+            maxWidth: "85%",
+            wordBreak: "break-word",
+            borderBottomRightRadius: isUser ? 4 : 16,
+            borderBottomLeftRadius: isUser ? 16 : 4,
+          }}
+        >
+          {isUser ? msg.content : <MarkdownMessage content={msg.content} compact />}
+          {msg.isStreaming && (
+            <span
+              style={{
+                display: "inline-block",
+                width: 6,
+                height: 14,
+                background: "currentColor",
+                opacity: 0.7,
+                marginLeft: 2,
+                verticalAlign: "text-bottom",
+                animation: "blink 1s step-end infinite",
+              }}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

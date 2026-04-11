@@ -533,7 +533,11 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                       zIndex: 1,
                     }}
                   >
-                    <TelegramLogo size={200} weight="thin" style={{ color: "var(--color-text-muted)", opacity: 0.04 }} />
+                    <TelegramLogo
+                      size={200}
+                      weight="thin"
+                      style={{ color: "var(--color-text-muted)", opacity: 0.04 }}
+                    />
                   </div>
                 )}
                 <div className="h-full overflow-y-auto">

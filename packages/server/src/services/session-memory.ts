@@ -73,9 +73,7 @@ export interface SessionSummaryInput {
  * Extract insights from a completed session.
  * Called by session-summarizer after generating the summary.
  */
-export async function extractInsights(
-  input: SessionSummaryInput,
-): Promise<SessionInsight[]> {
+export async function extractInsights(input: SessionSummaryInput): Promise<SessionInsight[]> {
   // Skip trivial sessions
   if (input.turnCount < 5) return [];
   if (!isAIConfigured()) return [];
@@ -303,16 +301,19 @@ export function pruneStaleInsights(olderThanDays: number = 60): number {
   try {
     const db = getDb();
     const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000).toISOString();
-    const before = db.select({ count: sql<number>`count(*)` }).from(sessionInsights).get();
+    const before = db
+      .select({ count: sql<number>`count(*)` })
+      .from(sessionInsights)
+      .get();
     db.delete(sessionInsights)
       .where(
-        and(
-          sql`${sessionInsights.lastUsedAt} < ${cutoff}`,
-          sql`${sessionInsights.hitCount} <= 1`,
-        ),
+        and(sql`${sessionInsights.lastUsedAt} < ${cutoff}`, sql`${sessionInsights.hitCount} <= 1`),
       )
       .run();
-    const after = db.select({ count: sql<number>`count(*)` }).from(sessionInsights).get();
+    const after = db
+      .select({ count: sql<number>`count(*)` })
+      .from(sessionInsights)
+      .get();
     return (before?.count ?? 0) - (after?.count ?? 0);
   } catch {
     return 0;
@@ -345,7 +346,11 @@ export function listInsights(projectSlug: string): SessionInsight[] {
 
 export function deleteInsight(id: string): boolean {
   const db = getDb();
-  const exists = db.select({ id: sessionInsights.id }).from(sessionInsights).where(eq(sessionInsights.id, id)).get();
+  const exists = db
+    .select({ id: sessionInsights.id })
+    .from(sessionInsights)
+    .where(eq(sessionInsights.id, id))
+    .get();
   if (!exists) return false;
   db.delete(sessionInsights).where(eq(sessionInsights.id, id)).run();
   return true;
@@ -353,8 +358,11 @@ export function deleteInsight(id: string): boolean {
 
 export function clearInsights(projectSlug: string): number {
   const db = getDb();
-  const before = db.select({ count: sql<number>`count(*)` }).from(sessionInsights)
-    .where(eq(sessionInsights.projectSlug, projectSlug)).get();
+  const before = db
+    .select({ count: sql<number>`count(*)` })
+    .from(sessionInsights)
+    .where(eq(sessionInsights.projectSlug, projectSlug))
+    .get();
   db.delete(sessionInsights).where(eq(sessionInsights.projectSlug, projectSlug)).run();
   return before?.count ?? 0;
 }

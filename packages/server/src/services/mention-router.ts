@@ -14,7 +14,11 @@
 import { resolveShortId } from "./short-id.js";
 import { getActiveSession } from "./session-store.js";
 import { listActiveDebates, injectHumanMessage } from "./debate-engine.js";
-import { getWorkspaceForSession, getConnectedSession, getWorkspaceCliConnections } from "./workspace-store.js";
+import {
+  getWorkspaceForSession,
+  getConnectedSession,
+  getWorkspaceCliConnections,
+} from "./workspace-store.js";
 import type { CLIPlatform } from "@companion/shared";
 import { createLogger } from "../logger.js";
 

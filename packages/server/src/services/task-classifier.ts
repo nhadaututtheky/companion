@@ -64,7 +64,8 @@ const RULES: ClassifierRule[] = [
 
   // Multi-step workflow patterns
   {
-    pattern: /\b(?:review|check|audit)\b.*\b(?:then|rồi|xong|after\s+that|and\s+(?:then\s+)?fix)\b/i,
+    pattern:
+      /\b(?:review|check|audit)\b.*\b(?:then|rồi|xong|after\s+that|and\s+(?:then\s+)?fix)\b/i,
     intent: "review_then_fix",
     orchestration: "workflow",
     complexity: "medium",
@@ -112,7 +113,8 @@ const RULES: ClassifierRule[] = [
 
   // Single session — complex (needs strong model)
   {
-    pattern: /\b(?:plan|architect|design|restructure|redesign)\b.*\b(?:architecture|system|infra|migration)\b/i,
+    pattern:
+      /\b(?:plan|architect|design|restructure|redesign)\b.*\b(?:architecture|system|infra|migration)\b/i,
     intent: "architecture",
     orchestration: "single",
     complexity: "complex",
@@ -130,7 +132,8 @@ const RULES: ClassifierRule[] = [
 
   // Single session — medium
   {
-    pattern: /\b(?:fix|debug|resolve|troubleshoot)\s+(?:the\s+)?(?:bug|error|issue|problem|crash)\b/i,
+    pattern:
+      /\b(?:fix|debug|resolve|troubleshoot)\s+(?:the\s+)?(?:bug|error|issue|problem|crash)\b/i,
     intent: "fix_bug",
     orchestration: "single",
     complexity: "medium",
@@ -290,7 +293,8 @@ async function classifyByAI(message: string): Promise<TaskClassification | null>
       pattern: parsed.pattern,
       complexity: parsed.complexity,
       suggestedTemplate: parsed.suggestedTemplate ?? undefined,
-      suggestedDebateFormat: debateFormat && VALID_DEBATE_FORMATS.has(debateFormat) ? debateFormat : undefined,
+      suggestedDebateFormat:
+        debateFormat && VALID_DEBATE_FORMATS.has(debateFormat) ? debateFormat : undefined,
       relevantFiles: Array.isArray(parsed.relevantFiles) ? parsed.relevantFiles : [],
       confidence: Math.min(1, Math.max(0, parsed.confidence)),
       suggestedModel: model && VALID_MODELS.has(model) ? model : undefined,

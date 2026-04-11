@@ -130,11 +130,18 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
         const project = getProject(mapping.projectSlug);
         try {
           await bridge.sendSettingsPanel(
-            chatId, topicId, sessionId,
-            project?.name ?? mapping.projectSlug, model, messageId,
+            chatId,
+            topicId,
+            sessionId,
+            project?.name ?? mapping.projectSlug,
+            model,
+            messageId,
           );
         } catch (err) {
-          log.error("Failed to refresh panel after model change", { sessionId, error: String(err) });
+          log.error("Failed to refresh panel after model change", {
+            sessionId,
+            error: String(err),
+          });
         }
       }
     }
@@ -166,7 +173,10 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
         reply_markup: keyboard as unknown as import("grammy").InlineKeyboard,
       });
     } catch (err) {
-      log.error("Failed to refresh model picker after thinking change", { sessionId, error: String(err) });
+      log.error("Failed to refresh model picker after thinking change", {
+        sessionId,
+        error: String(err),
+      });
     }
   });
 

@@ -16,7 +16,11 @@ import { startDebate } from "./debate-engine.js";
 import { handleMentions } from "./mention-router.js";
 import { getSetting } from "./settings-helpers.js";
 import { eventBus } from "./event-bus.js";
-import type { TaskClassification, DispatchResult, OrchestrationPattern } from "@companion/shared/types";
+import type {
+  TaskClassification,
+  DispatchResult,
+  OrchestrationPattern,
+} from "@companion/shared/types";
 
 const log = createLogger("dispatch-router");
 
@@ -222,10 +226,7 @@ async function dispatchDebate(
   };
 }
 
-function dispatchMention(
-  message: string,
-  ctx: DispatchContext,
-): DispatchResult {
+function dispatchMention(message: string, ctx: DispatchContext): DispatchResult {
   const targetIds = handleMentions(
     message,
     ctx.originSessionId,

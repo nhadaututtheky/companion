@@ -35,8 +35,7 @@ export function BottomStatsBar() {
       totalCost: active.reduce((sum, s) => sum + (s.state?.total_cost_usd ?? 0), 0),
       totalTurns: active.reduce((sum, s) => sum + (s.state?.num_turns ?? 0), 0),
       totalTokens: active.reduce(
-        (sum, s) =>
-          sum + (s.state?.total_input_tokens ?? 0) + (s.state?.total_output_tokens ?? 0),
+        (sum, s) => sum + (s.state?.total_input_tokens ?? 0) + (s.state?.total_output_tokens ?? 0),
         0,
       ),
     };
@@ -153,15 +152,7 @@ export function BottomStatsBar() {
 
 // ── Shared sub-components ─────────────────────────────────────────────────
 
-function StatBlock({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: string;
-}) {
+function StatBlock({ label, value, accent }: { label: string; value: string; accent?: string }) {
   return (
     <div className="flex flex-col items-center gap-0.5 px-3 py-2">
       <span

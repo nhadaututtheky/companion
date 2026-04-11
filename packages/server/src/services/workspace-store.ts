@@ -150,10 +150,7 @@ export function disconnectCli(workspaceId: string, platform: CLIPlatform): void 
   cliConnections.get(workspaceId)?.set(platform, null);
 }
 
-export function getConnectedSession(
-  workspaceId: string,
-  platform: CLIPlatform,
-): string | null {
+export function getConnectedSession(workspaceId: string, platform: CLIPlatform): string | null {
   return cliConnections.get(workspaceId)?.get(platform) ?? null;
 }
 

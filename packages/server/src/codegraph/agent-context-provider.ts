@@ -78,15 +78,74 @@ export function getCodeGraphConfig(projectSlug: string): CodeGraphConfig {
 
 const STOP_WORDS = new Set([
   // English
-  "the", "this", "that", "with", "from", "into", "have", "been", "will",
-  "would", "could", "should", "about", "what", "when", "where", "which",
-  "file", "code", "function", "class", "type", "import", "export",
-  "create", "update", "delete", "add", "remove", "fix", "change", "make",
-  "need", "want", "like", "use", "using", "can", "how", "please", "just",
-  "also", "then", "some", "more", "check", "look", "see", "try",
+  "the",
+  "this",
+  "that",
+  "with",
+  "from",
+  "into",
+  "have",
+  "been",
+  "will",
+  "would",
+  "could",
+  "should",
+  "about",
+  "what",
+  "when",
+  "where",
+  "which",
+  "file",
+  "code",
+  "function",
+  "class",
+  "type",
+  "import",
+  "export",
+  "create",
+  "update",
+  "delete",
+  "add",
+  "remove",
+  "fix",
+  "change",
+  "make",
+  "need",
+  "want",
+  "like",
+  "use",
+  "using",
+  "can",
+  "how",
+  "please",
+  "just",
+  "also",
+  "then",
+  "some",
+  "more",
+  "check",
+  "look",
+  "see",
+  "try",
   // Vietnamese
-  "cái", "này", "của", "cho", "các", "được", "trong", "với", "không",
-  "đã", "sẽ", "bro", "nhé", "luôn", "rồi", "thì", "mà", "hay",
+  "cái",
+  "này",
+  "của",
+  "cho",
+  "các",
+  "được",
+  "trong",
+  "với",
+  "không",
+  "đã",
+  "sẽ",
+  "bro",
+  "nhé",
+  "luôn",
+  "rồi",
+  "thì",
+  "mà",
+  "hay",
 ]);
 
 /** Split camelCase/PascalCase into constituent words */
@@ -125,7 +184,10 @@ function extractKeywords(text: string): string[] {
 
   // Add file path basenames as high-value keywords
   for (const fp of filePaths) {
-    const base = fp.split("/").pop()?.replace(/\.\w+$/, "");
+    const base = fp
+      .split("/")
+      .pop()
+      ?.replace(/\.\w+$/, "");
     if (base && base.length >= 3) keywords.push(base);
     // Also add parent directory name (domain indicator)
     const parts = fp.split("/");
@@ -278,16 +340,18 @@ export function buildMessageContext(
   const messageKeywords = extractKeywords(userMessage);
   const classificationFiles = classification?.relevantFiles ?? [];
   const fileKeywords = classificationFiles.flatMap((fp) => {
-    const base = fp.split("/").pop()?.replace(/\.\w+$/, "");
+    const base = fp
+      .split("/")
+      .pop()
+      ?.replace(/\.\w+$/, "");
     return base && base.length >= 3 ? [base] : [];
   });
   const keywords = [...new Set([...messageKeywords, ...fileKeywords])];
   if (keywords.length === 0) return null;
 
   // Adjust result count by task complexity
-  const resultLimit = classification?.complexity === "simple" ? 3
-    : classification?.complexity === "complex" ? 8
-    : 5;
+  const resultLimit =
+    classification?.complexity === "simple" ? 3 : classification?.complexity === "complex" ? 8 : 5;
 
   // Check cache (60s TTL)
   const cacheKey = `${projectSlug}:${keywords.sort().join(",")}:${resultLimit}`;

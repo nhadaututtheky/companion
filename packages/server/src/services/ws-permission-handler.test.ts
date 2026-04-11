@@ -97,7 +97,9 @@ describe("ws-permission-handler", () => {
 
       expect(cliSend).not.toHaveBeenCalled(); // cliSend is on session, but bridge.sendToCLI is called
       expect(bridge.sendToCLI).toHaveBeenCalled();
-      const ndjson = ((bridge.sendToCLI as ReturnType<typeof mock>).mock.calls as any[][])[0]![1] as string;
+      const ndjson = (
+        (bridge.sendToCLI as ReturnType<typeof mock>).mock.calls as any[][]
+      )[0]![1] as string;
       const parsed = JSON.parse(ndjson);
       expect(parsed.response.response.behavior).toBe("allow");
     });
@@ -112,7 +114,9 @@ describe("ws-permission-handler", () => {
         behavior: "deny",
       });
 
-      const ndjson = ((bridge.sendToCLI as ReturnType<typeof mock>).mock.calls as any[][])[0]![1] as string;
+      const ndjson = (
+        (bridge.sendToCLI as ReturnType<typeof mock>).mock.calls as any[][]
+      )[0]![1] as string;
       const parsed = JSON.parse(ndjson);
       expect(parsed.response.response.behavior).toBe("deny");
     });
@@ -217,7 +221,9 @@ describe("ws-permission-handler", () => {
       handleInterrupt(bridge, session);
 
       expect(bridge.sendToCLI).toHaveBeenCalled();
-      const ndjson = ((bridge.sendToCLI as ReturnType<typeof mock>).mock.calls as any[][])[0]![1] as string;
+      const ndjson = (
+        (bridge.sendToCLI as ReturnType<typeof mock>).mock.calls as any[][]
+      )[0]![1] as string;
       const parsed = JSON.parse(ndjson);
       expect(parsed.request.subtype).toBe("interrupt");
     });

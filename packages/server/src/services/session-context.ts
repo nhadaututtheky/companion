@@ -4,7 +4,11 @@
  */
 
 import { getProject } from "./project-profiles.js";
-import { getRelevantInsights, formatInsightsForContext, recordInsightUsed } from "./session-memory.js";
+import {
+  getRelevantInsights,
+  formatInsightsForContext,
+  recordInsightUsed,
+} from "./session-memory.js";
 
 interface SessionContextOpts {
   sessionId: string;

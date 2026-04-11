@@ -79,10 +79,13 @@ function CliCard({
   const color = CLI_COLORS[cli.platform];
   const isActive = cli.status === "connected" || cli.status === "running";
   const dotColor =
-    cli.status === "connected" || cli.status === "running" ? color
-    : cli.status === "idle" ? "#f59e0b"
-    : cli.status === "error" ? "#ef4444"
-    : "var(--color-text-muted)";
+    cli.status === "connected" || cli.status === "running"
+      ? color
+      : cli.status === "idle"
+        ? "#f59e0b"
+        : cli.status === "error"
+          ? "#ef4444"
+          : "var(--color-text-muted)";
 
   return (
     <div
@@ -149,7 +152,11 @@ function CliCard({
         </div>
       ) : (
         <div className="flex items-center gap-1.5 py-1">
-          <Plugs size={10} weight="regular" style={{ color: "var(--color-text-muted)", opacity: 0.5 }} />
+          <Plugs
+            size={10}
+            weight="regular"
+            style={{ color: "var(--color-text-muted)", opacity: 0.5 }}
+          />
           <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
             Not connected
           </span>
@@ -195,9 +202,7 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
 
   const recentActivity = useMemo(() => {
     if (!detail?.clis) return [];
-    const connectedIds = new Set(
-      detail.clis.filter((c) => c.sessionId).map((c) => c.sessionId!),
-    );
+    const connectedIds = new Set(detail.clis.filter((c) => c.sessionId).map((c) => c.sessionId!));
     if (connectedIds.size === 0) {
       const wsSlug = detail.projectSlug;
       return sessions
@@ -259,7 +264,11 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
       <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-4">
         {detailLoading && !detail ? (
           <div className="flex items-center justify-center py-8">
-            <CircleNotch size={20} className="animate-spin" style={{ color: "var(--color-text-muted)" }} />
+            <CircleNotch
+              size={20}
+              className="animate-spin"
+              style={{ color: "var(--color-text-muted)" }}
+            />
           </div>
         ) : detail ? (
           <>
@@ -316,7 +325,10 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
                         style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
                       />
                       <span className="flex-1 truncate">{s.model.replace("claude-", "")}</span>
-                      <span className="font-mono text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+                      <span
+                        className="font-mono text-[10px]"
+                        style={{ color: "var(--color-text-muted)" }}
+                      >
                         {s.numTurns}t · {fmtCost(s.totalCostUsd)}
                       </span>
                     </div>

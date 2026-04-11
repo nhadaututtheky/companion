@@ -102,7 +102,10 @@ export function PulseIndicator({ sessionId }: PulseIndicatorProps) {
             if (!guide) return null;
             return (
               <div className="flex flex-col gap-1">
-                <p className="text-[11px] leading-snug" style={{ color: "var(--color-text-secondary)" }}>
+                <p
+                  className="text-[11px] leading-snug"
+                  style={{ color: "var(--color-text-secondary)" }}
+                >
                   {guide.advice}
                 </p>
                 {guide.action && (
@@ -122,7 +125,11 @@ export function PulseIndicator({ sessionId }: PulseIndicatorProps) {
                 color: "var(--color-text-muted)",
               }}
             >
-              Top signal: {reading.topSignal.replace(/([A-Z])/g, " $1").trim().toLowerCase()}
+              Top signal:{" "}
+              {reading.topSignal
+                .replace(/([A-Z])/g, " $1")
+                .trim()
+                .toLowerCase()}
             </div>
           )}
         </div>

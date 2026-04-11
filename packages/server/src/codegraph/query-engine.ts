@@ -261,10 +261,16 @@ export function getRelatedNodes(
     const edgeCounts = db.all<{ nodeId: number; cnt: number }>(sql`
       SELECT node_id, count(*) as cnt FROM (
         SELECT source_node_id as node_id FROM code_edges
-        WHERE project_slug = ${projectSlug} AND source_node_id IN (${sql.join(allNodeIds.map(id => sql`${id}`), sql`, `)})
+        WHERE project_slug = ${projectSlug} AND source_node_id IN (${sql.join(
+          allNodeIds.map((id) => sql`${id}`),
+          sql`, `,
+        )})
         UNION ALL
         SELECT target_node_id as node_id FROM code_edges
-        WHERE project_slug = ${projectSlug} AND target_node_id IN (${sql.join(allNodeIds.map(id => sql`${id}`), sql`, `)})
+        WHERE project_slug = ${projectSlug} AND target_node_id IN (${sql.join(
+          allNodeIds.map((id) => sql`${id}`),
+          sql`, `,
+        )})
       ) GROUP BY node_id
     `);
     for (const row of edgeCounts) {

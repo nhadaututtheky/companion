@@ -169,11 +169,7 @@ export function emitContextInjection(
   logContextInjection(session.id, injectionType, tokenEstimate);
 }
 
-function logContextInjection(
-  sessionId: string,
-  injectionType: string,
-  tokenCount: number,
-): void {
+function logContextInjection(sessionId: string, injectionType: string, tokenCount: number): void {
   try {
     const db = getDb();
     const row = db

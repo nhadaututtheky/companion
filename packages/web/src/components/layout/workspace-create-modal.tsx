@@ -50,9 +50,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
   }, [open]);
 
   const toggleCli = useCallback((cli: CLIPlatform) => {
-    setCliSlots((prev) =>
-      prev.includes(cli) ? prev.filter((c) => c !== cli) : [...prev, cli],
-    );
+    setCliSlots((prev) => (prev.includes(cli) ? prev.filter((c) => c !== cli) : [...prev, cli]));
   }, []);
 
   const handleCreate = useCallback(async () => {
@@ -161,7 +159,11 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
             </label>
             {loadingProjects ? (
               <div className="flex items-center gap-2 py-2">
-                <CircleNotch size={14} className="animate-spin" style={{ color: "var(--color-text-muted)" }} />
+                <CircleNotch
+                  size={14}
+                  className="animate-spin"
+                  style={{ color: "var(--color-text-muted)" }}
+                />
                 <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
                   Loading projects...
                 </span>
@@ -190,7 +192,10 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
               </select>
             )}
             {selectedProject && (
-              <span className="flex items-center gap-1 text-[10px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+              <span
+                className="flex items-center gap-1 text-[10px] mt-0.5"
+                style={{ color: "var(--color-text-muted)" }}
+              >
                 <FolderSimple size={10} weight="bold" />
                 {selectedProject.dir}
               </span>
@@ -256,7 +261,10 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
             disabled={!canCreate || creating}
             className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold cursor-pointer transition-all"
             style={{
-              background: canCreate && !creating ? "var(--color-primary, #6366f1)" : "var(--color-bg-elevated)",
+              background:
+                canCreate && !creating
+                  ? "var(--color-primary, #6366f1)"
+                  : "var(--color-bg-elevated)",
               color: canCreate && !creating ? "#fff" : "var(--color-text-muted)",
               opacity: canCreate && !creating ? 1 : 0.5,
             }}

@@ -149,9 +149,10 @@ export async function summarizeSession(sessionId: string): Promise<void> {
 
     // Extract cross-session insights from this summary (non-blocking)
     if (record.projectSlug) {
-      const filesModified = parsed.filesModified.length > 0
-        ? parsed.filesModified
-        : ((record.filesModified as string[]) ?? []);
+      const filesModified =
+        parsed.filesModified.length > 0
+          ? parsed.filesModified
+          : ((record.filesModified as string[]) ?? []);
 
       void extractInsights({
         sessionId,

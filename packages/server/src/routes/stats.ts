@@ -7,7 +7,15 @@
 import { Hono } from "hono";
 import { gte, sql, desc, eq } from "drizzle-orm";
 import { getDb } from "../db/client.js";
-import { sessions, projects, codeFiles, codeNodes, codeEdges, codeScanJobs, contextInjectionLog } from "../db/schema.js";
+import {
+  sessions,
+  projects,
+  codeFiles,
+  codeNodes,
+  codeEdges,
+  codeScanJobs,
+  contextInjectionLog,
+} from "../db/schema.js";
 import { listDomains, listRawFiles } from "../wiki/store.js";
 import { lintDomain } from "../wiki/linter.js";
 import type { ApiResponse } from "@companion/shared";
@@ -309,7 +317,8 @@ statsRoutes.get("/", (c) => {
     totalTokensSaved,
     totalCompressions,
     totalCacheHits,
-    cacheHitRate: totalCompressions > 0 ? Math.round((totalCacheHits / totalCompressions) * 100) : 0,
+    cacheHitRate:
+      totalCompressions > 0 ? Math.round((totalCacheHits / totalCompressions) * 100) : 0,
     estimatedCostSaved: Math.round(totalTokensSaved * weightedRate * 10000) / 10000,
   };
 
@@ -467,27 +476,31 @@ statsRoutes.get("/features", (c) => {
 
     for (const scan of latestScans) {
       const slug = scan.projectSlug;
-      const fileCount = db
-        .select({ count: sql<number>`count(*)` })
-        .from(codeFiles)
-        .where(eq(codeFiles.projectSlug, slug))
-        .get()?.count ?? 0;
-      const nodeCount = db
-        .select({ count: sql<number>`count(*)` })
-        .from(codeNodes)
-        .where(eq(codeNodes.projectSlug, slug))
-        .get()?.count ?? 0;
-      const edgeCount = db
-        .select({ count: sql<number>`count(*)` })
-        .from(codeEdges)
-        .where(eq(codeEdges.projectSlug, slug))
-        .get()?.count ?? 0;
+      const fileCount =
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(codeFiles)
+          .where(eq(codeFiles.projectSlug, slug))
+          .get()?.count ?? 0;
+      const nodeCount =
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(codeNodes)
+          .where(eq(codeNodes.projectSlug, slug))
+          .get()?.count ?? 0;
+      const edgeCount =
+        db
+          .select({ count: sql<number>`count(*)` })
+          .from(codeEdges)
+          .where(eq(codeEdges.projectSlug, slug))
+          .get()?.count ?? 0;
 
-      const filesWithNodes = db
-        .select({ count: sql<number>`count(distinct ${codeNodes.fileId})` })
-        .from(codeNodes)
-        .where(eq(codeNodes.projectSlug, slug))
-        .get()?.count ?? 0;
+      const filesWithNodes =
+        db
+          .select({ count: sql<number>`count(distinct ${codeNodes.fileId})` })
+          .from(codeNodes)
+          .where(eq(codeNodes.projectSlug, slug))
+          .get()?.count ?? 0;
       const coveragePercent = fileCount > 0 ? Math.round((filesWithNodes / fileCount) * 100) : 0;
 
       const completedAt = scan.completedAt;

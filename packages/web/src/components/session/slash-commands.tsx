@@ -10,14 +10,42 @@ interface SlashCommand {
 
 const SLASH_COMMANDS: SlashCommand[] = [
   // Session
-  { command: "/clear", description: "Reset context — keep session, clear conversation history", category: "session" },
-  { command: "/compact", description: "Compress context window to free up space", category: "session" },
+  {
+    command: "/clear",
+    description: "Reset context — keep session, clear conversation history",
+    category: "session",
+  },
+  {
+    command: "/compact",
+    description: "Compress context window to free up space",
+    category: "session",
+  },
   // Research & Intelligence
-  { command: "/docs", description: "Fetch documentation from a URL", usage: "/docs <URL> [--refresh]", category: "research" },
-  { command: "/research", description: "Search the web for information", usage: "/research <query>", category: "research" },
-  { command: "/crawl", description: "Crawl a website and extract content", usage: "/crawl <URL> [--depth N] [--max N]", category: "research" },
+  {
+    command: "/docs",
+    description: "Fetch documentation from a URL",
+    usage: "/docs <URL> [--refresh]",
+    category: "research",
+  },
+  {
+    command: "/research",
+    description: "Search the web for information",
+    usage: "/research <query>",
+    category: "research",
+  },
+  {
+    command: "/crawl",
+    description: "Crawl a website and extract content",
+    usage: "/crawl <URL> [--depth N] [--max N]",
+    category: "research",
+  },
   // Agent
-  { command: "/spawn", description: "Spawn a child agent", usage: '/spawn "<name>" [--role specialist|researcher|reviewer] [--model MODEL]', category: "agent" },
+  {
+    command: "/spawn",
+    description: "Spawn a child agent",
+    usage: '/spawn "<name>" [--role specialist|researcher|reviewer] [--model MODEL]',
+    category: "agent",
+  },
   // Info
   { command: "/status", description: "Show current session status", category: "info" },
 ];
@@ -40,7 +68,13 @@ interface SlashCommandMenuProps {
   anchorRef: React.RefObject<HTMLElement | null>;
 }
 
-export function SlashCommandMenu({ query, visible, onSelect, onClose, anchorRef }: SlashCommandMenuProps) {
+export function SlashCommandMenu({
+  query,
+  visible,
+  onSelect,
+  onClose,
+  anchorRef,
+}: SlashCommandMenuProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -54,13 +88,11 @@ export function SlashCommandMenu({ query, visible, onSelect, onClose, anchorRef 
   }, [query]);
 
   // Group by category
-  const grouped = CATEGORY_ORDER
-    .map((cat) => ({
-      category: cat,
-      label: CATEGORY_LABELS[cat] ?? cat,
-      commands: filtered.filter((c) => c.category === cat),
-    }))
-    .filter((g) => g.commands.length > 0);
+  const grouped = CATEGORY_ORDER.map((cat) => ({
+    category: cat,
+    label: CATEGORY_LABELS[cat] ?? cat,
+    commands: filtered.filter((c) => c.category === cat),
+  })).filter((g) => g.commands.length > 0);
 
   const flatList = grouped.flatMap((g) => g.commands);
 

@@ -178,10 +178,7 @@ function WorkspacePanel({
               {workspace.name}
             </span>
           )}
-          <span
-            className="text-[10px] truncate"
-            style={{ color: "var(--color-text-muted)" }}
-          >
+          <span className="text-[10px] truncate" style={{ color: "var(--color-text-muted)" }}>
             {workspace.cliSlots.length} CLI{workspace.cliSlots.length !== 1 ? "s" : ""} configured
           </span>
         </div>
@@ -195,10 +192,7 @@ function WorkspacePanel({
           </button>
           {showMenu && (
             <>
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setShowMenu(false)}
-              />
+              <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
               <div
                 className="absolute right-0 top-full mt-1 z-50 py-1"
                 style={{
@@ -241,27 +235,30 @@ function WorkspacePanel({
       </div>
 
       {/* CLI Slots */}
-      <div
-        className="px-3 py-2"
-        style={{ borderBottom: "1px solid var(--glass-border)" }}
-      >
+      <div className="px-3 py-2" style={{ borderBottom: "1px solid var(--glass-border)" }}>
         <span
           className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block"
           style={{ color: "var(--color-text-muted)" }}
         >
           CLI Agents
         </span>
-        <div className="flex flex-col gap-1" style={{ opacity: detailLoading ? 0.5 : 1, transition: "opacity 150ms ease" }}>
+        <div
+          className="flex flex-col gap-1"
+          style={{ opacity: detailLoading ? 0.5 : 1, transition: "opacity 150ms ease" }}
+        >
           {workspace.cliSlots.map((cli) => {
             const cliStatus = detail?.clis?.find((c) => c.platform === cli);
             const status = cliStatus?.status ?? "disconnected";
             const isActive = status === "connected" || status === "running";
             const color = CLI_COLORS[cli];
             const dotColor =
-              status === "connected" || status === "running" ? color
-              : status === "idle" ? "#f59e0b"
-              : status === "error" ? "#ef4444"
-              : "var(--color-text-muted)";
+              status === "connected" || status === "running"
+                ? color
+                : status === "idle"
+                  ? "#f59e0b"
+                  : status === "error"
+                    ? "#ef4444"
+                    : "var(--color-text-muted)";
             const dotOpacity = status === "disconnected" ? 0.4 : 1;
 
             return (
@@ -287,20 +284,14 @@ function WorkspacePanel({
                 <span
                   className="text-xs flex-1 truncate"
                   style={{
-                    color: isActive
-                      ? "var(--color-text-primary)"
-                      : "var(--color-text-muted)",
+                    color: isActive ? "var(--color-text-primary)" : "var(--color-text-muted)",
                     fontWeight: isActive ? 500 : 400,
                   }}
                 >
                   {CLI_LABELS[cli]}
                 </span>
                 {isActive ? (
-                  <PlugsConnected
-                    size={11}
-                    weight="bold"
-                    style={{ color, flexShrink: 0 }}
-                  />
+                  <PlugsConnected size={11} weight="bold" style={{ color, flexShrink: 0 }} />
                 ) : (
                   <Plugs
                     size={11}

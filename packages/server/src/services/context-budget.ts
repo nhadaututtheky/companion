@@ -190,9 +190,9 @@ export function allocateBudget(
 
 /** Complexity-based context budget multipliers */
 const COMPLEXITY_MULTIPLIERS: Record<TaskComplexity, number> = {
-  simple: 0.6,   // Less context for simple tasks (explanations, searches)
-  medium: 1.0,   // Default
-  complex: 1.4,  // More context for complex tasks (architecture, multi-file)
+  simple: 0.6, // Less context for simple tasks (explanations, searches)
+  medium: 1.0, // Default
+  complex: 1.4, // More context for complex tasks (architecture, multi-file)
 };
 
 /**

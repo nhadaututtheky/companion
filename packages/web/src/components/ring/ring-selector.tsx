@@ -137,9 +137,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
               height: size,
               zIndex: 43,
               borderRadius: "50%",
-              border: isSelected
-                ? `3px solid ${color}`
-                : "2px solid transparent",
+              border: isSelected ? `3px solid ${color}` : "2px solid transparent",
               background: isSelected ? `${color}20` : "transparent",
               boxShadow: isHovered
                 ? `0 4px 16px ${color}40`
@@ -177,7 +175,9 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
                 style={{ width: "100%", height: "100%" }}
               />
             </div>
-            <div style={{ width: 7, height: 7, borderRadius: "50%", background: color, zIndex: 1 }} />
+            <div
+              style={{ width: 7, height: 7, borderRadius: "50%", background: color, zIndex: 1 }}
+            />
             <span
               style={{
                 fontSize: isHovered ? 8 : 7,

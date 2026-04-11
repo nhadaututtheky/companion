@@ -406,7 +406,10 @@ export function useSession(sessionId: string): UseSessionReturn {
             // Inject end-of-session message — skip if already present (dedup)
             if (result) {
               const hasEndMsg = updated.some(
-                (m) => m.role === "system" && (m.content.includes("Session completed") || m.content.includes("Session ended with an error")),
+                (m) =>
+                  m.role === "system" &&
+                  (m.content.includes("Session completed") ||
+                    m.content.includes("Session ended with an error")),
               );
               if (!hasEndMsg) {
                 if (result.is_error) {
@@ -615,7 +618,11 @@ export function useSession(sessionId: string): UseSessionReturn {
             );
             setMessages((prev) => {
               const hasEndMsg = prev.some(
-                (m) => m.role === "system" && (m.content.includes("crashed") || m.content.includes("Session ended") || m.content.includes("Session completed")),
+                (m) =>
+                  m.role === "system" &&
+                  (m.content.includes("crashed") ||
+                    m.content.includes("Session ended") ||
+                    m.content.includes("Session completed")),
               );
               if (hasEndMsg) return prev;
               return [
@@ -631,14 +638,14 @@ export function useSession(sessionId: string): UseSessionReturn {
             // Only add if result handler didn't fire (e.g. idle timeout)
             setMessages((prev) => {
               const hasEndMsg = prev.some(
-                (m) => m.role === "system" && (m.content.includes("Session ended") || m.content.includes("Session completed")),
+                (m) =>
+                  m.role === "system" &&
+                  (m.content.includes("Session ended") || m.content.includes("Session completed")),
               );
               if (hasEndMsg) return prev;
               return [
                 ...prev,
-                makeSystemMessage(
-                  `Session ended. Send a message to resume or close this session.`,
-                ),
+                makeSystemMessage(`Session ended. Send a message to resume or close this session.`),
               ];
             });
           }

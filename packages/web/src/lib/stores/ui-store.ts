@@ -40,7 +40,16 @@ interface UiStore {
   setSettingsActiveTab: (tab: SettingsTab) => void;
   setActivityTerminalOpen: (open: boolean) => void;
   setRightPanelMode: (
-    mode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context" | "wiki" | "workspace",
+    mode:
+      | "none"
+      | "files"
+      | "browser"
+      | "search"
+      | "terminal"
+      | "stats"
+      | "ai-context"
+      | "wiki"
+      | "workspace",
   ) => void;
   setRightPanelPath: (path: string | null) => void;
   setBrowserPreviewUrl: (url: string | null) => void;

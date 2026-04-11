@@ -24,12 +24,7 @@ export function MascotViewer({ lottieFile, size = 120, className }: MascotViewer
         pointerEvents: "none",
       }}
     >
-      <DotLottieReact
-        src={lottieFile}
-        loop
-        autoplay
-        style={{ width: "100%", height: "100%" }}
-      />
+      <DotLottieReact src={lottieFile} loop autoplay style={{ width: "100%", height: "100%" }} />
     </div>
   );
 }
