@@ -402,7 +402,7 @@ statsRoutes.get("/features", (c) => {
   }));
 
   // ── Wiki KB summary ─────────────────────────────────────────────────────
-  let wikiDomains: Array<{
+  const wikiDomains: Array<{
     slug: string;
     name: string;
     articleCount: number;
