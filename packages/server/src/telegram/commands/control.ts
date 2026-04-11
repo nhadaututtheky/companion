@@ -139,6 +139,19 @@ export function registerControlCommands(bridge: TelegramBridge): void {
     await ctx.reply("📦 Compacting context...");
   });
 
+  // ── /clear — Reset context (clear conversation, keep session) ─────────
+
+  bot.command("clear", async (ctx) => {
+    const mapping = bridge.getMapping(ctx.chat.id, ctx.message?.message_thread_id);
+    if (!mapping) {
+      await ctx.reply("No active session.");
+      return;
+    }
+
+    bridge.wsBridge.sendUserMessage(mapping.sessionId, "/clear", "telegram");
+    await ctx.reply("🧹 Context cleared — session continues with fresh conversation.");
+  });
+
   // ── Permission callback queries ───────────────────────────────────────
 
   bot.callbackQuery(/^perm:(allow|deny):(.+):(.+)$/, async (ctx) => {

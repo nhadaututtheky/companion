@@ -11,7 +11,8 @@ type RightPanel =
   | "terminal"
   | "stats"
   | "ai-context"
-  | "wiki";
+  | "wiki"
+  | "workspace";
 
 export interface LayoutPreset {
   id: string;

@@ -9,6 +9,9 @@ interface SlashCommand {
 }
 
 const SLASH_COMMANDS: SlashCommand[] = [
+  // Session
+  { command: "/clear", description: "Reset context — keep session, clear conversation history", category: "session" },
+  { command: "/compact", description: "Compress context window to free up space", category: "session" },
   // Research & Intelligence
   { command: "/docs", description: "Fetch documentation from a URL", usage: "/docs <URL> [--refresh]", category: "research" },
   { command: "/research", description: "Search the web for information", usage: "/research <query>", category: "research" },

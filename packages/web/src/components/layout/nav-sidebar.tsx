@@ -67,6 +67,12 @@ const PANEL_ITEMS: NavItem[] = [
 
 const AI_ITEMS: NavItem[] = [
   {
+    id: "workspace",
+    label: "Workspace",
+    icon: GridFour,
+    description: "Multi-CLI workspace dashboard — agents, costs, and activity",
+  },
+  {
     id: "ai-context",
     label: "AI Context",
     icon: Brain,

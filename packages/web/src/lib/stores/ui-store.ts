@@ -17,7 +17,8 @@ interface UiStore {
     | "terminal"
     | "stats"
     | "ai-context"
-    | "wiki";
+    | "wiki"
+    | "workspace";
   rightPanelPath: string | null;
   browserPreviewUrl: string | null;
   featureGuideOpen: boolean;
@@ -26,8 +27,10 @@ interface UiStore {
   activeNavMenu: "panels" | "ai" | "layout" | null;
   statsBarOpen: boolean;
   schedulesModalOpen: boolean;
+  workspaceCreateModalOpen: boolean;
   setStatsBarOpen: (open: boolean) => void;
   setSchedulesModalOpen: (open: boolean) => void;
+  setWorkspaceCreateModalOpen: (open: boolean) => void;
   setFeatureGuideOpen: (open: boolean) => void;
   setTheme: (t: "light" | "dark") => void;
   toggleTheme: () => void;
@@ -37,7 +40,7 @@ interface UiStore {
   setSettingsActiveTab: (tab: SettingsTab) => void;
   setActivityTerminalOpen: (open: boolean) => void;
   setRightPanelMode: (
-    mode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context" | "wiki",
+    mode: "none" | "files" | "browser" | "search" | "terminal" | "stats" | "ai-context" | "wiki" | "workspace",
   ) => void;
   setRightPanelPath: (path: string | null) => void;
   setBrowserPreviewUrl: (url: string | null) => void;
@@ -75,10 +78,13 @@ export const useUiStore = create<UiStore>((set) => ({
   activeNavMenu: null,
   statsBarOpen: false,
   schedulesModalOpen: false,
+  workspaceCreateModalOpen: false,
 
   setStatsBarOpen: (open) => set({ statsBarOpen: open }),
 
   setSchedulesModalOpen: (open) => set({ schedulesModalOpen: open }),
+
+  setWorkspaceCreateModalOpen: (open) => set({ workspaceCreateModalOpen: open }),
 
   setTheme: (theme) => {
     set({ theme });

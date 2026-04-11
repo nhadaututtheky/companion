@@ -6,3 +6,4 @@ export * from "./workflow";
 export * from "./schedule";
 export * from "./cli-adapter";
 export * from "./orchestration";
+export * from "./workspace";

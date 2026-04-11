@@ -17,6 +17,37 @@ export const projects = sqliteTable("projects", {
     .$defaultFn(() => new Date()),
 });
 
+// ─── Workspaces ─────────────────────────────────────────────────────────────
+
+export const workspaces = sqliteTable(
+  "workspaces",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    projectSlug: text("project_slug")
+      .notNull()
+      .references(() => projects.slug),
+    /** JSON array of CLI platforms to connect: ["claude","codex","gemini","opencode"] */
+    cliSlots: text("cli_slots", { mode: "json" })
+      .$type<import("@companion/shared").CLIPlatform[]>()
+      .notNull()
+      .default(["claude"]),
+    /** Default expert persona for new sessions */
+    defaultExpert: text("default_expert"),
+    /** Auto-spawn CLIs when workspace is opened */
+    autoConnect: integer("auto_connect", { mode: "boolean" }).notNull().default(false),
+    /** Linked wiki knowledge base domain */
+    wikiDomain: text("wiki_domain"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [index("idx_workspaces_project").on(table.projectSlug)],
+);
+
 // ─── Sessions ────────────────────────────────────────────────────────────────
 
 export const sessions = sqliteTable(
@@ -45,6 +76,10 @@ export const sessions = sqliteTable(
     personaId: text("persona_id"),
     /** Agent role in multi-brain workspace (e.g. "coordinator", "specialist") */
     role: text("role"),
+    /** Workspace this session belongs to */
+    workspaceId: text("workspace_id").references(() => workspaces.id),
+    /** CLI platform (claude, codex, gemini, opencode) */
+    cliPlatform: text("cli_platform").default("claude"),
 
     // Session management config
     /** Cost warning threshold in USD (null = no budget) */
@@ -89,6 +124,7 @@ export const sessions = sqliteTable(
     index("idx_sessions_project").on(table.projectSlug),
     index("idx_sessions_started_at").on(table.startedAt),
     index("idx_sessions_ended_at").on(table.endedAt),
+    index("idx_sessions_workspace").on(table.workspaceId),
   ],
 );
 

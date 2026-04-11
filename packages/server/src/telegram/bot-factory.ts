@@ -108,6 +108,8 @@ export async function registerCommands(bot: Bot): Promise<void> {
       { command: "status", description: "Show session status" },
       { command: "model", description: "Change AI model" },
       { command: "templates", description: "Browse session templates" },
+      { command: "clear", description: "Reset context (keep session)" },
+      { command: "compact", description: "Compress context window" },
       { command: "mood", description: "Agent pulse / health check" },
       { command: "help", description: "Show all commands" },
     ]);

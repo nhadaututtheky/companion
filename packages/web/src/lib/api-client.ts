@@ -1547,4 +1547,47 @@ export const api = {
         publishedAt: string;
       }>(`/api/health/update-check${force ? "?force=true" : ""}`),
   },
+
+  workspaces: {
+    list: () =>
+      request<{
+        success: boolean;
+        data: import("@companion/shared").Workspace[];
+      }>("/api/workspaces"),
+
+    get: (id: string) =>
+      request<{
+        success: boolean;
+        data: import("@companion/shared").WorkspaceWithStatus;
+      }>(`/api/workspaces/${encodeURIComponent(id)}`),
+
+    create: (body: import("@companion/shared").WorkspaceCreateBody) =>
+      request<{ success: boolean; data: import("@companion/shared").Workspace }>(
+        "/api/workspaces",
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+
+    update: (id: string, body: import("@companion/shared").WorkspaceUpdateBody) =>
+      request<{ success: boolean; data: import("@companion/shared").Workspace }>(
+        `/api/workspaces/${encodeURIComponent(id)}`,
+        { method: "PUT", body: JSON.stringify(body) },
+      ),
+
+    delete: (id: string) =>
+      request<{ success: boolean }>(`/api/workspaces/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      }),
+
+    connect: (id: string, platform: string, sessionId: string) =>
+      request<{ success: boolean }>(
+        `/api/workspaces/${encodeURIComponent(id)}/connect`,
+        { method: "POST", body: JSON.stringify({ platform, sessionId }) },
+      ),
+
+    disconnect: (id: string, cli: string) =>
+      request<{ success: boolean }>(
+        `/api/workspaces/${encodeURIComponent(id)}/disconnect/${encodeURIComponent(cli)}`,
+        { method: "POST" },
+      ),
+  },
 };

@@ -21,6 +21,7 @@ import { terminalManager } from "./services/terminal-manager.js";
 import { cleanupAllHooks, cleanupOrphanHooks } from "./services/adapters/claude-adapter.js";
 import * as spectatorBridge from "./services/spectator-bridge.js";
 import { startScheduler, stopScheduler } from "./services/scheduler.js";
+import { initWorkspaceRuntime } from "./services/workspace-store.js";
 import { validateShareToken } from "./services/share-manager.js";
 import { registerGlobalErrorHandlers, flushErrors } from "./services/error-tracker.js";
 import { join, resolve, dirname } from "node:path";
@@ -64,6 +65,9 @@ registerGlobalErrorHandlers();
 
 // Warn if no auth credentials configured
 warnIfNoAuth();
+
+// Initialize workspace runtime state from DB
+initWorkspaceRuntime();
 
 // On startup, mark all non-terminal sessions as ended (server restarted, all in-memory state gone)
 const startupCleaned = bulkEndSessions();

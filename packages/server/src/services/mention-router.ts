@@ -14,15 +14,79 @@
 import { resolveShortId } from "./short-id.js";
 import { getActiveSession } from "./session-store.js";
 import { listActiveDebates, injectHumanMessage } from "./debate-engine.js";
+import { getWorkspaceForSession, getConnectedSession, getWorkspaceCliConnections } from "./workspace-store.js";
+import type { CLIPlatform } from "@companion/shared";
 import { createLogger } from "../logger.js";
 
 const log = createLogger("mention-router");
+
+/** CLI platform aliases — @claude, @codex, @gemini, @opencode */
+const CLI_ALIASES: Record<string, CLIPlatform> = {
+  claude: "claude",
+  claudecode: "claude",
+  "claude-code": "claude",
+  codex: "codex",
+  gemini: "gemini",
+  "gemini-cli": "gemini",
+  opencode: "opencode",
+  "open-code": "opencode",
+};
+
+const ALL_ALIAS = "all";
 
 /** Pattern string for @shortId mentions — create new RegExp per use to avoid stale lastIndex */
 const MENTION_PATTERN = "@([a-z][a-z0-9-]*)";
 
 function createMentionRegex(): RegExp {
   return new RegExp(MENTION_PATTERN, "gi");
+}
+
+/**
+ * Resolve a @mention as a CLI platform within the sender's workspace.
+ * Returns session ID of the connected CLI, or null if not in workspace / not connected.
+ */
+function resolveCliMention(
+  alias: string,
+  fromSessionId: string,
+): { sessionId: string; platform: CLIPlatform } | null {
+  const platform = CLI_ALIASES[alias.toLowerCase()];
+  if (!platform) return null;
+
+  const wsId = getWorkspaceForSession(fromSessionId);
+  if (!wsId) return null;
+
+  const sessionId = getConnectedSession(wsId, platform);
+  if (!sessionId || sessionId === fromSessionId) return null;
+
+  const target = getActiveSession(sessionId);
+  if (!target) return null;
+
+  return { sessionId, platform };
+}
+
+/**
+ * Resolve @all — returns all connected CLI sessions in the sender's workspace.
+ * Uses in-memory cliConnections map (no DB hit).
+ */
+function resolveAllMention(
+  fromSessionId: string,
+): Array<{ sessionId: string; platform: CLIPlatform }> {
+  const wsId = getWorkspaceForSession(fromSessionId);
+  if (!wsId) return [];
+
+  const connections = getWorkspaceCliConnections(wsId);
+  if (!connections) return [];
+
+  const results: Array<{ sessionId: string; platform: CLIPlatform }> = [];
+  for (const [platform, sessionId] of connections) {
+    if (sessionId && sessionId !== fromSessionId) {
+      const target = getActiveSession(sessionId);
+      if (target) {
+        results.push({ sessionId, platform });
+      }
+    }
+  }
+  return results;
 }
 
 export interface ParsedMention {
@@ -34,6 +98,10 @@ export interface ParsedMention {
   end: number;
   /** If this mention targets a debate channel instead of a session */
   debateChannelId?: string;
+  /** CLI platform if resolved as workspace CLI mention */
+  cliPlatform?: CLIPlatform;
+  /** True if this is an @all fan-out mention */
+  isAllFanout?: boolean;
 }
 
 export interface MentionContext {
@@ -63,39 +131,63 @@ export function parseMentions(
 
   while ((match = regex.exec(message)) !== null) {
     const shortId = match[1]!.toLowerCase();
+    const matchStart = match.index;
+    const matchEnd = match.index + match[0].length;
+
+    // Priority 1: @all — fan-out to all workspace CLIs
+    if (shortId === ALL_ALIAS) {
+      const allClis = resolveAllMention(fromSessionId);
+      for (const { sessionId, platform } of allClis) {
+        mentions.push({
+          shortId: platform,
+          sessionId,
+          start: matchStart,
+          end: matchEnd,
+          cliPlatform: platform,
+          isAllFanout: true,
+        });
+      }
+      continue;
+    }
+
+    // Priority 2: @cli-type — workspace CLI routing
+    const cliMatch = resolveCliMention(shortId, fromSessionId);
+    if (cliMatch) {
+      mentions.push({
+        shortId,
+        sessionId: cliMatch.sessionId,
+        start: matchStart,
+        end: matchEnd,
+        cliPlatform: cliMatch.platform,
+      });
+      continue;
+    }
+
+    // Priority 3: @session-shortid
     const sessionId = resolveShortId(shortId);
-
     if (sessionId) {
-      // Don't mention yourself
       if (sessionId === fromSessionId) continue;
-
-      // Check session is active
       const target = getActiveSession(sessionId);
       if (!target) {
         log.debug("Mentioned session not active", { shortId, sessionId });
         continue;
       }
+      mentions.push({ shortId, sessionId, start: matchStart, end: matchEnd });
+      continue;
+    }
 
+    // Priority 4: debate agent alias
+    const debateMatch = resolveDebateAgentMention(shortId);
+    if (debateMatch) {
       mentions.push({
         shortId,
-        sessionId,
-        start: match.index,
-        end: match.index + match[0].length,
+        sessionId: `debate:${debateMatch.channelId}`,
+        debateChannelId: debateMatch.channelId,
+        start: matchStart,
+        end: matchEnd,
       });
     } else {
-      // Try resolving as a debate agent ID (e.g. @advocate, @challenger)
-      const debateMatch = resolveDebateAgentMention(shortId);
-      if (debateMatch) {
-        mentions.push({
-          shortId,
-          sessionId: `debate:${debateMatch.channelId}`,
-          debateChannelId: debateMatch.channelId,
-          start: match.index,
-          end: match.index + match[0].length,
-        });
-      } else {
-        log.debug("Unresolved mention", { shortId });
-      }
+      log.debug("Unresolved mention", { shortId });
     }
   }
 
@@ -106,10 +198,13 @@ export function parseMentions(
     (m, i, arr) => arr.findIndex((x) => x.sessionId === m.sessionId) === i,
   );
 
-  // Build clean message — only strip resolved @mentions (by position, reverse order to preserve indices)
+  // Build clean message — strip unique positions (dedup by position for @all which shares one range)
   let cleanMessage = message;
+  const seenPositions = new Set<number>();
   const sortedByPos = [...unique].sort((a, b) => b.start - a.start);
   for (const m of sortedByPos) {
+    if (seenPositions.has(m.start)) continue;
+    seenPositions.add(m.start);
     cleanMessage = cleanMessage.slice(0, m.start) + cleanMessage.slice(m.end);
   }
   cleanMessage = cleanMessage.replace(/\s+/g, " ").trim();
@@ -163,21 +258,32 @@ function routeMention(
   const target = getActiveSession(mention.sessionId);
   if (!target) return;
 
-  // Build the message — NO @shortId in text to prevent recursive mention routing
+  const identity = mention.cliPlatform
+    ? `You are ${mention.cliPlatform} CLI agent`
+    : `You are session "${mention.shortId}"`;
+
+  const context = mention.isAllFanout
+    ? `[Workspace @all broadcast from session "${ctx.fromShortId}"]`
+    : mention.cliPlatform
+      ? `[Workspace @${mention.cliPlatform} mention from session "${ctx.fromShortId}"]`
+      : `[Cross-session mention from session "${ctx.fromShortId}"]`;
+
   const prompt = [
-    `[Cross-session mention from session "${ctx.fromShortId}"]`,
+    context,
     ``,
     ctx.cleanMessage,
     ``,
     `---`,
     `Reply naturally. Your response will be shared back with session "${ctx.fromShortId}".`,
-    `You are session "${mention.shortId}". Keep your response concise and focused.`,
+    `${identity}. Keep your response concise and focused.`,
   ].join("\n");
 
   log.info("Routing mention", {
     from: ctx.fromShortId,
     to: mention.shortId,
     targetSessionId: mention.sessionId,
+    cliPlatform: mention.cliPlatform,
+    isAllFanout: mention.isAllFanout,
   });
 
   sendToSession(mention.sessionId, prompt);

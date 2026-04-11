@@ -171,6 +171,8 @@ export function createSessionRecord(opts: {
   compactThreshold?: number;
   personaId?: string;
   role?: string;
+  workspaceId?: string;
+  cliPlatform?: string;
 }): string {
   const db = getDb();
   const MAX_RETRIES = 5;
@@ -192,6 +194,8 @@ export function createSessionRecord(opts: {
           channelId: opts.channelId,
           personaId: opts.personaId,
           role: opts.role,
+          workspaceId: opts.workspaceId,
+          cliPlatform: opts.cliPlatform ?? "claude",
           costBudgetUsd: opts.costBudgetUsd,
           compactMode: opts.compactMode ?? "manual",
           compactThreshold: opts.compactThreshold ?? 75,

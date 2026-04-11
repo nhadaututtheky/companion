@@ -125,4 +125,8 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0030_session_insights.sql",
     sql: "-- Session Insights — cross-session learning from patterns, mistakes, preferences\nCREATE TABLE IF NOT EXISTS session_insights (\n  id TEXT PRIMARY KEY,\n  project_slug TEXT NOT NULL DEFAULT '',\n  type TEXT NOT NULL CHECK (type IN ('pattern', 'mistake', 'preference', 'hotspot')),\n  content TEXT NOT NULL,\n  source_session_id TEXT NOT NULL DEFAULT '',\n  source_files TEXT NOT NULL DEFAULT '[]',\n  relevance_score REAL NOT NULL DEFAULT 0.5,\n  hit_count INTEGER NOT NULL DEFAULT 1,\n  content_hash TEXT NOT NULL DEFAULT '',\n  created_at TEXT NOT NULL DEFAULT (datetime('now')),\n  last_used_at TEXT NOT NULL DEFAULT (datetime('now'))\n);\n\nCREATE INDEX IF NOT EXISTS idx_insights_project ON session_insights(project_slug);\nCREATE INDEX IF NOT EXISTS idx_insights_type ON session_insights(type);\nCREATE INDEX IF NOT EXISTS idx_insights_hash ON session_insights(content_hash);\n",
   },
+  {
+    name: "0031_workspaces.sql",
+    sql: "-- Workspaces: multi-CLI project hub\nCREATE TABLE `workspaces` (\n  `id` text PRIMARY KEY NOT NULL,\n  `name` text NOT NULL,\n  `project_slug` text NOT NULL REFERENCES `projects`(`slug`),\n  `cli_slots` text NOT NULL DEFAULT '[\"claude\"]',\n  `default_expert` text,\n  `auto_connect` integer NOT NULL DEFAULT 0,\n  `wiki_domain` text,\n  `created_at` integer NOT NULL,\n  `updated_at` integer NOT NULL\n);\nCREATE INDEX `idx_workspaces_project` ON `workspaces` (`project_slug`);\nALTER TABLE `sessions` ADD COLUMN `workspace_id` text REFERENCES `workspaces`(`id`);\nCREATE INDEX `idx_sessions_workspace` ON `sessions` (`workspace_id`);\n",
+  },
 ];

@@ -33,6 +33,13 @@ const WikiPanel = dynamic(
   () => import("@/components/panels/wiki-panel").then((m) => ({ default: m.WikiPanel })),
   { ssr: false },
 );
+const WorkspaceDashboard = dynamic(
+  () =>
+    import("@/components/panels/workspace-dashboard").then((m) => ({
+      default: m.WorkspaceDashboard,
+    })),
+  { ssr: false },
+);
 const OnboardingWizard = dynamic(
   () => import("@/components/onboarding-wizard").then((m) => ({ default: m.OnboardingWizard })),
   { ssr: false },
@@ -667,7 +674,7 @@ export default function DashboardPage() {
                 width:
                   rightPanelMode === "browser" || rightPanelMode === "terminal"
                     ? 600
-                    : rightPanelMode === "wiki"
+                    : rightPanelMode === "wiki" || rightPanelMode === "workspace"
                       ? 520
                       : 480,
                 background: "var(--glass-bg-heavy)",
@@ -727,6 +734,14 @@ export default function DashboardPage() {
               {rightPanelMode === "wiki" && (
                 <PanelErrorBoundary name="Wiki">
                   <WikiPanel onClose={() => setRightPanelMode("none")} />
+                </PanelErrorBoundary>
+              )}
+              {rightPanelMode === "workspace" && (
+                <PanelErrorBoundary name="Workspace">
+                  <WorkspaceDashboard
+                    onClose={() => setRightPanelMode("none")}
+                    sessions={sessionList}
+                  />
                 </PanelErrorBoundary>
               )}
             </aside>

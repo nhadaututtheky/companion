@@ -73,6 +73,8 @@ import {
   type ContextBridge,
 } from "./ws-context-tracker.js";
 import { revokeAllForSession } from "./share-manager.js";
+import { connectCli, disconnectCli, getWorkspaceForSession, getWorkspace as getWorkspaceById } from "./workspace-store.js";
+import { getWorkspaceContext } from "./workspace-context.js";
 import { eventBus } from "./event-bus.js";
 import { generateSessionName } from "./session-namer.js";
 import { processToolEvent, removeTracker } from "../codegraph/event-collector.js";
@@ -362,6 +364,8 @@ export class WsBridge {
     platformOptions?: Record<string, unknown>;
     /** Agent role in multi-brain workspace. */
     role?: "coordinator" | "specialist" | "researcher" | "reviewer";
+    /** Workspace ID — links session to a multi-CLI workspace. */
+    workspaceId?: string;
   }): Promise<string> {
     const sessionId = randomUUID();
 
@@ -437,10 +441,25 @@ export class WsBridge {
       compactThreshold: opts.compactThreshold,
       personaId: opts.personaId,
       role: opts.role,
+      workspaceId: opts.workspaceId,
+      cliPlatform: opts.cliPlatform,
     });
 
     // Attach shortId to session state for clients
     initialState.short_id = shortId;
+
+    // Connect session to workspace and inject shared context
+    if (opts.workspaceId) {
+      const platform = opts.cliPlatform ?? "claude";
+      connectCli(opts.workspaceId, platform, sessionId);
+
+      const wsCtx = getWorkspaceContext(opts.workspaceId, platform);
+      if (wsCtx && opts.prompt) {
+        opts.prompt = `${wsCtx.content}\n---\n\n${opts.prompt}`;
+      } else if (wsCtx && !opts.prompt) {
+        opts.prompt = wsCtx.content;
+      }
+    }
 
     // If resuming, clear cliSessionId from old session so it's no longer listed as resumable
     if (opts.resume && opts.cliSessionId) {
@@ -1926,6 +1945,13 @@ export class WsBridge {
     this.idleDetector.stopTracking(session.id);
     clearPrevTokens(session.id);
     clearEarlyResult(session.id);
+
+    // Disconnect from workspace if linked
+    const wsId = getWorkspaceForSession(session.id);
+    if (wsId) {
+      const platform = (session.state.cli_platform ?? "claude") as CLIPlatform;
+      disconnectCli(wsId, platform);
+    }
 
     // Reject any outstanding SDK permission resolvers for this session
     for (const [reqId] of session.pendingPermissions) {
