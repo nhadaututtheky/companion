@@ -79,6 +79,8 @@ interface SessionConfig {
   idleWarningTimer?: ReturnType<typeof setTimeout>;
   /** Busy watchdog timer — kills session if stuck busy with no activity */
   busyWatchdog?: ReturnType<typeof setTimeout>;
+  /** Last time idle timer was reset — used to debounce resets from stream events */
+  lastIdleReset?: number;
 }
 
 /** Dead session info for resume detection */
@@ -283,9 +285,10 @@ export class TelegramBridge {
     }
   }
 
-  /** Reset the idle timer for a session. Called on session start, user message + result events. */
+  /** Reset the idle timer for a session. Called on session start, user message, CLI activity + result events. */
   resetIdleTimer(sessionId: string, chatId: number, topicId?: number): void {
     const cfg = this.getSessionConfig(sessionId);
+    cfg.lastIdleReset = Date.now();
 
     if (cfg.idleTimer) {
       clearTimeout(cfg.idleTimer);
@@ -1220,9 +1223,17 @@ export class TelegramBridge {
     msg: BrowserIncomingMessage,
   ): Promise<void> {
     try {
-      // Reset busy watchdog on any sign of CLI activity
+      // Reset busy watchdog + idle timer on any sign of CLI activity
       if (msg.type === "assistant" || msg.type === "tool_progress" || msg.type === "stream_event") {
         this.resetBusyWatchdog(sessionId, chatId, topicId);
+
+        // Debounce idle timer reset — stream events fire rapidly, only reset every 30s
+        const cfg = this.getSessionConfig(sessionId);
+        const now = Date.now();
+        if (!cfg.lastIdleReset || now - cfg.lastIdleReset > 30_000) {
+          cfg.lastIdleReset = now;
+          this.resetIdleTimer(sessionId, chatId, topicId ?? undefined);
+        }
       }
 
       switch (msg.type) {
