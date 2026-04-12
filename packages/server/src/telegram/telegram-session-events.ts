@@ -7,6 +7,7 @@
 import { escapeHTML, formatToolFeed, shortModelName } from "./formatter.js";
 import { getSessionSummary } from "../services/session-summarizer.js";
 import { createLogger } from "../logger.js";
+import { getReviewUrl } from "./review-link.js";
 import type { TelegramBridge } from "./telegram-bridge.js";
 import type { BrowserIncomingMessage, CLIResultMessage } from "@companion/shared";
 
@@ -62,6 +63,38 @@ export async function handleAssistantMessage(
   // NOTE: Do NOT call streamHandler.appendText here.
   // stream_event deltas feed the stream incrementally.
   // assistant message contains the SAME full text — handled by stream handler.
+
+  // ── Plan file detection: send review link when agent writes .md plans ──
+  for (const block of content) {
+    if (block.type !== "tool_use") continue;
+    const b = block as { name?: string; input?: Record<string, unknown> };
+    if (b.name !== "Write" && b.name !== "Edit") continue;
+    const filePath = (b.input?.file_path ?? b.input?.path ?? "") as string;
+    if (!filePath.endsWith(".md")) continue;
+    // Only trigger for plan-like files
+    const fname = filePath.replace(/\\/g, "/").split("/").pop() ?? "";
+    if (!fname.startsWith("plan") && !filePath.includes(".rune/plan")) continue;
+
+    const mapping = bridge.getMapping(chatId, topicId);
+    if (!mapping) continue;
+
+    const relPath = filePath.includes(".rune/")
+      ? filePath.slice(filePath.indexOf(".rune/"))
+      : fname;
+    const url = await getReviewUrl(mapping.projectSlug, relPath);
+    if (!url) continue;
+
+    await bridge.bot.api
+      .sendMessage(chatId, `📋 <b>Plan updated:</b> <code>${escapeHTML(fname)}</code>`, {
+        parse_mode: "HTML",
+        message_thread_id: topicId,
+        reply_markup: {
+          inline_keyboard: [[{ text: "📖 Review & Comment", url }]],
+        } as unknown as import("grammy").InlineKeyboard,
+      })
+      .catch(() => {});
+    break; // One notification per message
+  }
 
   // ── File path detection: show "View File" buttons ──
   const textParts: string[] = [];

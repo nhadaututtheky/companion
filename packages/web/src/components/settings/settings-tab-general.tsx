@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Key, Globe, FloppyDisk, Check, PaintBrush, Bug, Lightbulb } from "@phosphor-icons/react";
+import {
+  Key,
+  Globe,
+  FloppyDisk,
+  Check,
+  PaintBrush,
+  Bug,
+  Lightbulb,
+  Link,
+} from "@phosphor-icons/react";
 import { areTipsEnabled, setTipsEnabled, resetDismissedTips } from "@/components/tips/tip-storage";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { api } from "@/lib/api-client";
@@ -308,6 +317,7 @@ export function GeneralTab() {
   const [saved, setSaved] = useState(false);
   const [serverStatus, setServerStatus] = useState<"unknown" | "online" | "offline">("unknown");
   const [promptScanEnabled, setPromptScanEnabled] = useState(true);
+  const [publicUrl, setPublicUrl] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -324,6 +334,10 @@ export function GeneralTab() {
       .get<{ data: { key: string; value: string } }>("/api/settings/security.promptScan")
       .then((res) => setPromptScanEnabled(res.data.value !== "false"))
       .catch(() => setPromptScanEnabled(true));
+    api
+      .get<{ data: { key: string; value: string } }>("/api/settings/review.publicUrl")
+      .then((res) => setPublicUrl(res.data.value ?? ""))
+      .catch(() => {});
   }, []);
 
   const handleSave = useCallback(() => {
@@ -370,6 +384,38 @@ export function GeneralTab() {
             onChange={setServerUrl}
             placeholder="http://localhost:3579"
           />
+        </div>
+      </SettingSection>
+
+      {/* Public URL (for Telegram review links) */}
+      <SettingSection
+        title="Public URL"
+        description="External URL for Telegram review links. Leave empty to auto-detect LAN IP."
+      >
+        <div className="flex items-start gap-3">
+          <Link
+            size={16}
+            weight="bold"
+            style={{ color: "var(--color-text-muted)", marginTop: 8, flexShrink: 0 }}
+          />
+          <div className="flex-1">
+            <InputField
+              label="Public URL"
+              value={publicUrl}
+              onChange={async (v) => {
+                setPublicUrl(v);
+                try {
+                  await api.put("/api/settings/review.publicUrl", { value: v });
+                } catch {
+                  // non-fatal
+                }
+              }}
+              placeholder="https://companion.mylab.dev"
+            />
+            <span className="text-xs" style={{ color: "var(--color-text-muted)", opacity: 0.7 }}>
+              Used by Telegram bot to generate clickable review links
+            </span>
+          </div>
         </div>
       </SettingSection>
 
