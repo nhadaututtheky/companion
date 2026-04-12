@@ -342,14 +342,26 @@ export class TelegramBridge {
       const session = this.wsBridge.getSession(sessionId);
       if (!session) return;
 
-      log.info("Idle timeout expired, stopping session", { sessionId, idleMs: cfg.idleTimeoutMs });
+      log.info("Idle timeout expired, stopping session permanently", { sessionId, idleMs: cfg.idleTimeoutMs });
       this.killSession(sessionId);
       this.removeMapping(chatId, topicId);
+
+      // Idle timeout = permanent kill — clear cliSessionId so session can't be resumed
+      this.clearDeadSession(chatId, topicId ?? 0);
+      try {
+        const db = getDb();
+        db.update(telegramSessionMappings)
+          .set({ cliSessionId: null })
+          .where(eq(telegramSessionMappings.sessionId, sessionId))
+          .run();
+      } catch {
+        // non-fatal
+      }
 
       const minutes = Math.round(cfg.idleTimeoutMs / 60_000);
       const label = minutes >= 60 ? `${Math.round(minutes / 60)}h` : `${minutes}m`;
       await this.bot.api
-        .sendMessage(chatId, `⏰ Session idle for ${label}, stopped.`, {
+        .sendMessage(chatId, `⏰ Session idle for ${label}, stopped. Use /start for a new session.`, {
           message_thread_id: topicId,
         })
         .catch(() => {});
@@ -532,9 +544,24 @@ export class TelegramBridge {
       this.setMapping(chatId, effectiveTopicId, mapping);
       this.subscribeToSession(sessionId, chatId, effectiveTopicId);
 
-      // Inherit idle timeout from previous session in this chat slot
+      // Inherit idle timeout: from previous active session, or from DB (resume case)
       if (inheritedIdleMs !== undefined) {
         this.setIdleTimeout(sessionId, inheritedIdleMs);
+      } else if (opts?.resume && opts?.cliSessionId) {
+        // Resume from dead session — look up persisted idle timeout from old mapping
+        try {
+          const db = getDb();
+          const oldRow = db
+            .select({ idleTimeoutMs: telegramSessionMappings.idleTimeoutMs })
+            .from(telegramSessionMappings)
+            .where(eq(telegramSessionMappings.cliSessionId, opts.cliSessionId))
+            .get();
+          if (oldRow && oldRow.idleTimeoutMs !== 3_600_000) {
+            this.setIdleTimeout(sessionId, oldRow.idleTimeoutMs);
+          }
+        } catch {
+          // non-fatal — use default
+        }
       }
 
       // Send settings panel (includes status + inline keyboard)
@@ -1447,6 +1474,10 @@ export class TelegramBridge {
             topicId: topicId || undefined,
           });
           this.subscribeToSession(row.sessionId, row.chatId, topicId || undefined);
+          // Restore persisted idle timeout into session config
+          const cfg = this.getSessionConfig(row.sessionId);
+          cfg.idleTimeoutMs = row.idleTimeoutMs;
+          this.resetIdleTimer(row.sessionId, row.chatId, topicId || undefined);
           loaded++;
         } else if (row.cliSessionId) {
           // CLI died but has cliSessionId — can be resumed

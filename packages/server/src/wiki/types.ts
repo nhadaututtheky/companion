@@ -50,6 +50,40 @@ export interface ArticleMeta {
   confidence?: ArticleConfidence;
   /** Link to original source (repo URL, doc URL, etc.) */
   sourceUrl?: string;
+  /** Number of times this article has been edited */
+  editCount?: number;
+  /** Who last edited: "session:<id> model:<name>" or "manual" */
+  lastEditedBy?: string;
+  /** Why the last edit was made (1-line reason) */
+  lastEditReason?: string;
+}
+
+/** Context passed through all wiki write operations for provenance tracking */
+export interface WriteContext {
+  /** Session ID that triggered the write */
+  sessionId?: string;
+  /** Model used by the agent */
+  model?: string;
+  /** Why this write is happening (1-line) */
+  reason?: string;
+}
+
+/** A single changelog entry — one line in _changelog.jsonl */
+export interface ChangelogEntry {
+  /** Article slug */
+  slug: string;
+  /** What happened: create, update, compile, delete */
+  action: "create" | "update" | "compile" | "delete";
+  /** Who did it: "session:<id> model:<name>" or "manual" or "ai-compiler" */
+  by: string;
+  /** Why (optional 1-line reason) */
+  reason?: string;
+  /** Token count before change (0 for create) */
+  tokensBefore: number;
+  /** Token count after change (0 for delete) */
+  tokensAfter: number;
+  /** ISO timestamp */
+  at: string;
 }
 
 /** A complete wiki article (frontmatter + body) */
@@ -203,7 +237,7 @@ export const MAX_ARTICLE_TOKENS = 5000;
 export const MAX_CORE_TOKENS = 3000;
 
 /** Reserved filenames in a domain directory */
-export const RESERVED_FILES = ["_index.md", "_core.md"] as const;
+export const RESERVED_FILES = ["_index.md", "_core.md", "_changelog.jsonl"] as const;
 
 /** Supported raw file extensions */
 export const RAW_EXTENSIONS = new Set([

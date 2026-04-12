@@ -22,6 +22,7 @@ import {
   type ArticleConfidence,
   type ArticleMeta,
   type ArticleRef,
+  type WriteContext,
   CHARS_PER_TOKEN,
   MAX_ARTICLE_TOKENS,
 } from "./types.js";
@@ -42,7 +43,7 @@ const MAX_FILES_PER_BATCH = 20;
  * Reads all raw files, sends them to LLM with a compile prompt,
  * and writes the resulting articles with proper frontmatter.
  */
-export async function compileWiki(request: CompileRequest, cwd?: string): Promise<CompileResult> {
+export async function compileWiki(request: CompileRequest, cwd?: string, ctx?: WriteContext): Promise<CompileResult> {
   const start = Date.now();
   const { domain, overwrite = false } = request;
 
@@ -144,7 +145,11 @@ export async function compileWiki(request: CompileRequest, cwd?: string): Promis
         confidence: article.confidence ?? "inferred",
       };
 
-      writeArticle(domain, article.slug, meta, article.content, cwd);
+      const compileCtx: WriteContext = {
+        ...ctx,
+        reason: ctx?.reason ?? `Compiled from ${rawContents.length} raw files`,
+      };
+      writeArticle(domain, article.slug, meta, article.content, cwd, compileCtx);
 
       articlesWritten.push({
         slug: article.slug,

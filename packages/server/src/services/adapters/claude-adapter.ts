@@ -189,7 +189,12 @@ function injectHooksConfig(
   };
 
   const merged = { ...existing, hooks };
-  mkdirSync(claudeDir, { recursive: true });
+  try {
+    mkdirSync(claudeDir, { recursive: true });
+  } catch (err: unknown) {
+    // Windows + Bun may throw EEXIST even with recursive:true for paths with spaces
+    if ((err as NodeJS.ErrnoException).code !== "EEXIST") throw err;
+  }
   writeFileSync(settingsPath, JSON.stringify(merged, null, 2), "utf-8");
   log.info("Injected hooks config", { settingsPath, hookUrl });
 

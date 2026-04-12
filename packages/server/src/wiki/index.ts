@@ -26,6 +26,8 @@ export {
   flagStale,
   getFlaggedArticles,
   clearFlags,
+  readChangelog,
+  readPreviousVersion,
   type NeedsUpdateEntry,
 } from "./store.js";
 
@@ -67,6 +69,8 @@ export type {
   RetrievalResult,
   RawFile,
   WikiConfig,
+  WriteContext,
+  ChangelogEntry,
 } from "./types.js";
 
 export {

@@ -29,6 +29,8 @@ import {
   type WikiIndex,
   type RawFile,
   type WikiConfig,
+  type WriteContext,
+  type ChangelogEntry,
   DEFAULT_WIKI_CONFIG,
   CHARS_PER_TOKEN,
   RESERVED_FILES,
@@ -178,6 +180,117 @@ export function deleteDomain(slug: string, cwd?: string): void {
   log.info("Deleted wiki domain", { slug });
 }
 
+// ─── Changelog + Prev-Backup ───────────────────────────────────────────────
+
+/** Max changelog entries per domain (rotate oldest when exceeded) */
+const MAX_CHANGELOG_ENTRIES = 200;
+
+/** Format a WriteContext into a short "by" string */
+function formatWriteBy(ctx?: WriteContext): string {
+  if (!ctx?.sessionId && !ctx?.model) return "unknown";
+  const parts: string[] = [];
+  if (ctx.sessionId) parts.push(`ses:${ctx.sessionId.slice(0, 8)}`);
+  if (ctx.model) parts.push(`model:${ctx.model}`);
+  return parts.join(" ");
+}
+
+/** Append a changelog entry to _changelog.jsonl */
+function appendChangelog(
+  domain: string,
+  entry: ChangelogEntry,
+  cwd?: string,
+): void {
+  const root = resolveWikiRoot(cwd);
+  const logPath = safePath(root, domain, "_changelog.jsonl");
+
+  try {
+    // Read existing to enforce max size
+    let lines: string[] = [];
+    if (existsSync(logPath)) {
+      lines = readFileSync(logPath, "utf-8").split("\n").filter(Boolean);
+    }
+
+    lines.push(JSON.stringify(entry));
+
+    // Rotate: keep only last MAX_CHANGELOG_ENTRIES
+    if (lines.length > MAX_CHANGELOG_ENTRIES) {
+      lines = lines.slice(lines.length - MAX_CHANGELOG_ENTRIES);
+    }
+
+    writeFileSync(logPath, lines.join("\n") + "\n", "utf-8");
+  } catch (err) {
+    log.warn("Failed to write changelog", { domain, error: String(err) });
+  }
+}
+
+/** Save previous version of an article as <slug>.prev.md (exactly 1 backup) */
+function backupPreviousVersion(
+  domain: string,
+  slug: string,
+  cwd?: string,
+): void {
+  const root = resolveWikiRoot(cwd);
+  const filePath = safePath(root, domain, `${slug}.md`);
+  const prevPath = safePath(root, domain, `${slug}.prev.md`);
+
+  try {
+    if (existsSync(filePath)) {
+      const content = readFileSync(filePath, "utf-8");
+      writeFileSync(prevPath, content, "utf-8");
+    }
+  } catch (err) {
+    log.warn("Failed to backup previous version", { domain, slug, error: String(err) });
+  }
+}
+
+/** Read changelog entries for a domain, optionally filtered by slug */
+export function readChangelog(
+  domain: string,
+  options?: { slug?: string; limit?: number },
+  cwd?: string,
+): ChangelogEntry[] {
+  const root = resolveWikiRoot(cwd);
+  const logPath = safePath(root, domain, "_changelog.jsonl");
+
+  if (!existsSync(logPath)) return [];
+
+  try {
+    const lines = readFileSync(logPath, "utf-8").split("\n").filter(Boolean);
+    let entries = lines.map((line) => JSON.parse(line) as ChangelogEntry);
+
+    if (options?.slug) {
+      entries = entries.filter((e) => e.slug === options.slug);
+    }
+
+    // Return most recent first, limited
+    entries.reverse();
+    if (options?.limit) {
+      entries = entries.slice(0, options.limit);
+    }
+
+    return entries;
+  } catch {
+    return [];
+  }
+}
+
+/** Read previous version of an article (returns null if no backup) */
+export function readPreviousVersion(
+  domain: string,
+  slug: string,
+  cwd?: string,
+): string | null {
+  const root = resolveWikiRoot(cwd);
+  const prevPath = safePath(root, domain, `${slug}.prev.md`);
+
+  if (!existsSync(prevPath)) return null;
+  try {
+    return readFileSync(prevPath, "utf-8");
+  } catch {
+    return null;
+  }
+}
+
 // ─── Article Operations ─────────────────────────────────────────────────────
 
 /** List all article files in a domain (excludes _index.md, _core.md, raw/) */
@@ -188,6 +301,7 @@ function listArticleFiles(domainPath: string): ArticleRef[] {
   for (const f of files) {
     if (!f.isFile() || !f.name.endsWith(".md")) continue;
     if ((RESERVED_FILES as readonly string[]).includes(f.name)) continue;
+    if (f.name.endsWith(".prev.md")) continue;
 
     const slug = f.name.replace(/\.md$/, "");
     const filePath = join(domainPath, f.name);
@@ -233,18 +347,22 @@ export function readArticle(domain: string, slug: string, cwd?: string): WikiArt
     manuallyEdited: Boolean(meta.manually_edited ?? meta.manuallyEdited ?? false),
     confidence,
     sourceUrl: (meta.source_url as string | undefined) ?? (meta.sourceUrl as string | undefined),
+    editCount: (meta.edit_count ?? meta.editCount) as number | undefined,
+    lastEditedBy: (meta.last_edited_by ?? meta.lastEditedBy) as string | undefined,
+    lastEditReason: (meta.last_edit_reason ?? meta.lastEditReason) as string | undefined,
   };
 
   return { slug, meta: articleMeta, content, path: filePath };
 }
 
-/** Write an article with frontmatter */
+/** Write an article with frontmatter, changelog, and prev-backup */
 export function writeArticle(
   domain: string,
   slug: string,
   meta: ArticleMeta,
   content: string,
   cwd?: string,
+  ctx?: WriteContext,
 ): void {
   validateArticleSlug(slug);
   const root = resolveWikiRoot(cwd);
@@ -255,29 +373,65 @@ export function writeArticle(
     throw new Error(`Domain "${domain}" not found`);
   }
 
+  // Read existing article for changelog + backup
+  const isUpdate = existsSync(filePath);
+  let tokensBefore = 0;
+  if (isUpdate) {
+    const existing = parseArticleMeta(filePath);
+    tokensBefore = existing?.tokens ?? 0;
+
+    // Backup previous version (exactly 1 .prev.md)
+    backupPreviousVersion(domain, slug, cwd);
+  }
+
+  // Bump edit count + provenance fields
+  const editCount = isUpdate ? (meta.editCount ?? 0) + 1 : 1;
+  const by = ctx ? formatWriteBy(ctx) : meta.compiledBy;
+  const enrichedMeta: ArticleMeta = {
+    ...meta,
+    editCount,
+    lastEditedBy: by,
+    lastEditReason: ctx?.reason,
+  };
+
   const frontmatter = [
     "---",
-    `title: "${meta.title.replace(/"/g, '\\"')}"`,
-    `domain: ${meta.domain}`,
+    `title: "${enrichedMeta.title.replace(/"/g, '\\"')}"`,
+    `domain: ${enrichedMeta.domain}`,
     `compiled_from:`,
-    ...meta.compiledFrom.map((f) => `  - ${f}`),
-    `compiled_by: ${meta.compiledBy}`,
-    `compiled_at: ${meta.compiledAt}`,
-    `tokens: ${meta.tokens}`,
-    `tags: [${meta.tags.join(", ")}]`,
-    ...(meta.manuallyEdited ? ["manually_edited: true"] : []),
-    ...(meta.confidence ? [`confidence: ${meta.confidence}`] : []),
-    ...(meta.sourceUrl ? [`source_url: "${meta.sourceUrl}"`] : []),
+    ...enrichedMeta.compiledFrom.map((f) => `  - ${f}`),
+    `compiled_by: ${enrichedMeta.compiledBy}`,
+    `compiled_at: ${enrichedMeta.compiledAt}`,
+    `tokens: ${enrichedMeta.tokens}`,
+    `tags: [${enrichedMeta.tags.join(", ")}]`,
+    ...(enrichedMeta.manuallyEdited ? ["manually_edited: true"] : []),
+    ...(enrichedMeta.confidence ? [`confidence: ${enrichedMeta.confidence}`] : []),
+    ...(enrichedMeta.sourceUrl ? [`source_url: "${enrichedMeta.sourceUrl}"`] : []),
+    `edit_count: ${editCount}`,
+    ...(enrichedMeta.lastEditedBy ? [`last_edited_by: "${enrichedMeta.lastEditedBy}"`] : []),
+    ...(enrichedMeta.lastEditReason ? [`last_edit_reason: "${enrichedMeta.lastEditReason.replace(/"/g, '\\"')}"`] : []),
     "---",
     "",
   ].join("\n");
 
   writeFileSync(filePath, frontmatter + content, "utf-8");
-  log.info("Wrote wiki article", { domain, slug, tokens: meta.tokens });
+
+  // Append changelog
+  appendChangelog(domain, {
+    slug,
+    action: isUpdate ? "update" : "create",
+    by,
+    reason: ctx?.reason,
+    tokensBefore,
+    tokensAfter: enrichedMeta.tokens,
+    at: enrichedMeta.compiledAt,
+  }, cwd);
+
+  log.info("Wrote wiki article", { domain, slug, tokens: enrichedMeta.tokens, editCount });
 }
 
 /** Delete an article */
-export function deleteArticle(domain: string, slug: string, cwd?: string): void {
+export function deleteArticle(domain: string, slug: string, cwd?: string, ctx?: WriteContext): void {
   const root = resolveWikiRoot(cwd);
   const filePath = safePath(root, domain, `${slug}.md`);
 
@@ -285,7 +439,24 @@ export function deleteArticle(domain: string, slug: string, cwd?: string): void 
     throw new Error(`Article "${slug}" not found in domain "${domain}"`);
   }
 
+  // Backup before delete
+  backupPreviousVersion(domain, slug, cwd);
+
+  const existing = parseArticleMeta(filePath);
+  const tokensBefore = existing?.tokens ?? 0;
+
   unlinkSync(filePath);
+
+  appendChangelog(domain, {
+    slug,
+    action: "delete",
+    by: ctx ? formatWriteBy(ctx) : "unknown",
+    reason: ctx?.reason,
+    tokensBefore,
+    tokensAfter: 0,
+    at: new Date().toISOString(),
+  }, cwd);
+
   log.info("Deleted wiki article", { domain, slug });
 }
 
@@ -295,6 +466,7 @@ export function writeNote(
   content: string,
   options?: { title?: string; tags?: string[]; confidence?: ArticleConfidence; sourceUrl?: string },
   cwd?: string,
+  ctx?: WriteContext,
 ): ArticleRef {
   const root = resolveWikiRoot(cwd);
   const domainPath = safePath(root, domain);
@@ -330,7 +502,7 @@ export function writeNote(
     sourceUrl: options?.sourceUrl,
   };
 
-  writeArticle(domain, slug, meta, content, cwd);
+  writeArticle(domain, slug, meta, content, cwd, ctx);
   rebuildIndex(domain, cwd);
 
   return { slug, title, tokens, tags: meta.tags, compiledAt: now, confidence: meta.confidence };
@@ -808,6 +980,9 @@ function parseArticleMeta(filePath: string): ArticleMeta | null {
       manuallyEdited: (meta.manually_edited ?? meta.manuallyEdited ?? false) as boolean,
       confidence,
       sourceUrl: (meta.source_url as string | undefined) ?? (meta.sourceUrl as string | undefined),
+      editCount: (meta.edit_count ?? meta.editCount) as number | undefined,
+      lastEditedBy: (meta.last_edited_by ?? meta.lastEditedBy) as string | undefined,
+      lastEditReason: (meta.last_edit_reason ?? meta.lastEditReason) as string | undefined,
     };
   } catch {
     return null;

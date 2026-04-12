@@ -49,7 +49,10 @@ import {
   writeNote,
   getWikiConfig,
   setWikiConfig,
+  readChangelog,
+  readPreviousVersion,
 } from "../wiki/index.js";
+import type { WriteContext } from "../wiki/types.js";
 
 export function createWikiRoutes(): Hono {
   const app = new Hono();
@@ -162,11 +165,20 @@ export function createWikiRoutes(): Hono {
         title: z.string().optional(),
         content: z.string(),
         tags: z.array(z.string()).optional(),
+        sessionId: z.string().optional(),
+        model: z.string().optional(),
+        reason: z.string().max(200).optional(),
       }),
     ),
     (c) => {
       const { domain, slug } = c.req.param();
       const body = c.req.valid("json");
+
+      const ctx: WriteContext = {
+        sessionId: body.sessionId,
+        model: body.model,
+        reason: body.reason,
+      };
 
       const existing = readArticle(domain, slug);
       const meta: ArticleMeta = existing
@@ -175,6 +187,7 @@ export function createWikiRoutes(): Hono {
             title: body.title ?? existing.meta.title,
             tags: body.tags ?? existing.meta.tags,
             tokens: Math.ceil(body.content.length / CHARS_PER_TOKEN),
+            compiledAt: new Date().toISOString(),
             manuallyEdited: true,
           }
         : {
@@ -189,7 +202,7 @@ export function createWikiRoutes(): Hono {
           };
 
       try {
-        writeArticle(domain, slug, meta, body.content);
+        writeArticle(domain, slug, meta, body.content, undefined, ctx);
         return c.json<ApiResponse>({ success: true, data: { slug, ...meta } });
       } catch (err) {
         return c.json<ApiResponse>({ success: false, error: String(err) }, 400);
@@ -242,17 +255,25 @@ export function createWikiRoutes(): Hono {
         tags: z.array(z.string()).optional(),
         confidence: z.enum(["extracted", "inferred", "ambiguous"]).optional(),
         sourceUrl: z.string().optional(),
+        sessionId: z.string().optional(),
+        model: z.string().optional(),
+        reason: z.string().max(200).optional(),
       }),
     ),
     (c) => {
       const { domain } = c.req.param();
       const body = c.req.valid("json");
+      const ctx: WriteContext = {
+        sessionId: body.sessionId,
+        model: body.model,
+        reason: body.reason,
+      };
       const ref = writeNote(domain, body.content, {
         title: body.title,
         tags: body.tags,
         confidence: body.confidence,
         sourceUrl: body.sourceUrl,
-      });
+      }, undefined, ctx);
       return c.json<ApiResponse>({ success: true, data: ref }, 201);
     },
   );
@@ -268,6 +289,9 @@ export function createWikiRoutes(): Hono {
         .object({
           rawFiles: z.array(z.string()).optional(),
           overwrite: z.boolean().optional(),
+          sessionId: z.string().optional(),
+          model: z.string().optional(),
+          reason: z.string().max(200).optional(),
         })
         .optional(),
     ),
@@ -275,12 +299,18 @@ export function createWikiRoutes(): Hono {
       const { domain } = c.req.param();
       const body = c.req.valid("json") ?? {};
 
+      const ctx: WriteContext = {
+        sessionId: body.sessionId,
+        model: body.model,
+        reason: body.reason,
+      };
+
       try {
         const result = await compileWiki({
           domain,
           rawFiles: body.rawFiles,
           overwrite: body.overwrite,
-        });
+        }, undefined, ctx);
         return c.json<ApiResponse>({ success: true, data: result });
       } catch (err) {
         return c.json<ApiResponse>({ success: false, error: String(err) }, 500);
@@ -345,6 +375,29 @@ export function createWikiRoutes(): Hono {
     const { domain } = c.req.param();
     const flags = getFlaggedArticles(domain);
     return c.json<ApiResponse>({ success: true, data: flags });
+  });
+
+  // ─── Changelog + Previous Versions ─────────────────────────────
+
+  /** Read changelog for a domain (most recent first) */
+  app.get("/:domain/changelog", (c) => {
+    const { domain } = c.req.param();
+    const slug = c.req.query("slug");
+    const limitStr = c.req.query("limit");
+    const limit = limitStr ? parseInt(limitStr, 10) : 50;
+
+    const entries = readChangelog(domain, { slug, limit });
+    return c.json<ApiResponse>({ success: true, data: entries });
+  });
+
+  /** Read previous version of an article */
+  app.get("/:domain/articles/:slug/prev", (c) => {
+    const { domain, slug } = c.req.param();
+    const prev = readPreviousVersion(domain, slug);
+    if (prev === null) {
+      return c.json<ApiResponse>({ success: false, error: "No previous version" }, 404);
+    }
+    return c.json<ApiResponse>({ success: true, data: { content: prev } });
   });
 
   // ─── Lint ───────────────────────────────────────────────────────────
