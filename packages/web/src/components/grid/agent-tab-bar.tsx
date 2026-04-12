@@ -1,6 +1,6 @@
 "use client";
 import { useSessionStore } from "@/lib/stores/session-store";
-import { Plus, Brain, Check, XCircle } from "@phosphor-icons/react";
+import { Plus, Brain, Check, XCircle, X } from "@phosphor-icons/react";
 
 const ROLE_ICONS: Record<string, string> = {
   coordinator: "🧠",
@@ -23,6 +23,7 @@ interface AgentTabBarProps {
   activeTab: string;
   onTabChange: (sessionId: string) => void;
   onSpawnClick?: () => void;
+  onCloseTab?: (childSessionId: string) => void;
 }
 
 export function AgentTabBar({
@@ -30,6 +31,7 @@ export function AgentTabBar({
   activeTab,
   onTabChange,
   onSpawnClick,
+  onCloseTab,
 }: AgentTabBarProps) {
   const childIds = useSessionStore((s) => s.sessions[parentSessionId]?.childSessionIds);
   const sessions = useSessionStore((s) => s.sessions);
@@ -44,7 +46,7 @@ export function AgentTabBar({
         scrollbarWidth: "none",
       }}
     >
-      {/* Brain tab — always first */}
+      {/* Brain tab — always first, no close button */}
       <button
         onClick={() => onTabChange(parentSessionId)}
         className={`agent-tab ${isParentActive ? "agent-tab--active" : "agent-tab--inactive"} flex items-center gap-1.5 text-xs font-semibold`}
@@ -68,39 +70,70 @@ export function AgentTabBar({
         const isError = status === "error";
 
         return (
-          <button
+          <div
             key={childId}
-            onClick={() => onTabChange(childId)}
-            className={`agent-tab ${isActive ? "agent-tab--active" : "agent-tab--inactive"} flex items-center gap-1.5 text-xs font-medium`}
+            className={`agent-tab ${isActive ? "agent-tab--active" : "agent-tab--inactive"} flex items-center gap-1 text-xs font-medium group`}
             style={{ opacity: sStyle.opacity }}
-            aria-label={`${child.agentName ?? child.shortId ?? "Agent"} — ${status}`}
-            title={`${child.agentName ?? child.shortId ?? "Agent"} — ${status}`}
           >
-            <span>{roleIcon}</span>
-            <span className="truncate" style={{ maxWidth: 80 }}>
-              {child.agentName ?? child.shortId ?? "Agent"}
-            </span>
+            {/* Tab label — clickable area */}
+            <button
+              onClick={() => onTabChange(childId)}
+              className="flex items-center gap-1.5 cursor-pointer"
+              style={{ color: "inherit" }}
+              aria-label={`${child.agentName ?? child.shortId ?? "Agent"} — ${status}`}
+              title={`${child.agentName ?? child.shortId ?? "Agent"} — ${status}`}
+            >
+              <span>{roleIcon}</span>
+              <span className="truncate" style={{ maxWidth: 80 }}>
+                {child.agentName ?? child.shortId ?? "Agent"}
+              </span>
 
-            {/* Status indicator */}
-            {isEnded ? (
-              <Check size={9} weight="bold" style={{ color: "var(--color-success)" }} />
-            ) : isError ? (
-              <XCircle size={9} weight="bold" style={{ color: "var(--color-danger)" }} />
-            ) : (
-              <span
-                style={{
-                  display: "inline-block",
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: sStyle.dot,
-                  flexShrink: 0,
-                  animation: sStyle.pulse ? "pulse 1.5s ease-in-out infinite" : "none",
-                  boxShadow: sStyle.pulse ? `0 0 4px ${sStyle.dot}` : "none",
+              {/* Status indicator */}
+              {isEnded ? (
+                <Check size={9} weight="bold" style={{ color: "var(--color-success)" }} />
+              ) : isError ? (
+                <XCircle size={9} weight="bold" style={{ color: "var(--color-danger)" }} />
+              ) : (
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: sStyle.dot,
+                    flexShrink: 0,
+                    animation: sStyle.pulse ? "pulse 1.5s ease-in-out infinite" : "none",
+                    boxShadow: sStyle.pulse ? `0 0 4px ${sStyle.dot}` : "none",
+                  }}
+                />
+              )}
+            </button>
+
+            {/* Close button — appears on hover */}
+            {onCloseTab && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCloseTab(childId);
                 }}
-              />
+                className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-sm p-0.5"
+                style={{ color: "var(--color-text-muted)", marginLeft: 2 }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "var(--color-danger)";
+                  e.currentTarget.style.background =
+                    "color-mix(in srgb, var(--color-danger) 15%, transparent)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "var(--color-text-muted)";
+                  e.currentTarget.style.background = "transparent";
+                }}
+                aria-label={`Close ${child.agentName ?? "agent"}`}
+                title={`Stop & close ${child.agentName ?? "agent"}`}
+              >
+                <X size={9} weight="bold" />
+              </button>
             )}
-          </button>
+          </div>
         );
       })}
 

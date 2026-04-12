@@ -509,6 +509,15 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
               activeTab={activeTab}
               onTabChange={setActiveTab}
               onSpawnClick={() => setSpawnOpen(true)}
+              onCloseTab={async (childId) => {
+                try {
+                  await api.sessions.stop(childId);
+                } catch {
+                  // already ended
+                }
+                useSessionStore.getState().removeChildSession(sessionId, childId);
+                if (activeTab === childId) setActiveTab(sessionId);
+              }}
             />
           )}
 
