@@ -230,9 +230,10 @@ export class TelegramBridge {
     }
     this.permBatches.clear();
 
-    // Clear idle + busy timers
+    // Clear idle + warning + busy timers
     for (const cfg of this.sessionConfigs.values()) {
       if (cfg.idleTimer) clearTimeout(cfg.idleTimer);
+      if (cfg.idleWarningTimer) clearTimeout(cfg.idleWarningTimer);
       if (cfg.busyWatchdog) clearTimeout(cfg.busyWatchdog);
     }
     this.sessionConfigs.clear();
@@ -313,8 +314,12 @@ export class TelegramBridge {
     if (cfg.idleTimeoutMs > WARN_BEFORE_MS) {
       cfg.idleWarningTimer = setTimeout(async () => {
         cfg.idleWarningTimer = undefined;
+
+        // Guard: check session still exists AND still belongs to this chat
         const session = this.wsBridge.getSession(sessionId);
         if (!session) return;
+        const currentMapping = this.getMapping(chatId, topicId);
+        if (currentMapping?.sessionId !== sessionId) return; // chat moved to different session
 
         const keyboard = {
           inline_keyboard: [
@@ -342,8 +347,12 @@ export class TelegramBridge {
     // Kill timer
     cfg.idleTimer = setTimeout(async () => {
       cfg.idleTimer = undefined;
+
+      // Guard: check session still exists AND still belongs to this chat
       const session = this.wsBridge.getSession(sessionId);
       if (!session) return;
+      const currentMapping = this.getMapping(chatId, topicId);
+      if (currentMapping?.sessionId !== sessionId) return; // chat moved to different session
 
       log.info("Idle timeout expired, stopping session permanently", {
         sessionId,
@@ -804,11 +813,15 @@ export class TelegramBridge {
   }
 
   killSession(sessionId: string): void {
-    // Clear idle + busy timers
+    // Clear ALL timers: idle kill, idle warning, busy watchdog
     const cfg = this.sessionConfigs.get(sessionId);
     if (cfg?.idleTimer) {
       clearTimeout(cfg.idleTimer);
       cfg.idleTimer = undefined;
+    }
+    if (cfg?.idleWarningTimer) {
+      clearTimeout(cfg.idleWarningTimer);
+      cfg.idleWarningTimer = undefined;
     }
     if (cfg?.busyWatchdog) {
       clearTimeout(cfg.busyWatchdog);
@@ -1330,6 +1343,17 @@ export class TelegramBridge {
               message_thread_id: topicId,
             })
             .catch(() => {});
+
+          // Clean up stale mapping so /resume doesn't see "already active"
+          this.removeMapping(chatId, topicId);
+          // Clean up session config timers
+          const dcCfg = this.sessionConfigs.get(sessionId);
+          if (dcCfg) {
+            if (dcCfg.idleTimer) clearTimeout(dcCfg.idleTimer);
+            if (dcCfg.idleWarningTimer) clearTimeout(dcCfg.idleWarningTimer);
+            if (dcCfg.busyWatchdog) clearTimeout(dcCfg.busyWatchdog);
+            this.sessionConfigs.delete(sessionId);
+          }
           break;
         }
 
