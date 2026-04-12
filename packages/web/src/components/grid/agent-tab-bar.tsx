@@ -18,37 +18,6 @@ const STATUS_STYLES: Record<string, { dot: string; opacity: number; pulse: boole
   error: { dot: "var(--color-danger)", opacity: 0.7, pulse: false },
 };
 
-/**
- * Pyramid tab: bo cong nhẹ top, rộng dần xuống dưới.
- * Uses perspective transform for smooth trapezoid curve (no clip-path — preserves border-radius).
- * Padding widens at bottom to reinforce the pyramid feel.
- */
-const TAB_BASE: React.CSSProperties = {
-  borderRadius: "10px 10px 0 0",
-  padding: "4px 8px 6px 8px",
-  transform: "perspective(80px) rotateX(2deg)",
-  transformOrigin: "bottom center",
-  transition: "all 180ms ease",
-};
-
-const TAB_ACTIVE: React.CSSProperties = {
-  ...TAB_BASE,
-  background: "color-mix(in srgb, var(--color-accent) 12%, transparent)",
-  borderTop: "2px solid var(--color-accent)",
-  borderLeft: "1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)",
-  borderRight: "1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)",
-  color: "var(--color-accent)",
-};
-
-const TAB_INACTIVE: React.CSSProperties = {
-  ...TAB_BASE,
-  background: "color-mix(in srgb, var(--color-text-muted) 5%, transparent)",
-  borderTop: "2px solid transparent",
-  borderLeft: "1px solid transparent",
-  borderRight: "1px solid transparent",
-  color: "var(--color-text-secondary)",
-};
-
 interface AgentTabBarProps {
   parentSessionId: string;
   activeTab: string;
@@ -69,7 +38,7 @@ export function AgentTabBar({
 
   return (
     <div
-      className="flex items-end gap-0.5 px-2 pt-1 flex-shrink-0 overflow-x-auto"
+      className="flex items-end gap-0 px-2 pt-1 flex-shrink-0 overflow-x-auto"
       style={{
         borderBottom: "1px solid var(--glass-border)",
         scrollbarWidth: "none",
@@ -78,8 +47,7 @@ export function AgentTabBar({
       {/* Brain tab — always first */}
       <button
         onClick={() => onTabChange(parentSessionId)}
-        className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold cursor-pointer flex-shrink-0"
-        style={isParentActive ? TAB_ACTIVE : TAB_INACTIVE}
+        className={`agent-tab ${isParentActive ? "agent-tab--active" : "agent-tab--inactive"} flex items-center gap-1.5 text-xs font-semibold`}
         aria-label="Brain (coordinator)"
         title="Brain — coordinator session"
       >
@@ -87,14 +55,14 @@ export function AgentTabBar({
         <span>Brain</span>
       </button>
 
-      {/* Child agent tabs — pyramid: wider as you go down */}
+      {/* Child agent tabs */}
       {(childIds ?? []).map((childId) => {
         const child = sessions[childId];
         if (!child) return null;
 
         const isActive = activeTab === childId;
         const status = child.status ?? "idle";
-        const style = STATUS_STYLES[status] ?? STATUS_STYLES.idle!;
+        const sStyle = STATUS_STYLES[status] ?? STATUS_STYLES.idle!;
         const roleIcon = ROLE_ICONS[child.brainRole ?? "specialist"] ?? "🔧";
         const isEnded = status === "ended";
         const isError = status === "error";
@@ -103,11 +71,8 @@ export function AgentTabBar({
           <button
             key={childId}
             onClick={() => onTabChange(childId)}
-            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium cursor-pointer flex-shrink-0"
-            style={{
-              ...(isActive ? TAB_ACTIVE : TAB_INACTIVE),
-              opacity: style.opacity,
-            }}
+            className={`agent-tab ${isActive ? "agent-tab--active" : "agent-tab--inactive"} flex items-center gap-1.5 text-xs font-medium`}
+            style={{ opacity: sStyle.opacity }}
             aria-label={`${child.agentName ?? child.shortId ?? "Agent"} — ${status}`}
             title={`${child.agentName ?? child.shortId ?? "Agent"} — ${status}`}
           >
@@ -128,10 +93,10 @@ export function AgentTabBar({
                   width: 6,
                   height: 6,
                   borderRadius: "50%",
-                  background: style.dot,
+                  background: sStyle.dot,
                   flexShrink: 0,
-                  animation: style.pulse ? "pulse 1.5s ease-in-out infinite" : "none",
-                  boxShadow: style.pulse ? `0 0 4px ${style.dot}` : "none",
+                  animation: sStyle.pulse ? "pulse 1.5s ease-in-out infinite" : "none",
+                  boxShadow: sStyle.pulse ? `0 0 4px ${sStyle.dot}` : "none",
                 }}
               />
             )}
@@ -139,24 +104,12 @@ export function AgentTabBar({
         );
       })}
 
-      {/* Add agent button — small pyramid shape */}
+      {/* Add agent button */}
       {onSpawnClick && (
         <button
           onClick={onSpawnClick}
-          className="flex items-center justify-center px-2 py-1 cursor-pointer flex-shrink-0 transition-colors"
-          style={{
-            ...TAB_BASE,
-            color: "var(--color-text-muted)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "var(--color-accent)";
-            e.currentTarget.style.background =
-              "color-mix(in srgb, var(--color-accent) 8%, transparent)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "var(--color-text-muted)";
-            e.currentTarget.style.background = "transparent";
-          }}
+          className="agent-tab agent-tab--inactive flex items-center justify-center"
+          style={{ padding: "4px 8px" }}
           aria-label="Spawn new agent"
           title="Spawn new agent"
         >

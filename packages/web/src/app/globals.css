@@ -275,6 +275,67 @@ p {
   }
 }
 
+/* ── Agent Tab Bar — Wave/Pyramid Tabs ─────────────────────────────────── */
+.agent-tab {
+  position: relative;
+  z-index: 1;
+  border-radius: 10px 10px 0 0;
+  padding: 4px 14px 5px 14px;
+  transition: all 180ms ease;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Inverted corners — smooth concave curve where tab meets the bar */
+.agent-tab::before,
+.agent-tab::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 8px;
+  height: 8px;
+  pointer-events: none;
+}
+
+.agent-tab::before {
+  left: -8px;
+  border-radius: 0 0 8px 0;
+  box-shadow: 4px 0 0 0 var(--agent-tab-bg);
+}
+
+.agent-tab::after {
+  right: -8px;
+  border-radius: 0 0 0 8px;
+  box-shadow: -4px 0 0 0 var(--agent-tab-bg);
+}
+
+/* Active tab */
+.agent-tab--active {
+  --agent-tab-bg: color-mix(in srgb, var(--color-accent) 14%, var(--color-bg-base));
+  background: var(--agent-tab-bg);
+  color: var(--color-accent);
+  z-index: 2;
+}
+
+/* Inactive tab — no inverted corners */
+.agent-tab--inactive {
+  --agent-tab-bg: transparent;
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.agent-tab--inactive:hover {
+  --agent-tab-bg: color-mix(in srgb, var(--color-text-muted) 8%, transparent);
+  background: var(--agent-tab-bg);
+}
+
+/* Hide pseudo-corners on inactive tabs */
+.agent-tab--inactive::before,
+.agent-tab--inactive::after {
+  display: none;
+}
+
 /* ── Modal Fade In (no translateX shift) ───────────────────────────────── */
 @keyframes modalFadeIn {
   from {
