@@ -1657,4 +1657,31 @@ export const api = {
         { method: "POST" },
       ),
   },
+
+  // ── Review ────────────────────────────────────────────────────────────────
+
+  review: {
+    files: (project: string) =>
+      request<{
+        success: boolean;
+        data: Array<{ name: string; path: string; size: number; modified: string }>;
+      }>(`/api/review/files?project=${encodeURIComponent(project)}`),
+
+    read: (project: string, file: string) =>
+      request<{ success: boolean; data: { path: string; content: string } }>(
+        `/api/review/read?project=${encodeURIComponent(project)}&file=${encodeURIComponent(file)}`,
+      ),
+
+    comment: (
+      project: string,
+      file: string,
+      afterLine: number,
+      comment: string,
+      selectedText?: string,
+    ) =>
+      request<{ success: boolean; data: { insertedAt: number } }>("/api/review/comment", {
+        method: "POST",
+        body: JSON.stringify({ project, file, afterLine, comment, selectedText }),
+      }),
+  },
 };
