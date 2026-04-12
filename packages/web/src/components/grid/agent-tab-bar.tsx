@@ -18,10 +18,16 @@ const STATUS_STYLES: Record<string, { dot: string; opacity: number; pulse: boole
   error: { dot: "var(--color-danger)", opacity: 0.7, pulse: false },
 };
 
-/** Pyramid tab shape: narrower at top, wider at bottom, soft rounded top corners */
+/**
+ * Pyramid tab: bo cong nhẹ top, rộng dần xuống dưới.
+ * Uses perspective transform for smooth trapezoid curve (no clip-path — preserves border-radius).
+ * Padding widens at bottom to reinforce the pyramid feel.
+ */
 const TAB_BASE: React.CSSProperties = {
-  borderRadius: "8px 8px 0 0",
-  clipPath: "polygon(8% 0%, 92% 0%, 100% 100%, 0% 100%)",
+  borderRadius: "10px 10px 0 0",
+  padding: "4px 8px 6px 8px",
+  transform: "perspective(80px) rotateX(2deg)",
+  transformOrigin: "bottom center",
   transition: "all 180ms ease",
 };
 
@@ -29,13 +35,17 @@ const TAB_ACTIVE: React.CSSProperties = {
   ...TAB_BASE,
   background: "color-mix(in srgb, var(--color-accent) 12%, transparent)",
   borderTop: "2px solid var(--color-accent)",
+  borderLeft: "1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)",
+  borderRight: "1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)",
   color: "var(--color-accent)",
 };
 
 const TAB_INACTIVE: React.CSSProperties = {
   ...TAB_BASE,
-  background: "color-mix(in srgb, var(--color-text-muted) 6%, transparent)",
+  background: "color-mix(in srgb, var(--color-text-muted) 5%, transparent)",
   borderTop: "2px solid transparent",
+  borderLeft: "1px solid transparent",
+  borderRight: "1px solid transparent",
   color: "var(--color-text-secondary)",
 };
 
