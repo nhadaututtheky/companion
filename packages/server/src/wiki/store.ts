@@ -195,11 +195,7 @@ function formatWriteBy(ctx?: WriteContext): string {
 }
 
 /** Append a changelog entry to _changelog.jsonl */
-function appendChangelog(
-  domain: string,
-  entry: ChangelogEntry,
-  cwd?: string,
-): void {
+function appendChangelog(domain: string, entry: ChangelogEntry, cwd?: string): void {
   const root = resolveWikiRoot(cwd);
   const logPath = safePath(root, domain, "_changelog.jsonl");
 
@@ -224,11 +220,7 @@ function appendChangelog(
 }
 
 /** Save previous version of an article as <slug>.prev.md (exactly 1 backup) */
-function backupPreviousVersion(
-  domain: string,
-  slug: string,
-  cwd?: string,
-): void {
+function backupPreviousVersion(domain: string, slug: string, cwd?: string): void {
   const root = resolveWikiRoot(cwd);
   const filePath = safePath(root, domain, `${slug}.md`);
   const prevPath = safePath(root, domain, `${slug}.prev.md`);
@@ -275,11 +267,7 @@ export function readChangelog(
 }
 
 /** Read previous version of an article (returns null if no backup) */
-export function readPreviousVersion(
-  domain: string,
-  slug: string,
-  cwd?: string,
-): string | null {
+export function readPreviousVersion(domain: string, slug: string, cwd?: string): string | null {
   const root = resolveWikiRoot(cwd);
   const prevPath = safePath(root, domain, `${slug}.prev.md`);
 
@@ -409,7 +397,9 @@ export function writeArticle(
     ...(enrichedMeta.sourceUrl ? [`source_url: "${enrichedMeta.sourceUrl}"`] : []),
     `edit_count: ${editCount}`,
     ...(enrichedMeta.lastEditedBy ? [`last_edited_by: "${enrichedMeta.lastEditedBy}"`] : []),
-    ...(enrichedMeta.lastEditReason ? [`last_edit_reason: "${enrichedMeta.lastEditReason.replace(/"/g, '\\"')}"`] : []),
+    ...(enrichedMeta.lastEditReason
+      ? [`last_edit_reason: "${enrichedMeta.lastEditReason.replace(/"/g, '\\"')}"`]
+      : []),
     "---",
     "",
   ].join("\n");
@@ -417,21 +407,30 @@ export function writeArticle(
   writeFileSync(filePath, frontmatter + content, "utf-8");
 
   // Append changelog
-  appendChangelog(domain, {
-    slug,
-    action: isUpdate ? "update" : "create",
-    by,
-    reason: ctx?.reason,
-    tokensBefore,
-    tokensAfter: enrichedMeta.tokens,
-    at: enrichedMeta.compiledAt,
-  }, cwd);
+  appendChangelog(
+    domain,
+    {
+      slug,
+      action: isUpdate ? "update" : "create",
+      by,
+      reason: ctx?.reason,
+      tokensBefore,
+      tokensAfter: enrichedMeta.tokens,
+      at: enrichedMeta.compiledAt,
+    },
+    cwd,
+  );
 
   log.info("Wrote wiki article", { domain, slug, tokens: enrichedMeta.tokens, editCount });
 }
 
 /** Delete an article */
-export function deleteArticle(domain: string, slug: string, cwd?: string, ctx?: WriteContext): void {
+export function deleteArticle(
+  domain: string,
+  slug: string,
+  cwd?: string,
+  ctx?: WriteContext,
+): void {
   const root = resolveWikiRoot(cwd);
   const filePath = safePath(root, domain, `${slug}.md`);
 
@@ -447,15 +446,19 @@ export function deleteArticle(domain: string, slug: string, cwd?: string, ctx?: 
 
   unlinkSync(filePath);
 
-  appendChangelog(domain, {
-    slug,
-    action: "delete",
-    by: ctx ? formatWriteBy(ctx) : "unknown",
-    reason: ctx?.reason,
-    tokensBefore,
-    tokensAfter: 0,
-    at: new Date().toISOString(),
-  }, cwd);
+  appendChangelog(
+    domain,
+    {
+      slug,
+      action: "delete",
+      by: ctx ? formatWriteBy(ctx) : "unknown",
+      reason: ctx?.reason,
+      tokensBefore,
+      tokensAfter: 0,
+      at: new Date().toISOString(),
+    },
+    cwd,
+  );
 
   log.info("Deleted wiki article", { domain, slug });
 }

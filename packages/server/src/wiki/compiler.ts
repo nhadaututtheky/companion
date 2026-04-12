@@ -43,7 +43,11 @@ const MAX_FILES_PER_BATCH = 20;
  * Reads all raw files, sends them to LLM with a compile prompt,
  * and writes the resulting articles with proper frontmatter.
  */
-export async function compileWiki(request: CompileRequest, cwd?: string, ctx?: WriteContext): Promise<CompileResult> {
+export async function compileWiki(
+  request: CompileRequest,
+  cwd?: string,
+  ctx?: WriteContext,
+): Promise<CompileResult> {
   const start = Date.now();
   const { domain, overwrite = false } = request;
 

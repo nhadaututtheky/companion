@@ -268,12 +268,18 @@ export function createWikiRoutes(): Hono {
         model: body.model,
         reason: body.reason,
       };
-      const ref = writeNote(domain, body.content, {
-        title: body.title,
-        tags: body.tags,
-        confidence: body.confidence,
-        sourceUrl: body.sourceUrl,
-      }, undefined, ctx);
+      const ref = writeNote(
+        domain,
+        body.content,
+        {
+          title: body.title,
+          tags: body.tags,
+          confidence: body.confidence,
+          sourceUrl: body.sourceUrl,
+        },
+        undefined,
+        ctx,
+      );
       return c.json<ApiResponse>({ success: true, data: ref }, 201);
     },
   );
@@ -306,11 +312,15 @@ export function createWikiRoutes(): Hono {
       };
 
       try {
-        const result = await compileWiki({
-          domain,
-          rawFiles: body.rawFiles,
-          overwrite: body.overwrite,
-        }, undefined, ctx);
+        const result = await compileWiki(
+          {
+            domain,
+            rawFiles: body.rawFiles,
+            overwrite: body.overwrite,
+          },
+          undefined,
+          ctx,
+        );
         return c.json<ApiResponse>({ success: true, data: result });
       } catch (err) {
         return c.json<ApiResponse>({ success: false, error: String(err) }, 500);

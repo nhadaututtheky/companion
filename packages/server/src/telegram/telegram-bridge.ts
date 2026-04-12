@@ -342,7 +342,10 @@ export class TelegramBridge {
       const session = this.wsBridge.getSession(sessionId);
       if (!session) return;
 
-      log.info("Idle timeout expired, stopping session permanently", { sessionId, idleMs: cfg.idleTimeoutMs });
+      log.info("Idle timeout expired, stopping session permanently", {
+        sessionId,
+        idleMs: cfg.idleTimeoutMs,
+      });
       this.killSession(sessionId);
       this.removeMapping(chatId, topicId);
 
@@ -361,9 +364,13 @@ export class TelegramBridge {
       const minutes = Math.round(cfg.idleTimeoutMs / 60_000);
       const label = minutes >= 60 ? `${Math.round(minutes / 60)}h` : `${minutes}m`;
       await this.bot.api
-        .sendMessage(chatId, `⏰ Session idle for ${label}, stopped. Use /start for a new session.`, {
-          message_thread_id: topicId,
-        })
+        .sendMessage(
+          chatId,
+          `⏰ Session idle for ${label}, stopped. Use /start for a new session.`,
+          {
+            message_thread_id: topicId,
+          },
+        )
         .catch(() => {});
     }, cfg.idleTimeoutMs);
   }
