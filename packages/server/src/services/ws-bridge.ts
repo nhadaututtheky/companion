@@ -415,6 +415,7 @@ export class WsBridge {
 
     // Create in-memory session
     const session = createActiveSession(sessionId, initialState);
+    if (opts.parentId) session.isChild = true;
 
     // Emit session created event
     eventBus.emit("session:created", {

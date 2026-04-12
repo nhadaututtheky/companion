@@ -18,9 +18,30 @@ const STATUS_STYLES: Record<string, { dot: string; opacity: number; pulse: boole
   error: { dot: "var(--color-danger)", opacity: 0.7, pulse: false },
 };
 
+/** Pyramid tab shape: narrower at top, wider at bottom, soft rounded top corners */
+const TAB_BASE: React.CSSProperties = {
+  borderRadius: "8px 8px 0 0",
+  clipPath: "polygon(8% 0%, 92% 0%, 100% 100%, 0% 100%)",
+  transition: "all 180ms ease",
+};
+
+const TAB_ACTIVE: React.CSSProperties = {
+  ...TAB_BASE,
+  background: "color-mix(in srgb, var(--color-accent) 12%, transparent)",
+  borderTop: "2px solid var(--color-accent)",
+  color: "var(--color-accent)",
+};
+
+const TAB_INACTIVE: React.CSSProperties = {
+  ...TAB_BASE,
+  background: "color-mix(in srgb, var(--color-text-muted) 6%, transparent)",
+  borderTop: "2px solid transparent",
+  color: "var(--color-text-secondary)",
+};
+
 interface AgentTabBarProps {
   parentSessionId: string;
-  activeTab: string; // sessionId of the currently viewed tab
+  activeTab: string;
   onTabChange: (sessionId: string) => void;
   onSpawnClick?: () => void;
 }
@@ -38,7 +59,7 @@ export function AgentTabBar({
 
   return (
     <div
-      className="flex items-center gap-1 px-3 py-1.5 flex-shrink-0 overflow-x-auto"
+      className="flex items-end gap-0.5 px-2 pt-1 flex-shrink-0 overflow-x-auto"
       style={{
         borderBottom: "1px solid var(--glass-border)",
         scrollbarWidth: "none",
@@ -47,24 +68,16 @@ export function AgentTabBar({
       {/* Brain tab — always first */}
       <button
         onClick={() => onTabChange(parentSessionId)}
-        className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all cursor-pointer flex-shrink-0"
-        style={{
-          background: isParentActive
-            ? "color-mix(in srgb, var(--color-accent) 15%, transparent)"
-            : "transparent",
-          color: isParentActive ? "var(--color-accent)" : "var(--color-text-muted)",
-          border: isParentActive
-            ? "1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)"
-            : "1px solid transparent",
-        }}
+        className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold cursor-pointer flex-shrink-0"
+        style={isParentActive ? TAB_ACTIVE : TAB_INACTIVE}
         aria-label="Brain (coordinator)"
         title="Brain — coordinator session"
       >
-        <Brain size={11} weight="bold" />
+        <Brain size={12} weight="bold" />
         <span>Brain</span>
       </button>
 
-      {/* Child agent tabs */}
+      {/* Child agent tabs — pyramid: wider as you go down */}
       {(childIds ?? []).map((childId) => {
         const child = sessions[childId];
         if (!child) return null;
@@ -80,15 +93,9 @@ export function AgentTabBar({
           <button
             key={childId}
             onClick={() => onTabChange(childId)}
-            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all cursor-pointer flex-shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium cursor-pointer flex-shrink-0"
             style={{
-              background: isActive
-                ? "color-mix(in srgb, var(--color-accent) 15%, transparent)"
-                : "transparent",
-              color: isActive ? "var(--color-accent)" : "var(--color-text-secondary)",
-              border: isActive
-                ? "1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)"
-                : "1px solid transparent",
+              ...(isActive ? TAB_ACTIVE : TAB_INACTIVE),
               opacity: style.opacity,
             }}
             aria-label={`${child.agentName ?? child.shortId ?? "Agent"} — ${status}`}
@@ -122,22 +129,28 @@ export function AgentTabBar({
         );
       })}
 
-      {/* Add agent button */}
+      {/* Add agent button — small pyramid shape */}
       {onSpawnClick && (
         <button
           onClick={onSpawnClick}
-          className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs cursor-pointer flex-shrink-0 transition-colors"
-          style={{ color: "var(--color-text-muted)" }}
+          className="flex items-center justify-center px-2 py-1 cursor-pointer flex-shrink-0 transition-colors"
+          style={{
+            ...TAB_BASE,
+            color: "var(--color-text-muted)",
+          }}
           onMouseEnter={(e) => {
             e.currentTarget.style.color = "var(--color-accent)";
+            e.currentTarget.style.background =
+              "color-mix(in srgb, var(--color-accent) 8%, transparent)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.color = "var(--color-text-muted)";
+            e.currentTarget.style.background = "transparent";
           }}
           aria-label="Spawn new agent"
           title="Spawn new agent"
         >
-          <Plus size={10} weight="bold" />
+          <Plus size={11} weight="bold" />
         </button>
       )}
     </div>

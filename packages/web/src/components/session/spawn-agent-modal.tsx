@@ -121,7 +121,7 @@ export function SpawnAgentModal({
           width: 400,
           maxWidth: "calc(100% - 24px)",
           maxHeight: "calc(100% - 24px)",
-          animation: "slideUpFade 200ms ease forwards",
+          animation: "modalFadeIn 200ms ease forwards",
         }}
       >
         {/* Header */}

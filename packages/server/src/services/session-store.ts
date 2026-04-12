@@ -70,6 +70,8 @@ export interface ActiveSession {
   machine: SessionStateMachine;
   /** Whether auto session name has been generated (prevent re-triggering) */
   nameGenerated?: boolean;
+  /** Whether this is a child/agent session (spawned from parent) */
+  isChild?: boolean;
 }
 
 /** Max number of messages to keep in memory per session (FIFO eviction) */
@@ -417,7 +419,11 @@ export function listSessions(opts?: {
 }
 
 export function countActiveSessions(): number {
-  return activeSessions.size;
+  let count = 0;
+  for (const s of activeSessions.values()) {
+    if (!s.isChild) count++;
+  }
+  return count;
 }
 
 /**
