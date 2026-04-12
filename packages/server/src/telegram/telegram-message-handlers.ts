@@ -106,12 +106,8 @@ export async function handleTextMessage(bridge: TelegramBridge, ctx: Context): P
   // Send to CLI
   bridge.wsBridge.sendUserMessage(mapping.sessionId, messageToSend, "telegram");
 
-  // User is active — clear idle timer
-  const sessionCfg = bridge.getSessionConfig(mapping.sessionId);
-  if (sessionCfg.idleTimer) {
-    clearTimeout(sessionCfg.idleTimer);
-    sessionCfg.idleTimer = undefined;
-  }
+  // User is active — reset idle timer (clears warning + kill, restarts countdown)
+  bridge.resetIdleTimer(mapping.sessionId, chatId, topicId);
 
   // Stream will lazy-start on first appendText (no startStream needed)
 }
@@ -170,6 +166,9 @@ export async function handlePhotoMessage(bridge: TelegramBridge, ctx: Context): 
     }
 
     bridge.wsBridge.sendMultimodalMessage(mapping.sessionId, blocks, "telegram");
+
+    // User is active — reset idle timer
+    bridge.resetIdleTimer(mapping.sessionId, chatId, topicId);
   } catch (err) {
     log.error("Failed to download/forward photo", { error: String(err) });
     await ctx.reply("❌ Failed to download image. Please try again.");
@@ -253,6 +252,9 @@ export async function handleDocumentMessage(bridge: TelegramBridge, ctx: Context
     const sizeKb = Math.round(buffer.length / 1024);
     const message = `User uploaded file: ${filename} (${sizeKb} KB, ${mime}). File saved at: ${savePath}`;
     bridge.wsBridge.sendUserMessage(mapping.sessionId, message, "telegram");
+
+    // User is active — reset idle timer
+    bridge.resetIdleTimer(mapping.sessionId, chatId, topicId);
   } catch (err) {
     log.error("Failed to download/forward document", { error: String(err) });
     await ctx.reply("❌ Failed to download file. Please try again.");
