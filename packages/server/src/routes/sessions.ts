@@ -523,6 +523,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         permissionMode: record.permissionMode,
         resume: true,
         cliSessionId: record.cliSessionId,
+        resumeFromSessionId: id,
         source: "api",
       });
 

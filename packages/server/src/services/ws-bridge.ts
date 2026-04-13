@@ -54,6 +54,7 @@ import {
   bufferEarlyResult,
   clearEarlyResult,
   replayEarlyResult,
+  clearStreamBatch,
 } from "./ws-stream-handler.js";
 import {
   handleSpawnCommand as _handleSpawnCommand,
@@ -103,6 +104,7 @@ import {
   clearCliSessionId,
   pushMessageHistory,
   getSessionRecord,
+  getSessionMessages,
   type ActiveSession,
 } from "./session-store.js";
 import type {
@@ -376,6 +378,8 @@ export class WsBridge {
     role?: "coordinator" | "specialist" | "researcher" | "reviewer";
     /** Workspace ID — links session to a multi-CLI workspace. */
     workspaceId?: string;
+    /** Original session ID when resuming — used to restore message history from DB. */
+    resumeFromSessionId?: string;
   }): Promise<string> {
     const sessionId = randomUUID();
 
@@ -416,6 +420,45 @@ export class WsBridge {
     // Create in-memory session
     const session = createActiveSession(sessionId, initialState);
     if (opts.parentId) session.isChild = true;
+
+    // Hydrate message history from the original session when resuming
+    if (opts.resume && opts.resumeFromSessionId) {
+      try {
+        const { items } = getSessionMessages(opts.resumeFromSessionId, { limit: 200 });
+        for (const msg of items) {
+          if (msg.role === "user") {
+            pushMessageHistory(session, {
+              type: "user_message",
+              content: msg.content,
+              timestamp: msg.timestamp,
+              source: msg.source,
+            });
+          } else if (msg.role === "assistant") {
+            pushMessageHistory(session, {
+              type: "assistant",
+              timestamp: msg.timestamp,
+              message: {
+                id: msg.id,
+                type: "message",
+                role: "assistant",
+                content: [{ type: "text", text: msg.content }],
+                model: "",
+                stop_reason: "end_turn",
+                stop_sequence: null,
+                usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+              },
+            });
+          }
+        }
+        log.info("Hydrated message history from previous session", {
+          newSessionId: sessionId,
+          originalSessionId: opts.resumeFromSessionId,
+          messageCount: items.length,
+        });
+      } catch (err) {
+        log.warn("Failed to hydrate message history on resume", { error: String(err) });
+      }
+    }
 
     // Emit session created event
     eventBus.emit("session:created", {
@@ -1956,6 +1999,9 @@ export class WsBridge {
     this.idleDetector.stopTracking(session.id);
     clearPrevTokens(session.id);
     clearEarlyResult(session.id);
+    clearStreamBatch(session.id);
+    cleanupPulse(session.id);
+    this.sessionSettings.delete(session.id);
 
     // Disconnect from workspace if linked
     const wsId = getWorkspaceForSession(session.id);
@@ -2076,7 +2122,23 @@ export class WsBridge {
   private routeBrowserMessage(session: ActiveSession, msg: BrowserOutgoingMessage): void {
     switch (msg.type) {
       case "user_message":
-        this.handleUserMessage(session, msg.content, "web");
+        if (msg.images && msg.images.length > 0) {
+          // Images attached — reuse multimodal pipeline (history + DB + temp file save)
+          const contentBlocks: Array<
+            | { type: "text"; text: string }
+            | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
+          > = [];
+          if (msg.content) contentBlocks.push({ type: "text", text: msg.content });
+          for (const img of msg.images) {
+            contentBlocks.push({
+              type: "image",
+              source: { type: "base64", media_type: img.mediaType, data: img.data },
+            });
+          }
+          this.sendMultimodalMessage(session.id, contentBlocks, "web");
+        } else {
+          this.handleUserMessage(session, msg.content, "web");
+        }
         break;
       case "permission_response":
         this.handlePermissionResponse(session, msg);

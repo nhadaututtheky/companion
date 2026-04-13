@@ -64,8 +64,8 @@ interface ChatMapping {
   topicId?: number;
 }
 
-/** Max time a session can stay "busy" without any tool_progress/result event (10 min) */
-const BUSY_WATCHDOG_MS = 10 * 60 * 1000;
+/** Interval to notify user when session is busy with no CLI events (15 min) — notification only, never kills */
+const BUSY_NOTIFY_MS = 15 * 60 * 1000;
 
 /** Per-session panel + idle config stored in memory */
 interface SessionConfig {
@@ -77,8 +77,10 @@ interface SessionConfig {
   idleTimer?: ReturnType<typeof setTimeout>;
   /** Warning timer — fires before idle kill */
   idleWarningTimer?: ReturnType<typeof setTimeout>;
-  /** Busy watchdog timer — kills session if stuck busy with no activity */
+  /** Busy notification timer — notifies user when CLI has been silent for a while (never kills) */
   busyWatchdog?: ReturnType<typeof setTimeout>;
+  /** Whether we already sent a "still running" notification this busy cycle */
+  busyNotified?: boolean;
   /** Last time idle timer was reset — used to debounce resets from stream events */
   lastIdleReset?: number;
 }
@@ -389,7 +391,8 @@ export class TelegramBridge {
 
   /**
    * Reset the busy watchdog. Called on any sign of life from CLI (tool_progress, assistant, stream).
-   * If no activity for BUSY_WATCHDOG_MS while session is busy, notify user and kill session.
+   * After BUSY_NOTIFY_MS of silence while busy, sends a one-time notification — NEVER kills.
+   * Session lifecycle is handled exclusively by the idle timer (user-configured timeout).
    */
   private resetBusyWatchdog(sessionId: string, chatId: number, topicId?: number): void {
     const cfg = this.getSessionConfig(sessionId);
@@ -399,33 +402,26 @@ export class TelegramBridge {
       cfg.busyWatchdog = undefined;
     }
 
+    cfg.busyNotified = false;
+
     cfg.busyWatchdog = setTimeout(async () => {
       cfg.busyWatchdog = undefined;
       const session = this.wsBridge.getSession(sessionId);
       if (!session) return;
-      // Only kill if still busy (not already idle/ended)
       if (session.state.status !== "busy") return;
+      if (cfg.busyNotified) return;
 
-      log.warn("Session stuck busy with no activity, force-stopping", {
-        sessionId,
-        watchdogMs: BUSY_WATCHDOG_MS,
-      });
-
-      // Flush any pending stream before killing
-      await this.streamHandler.completeStream(chatId, topicId);
-      this.cleanupToolFeed(chatId, topicId);
-
-      this.killSession(sessionId);
-      this.removeMapping(chatId, topicId);
+      cfg.busyNotified = true;
+      log.info("Session busy with no CLI events for 15 min — notifying user", { sessionId });
 
       await this.bot.api
         .sendMessage(
           chatId,
-          `⚠️ <b>Session unresponsive</b> for 10 min — force stopped. Use /start to begin a new session.`,
-          { parse_mode: "HTML", message_thread_id: topicId },
+          `ℹ️ Session has been running silently for 15 min (likely a long tool). It will continue until the idle timeout expires or you /stop it.`,
+          { message_thread_id: topicId },
         )
         .catch(() => {});
-    }, BUSY_WATCHDOG_MS);
+    }, BUSY_NOTIFY_MS);
   }
 
   // ── Dead session management (for resume) ─────────────────────────────
@@ -1238,7 +1234,7 @@ export class TelegramBridge {
   ): Promise<void> {
     try {
       // Reset busy watchdog + idle timer on any sign of CLI activity
-      if (msg.type === "assistant" || msg.type === "tool_progress" || msg.type === "stream_event") {
+      if (msg.type === "assistant" || msg.type === "tool_progress" || msg.type === "stream_event" || msg.type === "stream_event_batch") {
         this.resetBusyWatchdog(sessionId, chatId, topicId);
 
         // Debounce idle timer reset — stream events fire rapidly, only reset every 30s
@@ -1258,6 +1254,19 @@ export class TelegramBridge {
         case "stream_event":
           await handleStreamEvent(this, chatId, topicId, msg);
           break;
+
+        case "stream_event_batch": {
+          // Unpack batched stream events and process each one
+          const batch = msg as unknown as { events: Array<{ event: unknown; parent_tool_use_id?: string }> };
+          for (const entry of batch.events) {
+            await handleStreamEvent(this, chatId, topicId, {
+              type: "stream_event",
+              event: entry.event,
+              parent_tool_use_id: entry.parent_tool_use_id ?? null,
+            } as BrowserIncomingMessage & { type: "stream_event" });
+          }
+          break;
+        }
 
         case "result":
           await handleResultMessage(this, chatId, topicId, sessionId, msg.data);

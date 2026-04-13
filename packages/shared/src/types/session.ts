@@ -137,7 +137,13 @@ export interface TokenUsage {
 
 /** Messages the browser/client sends TO the bridge */
 export type BrowserOutgoingMessage =
-  | { type: "user_message"; content: string; session_id?: string }
+  | {
+      type: "user_message";
+      content: string;
+      session_id?: string;
+      /** Base64-encoded images attached from web UI */
+      images?: Array<{ data: string; mediaType: string; name: string }>;
+    }
   | {
       type: "permission_response";
       request_id: string;
@@ -163,6 +169,10 @@ export type BrowserIncomingMessage =
       type: "stream_event";
       event: unknown;
       parent_tool_use_id: string | null;
+    }
+  | {
+      type: "stream_event_batch";
+      events: Array<{ event: unknown; parent_tool_use_id?: string }>;
     }
   | { type: "result"; data: CLIResultMessage }
   | { type: "permission_request"; request: PermissionRequest }
