@@ -7,12 +7,19 @@
  * - telegram-message-handlers.ts — user input (text, photo, document)
  * - telegram-permission-handler.ts — permission batching + auto-approve
  * - telegram-session-events.ts — CLI output (assistant, stream, result, child agents)
+ *
+ * Additional extracted modules:
+ * - telegram-idle-manager.ts — idle timeout + busy watchdog per session
+ * - telegram-dead-sessions.ts — dead session tracking for resume
+ * - telegram-forum-topics.ts — forum topic creation/lookup
+ * - telegram-subscriptions.ts — session + stream subscription management
+ * - telegram-persistence.ts — DB persistence of chat-to-session mappings
  */
 
 import { type Bot, type Context } from "grammy";
-import { eq, and, isNull } from "drizzle-orm";
 import { getDb } from "../db/client.js";
-import { telegramSessionMappings, telegramForumTopics } from "../db/schema.js";
+import { telegramSessionMappings } from "../db/schema.js";
+import { eq } from "drizzle-orm";
 import { createBot, registerCommands, type BotConfig } from "./bot-factory.js";
 import { StreamHandler } from "./stream-handler.js";
 import { escapeHTML, shortModelName, modelStrength } from "./formatter.js";
@@ -53,6 +60,13 @@ import {
   handleChildEnded,
 } from "./telegram-session-events.js";
 
+// Extracted modules
+import { TelegramIdleManager, type SessionConfig } from "./telegram-idle-manager.js";
+import { TelegramDeadSessions, type DeadSessionInfo } from "./telegram-dead-sessions.js";
+import { TelegramForumTopics } from "./telegram-forum-topics.js";
+import { TelegramSubscriptions } from "./telegram-subscriptions.js";
+import { TelegramPersistence } from "./telegram-persistence.js";
+
 const log = createLogger("telegram-bridge");
 
 // ─── Chat-Session Mapping ───────────────────────────────────────────────────
@@ -64,39 +78,8 @@ interface ChatMapping {
   topicId?: number;
 }
 
-/** Interval to notify user when session is busy with no CLI events (15 min) — notification only, never kills */
-const BUSY_NOTIFY_MS = 15 * 60 * 1000;
-
-/** Per-session panel + idle config stored in memory */
-interface SessionConfig {
-  /** Telegram message_id of the settings panel message (for editing) */
-  panelMessageId?: number;
-  /** Idle timeout in ms (0 = never) */
-  idleTimeoutMs: number;
-  /** Idle timeout timer handle */
-  idleTimer?: ReturnType<typeof setTimeout>;
-  /** Warning timer — fires before idle kill */
-  idleWarningTimer?: ReturnType<typeof setTimeout>;
-  /** Busy notification timer — notifies user when CLI has been silent for a while (never kills) */
-  busyWatchdog?: ReturnType<typeof setTimeout>;
-  /** Whether we already sent a "still running" notification this busy cycle */
-  busyNotified?: boolean;
-  /** Last time idle timer was reset — used to debounce resets from stream events */
-  lastIdleReset?: number;
-}
-
-/** Dead session info for resume detection */
-export interface DeadSessionInfo {
-  chatId: number;
-  topicId: number;
-  sessionId: string;
-  cliSessionId: string;
-  projectSlug: string;
-  model: string;
-  diedAt: number;
-}
-
-// PermBatch type imported from telegram-permission-handler.ts
+// Re-export DeadSessionInfo for consumers
+export type { DeadSessionInfo };
 
 // ─── Status emoji helpers ────────────────────────────────────────────────────
 
@@ -167,11 +150,57 @@ export class TelegramBridge {
   /** Reverse index: sessionId → Set of messageIds — @internal for permission-handler */
   sessionAutoApproveMessages = new Map<string, Set<number>>();
 
+  // ── Extracted module instances ────────────────────────────────────────
+  private idleManager: TelegramIdleManager;
+  private deadSessionsManager: TelegramDeadSessions;
+  private forumTopics: TelegramForumTopics;
+  private subscriptionManager: TelegramSubscriptions;
+  private persistence: TelegramPersistence;
+
   constructor(wsBridge: WsBridge, config: BotConfig) {
     this.wsBridge = wsBridge;
     this.config = config;
     this.bot = createBot(config);
     this.streamHandler = new StreamHandler(this.bot.api);
+
+    // ── Initialize extracted modules ──────────────────────────────────
+    this.idleManager = new TelegramIdleManager(this.sessionConfigs, {
+      bot: this.bot,
+      wsBridge: this.wsBridge,
+      getMapping: (chatId, topicId) => this.getMapping(chatId, topicId),
+      killSession: (sessionId) => this.killSession(sessionId),
+      removeMapping: (chatId, topicId) => this.removeMapping(chatId, topicId),
+      clearDeadSession: (chatId, topicId) => this.clearDeadSession(chatId, topicId),
+    });
+
+    this.deadSessionsManager = new TelegramDeadSessions(this.deadSessions);
+
+    this.forumTopics = new TelegramForumTopics(this.bot, this.streamSubscriptions);
+
+    this.subscriptionManager = new TelegramSubscriptions(
+      this.subscriptions,
+      this.streamSubscriptions,
+      this.wsBridge,
+      this.config.botId,
+    );
+    // Wire up callbacks to avoid circular dependency at construction time
+    this.subscriptionManager.onMessage = (chatId, topicId, sessionId, msg) =>
+      this.handleSessionMessage(chatId, topicId, sessionId, msg);
+    this.subscriptionManager.onSetStreamMapping = (chatId, topicId, sessionId, projectSlug, model) => {
+      if (!this.getMapping(chatId, topicId)) {
+        this.mappings.set(this.mapKey(chatId, topicId), {
+          sessionId,
+          projectSlug,
+          model,
+          topicId,
+        });
+      }
+    };
+    this.subscriptionManager.onRemoveStreamMapping = (chatId, topicId) =>
+      this.removeMapping(chatId, topicId);
+    this.subscriptionManager.onGetMapping = (chatId, topicId) => this.getMapping(chatId, topicId);
+
+    this.persistence = new TelegramPersistence(this.mappings);
 
     // Register command handlers
     registerSessionCommands(this);
@@ -251,220 +280,49 @@ export class TelegramBridge {
     log.info("Bot stopped", { botId: this.config.botId });
   }
 
-  // ── Session config (panel + idle) ────────────────────────────────────
+  // ── Session config (panel + idle) — delegated to TelegramIdleManager ──
 
   getSessionConfig(sessionId: string): SessionConfig {
-    let cfg = this.sessionConfigs.get(sessionId);
-    if (!cfg) {
-      cfg = { idleTimeoutMs: 3_600_000 }; // default 1h
-      this.sessionConfigs.set(sessionId, cfg);
-    }
-    return cfg;
+    return this.idleManager.getSessionConfig(sessionId);
   }
 
   setSessionPanelMessageId(sessionId: string, messageId: number): void {
-    this.getSessionConfig(sessionId).panelMessageId = messageId;
+    this.idleManager.setSessionPanelMessageId(sessionId, messageId);
   }
 
   setIdleTimeout(sessionId: string, ms: number): void {
-    const cfg = this.getSessionConfig(sessionId);
-    cfg.idleTimeoutMs = ms;
-    // Persist to DB
-    this.persistIdleTimeout(sessionId, ms);
-  }
-
-  private persistIdleTimeout(sessionId: string, ms: number): void {
-    try {
-      const db = getDb();
-      db.update(telegramSessionMappings)
-        .set({
-          idleTimeoutEnabled: ms > 0,
-          idleTimeoutMs: ms,
-        })
-        .where(eq(telegramSessionMappings.sessionId, sessionId))
-        .run();
-    } catch (err) {
-      log.error("Failed to persist idle timeout", { sessionId, error: String(err) });
-    }
+    this.idleManager.setIdleTimeout(sessionId, ms);
   }
 
   /** Reset the idle timer for a session. Called on session start, user message, CLI activity + result events. */
   resetIdleTimer(sessionId: string, chatId: number, topicId?: number): void {
-    const cfg = this.getSessionConfig(sessionId);
-    cfg.lastIdleReset = Date.now();
-
-    if (cfg.idleTimer) {
-      clearTimeout(cfg.idleTimer);
-      cfg.idleTimer = undefined;
-    }
-    if (cfg.idleWarningTimer) {
-      clearTimeout(cfg.idleWarningTimer);
-      cfg.idleWarningTimer = undefined;
-    }
-
-    // Clear busy watchdog — session is no longer busy
-    if (cfg.busyWatchdog) {
-      clearTimeout(cfg.busyWatchdog);
-      cfg.busyWatchdog = undefined;
-    }
-
-    if (cfg.idleTimeoutMs <= 0) return;
-
-    const WARN_BEFORE_MS = 5 * 60 * 1000; // 5 minutes
-
-    // Warning before kill (only if timeout > 5 min)
-    if (cfg.idleTimeoutMs > WARN_BEFORE_MS) {
-      cfg.idleWarningTimer = setTimeout(async () => {
-        cfg.idleWarningTimer = undefined;
-
-        // Guard: check session still exists AND still belongs to this chat
-        const session = this.wsBridge.getSession(sessionId);
-        if (!session) return;
-        const currentMapping = this.getMapping(chatId, topicId);
-        if (currentMapping?.sessionId !== sessionId) return; // chat moved to different session
-
-        const keyboard = {
-          inline_keyboard: [
-            [
-              { text: "💬 Keep Alive", callback_data: `panel:idle:extend:${sessionId}` },
-              { text: "💤 Let it go", callback_data: `panel:idle:letgo:${sessionId}` },
-            ],
-          ],
-        };
-
-        await this.bot.api
-          .sendMessage(
-            chatId,
-            "⏰ Session idle — auto-stop in <b>5 minutes</b>. Send a message or tap below.",
-            {
-              parse_mode: "HTML",
-              reply_markup: keyboard as unknown as import("grammy").InlineKeyboard,
-              message_thread_id: topicId,
-            },
-          )
-          .catch(() => {});
-      }, cfg.idleTimeoutMs - WARN_BEFORE_MS);
-    }
-
-    // Kill timer
-    cfg.idleTimer = setTimeout(async () => {
-      cfg.idleTimer = undefined;
-
-      // Guard: check session still exists AND still belongs to this chat
-      const session = this.wsBridge.getSession(sessionId);
-      if (!session) return;
-      const currentMapping = this.getMapping(chatId, topicId);
-      if (currentMapping?.sessionId !== sessionId) return; // chat moved to different session
-
-      log.info("Idle timeout expired, stopping session permanently", {
-        sessionId,
-        idleMs: cfg.idleTimeoutMs,
-      });
-      this.killSession(sessionId);
-      this.removeMapping(chatId, topicId);
-
-      // Idle timeout = permanent kill — clear cliSessionId so session can't be resumed
-      this.clearDeadSession(chatId, topicId ?? 0);
-      try {
-        const db = getDb();
-        db.update(telegramSessionMappings)
-          .set({ cliSessionId: null })
-          .where(eq(telegramSessionMappings.sessionId, sessionId))
-          .run();
-      } catch {
-        // non-fatal
-      }
-
-      const minutes = Math.round(cfg.idleTimeoutMs / 60_000);
-      const label = minutes >= 60 ? `${Math.round(minutes / 60)}h` : `${minutes}m`;
-      await this.bot.api
-        .sendMessage(
-          chatId,
-          `⏰ Session idle for ${label}, stopped. Use /start for a new session.`,
-          {
-            message_thread_id: topicId,
-          },
-        )
-        .catch(() => {});
-    }, cfg.idleTimeoutMs);
+    this.idleManager.resetIdleTimer(sessionId, chatId, topicId);
   }
 
-  /**
-   * Reset the busy watchdog. Called on any sign of life from CLI (tool_progress, assistant, stream).
-   * After BUSY_NOTIFY_MS of silence while busy, sends a one-time notification — NEVER kills.
-   * Session lifecycle is handled exclusively by the idle timer (user-configured timeout).
-   */
   private resetBusyWatchdog(sessionId: string, chatId: number, topicId?: number): void {
-    const cfg = this.getSessionConfig(sessionId);
-
-    if (cfg.busyWatchdog) {
-      clearTimeout(cfg.busyWatchdog);
-      cfg.busyWatchdog = undefined;
-    }
-
-    cfg.busyNotified = false;
-
-    cfg.busyWatchdog = setTimeout(async () => {
-      cfg.busyWatchdog = undefined;
-      const session = this.wsBridge.getSession(sessionId);
-      if (!session) return;
-      if (session.state.status !== "busy") return;
-      if (cfg.busyNotified) return;
-
-      cfg.busyNotified = true;
-      log.info("Session busy with no CLI events for 15 min — notifying user", { sessionId });
-
-      await this.bot.api
-        .sendMessage(
-          chatId,
-          `ℹ️ Session has been running silently for 15 min (likely a long tool). It will continue until the idle timeout expires or you /stop it.`,
-          { message_thread_id: topicId },
-        )
-        .catch(() => {});
-    }, BUSY_NOTIFY_MS);
+    this.idleManager.resetBusyWatchdog(sessionId, chatId, topicId);
   }
 
-  // ── Dead session management (for resume) ─────────────────────────────
+  // ── Dead session management — delegated to TelegramDeadSessions ───────
 
   /** Get dead session by exact chatId:topicId key */
   getDeadSession(chatId: number, topicId: number): DeadSessionInfo | undefined {
-    const k = this.mapKey(chatId, topicId);
-    const dead = this.deadSessions.get(k);
-    if (!dead) return undefined;
-    // Expire after 24h
-    if (Date.now() - dead.diedAt > 24 * 60 * 60 * 1000) {
-      this.deadSessions.delete(k);
-      return undefined;
-    }
-    return dead;
+    return this.deadSessionsManager.getDeadSession(chatId, topicId);
   }
 
   /** Get dead session by project slug (searches all dead sessions for this chatId) */
   getDeadSessionByProject(chatId: number, projectSlug: string): DeadSessionInfo | undefined {
-    for (const [k, dead] of this.deadSessions) {
-      if (dead.chatId === chatId && dead.projectSlug === projectSlug) {
-        if (Date.now() - dead.diedAt > 24 * 60 * 60 * 1000) {
-          this.deadSessions.delete(k);
-          continue;
-        }
-        return dead;
-      }
-    }
-    return undefined;
+    return this.deadSessionsManager.getDeadSessionByProject(chatId, projectSlug);
   }
 
   /** Remove a dead session entry */
   clearDeadSession(chatId: number, topicId: number): void {
-    this.deadSessions.delete(this.mapKey(chatId, topicId));
+    this.deadSessionsManager.clearDeadSession(chatId, topicId);
   }
 
   /** Clear dead session by project slug */
   clearDeadSessionByProject(chatId: number, projectSlug: string): void {
-    for (const [k, dead] of this.deadSessions) {
-      if (dead.chatId === chatId && dead.projectSlug === projectSlug) {
-        this.deadSessions.delete(k);
-      }
-    }
+    this.deadSessionsManager.clearDeadSessionByProject(chatId, projectSlug);
   }
 
   // ── Mapping management ────────────────────────────────────────────────
@@ -480,7 +338,7 @@ export class TelegramBridge {
 
   setMapping(chatId: number, topicId: number | undefined, mapping: ChatMapping): void {
     this.mappings.set(this.mapKey(chatId, topicId), mapping);
-    this.persistMapping(chatId, topicId, mapping);
+    this.persistence.persistMapping(chatId, topicId, mapping);
   }
 
   removeMapping(chatId: number, topicId?: number): void {
@@ -1005,62 +863,18 @@ export class TelegramBridge {
     cancelAllAutoApproveCountdownsFn(this);
   }
 
-  // ── Subscribe to CLI output ───────────────────────────────────────────
+  // ── Subscribe to CLI output — delegated to TelegramSubscriptions ──────
 
   subscribeToSession(sessionId: string, chatId: number, topicId?: number): void {
-    const subscriberId = `telegram:${this.config.botId}:${chatId}:${topicId ?? 0}`;
-
-    const unsub = this.wsBridge.subscribe(sessionId, subscriberId, (msg) => {
-      this.handleSessionMessage(chatId, topicId, sessionId, msg as BrowserIncomingMessage);
-    });
-
-    this.subscriptions.set(sessionId, unsub);
+    this.subscriptionManager.subscribeToSession(sessionId, chatId, topicId);
   }
 
   /**
    * Attach a chat to an existing session for stream-only observation.
    * Does NOT create a new CLI process. Does NOT set a full mapping.
-   * The existing session keeps running normally; this just forwards events.
    */
   attachStreamToSession(sessionId: string, chatId: number, topicId?: number): boolean {
-    const session = this.wsBridge.getSession(sessionId);
-    if (!session) return false;
-
-    const subscriberId = `stream:${this.config.botId}:${chatId}:${topicId ?? 0}`;
-
-    // Remove any existing stream subscription for this chat
-    const existingKey = `${chatId}:${topicId ?? 0}`;
-    const existingSessionId = this.streamSubscriptions.get(existingKey);
-    if (existingSessionId) {
-      this.wsBridge.subscribe(existingSessionId, subscriberId, () => {})(); // unsubscribe immediately
-    }
-
-    const unsub = this.wsBridge.subscribe(sessionId, subscriberId, (msg) => {
-      this.handleSessionMessage(chatId, topicId, sessionId, msg as BrowserIncomingMessage);
-    });
-
-    // Track this stream subscription so we can detach it
-    const chatKey = `${chatId}:${topicId ?? 0}`;
-    this.streamSubscriptions.set(chatKey, sessionId);
-
-    // Store the unsubscribe function keyed by chatKey+sessionId
-    const unsubKey = `stream:${chatKey}:${sessionId}`;
-    this.subscriptions.set(unsubKey, unsub);
-
-    // Create a lightweight mapping so Telegram can send messages to this session
-    const projectSlug = session.state.name ?? session.state.session_id ?? sessionId.slice(0, 8);
-    const model = session.state.model ?? "claude-sonnet-4-6";
-    if (!this.getMapping(chatId, topicId)) {
-      this.mappings.set(this.mapKey(chatId, topicId), {
-        sessionId,
-        projectSlug,
-        model,
-        topicId,
-      });
-    }
-
-    log.info("Stream subscriber attached", { sessionId, chatId, topicId });
-    return true;
+    return this.subscriptionManager.attachStreamToSession(sessionId, chatId, topicId);
   }
 
   /**
@@ -1068,33 +882,12 @@ export class TelegramBridge {
    * Does NOT kill the session. Session continues running normally.
    */
   detachStream(chatId: number, topicId?: number): string | undefined {
-    const chatKey = `${chatId}:${topicId ?? 0}`;
-    const sessionId = this.streamSubscriptions.get(chatKey);
-    if (!sessionId) return undefined;
-
-    const unsubKey = `stream:${chatKey}:${sessionId}`;
-    const unsub = this.subscriptions.get(unsubKey);
-    if (unsub) {
-      unsub();
-      this.subscriptions.delete(unsubKey);
-    }
-
-    this.streamSubscriptions.delete(chatKey);
-
-    // Remove the lightweight mapping created by attachStreamToSession
-    // (only if the mapping was created for stream, not for a full /start session)
-    const mapping = this.getMapping(chatId, topicId);
-    if (mapping?.sessionId === sessionId) {
-      this.removeMapping(chatId, topicId);
-    }
-
-    log.info("Stream subscriber detached", { sessionId, chatId, topicId });
-    return sessionId;
+    return this.subscriptionManager.detachStream(chatId, topicId);
   }
 
   /** Get the sessionId this chat is stream-attached to (if any) */
   getStreamMapping(chatId: number, topicId?: number): string | undefined {
-    return this.streamSubscriptions.get(`${chatId}:${topicId ?? 0}`);
+    return this.subscriptionManager.getStreamMapping(chatId, topicId);
   }
 
   // ── Debate tracking ──────────────────────────────────────────────────
@@ -1111,7 +904,7 @@ export class TelegramBridge {
     this.activeDebateChannels.delete(this.mapKey(chatId, topicId));
   }
 
-  // ── Forum topic management (1 project = 1 forum topic per group) ────
+  // ── Forum topic management — delegated to TelegramForumTopics ─────────
 
   /**
    * Get or create a forum topic for a project in a group chat.
@@ -1122,106 +915,31 @@ export class TelegramBridge {
     projectSlug: string,
     projectName: string,
   ): Promise<number | undefined> {
-    // Only works in group chats (negative chatId)
-    if (chatId >= 0) return undefined;
-
-    const db = getDb();
-
-    // Check if we already have a topic for this project in this group
-    const existing = db
-      .select()
-      .from(telegramForumTopics)
-      .where(
-        and(
-          eq(telegramForumTopics.chatId, chatId),
-          eq(telegramForumTopics.projectSlug, projectSlug),
-        ),
-      )
-      .get();
-
-    if (existing) {
-      return existing.topicId;
-    }
-
-    // Try to create a new forum topic
-    try {
-      const topicName = `📂 ${projectName}`;
-      const forumTopic = await this.bot.api.createForumTopic(chatId, topicName);
-      const topicId = forumTopic.message_thread_id;
-
-      db.insert(telegramForumTopics)
-        .values({
-          chatId,
-          projectSlug,
-          topicId,
-          topicName,
-        })
-        .run();
-
-      log.info("Created forum topic", { chatId, projectSlug, topicId, topicName });
-      return topicId;
-    } catch {
-      // Forum topics not enabled in this group — that's fine
-      return undefined;
-    }
+    return this.forumTopics.getOrCreateForumTopic(chatId, projectSlug, projectName);
   }
 
   /** Get the stored forum topic for a project (no creation). */
   getForumTopicId(chatId: number, projectSlug: string): number | undefined {
-    const db = getDb();
-    const row = db
-      .select({ topicId: telegramForumTopics.topicId })
-      .from(telegramForumTopics)
-      .where(
-        and(
-          eq(telegramForumTopics.chatId, chatId),
-          eq(telegramForumTopics.projectSlug, projectSlug),
-        ),
-      )
-      .get();
-    return row?.topicId;
+    return this.forumTopics.getForumTopicId(chatId, projectSlug);
   }
 
   /** List all forum topics for a group chat. */
   listForumTopics(
     chatId: number,
   ): Array<{ projectSlug: string; topicId: number; topicName: string }> {
-    const db = getDb();
-    return db
-      .select({
-        projectSlug: telegramForumTopics.projectSlug,
-        topicId: telegramForumTopics.topicId,
-        topicName: telegramForumTopics.topicName,
-      })
-      .from(telegramForumTopics)
-      .where(eq(telegramForumTopics.chatId, chatId))
-      .all();
+    return this.forumTopics.listForumTopics(chatId);
   }
 
   /** Delete a forum topic mapping (does NOT delete the Telegram topic itself). */
   deleteForumTopicMapping(chatId: number, projectSlug: string): void {
-    const db = getDb();
-    db.delete(telegramForumTopics)
-      .where(
-        and(
-          eq(telegramForumTopics.chatId, chatId),
-          eq(telegramForumTopics.projectSlug, projectSlug),
-        ),
-      )
-      .run();
+    this.forumTopics.deleteForumTopicMapping(chatId, projectSlug);
   }
 
   /** Reverse lookup: find the stream subscriber info for a given sessionId */
   getStreamSubscriberForSession(
     sessionId: string,
   ): { chatId: number; topicId: number } | undefined {
-    for (const [chatKey, sid] of this.streamSubscriptions.entries()) {
-      if (sid === sessionId) {
-        const [chatIdStr, topicIdStr] = chatKey.split(":");
-        return { chatId: Number(chatIdStr), topicId: Number(topicIdStr) };
-      }
-    }
-    return undefined;
+    return this.forumTopics.getStreamSubscriberForSession(sessionId);
   }
 
   // ── Session message router (delegates to extracted handlers) ──────────
@@ -1287,7 +1005,7 @@ export class TelegramBridge {
           // Store the cliSessionId in telegram_session_mappings when CLI initializes
           const cliSessionId = (msg.session as { session_id?: string })?.session_id;
           if (cliSessionId) {
-            this.updateMappingCliSessionId(sessionId, cliSessionId);
+            this.persistence.updateMappingCliSessionId(sessionId, cliSessionId);
           }
           break;
         }
@@ -1502,109 +1220,24 @@ export class TelegramBridge {
     }
   }
 
-  // Tool feed (upsertToolFeed, cleanupToolFeed) moved to accessor section above
+  // Tool feed (upsertToolFeed, cleanupToolFeed) in accessor section above
 
   // Message handlers, permission handlers, session event handlers
   // extracted to telegram-message-handlers.ts, telegram-permission-handler.ts,
   // telegram-session-events.ts
 
-  // ── Persistence ───────────────────────────────────────────────────────
+  // ── Persistence — delegated to TelegramPersistence ────────────────────
 
   private loadMappings(): void {
-    try {
-      const db = getDb();
-      const rows = db.select().from(telegramSessionMappings).all();
-
-      let loaded = 0;
-      let dead = 0;
-      let stale = 0;
-
-      for (const row of rows) {
-        const topicId = row.topicId ?? 0;
-        const activeSession = this.wsBridge.getSession(row.sessionId);
-
-        if (activeSession) {
-          // Session is alive — restore mapping + subscribe
-          const key = this.mapKey(row.chatId, topicId || undefined);
-          this.mappings.set(key, {
-            sessionId: row.sessionId,
-            projectSlug: row.projectSlug,
-            model: row.model,
-            topicId: topicId || undefined,
-          });
-          this.subscribeToSession(row.sessionId, row.chatId, topicId || undefined);
-          // Restore persisted idle timeout into session config
-          const cfg = this.getSessionConfig(row.sessionId);
-          cfg.idleTimeoutMs = row.idleTimeoutMs;
-          this.resetIdleTimer(row.sessionId, row.chatId, topicId || undefined);
-          loaded++;
-        } else if (row.cliSessionId) {
-          // CLI died but has cliSessionId — can be resumed
-          const key = this.mapKey(row.chatId, topicId || undefined);
-          this.deadSessions.set(key, {
-            chatId: row.chatId,
-            topicId,
-            sessionId: row.sessionId,
-            cliSessionId: row.cliSessionId,
-            projectSlug: row.projectSlug,
-            model: row.model,
-            diedAt: Date.now(),
-          });
-          dead++;
-        } else {
-          // No cliSessionId — truly stale, clean up
-          db.delete(telegramSessionMappings).where(eq(telegramSessionMappings.id, row.id)).run();
-          stale++;
-        }
-      }
-
-      log.info("Loaded Telegram mappings", { loaded, dead, stale, total: rows.length });
-    } catch (err) {
-      log.error("Failed to load mappings", { error: String(err) });
-    }
-  }
-
-  private updateMappingCliSessionId(sessionId: string, cliSessionId: string): void {
-    try {
-      const db = getDb();
-      db.update(telegramSessionMappings)
-        .set({ cliSessionId })
-        .where(eq(telegramSessionMappings.sessionId, sessionId))
-        .run();
-    } catch (err) {
-      log.error("Failed to update mapping cliSessionId", { sessionId, error: String(err) });
-    }
-  }
-
-  private persistMapping(chatId: number, topicId: number | undefined, mapping: ChatMapping): void {
-    try {
-      const db = getDb();
-
-      // Upsert: delete existing for this chat+topic, then insert
-      db.delete(telegramSessionMappings)
-        .where(
-          and(
-            eq(telegramSessionMappings.chatId, chatId),
-            topicId !== undefined
-              ? eq(telegramSessionMappings.topicId, topicId)
-              : isNull(telegramSessionMappings.topicId),
-          ),
-        )
-        .run();
-
-      db.insert(telegramSessionMappings)
-        .values({
-          chatId,
-          sessionId: mapping.sessionId,
-          projectSlug: mapping.projectSlug,
-          model: mapping.model,
-          topicId: topicId ?? null,
-          createdAt: new Date(),
-          lastActivityAt: new Date(),
-        })
-        .run();
-    } catch (err) {
-      log.error("Failed to persist mapping", { error: String(err) });
-    }
+    this.persistence.loadMappings({
+      mapKey: (chatId, topicId) => this.mapKey(chatId, topicId),
+      getSession: (sessionId) => this.wsBridge.getSession(sessionId),
+      subscribeToSession: (sessionId, chatId, topicId) =>
+        this.subscribeToSession(sessionId, chatId, topicId),
+      getSessionConfig: (sessionId) => this.getSessionConfig(sessionId),
+      resetIdleTimer: (sessionId, chatId, topicId) =>
+        this.resetIdleTimer(sessionId, chatId, topicId),
+      deadSessions: this.deadSessions,
+    });
   }
 }
