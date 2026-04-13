@@ -37,6 +37,14 @@ export function findTheme(id: string): ThemeDefinition {
 /** Validate a CSS color value — only allow hex, rgb(), hsl(), and named colors */
 const SAFE_COLOR = /^(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\)|[a-zA-Z]{3,20})$/;
 
+/** Monochrome overrides — applied on top of any theme */
+const MONO_OVERRIDES: Record<string, string> = {
+  "--color-accent": "#888888",
+  "--color-success": "#808080",
+  "--color-danger": "#707070",
+  "--color-warning": "#999999",
+};
+
 /** Apply theme colors to the document root */
 export function applyTheme(themeId: string, isDark: boolean): void {
   const theme = findTheme(themeId);
@@ -44,12 +52,23 @@ export function applyTheme(themeId: string, isDark: boolean): void {
   const vars = themeToCssVars(colors);
 
   const root = document.documentElement;
+  const isMono = root.classList.contains("mono");
+
   for (const [key, value] of Object.entries(vars)) {
-    if (!SAFE_COLOR.test(value.trim())) continue; // Skip unsafe values
-    root.style.setProperty(key, value);
+    // In mono mode, override color accents with grayscale
+    const finalValue = isMono && MONO_OVERRIDES[key] ? MONO_OVERRIDES[key] : value;
+    if (!SAFE_COLOR.test(finalValue.trim())) continue;
+    root.style.setProperty(key, finalValue);
   }
 
   localStorage.setItem(THEME_ID_KEY, themeId);
+}
+
+/** Re-apply current theme (used when toggling mono mode) */
+export function reapplyCurrentTheme(): void {
+  const themeId = getStoredThemeId();
+  const isDark = document.documentElement.classList.contains("dark");
+  applyTheme(themeId, isDark);
 }
 
 /** Remove inline theme overrides (revert to CSS defaults) */
@@ -79,8 +98,15 @@ export function clearThemeOverrides(): void {
 /** React hook that syncs theme on mount and when dark mode changes */
 export function useThemeSync(isDark: boolean): void {
   useEffect(() => {
+    // Restore monochrome class BEFORE applyTheme so it picks up mono overrides
+    try {
+      const mono = localStorage.getItem("companion_mono") === "1";
+      document.documentElement.classList.toggle("mono", mono);
+    } catch {
+      // ignore
+    }
+
     const themeId = getStoredThemeId();
-    // Always apply theme — default theme has explicit colors that match CSS vars
     applyTheme(themeId, isDark);
   }, [isDark]);
 }

@@ -1,8 +1,10 @@
 import { create } from "zustand";
 import type { SettingsTab } from "@/types/settings";
+import { reapplyCurrentTheme } from "@/lib/theme-provider";
 
 interface UiStore {
   theme: "light" | "dark";
+  monochrome: boolean;
   commandPaletteOpen: boolean;
   newSessionModalOpen: boolean;
   newSessionDefaultPersonaId: string | null;
@@ -36,6 +38,8 @@ interface UiStore {
   setFeatureGuideOpen: (open: boolean) => void;
   setTheme: (t: "light" | "dark") => void;
   toggleTheme: () => void;
+  setMonochrome: (on: boolean) => void;
+  toggleMonochrome: () => void;
   setCommandPaletteOpen: (open: boolean) => void;
   setNewSessionModalOpen: (open: boolean, defaultPersonaId?: string | null) => void;
   setSettingsModalOpen: (open: boolean) => void;
@@ -72,8 +76,18 @@ const getInitialTheme = (): "light" | "dark" => {
   }
 };
 
+const getInitialMonochrome = (): boolean => {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem("companion_mono") === "1";
+  } catch {
+    return false;
+  }
+};
+
 export const useUiStore = create<UiStore>((set) => ({
   theme: getInitialTheme(),
+  monochrome: getInitialMonochrome(),
   commandPaletteOpen: false,
   newSessionModalOpen: false,
   newSessionDefaultPersonaId: null,
@@ -116,6 +130,26 @@ export const useUiStore = create<UiStore>((set) => ({
         localStorage.setItem("theme", next);
       }
       return { theme: next };
+    }),
+
+  setMonochrome: (on) => {
+    set({ monochrome: on });
+    if (typeof document !== "undefined") {
+      document.documentElement.classList.toggle("mono", on);
+      localStorage.setItem("companion_mono", on ? "1" : "0");
+      reapplyCurrentTheme();
+    }
+  },
+
+  toggleMonochrome: () =>
+    set((s) => {
+      const next = !s.monochrome;
+      if (typeof document !== "undefined") {
+        document.documentElement.classList.toggle("mono", next);
+        localStorage.setItem("companion_mono", next ? "1" : "0");
+        reapplyCurrentTheme();
+      }
+      return { monochrome: next };
     }),
 
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),

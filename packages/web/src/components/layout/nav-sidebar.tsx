@@ -18,7 +18,7 @@ import {
   Check,
   Moon,
   Sun,
-  Desktop,
+  CircleHalf,
 } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useLayoutStore, type LayoutMode, BUILT_IN_PRESETS } from "@/lib/stores/layout-store";
@@ -330,30 +330,25 @@ function LayoutContent() {
   const setActivityTerminalOpen = useUiStore((s) => s.setActivityTerminalOpen);
   const uiTheme = useUiStore((s) => s.theme);
   const setTheme = useUiStore((s) => s.setTheme);
+  const monochrome = useUiStore((s) => s.monochrome);
+  const toggleMonochrome = useUiStore((s) => s.toggleMonochrome);
 
   const [activeThemeId, setActiveThemeId] = useState(() => getStoredThemeId());
-  const [themeMode, setThemeMode] = useState<"system" | "dark" | "light">(() => {
+  const [themeMode, setThemeMode] = useState<"dark" | "light">(() => {
     if (typeof window === "undefined") return "dark";
-    return (localStorage.getItem("companion_theme_mode") as "system" | "dark" | "light") ?? "dark";
+    const stored = localStorage.getItem("companion_theme_mode");
+    if (stored === "light") return "light";
+    return "dark";
   });
-  const [systemTheme, setSystemTheme] = useState<"light" | "dark">("dark");
 
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    setSystemTheme(mq.matches ? "dark" : "light");
-    const handler = (e: MediaQueryListEvent) => setSystemTheme(e.matches ? "dark" : "light");
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
+  const resolvedDark = themeMode === "dark";
 
-  const resolvedDark = themeMode === "system" ? systemTheme === "dark" : themeMode === "dark";
-
-  const handleThemeMode = (m: "system" | "dark" | "light") => {
-    setThemeMode(m);
-    localStorage.setItem("companion_theme_mode", m);
-    const resolved = m === "system" ? systemTheme : m;
-    setTheme(resolved);
-    applyTheme(activeThemeId, resolved === "dark");
+  const handleToggleMode = () => {
+    const next = themeMode === "dark" ? "light" : "dark";
+    setThemeMode(next);
+    localStorage.setItem("companion_theme_mode", next);
+    setTheme(next);
+    applyTheme(activeThemeId, next === "dark");
   };
 
   const handleSelectTheme = (id: string) => {
@@ -427,31 +422,45 @@ function LayoutContent() {
           <span className="text-text-muted mb-2 block text-[10px] font-semibold uppercase tracking-wider">
             Mode
           </span>
-          <div className="flex flex-col gap-1">
-            {[
-              { id: "system" as const, label: "System", icon: Desktop },
-              { id: "dark" as const, label: "Dark", icon: Moon },
-              { id: "light" as const, label: "Light", icon: Sun },
-            ].map((m) => {
-              const isActive = themeMode === m.id;
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => handleThemeMode(m.id)}
-                  className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[11px] font-medium transition-all"
-                  style={{
-                    background: isActive ? "var(--color-accent)" : "transparent",
-                    color: isActive ? "#fff" : "var(--color-text-secondary)",
-                    border: isActive
-                      ? "1px solid var(--color-accent)"
-                      : "1px solid var(--glass-border)",
-                  }}
-                >
-                  <m.icon size={12} weight={isActive ? "fill" : "regular"} />
-                  {m.label}
-                </button>
-              );
-            })}
+          <div className="flex flex-col gap-1.5">
+            {/* Dark ↔ Light toggle */}
+            <button
+              onClick={handleToggleMode}
+              className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[11px] font-medium transition-all"
+              style={{
+                background: "var(--color-accent)",
+                color: "#fff",
+                border: "1px solid var(--color-accent)",
+              }}
+              aria-label={`Switch to ${themeMode === "dark" ? "light" : "dark"} mode`}
+            >
+              {themeMode === "dark" ? (
+                <Moon size={12} weight="fill" />
+              ) : (
+                <Sun size={12} weight="fill" />
+              )}
+              {themeMode === "dark" ? "Dark" : "Light"}
+            </button>
+            {/* Monochrome toggle */}
+            <button
+              onClick={toggleMonochrome}
+              className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[11px] font-medium transition-all"
+              style={{
+                background: monochrome
+                  ? "var(--color-text-primary)"
+                  : "transparent",
+                color: monochrome
+                  ? "var(--color-bg-base)"
+                  : "var(--color-text-secondary)",
+                border: monochrome
+                  ? "1px solid var(--color-text-primary)"
+                  : "1px solid var(--glass-border)",
+              }}
+              aria-label="Toggle monochrome mode"
+            >
+              <CircleHalf size={12} weight={monochrome ? "fill" : "regular"} />
+              Mono
+            </button>
           </div>
         </div>
       </div>
