@@ -5,9 +5,12 @@
 import { describe, it, expect, beforeEach, mock } from "bun:test";
 
 // Mock spectator-bridge (external dependency)
-mock.module("./spectator-bridge.js", () => ({
+const spectatorBridgeMockFactory = () => ({
   broadcastToSpectators: mock(() => {}),
-}));
+});
+mock.module("./spectator-bridge.js", spectatorBridgeMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("./spectator-bridge.js"), spectatorBridgeMockFactory);
 
 import { broadcastToAll, broadcastToSubscribers } from "./ws-broadcast.js";
 import type { ActiveSession } from "./session-store.js";

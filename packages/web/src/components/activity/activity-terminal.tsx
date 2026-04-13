@@ -18,7 +18,6 @@ import {
   type ActivityLogType,
 } from "@/lib/stores/activity-store";
 import { useSessionStore } from "@/lib/stores/session-store";
-import { useShallow } from "zustand/react/shallow";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -164,13 +163,14 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
   const filterType = useActivityStore((s) => s.filterType);
   const clearLogs = useActivityStore((s) => s.clearLogs);
   const setFilter = useActivityStore((s) => s.setFilter);
-  const sessionOptions = useSessionStore(
-    useShallow((s) =>
-      Object.values(s.sessions).map((sess) => ({
+  const sessions = useSessionStore((s) => s.sessions);
+  const sessionOptions = useMemo(
+    () =>
+      Object.values(sessions).map((sess) => ({
         value: sess.id,
         label: sess.projectName ?? sess.id.slice(0, 8),
       })),
-    ),
+    [sessions],
   );
   const scrollRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);

@@ -6,7 +6,7 @@
 import { describe, it, expect, mock } from "bun:test";
 
 // Mock dependencies with path relative to THIS file (src/tests/)
-mock.module("../services/short-id.js", () => ({
+const shortIdMockFactory = () => ({
   resolveShortId: (shortId: string) => {
     const map: Record<string, string> = {
       fox: "session-fox-123",
@@ -15,16 +15,24 @@ mock.module("../services/short-id.js", () => ({
     };
     return map[shortId] ?? null;
   },
-}));
-mock.module("../services/session-store.js", () => ({
+});
+mock.module("../services/short-id.js", shortIdMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/short-id.js"), shortIdMockFactory);
+
+const sessionStoreMockFactory = () => ({
   getActiveSession: (id: string) => {
     if (id.startsWith("session-")) {
       return { id, state: { status: "running" } };
     }
     return null;
   },
-}));
-mock.module("../services/debate-engine.js", () => ({
+});
+mock.module("../services/session-store.js", sessionStoreMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/session-store.js"), sessionStoreMockFactory);
+
+const debateEngineMockFactory = () => ({
   listActiveDebates: () => [
     {
       channelId: "debate-1",
@@ -35,7 +43,10 @@ mock.module("../services/debate-engine.js", () => ({
     },
   ],
   injectHumanMessage: mock(() => true),
-}));
+});
+mock.module("../services/debate-engine.js", debateEngineMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/debate-engine.js"), debateEngineMockFactory);
 
 import { parseMentions, handleMentions } from "../services/mention-router.js";
 

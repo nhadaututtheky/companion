@@ -7,9 +7,12 @@ import { describe, test, expect, beforeEach, afterAll, mock } from "bun:test";
 import { createTestDb } from "./test-db.js";
 
 const testDbResult = createTestDb();
-mock.module("../db/client.js", () => ({
+const dbClientMockFactory = () => ({
   getDb: () => testDbResult.db,
-}));
+});
+mock.module("../db/client.js", dbClientMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../db/client.js"), dbClientMockFactory);
 
 const { trackError, flushErrors, getErrors, clearErrors } =
   await import("../services/error-tracker.js");

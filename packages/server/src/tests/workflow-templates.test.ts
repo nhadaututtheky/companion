@@ -8,9 +8,12 @@ import { createTestDb } from "./test-db.js";
 
 // Mock getDb to return our test database
 const testDbResult = createTestDb();
-mock.module("../db/client.js", () => ({
+const dbClientMockFactory = () => ({
   getDb: () => testDbResult.db,
-}));
+});
+mock.module("../db/client.js", dbClientMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../db/client.js"), dbClientMockFactory);
 
 // Import after mocking
 const {

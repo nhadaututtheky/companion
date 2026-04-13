@@ -6,14 +6,21 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 
 // Mock dependencies
 const mockBroadcastToAll = mock(() => {});
-mock.module("./ws-broadcast.js", () => ({
+const wsBroadcastMockFactory = () => ({
   broadcastToAll: mockBroadcastToAll,
-}));
-mock.module("./pulse-estimator.js", () => ({
+});
+mock.module("./ws-broadcast.js", wsBroadcastMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("./ws-broadcast.js"), wsBroadcastMockFactory);
+
+const pulseEstimatorMockFactory = () => ({
   getOrCreatePulse: () => ({
     setBlocked: () => {},
   }),
-}));
+});
+mock.module("./pulse-estimator.js", pulseEstimatorMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("./pulse-estimator.js"), pulseEstimatorMockFactory);
 
 import {
   handlePermissionResponse,

@@ -15,7 +15,7 @@ let currentDb: ReturnType<typeof createTestDb>["db"] | null = null;
 let currentSqlite: Database | null = null;
 let insertProject: ((slug: string, name?: string) => void) | null = null;
 
-mock.module("../db/client.js", () => ({
+const dbClientMockFactory = () => ({
   getDb: () => {
     if (!currentDb) throw new Error("Test DB not initialised — call setupTestDb() first");
     return currentDb;
@@ -23,7 +23,10 @@ mock.module("../db/client.js", () => ({
   getSqlite: () => currentSqlite,
   closeDb: () => {},
   schema: {},
-}));
+});
+mock.module("../db/client.js", dbClientMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../db/client.js"), dbClientMockFactory);
 
 // Import AFTER the mock is registered
 import {

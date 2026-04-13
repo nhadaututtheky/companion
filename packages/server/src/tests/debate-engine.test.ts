@@ -11,7 +11,7 @@ let currentDb: ReturnType<typeof createTestDb>["db"] | null = null;
 let currentSqlite: Database | null = null;
 
 // Use real DB (in-memory) instead of mocking db/client — prevents test pollution
-mock.module("../db/client.js", () => ({
+const dbClientMockFactory = () => ({
   getDb: () => {
     if (!currentDb) throw new Error("Test DB not initialised");
     return currentDb;
@@ -19,24 +19,45 @@ mock.module("../db/client.js", () => ({
   getSqlite: () => currentSqlite,
   closeDb: () => {},
   schema: {},
-}));
+});
+mock.module("../db/client.js", dbClientMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../db/client.js"), dbClientMockFactory);
 
 // Mock only external dependencies (AI, convergence — not DB)
-mock.module("../services/convergence-detector.js", () => ({
+const convergenceDetectorMockFactory = () => ({
   checkConvergence: mock(async () => ({ score: 0, staleRounds: 0 })),
-}));
-mock.module("../services/ai-client.js", () => ({
+});
+mock.module("../services/convergence-detector.js", convergenceDetectorMockFactory);
+if (process.platform !== "win32")
+  mock.module(
+    import.meta.resolve("../services/convergence-detector.js"),
+    convergenceDetectorMockFactory,
+  );
+
+const aiClientMockFactory = () => ({
   callAI: mock(async () => ({ text: "test response", costUsd: 0.001 })),
   callAIWithModel: mock(async () => ({ text: "test response", costUsd: 0.001 })),
   getOpenRouterConfig: mock(() => null),
-}));
-mock.module("../services/provider-registry.js", () => ({
+});
+mock.module("../services/ai-client.js", aiClientMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/ai-client.js"), aiClientMockFactory);
+
+const providerRegistryMockFactory = () => ({
   resolveModelProvider: mock(() => null),
   getProviderOverride: mock(() => null),
-}));
-mock.module("../services/custom-personas.js", () => ({
+});
+mock.module("../services/provider-registry.js", providerRegistryMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/provider-registry.js"), providerRegistryMockFactory);
+
+const customPersonasMockFactory = () => ({
   resolvePersona: mock(() => null),
-}));
+});
+mock.module("../services/custom-personas.js", customPersonasMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/custom-personas.js"), customPersonasMockFactory);
 
 import {
   getActiveDebate,

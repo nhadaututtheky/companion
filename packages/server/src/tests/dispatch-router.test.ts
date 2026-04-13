@@ -17,15 +17,23 @@ const mockStartDebate = mock(() =>
     status: "active",
   }),
 );
-mock.module("../services/workflow-engine.js", () => ({
+const workflowEngineMockFactory = () => ({
   startWorkflow: mockStartWorkflow,
-}));
-mock.module("../services/debate-engine.js", () => ({
+});
+mock.module("../services/workflow-engine.js", workflowEngineMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/workflow-engine.js"), workflowEngineMockFactory);
+
+const debateEngineMockFactory = () => ({
   startDebate: mockStartDebate,
-}));
+});
+mock.module("../services/debate-engine.js", debateEngineMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/debate-engine.js"), debateEngineMockFactory);
+
 // NOTE: Do NOT mock mention-router.js here — it pollutes mention-router.test.ts
 // Instead, mock its dependencies (short-id, session-store) which are already mocked above.
-mock.module("../services/settings-helpers.js", () => ({
+const settingsHelpersMockFactory = () => ({
   getSetting: (key: string) => {
     const settings: Record<string, string> = {
       "orchestration.autoDispatch": "true",
@@ -33,25 +41,44 @@ mock.module("../services/settings-helpers.js", () => ({
     };
     return settings[key] ?? null;
   },
-}));
-mock.module("../services/event-bus.js", () => ({
+});
+mock.module("../services/settings-helpers.js", settingsHelpersMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/settings-helpers.js"), settingsHelpersMockFactory);
+
+const eventBusMockFactory = () => ({
   eventBus: { emit: mock(() => {}) },
-}));
-mock.module("../services/ai-client.js", () => ({
+});
+mock.module("../services/event-bus.js", eventBusMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/event-bus.js"), eventBusMockFactory);
+
+const aiClientMockFactory = () => ({
   callAI: mock(() => Promise.resolve({ text: "{}", costUsd: 0, inputTokens: 0 })),
   isAIConfigured: () => false,
-}));
-mock.module("../services/short-id.js", () => ({
+});
+mock.module("../services/ai-client.js", aiClientMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/ai-client.js"), aiClientMockFactory);
+
+const shortIdMockFactory = () => ({
   resolveShortId: (id: string) => (id === "fox" ? "session-fox-123" : null),
-}));
-mock.module("../services/session-store.js", () => ({
+});
+mock.module("../services/short-id.js", shortIdMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/short-id.js"), shortIdMockFactory);
+
+const sessionStoreMockFactory = () => ({
   getActiveSession: (id: string) => {
     if (id.startsWith("session-")) {
       return { id, state: { status: "running" } };
     }
     return null;
   },
-}));
+});
+mock.module("../services/session-store.js", sessionStoreMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/session-store.js"), sessionStoreMockFactory);
 
 import { dispatch, previewDispatchSync } from "../services/dispatch-router.js";
 import type { TaskClassification } from "@companion/shared/types";

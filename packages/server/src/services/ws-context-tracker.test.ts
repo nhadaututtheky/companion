@@ -6,22 +6,37 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 
 // Mock dependencies
 const mockBroadcastToAll = mock(() => {});
-mock.module("./ws-broadcast.js", () => ({
+const wsBroadcastMockFactory = () => ({
   broadcastToAll: mockBroadcastToAll,
-}));
-mock.module("./pulse-estimator.js", () => ({
+});
+mock.module("./ws-broadcast.js", wsBroadcastMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("./ws-broadcast.js"), wsBroadcastMockFactory);
+
+const pulseEstimatorMockFactory = () => ({
   getOrCreatePulse: () => ({
     recordContextUpdate: () => {},
     recordThinking: () => {},
   }),
-}));
-mock.module("./compact-manager.js", () => ({
+});
+mock.module("./pulse-estimator.js", pulseEstimatorMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("./pulse-estimator.js"), pulseEstimatorMockFactory);
+
+const compactManagerMockFactory = () => ({
   checkSmartCompact: mock(() => {}),
   clearCompactTimers: mock(() => {}),
-}));
-mock.module("./session-store.js", () => ({
+});
+mock.module("./compact-manager.js", compactManagerMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("./compact-manager.js"), compactManagerMockFactory);
+
+const sessionStoreMockFactory = () => ({
   updateSessionCostWarned: mock(() => {}),
-}));
+});
+mock.module("./session-store.js", sessionStoreMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("./session-store.js"), sessionStoreMockFactory);
 
 import {
   broadcastContextUpdate,

@@ -10,7 +10,7 @@ import { createTestDb } from "../test-utils.js";
 let currentDb: ReturnType<typeof createTestDb>["db"] | null = null;
 let currentSqlite: Database | null = null;
 
-mock.module("../db/client.js", () => ({
+const dbMockFactory = () => ({
   getDb: () => {
     if (!currentDb) throw new Error("Test DB not initialised");
     return currentDb;
@@ -18,7 +18,10 @@ mock.module("../db/client.js", () => ({
   getSqlite: () => currentSqlite,
   closeDb: () => {},
   schema: {},
-}));
+});
+mock.module("../db/client.js", dbMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../db/client.js"), dbMockFactory);
 
 // Import AFTER mock
 import { getSetting, getSettingInt, getSettingBool } from "./settings-helpers.js";

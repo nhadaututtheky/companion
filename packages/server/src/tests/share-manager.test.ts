@@ -10,9 +10,12 @@ import { sessions } from "../db/schema.js";
 let testDbResult: ReturnType<typeof createTestDb>;
 
 // Mock DB before importing service
-mock.module("../db/client.js", () => ({
+const dbClientMockFactory = () => ({
   getDb: () => testDbResult.db,
-}));
+});
+mock.module("../db/client.js", dbClientMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../db/client.js"), dbClientMockFactory);
 
 const {
   createShareToken,

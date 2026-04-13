@@ -5,12 +5,19 @@
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 
 // Mock dependencies
-mock.module("./ws-broadcast.js", () => ({
+const wsBroadcastMockFactory = () => ({
   broadcastToAll: mock(() => {}),
-}));
-mock.module("./pulse-estimator.js", () => ({
+});
+mock.module("./ws-broadcast.js", wsBroadcastMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("./ws-broadcast.js"), wsBroadcastMockFactory);
+
+const pulseEstimatorMockFactory = () => ({
   getOrCreatePulse: () => ({ recordThinking: () => {} }),
-}));
+});
+mock.module("./pulse-estimator.js", pulseEstimatorMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("./pulse-estimator.js"), pulseEstimatorMockFactory);
 
 import {
   bufferEarlyResult,
@@ -107,7 +114,7 @@ describe("ws-stream-handler", () => {
   });
 
   describe("handleStreamEvent", () => {
-    it("broadcasts stream_event to all", () => {
+    it("batches stream events and broadcasts after flush interval", async () => {
       const session = createMockSession();
       const mockBroadcast = broadcastToAll as ReturnType<typeof mock>;
 
@@ -116,9 +123,16 @@ describe("ws-stream-handler", () => {
         event: { delta: { type: "content_block_delta" } },
       } as any);
 
-      expect(mockBroadcast).toHaveBeenCalled();
+      // Events are batched — not broadcast synchronously
+      const callsBefore = mockBroadcast.mock.calls.length;
+
+      // Wait for the 30ms batch interval to flush
+      await new Promise((r) => setTimeout(r, 50));
+
+      expect(mockBroadcast.mock.calls.length).toBeGreaterThan(callsBefore);
       const call = mockBroadcast.mock.calls[mockBroadcast.mock.calls.length - 1]!;
-      expect(call[1]!.type).toBe("stream_event");
+      expect(call[1]!.type).toBe("stream_event_batch");
+      expect(call[1]!.events).toHaveLength(1);
     });
   });
 
