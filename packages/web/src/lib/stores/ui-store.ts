@@ -28,9 +28,11 @@ interface UiStore {
   statsBarOpen: boolean;
   schedulesModalOpen: boolean;
   workspaceCreateModalOpen: boolean;
+  resumeSessionsModalOpen: boolean;
   setStatsBarOpen: (open: boolean) => void;
   setSchedulesModalOpen: (open: boolean) => void;
   setWorkspaceCreateModalOpen: (open: boolean) => void;
+  setResumeSessionsModalOpen: (open: boolean) => void;
   setFeatureGuideOpen: (open: boolean) => void;
   setTheme: (t: "light" | "dark") => void;
   toggleTheme: () => void;
@@ -88,12 +90,15 @@ export const useUiStore = create<UiStore>((set) => ({
   statsBarOpen: false,
   schedulesModalOpen: false,
   workspaceCreateModalOpen: false,
+  resumeSessionsModalOpen: false,
 
   setStatsBarOpen: (open) => set({ statsBarOpen: open }),
 
   setSchedulesModalOpen: (open) => set({ schedulesModalOpen: open }),
 
   setWorkspaceCreateModalOpen: (open) => set({ workspaceCreateModalOpen: open }),
+
+  setResumeSessionsModalOpen: (open) => set({ resumeSessionsModalOpen: open }),
 
   setTheme: (theme) => {
     set({ theme });

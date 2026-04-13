@@ -1,4 +1,10 @@
 import { request } from "./base";
+import type {
+  ScannedSession,
+  ScannedSessionDetail,
+  ScanSessionsResponse,
+  CLIPlatform,
+} from "@companion/shared";
 
 export const sessions = {
   list: () => request<{ data: { sessions: unknown[] } }>("/api/sessions"),
@@ -149,6 +155,33 @@ export const sessions = {
       method: "PATCH",
       body: JSON.stringify({ tags }),
     }),
+  // ─── Filesystem session scanner ─────────────────────────────────────
+  scan: (opts?: {
+    agent?: CLIPlatform;
+    project?: string;
+    q?: string;
+    limit?: number;
+    offset?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (opts?.agent) params.set("agent", opts.agent);
+    if (opts?.project) params.set("project", opts.project);
+    if (opts?.q) params.set("q", opts.q);
+    if (opts?.limit) params.set("limit", String(opts.limit));
+    if (opts?.offset) params.set("offset", String(opts.offset));
+    const qs = params.toString();
+    return request<{ success: boolean; data: ScanSessionsResponse }>(
+      `/api/sessions/scan${qs ? `?${qs}` : ""}`,
+    );
+  },
+  scanDetail: (agent: CLIPlatform, id: string) =>
+    request<{
+      success: boolean;
+      data: ScannedSessionDetail & { resumeCommand: string };
+    }>(`/api/sessions/scan/${agent}/${id}`),
+  scanRefresh: () =>
+    request<{ success: boolean }>("/api/sessions/scan/refresh", { method: "POST" }),
+
   debate: {
     addParticipant: (id: string, model: string, personaId?: string) =>
       request<{

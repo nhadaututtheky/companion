@@ -46,6 +46,13 @@ const OnboardingWizard = dynamic(
   () => import("@/components/onboarding-wizard").then((m) => ({ default: m.OnboardingWizard })),
   { ssr: false },
 );
+const ResumeSessionsModal = dynamic(
+  () =>
+    import("@/components/session/resume-sessions-modal").then((m) => ({
+      default: m.ResumeSessionsModal,
+    })),
+  { ssr: false },
+);
 const FeatureGuideModal = dynamic(
   () =>
     import("@/components/feature-guide/feature-guide-modal").then((m) => ({
@@ -232,6 +239,8 @@ export default function DashboardPage() {
   const setActivityTerminalOpen = useUiStore((s) => s.setActivityTerminalOpen);
   const featureGuideOpen = useUiStore((s) => s.featureGuideOpen);
   const setFeatureGuideOpen = useUiStore((s) => s.setFeatureGuideOpen);
+  const resumeSessionsModalOpen = useUiStore((s) => s.resumeSessionsModalOpen);
+  const setResumeSessionsModalOpen = useUiStore((s) => s.setResumeSessionsModalOpen);
   const rightPanelMode = useUiStore((s) => s.rightPanelMode);
   const rightPanelPath = useUiStore((s) => s.rightPanelPath);
   const browserPreviewUrl = useUiStore((s) => s.browserPreviewUrl);
@@ -527,6 +536,12 @@ export default function DashboardPage() {
 
       {/* New Session modal (Phase 4) */}
       <NewSessionModal open={newSessionOpen} onClose={handleCloseNewSession} />
+
+      {/* Resume AI Sessions modal (autoscan) */}
+      <ResumeSessionsModal
+        open={resumeSessionsModalOpen}
+        onClose={() => setResumeSessionsModalOpen(false)}
+      />
 
       <Header onMenuToggle={() => setMobileSidebarOpen(true)} />
       <FloatingStatsBar />

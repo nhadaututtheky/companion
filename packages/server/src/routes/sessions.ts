@@ -33,7 +33,13 @@ import { getMaxSessions } from "../services/license.js";
 import { startDebate } from "../services/debate-engine.js";
 import { resolveModelProvider } from "../services/provider-registry.js";
 import { getSessionSummary } from "../services/session-summarizer.js";
-import type { ApiResponse } from "@companion/shared";
+import {
+  scanSessions,
+  getScannedSessionDetail,
+  getResumeCommand,
+  clearScanCache,
+} from "../services/session-scanner.js";
+import type { ApiResponse, CLIPlatform } from "@companion/shared";
 import { thinkingModeTobudget } from "@companion/shared";
 import { resolvePersona } from "../services/custom-personas.js";
 
@@ -170,6 +176,60 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     }
     return c.json({ success: true } satisfies ApiResponse);
   });
+
+  // ─── Filesystem session scanner (autoscan) ─────────────────────────────
+
+  const VALID_AGENTS = new Set(["claude", "codex", "gemini", "opencode"]);
+  const SESSION_ID_RE = /^[a-zA-Z0-9_-]{1,128}$/;
+
+  app.get("/scan", async (c) => {
+    const agentRaw = c.req.query("agent") || "";
+    const agentType = (VALID_AGENTS.has(agentRaw) ? agentRaw : undefined) as
+      | CLIPlatform
+      | undefined;
+    const projectPath = c.req.query("project") || undefined;
+    const query = c.req.query("q") || undefined;
+    const rawLimit = c.req.query("limit") ? parseInt(c.req.query("limit")!, 10) : 50;
+    const limit = Math.min(Math.max(1, rawLimit), 200);
+    const rawOffset = c.req.query("offset") ? parseInt(c.req.query("offset")!, 10) : 0;
+    const offset = Math.max(0, rawOffset);
+
+    const result = await scanSessions({ agentType, projectPath, query, limit, offset });
+    return c.json({ success: true, data: result } satisfies ApiResponse);
+  });
+
+  app.get("/scan/:agent/:id", async (c) => {
+    const agentRaw = c.req.param("agent");
+    const sessionId = c.req.param("id");
+
+    if (!VALID_AGENTS.has(agentRaw)) {
+      return c.json({ success: false, error: "Invalid agent type" } satisfies ApiResponse, 400);
+    }
+    if (!SESSION_ID_RE.test(sessionId)) {
+      return c.json({ success: false, error: "Invalid session ID" } satisfies ApiResponse, 400);
+    }
+
+    const agentType = agentRaw as CLIPlatform;
+    const detail = await getScannedSessionDetail(agentType, sessionId);
+    if (!detail) {
+      return c.json({ success: false, error: "Session not found" } satisfies ApiResponse, 404);
+    }
+
+    return c.json({
+      success: true,
+      data: {
+        ...detail,
+        resumeCommand: getResumeCommand(agentType, sessionId),
+      },
+    } satisfies ApiResponse);
+  });
+
+  app.post("/scan/refresh", (c) => {
+    clearScanCache();
+    return c.json({ success: true } satisfies ApiResponse);
+  });
+
+  // ─── Create session ───────────────────────────────────────────────────
 
   app.post("/", zValidator("json", createSessionSchema), async (c) => {
     const body = c.req.valid("json");

@@ -10,6 +10,7 @@ import {
   CircleDashed,
   PencilSimple,
   SquaresFour,
+  ClockCounterClockwise,
 } from "@phosphor-icons/react";
 import { useShallow } from "zustand/react/shallow";
 import { useUiStore } from "@/lib/stores/ui-store";
@@ -586,6 +587,16 @@ export function ProjectSidebar({
         })}
 
         <div className="flex-1" />
+
+        {/* Resume sessions (autoscan) */}
+        <button
+          onClick={() => useUiStore.getState().setResumeSessionsModalOpen(true)}
+          className="project-icon-btn project-icon-new flex cursor-pointer items-center justify-center rounded-lg"
+          title="Resume AI Sessions"
+          aria-label="Resume AI Sessions"
+        >
+          <ClockCounterClockwise size={16} weight="bold" />
+        </button>
 
         {/* New workspace */}
         <button
