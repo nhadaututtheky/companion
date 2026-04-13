@@ -1,9 +1,10 @@
 "use client";
-import { X, FileText, Warning, Terminal, CodeBlock } from "@phosphor-icons/react";
+import { X, FileText, Warning, Terminal, CodeBlock, ImageSquare } from "@phosphor-icons/react";
 import type { ContextAttachment, AttachmentKind } from "@/lib/stores/composer-store";
 
 const ICONS: Record<AttachmentKind, typeof FileText> = {
   file: FileText,
+  image: ImageSquare,
   error: Warning,
   tool_output: Terminal,
   code_selection: CodeBlock,
@@ -11,6 +12,7 @@ const ICONS: Record<AttachmentKind, typeof FileText> = {
 
 const COLORS: Record<AttachmentKind, string> = {
   file: "#4285F4",
+  image: "#F59E0B",
   error: "#ef4444",
   tool_output: "#34A853",
   code_selection: "#a855f7",
@@ -24,7 +26,8 @@ interface AttachmentChipProps {
 export function AttachmentChip({ attachment, onRemove }: AttachmentChipProps) {
   const Icon = ICONS[attachment.kind];
   const color = COLORS[attachment.kind];
-  const preview = attachment.content.slice(0, 120).replace(/\n/g, " ");
+  const isImage = attachment.kind === "image";
+  const preview = isImage ? attachment.label : attachment.content.slice(0, 120).replace(/\n/g, " ");
 
   return (
     <div
@@ -36,7 +39,16 @@ export function AttachmentChip({ attachment, onRemove }: AttachmentChipProps) {
       }}
       title={preview}
     >
-      <Icon size={12} weight="bold" className="shrink-0" style={{ color }} />
+      {isImage && attachment.content ? (
+        <img
+          src={`data:${attachment.meta?.mediaType ?? "image/png"};base64,${attachment.content}`}
+          alt={attachment.label}
+          className="shrink-0 rounded object-cover"
+          style={{ width: 24, height: 24 }}
+        />
+      ) : (
+        <Icon size={12} weight="bold" className="shrink-0" style={{ color }} />
+      )}
       <span className="truncate font-medium" style={{ color }}>
         {attachment.label}
       </span>

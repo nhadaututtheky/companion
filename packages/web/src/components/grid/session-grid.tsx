@@ -51,19 +51,23 @@ export function SessionGrid({ sessions, onExpand }: SessionGridProps) {
           } as React.CSSProperties
         }
       >
-        {sessions.map((s) => (
-          <div
-            key={s.id}
-            className="overflow-hidden"
-            style={{
-              opacity: expandedSessionId && expandedSessionId !== s.id ? 0.6 : 1,
-              transition: "opacity 250ms ease",
-              minHeight: 200,
-            }}
-          >
-            <MiniTerminal sessionId={s.id} onExpand={onExpand} />
-          </div>
-        ))}
+        {sessions.map((s) => {
+          // Skip rendering the expanded session's mini-terminal — ExpandedSession
+          // portal already renders a full view, so keeping both wastes DOM + 2x hooks
+          const isExpanded = expandedSessionId === s.id;
+          return (
+            <div
+              key={s.id}
+              style={{
+                opacity: expandedSessionId && !isExpanded ? 0.6 : 1,
+                transition: "opacity 250ms ease",
+                minHeight: 200,
+              }}
+            >
+              {!isExpanded && <MiniTerminal sessionId={s.id} onExpand={onExpand} />}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

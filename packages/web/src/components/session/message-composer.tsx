@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useCallback, useEffect, type KeyboardEvent } from "react";
 import { Z } from "@/lib/z-index";
-import { PaperPlaneTilt, Stop, Microphone, MicrophoneSlash } from "@phosphor-icons/react";
+import { PaperPlaneTilt, Stop, Microphone, MicrophoneSlash, Paperclip } from "@phosphor-icons/react";
 import { useVoiceInput } from "@/hooks/use-voice-input";
 import {
   useComposerStore,
@@ -17,7 +17,7 @@ import { ModelBar, type ModelInfo } from "./model-bar";
 import { api } from "@/lib/api-client";
 
 interface MessageComposerProps {
-  onSend: (text: string) => void;
+  onSend: (text: string, images?: Array<{ data: string; mediaType: string; name: string }>) => void;
   onStop?: () => void;
   isRunning?: boolean;
   disabled?: boolean;
@@ -55,6 +55,7 @@ export function MessageComposer({
   const [slashQuery, setSlashQuery] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const composerWrapperRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Composer store — use individual selectors to avoid infinite loops
   const attachments = useComposerStore((s) => s.attachments);
@@ -90,7 +91,17 @@ export function MessageComposer({
   const handleSend = () => {
     if (!hasContent || disabled) return;
     const finalMessage = buildMessageWithContext(text.trim(), attachments);
-    onSend(finalMessage);
+    // Extract image attachments to send via WS separately
+    const imageAtts = attachments.filter((a) => a.kind === "image");
+    const images =
+      imageAtts.length > 0
+        ? imageAtts.map((a) => ({
+            data: a.content,
+            mediaType: a.meta?.mediaType ?? "image/png",
+            name: a.label,
+          }))
+        : undefined;
+    onSend(finalMessage, images);
     setText("");
     clearAttachments();
     if (textareaRef.current) {
@@ -148,11 +159,80 @@ export function MessageComposer({
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
   };
 
+  // Clipboard paste — capture images from clipboard
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (!file) continue;
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            // result = "data:image/png;base64,xxxxx" — extract base64 part
+            const base64 = result.split(",")[1];
+            if (!base64) return;
+            addAttachment({
+              kind: "image",
+              label: file.name || `Pasted image`,
+              content: base64,
+              meta: { mediaType: file.type },
+            });
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    },
+    [addAttachment],
+  );
+
+  // File input change — handle selected files
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (!files) return;
+      for (const file of Array.from(files)) {
+        if (file.type.startsWith("image/")) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            const base64 = result.split(",")[1];
+            if (!base64) return;
+            addAttachment({
+              kind: "image",
+              label: file.name,
+              content: base64,
+              meta: { mediaType: file.type },
+            });
+          };
+          reader.readAsDataURL(file);
+        } else {
+          // Text-based file — read as text
+          const reader = new FileReader();
+          reader.onload = () => {
+            addAttachment({
+              kind: "file",
+              label: file.name,
+              content: reader.result as string,
+              meta: { language: file.name.split(".").pop() ?? "" },
+            });
+          };
+          reader.readAsText(file);
+        }
+      }
+      // Reset input so same file can be re-selected
+      e.target.value = "";
+    },
+    [addAttachment],
+  );
+
   return (
     <div
       ref={composerWrapperRef}
       className="message-composer-wrapper relative px-4 py-3"
-      style={{ borderTop: "1px solid var(--color-border)" }}
       onDragOver={(e) => {
         if (e.dataTransfer.types.includes("application/x-companion-file")) {
           e.preventDefault();
@@ -199,8 +279,9 @@ export function MessageComposer({
       }}
     >
       <div
-        className="bg-bg-elevated relative flex flex-col rounded-xl px-4 py-2.5"
+        className="bg-bg-elevated relative flex flex-col px-4 py-2.5"
         style={{
+          borderRadius: "var(--radius-md)",
           border: isDragOver
             ? "1.5px solid var(--color-accent)"
             : isFocused
@@ -219,7 +300,7 @@ export function MessageComposer({
               inset: 0,
               background: "rgba(66, 133, 244, 0.08)",
               border: "2px dashed var(--color-accent)",
-              borderRadius: 12,
+              borderRadius: "var(--radius-lg)",
               alignItems: "center",
               justifyContent: "center",
               zIndex: Z.dropdown,
@@ -269,6 +350,7 @@ export function MessageComposer({
             }}
             onKeyDown={handleKeyDown}
             onInput={handleInput}
+            onPaste={handlePaste}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             disabled={disabled}
@@ -290,6 +372,30 @@ export function MessageComposer({
               outline: "none",
             }}
           />
+
+          {/* Hidden file input for attach */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,.txt,.md,.json,.csv,.ts,.tsx,.js,.jsx,.py,.rs,.go,.yaml,.yml,.toml,.xml,.html,.css,.sql,.sh"
+            onChange={handleFileSelect}
+            className="hidden"
+            aria-hidden="true"
+          />
+
+          {/* Attach file/image button */}
+          {!isRunning && (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex-shrink-0 cursor-pointer rounded-lg p-1.5 transition-all"
+              style={{ color: "var(--color-text-muted)" }}
+              aria-label="Attach file or image"
+              title="Attach file or image (or paste image with Ctrl+V)"
+            >
+              <Paperclip size={16} weight="regular" />
+            </button>
+          )}
 
           {/* Voice input button */}
           {voiceSupported && !isRunning && (

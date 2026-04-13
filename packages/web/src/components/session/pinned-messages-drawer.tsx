@@ -64,8 +64,7 @@ export function PinnedMessagesDrawer({
         className="bg-bg-card fixed bottom-0 right-0 top-0 z-50 flex flex-col"
         style={{
           width: 320,
-          borderLeft: "1px solid var(--color-border)",
-          boxShadow: "-8px 0 32px rgba(0,0,0,0.15)",
+          boxShadow: "-1px 0 0 var(--color-border), -8px 0 32px rgba(0,0,0,0.15)",
         }}
         role="dialog"
         aria-label="Pinned messages"
@@ -74,7 +73,7 @@ export function PinnedMessagesDrawer({
         {/* Header */}
         <div
           className="flex flex-shrink-0 items-center justify-between px-4 py-3"
-          style={{ borderBottom: "1px solid var(--color-border)" }}
+          style={{ boxShadow: "0 1px 0 var(--color-border)" }}
         >
           <div className="flex items-center gap-2">
             <PushPin size={15} weight="fill" style={{ color: "#FBBC04" }} />

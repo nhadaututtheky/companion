@@ -334,10 +334,10 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
             </div>
           </div>
 
-          {/* Context meter — use real-time CLI data when available */}
+          {/* Context meter — prefer real-time CLI data when available */}
           <ContextMeter
-            inputTokens={s.total_input_tokens}
-            outputTokens={s.total_output_tokens}
+            inputTokens={session.contextTokens ?? s.total_input_tokens}
+            outputTokens={session.contextTokens != null ? 0 : s.total_output_tokens}
             maxTokens={session.contextMaxTokens}
           />
 

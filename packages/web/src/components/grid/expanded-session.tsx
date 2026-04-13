@@ -140,7 +140,7 @@ function ExpandedModelSwitcher({
 
       {open && (
         <div
-          className="rounded-radius-lg shadow-float border-glass-border absolute border"
+          className="rounded-lg shadow-float absolute "
           style={{
             top: "calc(100% + 4px)",
             right: 0,
@@ -317,7 +317,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
           position: "fixed",
           inset: 0,
           zIndex: Z.popover,
-          background: "rgba(0,0,0,0.5)",
+          background: "var(--overlay-medium)",
         }}
       />
 
@@ -340,27 +340,23 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
         }}
       >
         <div
-          className="dark:bg-glass-dark expanded-session-card relative flex overflow-hidden"
+          className="expanded-session-card relative flex overflow-hidden"
           style={{
             width: "100%",
             maxWidth: 1200,
             height: "100%",
             maxHeight: "90vh",
-            borderRadius: 16,
+            borderRadius: "var(--radius-2xl)",
             flexDirection: "column",
             pointerEvents: "auto",
-            /* Light mode glass */
-            background: "rgba(255,255,255,0.85)",
-            backdropFilter: "blur(16px)",
-            WebkitBackdropFilter: "blur(16px)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.08)",
+            background: "var(--color-bg-card)",
+            boxShadow: "var(--shadow-modal)",
           }}
         >
           {/* ── Header ── */}
           <div
             className="flex flex-shrink-0 items-center gap-2 px-4 py-3"
-            style={{ borderBottom: "1px solid var(--color-border)" }}
+            style={{ boxShadow: "0 1px 0 var(--color-border)" }}
           >
             {/* Project name + typing status */}
             <h2
@@ -465,11 +461,12 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             </button>
           </div>
 
-          {/* ── Context meter ── */}
+          {/* ── Context meter — prefer real-time data from CLI polling ── */}
           <div className="flex-shrink-0">
             <ContextMeter
-              inputTokens={session?.state?.total_input_tokens ?? 0}
-              outputTokens={session?.state?.total_output_tokens ?? 0}
+              inputTokens={session?.contextTokens ?? session?.state?.total_input_tokens ?? 0}
+              outputTokens={session?.contextTokens != null ? 0 : (session?.state?.total_output_tokens ?? 0)}
+              maxTokens={session?.contextMaxTokens}
             />
           </div>
 
@@ -547,13 +544,13 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
               className="hidden min-h-0 flex-shrink-0 flex-col sm:flex"
               style={{
                 width: 280,
-                borderLeft: "1px solid var(--color-border)",
+                boxShadow: "-1px 0 0 var(--color-border)",
               }}
             >
               {/* Sidebar tab bar */}
               <div
                 className="flex flex-shrink-0"
-                style={{ borderBottom: "1px solid var(--color-border)" }}
+                style={{ boxShadow: "0 1px 0 var(--color-border)" }}
                 role="tablist"
                 aria-label="Session sidebar tabs"
               >

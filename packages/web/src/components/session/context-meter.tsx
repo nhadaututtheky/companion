@@ -6,7 +6,7 @@ interface ContextMeterProps {
   maxTokens?: number;
 }
 
-const MAX_TOKENS = 200_000; // claude default
+const MAX_TOKENS = 1_000_000; // opus/sonnet default (haiku is 200k)
 
 function formatK(n: number) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -58,7 +58,7 @@ export function ContextMeter({
             style={{
               width: 6,
               height: 6,
-              borderRadius: 2,
+              borderRadius: "var(--radius-xs)",
               background: "#4285F4",
             }}
           />
@@ -70,7 +70,7 @@ export function ContextMeter({
             style={{
               width: 6,
               height: 6,
-              borderRadius: 2,
+              borderRadius: "var(--radius-xs)",
               background: "#A855F7",
             }}
           />

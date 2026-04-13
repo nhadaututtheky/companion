@@ -2,7 +2,7 @@ import { create } from "zustand";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type AttachmentKind = "file" | "error" | "tool_output" | "code_selection";
+export type AttachmentKind = "file" | "image" | "error" | "tool_output" | "code_selection";
 
 export type QuickAction = "fix" | "explain" | "review";
 
@@ -22,6 +22,8 @@ export interface ContextAttachment {
     language?: string;
     toolName?: string;
     lineRange?: string;
+    /** MIME type for image attachments */
+    mediaType?: string;
   };
 }
 
@@ -50,10 +52,13 @@ export const useComposerStore = create<ComposerStore>((set) => ({
         {
           ...att,
           id: crypto.randomUUID(),
+          // Skip truncation for images (base64 data)
           content:
-            att.content.length > MAX_ATTACHMENT_CHARS
-              ? att.content.slice(0, MAX_ATTACHMENT_CHARS) + "\n... (truncated)"
-              : att.content,
+            att.kind === "image"
+              ? att.content
+              : att.content.length > MAX_ATTACHMENT_CHARS
+                ? att.content.slice(0, MAX_ATTACHMENT_CHARS) + "\n... (truncated)"
+                : att.content,
         },
       ],
     })),
@@ -78,9 +83,11 @@ export function buildMessageWithContext(
   userText: string,
   attachments: ContextAttachment[],
 ): string {
-  if (attachments.length === 0) return userText;
+  // Images are sent separately via WS — only include text-based attachments
+  const textAttachments = attachments.filter((a) => a.kind !== "image");
+  if (textAttachments.length === 0) return userText;
 
-  const contextBlocks = attachments.map((att) => {
+  const contextBlocks = textAttachments.map((att) => {
     const lang = att.meta?.language ?? "";
     const source = att.meta?.filePath
       ? `File: \`${att.meta.filePath}\`${att.meta.lineRange ? ` (${att.meta.lineRange})` : ""}`

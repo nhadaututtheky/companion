@@ -40,17 +40,11 @@ export function SessionPane({ sessionId, onClose }: SessionPaneProps) {
 
   return (
     <div
-      className="bg-bg-base border-border flex h-full flex-col overflow-hidden border"
-      style={{
-        borderRadius: 8,
-      }}
+      className="bg-bg-base shadow-soft flex h-full flex-col overflow-hidden rounded-lg"
     >
       {/* Pane header */}
       <div
         className="bg-bg-card flex shrink-0 items-center gap-2 px-3 py-1.5"
-        style={{
-          borderBottom: "1px solid var(--color-border)",
-        }}
       >
         <span
           className="shrink-0 rounded-full"
