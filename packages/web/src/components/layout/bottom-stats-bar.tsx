@@ -71,7 +71,7 @@ export function BottomStatsBar() {
       {expanded ? (
         /* ── Expanded: simple active session summary ── */
         <div
-          className="flex items-stretch rounded-radius-xl border border-glass-border" style={{
+          className="flex items-stretch rounded-radius-xl shadow-soft border border-glass-border" style={{
             background: "var(--glass-bg-heavy)",
             backdropFilter: "blur(var(--glass-blur))",
             WebkitBackdropFilter: "blur(var(--glass-blur))",
@@ -111,7 +111,7 @@ export function BottomStatsBar() {
         /* ── Collapsed watermark pill ── */
         <button
           onClick={() => setExpanded(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 cursor-pointer transition-all text-text-muted rounded-radius-pill border border-glass-border font-semibold font-mono" style={{
+          className="flex items-center gap-1.5 px-3 py-1.5 cursor-pointer transition-all text-text-muted rounded-radius-pill shadow-soft border border-glass-border font-semibold font-mono" style={{
             background: "var(--glass-bg)",
             backdropFilter: "blur(4px)",
             WebkitBackdropFilter: "blur(4px)",

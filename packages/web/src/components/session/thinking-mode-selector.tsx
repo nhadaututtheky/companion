@@ -65,7 +65,7 @@ export function ThinkingModeSelector({
 
       {open && (
         <div
-          className="absolute top-full left-0 mt-1 rounded-lg overflow-hidden shadow-lg z-50 bg-bg-card border border-border" style={{
+          className="absolute top-full left-0 mt-1 rounded-lg overflow-hidden shadow-lg z-50 bg-bg-card border border-glass-border" style={{
             minWidth: 160,
           }}
         >

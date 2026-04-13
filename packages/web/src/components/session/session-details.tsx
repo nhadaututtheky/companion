@@ -144,7 +144,7 @@ function CompactModeControl({ sessionId }: { sessionId: string }) {
       </button>
       {expanded && (
         <div
-          className="mt-2 p-3 rounded-lg flex flex-col gap-2 bg-bg-card border border-border"
+          className="shadow-soft mt-2 p-3 rounded-lg flex flex-col gap-2 bg-bg-card"
         >
           <div className="flex gap-1">
             {(["manual", "smart", "aggressive"] as const).map((m) => (
@@ -207,7 +207,7 @@ function RTKSavingsCard({
   if (tokensSaved === 0 && compressions === 0) {
     return (
       <div
-        className="p-3 rounded-xl bg-bg-card border border-border"
+        className="shadow-soft p-3 rounded-xl bg-bg-card"
       >
         <div className="flex items-center gap-2">
           <span className="text-text-muted" style={{ fontSize: 14 }}>⚡</span>
@@ -494,7 +494,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
             <a
               href={`${typeof window !== "undefined" ? localStorage.getItem("api_url") || "" : ""}/api/sessions/${session.id}/export`}
               download
-              className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-text-secondary bg-bg-elevated border border-border"
+              className="shadow-soft flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-text-secondary bg-bg-elevated"
             >
               <DownloadSimple size={14} weight="bold" />
               Export as Markdown
@@ -704,7 +704,7 @@ function StreamToTelegramButton({ sessionId }: { sessionId: string }) {
   if (loading) {
     return (
       <div
-        className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs text-text-muted bg-bg-elevated border border-border"
+        className="shadow-soft flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs text-text-muted bg-bg-elevated"
       >
         <TelegramLogo size={14} weight="bold" />
         Loading...
@@ -777,7 +777,7 @@ function SessionSummaryPanel({ sessionId }: { sessionId: string }) {
       </button>
       {expanded && (
         <div
-          className="mt-2 p-3 rounded-lg text-xs leading-relaxed text-text-secondary bg-bg-elevated border border-border"
+          className="shadow-sm mt-2 p-3 rounded-lg text-xs leading-relaxed text-text-secondary bg-bg-elevated"
         >
           <p>{summary.summary}</p>
           {summary.keyDecisions.length > 0 && (

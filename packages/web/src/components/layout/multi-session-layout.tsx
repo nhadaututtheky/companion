@@ -65,7 +65,7 @@ function EmptyPane({
             <button
               key={s.id}
               onClick={() => pinToPane(paneIndex, s.id)}
-              className="text-xs font-mono px-3 py-2 rounded-lg cursor-pointer transition-colors text-left truncate text-text-secondary bg-bg-card border border-border"
+              className="shadow-soft text-xs font-mono px-3 py-2 rounded-lg cursor-pointer transition-colors text-left truncate text-text-secondary bg-bg-card"
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.borderColor = "var(--color-accent)";
               }}

@@ -116,7 +116,7 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
       role="dialog"
       aria-modal="true"
       aria-label="Settings"
-      className="flex flex-col overflow-hidden rounded-2xl border border-glass-border" style={{
+      className="flex flex-col overflow-hidden rounded-2xl shadow-soft border border-glass-border" style={{
         width: "min(calc(100vw - 32px), 1100px)",
         height: "min(85vh, calc(100vh - 32px))",
         background: "var(--glass-bg-heavy)",

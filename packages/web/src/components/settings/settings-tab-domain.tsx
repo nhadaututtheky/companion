@@ -291,7 +291,7 @@ export function DomainTab() {
 
             {/* Command to run */}
             <div
-              className="flex items-center justify-between px-3 py-2.5 rounded-lg font-mono text-xs border border-glass-border" style={{
+              className="flex items-center justify-between px-3 py-2.5 rounded-lg font-mono text-xs shadow-soft border border-glass-border" style={{
                 background: "#1a1a2e",
                 color: "#34A853",
                 }}
@@ -365,7 +365,7 @@ export function DomainTab() {
         {mode !== "off" && saved && (
           <button
             onClick={handleApply}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer text-text-primary bg-bg-elevated border border-glass-border"
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer text-text-primary bg-bg-elevated shadow-soft border border-glass-border"
           >
             <ArrowsClockwise size={16} weight="bold" />
           </button>

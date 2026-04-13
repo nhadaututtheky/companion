@@ -124,7 +124,7 @@ export function PinnedMessagesDrawer({
                 return (
                   <div
                     key={idx}
-                    className="rounded-xl p-3 flex flex-col gap-2 bg-bg-elevated border border-border"
+                    className="shadow-sm rounded-xl p-3 flex flex-col gap-2 bg-bg-elevated"
                   >
                     {/* Role badge + index */}
                     <div className="flex items-center justify-between">

@@ -197,7 +197,7 @@ export function FileTree({ rootPath, onFileSelect }: FileTreeProps) {
     return (
       <button
         onClick={handleExpand}
-        className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-text-secondary bg-bg-elevated border border-border"
+        className="shadow-soft flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-text-secondary bg-bg-elevated"
       >
         <FolderSimple size={14} weight="bold" />
         {loading ? "Loading..." : "Browse project files"}
@@ -207,7 +207,7 @@ export function FileTree({ rootPath, onFileSelect }: FileTreeProps) {
 
   return (
     <div
-      className="flex flex-col rounded-lg overflow-hidden bg-bg-card border border-border" style={{
+      className="shadow-soft flex flex-col rounded-lg overflow-hidden bg-bg-card" style={{
         maxHeight: 300,
         overflowY: "auto",
       }}

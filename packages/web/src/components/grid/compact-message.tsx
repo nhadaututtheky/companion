@@ -30,7 +30,7 @@ function CompactThinking({ blocks }: { blocks: ThinkingBlock[] }) {
 
   return (
     <div
-      className="mx-3 my-1 rounded-lg overflow-hidden bg-bg-elevated border border-border"
+      className="shadow-soft mx-3 my-1 rounded-lg overflow-hidden bg-bg-elevated"
     >
       <button
         onClick={() => setExpanded(!expanded)}

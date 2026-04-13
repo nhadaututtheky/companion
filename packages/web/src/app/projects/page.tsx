@@ -69,7 +69,7 @@ function ProjectCard({
 
   return (
     <div
-      className="flex items-start justify-between p-5 rounded-2xl transition-all bg-bg-card border border-border"
+      className="shadow-soft flex items-start justify-between p-5 rounded-2xl transition-all bg-bg-card"
     >
       <div className="flex gap-4 min-w-0">
         <div
@@ -173,7 +173,7 @@ function ProjectDialog({
     >
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col gap-4 p-6 rounded-2xl shadow-lg w-full max-w-md bg-bg-card border border-border"
+        className="flex flex-col gap-4 p-6 rounded-2xl shadow-lg w-full max-w-md bg-bg-card"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -306,7 +306,7 @@ function DeleteConfirmDialog({
       onClick={onCancel}
     >
       <div
-        className="flex flex-col gap-4 p-6 rounded-2xl shadow-lg w-full max-w-sm bg-bg-card border border-border"
+        className="flex flex-col gap-4 p-6 rounded-2xl shadow-lg w-full max-w-sm bg-bg-card"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3">
@@ -426,7 +426,7 @@ export default function ProjectsPage() {
 
         {/* Telegram sync info banner */}
         <div
-          className="flex items-start gap-3 p-4 rounded-xl mb-5 bg-bg-elevated border border-border"
+          className="shadow-sm flex items-start gap-3 p-4 rounded-xl mb-5 bg-bg-elevated"
         >
           <TelegramLogo
             size={20}
@@ -455,7 +455,7 @@ export default function ProjectsPage() {
           </div>
         ) : projects.length === 0 ? (
           <div
-            className="flex flex-col items-center justify-center py-16 gap-4 rounded-2xl bg-bg-card border border-border"
+            className="shadow-soft flex flex-col items-center justify-center py-16 gap-4 rounded-2xl bg-bg-card"
           >
             <div
               className="flex items-center justify-center rounded-2xl"

@@ -158,7 +158,7 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
         <button
           onClick={handleTestCdp}
           disabled={testing}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors w-fit text-text-secondary bg-bg-elevated border border-border" style={{
+          className="shadow-soft flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors w-fit text-text-secondary bg-bg-elevated" style={{
             opacity: testing ? 0.7 : 1,
           }}
         >

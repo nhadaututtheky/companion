@@ -115,7 +115,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
       }}
     >
       <div
-        className="flex flex-col gap-4 rounded-2xl p-5 w-full max-w-md max-h-[80vh] overflow-y-auto bg-bg-card border border-border" style={{
+        className="shadow-float flex flex-col gap-4 rounded-2xl p-5 w-full max-w-md max-h-[80vh] overflow-y-auto bg-bg-card" style={{
           boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
         }}
       >
@@ -136,7 +136,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
 
         {/* Create new share */}
         <div
-          className="flex flex-col gap-3 rounded-xl p-3 bg-bg-elevated border border-border"
+          className="shadow-sm flex flex-col gap-3 rounded-xl p-3 bg-bg-elevated"
         >
           <span className="text-xs font-semibold uppercase tracking-wide">New Share Link</span>
           <div className="flex items-center gap-3">

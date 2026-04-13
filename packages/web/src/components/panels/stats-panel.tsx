@@ -81,7 +81,7 @@ interface KpiCardProps {
 function KpiCard({ label, value, sub, icon, accent = "#4285f4" }: KpiCardProps) {
   return (
     <div
-      className="flex flex-col gap-1 rounded-lg p-3 flex-1 min-w-0 bg-bg-elevated border border-glass-border"
+      className="flex flex-col gap-1 rounded-lg p-3 flex-1 min-w-0 bg-bg-elevated shadow-soft border border-glass-border"
     >
       <div className="flex items-center justify-between gap-1">
         <span className="text-xs">{label}</span>
@@ -234,7 +234,7 @@ export function StatsPanel({ onClose }: StatsPanelProps) {
             {/* Link to full analytics */}
             <Link
               href="/analytics"
-              className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-accent bg-bg-elevated border border-glass-border"
+              className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-accent bg-bg-elevated shadow-soft border border-glass-border"
             >
               <ChartBar size={12} weight="bold" aria-hidden="true" />
               View full analytics
@@ -254,7 +254,7 @@ function ActivityHeatmap({ data }: { data: StatsData["dailyActivity"] }) {
 
   return (
     <div
-      className="rounded-lg p-3 bg-bg-elevated border border-glass-border"
+      className="rounded-lg p-3 bg-bg-elevated shadow-soft border border-glass-border"
     >
       <div
         className="grid" style={{
@@ -310,7 +310,7 @@ function ModelBreakdown({ breakdown }: { breakdown: StatsData["modelBreakdown"] 
 
   return (
     <div
-      className="flex flex-col gap-2 rounded-lg p-3 bg-bg-elevated border border-glass-border"
+      className="flex flex-col gap-2 rounded-lg p-3 bg-bg-elevated shadow-soft border border-glass-border"
     >
       {breakdown.map((m) => {
         const pct = total > 0 ? Math.round((m.count / total) * 100) : 0;
@@ -358,7 +358,7 @@ function TopProjects({ projects }: { projects: StatsData["topProjects"] }) {
 
   return (
     <div
-      className="flex flex-col gap-1.5 rounded-lg p-3 bg-bg-elevated border border-glass-border"
+      className="flex flex-col gap-1.5 rounded-lg p-3 bg-bg-elevated shadow-soft border border-glass-border"
     >
       {projects.map((p) => {
         const pct = max > 0 ? Math.round((p.sessions / max) * 100) : 0;

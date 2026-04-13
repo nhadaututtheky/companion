@@ -78,7 +78,7 @@ export function PulseIndicator({ sessionId }: PulseIndicatorProps) {
       {/* Sparkline popover */}
       {showSparkline && history && history.length > 1 && (
         <div
-          className="absolute top-full right-0 mt-1 p-2.5 rounded-lg z-50 flex flex-col gap-2 bg-bg-elevated border border-border" style={{
+          className="absolute top-full right-0 mt-1 p-2.5 rounded-lg z-50 flex flex-col gap-2 bg-bg-elevated shadow-lg border border-glass-border" style={{
             boxShadow: "var(--shadow-lg)",
             minWidth: 200,
             maxWidth: 260,

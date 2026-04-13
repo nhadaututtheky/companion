@@ -162,7 +162,7 @@ export default function SchedulesPage() {
               {/* Upcoming runs */}
               {upcoming.length > 0 && (
                 <div
-                  className="rounded-xl p-3 bg-bg-card border border-border"
+                  className="shadow-soft rounded-xl p-3 bg-bg-card"
                 >
                   <div className="flex items-center gap-1.5 mb-2">
                     <CalendarBlank size={12} style={{ color: "#4285F4" }} />

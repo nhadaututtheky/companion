@@ -66,7 +66,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
   return (
     <header
-      className="flex items-center px-5 gap-3 h-12 relative z-10 rounded-radius-xl border border-glass-border" style={{
+      className="flex items-center px-5 gap-3 h-12 relative z-10 rounded-radius-xl shadow-soft border border-glass-border" style={{
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
@@ -93,7 +93,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
       {/* Center: Search trigger (⌘K) */}
       <button
         onClick={() => setCommandPaletteOpen(true)}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm transition-colors cursor-pointer min-h-[44px] text-text-muted bg-bg-elevated rounded-radius-md border border-glass-border" style={{
+        className="flex items-center gap-2 px-3 py-1.5 text-sm transition-colors cursor-pointer min-h-[44px] text-text-muted bg-bg-elevated rounded-radius-md shadow-soft border border-glass-border" style={{
           minWidth: 44,
         }}
         aria-label="Open command palette"
@@ -101,7 +101,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <MagnifyingGlass size={14} weight="bold" />
         <span className="hidden sm:inline">Search...</span>
         <span
-          className="ml-auto text-xs hidden sm:inline bg-bg-base rounded-radius-sm border border-glass-border" style={{
+          className="ml-auto text-xs hidden sm:inline bg-bg-base rounded-radius-sm shadow-soft border border-glass-border" style={{
             padding: "1px 5px",
             }}
         >

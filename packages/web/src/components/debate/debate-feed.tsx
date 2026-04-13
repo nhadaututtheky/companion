@@ -93,7 +93,7 @@ function DebateMessageBubble({ msg }: { msg: DebateMessage }) {
 
   return (
     <div
-      className="flex flex-col gap-1 rounded-xl p-3 bg-bg-card border border-border" style={{
+      className="shadow-soft flex flex-col gap-1 rounded-xl p-3 bg-bg-card" style={{
         borderLeft: `3px solid ${badge!.color}`,
       }}
     >
@@ -128,7 +128,7 @@ function DebateMessageBubble({ msg }: { msg: DebateMessage }) {
         ) : (
           <div
             key={i}
-            className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-bg-elevated border border-border"
+            className="shadow-soft flex items-center gap-1.5 px-2 py-1 rounded-lg bg-bg-elevated"
           >
             <Wrench size={11} className="text-text-muted" aria-hidden="true" />
             <span

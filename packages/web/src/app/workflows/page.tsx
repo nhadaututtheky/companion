@@ -118,7 +118,7 @@ export default function WorkflowsPage() {
           </div>
         ) : workflows.length === 0 ? (
           <div
-            className="text-center py-12 rounded-xl bg-bg-card border border-border"
+            className="shadow-soft text-center py-12 rounded-xl bg-bg-card"
           >
             <Lightning
               size={32}
@@ -140,7 +140,7 @@ export default function WorkflowsPage() {
                 <Link
                   key={w.channelId}
                   href={`/workflows/${w.channelId}`}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors cursor-pointer bg-bg-card border border-border" style={{
+                  className="shadow-soft flex items-center gap-3 px-4 py-3 rounded-xl transition-colors cursor-pointer bg-bg-card" style={{
                     textDecoration: "none",
                   }}
                 >

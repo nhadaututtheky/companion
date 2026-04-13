@@ -58,7 +58,7 @@ export function ScheduleList({
 
   return (
     <div
-      className="rounded-xl overflow-hidden bg-bg-card border border-border"
+      className="shadow-soft rounded-xl overflow-hidden bg-bg-card"
     >
       <table className="w-full">
         <thead>

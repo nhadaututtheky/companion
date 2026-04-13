@@ -69,7 +69,7 @@ export class PanelErrorBoundary extends Component<
         </p>
         <button
           onClick={this.handleRetry}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors text-text-primary bg-bg-card border border-border"
+          className="shadow-soft inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors text-text-primary bg-bg-card"
         >
           <ArrowClockwise size={12} weight="bold" aria-hidden="true" />
           Retry

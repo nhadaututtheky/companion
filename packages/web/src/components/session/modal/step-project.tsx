@@ -212,7 +212,7 @@ export function StepProject(props: StepProjectProps) {
       >
         <button
           onClick={() => onShowDirBrowser(true)}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer text-text-primary bg-bg-elevated border border-border"
+          className="shadow-soft flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer text-text-primary bg-bg-elevated"
         >
           <FolderOpen size={14} aria-hidden="true" />
           Browse folder...

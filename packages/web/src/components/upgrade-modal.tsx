@@ -155,7 +155,7 @@ export function UpgradeModal() {
       onClick={handleBackdrop}
     >
       <div
-        className="relative w-full max-w-md mx-4 rounded-2xl overflow-hidden bg-bg-card border border-border" style={{
+        className="shadow-float relative w-full max-w-md mx-4 rounded-2xl overflow-hidden bg-bg-card" style={{
           boxShadow: "0 25px 50px rgba(0,0,0,0.3)",
         }}
       >
@@ -204,7 +204,7 @@ export function UpgradeModal() {
             {/* Pricing */}
             <div className="px-6 pb-4">
               <div
-                className="flex items-center justify-between p-4 rounded-xl bg-bg-elevated border border-border"
+                className="shadow-sm flex items-center justify-between p-4 rounded-xl bg-bg-elevated"
               >
                 <div>
                   <div className="flex items-baseline gap-2">
@@ -292,7 +292,7 @@ export function UpgradeModal() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="px-3 py-2.5 rounded-lg text-sm text-text-primary bg-bg-elevated border border-border"
+                  className="shadow-soft px-3 py-2.5 rounded-lg text-sm text-text-primary bg-bg-elevated"
                   onKeyDown={(e) => e.key === "Enter" && handleCreateOrder()}
                   autoFocus
                 />
@@ -308,7 +308,7 @@ export function UpgradeModal() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your name"
-                  className="px-3 py-2.5 rounded-lg text-sm text-text-primary bg-bg-elevated border border-border"
+                  className="shadow-soft px-3 py-2.5 rounded-lg text-sm text-text-primary bg-bg-elevated"
                   onKeyDown={(e) => e.key === "Enter" && handleCreateOrder()}
                 />
               </div>
@@ -369,7 +369,7 @@ export function UpgradeModal() {
 
             {/* Details */}
             <div
-              className="flex flex-col gap-2 p-3 rounded-xl text-xs bg-bg-elevated border border-border"
+              className="shadow-sm flex flex-col gap-2 p-3 rounded-xl text-xs bg-bg-elevated"
             >
               <div className="flex items-center justify-between">
                 <span className="text-text-muted">Amount</span>
@@ -435,7 +435,7 @@ export function UpgradeModal() {
             {licenseKey && (
               <div className="w-full flex flex-col gap-2">
                 <div
-                  className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-bg-elevated border border-border font-mono"
+                  className="shadow-soft flex items-center justify-between px-3 py-2.5 rounded-lg bg-bg-elevated font-mono"
                 >
                   <code className="text-xs font-bold" style={{ color: "#8b5cf6" }}>
                     {licenseKey}
@@ -459,7 +459,7 @@ export function UpgradeModal() {
 
             <button
               onClick={handleClose}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold cursor-pointer text-text-primary bg-bg-elevated border border-border"
+              className="shadow-soft w-full py-2.5 rounded-xl text-sm font-semibold cursor-pointer text-text-primary bg-bg-elevated"
             >
               Done
             </button>

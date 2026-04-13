@@ -80,7 +80,7 @@ export function TelegramStatus() {
           {status.bots.map((bot) => (
             <div
               key={bot.botId}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-bg-elevated border border-border"
+              className="shadow-soft flex items-center gap-3 px-3 py-2.5 rounded-lg bg-bg-elevated"
             >
               <TelegramLogo
                 size={16}

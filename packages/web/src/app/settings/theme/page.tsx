@@ -242,7 +242,7 @@ export default function ThemeSettingsPage() {
 
         {/* Import VS Code theme */}
         <div
-          className="rounded-xl p-4 bg-bg-card border border-border"
+          className="shadow-soft rounded-xl p-4 bg-bg-card"
         >
           <h2 className="text-sm font-semibold mb-2">Import VS Code Theme</h2>
           <p className="text-xs mb-3">
@@ -250,7 +250,7 @@ export default function ThemeSettingsPage() {
             &quot;colors&quot; key will be mapped to Companion&apos;s CSS variables.
           </p>
           <label
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer transition-colors text-text-secondary bg-bg-elevated border border-border"
+            className="shadow-soft inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer transition-colors text-text-secondary bg-bg-elevated"
           >
             <UploadSimple size={16} />
             Choose File

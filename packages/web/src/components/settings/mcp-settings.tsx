@@ -218,7 +218,7 @@ export function McpSettings() {
       >
         {/* Left: Server list */}
         <div
-          className="rounded-xl overflow-hidden border border-glass-border" style={{
+          className="rounded-xl overflow-hidden shadow-soft border border-glass-border" style={{
             background: "var(--glass-bg-heavy)",
             boxShadow: "var(--shadow-soft)",
           }}
@@ -289,7 +289,7 @@ export function McpSettings() {
 
         {/* Right: Editor */}
         <div
-          className="rounded-xl border border-glass-border" style={{
+          className="rounded-xl shadow-soft border border-glass-border" style={{
             background: "var(--glass-bg-heavy)",
             boxShadow: "var(--shadow-soft)",
           }}
@@ -359,7 +359,7 @@ function DetectedServersSection({
             return (
               <div
                 key={`${server.id}-${server.source}`}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-bg-base border border-glass-border"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-bg-base shadow-soft border border-glass-border"
               >
                 <Icon
                   size={14}

@@ -69,7 +69,7 @@ export function DebateAgentCard({
 
   return (
     <div
-      className="flex flex-col gap-2 rounded-xl p-3 bg-bg-card border border-border"
+      className="shadow-soft flex flex-col gap-2 rounded-xl p-3 bg-bg-card"
     >
       {/* Header */}
       <div className="flex items-center justify-between">

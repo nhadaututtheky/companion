@@ -48,7 +48,7 @@ export function StepReview(props: StepReviewProps) {
     <div className="flex flex-col gap-4 px-5 py-4">
       {/* Summary card */}
       <div
-        className="rounded-xl p-4 flex flex-col gap-3 bg-bg-elevated border border-border"
+        className="shadow-sm rounded-xl p-4 flex flex-col gap-3 bg-bg-elevated"
       >
         <h3
           className="text-sm font-bold text-text-primary" style={{
@@ -132,7 +132,7 @@ export function StepReview(props: StepReviewProps) {
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer text-text-secondary bg-bg-elevated border border-border"
+          className="shadow-soft px-4 py-2 rounded-lg text-sm font-medium cursor-pointer text-text-secondary bg-bg-elevated"
         >
           Back
         </button>

@@ -98,7 +98,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
       aria-label="Create Workspace"
     >
       <div
-        className="flex flex-col w-full max-w-md max-h-[85vh] rounded-2xl overflow-hidden bg-bg-base border border-border" style={{
+        className="shadow-float flex flex-col w-full max-w-md max-h-[85vh] rounded-2xl overflow-hidden bg-bg-base" style={{
           boxShadow: "0 25px 50px rgba(0,0,0,0.3)",
         }}
       >
@@ -135,7 +135,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Companion Dev"
-              className="rounded-lg px-3 py-2 text-sm text-text-primary bg-bg-card border border-border"
+              className="shadow-soft rounded-lg px-3 py-2 text-sm text-text-primary bg-bg-card"
               autoFocus
             />
           </div>
@@ -167,7 +167,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
                 id="ws-project"
                 value={projectSlug}
                 onChange={(e) => setProjectSlug(e.target.value)}
-                className="rounded-lg px-3 py-2 text-sm cursor-pointer text-text-primary bg-bg-card border border-border"
+                className="shadow-soft rounded-lg px-3 py-2 text-sm cursor-pointer text-text-primary bg-bg-card"
               >
                 {projects.map((p) => (
                   <option key={p.slug} value={p.slug}>
@@ -230,7 +230,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
         >
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all text-text-secondary bg-bg-card border border-border"
+            className="shadow-soft px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all text-text-secondary bg-bg-card"
           >
             Cancel
           </button>

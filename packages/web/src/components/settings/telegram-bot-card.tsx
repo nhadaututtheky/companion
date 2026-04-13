@@ -175,7 +175,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
 
   return (
     <div
-      className="rounded-xl p-4 flex flex-col gap-3 border border-glass-border" style={{
+      className="rounded-xl p-4 flex flex-col gap-3 shadow-soft border border-glass-border" style={{
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
@@ -438,7 +438,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
                   config.notificationGroupId ? String(config.notificationGroupId) : "",
                 );
               }}
-              className="flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer text-text-secondary bg-bg-elevated border border-glass-border"
+              className="flex items-center gap-2 px-3 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer text-text-secondary bg-bg-elevated shadow-soft border border-glass-border"
             >
               <X size={12} weight="bold" aria-hidden="true" />
               Cancel

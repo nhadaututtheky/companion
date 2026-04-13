@@ -133,7 +133,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
       {/* Header — click to expand/collapse */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="flex items-center justify-between w-full cursor-pointer px-3 py-2 rounded-lg transition-colors bg-bg-elevated border border-border"
+        className="shadow-soft flex items-center justify-between w-full cursor-pointer px-3 py-2 rounded-lg transition-colors bg-bg-elevated"
       >
         <span className="flex items-center gap-2">
           <span className="text-sm font-medium">{botLabel}</span>

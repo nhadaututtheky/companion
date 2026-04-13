@@ -76,7 +76,7 @@ export function PersonaChip({ personaId, onSwitch, disabled }: PersonaChipProps)
 
       {open && (
         <div
-          className="absolute left-0 mt-1 rounded-lg overflow-hidden bg-bg-card border border-border" style={{
+          className="shadow-soft absolute left-0 mt-1 rounded-lg overflow-hidden bg-bg-card" style={{
             top: "100%",
             width: 260,
             boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
@@ -95,7 +95,7 @@ export function PersonaChip({ personaId, onSwitch, disabled }: PersonaChipProps)
             aria-label="Default Claude (no persona)"
           >
             <div
-              className="flex items-center justify-center rounded-full flex-shrink-0 text-text-muted bg-bg-elevated border border-border" style={{
+              className="shadow-soft flex items-center justify-center rounded-full flex-shrink-0 text-text-muted bg-bg-elevated" style={{
                 width: 24,
                 height: 24,
                 fontSize: 10,

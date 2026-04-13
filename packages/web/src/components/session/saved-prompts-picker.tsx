@@ -106,7 +106,7 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
 
       {open && (
         <div
-          className="absolute bottom-full left-0 mb-2 rounded-xl overflow-hidden bg-bg-card border border-border flex" style={{
+          className="absolute bottom-full left-0 mb-2 rounded-xl overflow-hidden bg-bg-card shadow-lg border border-glass-border flex" style={{
             width: 340,
             maxHeight: 420,
             boxShadow: "var(--shadow-lg)",
@@ -174,7 +174,7 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
           {prompts.length > 3 && (
             <div className="px-3 py-2" style={{ borderBottom: "1px solid var(--color-border)" }}>
               <div
-                className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-bg-elevated border border-border"
+                className="shadow-soft flex items-center gap-1.5 px-2 py-1 rounded-md bg-bg-elevated"
               >
                 <MagnifyingGlass size={12} className="text-text-muted" />
                 <input

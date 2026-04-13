@@ -100,7 +100,7 @@ export function TemplateQuickPicker() {
 
             {/* Panel */}
             <div
-              className="bg-bg-card rounded-radius-xl border border-glass-border overflow-hidden flex" style={{
+              className="bg-bg-card rounded-radius-xl shadow-soft border border-glass-border overflow-hidden flex" style={{
                 position: "fixed",
                 top: "50%",
                 left: "50%",
@@ -132,7 +132,7 @@ export function TemplateQuickPicker() {
                       setOpen(false);
                       router.push("/templates");
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors text-text-secondary bg-bg-elevated border border-glass-border"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors text-text-secondary bg-bg-elevated shadow-soft border border-glass-border"
                   >
                     <PencilSimple size={12} weight="bold" aria-hidden="true" />
                     Manage
@@ -155,7 +155,7 @@ export function TemplateQuickPicker() {
                     <button
                       key={persona.id}
                       onClick={() => handleSelectPersona(persona)}
-                      className="flex items-center gap-3 p-3 rounded-xl text-left cursor-pointer transition-all bg-bg-elevated border border-glass-border"
+                      className="flex items-center gap-3 p-3 rounded-xl text-left cursor-pointer transition-all bg-bg-elevated shadow-soft border border-glass-border"
                       title={persona.strength}
                     >
                       <PersonaAvatar persona={persona} size={36} showBadge={false} />
@@ -197,7 +197,7 @@ export function TemplateQuickPicker() {
                         <button
                           key={tpl.id}
                           onClick={() => handleSelectTemplate(tpl)}
-                          className="flex items-center gap-3 p-3 rounded-xl text-left cursor-pointer transition-all bg-bg-elevated border border-glass-border"
+                          className="flex items-center gap-3 p-3 rounded-xl text-left cursor-pointer transition-all bg-bg-elevated shadow-soft border border-glass-border"
                         >
                           <span className="shrink-0" style={{ fontSize: 20, lineHeight: 1 }}>
                             {tpl.icon || "\uD83D\uDCDD"}

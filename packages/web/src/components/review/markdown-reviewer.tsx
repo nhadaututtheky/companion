@@ -78,7 +78,7 @@ function CommentInput({
       }}
     >
       <div
-        className="rounded-lg shadow-lg overflow-hidden bg-bg-elevated border border-border" style={{
+        className="rounded-lg shadow-lg overflow-hidden bg-bg-elevated" style={{
           width: 340,
           }}
       >

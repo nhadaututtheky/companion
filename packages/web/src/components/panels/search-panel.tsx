@@ -175,7 +175,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search..."
-            className="w-full text-sm rounded-md text-text-primary bg-bg-elevated border border-border" style={{
+            className="shadow-soft w-full text-sm rounded-md text-text-primary bg-bg-elevated" style={{
               padding: "6px 10px 6px 32px",
               outline: "none",
             }}
@@ -198,7 +198,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
           value={glob}
           onChange={(e) => setGlob(e.target.value)}
           placeholder="File filter: *.ts, *.tsx"
-          className="w-full text-xs rounded-md text-text-secondary bg-bg-elevated border border-border" style={{
+          className="shadow-soft w-full text-xs rounded-md text-text-secondary bg-bg-elevated" style={{
             padding: "5px 10px",
             outline: "none",
           }}

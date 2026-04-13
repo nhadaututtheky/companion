@@ -73,7 +73,7 @@ export function TelegramDebateGuide() {
 
   return (
     <div
-      className="rounded-xl overflow-hidden bg-bg-card border border-border"
+      className="shadow-soft rounded-xl overflow-hidden bg-bg-card"
     >
       {/* Header — collapsible */}
       <button
@@ -109,7 +109,7 @@ export function TelegramDebateGuide() {
         >
           {/* Intro */}
           <div
-            className="flex items-start gap-2 mt-3 px-3 py-2.5 rounded-lg bg-bg-elevated border border-border"
+            className="shadow-soft flex items-start gap-2 mt-3 px-3 py-2.5 rounded-lg bg-bg-elevated"
           >
             <Info
               size={14}
@@ -245,7 +245,7 @@ export function TelegramDebateGuide() {
 
           {/* Tips */}
           <div
-            className="flex flex-col gap-2 px-3 py-2.5 rounded-lg bg-bg-elevated border border-border"
+            className="shadow-soft flex flex-col gap-2 px-3 py-2.5 rounded-lg bg-bg-elevated"
           >
             <div className="flex items-center gap-1.5">
               <Lightning

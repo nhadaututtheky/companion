@@ -74,7 +74,7 @@ function ThinkingSection({ blocks }: { blocks: ThinkingBlock[] }) {
 
   return (
     <div
-      className="my-2 rounded-lg overflow-hidden bg-bg-elevated border border-border"
+      className="shadow-soft my-2 rounded-lg overflow-hidden bg-bg-elevated"
     >
       <button
         onClick={() => setExpanded(!expanded)}
@@ -398,7 +398,7 @@ function MessageBubble({
     return (
       <div
         ref={msgRef}
-        className="flex gap-2 mx-4 my-1.5 p-3 rounded-xl bg-bg-elevated border border-border"
+        className="shadow-sm flex gap-2 mx-4 my-1.5 p-3 rounded-xl bg-bg-elevated"
       >
         <Wrench size={14} weight="bold" className="shrink-0" style={{ color: "#4285F4", marginTop: 2 }} />
         <pre className="text-xs font-mono m-0 whitespace-pre-wrap">{msg.content}</pre>

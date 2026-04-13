@@ -74,7 +74,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="rounded-xl w-full max-w-md max-h-[70vh] flex flex-col bg-bg-card border border-border" style={{
+        className="shadow-float rounded-xl w-full max-w-md max-h-[70vh] flex flex-col bg-bg-card" style={{
           boxShadow: "0 16px 48px rgba(0,0,0,0.2)",
         }}
       >

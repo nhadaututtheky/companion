@@ -111,7 +111,7 @@ export function SpawnAgentModal({
       }}
     >
       <div
-        className="flex flex-col gap-4 p-5 overflow-y-auto rounded-radius-xl border border-glass-border" style={{
+        className="flex flex-col gap-4 p-5 overflow-y-auto rounded-radius-xl shadow-soft border border-glass-border" style={{
           background: "var(--glass-bg-heavy)",
           backdropFilter: "blur(var(--glass-blur))",
           WebkitBackdropFilter: "blur(var(--glass-blur))",
@@ -150,7 +150,7 @@ export function SpawnAgentModal({
                 key={t.id}
                 onClick={() => handleSpawnTemplate(t.id)}
                 disabled={!!spawningTemplate}
-                className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs cursor-pointer transition-colors text-left disabled:opacity-50 text-text-secondary bg-bg-elevated border border-glass-border"
+                className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs cursor-pointer transition-colors text-left disabled:opacity-50 text-text-secondary bg-bg-elevated shadow-soft border border-glass-border"
               >
                 <span className="text-base">{t.icon}</span>
                 <div className="flex flex-col min-w-0">
@@ -190,7 +190,7 @@ export function SpawnAgentModal({
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Backend Engineer"
             maxLength={100}
-            className="px-3 py-2 rounded-lg text-sm outline-none text-text-primary bg-bg-elevated border border-glass-border"
+            className="px-3 py-2 rounded-lg text-sm outline-none text-text-primary bg-bg-elevated shadow-soft border border-glass-border"
             autoFocus
           />
         </div>
@@ -265,7 +265,7 @@ export function SpawnAgentModal({
             placeholder="e.g. Implement the payment API with Stripe integration"
             rows={3}
             maxLength={10000}
-            className="px-3 py-2 rounded-lg text-sm outline-none resize-none text-text-primary bg-bg-elevated border border-glass-border" style={{
+            className="px-3 py-2 rounded-lg text-sm outline-none resize-none text-text-primary bg-bg-elevated shadow-soft border border-glass-border" style={{
               fontFamily: "var(--font-body)",
             }}
           />

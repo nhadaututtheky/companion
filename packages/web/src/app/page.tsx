@@ -579,7 +579,7 @@ export default function DashboardPage() {
               mobileSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
               "transition-transform duration-200 ease-in-out",
               "mobile-sidebar-overlay",
-            , "rounded-radius-xl", "border border-glass-border"].join(" ")} style={{
+            , "rounded-radius-xl", "shadow-float border border-glass-border"].join(" ")} style={{
               background: "var(--glass-bg-heavy)",
               backdropFilter: "blur(var(--glass-blur))",
               WebkitBackdropFilter: "blur(var(--glass-blur))",
@@ -622,7 +622,7 @@ export default function DashboardPage() {
 
           {/* Main grid area */}
           <main
-            className="flex flex-col flex-1 min-w-0 overflow-hidden bg-bg-base rounded-radius-xl border border-glass-border relative"
+            className="flex flex-col flex-1 min-w-0 overflow-hidden bg-bg-base rounded-radius-xl shadow-soft border border-glass-border relative"
           >
             {/* Stats watermark — centered behind sessions, click to expand */}
             <BottomStatsBar />
@@ -653,7 +653,7 @@ export default function DashboardPage() {
           {/* Right panel — File Explorer, Browser Preview, or Search (desktop only, hidden on mobile to save space) */}
           {rightPanelMode !== "none" && (
             <aside
-              className="hidden md:flex flex-col flex-shrink-0 overflow-hidden rounded-radius-xl border border-glass-border" style={{
+              className="hidden md:flex flex-col flex-shrink-0 overflow-hidden rounded-radius-xl shadow-soft border border-glass-border" style={{
                 width:
                   rightPanelMode === "browser" || rightPanelMode === "terminal"
                     ? 600

@@ -123,7 +123,7 @@ export default function SessionsPage() {
             placeholder="Search sessions..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg text-sm mb-3 text-text-primary bg-bg-card border border-border"
+            className="shadow-soft w-full px-3 py-2 rounded-lg text-sm mb-3 text-text-primary bg-bg-card"
           />
         </div>
         <div className="flex gap-2 mb-4">
@@ -164,7 +164,7 @@ export default function SessionsPage() {
               <button
                 key={s.id}
                 onClick={() => router.push(`/sessions/${s.id}`)}
-                className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left transition-colors cursor-pointer bg-bg-card border border-border"
+                className="shadow-soft w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left transition-colors cursor-pointer bg-bg-card"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">

@@ -151,7 +151,7 @@ export function TelegramTab() {
               {/* Add bot button */}
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer w-fit border border-glass-border" style={{
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer w-fit shadow-soft border border-glass-border" style={{
                   background: showAddForm ? "var(--color-bg-elevated)" : "var(--color-accent)",
                   color: showAddForm ? "var(--color-text-secondary)" : "#fff",
                 }}
@@ -163,7 +163,7 @@ export function TelegramTab() {
               {/* Add bot form */}
               {showAddForm && (
                 <div
-                  className="flex flex-col gap-3 p-4 rounded-xl bg-bg-elevated border border-glass-border"
+                  className="flex flex-col gap-3 p-4 rounded-xl bg-bg-elevated shadow-soft border border-glass-border"
                 >
                   <h3 className="text-xs font-semibold">New Bot</h3>
 

@@ -156,7 +156,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="rounded-xl w-full max-w-lg max-h-[85vh] flex flex-col bg-bg-card border border-border" style={{
+        className="shadow-float rounded-xl w-full max-w-lg max-h-[85vh] flex flex-col bg-bg-card" style={{
           boxShadow: "0 16px 48px rgba(0,0,0,0.2)",
         }}
       >

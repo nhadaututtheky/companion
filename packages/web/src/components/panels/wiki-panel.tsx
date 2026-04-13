@@ -249,7 +249,7 @@ function BrowseView() {
           <button
             key={d.slug}
             onClick={() => selectDomain(d.slug)}
-            className="flex items-center gap-3 p-3 rounded-lg text-left cursor-pointer bg-bg-elevated border border-border"
+            className="shadow-sm flex items-center gap-3 p-3 rounded-lg text-left cursor-pointer bg-bg-elevated"
           >
             <BookOpen size={18} className="shrink-0" style={{ color: WIKI_ACCENT }} />
             <div className="flex-1 min-w-0">
@@ -296,7 +296,7 @@ function BrowseView() {
 
         {/* Search */}
         <div
-          className="flex items-center gap-2 rounded px-2 py-1 bg-bg-elevated border border-border"
+          className="shadow-soft flex items-center gap-2 rounded px-2 py-1 bg-bg-elevated"
         >
           <MagnifyingGlass size={12} className="text-text-secondary" />
           <input
@@ -478,7 +478,7 @@ function NewDomainForm({ onCreated, onCancel }: { onCreated: () => void; onCance
 
   return (
     <div
-      className="flex flex-col gap-2 p-3 rounded-lg bg-bg-elevated border border-border"
+      className="shadow-sm flex flex-col gap-2 p-3 rounded-lg bg-bg-elevated"
     >
       <input
         type="text"
@@ -618,7 +618,7 @@ function LintButton({ domain }: { domain: string }) {
 
       {showResults && issues !== null && (
         <div
-          className="fixed z-50 rounded-lg p-3 flex flex-col gap-1.5 max-h-48 overflow-y-auto bg-bg-base border border-border" style={{
+          className="fixed z-50 rounded-lg p-3 flex flex-col gap-1.5 max-h-48 overflow-y-auto bg-bg-base shadow-lg border border-glass-border" style={{
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
             width: "min(400px, calc(100vw - 2rem))",
             top: "auto",
@@ -932,7 +932,7 @@ function RawView() {
       {/* Paste form */}
       {pasteMode && (
         <div
-          className="mx-3 mb-3 flex flex-col gap-2 p-3 rounded-lg bg-bg-elevated border border-border"
+          className="shadow-sm mx-3 mb-3 flex flex-col gap-2 p-3 rounded-lg bg-bg-elevated"
         >
           <input
             type="text"

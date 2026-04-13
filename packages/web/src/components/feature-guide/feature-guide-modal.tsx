@@ -109,7 +109,7 @@ export function FeatureGuideModal() {
       {activeCategory && (
         <div
           key={activeCategory}
-          className="rounded-radius-xl border border-glass-border overflow-hidden flex" style={{
+          className="rounded-radius-xl shadow-soft border border-glass-border overflow-hidden flex" style={{
             background: "var(--glass-bg-heavy)",
             backdropFilter: "blur(var(--glass-blur))",
             WebkitBackdropFilter: "blur(var(--glass-blur))",
@@ -185,7 +185,7 @@ export function FeatureGuideModal() {
 
       {/* Category pills bar — always visible */}
       <div
-        className="flex items-center gap-1.5 px-3 py-2 rounded-radius-xl border border-glass-border" style={{
+        className="flex items-center gap-1.5 px-3 py-2 rounded-radius-xl shadow-soft border border-glass-border" style={{
           background: "var(--glass-bg-heavy)",
           backdropFilter: "blur(var(--glass-blur))",
           WebkitBackdropFilter: "blur(var(--glass-blur))",

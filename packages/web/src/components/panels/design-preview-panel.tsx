@@ -181,7 +181,7 @@ export function DesignPreviewPanel() {
         </p>
         <button
           onClick={closePanel}
-          className="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors text-text-primary bg-bg-elevated border border-border"
+          className="shadow-soft px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors text-text-primary bg-bg-elevated"
         >
           Back to Chat
         </button>
@@ -205,7 +205,7 @@ export function DesignPreviewPanel() {
         {/* Back button */}
         <button
           onClick={closePanel}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer transition-colors text-text-primary bg-bg-elevated border border-border"
+          className="shadow-soft flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer transition-colors text-text-primary bg-bg-elevated"
           aria-label="Back to chat"
         >
           <ArrowLeft size={14} weight="bold" />

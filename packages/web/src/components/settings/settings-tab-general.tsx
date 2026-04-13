@@ -149,7 +149,7 @@ function LicenseSection() {
       {/* Upgrade card — only show for free/trial */}
       {!isPro && (
         <div
-          className="mb-4 p-4 rounded-xl border border-glass-border" style={{
+          className="mb-4 p-4 rounded-xl shadow-soft border border-glass-border" style={{
             background: "linear-gradient(135deg, #6366f108, #8b5cf610, #ec489808)",
             }}
         >
@@ -193,7 +193,7 @@ function LicenseSection() {
               href="https://pay.theio.vn/checkout/companion-pro"
               target="_blank"
               rel="noopener"
-              className="flex items-center justify-center px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer text-text-secondary bg-bg-elevated border border-glass-border" style={{
+              className="flex items-center justify-center px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer text-text-secondary bg-bg-elevated shadow-soft border border-glass-border" style={{
                 textDecoration: "none",
               }}
             >
@@ -431,7 +431,7 @@ export function GeneralTab() {
       <SettingSection title="Appearance" description="Customize colors and theme.">
         <button
           onClick={() => useUiStore.getState().setSettingsActiveTab("appearance")}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer text-text-secondary border border-glass-border" style={{
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer text-text-secondary shadow-soft border border-glass-border" style={{
             background: "none",
           }}
         >
@@ -487,7 +487,7 @@ export function GeneralTab() {
           href="/settings/errors"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer text-text-secondary border border-glass-border" style={{
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer text-text-secondary shadow-soft border border-glass-border" style={{
             textDecoration: "none",
             marginTop: 12,
           }}

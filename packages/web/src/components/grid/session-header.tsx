@@ -283,7 +283,7 @@ export function SessionHeader({
           {/* Model dropdown */}
           {modelDropdownOpen && (
             <div
-              className="rounded-radius-lg border border-glass-border absolute" style={{
+              className="rounded-radius-lg shadow-float border border-glass-border absolute" style={{
                 top: "calc(100% + 4px)",
                 right: 0,
                 zIndex: Z.popover,

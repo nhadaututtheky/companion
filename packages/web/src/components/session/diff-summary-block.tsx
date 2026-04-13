@@ -106,7 +106,7 @@ export function DiffSummaryBlock({ tools }: DiffSummaryBlockProps) {
 
   return (
     <div
-      className="my-2 rounded-lg overflow-hidden bg-bg-elevated border border-border"
+      className="shadow-soft my-2 rounded-lg overflow-hidden bg-bg-elevated"
     >
       {/* Header */}
       <div

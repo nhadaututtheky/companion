@@ -65,7 +65,7 @@ export function ModelDropdown({
   return (
     <div
       ref={ref}
-      className="absolute bottom-full left-0 mb-1 rounded-lg overflow-hidden shadow-lg z-50 bg-bg-card border border-border" style={{
+      className="absolute bottom-full left-0 mb-1 rounded-lg overflow-hidden shadow-lg z-50 bg-bg-card border border-glass-border" style={{
         minWidth: 260,
         maxHeight: 340,
         overflowY: "auto",

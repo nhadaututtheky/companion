@@ -124,7 +124,7 @@ function KpiCard({
 }) {
   return (
     <div
-      className="flex flex-col gap-1 rounded-xl p-4 flex-1 min-w-0 bg-bg-card border border-border"
+      className="shadow-soft flex flex-col gap-1 rounded-xl p-4 flex-1 min-w-0 bg-bg-card"
     >
       <div className="flex items-center justify-between gap-1">
         <span className="text-xs">{label}</span>
@@ -160,7 +160,7 @@ function BarChart({
 
   return (
     <div
-      className="rounded-xl p-4 bg-bg-card border border-border"
+      className="shadow-soft rounded-xl p-4 bg-bg-card"
     >
       <div className="flex items-end gap-[2px]" style={{ height: 120 }}>
         {data.map((d) => {
@@ -246,7 +246,7 @@ function SessionTable({ sessions }: { sessions: RecentSession[] }) {
 
   return (
     <div
-      className="rounded-xl overflow-hidden bg-bg-card border border-border"
+      className="shadow-soft rounded-xl overflow-hidden bg-bg-card"
     >
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
@@ -707,7 +707,7 @@ function CodeGraphTab({ data }: { data: FeatureData["codegraph"] }) {
         {data.projects.map((p) => (
           <div
             key={p.slug}
-            className="flex items-center gap-4 p-3 rounded-xl bg-bg-card border border-border"
+            className="shadow-soft flex items-center gap-4 p-3 rounded-xl bg-bg-card"
           >
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold">{p.slug}</p>
@@ -833,7 +833,7 @@ function ContextTab({ data }: { data: FeatureData["context"] }) {
             return (
               <div
                 key={t.type}
-                className="flex items-center gap-3 p-3 rounded-xl bg-bg-card border border-border"
+                className="shadow-soft flex items-center gap-3 p-3 rounded-xl bg-bg-card"
               >
                 <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
                 <div className="flex-1 min-w-0">
@@ -883,7 +883,7 @@ function ContextTab({ data }: { data: FeatureData["context"] }) {
           {data.topSessions.slice(0, 5).map((s) => (
             <div
               key={s.sessionId}
-              className="flex items-center gap-3 p-3 rounded-xl bg-bg-card border border-border"
+              className="shadow-soft flex items-center gap-3 p-3 rounded-xl bg-bg-card"
             >
               <div className="flex-1 min-w-0">
                 <Link
@@ -1109,7 +1109,7 @@ export default function AnalyticsPage() {
                     Model Usage (30d)
                   </span>
                   <div
-                    className="flex flex-col gap-3 rounded-xl p-4 bg-bg-card border border-border"
+                    className="shadow-soft flex flex-col gap-3 rounded-xl p-4 bg-bg-card"
                   >
                     {data.modelBreakdown.map((m) => {
                       const total = data.modelBreakdown.reduce((s, x) => s + x.count, 0);
@@ -1154,7 +1154,7 @@ export default function AnalyticsPage() {
                     Top Projects (30d)
                   </span>
                   <div
-                    className="flex flex-col gap-2 rounded-xl p-4 bg-bg-card border border-border"
+                    className="shadow-soft flex flex-col gap-2 rounded-xl p-4 bg-bg-card"
                   >
                     {data.topProjects.map((p) => {
                       const max = data.topProjects[0]?.sessions ?? 1;

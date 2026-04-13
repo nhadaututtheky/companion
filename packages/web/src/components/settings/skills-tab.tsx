@@ -340,7 +340,7 @@ export function SkillsTab() {
 
           {/* Tree browser */}
           <div
-            className="flex rounded-xl overflow-hidden border border-glass-border" style={{
+            className="flex rounded-xl overflow-hidden shadow-soft border border-glass-border" style={{
               height: "min(480px, 60vh)",
             }}
           >

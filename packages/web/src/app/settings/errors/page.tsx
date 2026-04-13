@@ -149,7 +149,7 @@ export default function ErrorsPage() {
 
           <button
             onClick={handleExport}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm cursor-pointer transition-colors text-text-secondary bg-bg-card border border-border"
+            className="shadow-soft flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm cursor-pointer transition-colors text-text-secondary bg-bg-card"
             aria-label="Export errors as JSON"
           >
             <DownloadSimple size={14} />
@@ -181,7 +181,7 @@ export default function ErrorsPage() {
           </div>
         ) : errors.length === 0 ? (
           <div
-            className="text-center py-12 rounded-xl bg-bg-card border border-border"
+            className="shadow-soft text-center py-12 rounded-xl bg-bg-card"
           >
             <Bug
               size={32}

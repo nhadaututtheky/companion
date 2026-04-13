@@ -138,7 +138,7 @@ export function DebateCreateModal({
       aria-label="Start Debate"
     >
       <div
-        className="flex flex-col w-full max-w-lg max-h-[85vh] rounded-2xl overflow-hidden bg-bg-base border border-border" style={{
+        className="shadow-float flex flex-col w-full max-w-lg max-h-[85vh] rounded-2xl overflow-hidden bg-bg-base" style={{
           boxShadow: "0 25px 50px rgba(0,0,0,0.3)",
         }}
       >

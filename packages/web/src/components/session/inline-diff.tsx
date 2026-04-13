@@ -29,7 +29,7 @@ export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }
 
   return (
     <div
-      className="my-1.5 rounded-lg overflow-hidden bg-bg-elevated border border-border"
+      className="shadow-soft my-1.5 rounded-lg overflow-hidden bg-bg-elevated"
     >
       {/* Header */}
       <button

@@ -118,7 +118,7 @@ export function ScheduleModal() {
 
       {/* Modal */}
       <div
-        className="bg-bg-card rounded-radius-xl border border-glass-border overflow-hidden flex" style={{
+        className="bg-bg-card rounded-radius-xl shadow-soft border border-glass-border overflow-hidden flex" style={{
           position: "fixed",
           top: "50%",
           left: "50%",
@@ -196,7 +196,7 @@ export function ScheduleModal() {
 
                 {upcoming.length > 0 && (
                   <div
-                    className="rounded-xl p-3 bg-bg-elevated border border-glass-border"
+                    className="rounded-xl p-3 bg-bg-elevated shadow-soft border border-glass-border"
                   >
                     <div className="flex items-center gap-1.5 mb-2">
                       <CalendarBlank size={12} style={{ color: "#4285F4" }} />

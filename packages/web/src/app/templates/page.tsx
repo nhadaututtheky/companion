@@ -103,14 +103,14 @@ function TemplateForm({
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={100}
-            className="w-full px-3 py-2 rounded-lg text-sm text-text-primary bg-bg-elevated border border-border"
+            className="shadow-soft w-full px-3 py-2 rounded-lg text-sm text-text-primary bg-bg-elevated"
           />
 
           {/* Model override */}
           <select
             value={model}
             onChange={(e) => setModel(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg text-sm cursor-pointer text-text-primary bg-bg-elevated border border-border"
+            className="shadow-soft w-full px-3 py-2 rounded-lg text-sm cursor-pointer text-text-primary bg-bg-elevated"
           >
             <option value="">Model: project default</option>
             <option value="claude-sonnet-4-6">Sonnet 4.6</option>
@@ -137,7 +137,7 @@ function TemplateForm({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors text-text-secondary bg-bg-elevated border border-border"
+          className="shadow-soft px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors text-text-secondary bg-bg-elevated"
         >
           <X size={14} className="inline mr-1" />
           Cancel
@@ -184,7 +184,7 @@ function TemplateCard({
 
   return (
     <div
-      className="p-4 rounded-xl transition-all hover:scale-[1.01] bg-bg-card border border-border"
+      className="shadow-soft p-4 rounded-xl transition-all hover:scale-[1.01] bg-bg-card"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
@@ -253,7 +253,7 @@ function PersonaCard({ persona, onClone }: { persona: Persona; onClone?: (id: st
   return (
     <PersonaTooltip persona={persona} placement="bottom">
       <div
-        className="flex items-center gap-3 p-3 rounded-xl persona-card w-full group bg-bg-card border border-border"
+        className="shadow-soft flex items-center gap-3 p-3 rounded-xl persona-card w-full group bg-bg-card"
       >
         <PersonaAvatar persona={persona} size={40} />
         <div className="flex flex-col flex-1 min-w-0">
@@ -336,7 +336,7 @@ function CustomPersonaCard({
 
   return (
     <div
-      className="flex items-center gap-3 p-3 rounded-xl group bg-bg-card border border-border"
+      className="shadow-soft flex items-center gap-3 p-3 rounded-xl group bg-bg-card"
     >
       <PersonaAvatar persona={persona} size={40} />
       <div className="flex flex-col flex-1 min-w-0">

@@ -107,7 +107,7 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
 
   return (
     <div
-      className="rounded-xl bg-bg-card border border-border"
+      className="shadow-soft rounded-xl bg-bg-card"
     >
       {/* Header */}
       <div

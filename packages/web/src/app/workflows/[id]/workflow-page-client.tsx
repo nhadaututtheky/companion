@@ -166,7 +166,7 @@ export function WorkflowPageClient({ params }: PageProps) {
 
         {/* Pipeline visualization */}
         <div
-          className="rounded-xl p-5 mb-6 bg-bg-card border border-border"
+          className="shadow-soft rounded-xl p-5 mb-6 bg-bg-card"
         >
           <div className="flex items-center gap-0">
             {state.steps.map((step, i) => (
@@ -263,7 +263,7 @@ export function WorkflowPageClient({ params }: PageProps) {
 
         {/* Summary card */}
         <div
-          className="rounded-xl px-4 py-3 mt-4 bg-bg-card border border-border"
+          className="shadow-soft rounded-xl px-4 py-3 mt-4 bg-bg-card"
         >
           <div className="flex items-center gap-4 text-xs">
             <span>

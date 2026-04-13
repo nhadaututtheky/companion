@@ -144,7 +144,7 @@ export function LayoutSelector() {
       {/* Dropdown */}
       {open && (
         <div
-          className="absolute right-0 top-full mt-1 rounded-xl overflow-hidden bg-bg-card border border-border" style={{
+          className="absolute right-0 top-full mt-1 rounded-xl overflow-hidden bg-bg-card shadow-lg border border-glass-border" style={{
             boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
             minWidth: 200,
             zIndex: Z.popover,

@@ -203,7 +203,7 @@ export function StepConfig(props: StepConfigProps) {
             </span>
           </div>
           <label
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer bg-bg-elevated border border-border"
+            className="shadow-soft flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer bg-bg-elevated"
           >
             <input
               type="checkbox"
@@ -222,7 +222,7 @@ export function StepConfig(props: StepConfigProps) {
             </div>
           </label>
           <label
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer bg-bg-elevated border border-border"
+            className="shadow-soft flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer bg-bg-elevated"
           >
             <input
               type="checkbox"
@@ -278,7 +278,7 @@ export function StepConfig(props: StepConfigProps) {
               aria-pressed={selectedPersonaId === null}
             >
               <div
-                className="flex items-center justify-center rounded-full text-text-muted bg-bg-card border border-border" style={{
+                className="shadow-soft flex items-center justify-center rounded-full text-text-muted bg-bg-card" style={{
                   width: 36,
                   height: 36,
                   fontSize: 14,
@@ -495,7 +495,7 @@ export function StepConfig(props: StepConfigProps) {
 
       {/* Resume toggle */}
       <label
-        className="flex items-center gap-3 p-3 rounded-lg cursor-pointer bg-bg-elevated border border-border"
+        className="shadow-sm flex items-center gap-3 p-3 rounded-lg cursor-pointer bg-bg-elevated"
       >
         <input
           type="checkbox"
@@ -514,7 +514,7 @@ export function StepConfig(props: StepConfigProps) {
       <div className="flex items-center justify-between pt-1">
         <button
           onClick={onBack}
-          className="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer text-text-secondary bg-bg-elevated border border-border"
+          className="shadow-soft px-4 py-2 rounded-lg text-sm font-medium cursor-pointer text-text-secondary bg-bg-elevated"
         >
           Back
         </button>

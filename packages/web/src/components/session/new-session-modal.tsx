@@ -504,7 +504,7 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
               <StepPills current={step} />
               <button
                 onClick={onClose}
-                className="flex items-center justify-center p-2 rounded-lg transition-colors cursor-pointer text-text-secondary bg-bg-elevated border border-border"
+                className="shadow-soft flex items-center justify-center p-2 rounded-lg transition-colors cursor-pointer text-text-secondary bg-bg-elevated"
                 aria-label="Close modal"
               >
                 <X size={14} weight="bold" aria-hidden="true" />
