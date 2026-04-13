@@ -112,7 +112,7 @@ export function ModelBar({
                 style={{
                   fontSize: 9,
                   padding: "0 3px",
-                  borderRadius: 3,
+                  borderRadius: "var(--radius-xs)",
                   background: "#10b98120",
                 }}
               >

@@ -227,7 +227,7 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
       {/* Header */}
       <div
         className="flex flex-shrink-0 items-center justify-between px-4 py-3"
-        style={{ borderBottom: "1px solid var(--glass-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--glass-border)" }}
       >
         <div className="flex items-center gap-2">
           <SquaresFour size={16} weight="bold" style={{ color: "#6366f1" }} aria-hidden="true" />

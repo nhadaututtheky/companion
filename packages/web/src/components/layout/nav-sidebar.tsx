@@ -148,7 +148,7 @@ function NavPill({
       onClick={onClick}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
-      className="rounded-radius-md flex cursor-pointer items-center gap-2.5 px-4 py-2.5 text-xs font-medium transition-all"
+      className="rounded-md flex cursor-pointer items-center gap-2.5 px-4 py-2.5 text-xs font-medium transition-all"
       style={{
         background: isActive ? "var(--color-text-primary)" : "var(--glass-bg)",
         backdropFilter: isActive ? "none" : "blur(var(--glass-blur))",
@@ -172,7 +172,7 @@ function NavPill({
 function DetailCard({ children, index }: { children: ReactNode; index: number }) {
   return (
     <div
-      className="rounded-radius-xl shadow-soft shrink-0"
+      className="rounded-xl shadow-soft shrink-0"
       style={{
         width: 240,
         background: "var(--glass-bg)",
@@ -234,7 +234,7 @@ function PanelsContent() {
             <span className="text-text-primary text-sm font-semibold">{active.label}</span>
             {rightPanelMode === active.id && (
               <span
-                className="text-success rounded-radius-pill flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
+                className="text-success rounded-full flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
                 style={{
                   background: "color-mix(in srgb, var(--color-success) 15%, transparent)",
                 }}
@@ -245,7 +245,7 @@ function PanelsContent() {
           </div>
           <p className="text-text-muted text-xs leading-relaxed">{active.description}</p>
           {active.shortcut && (
-            <span className="text-text-muted bg-bg-elevated rounded-radius-sm border-glass-border mt-3 inline-block border px-2 py-1 font-mono text-xs">
+            <span className="text-text-muted bg-bg-elevated rounded-sm mt-3 inline-block px-2 py-1 font-mono text-xs">
               {active.shortcut}
             </span>
           )}
@@ -303,7 +303,7 @@ function AIContent() {
             <span className="text-text-primary text-sm font-semibold">{active.label}</span>
             {isItemActive(active.id) && (
               <span
-                className="text-success rounded-radius-pill flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
+                className="text-success rounded-full flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
                 style={{
                   background: "color-mix(in srgb, var(--color-success) 15%, transparent)",
                 }}
@@ -363,7 +363,7 @@ function LayoutContent() {
 
   return (
     <div
-      className="rounded-radius-xl shadow-soft"
+      className="rounded-xl shadow-soft"
       style={{
         background: "var(--glass-bg)",
         backdropFilter: "blur(var(--glass-blur))",
@@ -388,7 +388,7 @@ function LayoutContent() {
                 <button
                   key={item.id}
                   onClick={() => setMode(item.mode)}
-                  className="rounded-radius-md flex cursor-pointer items-center gap-2 px-3 py-2 text-[11px] font-medium transition-all"
+                  className="rounded-md flex cursor-pointer items-center gap-2 px-3 py-2 text-[11px] font-medium transition-all"
                   style={{
                     background: isActive ? "var(--color-accent)" : "transparent",
                     color: isActive ? "#fff" : "var(--color-text-secondary)",
@@ -405,7 +405,7 @@ function LayoutContent() {
             {/* Activity Log toggle */}
             <button
               onClick={() => setActivityTerminalOpen(!activityTerminalOpen)}
-              className="rounded-radius-md col-span-2 flex cursor-pointer items-center gap-2 px-3 py-2 text-[11px] font-medium transition-all"
+              className="rounded-md col-span-2 flex cursor-pointer items-center gap-2 px-3 py-2 text-[11px] font-medium transition-all"
               style={{
                 background: activityTerminalOpen
                   ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
@@ -438,7 +438,7 @@ function LayoutContent() {
                 <button
                   key={m.id}
                   onClick={() => handleThemeMode(m.id)}
-                  className="rounded-radius-md flex cursor-pointer items-center gap-2 px-3 py-2 text-[11px] font-medium transition-all"
+                  className="rounded-md flex cursor-pointer items-center gap-2 px-3 py-2 text-[11px] font-medium transition-all"
                   style={{
                     background: isActive ? "var(--color-accent)" : "transparent",
                     color: isActive ? "#fff" : "var(--color-text-secondary)",
@@ -478,7 +478,7 @@ function LayoutContent() {
               >
                 {/* Color swatch */}
                 <div
-                  className="rounded-radius-md relative"
+                  className="rounded-md relative"
                   style={{
                     width: 36,
                     height: 36,
@@ -506,10 +506,10 @@ function LayoutContent() {
                   {/* Mini dots: success, danger */}
                   <div className="absolute left-1.5 top-1.5 flex gap-1">
                     <div
-                      style={{ width: 4, height: 4, borderRadius: 2, background: colors.success }}
+                      style={{ width: 4, height: 4, borderRadius: "var(--radius-xs)", background: colors.success }}
                     />
                     <div
-                      style={{ width: 4, height: 4, borderRadius: 2, background: colors.danger }}
+                      style={{ width: 4, height: 4, borderRadius: "var(--radius-xs)", background: colors.danger }}
                     />
                   </div>
                 </div>

@@ -65,7 +65,7 @@ export function ModelDropdown({
   return (
     <div
       ref={ref}
-      className="bg-bg-card border-glass-border absolute bottom-full left-0 z-50 mb-1 overflow-hidden rounded-lg border shadow-lg"
+      className="bg-bg-card absolute bottom-full left-0 z-50 mb-1 overflow-hidden rounded-lg shadow-lg"
       style={{
         minWidth: 260,
         maxHeight: 340,
@@ -85,7 +85,7 @@ export function ModelDropdown({
               <div
                 className="text-text-muted bg-bg-base px-3 py-1.5 text-xs font-semibold uppercase tracking-wider"
                 style={{
-                  borderBottom: "1px solid var(--color-border)",
+                  boxShadow: "0 1px 0 var(--color-border)",
                 }}
               >
                 Free models
@@ -115,7 +115,7 @@ export function ModelDropdown({
               <div
                 className="text-text-muted bg-bg-base px-3 py-1.5 text-xs font-semibold uppercase tracking-wider"
                 style={{
-                  borderBottom: "1px solid var(--color-border)",
+                  boxShadow: "0 1px 0 var(--color-border)",
                   borderTop: freeByProvider.size > 0 ? "1px solid var(--color-border)" : undefined,
                 }}
               >
@@ -220,7 +220,7 @@ function ModelRow({
           style={{
             fontSize: 9,
             padding: "1px 4px",
-            borderRadius: 3,
+            borderRadius: "var(--radius-xs)",
             background: "#10b98115",
             color: "#10b981",
           }}

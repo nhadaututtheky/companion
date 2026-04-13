@@ -133,7 +133,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
       <div
         className="bg-bg-card flex shrink-0 items-center gap-2 px-3 py-2"
         style={{
-          borderBottom: "1px solid var(--glass-border)",
+          boxShadow: "0 1px 0 var(--glass-border)",
         }}
       >
         {/* Nav buttons */}
@@ -245,20 +245,13 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
         style={{ background: "var(--color-bg-elevated, #1a1a2e)" }}
       >
         <div
-          className="border-border overflow-hidden border"
+          className={`border-border overflow-hidden border ${viewport !== "desktop" ? "shadow-float m-4 rounded-lg" : ""}`}
           style={{
             width: currentViewport.width,
             height: currentViewport.height,
             maxWidth: "100%",
             maxHeight: "100%",
             transition: "width 300ms ease, height 300ms ease",
-            ...(viewport !== "desktop"
-              ? {
-                  borderRadius: 8,
-                  margin: 16,
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-                }
-              : {}),
           }}
         >
           {url ? (
@@ -288,7 +281,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
       <div
         className="bg-bg-elevated flex shrink-0 items-center justify-between px-3 py-1"
         style={{
-          borderTop: "1px solid var(--glass-border)",
+          boxShadow: "0 -1px 0 var(--glass-border)",
         }}
       >
         <span className="text-text-muted truncate font-mono text-xs" style={{ fontSize: 10 }}>

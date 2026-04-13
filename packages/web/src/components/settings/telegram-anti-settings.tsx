@@ -337,5 +337,5 @@ function StatusDot({ status }: { status: "unknown" | "connected" | "disconnected
 }
 
 function Divider() {
-  return <div style={{ borderTop: "1px solid var(--color-border)", margin: "4px 0" }} />;
+  return <div style={{ boxShadow: "0 -1px 0 var(--color-border)", margin: "4px 0" }} />;
 }

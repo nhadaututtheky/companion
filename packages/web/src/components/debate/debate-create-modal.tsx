@@ -125,8 +125,8 @@ export function DebateCreateModal({
       className="fixed inset-0 flex items-center justify-center"
       style={{
         zIndex: Z.topModal,
-        background: "rgba(0,0,0,0.6)",
-        backdropFilter: "blur(4px)",
+        background: "var(--overlay-heavy)",
+        backdropFilter: "blur(var(--glass-blur-sm))",
         opacity: animationState === "entering" || animationState === "entered" ? 1 : 0,
         transition: "opacity 250ms ease",
       }}
@@ -146,7 +146,7 @@ export function DebateCreateModal({
         {/* Header */}
         <div
           className="flex flex-shrink-0 items-center justify-between px-5 py-3"
-          style={{ borderBottom: "1px solid var(--color-border)" }}
+          style={{ boxShadow: "0 1px 0 var(--color-border)" }}
         >
           <h2 className="text-text-primary text-sm font-bold">Start CLI Debate</h2>
           <button
@@ -274,7 +274,7 @@ export function DebateCreateModal({
         {/* Footer */}
         <div
           className="flex flex-shrink-0 items-center justify-end gap-3 px-5 py-3"
-          style={{ borderTop: "1px solid var(--color-border)" }}
+          style={{ boxShadow: "0 -1px 0 var(--color-border)" }}
         >
           <button
             onClick={onClose}

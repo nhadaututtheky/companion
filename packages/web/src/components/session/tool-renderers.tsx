@@ -151,7 +151,7 @@ export function ToolInputRenderer({
       return (
         <div
           className="rounded-md px-3 py-2 font-mono text-xs"
-          style={{ background: "rgba(0,0,0,0.3)" }}
+          style={{ background: "var(--overlay-light)" }}
         >
           <span className="select-none" style={{ color: "#34A853" }}>
             ${" "}

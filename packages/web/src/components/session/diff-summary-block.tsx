@@ -109,7 +109,7 @@ export function DiffSummaryBlock({ tools }: DiffSummaryBlockProps) {
       {/* Header */}
       <div
         className="flex items-center gap-2.5 px-3 py-2"
-        style={{ borderBottom: "1px solid var(--color-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--color-border)" }}
       >
         <GitDiff size={14} weight="bold" style={{ color: "#4285F4" }} />
         <span className="text-text-primary text-xs font-semibold">
@@ -208,7 +208,7 @@ function DiffBar({ additions, deletions }: { additions: number; deletions: numbe
           style={{
             width: 6,
             height: 6,
-            borderRadius: 1,
+            borderRadius: "var(--radius-xs)",
             background: "#34A853",
           }}
         />
@@ -219,7 +219,7 @@ function DiffBar({ additions, deletions }: { additions: number; deletions: numbe
           style={{
             width: 6,
             height: 6,
-            borderRadius: 1,
+            borderRadius: "var(--radius-xs)",
             background: "var(--color-border)",
           }}
         />
@@ -230,7 +230,7 @@ function DiffBar({ additions, deletions }: { additions: number; deletions: numbe
           style={{
             width: 6,
             height: 6,
-            borderRadius: 1,
+            borderRadius: "var(--radius-xs)",
             background: "#ef4444",
           }}
         />

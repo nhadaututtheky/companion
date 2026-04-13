@@ -147,7 +147,7 @@ export function ChangesPanel({ messages }: ChangesPanelProps) {
               <button
                 onClick={() => toggleFile(filePath)}
                 className="flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-left transition-colors"
-                style={{ borderBottom: "1px solid var(--color-border)" }}
+                style={{ boxShadow: "0 1px 0 var(--color-border)" }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
                 }}

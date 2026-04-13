@@ -17,7 +17,7 @@ function ColorDot({ color, label }: { color: string; label: string }) {
         style={{
           width: 24,
           height: 24,
-          borderRadius: 6,
+          borderRadius: "var(--radius-md)",
           background: color,
           border: "1px solid rgba(128,128,128,0.3)",
         }}
@@ -64,15 +64,15 @@ function ThemeCard({
       {/* Preview */}
       <div style={{ background: colors.bgBase, padding: 12 }}>
         <div className="mb-2 flex gap-2">
-          <div style={{ width: 40, height: 6, borderRadius: 3, background: colors.accent }} />
-          <div style={{ width: 24, height: 6, borderRadius: 3, background: colors.success }} />
-          <div style={{ width: 16, height: 6, borderRadius: 3, background: colors.danger }} />
+          <div style={{ width: 40, height: 6, borderRadius: "var(--radius-xs)", background: colors.accent }} />
+          <div style={{ width: 24, height: 6, borderRadius: "var(--radius-xs)", background: colors.success }} />
+          <div style={{ width: 16, height: 6, borderRadius: "var(--radius-xs)", background: colors.danger }} />
         </div>
         <div
           style={{
             width: "80%",
             height: 4,
-            borderRadius: 2,
+            borderRadius: "var(--radius-xs)",
             background: colors.textMuted,
             marginBottom: 4,
             opacity: 0.5,
@@ -82,7 +82,7 @@ function ThemeCard({
           style={{
             width: "60%",
             height: 4,
-            borderRadius: 2,
+            borderRadius: "var(--radius-xs)",
             background: colors.textMuted,
             opacity: 0.3,
           }}

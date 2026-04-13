@@ -152,7 +152,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
   return (
     <div
       className="fixed inset-0 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.5)", zIndex: Z.overlay }}
+      style={{ background: "var(--overlay-medium)", zIndex: Z.overlay }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
@@ -164,7 +164,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
         {/* Header */}
         <div
           className="flex items-center justify-between px-5 py-3"
-          style={{ borderBottom: "1px solid var(--color-border)" }}
+          style={{ boxShadow: "0 1px 0 var(--color-border)" }}
         >
           <h2 className="text-sm font-semibold">{isEdit ? "Edit Schedule" : "New Schedule"}</h2>
           <button onClick={onClose} className="cursor-pointer rounded-lg p-1" aria-label="Close">
@@ -336,7 +336,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
         {/* Footer */}
         <div
           className="flex items-center justify-between px-5 py-3"
-          style={{ borderTop: "1px solid var(--color-border)" }}
+          style={{ boxShadow: "0 -1px 0 var(--color-border)" }}
         >
           <button onClick={onClose} className="cursor-pointer rounded-lg px-4 py-1.5 text-xs">
             Cancel

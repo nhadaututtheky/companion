@@ -160,14 +160,14 @@ export default function WorkflowsPage() {
                     style={{
                       width: 80,
                       height: 6,
-                      borderRadius: 3,
+                      borderRadius: "var(--radius-xs)",
                     }}
                   >
                     <div
                       style={{
                         width: `${pct}%`,
                         height: "100%",
-                        borderRadius: 3,
+                        borderRadius: "var(--radius-xs)",
                         background:
                           w.status === "concluded" ? "var(--color-success)" : "var(--color-accent)",
                         transition: "width 300ms ease",

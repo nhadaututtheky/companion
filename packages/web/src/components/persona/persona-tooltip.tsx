@@ -56,14 +56,12 @@ export function PersonaTooltip({ persona, children, placement = "bottom" }: Pers
 
       {visible && (
         <div
-          className="persona-tooltip bg-bg-card border-border absolute border"
+          className="persona-tooltip bg-bg-card shadow-float absolute rounded-xl"
           role="tooltip"
           style={{
             ...placementStyles[placement],
             width: 280,
             padding: 12,
-            borderRadius: 12,
-            boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
             zIndex: Z.overlay,
             pointerEvents: "auto",
           }}

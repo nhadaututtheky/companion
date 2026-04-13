@@ -60,7 +60,7 @@ function StepPills({ current }: { current: Step }) {
             />
           )}
           <div
-            className="rounded-radius-pill flex items-center gap-1.5 px-2.5 py-1"
+            className="rounded-full flex items-center gap-1.5 px-2.5 py-1"
             style={{
               background:
                 current === n
@@ -68,10 +68,10 @@ function StepPills({ current }: { current: Step }) {
                   : current > n
                     ? "color-mix(in srgb, var(--color-success) 10%, transparent)"
                     : "transparent",
-              border:
+              boxShadow:
                 current === n
-                  ? "1px solid color-mix(in srgb, var(--color-accent) 30%, transparent)"
-                  : "1px solid transparent",
+                  ? "0 0 0 1px color-mix(in srgb, var(--color-accent) 30%, transparent)"
+                  : "none",
             }}
           >
             <div
@@ -448,9 +448,9 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
           position: "fixed",
           inset: 0,
           zIndex: Z.modal,
-          background: "rgba(0,0,0,0.45)",
-          backdropFilter: "blur(4px)",
-          WebkitBackdropFilter: "blur(4px)",
+          background: "var(--overlay-medium)",
+          backdropFilter: "blur(var(--glass-blur-sm))",
+          WebkitBackdropFilter: "blur(var(--glass-blur-sm))",
         }}
       />
 
@@ -472,23 +472,19 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
           role="dialog"
           aria-modal="true"
           aria-label="New Session"
-          className="dark:bg-glass-dark overflow-hidden"
+          className="dark:bg-glass-dark w-full max-w-[600px] overflow-hidden rounded-2xl"
           style={{
-            width: "100%",
-            maxWidth: 600,
-            borderRadius: 16,
             pointerEvents: "auto",
             background: "rgba(255,255,255,0.92)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            border: "1px solid rgba(255,255,255,0.18)",
-            boxShadow: "0 8px 40px rgba(0,0,0,0.18), inset 0 0 0 1px rgba(255,255,255,0.1)",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
           }}
         >
           {/* Header */}
           <div
             className="flex flex-shrink-0 items-center justify-between px-5 py-4"
-            style={{ borderBottom: "1px solid var(--color-border)" }}
+            style={{ boxShadow: "0 1px 0 var(--color-border)" }}
           >
             <div>
               <h2
@@ -521,7 +517,7 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
               style={{
                 background: "#EA433510",
                 color: "#EA4335",
-                borderBottom: "1px solid #EA433530",
+                boxShadow: "0 1px 0 #EA433530",
               }}
             >
               <Warning size={16} aria-hidden="true" />

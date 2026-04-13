@@ -42,10 +42,10 @@ function StepDot({ index, current, total: _total }: StepDotProps) {
 
   return (
     <div
+      className="rounded-full"
       style={{
         width: active ? 20 : 8,
         height: 8,
-        borderRadius: 9999,
         transition: "width 250ms ease, background 250ms ease",
         background: done
           ? "var(--color-accent, #4285F4)"
@@ -65,15 +65,10 @@ function StepWelcome() {
   return (
     <div className="flex flex-col items-center gap-6 px-2 text-center">
       <div
-        className="flex"
+        className="flex size-16 items-center justify-center rounded-2xl"
         style={{
-          width: 64,
-          height: 64,
-          borderRadius: 16,
           background: "linear-gradient(135deg, #4285F420, #34A85320)",
           border: "1px solid #4285F430",
-          alignItems: "center",
-          justifyContent: "center",
         }}
       >
         <Sparkle size={32} weight="duotone" style={{ color: "#4285F4" }} aria-hidden="true" />
@@ -131,16 +126,10 @@ function StepClaudeCLI({ available }: { available: boolean }) {
     <div className="flex flex-col gap-5">
       <div className="flex items-center gap-3">
         <div
+          className="flex size-10 shrink-0 items-center justify-center rounded-[10px]"
           style={{
-            width: 40,
-            height: 40,
-            borderRadius: 10,
             background: available ? "#34A85320" : "#EA433520",
             border: `1px solid ${available ? "#34A85340" : "#EA433540"}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
           }}
         >
           <Terminal
@@ -227,16 +216,10 @@ function StepProjects({ hasProjects }: { hasProjects: boolean }) {
     <div className="flex flex-col gap-5">
       <div className="flex items-center gap-3">
         <div
+          className="flex size-10 shrink-0 items-center justify-center rounded-[10px]"
           style={{
-            width: 40,
-            height: 40,
-            borderRadius: 10,
             background: hasProjects ? "#34A85320" : "#4285F420",
             border: `1px solid ${hasProjects ? "#34A85340" : "#4285F440"}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
           }}
         >
           <FolderOpen
@@ -332,15 +315,10 @@ function StepFirstSession({
   return (
     <div className="flex flex-col items-center gap-6 px-2 text-center">
       <div
-        className="flex"
+        className="flex size-16 items-center justify-center rounded-2xl"
         style={{
-          width: 64,
-          height: 64,
-          borderRadius: 16,
           background: "linear-gradient(135deg, #4285F420, #34A85320)",
           border: "1px solid #34A85330",
-          alignItems: "center",
-          justifyContent: "center",
         }}
       >
         <Rocket size={32} weight="duotone" style={{ color: "#34A853" }} aria-hidden="true" />
@@ -437,8 +415,8 @@ export function OnboardingWizard({ onOpenNewSession }: OnboardingWizardProps) {
         position: "fixed",
         inset: 0,
         zIndex: Z.overlay,
-        background: "rgba(0,0,0,0.55)",
-        backdropFilter: "blur(4px)",
+        background: "var(--overlay-medium)",
+        backdropFilter: "blur(var(--glass-blur-sm))",
         alignItems: "center",
         justifyContent: "center",
         padding: 16,
@@ -449,15 +427,7 @@ export function OnboardingWizard({ onOpenNewSession }: OnboardingWizardProps) {
     >
       {/* Modal */}
       <div
-        className="overflow-hidden"
-        style={{
-          width: "100%",
-          maxWidth: 460,
-          borderRadius: 16,
-          background: "var(--color-bg-card, #121a20)",
-          border: "1px solid var(--color-border, #2a3f52)",
-          boxShadow: "0 24px 64px rgba(0,0,0,0.4)",
-        }}
+        className="border-border bg-bg-card w-full max-w-[460px] overflow-hidden rounded-2xl border shadow-[0_24px_64px_rgba(0,0,0,0.4)]"
       >
         {/* Header */}
         <div

@@ -162,7 +162,7 @@ function ProjectDialog({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.4)" }}
+      style={{ background: "var(--overlay-light)" }}
       onClick={onClose}
     >
       <form
@@ -296,7 +296,7 @@ function DeleteConfirmDialog({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.4)" }}
+      style={{ background: "var(--overlay-light)" }}
       onClick={onCancel}
     >
       <div

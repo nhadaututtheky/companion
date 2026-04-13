@@ -132,12 +132,7 @@ export default function ErrorsPage() {
                 setSourceFilter(e.target.value);
                 setOffset(0);
               }}
-              className="text-text-primary bg-bg-card border-border cursor-pointer border"
-              style={{
-                borderRadius: 6,
-                padding: "4px 8px",
-                fontSize: 13,
-              }}
+              className="text-text-primary bg-bg-card border-border cursor-pointer rounded-md border px-2 py-1 text-[13px]"
               aria-label="Filter by source"
             >
               <option value="">All sources</option>
@@ -199,7 +194,7 @@ export default function ErrorsPage() {
                 key={err.id}
                 className="cursor-pointer"
                 style={{
-                  borderBottom: "1px solid var(--color-border)",
+                  boxShadow: "0 1px 0 var(--color-border)",
                   background: expandedId === err.id ? "var(--color-bg-card)" : "transparent",
                 }}
                 onClick={() => setExpandedId(expandedId === err.id ? null : err.id)}
@@ -255,32 +250,14 @@ export default function ErrorsPage() {
                     )}
                     {err.stack && (
                       <pre
-                        className="text-text-secondary bg-bg-base border-border whitespace-pre-wrap border"
-                        style={{
-                          borderRadius: 6,
-                          padding: 12,
-                          overflow: "auto",
-                          maxHeight: 200,
-                          fontSize: 11,
-                          lineHeight: 1.5,
-                          wordBreak: "break-all",
-                        }}
+                        className="text-text-secondary bg-bg-base border-border max-h-[200px] overflow-auto whitespace-pre-wrap break-all rounded-md border p-3 text-[11px] leading-normal"
                       >
                         {err.stack}
                       </pre>
                     )}
                     {err.context && (
                       <pre
-                        className="text-text-secondary bg-bg-base border-border border"
-                        style={{
-                          borderRadius: 6,
-                          padding: 12,
-                          overflow: "auto",
-                          maxHeight: 120,
-                          fontSize: 11,
-                          lineHeight: 1.5,
-                          marginTop: 8,
-                        }}
+                        className="text-text-secondary bg-bg-base border-border mt-2 max-h-[120px] overflow-auto rounded-md border p-3 text-[11px] leading-normal"
                       >
                         {JSON.stringify(err.context, null, 2)}
                       </pre>

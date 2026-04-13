@@ -128,7 +128,7 @@ function layoutNodes(
         style: {
           background: color + "20",
           border: `1.5px solid ${color}`,
-          borderRadius: 6,
+          borderRadius: "var(--radius-md)",
           padding: "4px 8px",
           fontSize: 11,
           color: "var(--color-text-primary)",

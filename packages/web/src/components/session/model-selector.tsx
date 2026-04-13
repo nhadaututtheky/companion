@@ -50,7 +50,7 @@ export function ModelSelector({ currentModel, onModelChange, disabled }: ModelSe
       <button
         onClick={() => !disabled && setOpen(!open)}
         disabled={disabled}
-        className="text-text-secondary bg-bg-elevated border-border flex cursor-pointer items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        className="text-text-secondary bg-bg-elevated border-border flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         aria-label={`Current model: ${display.label}. Click to change.`}
         title="Switch model"
       >
@@ -60,7 +60,7 @@ export function ModelSelector({ currentModel, onModelChange, disabled }: ModelSe
 
       {open && (
         <div
-          className="bg-bg-card border-glass-border absolute left-0 top-full z-50 mt-1 overflow-hidden rounded-lg border shadow-lg"
+          className="bg-bg-card absolute left-0 top-full z-50 mt-1 overflow-hidden rounded-lg shadow-lg"
           style={{
             minWidth: 160,
           }}
@@ -92,7 +92,7 @@ export function ModelSelector({ currentModel, onModelChange, disabled }: ModelSe
                   style={{
                     width: 18,
                     height: 18,
-                    borderRadius: 4,
+                    borderRadius: "var(--radius-sm)",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: 10,

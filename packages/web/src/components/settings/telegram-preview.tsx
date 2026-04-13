@@ -425,15 +425,12 @@ export function TelegramPreview() {
 
       {/* ── Command Reference ── */}
       <div
-        className="bg-bg-elevated border-border overflow-hidden border"
-        style={{
-          borderRadius: 10,
-        }}
+        className="bg-bg-elevated border-border overflow-hidden rounded-xl border"
       >
         <div
           style={{
             padding: "10px 14px",
-            borderBottom: "1px solid var(--color-border)",
+            boxShadow: "0 1px 0 var(--color-border)",
           }}
         >
           <span

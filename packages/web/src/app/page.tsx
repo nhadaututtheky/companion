@@ -541,7 +541,7 @@ export default function DashboardPage() {
         }}
       >
         <div
-          className="rounded-radius-xl flex overflow-hidden"
+          className="flex min-h-0"
           style={{
             flex: 1,
             gap: 8,
@@ -557,7 +557,7 @@ export default function DashboardPage() {
                 position: "fixed",
                 inset: 0,
                 zIndex: Z.sidebar,
-                background: "rgba(0,0,0,0.4)",
+                background: "var(--overlay-light)",
               }}
             />
           )}
@@ -571,7 +571,7 @@ export default function DashboardPage() {
               mobileSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
               "transition-transform duration-200 ease-in-out",
               "mobile-sidebar-overlay",
-              "rounded-radius-xl",
+              "rounded-xl",
               "shadow-float",
             ].join(" ")}
             style={{
@@ -585,7 +585,7 @@ export default function DashboardPage() {
             {/* Mobile close button */}
             <div
               className="flex items-center justify-between px-4 py-2 md:hidden"
-              style={{ borderBottom: "1px solid var(--color-border)", width: "100%" }}
+              style={{ boxShadow: "0 1px 0 var(--color-border)", width: "100%" }}
             >
               <span className="text-text-secondary text-xs font-semibold">Projects</span>
               <button
@@ -612,7 +612,7 @@ export default function DashboardPage() {
           </aside>
 
           {/* Main grid area */}
-          <main className="bg-bg-base rounded-radius-xl shadow-soft relative flex min-w-0 flex-1 flex-col overflow-hidden">
+          <main className="bg-bg-base rounded-xl shadow-soft relative flex min-w-0 flex-1 flex-col overflow-hidden">
             {/* Stats watermark — centered behind sessions, click to expand */}
             <BottomStatsBar />
 
@@ -642,7 +642,7 @@ export default function DashboardPage() {
           {/* Right panel — File Explorer, Browser Preview, or Search (desktop only, hidden on mobile to save space) */}
           {rightPanelMode !== "none" && (
             <aside
-              className="rounded-radius-xl shadow-soft hidden flex-shrink-0 flex-col overflow-hidden md:flex"
+              className="rounded-xl shadow-soft hidden flex-shrink-0 flex-col overflow-hidden md:flex"
               style={{
                 width:
                   rightPanelMode === "browser" || rightPanelMode === "terminal"

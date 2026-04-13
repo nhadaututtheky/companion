@@ -99,7 +99,7 @@ export function RTKSettings() {
     <div className="flex flex-col gap-5">
       {/* Enable/Disable */}
       <div
-        className="shadow-soft border-glass-border rounded-xl border p-5"
+        className="shadow-soft rounded-xl p-5"
         style={{
           background: "var(--glass-bg-heavy)",
           boxShadow: "var(--shadow-soft)",

@@ -105,13 +105,13 @@ export function SpawnAgentModal({
   return (
     <div
       className="absolute inset-0 flex items-center justify-center"
-      style={{ zIndex: Z.popover, background: "rgba(0,0,0,0.4)", borderRadius: "inherit" }}
+      style={{ zIndex: Z.popover, background: "var(--overlay-light)", borderRadius: "inherit" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className="rounded-radius-xl shadow-soft border-glass-border flex flex-col gap-4 overflow-y-auto border p-5"
+        className="rounded-xl shadow-soft flex flex-col gap-4 overflow-y-auto p-5"
         style={{
           background: "var(--glass-bg-heavy)",
           backdropFilter: "blur(var(--glass-blur))",
@@ -149,7 +149,7 @@ export function SpawnAgentModal({
                 key={t.id}
                 onClick={() => handleSpawnTemplate(t.id)}
                 disabled={!!spawningTemplate}
-                className="text-text-secondary bg-bg-elevated shadow-soft border-glass-border flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-xs transition-colors disabled:opacity-50"
+                className="text-text-secondary bg-bg-elevated shadow-soft flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs transition-colors disabled:opacity-50"
               >
                 <span className="text-base">{t.icon}</span>
                 <div className="flex min-w-0 flex-col">
@@ -187,7 +187,7 @@ export function SpawnAgentModal({
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Backend Engineer"
             maxLength={100}
-            className="text-text-primary bg-bg-elevated shadow-soft border-glass-border rounded-lg border px-3 py-2 text-sm outline-none"
+            className="text-text-primary bg-bg-elevated shadow-soft rounded-lg px-3 py-2 text-sm outline-none"
             autoFocus
           />
         </div>
@@ -258,7 +258,7 @@ export function SpawnAgentModal({
             placeholder="e.g. Implement the payment API with Stripe integration"
             rows={3}
             maxLength={10000}
-            className="text-text-primary bg-bg-elevated shadow-soft border-glass-border resize-none rounded-lg border px-3 py-2 text-sm outline-none"
+            className="text-text-primary bg-bg-elevated shadow-soft resize-none rounded-lg px-3 py-2 text-sm outline-none"
             style={{
               fontFamily: "var(--font-body)",
             }}

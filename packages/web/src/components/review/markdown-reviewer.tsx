@@ -89,7 +89,7 @@ function CommentInput({
             className="text-text-secondary px-3 py-2 text-xs"
             style={{
               background: "rgba(66,133,244,0.08)",
-              borderBottom: "1px solid var(--color-border)",
+              boxShadow: "0 1px 0 var(--color-border)",
               fontStyle: "italic",
             }}
           >
@@ -327,12 +327,7 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
 
               return (
                 <code
-                  className="bg-bg-elevated border-border border font-mono"
-                  style={{
-                    borderRadius: 4,
-                    padding: "1px 5px",
-                    fontSize: "0.9em",
-                  }}
+                  className="bg-bg-elevated border-border rounded border px-1.5 py-px font-mono text-[0.9em]"
                   {...props}
                 >
                   {children}
@@ -385,7 +380,7 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
                   className="text-text-primary"
                   style={{
                     padding: "8px 14px",
-                    borderBottom: "1px solid var(--color-border)",
+                    boxShadow: "0 1px 0 var(--color-border)",
                   }}
                 >
                   {children}
@@ -393,7 +388,7 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
               );
             },
             tr({ children }) {
-              return <tr style={{ borderBottom: "1px solid var(--color-border)" }}>{children}</tr>;
+              return <tr style={{ boxShadow: "0 1px 0 var(--color-border)" }}>{children}</tr>;
             },
 
             // ── Block elements ───────────────────────────────
@@ -489,7 +484,7 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
                     fontSize: 20,
                     margin: "18px 0 6px",
                     paddingBottom: 6,
-                    borderBottom: "1px solid var(--color-border)",
+                    boxShadow: "0 1px 0 var(--color-border)",
                   }}
                 >
                   {children}
@@ -552,7 +547,7 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
                   tag="hr"
                   style={{
                     border: "none",
-                    borderTop: "1px solid var(--color-border)",
+                    boxShadow: "0 -1px 0 var(--color-border)",
                     margin: "16px 0",
                   }}
                 >

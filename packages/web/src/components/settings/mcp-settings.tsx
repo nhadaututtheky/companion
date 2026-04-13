@@ -218,7 +218,7 @@ export function McpSettings() {
       >
         {/* Left: Server list */}
         <div
-          className="shadow-soft border-glass-border overflow-hidden rounded-xl border"
+          className="shadow-soft overflow-hidden rounded-xl "
           style={{
             background: "var(--glass-bg-heavy)",
             boxShadow: "var(--shadow-soft)",
@@ -289,7 +289,7 @@ export function McpSettings() {
 
         {/* Right: Editor */}
         <div
-          className="shadow-soft border-glass-border rounded-xl border"
+          className="shadow-soft rounded-xl "
           style={{
             background: "var(--glass-bg-heavy)",
             boxShadow: "var(--shadow-soft)",
@@ -357,7 +357,7 @@ function DetectedServersSection({
             return (
               <div
                 key={`${server.id}-${server.source}`}
-                className="bg-bg-base shadow-soft border-glass-border flex items-center gap-3 rounded-xl border px-3 py-2.5"
+                className="bg-bg-base shadow-soft flex items-center gap-3 rounded-xl px-3 py-2.5"
               >
                 <Icon size={14} weight="duotone" className="text-text-secondary shrink-0" />
                 <div className="min-w-0 flex-1">
@@ -676,14 +676,10 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
           <span className="text-xs">Enabled</span>
           <button
             onClick={() => update({ enabled: !server.enabled })}
-            className="relative cursor-pointer"
+            className="relative h-5 w-9 cursor-pointer rounded-full transition-colors duration-150"
             style={{
-              width: 36,
-              height: 20,
-              borderRadius: 10,
               background: server.enabled ? "#4285F4" : "var(--color-bg-elevated)",
               border: `1px solid ${server.enabled ? "#4285F4" : "var(--color-border)"}`,
-              transition: "background 150ms ease",
             }}
             role="switch"
             aria-checked={server.enabled}
@@ -707,7 +703,6 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
       {/* Footer actions */}
       <div
         className="flex items-center justify-between px-4 py-3"
-        style={{ borderTop: "1px solid var(--glass-border)" }}
       >
         {!isNew ? (
           <button

@@ -230,7 +230,7 @@ export function DebateFeed({ channelId }: DebateFeedProps) {
       {/* Header */}
       <div
         className="flex flex-shrink-0 items-center justify-between px-4 py-2"
-        style={{ borderBottom: "1px solid var(--color-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--color-border)" }}
       >
         <div className="flex flex-col">
           <span className="text-text-primary text-xs font-bold">{channel.topic}</span>

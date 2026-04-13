@@ -98,7 +98,7 @@ export function StepProject(props: StepProjectProps) {
       {/* Search */}
       <div
         className="flex items-center gap-2 px-4 py-3"
-        style={{ borderBottom: "1px solid var(--color-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--color-border)" }}
       >
         <MagnifyingGlass size={14} className="text-text-muted shrink-0" aria-hidden="true" />
         <input
@@ -206,7 +206,7 @@ export function StepProject(props: StepProjectProps) {
       {/* Browse / GitHub actions */}
       <div
         className="flex flex-shrink-0 items-center gap-2 px-4 py-3"
-        style={{ borderTop: "1px solid var(--color-border)" }}
+        style={{ boxShadow: "0 -1px 0 var(--color-border)" }}
       >
         <button
           onClick={() => onShowDirBrowser(true)}
@@ -218,7 +218,7 @@ export function StepProject(props: StepProjectProps) {
 
         <button
           onClick={() => onShowGithubInput((v) => !v)}
-          className="text-text-primary border-border flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+          className="shadow-soft text-text-primary bg-bg-elevated flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
           style={{
             background: showGithubInput ? "var(--color-bg-hover)" : "var(--color-bg-elevated)",
           }}
@@ -259,7 +259,7 @@ export function StepProject(props: StepProjectProps) {
       {/* Platform picker */}
       <div
         className="px-4 pb-3"
-        style={{ borderTop: "1px solid var(--color-border)", paddingTop: 12 }}
+        style={{ boxShadow: "0 -1px 0 var(--color-border)", paddingTop: 12 }}
       >
         <PlatformPicker
           platforms={detectedPlatforms}

@@ -218,7 +218,7 @@ export function FileTree({ rootPath, onFileSelect }: FileTreeProps) {
       <div
         className="text-text-muted bg-bg-elevated sticky top-0 z-10 px-3 py-1.5 text-xs font-semibold"
         style={{
-          borderBottom: "1px solid var(--color-border)",
+          boxShadow: "0 1px 0 var(--color-border)",
         }}
       >
         {rootPath.split(/[\\/]/).pop()}

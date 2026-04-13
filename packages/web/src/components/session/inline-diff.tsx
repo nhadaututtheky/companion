@@ -71,7 +71,7 @@ export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }
       {expanded && (
         <div
           className="max-h-[400px] overflow-x-auto overflow-y-auto"
-          style={{ borderTop: "1px solid var(--color-border)" }}
+          style={{ boxShadow: "0 -1px 0 var(--color-border)" }}
         >
           {displayLines.length === 0 ? (
             <div className="px-3 py-2 font-mono text-xs">No changes</div>

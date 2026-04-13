@@ -134,14 +134,12 @@ export function SlashCommandMenu({
   return (
     <div
       ref={menuRef}
-      className="bg-bg-elevated border-border absolute border"
+      className="bg-bg-elevated shadow-float absolute rounded-xl"
       style={{
         bottom: "100%",
         left: 0,
         right: 0,
         marginBottom: 4,
-        borderRadius: 12,
-        boxShadow: "var(--shadow-lg)",
         maxHeight: 280,
         overflowY: "auto",
         zIndex: Z.popover,

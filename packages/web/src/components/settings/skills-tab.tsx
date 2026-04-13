@@ -145,10 +145,7 @@ function SkillPreview({
     <div className="h-full overflow-y-auto">
       {/* Header */}
       <div
-        className="bg-bg-card sticky top-0 px-4 py-3"
-        style={{
-          borderBottom: "1px solid var(--glass-border)",
-        }}
+        className="bg-bg-card shadow-soft sticky top-0 px-4 py-3"
       >
         <h3 className="text-text-primary text-sm font-semibold">{skill.name}</h3>
         {skill.description && <p className="text-text-muted mt-0.5 text-xs">{skill.description}</p>}
@@ -306,14 +303,14 @@ export function SkillsTab() {
               placeholder="Filter skills..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="text-text-primary bg-bg-base border-glass-border w-full rounded-lg border py-2 pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+              className="text-text-primary bg-bg-base w-full rounded-lg py-2 pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
               aria-label="Filter skills by name"
             />
           </div>
 
           {/* Tree browser */}
           <div
-            className="shadow-soft border-glass-border flex overflow-hidden rounded-xl border"
+            className="shadow-soft flex overflow-hidden rounded-xl "
             style={{
               height: "min(480px, 60vh)",
             }}
@@ -323,7 +320,6 @@ export function SkillsTab() {
               className="bg-bg-base shrink-0 overflow-y-auto py-2"
               style={{
                 width: "clamp(180px, 35%, 280px)",
-                borderRight: "1px solid var(--glass-border)",
               }}
             >
               {filteredGroups.length === 0 ? (

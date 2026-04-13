@@ -118,13 +118,13 @@ export default function ReviewPage() {
         className="bg-bg-card flex-shrink-0 overflow-y-auto"
         style={{
           width: 260,
-          borderRight: "1px solid var(--color-border)",
+          boxShadow: "1px 0 0 var(--color-border)",
         }}
       >
         {/* Header */}
         <div
           className="flex items-center gap-2 px-4 py-3"
-          style={{ borderBottom: "1px solid var(--color-border)" }}
+          style={{ boxShadow: "0 1px 0 var(--color-border)" }}
         >
           <a
             href="/"
@@ -191,7 +191,7 @@ export default function ReviewPage() {
             {/* File header */}
             <div
               className="mb-6 flex items-center gap-2 pb-4"
-              style={{ borderBottom: "1px solid var(--color-border)" }}
+              style={{ boxShadow: "0 1px 0 var(--color-border)" }}
             >
               <File size={18} weight="duotone" style={{ color: "#4285F4" }} />
               <span className="text-text-secondary font-mono text-sm">{activeFile}</span>

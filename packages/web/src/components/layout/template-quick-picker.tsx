@@ -72,7 +72,7 @@ export function TemplateQuickPicker() {
       {/* Header button */}
       <button
         onClick={() => setOpen(true)}
-        className="text-text-secondary rounded-radius-md flex min-h-[44px] cursor-pointer items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all"
+        className="text-text-secondary rounded-md flex min-h-[44px] cursor-pointer items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all"
         style={{
           background: "transparent",
           border: "1px solid transparent",
@@ -93,15 +93,15 @@ export function TemplateQuickPicker() {
               style={{
                 position: "fixed",
                 inset: 0,
-                background: "rgba(0,0,0,0.5)",
-                backdropFilter: "blur(4px)",
+                background: "var(--overlay-medium)",
+                backdropFilter: "blur(var(--glass-blur-sm))",
                 zIndex: Z.overlay,
               }}
             />
 
             {/* Panel */}
             <div
-              className="bg-bg-card rounded-radius-xl shadow-soft border-glass-border flex overflow-hidden border"
+              className="bg-bg-card rounded-xl shadow-soft flex overflow-hidden "
               style={{
                 position: "fixed",
                 top: "50%",
@@ -117,7 +117,7 @@ export function TemplateQuickPicker() {
               {/* Header */}
               <div
                 className="flex flex-shrink-0 items-center justify-between px-5 py-3"
-                style={{ borderBottom: "1px solid var(--glass-border)" }}
+                style={{ boxShadow: "0 1px 0 var(--glass-border)" }}
               >
                 <div className="flex items-center gap-2">
                   <Rocket size={18} weight="bold" style={{ color: "#4285F4" }} />
@@ -132,7 +132,7 @@ export function TemplateQuickPicker() {
                       setOpen(false);
                       router.push("/templates");
                     }}
-                    className="text-text-secondary bg-bg-elevated shadow-soft border-glass-border flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors"
+                    className="text-text-secondary bg-bg-elevated shadow-soft flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                   >
                     <PencilSimple size={12} weight="bold" aria-hidden="true" />
                     Manage
@@ -155,7 +155,7 @@ export function TemplateQuickPicker() {
                     <button
                       key={persona.id}
                       onClick={() => handleSelectPersona(persona)}
-                      className="bg-bg-elevated shadow-soft border-glass-border flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-left transition-all"
+                      className="bg-bg-elevated shadow-soft flex cursor-pointer items-center gap-3 rounded-xl p-3 text-left transition-all"
                       title={persona.strength}
                     >
                       <PersonaAvatar persona={persona} size={36} showBadge={false} />
@@ -189,7 +189,7 @@ export function TemplateQuickPicker() {
                         <button
                           key={tpl.id}
                           onClick={() => handleSelectTemplate(tpl)}
-                          className="bg-bg-elevated shadow-soft border-glass-border flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-left transition-all"
+                          className="bg-bg-elevated shadow-soft flex cursor-pointer items-center gap-3 rounded-xl p-3 text-left transition-all"
                         >
                           <span className="shrink-0" style={{ fontSize: 20, lineHeight: 1 }}>
                             {tpl.icon || "\uD83D\uDCDD"}

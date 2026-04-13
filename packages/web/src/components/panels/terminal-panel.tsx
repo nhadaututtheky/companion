@@ -212,7 +212,7 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
       <div
         className="bg-bg-card flex shrink-0 items-center justify-between px-3 py-1.5"
         style={{
-          borderBottom: "1px solid var(--glass-border)",
+          boxShadow: "0 1px 0 var(--glass-border)",
         }}
       >
         <div className="flex items-center gap-2">

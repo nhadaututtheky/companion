@@ -31,7 +31,7 @@ export function ApiKeyIndicator() {
   }, [router]);
 
   return (
-    <div className="flex flex-col gap-0" style={{ borderTop: "1px solid var(--color-border)" }}>
+    <div className="flex flex-col gap-0" style={{ boxShadow: "0 -1px 0 var(--color-border)" }}>
       {/* Version badge */}
       {version && (
         <div

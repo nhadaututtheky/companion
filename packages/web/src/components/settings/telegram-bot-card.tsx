@@ -175,7 +175,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
 
   return (
     <div
-      className="shadow-soft border-glass-border flex flex-col gap-3 rounded-xl border p-4"
+      className="shadow-soft flex flex-col gap-3 rounded-xl p-4"
       style={{
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
@@ -224,7 +224,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
           <button
             onClick={handleTest}
             disabled={testing}
-            className="text-text-secondary bg-bg-elevated border-glass-border cursor-pointer rounded-full border px-2 py-1 text-xs font-medium transition-colors"
+            className="text-text-secondary bg-bg-elevated cursor-pointer rounded-full px-2 py-1 text-xs font-medium transition-colors"
             aria-label="Test bot token"
           >
             Test
@@ -234,7 +234,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
           <button
             onClick={handleToggle}
             disabled={toggling}
-            className="bg-bg-elevated border-glass-border cursor-pointer rounded-full border p-1.5 transition-colors"
+            className="bg-bg-elevated cursor-pointer rounded-full p-1.5 transition-colors"
             style={{
               color: isRunning ? "var(--color-danger)" : "var(--color-success)",
             }}
@@ -249,7 +249,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
               setEditing(!editing);
               setConfirmDelete(false);
             }}
-            className="border-border cursor-pointer rounded-lg border p-1.5 transition-colors"
+            className="border-border cursor-pointer rounded-lg p-1.5 transition-colors"
             style={{
               background: editing ? "var(--color-accent)" : "var(--color-bg-elevated)",
               color: editing ? "#fff" : "var(--color-text-secondary)",
@@ -263,7 +263,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="border-border cursor-pointer rounded-lg border p-1.5 transition-colors"
+            className="border-border cursor-pointer rounded-lg p-1.5 transition-colors"
             style={{
               background: confirmDelete ? "var(--color-danger)" : "var(--color-bg-elevated)",
               color: confirmDelete ? "#fff" : "var(--color-danger)",
@@ -304,7 +304,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
       {editing && (
         <div
           className="flex flex-col gap-3 pt-3"
-          style={{ borderTop: "1px solid var(--glass-border)" }}
+          style={{ boxShadow: "0 -1px 0 var(--glass-border)" }}
         >
           {/* Label */}
           <div className="flex flex-col gap-1">
@@ -437,7 +437,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
                   config.notificationGroupId ? String(config.notificationGroupId) : "",
                 );
               }}
-              className="text-text-secondary bg-bg-elevated shadow-soft border-glass-border flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-xs font-medium transition-colors"
+              className="text-text-secondary bg-bg-elevated shadow-soft flex cursor-pointer items-center gap-2 rounded-full px-3 py-2 text-xs font-medium transition-colors"
             >
               <X size={12} weight="bold" aria-hidden="true" />
               Cancel
@@ -452,7 +452,7 @@ export function TelegramBotCard({ config, running, onRefresh, onDelete }: Telegr
           {config.allowedChatIds.map((id) => (
             <span
               key={id}
-              className="text-text-muted bg-bg-elevated border-glass-border rounded-full border px-2 py-0.5 font-mono text-xs"
+              className="text-text-muted bg-bg-elevated rounded-full px-2 py-0.5 font-mono text-xs"
             >
               {id}
             </span>

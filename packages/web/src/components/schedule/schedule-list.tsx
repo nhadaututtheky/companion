@@ -60,7 +60,7 @@ export function ScheduleList({
     <div className="shadow-soft bg-bg-card overflow-hidden rounded-xl">
       <table className="w-full">
         <thead>
-          <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
+          <tr style={{ boxShadow: "0 1px 0 var(--color-border)" }}>
             {["Name", "Trigger", "Next Run", "Runs", "Status", "Actions"].map((h) => (
               <th
                 key={h}
@@ -80,7 +80,7 @@ export function ScheduleList({
               <tr
                 key={s.id}
                 className="group transition-colors"
-                style={{ borderBottom: "1px solid var(--color-border)" }}
+                style={{ boxShadow: "0 1px 0 var(--color-border)" }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "var(--color-bg-elevated)";
                 }}
@@ -141,7 +141,7 @@ export function ScheduleList({
                     style={{
                       width: 32,
                       height: 18,
-                      borderRadius: 9,
+                      borderRadius: "var(--radius-lg)",
                       background: s.enabled ? "#34A853" : "var(--color-bg-elevated)",
                       border: `1px solid ${s.enabled ? "#34A853" : "var(--color-border)"}`,
                       transition: "background 150ms ease",

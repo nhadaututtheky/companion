@@ -49,7 +49,7 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
               style={{
                 background: "var(--color-accent)",
                 color: "#fff",
-                borderRadius: 2,
+                borderRadius: "var(--radius-xs)",
                 padding: "0 2px",
               }}
             >
@@ -135,7 +135,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
       {/* Header */}
       <div
         className="flex flex-shrink-0 items-center gap-2 px-3 py-3"
-        style={{ borderBottom: "1px solid var(--glass-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--glass-border)" }}
       >
         <MagnifyingGlass
           size={15}
@@ -156,7 +156,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
       {/* Inputs */}
       <div
         className="flex flex-shrink-0 flex-col gap-2 px-3 py-3"
-        style={{ borderBottom: "1px solid var(--glass-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--glass-border)" }}
       >
         {/* Query input */}
         <div className="relative flex items-center">
@@ -242,7 +242,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
             <div
               className="text-text-muted flex flex-shrink-0 items-center gap-1.5 px-3 py-2 text-xs"
               style={{
-                borderBottom: "1px solid var(--glass-border)",
+                boxShadow: "0 1px 0 var(--glass-border)",
               }}
             >
               <span>
@@ -258,7 +258,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
                   <button
                     onClick={() => onOpenFile(match.file)}
                     className="w-full cursor-pointer px-3 py-2.5 text-left transition-colors hover:bg-[var(--color-bg-elevated)]"
-                    style={{ borderBottom: "1px solid var(--glass-border)" }}
+                    style={{ boxShadow: "0 1px 0 var(--glass-border)" }}
                     aria-label={`Open ${fileBasename(match.file)} at line ${match.line}`}
                   >
                     {/* File + line */}
@@ -294,7 +294,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
       <div
         className="text-text-muted flex flex-shrink-0 items-center gap-1.5 truncate px-3 py-2 text-xs"
         style={{
-          borderTop: "1px solid var(--glass-border)",
+          boxShadow: "0 -1px 0 var(--glass-border)",
         }}
         title={searchRoot}
       >

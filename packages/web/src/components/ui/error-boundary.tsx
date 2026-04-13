@@ -59,7 +59,7 @@ export class ErrorBoundary extends Component<Props, State> {
             className="cursor-pointer font-medium"
             style={{
               padding: "0.5rem 1.5rem",
-              borderRadius: "8px",
+              borderRadius: "var(--radius-lg)",
               border: "1px solid var(--color-border, #ddd)",
               background: "var(--color-bg-card, #fff)",
               fontSize: "0.875rem",

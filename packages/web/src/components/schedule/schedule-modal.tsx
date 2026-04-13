@@ -110,15 +110,15 @@ export function ScheduleModal() {
         style={{
           position: "fixed",
           inset: 0,
-          background: "rgba(0,0,0,0.5)",
-          backdropFilter: "blur(4px)",
+          background: "var(--overlay-medium)",
+          backdropFilter: "blur(var(--glass-blur-sm))",
           zIndex: Z.overlay,
         }}
       />
 
       {/* Modal */}
       <div
-        className="bg-bg-card rounded-radius-xl shadow-soft border-glass-border flex overflow-hidden border"
+        className="bg-bg-card rounded-xl shadow-float flex overflow-hidden"
         style={{
           position: "fixed",
           top: "50%",
@@ -134,7 +134,7 @@ export function ScheduleModal() {
         {/* Header */}
         <div
           className="flex flex-shrink-0 items-center justify-between px-5 py-3"
-          style={{ borderBottom: "1px solid var(--glass-border)" }}
+          style={{ boxShadow: "0 1px 0 var(--glass-border)" }}
         >
           <div className="flex items-center gap-2">
             <Timer size={18} weight="bold" style={{ color: "#4285F4" }} />
@@ -194,7 +194,7 @@ export function ScheduleModal() {
                 <ScheduleCalendar upcoming={upcoming} />
 
                 {upcoming.length > 0 && (
-                  <div className="bg-bg-elevated shadow-soft border-glass-border rounded-xl border p-3">
+                  <div className="bg-bg-elevated shadow-soft rounded-xl p-3">
                     <div className="mb-2 flex items-center gap-1.5">
                       <CalendarBlank size={12} style={{ color: "#4285F4" }} />
                       <span className="text-xs font-semibold">Upcoming</span>

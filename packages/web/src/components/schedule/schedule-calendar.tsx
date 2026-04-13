@@ -110,7 +110,7 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
       {/* Header */}
       <div
         className="flex items-center justify-between px-4 py-3"
-        style={{ borderBottom: "1px solid var(--color-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--color-border)" }}
       >
         <button
           onClick={prevMonth}

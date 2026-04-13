@@ -109,7 +109,7 @@ function ContextStatusBar({
     <div
       className="bg-bg-card flex items-center gap-3 px-4 py-1.5"
       style={{
-        borderBottom: "1px solid var(--color-border)",
+        boxShadow: "0 1px 0 var(--color-border)",
       }}
     >
       {/* Progress bar */}
@@ -488,7 +488,7 @@ export function SessionPageClient({ params }: PageProps) {
                   style={{
                     height: 240,
                     minHeight: 120,
-                    borderTop: "1px solid var(--color-border)",
+                    boxShadow: "0 -1px 0 var(--color-border)",
                   }}
                 >
                   <PanelErrorBoundary name="Terminal">

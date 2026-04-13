@@ -143,7 +143,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
             border: "none",
             color: "var(--text-secondary)",
             padding: 4,
-            borderRadius: 4,
+            borderRadius: "var(--radius-sm)",
           }}
           aria-label="Close prompt history"
         >
@@ -166,7 +166,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
             gap: 6,
             background: "var(--bg-card)",
             border: "1px solid var(--border-color)",
-            borderRadius: 6,
+            borderRadius: "var(--radius-md)",
             padding: "4px 8px",
           }}
         >
@@ -262,7 +262,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
                     style={{
                       background: "var(--bg-elevated, var(--bg-card))",
                       padding: "1px 6px",
-                      borderRadius: 4,
+                      borderRadius: "var(--radius-sm)",
                       maxWidth: 140,
                       textOverflow: "ellipsis",
                     }}
@@ -306,7 +306,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
                     gap: 4,
                     background: "none",
                     border: "1px solid var(--border-color)",
-                    borderRadius: 4,
+                    borderRadius: "var(--radius-sm)",
                     padding: "2px 8px",
                     color: copiedId === p.id ? "var(--success, #10b981)" : "var(--text-secondary)",
                     fontSize: 11,
@@ -326,7 +326,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
                       gap: 4,
                       background: "none",
                       border: "1px solid var(--border-color)",
-                      borderRadius: 4,
+                      borderRadius: "var(--radius-sm)",
                       padding: "2px 8px",
                       color: "var(--text-secondary)",
                       fontSize: 11,

@@ -281,7 +281,7 @@ export function PersonaBuilder({
       {/* Navigation */}
       <div
         className="flex items-center justify-between pt-2"
-        style={{ borderTop: "1px solid var(--color-border)" }}
+        style={{ boxShadow: "0 -1px 0 var(--color-border)" }}
       >
         <button
           onClick={() => step > 0 && setStep(step - 1)}

@@ -45,12 +45,7 @@ export class PanelErrorBoundary extends Component<
 
     return (
       <div
-        className="bg-bg-elevated border-border flex flex-col items-center justify-center gap-3 border p-6"
-        style={{
-          height: "100%",
-          minHeight: 120,
-          borderRadius: "var(--radius-lg, 8px)",
-        }}
+        className="bg-bg-elevated border-border flex h-full min-h-[120px] flex-col items-center justify-center gap-3 rounded-lg border p-6"
       >
         <WarningCircle
           size={28}

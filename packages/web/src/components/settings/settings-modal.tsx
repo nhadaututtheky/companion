@@ -116,7 +116,7 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
       role="dialog"
       aria-modal="true"
       aria-label="Settings"
-      className="shadow-soft border-glass-border flex flex-col overflow-hidden rounded-2xl border"
+      className="shadow-float flex flex-col overflow-hidden rounded-2xl"
       style={{
         width: "min(calc(100vw - 32px), 1100px)",
         height: "min(85vh, calc(100vh - 32px))",
@@ -129,7 +129,6 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
       {/* Title bar */}
       <div
         className="flex shrink-0 items-center justify-between px-6 py-4"
-        style={{ borderBottom: "1px solid var(--color-border)" }}
       >
         <h2
           className="text-text-primary text-base font-semibold"
@@ -155,14 +154,13 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
           className="hidden shrink-0 overflow-y-auto py-2 sm:block"
           style={{
             width: 200,
-            borderRight: "1px solid var(--glass-border)",
           }}
         >
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="rounded-radius-md flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-sm transition-all"
+              className="rounded-md flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-sm transition-all"
               style={{
                 color: activeTab === tab.id ? "var(--color-accent)" : "var(--color-text-secondary)",
                 background:
@@ -184,7 +182,6 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
         {/* Mobile tab selector (visible below sm breakpoint) */}
         <div
           className="flex shrink-0 gap-1 overflow-x-auto px-4 py-2 sm:hidden"
-          style={{ borderBottom: "1px solid var(--color-border)" }}
         >
           {TABS.map((tab) => (
             <button

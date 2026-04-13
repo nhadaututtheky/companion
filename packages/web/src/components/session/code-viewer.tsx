@@ -58,7 +58,7 @@ const companionDarkTheme = EditorView.theme(
       backgroundColor: "var(--color-bg-elevated)",
       color: "var(--color-text-muted)",
       border: "none",
-      borderRight: "1px solid var(--color-border)",
+      boxShadow: "1px 0 0 var(--color-border)",
     },
     ".cm-activeLineGutter": {
       backgroundColor: "transparent",

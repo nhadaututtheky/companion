@@ -107,7 +107,7 @@ function BreakdownRow({
           style={{
             width: 8,
             height: 8,
-            borderRadius: 2,
+            borderRadius: "var(--radius-xs)",
             background: color,
           }}
           aria-hidden="true"
@@ -202,7 +202,7 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
 
       {/* Expanded detail */}
       {expanded && (
-        <div className="px-3 pb-3" style={{ borderTop: "1px solid var(--color-border)" }}>
+        <div className="px-3 pb-3" style={{ boxShadow: "0 -1px 0 var(--color-border)" }}>
           {/* Token distribution bar */}
           {totalTokens > 0 && (
             <div className="mb-3 mt-2">
@@ -239,7 +239,7 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
           {hasCacheData && (
             <div
               className="mt-2 flex items-center gap-1 pt-2"
-              style={{ borderTop: "1px solid var(--color-border)" }}
+              style={{ boxShadow: "0 -1px 0 var(--color-border)" }}
             >
               <ChartBar size={11} aria-hidden="true" />
               <span className="text-xs">

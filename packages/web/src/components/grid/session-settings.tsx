@@ -175,20 +175,18 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
       ref={popoverRef}
       role="dialog"
       aria-label="Session settings"
-      className="bg-bg-card border-border absolute overflow-hidden border"
+      className="bg-bg-card shadow-float absolute overflow-hidden rounded-xl"
       style={{
         top: "calc(100% + 4px)",
         right: 0,
         zIndex: Z.popover,
         width: 260,
-        borderRadius: 10,
-        boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
       }}
     >
       {/* Header */}
       <div
         className="flex items-center justify-between px-3 py-2"
-        style={{ borderBottom: "1px solid var(--color-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--color-border)" }}
       >
         <span className="text-xs font-semibold uppercase">Session Settings</span>
         <button
@@ -205,7 +203,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
       ) : (
         <div className="flex flex-col">
           {/* Idle Timeout */}
-          <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--color-border)" }}>
+          <div className="px-3 py-2.5" style={{ boxShadow: "0 1px 0 var(--color-border)" }}>
             <div className="mb-2 flex items-center gap-1.5">
               <Timer size={12} aria-hidden="true" />
               <span className="text-xs font-semibold">Idle Timeout</span>
@@ -235,7 +233,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
           </div>
 
           {/* Stream to Telegram */}
-          <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--color-border)" }}>
+          <div className="px-3 py-2.5" style={{ boxShadow: "0 1px 0 var(--color-border)" }}>
             <div className="flex items-start gap-2">
               <TelegramLogo
                 size={12}
@@ -254,7 +252,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
           </div>
 
           {/* Keep Alive */}
-          <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--color-border)" }}>
+          <div className="px-3 py-2.5" style={{ boxShadow: "0 1px 0 var(--color-border)" }}>
             <button
               onClick={handleKeepAliveToggle}
               className="flex w-full cursor-pointer items-center gap-2 text-left"
@@ -282,7 +280,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
           </div>
 
           {/* Compact Mode */}
-          <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--color-border)" }}>
+          <div className="px-3 py-2.5" style={{ boxShadow: "0 1px 0 var(--color-border)" }}>
             <div className="mb-2 flex items-center gap-1.5">
               <ArrowsClockwise size={12} aria-hidden="true" />
               <span className="text-xs font-semibold">Auto-Compact</span>

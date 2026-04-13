@@ -217,11 +217,11 @@ export function CommandPalette() {
         alignItems: "flex-start",
         justifyContent: "center",
         paddingTop: "15vh",
-        backdropFilter: "blur(4px)",
+        backdropFilter: "blur(var(--glass-blur-sm))",
       }}
     >
       <div
-        className="rounded-radius-xl shadow-soft overflow-hidden"
+        className="rounded-xl shadow-soft overflow-hidden"
         style={{
           width: "100%",
           maxWidth: "560px",
@@ -240,7 +240,7 @@ export function CommandPalette() {
             style={{
               alignItems: "center",
               padding: "12px 16px",
-              borderBottom: "1px solid var(--glass-border)",
+              boxShadow: "0 1px 0 var(--glass-border)",
               gap: "10px",
             }}
           >
@@ -258,7 +258,7 @@ export function CommandPalette() {
               }}
             />
             <kbd
-              className="text-text-muted bg-bg-elevated rounded-radius-sm border-glass-border border font-mono"
+              className="text-text-muted bg-bg-elevated rounded-sm font-mono"
               style={{
                 fontSize: "11px",
                 padding: "2px 6px",
@@ -532,7 +532,7 @@ export function CommandPalette() {
                           (c, i) => (
                             <span
                               key={i}
-                              className="border-border rounded-full border"
+                              className="border-border rounded-full "
                               style={{
                                 width: 8,
                                 height: 8,
@@ -644,7 +644,7 @@ function ShortcutBadge({ keys }: { keys: string[] }) {
       {keys.map((k) => (
         <kbd
           key={k}
-          className="text-text-muted bg-bg-base rounded-radius-sm border-glass-border border font-mono"
+          className="text-text-muted bg-bg-base rounded-sm font-mono"
           style={{
             fontSize: "10px",
             padding: "1px 5px",
@@ -661,7 +661,7 @@ function ActiveBadge({ active }: { active: boolean }) {
   if (!active) return null;
   return (
     <span
-      className="text-accent rounded-radius-pill shrink-0 font-semibold"
+      className="text-accent rounded-full shrink-0 font-semibold"
       style={{
         fontSize: "10px",
         background: "color-mix(in srgb, var(--color-accent) 12%, transparent)",

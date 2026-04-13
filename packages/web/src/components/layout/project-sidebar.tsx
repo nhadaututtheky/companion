@@ -131,7 +131,7 @@ function WorkspacePanel({
       {/* Header */}
       <div
         className="flex items-center gap-2 px-3 py-2.5"
-        style={{ borderBottom: "1px solid var(--glass-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--glass-border)" }}
       >
         <span
           className="flex flex-shrink-0 items-center justify-center rounded-md"
@@ -190,7 +190,7 @@ function WorkspacePanel({
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
               <div
-                className="bg-bg-card rounded-radius-md shadow-float border-glass-border absolute right-0 top-full z-50 mt-1 border py-1"
+                className="bg-bg-card rounded-md shadow-float absolute right-0 top-full z-50 mt-1 py-1"
                 style={{
                   width: 160,
                   boxShadow: "var(--shadow-float)",
@@ -227,7 +227,7 @@ function WorkspacePanel({
       </div>
 
       {/* CLI Slots */}
-      <div className="px-3 py-2" style={{ borderBottom: "1px solid var(--glass-border)" }}>
+      <div className="px-3 py-2" style={{ boxShadow: "0 1px 0 var(--glass-border)" }}>
         <span className="text-text-muted mb-1.5 block text-[10px] font-semibold uppercase tracking-wider">
           CLI Agents
         </span>
@@ -304,7 +304,7 @@ function WorkspacePanel({
       <button
         onClick={onNew}
         className="project-new-session-btn flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-xs font-medium"
-        style={{ borderBottom: "1px solid var(--glass-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--glass-border)" }}
         aria-label="New session"
       >
         <NotePencil size={14} weight="bold" />
@@ -348,7 +348,7 @@ function ProjectPanel({
     <div className="project-panel flex min-w-0 flex-1 flex-col overflow-hidden" role="tabpanel">
       <div
         className="flex items-center gap-2 px-3 py-2.5"
-        style={{ borderBottom: "1px solid var(--glass-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--glass-border)" }}
       >
         <span
           className="flex flex-shrink-0 items-center justify-center rounded-md"
@@ -379,7 +379,7 @@ function ProjectPanel({
       <button
         onClick={onNew}
         className="project-new-session-btn flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-xs font-medium"
-        style={{ borderBottom: "1px solid var(--glass-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--glass-border)" }}
         aria-label="New session"
       >
         <NotePencil size={14} weight="bold" />

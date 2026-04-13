@@ -76,7 +76,7 @@ export function WikiPanel({ onClose }: WikiPanelProps) {
       <div
         className="bg-bg-elevated flex shrink-0 items-center gap-2 px-3 py-1.5"
         style={{
-          borderBottom: "1px solid var(--color-border)",
+          boxShadow: "0 1px 0 var(--color-border)",
         }}
       >
         {(view === "article" || view === "raw") && (
@@ -216,7 +216,7 @@ function BrowseView() {
           <span className="text-text-secondary text-xs font-medium">Domains</span>
           <button
             onClick={() => setShowNewDomain(true)}
-            className="bg-bg-elevated border-border flex cursor-pointer items-center gap-1 rounded border px-2 py-1 text-xs"
+            className="bg-bg-elevated border-border flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-xs"
           >
             <Plus size={12} /> New
           </button>
@@ -271,7 +271,7 @@ function BrowseView() {
       {/* Domain header + actions */}
       <div
         className="flex flex-col gap-2 p-3"
-        style={{ borderBottom: "1px solid var(--color-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--color-border)" }}
       >
         <div className="flex items-center gap-2">
           <button
@@ -301,7 +301,7 @@ function BrowseView() {
         <div className="relative flex gap-2">
           <button
             onClick={() => setView("raw")}
-            className="bg-bg-elevated border-border flex cursor-pointer items-center gap-1 rounded border px-2 py-1 text-xs"
+            className="bg-bg-elevated border-border flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-xs"
           >
             <Upload size={12} /> Raw Files
           </button>
@@ -339,7 +339,7 @@ function BrowseView() {
           }}
           className="flex cursor-pointer items-center gap-2 px-3 py-2 text-left"
           style={{
-            borderBottom: "1px solid var(--color-border)",
+            boxShadow: "0 1px 0 var(--color-border)",
             background: "rgba(16, 185, 129, 0.05)",
           }}
         >
@@ -366,7 +366,7 @@ function BrowseView() {
             key={a.slug}
             onClick={() => openArticle(a.slug)}
             className="flex cursor-pointer items-start gap-2 px-3 py-2 text-left hover:bg-[var(--color-bg-elevated)]"
-            style={{ borderBottom: "1px solid var(--color-border)" }}
+            style={{ boxShadow: "0 1px 0 var(--color-border)" }}
           >
             <File size={14} className="text-text-secondary shrink-0" style={{ marginTop: 1 }} />
             <div className="min-w-0 flex-1">
@@ -458,7 +458,7 @@ function NewDomainForm({ onCreated, onCancel }: { onCreated: () => void; onCance
         onChange={(e) => setName(e.target.value)}
         placeholder="Domain name (e.g. Trading)"
         aria-label="Domain name"
-        className="text-text-primary border-border rounded border bg-transparent px-2 py-1 text-xs outline-none"
+        className="text-text-primary border-border rounded bg-transparent px-2 py-1 text-xs outline-none"
         autoFocus
       />
       <input
@@ -467,7 +467,7 @@ function NewDomainForm({ onCreated, onCancel }: { onCreated: () => void; onCance
         onChange={(e) => setSlug(e.target.value)}
         placeholder={`Slug: ${autoSlug || "trading"}`}
         aria-label="Domain slug"
-        className="text-text-primary border-border rounded border bg-transparent px-2 py-1 text-xs outline-none"
+        className="text-text-primary border-border rounded bg-transparent px-2 py-1 text-xs outline-none"
       />
       <div className="flex justify-end gap-2">
         <button
@@ -574,7 +574,7 @@ function LintButton({ domain }: { domain: string }) {
       <button
         onClick={handleLint}
         disabled={linting}
-        className="bg-bg-elevated border-border relative flex cursor-pointer items-center gap-1 rounded border px-2 py-1 text-xs"
+        className="bg-bg-elevated border-border relative flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-xs"
         title="Check for stale articles"
       >
         {linting ? <CircleNotch size={12} className="animate-spin" /> : <Warning size={12} />}
@@ -591,7 +591,7 @@ function LintButton({ domain }: { domain: string }) {
 
       {showResults && issues !== null && (
         <div
-          className="bg-bg-base border-glass-border fixed z-50 flex max-h-48 flex-col gap-1.5 overflow-y-auto rounded-lg border p-3 shadow-lg"
+          className="bg-bg-base fixed z-50 flex max-h-48 flex-col gap-1.5 overflow-y-auto rounded-lg p-3 shadow-lg"
           style={{
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
             width: "min(400px, calc(100vw - 2rem))",
@@ -674,7 +674,7 @@ function ArticleView() {
       <div
         className="bg-bg-elevated flex flex-wrap gap-x-4 gap-y-1 px-3 py-2"
         style={{
-          borderBottom: "1px solid var(--color-border)",
+          boxShadow: "0 1px 0 var(--color-border)",
         }}
       >
         <span className="text-text-secondary text-[10px]">
@@ -752,7 +752,7 @@ function ArticleView() {
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="text-text-primary border-border min-h-[300px] w-full resize-y rounded border bg-transparent p-2 font-mono text-xs outline-none"
+            className="text-text-primary border-border min-h-[300px] w-full resize-y rounded bg-transparent p-2 font-mono text-xs outline-none"
           />
           <button
             onClick={handleSave}
@@ -771,7 +771,7 @@ function ArticleView() {
 
       {/* Source files */}
       {article.meta.compiledFrom.length > 0 && (
-        <div className="px-3 py-2" style={{ borderTop: "1px solid var(--color-border)" }}>
+        <div className="px-3 py-2" style={{ boxShadow: "0 -1px 0 var(--color-border)" }}>
           <span className="text-text-secondary text-[10px] font-medium">Compiled from:</span>
           <div className="mt-1 flex flex-col gap-0.5">
             {article.meta.compiledFrom.map((f) => (
@@ -893,7 +893,7 @@ function RawView() {
             onChange={(e) => setPasteName(e.target.value)}
             placeholder="Filename (e.g. research-notes)"
             aria-label="Raw file name"
-            className="text-text-primary border-border rounded border bg-transparent px-2 py-1 text-xs outline-none"
+            className="text-text-primary border-border rounded bg-transparent px-2 py-1 text-xs outline-none"
             autoFocus
           />
           <textarea
@@ -901,7 +901,7 @@ function RawView() {
             onChange={(e) => setPasteContent(e.target.value)}
             placeholder="Paste your raw material here..."
             aria-label="Raw file content"
-            className="text-text-primary border-border min-h-[120px] w-full resize-y rounded border bg-transparent p-2 font-mono text-xs outline-none"
+            className="text-text-primary border-border min-h-[120px] w-full resize-y rounded bg-transparent p-2 font-mono text-xs outline-none"
           />
           <div className="flex justify-end gap-2">
             <button
@@ -944,7 +944,7 @@ function RawView() {
           <div
             key={f.name}
             className="flex items-center gap-2 px-3 py-2"
-            style={{ borderBottom: "1px solid var(--color-border)" }}
+            style={{ boxShadow: "0 1px 0 var(--color-border)" }}
           >
             <File size={14} className="text-text-secondary shrink-0" />
             <div className="min-w-0 flex-1">

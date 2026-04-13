@@ -98,26 +98,20 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
         zIndex: Z.overlay,
         alignItems: "center",
         justifyContent: "center",
-        background: "rgba(0,0,0,0.5)",
-        backdropFilter: "blur(4px)",
+        background: "var(--overlay-medium)",
+        backdropFilter: "blur(var(--glass-blur-sm))",
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className="bg-bg-card border-border flex overflow-hidden border"
-        style={{
-          borderRadius: 16,
-          width: 640,
-          maxHeight: "80vh",
-          flexDirection: "column",
-        }}
+        className="bg-bg-card border-border flex max-h-[80vh] w-[640px] flex-col overflow-hidden rounded-2xl border"
       >
         {/* Header */}
         <div
           className="flex items-center gap-3 px-5 py-4"
-          style={{ borderBottom: "1px solid var(--color-border)" }}
+          style={{ boxShadow: "0 1px 0 var(--color-border)" }}
         >
           <Lightning size={20} weight="bold" />
           <h2 className="flex-1 text-base font-bold">
@@ -235,16 +229,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="Describe the task, bug, or feature..."
                 rows={3}
-                className="text-text-primary bg-bg-base border-border border"
-                style={{
-                  width: "100%",
-                  borderRadius: 8,
-                  padding: "8px 12px",
-                  fontSize: 13,
-                  resize: "vertical",
-                  outline: "none",
-                  marginBottom: 12,
-                }}
+                className="text-text-primary bg-bg-base border-border mb-3 w-full resize-y rounded-lg border px-3 py-2 text-[13px] outline-none"
               />
 
               {/* Cost cap */}
@@ -267,7 +252,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
 
         {/* Footer */}
         {selected && (
-          <div className="px-5 py-3" style={{ borderTop: "1px solid var(--color-border)" }}>
+          <div className="px-5 py-3" style={{ boxShadow: "0 -1px 0 var(--color-border)" }}>
             <button
               onClick={handleStart}
               disabled={!topic.trim() || starting}

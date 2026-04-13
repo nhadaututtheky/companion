@@ -151,7 +151,7 @@ export function UpgradeModal() {
   return (
     <div
       className="fixed inset-0 flex items-center justify-center"
-      style={{ zIndex: Z.topModal, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+      style={{ zIndex: Z.topModal, background: "var(--overlay-heavy)", backdropFilter: "blur(var(--glass-blur-sm))" }}
       onClick={handleBackdrop}
     >
       <div

@@ -93,7 +93,7 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
     <div className="relative" ref={panelRef}>
       <button
         onClick={() => setOpen(!open)}
-        className="border-border flex cursor-pointer items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-all hover:brightness-110"
+        className="border-border flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-all hover:brightness-110"
         style={{
           background: open ? "var(--color-accent)" : "var(--color-bg-elevated)",
           color: open ? "#fff" : "var(--color-text-secondary)",
@@ -107,7 +107,7 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
 
       {open && (
         <div
-          className="bg-bg-card border-glass-border absolute bottom-full left-0 mb-2 flex overflow-hidden rounded-xl border shadow-lg"
+          className="bg-bg-card absolute bottom-full left-0 mb-2 flex overflow-hidden rounded-xl shadow-lg"
           style={{
             width: 340,
             maxHeight: 420,
@@ -119,7 +119,7 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
           {/* Header */}
           <div
             className="flex items-center justify-between px-3 py-2"
-            style={{ borderBottom: "1px solid var(--color-border)" }}
+            style={{ boxShadow: "0 1px 0 var(--color-border)" }}
           >
             <span className="text-text-primary text-xs font-semibold">Saved Prompts</span>
             <div className="flex items-center gap-1">
@@ -141,20 +141,20 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
           {showCreate && (
             <div
               className="space-y-2 px-3 py-2"
-              style={{ borderBottom: "1px solid var(--color-border)" }}
+              style={{ boxShadow: "0 1px 0 var(--color-border)" }}
             >
               <input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="Prompt name..."
-                className="text-text-primary bg-bg-elevated border-border w-full rounded-md border px-2 py-1.5 text-xs outline-none"
+                className="text-text-primary bg-bg-elevated border-border w-full rounded-md px-2 py-1.5 text-xs outline-none"
               />
               <textarea
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
                 placeholder="Prompt content..."
                 rows={3}
-                className="text-text-primary bg-bg-elevated border-border w-full resize-none rounded-md border px-2 py-1.5 text-xs outline-none"
+                className="text-text-primary bg-bg-elevated border-border w-full resize-none rounded-md px-2 py-1.5 text-xs outline-none"
               />
               <button
                 onClick={handleCreate}
@@ -172,7 +172,7 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
 
           {/* Search */}
           {prompts.length > 3 && (
-            <div className="px-3 py-2" style={{ borderBottom: "1px solid var(--color-border)" }}>
+            <div className="px-3 py-2" style={{ boxShadow: "0 1px 0 var(--color-border)" }}>
               <div className="shadow-soft bg-bg-elevated flex items-center gap-1.5 rounded-md px-2 py-1">
                 <MagnifyingGlass size={12} className="text-text-muted" />
                 <input
@@ -198,7 +198,7 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
                 <div
                   key={p.id}
                   className="group flex cursor-pointer items-start gap-2 px-3 py-2 transition-colors"
-                  style={{ borderBottom: "1px solid var(--color-border)" }}
+                  style={{ boxShadow: "0 1px 0 var(--color-border)" }}
                   onClick={() => {
                     onSelect(p.content);
                     setOpen(false);

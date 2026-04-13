@@ -71,14 +71,14 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
     <div
       className="bg-bg-base flex h-full flex-col"
       style={{
-        borderLeft: "1px solid var(--color-border)",
+        boxShadow: "-1px 0 0 var(--color-border)",
       }}
     >
       {/* Header */}
       <div
         className="bg-bg-elevated flex shrink-0 items-center justify-between px-3 py-2"
         style={{
-          borderBottom: "1px solid var(--color-border)",
+          boxShadow: "0 1px 0 var(--color-border)",
         }}
       >
         <div className="flex min-w-0 items-center gap-2">
@@ -160,7 +160,7 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
       <div
         className="bg-bg-elevated shrink-0 px-3 py-1.5"
         style={{
-          borderTop: "1px solid var(--color-border)",
+          boxShadow: "0 -1px 0 var(--color-border)",
         }}
       >
         <span

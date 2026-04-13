@@ -80,7 +80,7 @@ interface KpiCardProps {
 
 function KpiCard({ label, value, sub, icon, accent = "#4285f4" }: KpiCardProps) {
   return (
-    <div className="bg-bg-elevated shadow-soft border-glass-border flex min-w-0 flex-1 flex-col gap-1 rounded-lg border p-3">
+    <div className="bg-bg-elevated shadow-soft flex min-w-0 flex-1 flex-col gap-1 rounded-lg p-3">
       <div className="flex items-center justify-between gap-1">
         <span className="text-xs">{label}</span>
         <span style={{ color: accent, opacity: 0.7 }}>{icon}</span>
@@ -136,7 +136,7 @@ export function StatsPanel({ onClose }: StatsPanelProps) {
       {/* Header */}
       <div
         className="flex flex-shrink-0 items-center justify-between px-4 py-3"
-        style={{ borderBottom: "1px solid var(--glass-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--glass-border)" }}
       >
         <div className="flex items-center gap-2">
           <ChartBar size={16} weight="bold" style={{ color: "#4285f4" }} aria-hidden="true" />
@@ -234,7 +234,7 @@ export function StatsPanel({ onClose }: StatsPanelProps) {
             {/* Link to full analytics */}
             <Link
               href="/analytics"
-              className="text-accent bg-bg-elevated shadow-soft border-glass-border flex cursor-pointer items-center justify-center gap-2 rounded-lg border py-2 text-xs font-medium transition-colors"
+              className="text-accent bg-bg-elevated shadow-soft flex cursor-pointer items-center justify-center gap-2 rounded-lg py-2 text-xs font-medium transition-colors"
             >
               <ChartBar size={12} weight="bold" aria-hidden="true" />
               View full analytics
@@ -253,7 +253,7 @@ function ActivityHeatmap({ data }: { data: StatsData["dailyActivity"] }) {
   const cells = data.slice(-30);
 
   return (
-    <div className="bg-bg-elevated shadow-soft border-glass-border rounded-lg border p-3">
+    <div className="bg-bg-elevated shadow-soft rounded-lg p-3">
       <div
         className="grid"
         style={{
@@ -271,7 +271,7 @@ function ActivityHeatmap({ data }: { data: StatsData["dailyActivity"] }) {
               style={{
                 width: "100%",
                 paddingBottom: "100%", // square via aspect-ratio trick
-                borderRadius: 3,
+                borderRadius: "var(--radius-xs)",
                 background: heatmapColor(day.sessions),
                 cursor: "default",
                 transition: "background 150ms ease",
@@ -286,11 +286,8 @@ function ActivityHeatmap({ data }: { data: StatsData["dailyActivity"] }) {
         {[0, 1, 3, 5, 7].map((n) => (
           <div
             key={n}
-            className="border-border shrink-0 border"
+            className="border-border size-2.5 shrink-0 rounded-sm "
             style={{
-              width: 10,
-              height: 10,
-              borderRadius: 2,
               background: heatmapColor(n),
             }}
             aria-hidden="true"
@@ -309,7 +306,7 @@ function ModelBreakdown({ breakdown }: { breakdown: StatsData["modelBreakdown"] 
   if (total === 0) return null;
 
   return (
-    <div className="bg-bg-elevated shadow-soft border-glass-border flex flex-col gap-2 rounded-lg border p-3">
+    <div className="bg-bg-elevated shadow-soft flex flex-col gap-2 rounded-lg p-3">
       {breakdown.map((m) => {
         const pct = total > 0 ? Math.round((m.count / total) * 100) : 0;
         const color = modelColor(m.model);
@@ -334,7 +331,7 @@ function ModelBreakdown({ breakdown }: { breakdown: StatsData["modelBreakdown"] 
                   width: `${pct}%`,
                   height: "100%",
                   background: color,
-                  borderRadius: 9999,
+                  borderRadius: "var(--radius-pill)",
                   transition: "width 400ms cubic-bezier(0.4,0,0.2,1)",
                   minWidth: pct > 0 ? 4 : 0,
                 }}
@@ -354,7 +351,7 @@ function TopProjects({ projects }: { projects: StatsData["topProjects"] }) {
   const max = projects[0]?.sessions ?? 1;
 
   return (
-    <div className="bg-bg-elevated shadow-soft border-glass-border flex flex-col gap-1.5 rounded-lg border p-3">
+    <div className="bg-bg-elevated shadow-soft flex flex-col gap-1.5 rounded-lg p-3">
       {projects.map((p) => {
         const pct = max > 0 ? Math.round((p.sessions / max) * 100) : 0;
         return (
@@ -375,7 +372,7 @@ function TopProjects({ projects }: { projects: StatsData["topProjects"] }) {
                   width: `${pct}%`,
                   height: "100%",
                   background: "#4285f4",
-                  borderRadius: 9999,
+                  borderRadius: "var(--radius-pill)",
                   transition: "width 400ms cubic-bezier(0.4,0,0.2,1)",
                   minWidth: pct > 0 ? 4 : 0,
                 }}

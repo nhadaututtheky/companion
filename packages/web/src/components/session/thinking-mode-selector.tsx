@@ -55,7 +55,7 @@ export function ThinkingModeSelector({
       <button
         onClick={() => !disabled && setOpen(!open)}
         disabled={disabled}
-        className="text-text-secondary bg-bg-elevated border-border flex cursor-pointer items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        className="text-text-secondary bg-bg-elevated border-border flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         aria-label={`Thinking mode: ${display.label}. Click to change.`}
         title="Switch thinking mode"
       >
@@ -65,7 +65,7 @@ export function ThinkingModeSelector({
 
       {open && (
         <div
-          className="bg-bg-card border-glass-border absolute left-0 top-full z-50 mt-1 overflow-hidden rounded-lg border shadow-lg"
+          className="bg-bg-card absolute left-0 top-full z-50 mt-1 overflow-hidden rounded-lg shadow-lg"
           style={{
             minWidth: 160,
           }}

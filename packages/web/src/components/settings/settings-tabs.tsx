@@ -31,10 +31,9 @@ export function SettingSection({
 }) {
   return (
     <div
-      className="shadow-soft border-glass-border rounded-xl border p-5"
+      className="shadow-soft rounded-xl p-5"
       style={{
         background: "var(--glass-bg-heavy)",
-        boxShadow: "var(--shadow-soft)",
       }}
     >
       <h2 className="mb-1 text-sm font-semibold">{title}</h2>
@@ -135,7 +134,7 @@ export function AppearanceTab() {
           </div>
           <button
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="text-text-primary bg-bg-elevated shadow-soft border-glass-border flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
+            className="text-text-primary bg-bg-elevated shadow-soft flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
           >
             <Robot size={14} weight="bold" aria-hidden="true" />
             {theme === "light" ? "Dark" : "Light"}

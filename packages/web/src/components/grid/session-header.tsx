@@ -171,26 +171,28 @@ export function SessionHeader({
 
   return (
     <>
-      {/* Top accent bar — session identity */}
-      {sessionColor && (
-        <div
-          style={{
-            height: 2,
-            background: `linear-gradient(90deg, ${sessionColor}, transparent)`,
-            flexShrink: 0,
-            borderRadius: "var(--radius-xl) var(--radius-xl) 0 0",
-          }}
-        />
-      )}
       <div
-        className="flex flex-shrink-0 items-center gap-2 px-3 py-2"
+        className="relative flex flex-shrink-0 items-center gap-2 px-3 py-2"
         style={{
-          borderBottom: contextPercent === undefined ? "1px solid var(--glass-border)" : "none",
-          background: sessionColor
-            ? `color-mix(in srgb, ${sessionColor} 4%, transparent)`
-            : undefined,
+          boxShadow: contextPercent === undefined ? "0 1px 0 var(--glass-border)" : "none",
         }}
       >
+        {/* Left accent line — session identity */}
+        {sessionColor && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 6,
+              bottom: 6,
+              width: 3,
+              borderRadius: "0 3px 3px 0",
+              background: sessionColor,
+              opacity: 0.7,
+            }}
+          />
+        )}
         {/* Left: status dot + project name */}
         <span
           className="inline-block shrink-0 rounded-full"
@@ -289,7 +291,7 @@ export function SessionHeader({
           {/* Model dropdown */}
           {modelDropdownOpen && (
             <div
-              className="rounded-radius-lg shadow-float border-glass-border absolute border"
+              className="rounded-lg shadow-float absolute "
               style={{
                 top: "calc(100% + 4px)",
                 right: 0,
@@ -474,7 +476,7 @@ export function SessionHeader({
           className="text-danger flex flex-shrink-0 items-center justify-center px-3 py-0.5 text-xs font-medium"
           style={{
             background: "color-mix(in srgb, var(--color-danger) 6%, transparent)",
-            borderBottom: "1px solid var(--glass-border)",
+            boxShadow: "0 1px 0 var(--glass-border)",
             fontSize: 10,
           }}
           role="alert"

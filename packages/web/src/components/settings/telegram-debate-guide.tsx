@@ -100,7 +100,7 @@ export function TelegramDebateGuide() {
       {expanded && (
         <div
           className="flex flex-col gap-5 px-4 pb-4"
-          style={{ borderTop: "1px solid var(--color-border)" }}
+          style={{ boxShadow: "0 -1px 0 var(--color-border)" }}
         >
           {/* Intro */}
           <div className="shadow-soft bg-bg-elevated mt-3 flex items-start gap-2 rounded-lg px-3 py-2.5">

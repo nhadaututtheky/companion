@@ -194,7 +194,7 @@ export function DesignPreviewPanel() {
       <div
         className="bg-bg-card flex shrink-0 items-center gap-3 px-4 py-2.5"
         style={{
-          borderBottom: "1px solid var(--color-border)",
+          boxShadow: "0 1px 0 var(--color-border)",
         }}
       >
         {/* Back button */}
@@ -370,18 +370,11 @@ export function DesignPreviewPanel() {
       {/* Preview area */}
       <div className="flex flex-1 items-start justify-center overflow-hidden">
         <div
-          className="border-border h-full overflow-auto overflow-hidden border"
+          className={`border-border h-full overflow-auto overflow-hidden border ${viewport !== "desktop" ? "shadow-float mx-auto my-4 rounded-xl" : ""}`}
           style={{
             width: currentViewport.width,
             maxWidth: "100%",
             transition: "width 300ms ease",
-            ...(viewport !== "desktop"
-              ? {
-                  margin: "16px auto",
-                  borderRadius: 12,
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
-                }
-              : {}),
           }}
         >
           {showSource ? (
@@ -397,7 +390,7 @@ export function DesignPreviewPanel() {
         <div
           className="bg-bg-card flex shrink-0 items-center gap-2 overflow-x-auto px-4 py-2"
           style={{
-            borderTop: "1px solid var(--color-border)",
+            boxShadow: "0 -1px 0 var(--color-border)",
           }}
         >
           {artifacts.map((a, i) => (

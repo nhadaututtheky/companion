@@ -109,7 +109,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.5)" }}
+      style={{ background: "var(--overlay-medium)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

@@ -173,7 +173,7 @@ function MessageComposer({ channelId, onPosted }: { channelId: string; onPosted:
   return (
     <div
       className="flex flex-shrink-0 items-end gap-2 px-3 py-2"
-      style={{ borderTop: "1px solid var(--color-border)" }}
+      style={{ boxShadow: "0 -1px 0 var(--color-border)" }}
     >
       <textarea
         value={text}
@@ -548,7 +548,7 @@ export function ChannelPanel({
       {/* Channel header */}
       <div
         className="flex flex-shrink-0 flex-col gap-1 px-3 py-2"
-        style={{ borderBottom: "1px solid var(--color-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--color-border)" }}
       >
         <div className="flex items-center gap-2">
           <LinkSimple

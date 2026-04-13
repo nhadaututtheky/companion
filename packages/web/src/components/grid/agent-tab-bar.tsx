@@ -42,7 +42,7 @@ export function AgentTabBar({
     <div
       className="flex flex-shrink-0 items-end gap-0 overflow-x-auto px-2 pt-1"
       style={{
-        borderBottom: "1px solid var(--glass-border)",
+        boxShadow: "0 1px 0 var(--glass-border)",
         scrollbarWidth: "none",
       }}
     >

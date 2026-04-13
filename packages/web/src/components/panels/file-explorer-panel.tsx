@@ -70,7 +70,7 @@ function CodeViewer({ content, ext }: { content: string; ext: string }) {
         className="text-text-muted bg-bg-elevated shrink-0 select-none py-2 pr-3 text-right"
         style={{
           width: gutterWidth,
-          borderRight: "1px solid var(--color-border)",
+          boxShadow: "1px 0 0 var(--color-border)",
           opacity: 0.6,
         }}
       >
@@ -459,7 +459,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
       <div
         className="bg-bg-card flex shrink-0 items-center gap-2 px-3 py-2"
         style={{
-          borderBottom: "1px solid var(--glass-border)",
+          boxShadow: "0 1px 0 var(--glass-border)",
         }}
       >
         {/* Root selector */}
@@ -544,7 +544,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
           className="shrink-0 overflow-y-auto py-1"
           style={{
             width: 250,
-            borderRight: "1px solid var(--glass-border)",
+            boxShadow: "1px 0 0 var(--glass-border)",
             background: "var(--color-bg-sidebar, var(--color-bg-card))",
           }}
         >
@@ -580,7 +580,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
               <div
                 className="bg-bg-elevated flex shrink-0 items-center justify-between px-3 py-1.5"
                 style={{
-                  borderBottom: "1px solid var(--glass-border)",
+                  boxShadow: "0 1px 0 var(--glass-border)",
                 }}
               >
                 <div className="flex min-w-0 items-center gap-2">
@@ -634,7 +634,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
               <div
                 className="bg-bg-elevated shrink-0 px-3 py-1"
                 style={{
-                  borderTop: "1px solid var(--glass-border)",
+                  boxShadow: "0 -1px 0 var(--glass-border)",
                 }}
               >
                 <span className="text-text-muted font-mono" style={{ fontSize: 10 }}>

@@ -145,7 +145,7 @@ export function LayoutSelector() {
       {/* Dropdown */}
       {open && (
         <div
-          className="bg-bg-card border-glass-border absolute right-0 top-full mt-1 overflow-hidden rounded-xl border shadow-lg"
+          className="bg-bg-card absolute right-0 top-full mt-1 overflow-hidden rounded-xl shadow-lg"
           style={{
             boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
             minWidth: 200,

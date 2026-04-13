@@ -109,7 +109,7 @@ export function FeatureGuideModal() {
       {activeCategory && (
         <div
           key={activeCategory}
-          className="rounded-radius-xl shadow-soft flex overflow-hidden"
+          className="rounded-xl shadow-soft flex overflow-hidden"
           style={{
             background: "var(--glass-bg-heavy)",
             backdropFilter: "blur(var(--glass-blur))",
@@ -125,7 +125,7 @@ export function FeatureGuideModal() {
           {/* Content header */}
           <div
             className="flex shrink-0 items-center gap-2 px-4 py-2.5"
-            style={{ borderBottom: "1px solid var(--glass-border)" }}
+            style={{ boxShadow: "0 1px 0 var(--glass-border)" }}
           >
             <span className="text-accent text-xs font-semibold uppercase tracking-wider">
               {CATEGORY_LABELS[activeCategory]}
@@ -136,7 +136,7 @@ export function FeatureGuideModal() {
             <div className="flex-1" />
             {/* Search within category */}
             <div
-              className="rounded-radius-md border-glass-border flex items-center gap-1.5 border px-2 py-1 text-xs"
+              className="rounded-md flex items-center gap-1.5 px-2 py-1 text-xs"
               style={{
                 background: "color-mix(in srgb, var(--color-bg-elevated) 60%, transparent)",
               }}
@@ -182,7 +182,7 @@ export function FeatureGuideModal() {
 
       {/* Category pills bar — always visible */}
       <div
-        className="rounded-radius-xl shadow-soft border-glass-border flex items-center gap-1.5 border px-3 py-2"
+        className="rounded-xl shadow-soft flex items-center gap-1.5 px-3 py-2"
         style={{
           background: "var(--glass-bg-heavy)",
           backdropFilter: "blur(var(--glass-blur))",
@@ -204,7 +204,7 @@ export function FeatureGuideModal() {
                 setActiveCategory(isActive ? null : cat);
                 setSearch("");
               }}
-              className="rounded-radius-md cursor-pointer px-2.5 py-1 text-[11px] font-medium transition-all"
+              className="rounded-md cursor-pointer px-2.5 py-1 text-[11px] font-medium transition-all"
               style={{
                 background: isActive ? "var(--color-accent)" : "transparent",
                 color: isActive ? "#fff" : "var(--color-text-secondary)",
@@ -242,22 +242,19 @@ function FeatureRow({ feature, onAction }: { feature: FeatureDef; onAction: () =
       className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors"
       style={{
         background: "transparent",
-        border: "1px solid transparent",
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = "var(--color-bg-hover)";
-        e.currentTarget.style.borderColor = "var(--glass-border)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = "transparent";
-        e.currentTarget.style.borderColor = "transparent";
       }}
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="text-text-primary text-xs font-semibold">{feature.name}</span>
           <span
-            className="rounded-radius-pill px-1.5 py-0.5 text-[9px] font-medium"
+            className="rounded-full px-1.5 py-0.5 text-[9px] font-medium"
             style={{
               background:
                 feature.tier === "pro" ? "rgba(234, 179, 8, 0.12)" : "rgba(16, 185, 129, 0.12)",
@@ -282,7 +279,6 @@ function FeatureRow({ feature, onAction }: { feature: FeatureDef; onAction: () =
           className="text-accent flex shrink-0 cursor-pointer items-center gap-1 rounded px-2 py-1 text-[10px] transition-colors"
           style={{
             background: "color-mix(in srgb, var(--color-accent) 8%, transparent)",
-            border: "1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)",
           }}
         >
           {feature.panel ? (

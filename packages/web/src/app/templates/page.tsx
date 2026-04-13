@@ -498,7 +498,7 @@ export default function TemplatesPage() {
       <div
         className="bg-bg-base sticky top-0 z-10 flex items-center justify-between px-6 py-4"
         style={{
-          borderBottom: "1px solid var(--color-border)",
+          boxShadow: "0 1px 0 var(--color-border)",
         }}
       >
         <div className="flex items-center gap-3">

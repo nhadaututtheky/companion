@@ -118,7 +118,7 @@ function MiniHeatmap({ data }: { data: StatsData["dailyActivity"] }) {
             style={{
               width: 8,
               height: 20,
-              borderRadius: 2,
+              borderRadius: "var(--radius-xs)",
               background: heatmapColor(day.sessions),
             }}
           />
@@ -141,7 +141,7 @@ function ModelPills({ breakdown }: { breakdown: StatsData["modelBreakdown"] }) {
         return (
           <div
             key={m.model}
-            className="rounded-radius-pill flex items-center gap-1 px-2 py-1 text-[10px] font-semibold"
+            className="rounded-full flex items-center gap-1 px-2 py-1 text-[10px] font-semibold"
             style={{
               background: `color-mix(in srgb, ${modelColor(m.model)} 12%, transparent)`,
               color: modelColor(m.model),
@@ -185,7 +185,7 @@ export function FloatingStatsBar() {
 
   return (
     <div
-      className="rounded-radius-xl shadow-soft hidden items-stretch sm:flex"
+      className="rounded-xl shadow-soft hidden items-stretch sm:flex"
       style={{
         position: "fixed",
         bottom: 80,

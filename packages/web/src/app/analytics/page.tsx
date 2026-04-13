@@ -268,7 +268,7 @@ function SessionTable({ sessions }: { sessions: RecentSession[] }) {
                   <tr
                     className="cursor-pointer transition-colors"
                     style={{
-                      borderTop: "1px solid var(--color-border)",
+                      boxShadow: "0 -1px 0 var(--color-border)",
                       background: isExpanded ? "var(--color-bg-elevated)" : undefined,
                     }}
                     onClick={() => setExpandedId(isExpanded ? null : s.id)}
@@ -349,7 +349,7 @@ function SessionTable({ sessions }: { sessions: RecentSession[] }) {
                         colSpan={9}
                         className="bg-bg-elevated px-4 py-3"
                         style={{
-                          borderTop: "1px solid var(--color-border)",
+                          boxShadow: "0 -1px 0 var(--color-border)",
                         }}
                       >
                         <div className="flex gap-6">
@@ -713,7 +713,7 @@ function CodeGraphTab({ data }: { data: FeatureData["codegraph"] }) {
                         : p.coveragePercent > 40
                           ? "#FBBC04"
                           : "#EA4335",
-                    borderRadius: 9999,
+                    borderRadius: "var(--radius-pill)",
                     minWidth: p.coveragePercent > 0 ? 4 : 0,
                   }}
                 />
@@ -831,7 +831,7 @@ function ContextTab({ data }: { data: FeatureData["context"] }) {
                           width: `${pct}%`,
                           height: "100%",
                           background: color,
-                          borderRadius: 9999,
+                          borderRadius: "var(--radius-pill)",
                           minWidth: pct > 0 ? 4 : 0,
                         }}
                       />
@@ -940,7 +940,7 @@ export default function AnalyticsPage() {
       {/* Header */}
       <header
         className="flex flex-shrink-0 items-center gap-3 px-6 py-4"
-        style={{ borderBottom: "1px solid var(--color-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--color-border)" }}
       >
         <Link
           href="/"
@@ -956,7 +956,7 @@ export default function AnalyticsPage() {
       {/* Tab bar */}
       <nav
         className="flex flex-shrink-0 gap-0 px-6"
-        style={{ borderBottom: "1px solid var(--color-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--color-border)" }}
       >
         {TABS.map((tab) => (
           <button
@@ -973,7 +973,7 @@ export default function AnalyticsPage() {
             {activeTab === tab.id && (
               <span
                 className="absolute bottom-0 left-2 right-2"
-                style={{ height: 2, background: "#4285f4", borderRadius: 1 }}
+                style={{ height: 2, background: "#4285f4", borderRadius: "var(--radius-xs)" }}
               />
             )}
           </button>
@@ -1117,7 +1117,7 @@ export default function AnalyticsPage() {
                                 width: `${pct}%`,
                                 height: "100%",
                                 background: modelColor(m.model),
-                                borderRadius: 9999,
+                                borderRadius: "var(--radius-pill)",
                                 transition: "width 400ms cubic-bezier(0.4,0,0.2,1)",
                                 minWidth: pct > 0 ? 4 : 0,
                               }}
@@ -1153,7 +1153,7 @@ export default function AnalyticsPage() {
                                 width: `${pct}%`,
                                 height: "100%",
                                 background: "#4285f4",
-                                borderRadius: 9999,
+                                borderRadius: "var(--radius-pill)",
                                 minWidth: pct > 0 ? 4 : 0,
                               }}
                             />

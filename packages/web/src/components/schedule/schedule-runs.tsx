@@ -70,7 +70,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
   return (
     <div
       className="fixed inset-0 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.5)", zIndex: 100 }}
+      style={{ background: "var(--overlay-medium)", zIndex: 100 }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
@@ -82,7 +82,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
         {/* Header */}
         <div
           className="flex items-center justify-between px-4 py-3"
-          style={{ borderBottom: "1px solid var(--color-border)" }}
+          style={{ boxShadow: "0 1px 0 var(--color-border)" }}
         >
           <div className="flex items-center gap-2">
             <ClockCounterClockwise size={14} style={{ color: "#4285F4" }} />
@@ -130,7 +130,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
                   <div
                     key={run.id}
                     className="flex items-center gap-3 px-4 py-2.5"
-                    style={{ borderBottom: "1px solid var(--color-border)" }}
+                    style={{ boxShadow: "0 1px 0 var(--color-border)" }}
                   >
                     {/* Status icon */}
                     <Icon
@@ -183,7 +183,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
         {/* Footer */}
         <div
           className="flex justify-end px-4 py-2"
-          style={{ borderTop: "1px solid var(--color-border)" }}
+          style={{ boxShadow: "0 -1px 0 var(--color-border)" }}
         >
           <button onClick={onClose} className="cursor-pointer rounded-lg px-3 py-1.5 text-xs">
             Close

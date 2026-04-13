@@ -149,7 +149,7 @@ function LicenseSection() {
       {/* Upgrade card — only show for free/trial */}
       {!isPro && (
         <div
-          className="shadow-soft border-glass-border mb-4 rounded-xl border p-4"
+          className="shadow-soft mb-4 rounded-xl p-4"
           style={{
             background: "linear-gradient(135deg, #6366f108, #8b5cf610, #ec489808)",
           }}
@@ -188,7 +188,7 @@ function LicenseSection() {
               href="https://pay.theio.vn/checkout/companion-pro"
               target="_blank"
               rel="noopener"
-              className="text-text-secondary bg-bg-elevated shadow-soft border-glass-border flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold"
+              className="text-text-secondary bg-bg-elevated shadow-soft flex cursor-pointer items-center justify-center rounded-lg px-3 py-2 text-xs font-semibold"
               style={{
                 textDecoration: "none",
               }}
@@ -264,7 +264,7 @@ function TipsSection() {
         </div>
         <button
           onClick={handleToggle}
-          className="border-glass-border relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full border transition-colors"
+          className="relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors"
           style={{
             background: enabled ? "var(--color-accent)" : "var(--color-bg-elevated)",
           }}
@@ -431,7 +431,7 @@ export function GeneralTab() {
       <SettingSection title="Appearance" description="Customize colors and theme.">
         <button
           onClick={() => useUiStore.getState().setSettingsActiveTab("appearance")}
-          className="text-text-secondary shadow-soft border-glass-border flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors"
+          className="text-text-secondary shadow-soft flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors"
           style={{
             background: "none",
           }}
@@ -467,7 +467,7 @@ export function GeneralTab() {
                 toast.error("Failed to update setting");
               }
             }}
-            className="border-glass-border relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full border transition-colors"
+            className="relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors"
             style={{
               background: promptScanEnabled ? "var(--color-accent)" : "var(--color-bg-elevated)",
             }}
@@ -489,7 +489,7 @@ export function GeneralTab() {
           href="/settings/errors"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-text-secondary shadow-soft border-glass-border flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors"
+          className="text-text-secondary shadow-soft flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors"
           style={{
             textDecoration: "none",
             marginTop: 12,

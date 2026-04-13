@@ -36,7 +36,7 @@ function ResizeHandle({ orientation }: { orientation: "horizontal" | "vertical" 
       <div
         style={{
           background: "var(--color-border)",
-          borderRadius: 3,
+          borderRadius: "var(--radius-xs)",
           transition: "background 150ms ease, opacity 150ms ease",
           ...(isHorizontal
             ? { width: 3, height: 32, margin: "auto 0" }

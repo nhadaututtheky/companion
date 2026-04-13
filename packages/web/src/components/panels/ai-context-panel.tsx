@@ -1137,7 +1137,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
       {/* Header */}
       <div
         className="flex flex-shrink-0 items-center justify-between px-4 py-3"
-        style={{ borderBottom: "1px solid var(--color-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--color-border)" }}
       >
         <div className="flex items-center gap-2">
           <Brain size={18} weight="bold" style={{ color: "#A855F7" }} />
@@ -1177,7 +1177,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
       {/* Project Selector */}
       <div
         className="flex-shrink-0 px-4 py-2"
-        style={{ borderBottom: "1px solid var(--color-border)" }}
+        style={{ boxShadow: "0 1px 0 var(--color-border)" }}
       >
         <select
           value={selectedSlug}
@@ -1231,7 +1231,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
         {cgScanning && cgJob && <ScanProgress job={cgJob} />}
 
         {/* Tabs */}
-        <div className="flex gap-1" style={{ borderBottom: "1px solid var(--color-border)" }}>
+        <div className="flex gap-1" style={{ boxShadow: "0 1px 0 var(--color-border)" }}>
           {(["explore", "feed", "settings"] as const).map((t) => (
             <button
               key={t}
@@ -1351,7 +1351,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
 
             {/* Divider */}
             {slug && cgReady && (
-              <div style={{ borderTop: "1px solid var(--color-border)", margin: "4px 0" }} />
+              <div style={{ boxShadow: "0 -1px 0 var(--color-border)", margin: "4px 0" }} />
             )}
 
             {/* WebIntel section */}
