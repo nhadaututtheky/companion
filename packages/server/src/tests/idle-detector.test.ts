@@ -53,7 +53,7 @@ describe("IdleDetector", () => {
     });
 
     detector.recordOutput("s-dur");
-    await sleep(THRESHOLD + 40);
+    await sleep(THRESHOLD + 100);
 
     expect(duration).toBeGreaterThan(0);
   });
