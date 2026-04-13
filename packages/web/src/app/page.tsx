@@ -579,7 +579,9 @@ export default function DashboardPage() {
               mobileSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
               "transition-transform duration-200 ease-in-out",
               "mobile-sidebar-overlay",
-            , "rounded-radius-xl", "shadow-float"].join(" ")} style={{
+              "rounded-radius-xl",
+              "shadow-float",
+            ].join(" ")} style={{
               background: "var(--glass-bg-heavy)",
               backdropFilter: "blur(var(--glass-blur))",
               WebkitBackdropFilter: "blur(var(--glass-blur))",
