@@ -378,10 +378,11 @@ export class TelegramBridge {
       return;
     }
 
-    // Auto-route to forum topic: if in a group and not already in a topic,
-    // try to get or create a forum topic for this project
+    // Auto-route to forum topic: if not already in a topic,
+    // try to get or create a forum topic for this project.
+    // Works in both group chats and private chats (Bot API 9.4+ Threaded Mode).
     let effectiveTopicId = topicId;
-    if (chatId < 0 && !topicId) {
+    if (!topicId) {
       const forumTopicId = await this.getOrCreateForumTopic(chatId, projectSlug, project.name);
       if (forumTopicId) {
         effectiveTopicId = forumTopicId;
@@ -929,7 +930,12 @@ export class TelegramBridge {
     return this.forumTopics.getForumTopicId(chatId, projectSlug);
   }
 
-  /** List all forum topics for a group chat. */
+  /** Reverse lookup: find which project a forum topic belongs to. */
+  getProjectSlugForTopic(chatId: number, topicId: number): string | undefined {
+    return this.forumTopics.getProjectSlugForTopic(chatId, topicId);
+  }
+
+  /** List all forum topics for a chat. */
   listForumTopics(
     chatId: number,
   ): Array<{ projectSlug: string; topicId: number; topicName: string }> {

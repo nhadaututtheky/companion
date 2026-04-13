@@ -867,10 +867,7 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
     const chatId = ctx.chat.id;
     const arg = ctx.match?.trim().toLowerCase();
 
-    if (chatId >= 0) {
-      await ctx.reply("Forum topics only work in group chats.");
-      return;
-    }
+    // Forum topics work in groups and private chats (Bot API 9.4+ Threaded Mode)
 
     if (arg === "reset") {
       const topics = bridge.listForumTopics(chatId);

@@ -34,11 +34,36 @@ export async function handleTextMessage(bridge: TelegramBridge, ctx: Context): P
   const mapping = bridge.getMapping(chatId, topicId);
 
   if (!mapping) {
+    // If user is in a forum topic, reverse-lookup which project it belongs to
+    // This enables auto-resume: user goes back to a project thread → auto-start
+    if (topicId) {
+      const projectSlug = bridge.getProjectSlugForTopic(chatId, topicId);
+      if (projectSlug) {
+        // Check for dead session to auto-resume
+        const dead = bridge.getDeadSessionByProject(chatId, projectSlug);
+        if (dead) {
+          await bridge.startSessionForChat(ctx, projectSlug, {
+            resume: true,
+            cliSessionId: dead.cliSessionId,
+          });
+        } else {
+          await bridge.startSessionForChat(ctx, projectSlug);
+        }
+        const newMapping = bridge.getMapping(chatId, topicId);
+        if (newMapping) {
+          const ready = await bridge.waitForSessionReady(newMapping.sessionId, 30_000);
+          if (ready) {
+            bridge.wsBridge.sendUserMessage(newMapping.sessionId, text, "telegram");
+          }
+        }
+        return;
+      }
+    }
+
     // Auto-connect: if only 1 project, start session automatically
     const projects = listProjects();
     if (projects.length === 1) {
       await bridge.startSessionForChat(ctx, projects[0]!.slug);
-      // Wait for the CLI to be ready before sending the queued message
       const newMapping = bridge.getMapping(chatId, topicId);
       if (newMapping) {
         const ready = await bridge.waitForSessionReady(newMapping.sessionId, 30_000);

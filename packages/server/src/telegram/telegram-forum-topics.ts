@@ -1,6 +1,7 @@
 /**
- * TelegramForumTopics — Manages forum topic creation and lookup per group chat.
- * Extracted from TelegramBridge for separation of concerns.
+ * TelegramForumTopics — Manages forum topic creation and lookup per chat.
+ * Works in both group chats (supergroups with forum enabled) and
+ * private chats (Bot API 9.4+ with Threaded Mode enabled in BotFather).
  */
 
 import { eq, and } from "drizzle-orm";
@@ -20,7 +21,8 @@ export class TelegramForumTopics {
   }
 
   /**
-   * Get or create a forum topic for a project in a group chat.
+   * Get or create a forum topic for a project in any chat (group or private).
+   * Requires: groups with forum enabled, or private chats with Threaded Mode (Bot API 9.4+).
    * Returns the topic ID, or undefined if forum topics are not supported.
    */
   async getOrCreateForumTopic(
@@ -28,8 +30,6 @@ export class TelegramForumTopics {
     projectSlug: string,
     projectName: string,
   ): Promise<number | undefined> {
-    // Only works in group chats (negative chatId)
-    if (chatId >= 0) return undefined;
 
     const db = getDb();
 
@@ -88,7 +88,23 @@ export class TelegramForumTopics {
     return row?.topicId;
   }
 
-  /** List all forum topics for a group chat. */
+  /** Reverse lookup: find which project a forum topic belongs to. */
+  getProjectSlugForTopic(chatId: number, topicId: number): string | undefined {
+    const db = getDb();
+    const row = db
+      .select({ projectSlug: telegramForumTopics.projectSlug })
+      .from(telegramForumTopics)
+      .where(
+        and(
+          eq(telegramForumTopics.chatId, chatId),
+          eq(telegramForumTopics.topicId, topicId),
+        ),
+      )
+      .get();
+    return row?.projectSlug;
+  }
+
+  /** List all forum topics for a chat. */
   listForumTopics(
     chatId: number,
   ): Array<{ projectSlug: string; topicId: number; topicName: string }> {
