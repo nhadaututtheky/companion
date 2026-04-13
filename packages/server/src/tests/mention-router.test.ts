@@ -44,6 +44,8 @@ const sessionStoreMockFactory = () => ({
   getSessionMessages: mock(() => []),
 });
 mock.module("../services/session-store.js", sessionStoreMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/session-store.js"), sessionStoreMockFactory);
 
 const debateEngineMockFactory = () => ({
   listActiveDebates: () => [
@@ -61,6 +63,8 @@ const debateEngineMockFactory = () => ({
   concludeDebate: mock(() => Promise.resolve()),
 });
 mock.module("../services/debate-engine.js", debateEngineMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/debate-engine.js"), debateEngineMockFactory);
 
 import { parseMentions, handleMentions } from "../services/mention-router.js";
 

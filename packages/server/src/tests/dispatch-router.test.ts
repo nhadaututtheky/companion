@@ -37,6 +37,8 @@ const debateEngineMockFactory = () => ({
   injectHumanMessage: mock(() => false),
 });
 mock.module("../services/debate-engine.js", debateEngineMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/debate-engine.js"), debateEngineMockFactory);
 
 // NOTE: Do NOT mock mention-router.js here — it pollutes mention-router.test.ts
 // Instead, mock its dependencies (short-id, session-store) which are already mocked above.
@@ -52,6 +54,8 @@ const settingsHelpersMockFactory = () => ({
   getSettingBool: (_key: string, fallback: boolean) => fallback,
 });
 mock.module("../services/settings-helpers.js", settingsHelpersMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/settings-helpers.js"), settingsHelpersMockFactory);
 
 const eventBusMockFactory = () => ({
   eventBus: { emit: mock(() => {}), on: mock(() => {}), off: mock(() => {}) },
@@ -102,6 +106,8 @@ const sessionStoreMockFactory = () => ({
   getSessionMessages: mock(() => []),
 });
 mock.module("../services/session-store.js", sessionStoreMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("../services/session-store.js"), sessionStoreMockFactory);
 
 import { dispatch, previewDispatchSync } from "../services/dispatch-router.js";
 import type { TaskClassification } from "@companion/shared/types";

@@ -37,7 +37,17 @@ jobs:
         run: cd packages/web && bun run check
 
       - name: Test (server)
-        run: cd packages/server && bun test
+        run: |
+          cd packages/server
+          failed=0
+          for f in src/services/*.test.ts src/tests/*.test.ts; do
+            echo "::group::$f"
+            if ! bun test "$f"; then
+              failed=1
+            fi
+            echo "::endgroup::"
+          done
+          exit $failed
 
       - name: Test (web)
         run: cd packages/web && bun test

@@ -11,6 +11,8 @@ const wsBroadcastMockFactory = () => ({
   broadcastToSubscribers: mock(() => {}),
 });
 mock.module("./ws-broadcast.js", wsBroadcastMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("./ws-broadcast.js"), wsBroadcastMockFactory);
 
 const pulseEstimatorMockFactory = () => ({
   getOrCreatePulse: () => ({
@@ -55,6 +57,8 @@ const sessionStoreMockFactory = () => ({
   getSessionMessages: mock(() => []),
 });
 mock.module("./session-store.js", sessionStoreMockFactory);
+if (process.platform !== "win32")
+  mock.module(import.meta.resolve("./session-store.js"), sessionStoreMockFactory);
 
 import {
   broadcastContextUpdate,
