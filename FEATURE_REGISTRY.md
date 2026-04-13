@@ -1,7 +1,7 @@
 # Companion — Feature Registry
 
 > Single source of truth for all features, their relationships, and boundaries.
-> Updated: 2026-04-05 | ~105 features across 8 domains
+> Updated: 2026-04-13 | ~120 features across 8 domains
 
 ## How to Use This File
 - **Before building**: Check if feature exists or overlaps with existing ones
@@ -20,6 +20,11 @@ The core domain. Sessions are Claude Code processes managed through WebSocket br
 | CLI launcher (Claude Code NDJSON pipe) | `cli-launcher.ts` | ws-bridge |
 | SDK engine (Anthropic Agent SDK direct) | `sdk-engine.ts` | ws-bridge |
 | WebSocket bridge (live message routing) | `ws-bridge.ts` | cli-launcher, sdk-engine, compact-manager |
+| WS broadcast (fan-out to browsers) | `ws-broadcast.ts` | ws-bridge, spectator-bridge |
+| WS context tracker (token counting) | `ws-context-tracker.ts` | ws-bridge, context-budget |
+| WS stream handler (SSE→WS relay) | `ws-stream-handler.ts` | ws-bridge |
+| WS permission handler (approve/deny) | `ws-permission-handler.ts` | ws-bridge |
+| WS multi-brain (parallel agent orchestration) | `ws-multi-brain.ts` | ws-bridge, ai-client |
 | Short IDs (@fox, @bear) | `short-id.ts` | session-store, mention-router |
 | Auto-naming (AI-generated session titles) | `session-namer.ts` | ai-client |
 | Auto-summarize on end | `session-summarizer.ts` | ai-client |
@@ -28,6 +33,7 @@ The core domain. Sessions are Claude Code processes managed through WebSocket br
 | Compact manager (auto context-compaction) | `compact-manager.ts` | ws-bridge |
 | Share + spectator (read-only session view) | `share-manager.ts`, `spectator-bridge.ts` | ws-bridge |
 | Pulse estimator (agent health scoring) | `pulse-estimator.ts` | ws-bridge, telegram-bridge |
+| Session memory (cross-session persistence) | `session-memory.ts` | session-store, DB |
 | Session REST API | `routes/sessions.ts` | session-store, ws-bridge |
 
 **Web UI:**
@@ -57,11 +63,12 @@ Multi-provider AI routing. Currently supports Anthropic + any OpenAI-compatible 
 |---------|------------|-------------|
 | Multi-provider AI client | `ai-client.ts` | settings-helpers |
 | Prompt scanner (risk detection) | `prompt-scanner.ts` | ws-bridge |
-| RTK pipeline (tool output compression) | `rtk/pipeline.ts` + 8 strategies | ws-bridge |
+| RTK pipeline (tool output compression) | `rtk/pipeline.ts` + 10 strategies | ws-bridge |
 | Provider registry (free + configured) | `provider-registry.ts` | ai-client, debate-engine, models API |
 | Models API (list, health, toggle) | `routes/models.ts` | provider-registry, web UI |
 | Saved prompts (CRUD) | `routes/saved-prompts.ts` | session composer |
 | Session templates (w/ variables) | `templates.ts` | new-session-modal |
+| Custom personas (user-defined agents) | `custom-personas.ts` | debate-engine, ai-client |
 
 **Supported Providers** (via `ai-client.ts`):
 - Anthropic (native) — Claude Haiku, Sonnet, Opus
@@ -87,6 +94,9 @@ Multi-agent debates + cross-session communication. **Unique to Companion.**
 | Feature | Key File(s) | Connects To |
 |---------|------------|-------------|
 | Debate engine (pro_con, red_team, review, brainstorm) | `debate-engine.ts` | ai-client, channel-manager, convergence-detector |
+| CLI debate engine (terminal-based debates) | `cli-debate-engine.ts` | debate-engine, cli-launcher |
+| Dispatch router (intent classification → handler) | `dispatch-router.ts` | task-classifier, debate-engine, workflow-engine |
+| Task classifier (AI-powered intent routing) | `task-classifier.ts` | ai-client, dispatch-router |
 | Convergence detector (auto-stop) | `convergence-detector.ts` | debate-engine |
 | Channel manager (shared context DB) | `channel-manager.ts` | debate-engine, workflow-engine |
 | @mention routing (cross-session forwarding) | `mention-router.ts` | short-id, session-store |
@@ -122,6 +132,8 @@ Terminal, file explorer, CodeGraph (Tree-sitter WASM AST), WebIntel — develope
 | WebIntel (web research via webclaw sidecar) | `web-intel.ts` | webclaw Docker |
 | WebIntel library detector | `web-intel-detector.ts` | web-intel |
 | WebIntel commands (/docs, /research) | `web-intel-handler.ts` | ws-bridge |
+| WebIntel cache (response caching) | `web-intel-cache.ts` | web-intel |
+| WebIntel jobs (background fetch queue) | `web-intel-jobs.ts` | web-intel, scheduler |
 
 **Web UI:**
 | Component | File | Connects To |
@@ -213,6 +225,13 @@ Auth, license, config, scheduling, database — the foundation.
 | Scheduler (cron + one-time) | `scheduler.ts` | session-store, templates |
 | Event bus (typed pub/sub) | `event-bus.ts` | ws-bridge, scheduler |
 | Error tracker | `error-tracker.ts` | DB errorLogs |
+| Context budget (token budget mgmt) | `context-budget.ts` | ws-context-tracker |
+| Context estimator (cost prediction) | `context-estimator.ts` | pulse-estimator |
+| Workspace context (project env info) | `workspace-context.ts` | session-context |
+| Workspace store (project state cache) | `workspace-store.ts` | workspace-context |
+| Crypto utils (AES-256-GCM) | `crypto.ts` | license, share-manager |
+| Debounced writer (batch DB writes) | `debounced-writer.ts` | session-store |
+| Version check (server update detection) | `version-check.ts` | settings API |
 | Domain/proxy config | `routes/domain.ts` | Docker API |
 | Drizzle ORM + SQLite (23 migrations) | `db/schema.ts` | all services |
 
