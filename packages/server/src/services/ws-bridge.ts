@@ -40,7 +40,6 @@ import {
   clearCompactTimers as _clearCompactTimers,
   type ContextBridge,
 } from "./ws-context-tracker.js";
-import { getWorkspace as getWorkspaceById } from "./workspace-store.js";
 import { eventBus } from "./event-bus.js";
 import { getLatestReading } from "./pulse-estimator.js";
 import {
@@ -54,7 +53,6 @@ import {
   type ActiveSession,
 } from "./session-store.js";
 import type {
-  CLIMessage,
   CLISystemInitMessage,
   CLIAssistantMessage,
   CLIResultMessage,
@@ -64,14 +62,10 @@ import type {
   BrowserOutgoingMessage,
   BrowserIncomingMessage,
   SessionStatus,
-  PermissionRequest,
   HookEvent,
   PreToolUseResponse,
 } from "@companion/shared";
-import {
-  SESSION_IDLE_TIMEOUT_MS,
-  getMaxContextTokens,
-} from "@companion/shared";
+import { SESSION_IDLE_TIMEOUT_MS } from "@companion/shared";
 import type { CLIProcess, NormalizedMessage, CLIPlatform } from "@companion/shared";
 // getMaxSessions moved to ws-multi-brain.ts
 type LaunchResult = CLIProcess;
@@ -699,15 +693,6 @@ export class WsBridge {
     this.messageHandler.handleSystemStatus(session, msg);
   }
 
-  /**
-   * After context compaction completes, re-inject a minimal system context
-   * message so Claude retains project/identity awareness in the new context window.
-   * Only fires if autoReinjectOnCompact is enabled (default: true).
-   */
-  private maybeReinjectIdentity(session: ActiveSession): void {
-    this.messageHandler.maybeReinjectIdentity(session);
-  }
-
   private handleAssistant(session: ActiveSession, msg: CLIAssistantMessage): void {
     this.messageHandler.handleAssistant(session, msg);
   }
@@ -840,41 +825,6 @@ export class WsBridge {
 
   private handleUserMessage(session: ActiveSession, content: string, source?: string): void {
     this.userMessageHandler.handleUserMessage(session, content, source);
-  }
-
-  private handleUserMessageInternal(
-    session: ActiveSession,
-    content: string,
-    source?: string,
-  ): void {
-    this.userMessageHandler.handleUserMessageInternal(session, content, source);
-  }
-
-  private async maybeEnrichWithDocs(session: ActiveSession, content: string): Promise<string> {
-    return this.userMessageHandler.maybeEnrichWithDocs(session, content);
-  }
-
-  private sendToEngine(session: ActiveSession, content: string): void {
-    this.userMessageHandler.sendToEngine(session, content);
-  }
-
-  private handlePermissionResponse(
-    session: ActiveSession,
-    msg: {
-      request_id: string;
-      behavior: "allow" | "deny";
-      updated_permissions?: unknown[];
-    },
-  ): void {
-    this.userMessageHandler.handlePermissionResponse(session, msg);
-  }
-
-  private handleInterrupt(session: ActiveSession): void {
-    this.userMessageHandler.handleInterrupt(session);
-  }
-
-  private handleSetModel(session: ActiveSession, model: string): void {
-    this.userMessageHandler.handleSetModel(session, model);
   }
 
   // ── Idle timer (auto-kill non-Telegram sessions after inactivity) ───────

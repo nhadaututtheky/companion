@@ -536,11 +536,11 @@ export class UserMessageHandler {
       this.bridge.sendToCLI(session, ndjson);
     }
 
-    session.state = { ...session.state, model };
+    session.state = { ...session.state, model: cliModel };
 
     this.bridge.broadcastToAll(session, {
       type: "session_update",
-      session: { model },
+      session: { model: cliModel },
     });
   }
 

@@ -4,7 +4,7 @@
   "type": "module",
   "workspaces": ["packages/*"],
   "scripts": {
-    "dev:server": "bun run --hot packages/server/src/index.ts",
+    "dev:server": "NODE_ENV=development bun run --hot packages/server/src/index.ts",
     "dev:web": "bun run --cwd packages/web dev",
     "build": "bun run --filter '*' build",
     "check": "bun run --filter '*' check",

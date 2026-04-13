@@ -370,14 +370,36 @@ export class SessionLifecycleManager {
       this.bridge.deletePlanWatcher(sessionId);
     }
 
+    // Clean up stream/context state
+    clearStreamBatch(sessionId);
+    clearPrevTokens(sessionId);
+    this.bridge.clearCompactTimers(sessionId);
+
     // Clean up graph activity tracker, injection state, and pulse (safe no-ops if never created)
     removeTracker(sessionId);
     clearActivityState(sessionId);
     cleanupPulse(sessionId);
 
     if (session) {
+      // Capture shortId BEFORE endSessionRecord clears it (for child_ended notification)
+      const preEndRecord = getSessionRecord(sessionId);
+      const savedShortId = preEndRecord?.shortId ?? undefined;
+
       this.bridge.updateStatus(session, "ended");
       persistSession(session);
+      disconnectAllSpectators(sessionId, "Session killed");
+      revokeAllForSession(sessionId);
+
+      // Emit session ended event
+      eventBus.emit("session:ended", {
+        sessionId,
+        exitCode: -1,
+        reason: "Session killed by user",
+      });
+
+      // Notify parent session if this was a child (multi-brain workspace)
+      this.bridge.notifyParentOfChildEnd(sessionId, "ended", savedShortId);
+
       removeActiveSession(sessionId);
       this.bridge.clearSessionCache(sessionId);
     }

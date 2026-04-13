@@ -342,10 +342,26 @@ export async function checkOrActivateTrial(): Promise<LicenseInfo> {
   }
 }
 
+// ── Dev Mode ───────────────────────────────────────────────────────────────
+
+const IS_DEV = process.env.NODE_ENV === "development";
+
+const DEV_LICENSE: LicenseInfo = {
+  valid: true,
+  tier: "pro",
+  email: "dev@localhost",
+  expiresAt: "2099-12-31T23:59:59Z",
+  maxSessions: -1,
+  features: [...PRO_FEATURES],
+  cachedAt: Date.now(),
+  daysLeft: 99999,
+};
+
 // ── Getters ─────────────────────────────────────────────────────────────────
 
 /** Get current license info (cached, no network call) */
 export function getLicense(): LicenseInfo {
+  if (IS_DEV) return DEV_LICENSE;
   return cachedLicense ?? FREE_LICENSE;
 }
 

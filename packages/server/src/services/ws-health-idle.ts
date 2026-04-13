@@ -157,6 +157,16 @@ export class HealthIdleManager {
       clearTimeout(timer);
     }
     this.cleanupTimers.clear();
+    // Cancel all pending idle timers
+    for (const timer of this.idleTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.idleTimers.clear();
+    // Cancel all pending idle warning timers
+    for (const timer of this.idleWarningTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.idleWarningTimers.clear();
   }
 
   // ── Idle Timer ────────────────────────────────────────────────────────────

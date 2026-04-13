@@ -93,6 +93,9 @@ try {
 }
 
 // ── License / Trial verification ────────────────────────────────────────────
+if (process.env.NODE_ENV === "development") {
+  log.info("DEV MODE — all Pro features unlocked, no license check");
+}
 const licenseKey = process.env.COMPANION_LICENSE_KEY;
 if (licenseKey) {
   // Force skip cache when key is explicitly set — always verify against server
