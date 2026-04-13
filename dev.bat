@@ -13,7 +13,7 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3579 " 2^>nul') do taskkill
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3580 " 2^>nul') do taskkill /F /PID %%a 2>/dev/null
 
 echo Starting server (port 3579)...
-start "Companion Server" cmd /k "cd /d %~dp0 && bun run dev:server"
+start "Companion Server" cmd /k "cd /d %~dp0 && set NODE_ENV=development&& set COMPANION_DEV=1&& bun run --hot packages/server/src/index.ts"
 
 timeout /t 2 /nobreak >/dev/null
 
