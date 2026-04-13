@@ -171,7 +171,7 @@ function NavPill({
 function DetailCard({ children, index }: { children: ReactNode; index: number }) {
   return (
     <div
-      className="rounded-radius-xl shadow-soft border border-glass-border shrink-0" style={{
+      className="rounded-radius-xl shadow-soft shrink-0" style={{
         width: 240,
         background: "var(--glass-bg)",
         backdropFilter: "blur(var(--glass-blur))",
@@ -369,7 +369,7 @@ function LayoutContent() {
 
   return (
     <div
-      className="rounded-radius-xl shadow-soft border border-glass-border" style={{
+      className="rounded-radius-xl shadow-soft" style={{
         background: "var(--glass-bg)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",

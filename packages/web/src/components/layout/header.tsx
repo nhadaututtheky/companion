@@ -66,7 +66,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
   return (
     <header
-      className="flex items-center px-5 gap-3 h-12 relative z-10 rounded-radius-xl shadow-soft border border-glass-border" style={{
+      className="flex items-center px-5 gap-3 h-12 relative z-10 rounded-radius-xl shadow-soft" style={{
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",

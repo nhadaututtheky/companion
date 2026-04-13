@@ -194,7 +194,7 @@ export function FloatingStatsBar() {
 
   return (
     <div
-      className="hidden sm:flex items-stretch rounded-radius-xl shadow-soft border border-glass-border" style={{
+      className="hidden sm:flex items-stretch rounded-radius-xl shadow-soft" style={{
         position: "fixed",
         bottom: 80,
         left: "50%",

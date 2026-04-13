@@ -221,7 +221,7 @@ export function CommandPalette() {
       }}
     >
       <div
-        className="rounded-radius-xl shadow-soft border border-glass-border overflow-hidden" style={{
+        className="rounded-radius-xl shadow-soft overflow-hidden" style={{
           width: "100%",
           maxWidth: "560px",
           margin: "0 16px",

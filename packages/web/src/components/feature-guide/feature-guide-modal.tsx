@@ -109,7 +109,7 @@ export function FeatureGuideModal() {
       {activeCategory && (
         <div
           key={activeCategory}
-          className="rounded-radius-xl shadow-soft border border-glass-border overflow-hidden flex" style={{
+          className="rounded-radius-xl shadow-soft overflow-hidden flex" style={{
             background: "var(--glass-bg-heavy)",
             backdropFilter: "blur(var(--glass-blur))",
             WebkitBackdropFilter: "blur(var(--glass-blur))",

@@ -229,7 +229,7 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
 
   return (
     <div
-      className="rounded-radius-xl shadow-soft border border-glass-border overflow-hidden shrink-0 flex" style={{
+      className="rounded-radius-xl shadow-soft overflow-hidden shrink-0 flex" style={{
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",

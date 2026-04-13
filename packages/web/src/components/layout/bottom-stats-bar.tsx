@@ -71,7 +71,7 @@ export function BottomStatsBar() {
       {expanded ? (
         /* ── Expanded: simple active session summary ── */
         <div
-          className="flex items-stretch rounded-radius-xl shadow-soft border border-glass-border" style={{
+          className="flex items-stretch rounded-radius-xl shadow-soft" style={{
             background: "var(--glass-bg-heavy)",
             backdropFilter: "blur(var(--glass-blur))",
             WebkitBackdropFilter: "blur(var(--glass-blur))",
