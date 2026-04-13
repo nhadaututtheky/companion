@@ -2,6 +2,10 @@
  * OpenCode CLI Adapter — Universal AI coding agent with 75+ providers.
  * Uses `opencode run` with --format json for JSONL output.
  * Supports local models (Ollama, LM Studio) and cloud providers.
+ *
+ * Tested against OpenCode v1.3.17.
+ * JSON event format: { type, timestamp, sessionID, part: { type, ... } }
+ * Part types: step-start, text, step-finish, reasoning, tool, patch
  */
 
 import { createLogger } from "../../logger.js";
@@ -16,15 +20,60 @@ import type {
 
 const log = createLogger("opencode-adapter");
 
+// ─── OpenCode JSON event shape (v1.3.17) ────────────────────────────────────
+
+interface OpenCodeTokens {
+  total: number;
+  input: number;
+  output: number;
+  reasoning: number;
+  cache: { write: number; read: number };
+}
+
+interface OpenCodePart {
+  id: string;
+  messageID: string;
+  sessionID: string;
+  type: string;
+  snapshot?: string;
+  // text parts
+  text?: string;
+  time?: { start: number; end: number };
+  metadata?: Record<string, unknown>;
+  // step-finish parts
+  reason?: string;
+  tokens?: OpenCodeTokens;
+  cost?: number;
+  // tool parts
+  tool?: string;
+  callID?: string;
+  state?: {
+    status: string;
+    input: Record<string, unknown>;
+    output: string;
+  };
+}
+
+interface OpenCodeEvent {
+  type: string;
+  timestamp: number;
+  sessionID: string;
+  part: OpenCodePart;
+}
+
 /**
  * Parse OpenCode CLI JSON output into NormalizedMessage.
- * OpenCode `run --format json` emits JSON events, one per line.
+ * `opencode run --format json` emits one JSON event per line.
+ *
+ * Real event types (v1.3.17): step_start, text, step_finish
+ * Real part types: step-start, text, step-finish, reasoning, tool, patch
  */
 function parseOpenCodeMessage(line: string): NormalizedMessage | null {
-  let parsed: Record<string, unknown>;
+  let event: OpenCodeEvent;
   try {
-    parsed = JSON.parse(line);
+    event = JSON.parse(line) as OpenCodeEvent;
   } catch {
+    // Non-JSON line (e.g. startup banner) — emit as assistant text
     if (line.trim()) {
       return {
         type: "assistant",
@@ -36,142 +85,149 @@ function parseOpenCodeMessage(line: string): NormalizedMessage | null {
     return null;
   }
 
-  const type = parsed.type as string | undefined;
-  const event = parsed.event as string | undefined;
-  const kind = type ?? event;
+  // Guard: must have part object
+  const part = event.part;
+  if (!part || typeof part !== "object") {
+    return { type: "progress", platform: "opencode", raw: event };
+  }
 
-  // Session/init event
-  if (kind === "session" || kind === "init" || kind === "session.start") {
+  const partType = part.type ?? event.type;
+
+  // ── step-start → system_init ──────────────────────────────────────────
+  if (partType === "step-start" || event.type === "step_start") {
     return {
       type: "system_init",
       platform: "opencode",
-      sessionId: (parsed.sessionId as string) ?? (parsed.session_id as string) ?? undefined,
-      model: (parsed.model as string) ?? undefined,
-      cwd: (parsed.cwd as string) ?? (parsed.dir as string) ?? undefined,
-      raw: parsed,
+      sessionId: event.sessionID ?? part.sessionID,
+      raw: event,
     };
   }
 
-  // Text/content event
-  if (kind === "content" || kind === "text" || kind === "assistant.text") {
-    const text =
-      (parsed.content as string) ?? (parsed.text as string) ?? (parsed.delta as string) ?? "";
+  // ── text → assistant ──────────────────────────────────────────────────
+  if (partType === "text" && event.type === "text") {
+    const text = part.text ?? "";
     return {
       type: "assistant",
       platform: "opencode",
       content: text,
       contentBlocks: [{ type: "text", text }],
-      model: parsed.model as string | undefined,
-      raw: parsed,
+      raw: event,
     };
   }
 
-  // Full assistant message (non-streaming)
-  if (kind === "message" || kind === "assistant") {
-    const content = (parsed.content as string) ?? (parsed.text as string) ?? "";
+  // ── reasoning → progress (thinking block) ─────────────────────────────
+  if (partType === "reasoning") {
+    const text = part.text ?? "";
     return {
-      type: "assistant",
+      type: "progress",
       platform: "opencode",
-      content,
-      contentBlocks: [{ type: "text", text: content }],
-      model: parsed.model as string | undefined,
-      raw: parsed,
+      contentBlocks: [{ type: "thinking", thinking: text }],
+      raw: event,
     };
   }
 
-  // Tool call
-  if (kind === "tool_call" || kind === "tool_use" || kind === "assistant.tool") {
-    const tool = parsed.tool as Record<string, unknown> | undefined;
+  // ── tool → assistant (tool_use) + tool_result ─────────────────────────
+  if (partType === "tool") {
+    const state = part.state;
+    const toolName = part.tool ?? "unknown";
+    const callId = part.callID ?? part.id;
+
+    // Tool is completed — emit as tool_result
+    if (state?.status === "completed") {
+      return {
+        type: "assistant",
+        platform: "opencode",
+        contentBlocks: [
+          {
+            type: "tool_use",
+            id: callId,
+            name: toolName,
+            input: state.input ?? {},
+          },
+        ],
+        raw: event,
+      };
+    }
+
+    // Tool in-progress or other status
     return {
       type: "assistant",
       platform: "opencode",
       contentBlocks: [
         {
           type: "tool_use",
-          id: (parsed.id as string) ?? (tool?.id as string) ?? crypto.randomUUID(),
-          name:
-            (parsed.name as string) ??
-            (tool?.name as string) ??
-            (parsed.tool_name as string) ??
-            "unknown",
-          input:
-            (parsed.input as Record<string, unknown>) ??
-            (tool?.input as Record<string, unknown>) ??
-            (parsed.args as Record<string, unknown>) ??
-            {},
+          id: callId,
+          name: toolName,
+          input: state?.input ?? {},
         },
       ],
-      raw: parsed,
+      raw: event,
     };
   }
 
-  // Tool result
-  if (kind === "tool_result" || kind === "tool.result") {
+  // ── patch → tool_result (file diff) ───────────────────────────────────
+  if (partType === "patch") {
+    const text = part.text ?? "";
     return {
       type: "tool_result",
       platform: "opencode",
-      content: (parsed.output as string) ?? (parsed.result as string) ?? "",
-      contentBlocks: [
-        {
-          type: "text",
-          text: (parsed.output as string) ?? (parsed.result as string) ?? "",
-        },
-      ],
-      raw: parsed,
+      content: text,
+      contentBlocks: [{ type: "text", text }],
+      raw: event,
     };
   }
 
-  // Completion
-  if (kind === "done" || kind === "complete" || kind === "session.end") {
-    const usage = parsed.usage as Record<string, unknown> | undefined;
+  // ── step-finish → complete (tokens + cost) ────────────────────────────
+  if (partType === "step-finish" || event.type === "step_finish") {
+    const tokens = part.tokens;
     return {
       type: "complete",
       platform: "opencode",
-      isError: false,
-      costUsd: (parsed.cost as number) ?? (usage?.cost as number) ?? undefined,
-      raw: parsed,
+      isError: part.reason === "error",
+      costUsd: part.cost ?? undefined,
+      tokenUsage: tokens
+        ? {
+            input: tokens.input,
+            output: tokens.output,
+            cacheRead: tokens.cache?.read,
+            cacheCreation: tokens.cache?.write,
+          }
+        : undefined,
+      raw: event,
     };
   }
 
-  // Error
-  if (kind === "error") {
+  // ── error ─────────────────────────────────────────────────────────────
+  if (event.type === "error" || partType === "error") {
     return {
       type: "error",
       platform: "opencode",
-      errorMessage: (parsed.message as string) ?? (parsed.error as string) ?? "Unknown error",
-      raw: parsed,
+      errorMessage:
+        part.text ?? (event as unknown as Record<string, string>).message ?? "Unknown error",
+      raw: event,
     };
   }
 
-  // Thinking/reasoning
-  if (kind === "thinking" || kind === "reasoning") {
-    return {
-      type: "progress",
-      platform: "opencode",
-      raw: parsed,
-    };
-  }
-
-  // Unknown — pass through as progress
+  // ── Unknown — pass through as progress ────────────────────────────────
   return {
     type: "progress",
     platform: "opencode",
-    raw: parsed,
+    raw: event,
   };
 }
 
 export class OpenCodeAdapter implements CLIAdapter {
   readonly platform = "opencode" as const;
   readonly capabilities: CLICapabilities = {
-    supportsResume: false, // run mode is one-shot, no resume
+    supportsResume: true, // --continue / --session <id>
     supportsStreaming: true,
     supportsTools: true,
     supportsMCP: true,
-    outputFormat: "ndjson", // --format json outputs JSON events
+    outputFormat: "ndjson", // --format json outputs JSON events per line
     inputFormat: "text",
     supportsModelFlag: true,
     supportsThinking: true,
-    supportsInteractive: false, // run mode is non-interactive
+    supportsInteractive: false, // run mode is non-interactive (one-shot)
   };
 
   async detect(): Promise<CLIDetectResult> {
@@ -224,9 +280,53 @@ export class OpenCodeAdapter implements CLIAdapter {
       args.push("--continue");
     }
 
-    // Session ID
-    if (opts.sessionId && opts.platformOptions?.continueSession) {
+    // Session ID — continue a specific session
+    if (opts.cliSessionId) {
+      args.push("--session", opts.cliSessionId);
+    } else if (opts.platformOptions?.continueSession && opts.sessionId) {
       args.push("--session", opts.sessionId);
+    }
+
+    // Fork — branch from existing session (requires --continue or --session)
+    if (opts.platformOptions?.fork) {
+      args.push("--fork");
+    }
+
+    // Attach to a running opencode serve instance (faster MCP cold starts)
+    const attachUrl = opts.platformOptions?.attach as string | undefined;
+    if (attachUrl) {
+      args.push("--attach", attachUrl);
+    }
+
+    // Password for remote server auth
+    const password = opts.platformOptions?.password as string | undefined;
+    if (password) {
+      args.push("--password", password);
+    }
+
+    // Session title
+    const title = opts.platformOptions?.title as string | undefined;
+    if (title) {
+      args.push("--title", title);
+    }
+
+    // File attachments
+    const files = opts.platformOptions?.files as string[] | undefined;
+    if (files?.length) {
+      for (const f of files) {
+        args.push("--file", f);
+      }
+    }
+
+    // Command mode — run a command, message becomes args
+    const command = opts.platformOptions?.command as string | undefined;
+    if (command) {
+      args.push("--command", command);
+    }
+
+    // Share session after completion
+    if (opts.platformOptions?.share) {
+      args.push("--share");
     }
 
     // Thinking mode

@@ -3,8 +3,10 @@
  *
  * Scans:
  *  - ~/.claude/projects/  (Claude Code JSONL files)
+ *  - AppData/Claude/claude-code-sessions/ (VS Code extension)
  *  - ~/.codex/sessions/   (Codex rollout JSONL files)
  *  - ~/.codex/history.jsonl (Codex prompt history)
+ *  - OpenCode SQLite DB via `opencode db` CLI (if installed)
  *
  * Adapted from 1DevTool's ResumeManager pattern.
  */
@@ -92,6 +94,8 @@ export async function getScannedSessionDetail(
       return getClaudeSessionDetail(sessionId);
     case "codex":
       return getCodexSessionDetail(sessionId);
+    case "opencode":
+      return getOpenCodeSessionDetail(sessionId);
     default:
       return null;
   }
@@ -103,6 +107,8 @@ export function getResumeCommand(agentType: CLIPlatform, sessionId: string): str
       return `claude --resume ${sessionId}`;
     case "codex":
       return `codex resume ${sessionId}`;
+    case "opencode":
+      return `opencode --session ${sessionId} --continue`;
     case "gemini":
       return `gemini`;
     default:
@@ -131,6 +137,7 @@ async function getAllSessions(): Promise<ScannedSession[]> {
     scanClaudeSessions(),
     scanClaudeVSCodeSessions(),
     scanCodexSessions(),
+    scanOpenCodeSessions(),
   ]);
 
   const sessions: ScannedSession[] = [];
@@ -654,6 +661,127 @@ function isCodexPreamble(text: string): boolean {
     t.includes("<collaboration_mode>") ||
     t.includes("sandbox_mode")
   );
+}
+
+// ─── OpenCode ────────────────────────────────────────────────────────────────
+
+/**
+ * Scan OpenCode sessions by querying its SQLite DB via `opencode db`.
+ * This is much more reliable than parsing filesystem — all data is in the DB.
+ */
+async function scanOpenCodeSessions(): Promise<ScannedSession[]> {
+  try {
+    // Check if opencode CLI is available
+    const versionProc = Bun.spawn(["opencode", "--version"], {
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const versionCode = await versionProc.exited;
+    if (versionCode !== 0) return [];
+  } catch {
+    return []; // opencode not installed
+  }
+
+  try {
+    const proc = Bun.spawn(
+      [
+        "opencode",
+        "db",
+        `SELECT s.id, s.title, s.directory, s.slug, s.parent_id, s.time_created, s.time_updated, p.worktree FROM session s JOIN project p ON s.project_id = p.id ORDER BY s.time_updated DESC LIMIT 200`,
+        "--format",
+        "json",
+      ],
+      { stdout: "pipe", stderr: "pipe" },
+    );
+
+    const output = await new Response(proc.stdout).text();
+    const code = await proc.exited;
+    if (code !== 0) return [];
+
+    const rows = JSON.parse(output) as Array<{
+      id: string;
+      title: string;
+      directory: string;
+      slug: string;
+      parent_id: string | null;
+      time_created: number;
+      time_updated: number;
+      worktree: string;
+    }>;
+
+    return rows.map((row) => ({
+      id: row.id,
+      agentType: "opencode" as CLIPlatform,
+      cwd: row.directory,
+      projectPath: row.worktree,
+      startedAt: row.time_created,
+      lastActivityAt: row.time_updated,
+      firstPrompt: row.title || `(${row.slug})`,
+      turnCount: 0, // would need extra query per session — skip for list view
+      isActive: false,
+      isTracked: false,
+    }));
+  } catch (err) {
+    log.warn("Failed to scan OpenCode sessions", { error: String(err) });
+    return [];
+  }
+}
+
+async function getOpenCodeSessionDetail(sessionId: string): Promise<ScannedSessionDetail | null> {
+  const sessions = await scanOpenCodeSessions();
+  const session = sessions.find((s) => s.id === sessionId);
+  if (!session) return null;
+
+  try {
+    // Get messages with parts
+    const proc = Bun.spawn(
+      [
+        "opencode",
+        "db",
+        `SELECT m.id, m.data as msg_data, p.data as part_data FROM message m LEFT JOIN part p ON p.message_id = m.id WHERE m.session_id = '${sessionId.replace(/'/g, "''")}' ORDER BY m.time_created ASC, p.time_created ASC`,
+        "--format",
+        "json",
+      ],
+      { stdout: "pipe", stderr: "pipe" },
+    );
+
+    const output = await new Response(proc.stdout).text();
+    const code = await proc.exited;
+    if (code !== 0) return { ...session, messages: [] };
+
+    const rows = JSON.parse(output) as Array<{
+      id: string;
+      msg_data: string;
+      part_data: string | null;
+    }>;
+
+    const messages: ScannedSessionDetail["messages"] = [];
+    const seenMsgIds = new Set<string>();
+
+    for (const row of rows) {
+      // Extract role from message data
+      const msgData = JSON.parse(row.msg_data) as { role: string };
+
+      // Extract text from part data
+      if (row.part_data) {
+        const partData = JSON.parse(row.part_data) as { type: string; text?: string };
+        if (partData.type === "text" && partData.text) {
+          if (!seenMsgIds.has(row.id + partData.text.slice(0, 50))) {
+            seenMsgIds.add(row.id + partData.text.slice(0, 50));
+            messages.push({
+              role: msgData.role === "user" ? "user" : "assistant",
+              content: partData.text,
+            });
+          }
+        }
+      }
+    }
+
+    return { ...session, messages };
+  } catch (err) {
+    log.warn("Failed to get OpenCode session detail", { error: String(err) });
+    return { ...session, messages: [] };
+  }
 }
 
 async function getCodexSessionDetail(sessionId: string): Promise<ScannedSessionDetail | null> {
