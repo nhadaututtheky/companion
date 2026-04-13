@@ -78,10 +78,7 @@ import {
 } from "./ws-health-idle.js";
 import { MessageHandler, type MessageHandlerBridge } from "./ws-message-handler.js";
 import { UserMessageHandler, type UserMessageBridge } from "./ws-user-message.js";
-import {
-  SessionLifecycleManager,
-  type SessionLifecycleBridge,
-} from "./ws-session-lifecycle.js";
+import { SessionLifecycleManager, type SessionLifecycleBridge } from "./ws-session-lifecycle.js";
 
 const log = createLogger("ws-bridge");
 
