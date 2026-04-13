@@ -549,7 +549,12 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
 
       log.info("Quick session started", { chatId, sessionId });
     } catch (err) {
-      await ctx.editMessageText(`Failed: ${String(err)}`).catch(() => {});
+      log.error("Failed to start quick session", { error: String(err) });
+      await ctx
+        .editMessageText(
+          "❌ Failed to start session. Check that the project directory exists and Claude CLI is available.",
+        )
+        .catch(() => {});
     }
   });
 }

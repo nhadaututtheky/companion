@@ -22,6 +22,7 @@ import { SessionDetails } from "@/components/session/session-details";
 import { PinnedMessagesDrawer } from "@/components/session/pinned-messages-drawer";
 import { ShareModal } from "@/components/session/share-modal";
 import { PromptHistoryPanel } from "@/components/panels/prompt-history-panel";
+import { Z } from "@/lib/z-index";
 import { ModelSelector } from "@/components/session/model-selector";
 import { ThinkingModeSelector } from "@/components/session/thinking-mode-selector";
 import { PersonaChip } from "@/components/persona/persona-chip";
@@ -552,7 +553,7 @@ export function SessionPageClient({ params }: PageProps) {
                 right: 0,
                 bottom: 0,
                 width: 400,
-                zIndex: 50,
+                zIndex: Z.popover,
                 boxShadow: "-4px 0 24px rgba(0,0,0,0.2)",
               }}
             >

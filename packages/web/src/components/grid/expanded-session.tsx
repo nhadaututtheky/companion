@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
+import { Z } from "@/lib/z-index";
 import {
   ArrowsIn,
   X,
@@ -143,7 +144,7 @@ function ExpandedModelSwitcher({
             position: "absolute",
             top: "calc(100% + 4px)",
             right: 0,
-            zIndex: 50,
+            zIndex: Z.popover,
             background: "var(--glass-bg-heavy)",
             backdropFilter: "blur(var(--glass-blur))",
             WebkitBackdropFilter: "blur(var(--glass-blur))",
@@ -324,7 +325,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
         style={{
           position: "fixed",
           inset: 0,
-          zIndex: 50,
+          zIndex: Z.popover,
           background: "rgba(0,0,0,0.5)",
         }}
       />
@@ -339,7 +340,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
         style={{
           position: "fixed",
           inset: 0,
-          zIndex: 51,
+          zIndex: Z.expanded,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -539,7 +540,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                       alignItems: "center",
                       justifyContent: "center",
                       pointerEvents: "none",
-                      zIndex: 1,
+                      zIndex: Z.base,
                     }}
                   >
                     <TelegramLogo

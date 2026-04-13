@@ -710,10 +710,15 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
     }
 
     await ctx.replyWithChatAction("typing");
+    const typingInterval = setInterval(() => {
+      ctx.replyWithChatAction("typing").catch(() => {});
+    }, 4000);
 
     try {
       const { research } = await import("../../services/web-intel.js");
       const result = await research(query, 3000);
+
+      clearInterval(typingInterval);
 
       if (!result) {
         await ctx.reply("Research failed — WEBCLAW_API_KEY may be required for web search.", {
@@ -745,6 +750,7 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
         });
       }
     } catch (err) {
+      clearInterval(typingInterval);
       log.warn("Error in /research command", { query, error: String(err) });
       await ctx.reply("Error performing research.", {
         message_thread_id: ctx.message?.message_thread_id,

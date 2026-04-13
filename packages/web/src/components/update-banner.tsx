@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ArrowSquareUpRight, X, Rocket } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
+import { Z } from "@/lib/z-index";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -135,8 +136,9 @@ export function UpdateBanner() {
 
   return (
     <div
-      className="fixed bottom-4 right-4 z-[100] flex items-start gap-3 rounded-xl px-4 py-3 max-w-sm"
+      className="fixed bottom-4 right-4 flex items-start gap-3 rounded-xl px-4 py-3 max-w-sm"
       style={{
+        zIndex: Z.overlay,
         background: "var(--color-bg-card)",
         border: "1px solid var(--color-accent)",
         boxShadow: "0 8px 32px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.05)",

@@ -183,6 +183,10 @@ const bridge = new WsBridge({
 
 botRegistry = new BotRegistry(bridge);
 
+// Warn if bot tokens will be stored unencrypted
+import { warnIfNoEncryption } from "./services/crypto.js";
+warnIfNoEncryption();
+
 // Auto-start bots (non-blocking)
 botRegistry.autoStart().catch((err) => {
   log.error("Failed to auto-start Telegram bots", { error: String(err) });
@@ -237,11 +241,14 @@ app.use("*", async (c, next) => {
     "Content-Security-Policy",
     [
       "default-src 'self' http://localhost:* ws://localhost:*",
+      // unsafe-inline needed for Next.js static export inline scripts + theme hydration
+      // unsafe-eval needed for Next.js static export webpack runtime
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*",
-      "style-src 'self' 'unsafe-inline' http://localhost:*",
+      "style-src 'self' 'unsafe-inline' http://localhost:* https://fonts.googleapis.com",
       "img-src 'self' data: blob: http://localhost:*",
       "connect-src 'self' ws://localhost:* wss: http://localhost:*",
-      "font-src 'self' data: http://localhost:*",
+      "font-src 'self' data: http://localhost:* https://fonts.gstatic.com",
+      "frame-ancestors 'self'",
     ].join("; ") + ";",
   );
 });

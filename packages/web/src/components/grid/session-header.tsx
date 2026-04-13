@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useCallback, useEffect } from "react";
+import { Z } from "@/lib/z-index";
 import {
   ArrowsOut,
   Minus,
@@ -296,7 +297,7 @@ export function SessionHeader({
                 position: "absolute",
                 top: "calc(100% + 4px)",
                 right: 0,
-                zIndex: 50,
+                zIndex: Z.popover,
                 background: "var(--glass-bg-heavy)",
                 backdropFilter: "blur(var(--glass-blur))",
                 WebkitBackdropFilter: "blur(var(--glass-blur))",

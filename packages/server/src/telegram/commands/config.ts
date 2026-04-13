@@ -3,7 +3,7 @@
  */
 
 import { InlineKeyboard } from "grammy";
-import { escapeHTML } from "../formatter.js";
+import { escapeHTML, toTelegramHTML } from "../formatter.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
 import {
   startDebate,
@@ -185,7 +185,7 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
         // onMessage callback — route to Telegram (in debate forum topic)
         async (_channelId: string, agent: DebateAgent, content: string, round: number) => {
           const label = `${agent.emoji} <b>${escapeHTML(agent.label)}</b> <i>(Round ${round})</i>`;
-          const text = `${label}\n\n${escapeHTML(content)}`;
+          const text = `${label}\n\n${toTelegramHTML(content)}`;
 
           // Split if too long (Telegram 4096 limit)
           if (text.length <= 4000) {
@@ -203,7 +203,8 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
               })
               .catch(() => {});
             await bridge.bot.api
-              .sendMessage(chatId, escapeHTML(content), {
+              .sendMessage(chatId, toTelegramHTML(content), {
+                parse_mode: "HTML",
                 message_thread_id: debateTopicId,
               })
               .catch(() => {});
@@ -264,7 +265,7 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
     await concludeDebate(channelId, async (_cId, agent, content, _round) => {
       const label = `${agent.emoji} <b>${escapeHTML(agent.label)}</b>`;
       await bridge.bot.api
-        .sendMessage(chatId, `${label}\n\n${escapeHTML(content)}`, {
+        .sendMessage(chatId, `${label}\n\n${toTelegramHTML(content)}`, {
           parse_mode: "HTML",
           message_thread_id: topicId,
         })

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback, useMemo, useState } from "react";
+import { Z } from "@/lib/z-index";
 import { Command } from "cmdk";
 import {
   Terminal,
@@ -211,7 +212,7 @@ export function CommandPalette() {
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 9999,
+        zIndex: Z.commandPalette,
         background: "rgba(0, 0, 0, 0.4)",
         display: "flex",
         alignItems: "flex-start",

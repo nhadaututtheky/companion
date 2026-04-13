@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Z } from "@/lib/z-index";
 import {
   Gear,
   Timer,
@@ -178,7 +179,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
         position: "absolute",
         top: "calc(100% + 4px)",
         right: 0,
-        zIndex: 50,
+        zIndex: Z.popover,
         width: 260,
         borderRadius: 10,
         background: "var(--color-bg-card)",

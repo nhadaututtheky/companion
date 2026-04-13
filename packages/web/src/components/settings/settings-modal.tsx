@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { Z } from "@/lib/z-index";
 import { X } from "@phosphor-icons/react";
 import { useAnimatePresence } from "@/lib/animation";
 import { useUiStore } from "@/lib/stores/ui-store";
@@ -250,7 +251,7 @@ export function SettingsModal() {
   const backdropStyle: React.CSSProperties = {
     position: "fixed",
     inset: 0,
-    zIndex: 70,
+    zIndex: Z.settings,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -262,7 +263,7 @@ export function SettingsModal() {
 
   const panelStyle: React.CSSProperties = {
     position: "relative",
-    zIndex: 71,
+    zIndex: Z.settingsContent,
     opacity: isEntered ? 1 : 0,
     transform: isEntered ? "scale(1) translateY(0)" : "scale(0.96) translateY(4px)",
     transition: "opacity 200ms ease, transform 200ms ease",

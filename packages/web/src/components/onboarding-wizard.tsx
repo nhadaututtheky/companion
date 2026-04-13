@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Z } from "@/lib/z-index";
 import {
   CheckCircle,
   Warning,
@@ -82,7 +83,7 @@ function StepWelcome() {
           className="text-2xl font-bold mb-2"
           style={{
             color: "var(--color-text-primary)",
-            fontFamily: "var(--font-sans, Space Grotesk, sans-serif)",
+            fontFamily: "var(--font-display)",
           }}
         >
           Welcome to Companion!
@@ -368,7 +369,7 @@ function StepFirstSession({
           className="text-2xl font-bold mb-2"
           style={{
             color: "var(--color-text-primary)",
-            fontFamily: "var(--font-sans, Space Grotesk, sans-serif)",
+            fontFamily: "var(--font-display)",
           }}
         >
           You're all set!
@@ -454,7 +455,7 @@ export function OnboardingWizard({ onOpenNewSession }: OnboardingWizardProps) {
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 100,
+        zIndex: Z.overlay,
         background: "rgba(0,0,0,0.55)",
         backdropFilter: "blur(4px)",
         display: "flex",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { Z } from "@/lib/z-index";
 import {
   X,
   ChartBar,
@@ -207,7 +208,7 @@ export function FloatingStatsBar() {
         bottom: 80,
         left: "50%",
         transform: "translateX(-50%)",
-        zIndex: 50,
+        zIndex: Z.popover,
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",

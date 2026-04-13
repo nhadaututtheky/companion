@@ -627,7 +627,9 @@ export class TelegramBridge {
       });
     } catch (err) {
       log.error("Failed to start session", { error: String(err) });
-      await ctx.reply(`Failed to start session: ${String(err)}`);
+      await ctx.reply(
+        "❌ Failed to start session. Check that the project directory exists and Claude CLI is available.",
+      );
     }
   }
 
@@ -777,8 +779,7 @@ export class TelegramBridge {
         // Row 4: Actions
         [
           btn("📊 Context", `ctx:detail:${sessionId}`),
-          btn("↩ Back", `panel:back:${sessionId}`),
-          btn("Cancel", `panel:cancel:${sessionId}`),
+          btn("⏸ Pause", `panel:cancel:${sessionId}`),
           btn("Stop", `panel:stop:${sessionId}`, "danger"),
         ],
       ],

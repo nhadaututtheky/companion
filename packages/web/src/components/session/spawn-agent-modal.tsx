@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Z } from "@/lib/z-index";
 import { X, Rocket, Lightning } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -104,7 +105,7 @@ export function SpawnAgentModal({
   return (
     <div
       className="absolute inset-0 flex items-center justify-center"
-      style={{ zIndex: 50, background: "rgba(0,0,0,0.4)", borderRadius: "inherit" }}
+      style={{ zIndex: Z.popover, background: "rgba(0,0,0,0.4)", borderRadius: "inherit" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

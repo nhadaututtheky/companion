@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { X, FloppyDisk, ArrowsClockwise } from "@phosphor-icons/react";
+import { Z } from "@/lib/z-index";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import type { Schedule, CreateScheduleInput, UpdateScheduleInput } from "@companion/shared";
@@ -151,7 +152,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
   return (
     <div
       className="fixed inset-0 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.5)", zIndex: 100 }}
+      style={{ background: "rgba(0,0,0,0.5)", zIndex: Z.overlay }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div

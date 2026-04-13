@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useCallback, useEffect, type KeyboardEvent } from "react";
+import { Z } from "@/lib/z-index";
 import { PaperPlaneTilt, Stop, Microphone, MicrophoneSlash } from "@phosphor-icons/react";
 import { useVoiceInput } from "@/hooks/use-voice-input";
 import {
@@ -224,7 +225,7 @@ export function MessageComposer({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              zIndex: 10,
+              zIndex: Z.dropdown,
               pointerEvents: "none",
             }}
           >

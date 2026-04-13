@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { Z } from "@/lib/z-index";
 import { createPortal } from "react-dom";
 import { Rocket, X, PencilSimple } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
@@ -96,7 +97,7 @@ export function TemplateQuickPicker() {
                 inset: 0,
                 background: "rgba(0,0,0,0.5)",
                 backdropFilter: "blur(4px)",
-                zIndex: 100,
+                zIndex: Z.overlay,
               }}
             />
 
@@ -109,7 +110,7 @@ export function TemplateQuickPicker() {
                 transform: "translate(-50%, -50%)",
                 width: "min(640px, 90vw)",
                 maxHeight: "80vh",
-                zIndex: 101,
+                zIndex: Z.overlayContent,
                 borderRadius: "var(--radius-xl)",
                 background: "var(--color-bg-card)",
                 border: "1px solid var(--glass-border)",

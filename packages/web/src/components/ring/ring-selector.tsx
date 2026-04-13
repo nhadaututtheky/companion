@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { Z } from "@/lib/z-index";
 import { X, LinkSimple } from "@phosphor-icons/react";
 import { useRingStore } from "@/lib/stores/ring-store";
 import { useSessionStore } from "@/lib/stores/session-store";
@@ -78,7 +79,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
       {/* Backdrop */}
       <div
         onClick={() => setSelecting(false)}
-        style={{ position: "fixed", inset: 0, zIndex: 41, background: "rgba(0,0,0,0.03)" }}
+        style={{ position: "fixed", inset: 0, zIndex: Z.ringBackdrop, background: "rgba(0,0,0,0.03)" }}
       />
 
       {/* Chrome bridge connecting bubbles to ring */}
@@ -90,7 +91,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
             top: anchorY - 2,
             width: dockWidth + 16,
             height: 4,
-            zIndex: 42,
+            zIndex: Z.ringConnector,
             opacity: open ? 0.5 : 0,
             transition: reducedMotion ? "none" : "opacity 0.3s ease 0.15s",
           }}
@@ -135,7 +136,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
               top: baseY,
               width: size,
               height: size,
-              zIndex: 43,
+              zIndex: Z.ringWindow,
               borderRadius: "50%",
               border: isSelected ? `3px solid ${color}` : "2px solid transparent",
               background: isSelected ? `${color}20` : "transparent",
@@ -176,7 +177,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
               />
             </div>
             <div
-              style={{ width: 7, height: 7, borderRadius: "50%", background: color, zIndex: 1 }}
+              style={{ width: 7, height: 7, borderRadius: "50%", background: color, zIndex: Z.base }}
             />
             <span
               style={{
@@ -187,7 +188,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-                zIndex: 1,
+                zIndex: Z.base,
               }}
             >
               {(session.projectName ?? session.id).slice(0, 6)}
@@ -226,7 +227,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
           left: cardLeft,
           top: cardTop,
           width: 280,
-          zIndex: 42,
+          zIndex: Z.ringConnector,
           borderRadius: 16,
           background: "var(--color-bg-card, #fff)",
           border: "1px solid var(--color-border, rgba(0,0,0,0.08))",

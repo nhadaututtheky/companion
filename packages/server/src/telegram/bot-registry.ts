@@ -11,6 +11,7 @@ import { createLogger } from "../logger.js";
 import type { WsBridge } from "../services/ws-bridge.js";
 import type { BotConfig } from "./bot-factory.js";
 import { escapeHTML } from "./formatter.js";
+import { encrypt, decrypt, warnIfNoEncryption } from "../services/crypto.js";
 
 const log = createLogger("bot-registry");
 
@@ -144,7 +145,7 @@ export class BotRegistry {
         if (this.bots.has(row.id)) continue; // Skip if already started from env
 
         await this.startBot({
-          token: row.botToken,
+          token: decrypt(row.botToken),
           botId: row.id,
           label: row.label,
           role: row.role as "claude" | "codex" | "gemini" | "opencode" | "general",
@@ -331,7 +332,7 @@ export class BotRegistry {
         .set({
           label: config.label,
           role: config.role,
-          botToken: config.botToken,
+          botToken: encrypt(config.botToken),
           allowedChatIds: config.allowedChatIds,
           allowedUserIds: config.allowedUserIds,
           enabled: config.enabled,
@@ -345,7 +346,7 @@ export class BotRegistry {
           id: config.id,
           label: config.label,
           role: config.role,
-          botToken: config.botToken,
+          botToken: encrypt(config.botToken),
           allowedChatIds: config.allowedChatIds,
           allowedUserIds: config.allowedUserIds,
           enabled: config.enabled,

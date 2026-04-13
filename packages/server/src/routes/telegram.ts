@@ -8,6 +8,7 @@ import { zValidator } from "@hono/zod-validator";
 import type { BotRegistry } from "../telegram/bot-registry.js";
 import type { ApiResponse } from "@companion/shared";
 import { hasFeature } from "../services/license.js";
+import { decrypt } from "../services/crypto.js";
 
 const botConfigSchema = z.object({
   id: z.string().min(1),
@@ -136,7 +137,7 @@ export function telegramRoutes(registry: BotRegistry) {
     }
 
     try {
-      const res = await fetch(`https://api.telegram.org/bot${row.botToken}/getMe`);
+      const res = await fetch(`https://api.telegram.org/bot${decrypt(row.botToken)}/getMe`);
       const json = (await res.json()) as {
         ok: boolean;
         result?: { username: string; first_name: string };
@@ -178,7 +179,7 @@ export function telegramRoutes(registry: BotRegistry) {
       if (!row) {
         return c.json({ success: false, error: "Bot not found" } satisfies ApiResponse, 404);
       }
-      botToken = row.botToken;
+      botToken = decrypt(row.botToken);
     }
 
     registry.saveBotConfig({

@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useEffect, useState, type KeyboardEvent } from "react";
+import { Z } from "@/lib/z-index";
 import { PaperPlaneTilt, X, XCircle, Scales, Terminal } from "@phosphor-icons/react";
 import { useRingStore, MODEL_PRESETS } from "@/lib/stores/ring-store";
 import { useSessionStore } from "@/lib/stores/session-store";
@@ -175,7 +176,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   return (
     <>
       {/* Backdrop */}
-      <div onClick={() => setExpanded(false)} style={{ position: "fixed", inset: 0, zIndex: 41 }} />
+      <div onClick={() => setExpanded(false)} style={{ position: "fixed", inset: 0, zIndex: Z.ringBackdrop }} />
 
       {/* Chrome-style color bridge connecting bubbles to ring */}
       <svg
@@ -185,7 +186,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
           top: anchorY - 2,
           width: dockWidth + 16,
           height: 4,
-          zIndex: 42,
+          zIndex: Z.ringConnector,
           opacity: open ? 0.6 : 0,
           transition: reducedMotion ? "none" : "opacity 0.3s ease 0.1s",
         }}
@@ -230,7 +231,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
               top: baseY,
               width: size,
               height: size,
-              zIndex: 43,
+              zIndex: Z.ringWindow,
               transform: open ? "scale(1)" : "scale(0)",
               opacity: open ? 1 : 0,
               transition: reducedMotion
@@ -311,7 +312,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
           top: cardTop,
           width: cardWidth,
           height: cardHeight,
-          zIndex: 42,
+          zIndex: Z.ringConnector,
           borderRadius: 16,
           background: "var(--color-bg-card, #fff)",
           border: "1px solid var(--color-border, rgba(0,0,0,0.08))",

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { Z } from "@/lib/z-index";
 import { X, Plus, FolderSimple, CircleNotch } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useAnimatePresence } from "@/lib/animation";
@@ -81,8 +82,9 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center"
+      className="fixed inset-0 flex items-center justify-center"
       style={{
+        zIndex: Z.topModal,
         background: "rgba(0,0,0,0.6)",
         backdropFilter: "blur(4px)",
         opacity: animationState === "entering" || animationState === "entered" ? 1 : 0,

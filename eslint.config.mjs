@@ -17,6 +17,7 @@ export default tseslint.config(
       "**/drizzle/**",
       ".rune/metrics/**",
       "landing/**",
+      "data/**",
       "**/*.js",
       "**/*.mjs",
     ],

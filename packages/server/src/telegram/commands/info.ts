@@ -132,6 +132,14 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
 
   // ── /model [name] — Change model ──────────────────────────────────────
 
+  const ALLOWED_MODELS = [
+    "claude-opus-4-6",
+    "claude-sonnet-4-6",
+    "claude-haiku-4-5",
+    "claude-opus-4-5",
+    "claude-sonnet-4-5",
+  ] as const;
+
   bot.command("model", async (ctx) => {
     const mapping = bridge.getMapping(ctx.chat.id, ctx.message?.message_thread_id);
     if (!mapping) {
@@ -142,6 +150,15 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
     const args = ctx.match?.trim();
 
     if (args) {
+      if (!ALLOWED_MODELS.includes(args as (typeof ALLOWED_MODELS)[number])) {
+        const validList = ALLOWED_MODELS.map((m) => `• <code>${escapeHTML(m)}</code>`).join("\n");
+        await ctx.reply(
+          `❌ Unknown model. Use /model to see available options.\n\n<b>Valid models:</b>\n${validList}`,
+          { parse_mode: "HTML" },
+        );
+        return;
+      }
+
       // Direct model set
       bridge.wsBridge.handleBrowserMessage(
         mapping.sessionId,

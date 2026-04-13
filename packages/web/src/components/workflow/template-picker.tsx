@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { X, CircleNotch, Play, ListBullets, Lightning } from "@phosphor-icons/react";
+import { Z } from "@/lib/z-index";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 
@@ -93,7 +94,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 100,
+        zIndex: Z.overlay,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

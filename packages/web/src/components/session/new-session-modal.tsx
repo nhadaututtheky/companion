@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
+import { Z } from "@/lib/z-index";
 import { X, Check, Warning } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useAnimatePresence } from "@/lib/animation";
@@ -447,7 +448,7 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
         style={{
           position: "fixed",
           inset: 0,
-          zIndex: 60,
+          zIndex: Z.modal,
           background: "rgba(0,0,0,0.45)",
           backdropFilter: "blur(4px)",
           WebkitBackdropFilter: "blur(4px)",
@@ -458,7 +459,7 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
         style={{
           position: "fixed",
           inset: 0,
-          zIndex: 61,
+          zIndex: Z.modalContent,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",

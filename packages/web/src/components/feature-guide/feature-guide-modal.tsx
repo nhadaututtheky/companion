@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { Z } from "@/lib/z-index";
 import {
   X,
   MagnifyingGlass,
@@ -99,7 +100,7 @@ export function FeatureGuideModal() {
         bottom: 20,
         left: "50%",
         transform: "translateX(-50%)",
-        zIndex: 50,
+        zIndex: Z.popover,
         maxWidth: "90vw",
         animation: "slideUpFade 250ms ease forwards",
       }}

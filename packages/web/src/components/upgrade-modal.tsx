@@ -17,6 +17,7 @@ import {
   ArrowsClockwise,
 } from "@phosphor-icons/react";
 import { useLicenseStore } from "@/lib/stores/license-store";
+import { Z } from "@/lib/z-index";
 import { toast } from "sonner";
 
 const PAY_API = "https://pay.theio.vn";
@@ -149,8 +150,8 @@ export function UpgradeModal() {
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+      className="fixed inset-0 flex items-center justify-center"
+      style={{ zIndex: Z.topModal, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
       onClick={handleBackdrop}
     >
       <div

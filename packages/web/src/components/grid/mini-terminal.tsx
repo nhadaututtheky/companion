@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useCallback, useState, type KeyboardEvent } from "react";
+import { Z } from "@/lib/z-index";
 import {
   PaperPlaneTilt,
   Lock,
@@ -433,7 +434,7 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
                   alignItems: "center",
                   justifyContent: "center",
                   pointerEvents: "none",
-                  zIndex: 1,
+                  zIndex: Z.base,
                 }}
               >
                 <TelegramLogo

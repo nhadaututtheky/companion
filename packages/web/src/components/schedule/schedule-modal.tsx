@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Timer, CalendarBlank, X } from "@phosphor-icons/react";
+import { Z } from "@/lib/z-index";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { useUiStore } from "@/lib/stores/ui-store";
@@ -111,7 +112,7 @@ export function ScheduleModal() {
           inset: 0,
           background: "rgba(0,0,0,0.5)",
           backdropFilter: "blur(4px)",
-          zIndex: 100,
+          zIndex: Z.overlay,
         }}
       />
 
@@ -124,7 +125,7 @@ export function ScheduleModal() {
           transform: "translate(-50%, -50%)",
           width: "min(1100px, 90vw)",
           maxHeight: "85vh",
-          zIndex: 101,
+          zIndex: Z.overlayContent,
           borderRadius: "var(--radius-xl)",
           background: "var(--color-bg-card)",
           border: "1px solid var(--glass-border)",

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useCallback, type ReactNode } from "react";
+import { Z } from "@/lib/z-index";
 import type { Persona } from "@companion/shared";
 import { PersonaAvatar } from "./persona-avatar";
 
@@ -65,7 +66,7 @@ export function PersonaTooltip({ persona, children, placement = "bottom" }: Pers
             background: "var(--color-bg-card)",
             border: "1px solid var(--color-border)",
             boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-            zIndex: 100,
+            zIndex: Z.overlay,
             pointerEvents: "auto",
           }}
         >

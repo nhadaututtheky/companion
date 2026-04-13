@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useCallback, useState } from "react";
+import { Z } from "@/lib/z-index";
 import { useShallow } from "zustand/react/shallow";
 import { ArrowCounterClockwise, X, TelegramLogo, Globe, Trash } from "@phosphor-icons/react";
 import { Header } from "@/components/layout/header";
@@ -573,7 +574,7 @@ export default function DashboardPage() {
               style={{
                 position: "fixed",
                 inset: 0,
-                zIndex: 40,
+                zIndex: Z.sidebar,
                 background: "rgba(0,0,0,0.4)",
               }}
             />

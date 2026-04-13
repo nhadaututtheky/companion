@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useRef } from "react";
+import { Z } from "@/lib/z-index";
 import { ChartBar, X, ArrowRight } from "@phosphor-icons/react";
 import { useSessionStore } from "@/lib/stores/session-store";
 import Link from "next/link";
@@ -65,7 +66,7 @@ export function BottomStatsBar() {
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
-        zIndex: expanded ? 45 : 1,
+        zIndex: expanded ? Z.statsBar : Z.base,
         pointerEvents: expanded ? "auto" : undefined,
       }}
     >

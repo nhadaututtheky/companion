@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, type KeyboardEvent } from "react";
+import { Z } from "@/lib/z-index";
 
 interface SlashCommand {
   command: string;
@@ -145,7 +146,7 @@ export function SlashCommandMenu({
         boxShadow: "var(--shadow-lg)",
         maxHeight: 280,
         overflowY: "auto",
-        zIndex: 50,
+        zIndex: Z.popover,
       }}
     >
       <div className="py-1.5">

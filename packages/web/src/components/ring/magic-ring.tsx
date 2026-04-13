@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState, useEffect, useCallback } from "react";
+import { Z } from "@/lib/z-index";
 import { useRingStore } from "@/lib/stores/ring-store";
 import { useMascotStore, MASCOT_OPTIONS } from "@/lib/stores/mascot-store";
 import { MascotViewer } from "@/components/mascot/mascot-viewer";
@@ -245,7 +246,7 @@ export function MagicRing() {
           height: activeSize,
           borderRadius: "50%",
           border: "none",
-          zIndex: 50,
+          zIndex: Z.popover,
           cursor: dragging ? "grabbing" : "pointer",
           padding: 0,
           display: "flex",

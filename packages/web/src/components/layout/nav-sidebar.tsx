@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, type ReactNode } from "react";
+import { Z } from "@/lib/z-index";
 import {
   MagnifyingGlass,
   FolderOpen,
@@ -598,7 +599,7 @@ export function NavSidebar() {
         top: "50%",
         transform: "translateY(-50%)",
         left: 92,
-        zIndex: 40,
+        zIndex: Z.sidebar,
         animation: "navSidebarSlideIn 200ms ease-out",
       }}
       key={activeNavMenu}

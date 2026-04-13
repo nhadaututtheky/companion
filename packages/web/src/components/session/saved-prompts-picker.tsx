@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { Z } from "@/lib/z-index";
 import { BookmarkSimple, Plus, X, MagnifyingGlass, Trash } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 
@@ -114,7 +115,7 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
             background: "var(--color-bg-card)",
             border: "1px solid var(--color-border)",
             boxShadow: "var(--shadow-lg)",
-            zIndex: 50,
+            zIndex: Z.popover,
             display: "flex",
             flexDirection: "column",
           }}

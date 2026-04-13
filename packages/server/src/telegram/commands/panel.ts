@@ -397,18 +397,11 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     }
   });
 
-  // ── Back (dismiss panel) ────────────────────────────────────────────────
-
-  bot.callbackQuery(/^panel:back:(.+)$/, async (ctx) => {
-    await ctx.answerCallbackQuery();
-    await ctx.deleteMessage().catch(() => {});
-  });
-
   // ── Cancel (interrupt Claude) ───────────────────────────────────────────
 
   bot.callbackQuery(/^panel:cancel:(.+)$/, async (ctx) => {
     const sessionId = ctx.match[1]!;
-    await ctx.answerCallbackQuery("Interrupting...");
+    await ctx.answerCallbackQuery("Paused");
 
     bridge.wsBridge.handleBrowserMessage(sessionId, JSON.stringify({ type: "interrupt" }));
 
@@ -419,7 +412,7 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
         .editMessageText(
           chatId,
           messageId,
-          "⚠️ Claude interrupted. Type a new message to continue.",
+          "⏸ Claude paused. Send a message to continue.",
         )
         .catch(() => {});
     }
