@@ -104,7 +104,7 @@ function parseOpenCodeMessage(line: string): NormalizedMessage | null {
   }
 
   // ── text → assistant ──────────────────────────────────────────────────
-  if (partType === "text" && event.type === "text") {
+  if (partType === "text" || event.type === "text") {
     const text = part.text ?? "";
     return {
       type: "assistant",
@@ -184,7 +184,7 @@ function parseOpenCodeMessage(line: string): NormalizedMessage | null {
       type: "complete",
       platform: "opencode",
       isError: part.reason === "error",
-      costUsd: part.cost ?? undefined,
+      costUsd: part.cost,
       tokenUsage: tokens
         ? {
             input: tokens.input,
