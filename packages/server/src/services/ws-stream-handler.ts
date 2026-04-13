@@ -61,7 +61,38 @@ export function replayEarlyResult(
   return true;
 }
 
-// ─── Stream Events ──────────────────────────────────────────────────────────
+// ─── Stream Event Batching ──────────────────────────────────────────────────
+
+/** Batch interval — buffer stream events for this duration before broadcasting. */
+const BATCH_INTERVAL_MS = 30;
+
+interface StreamBatch {
+  events: Array<{ event: unknown; parent_tool_use_id?: string }>;
+  timer: ReturnType<typeof setTimeout>;
+}
+
+const streamBatches = new Map<string, StreamBatch>();
+
+function flushStreamBatch(session: ActiveSession): void {
+  const batch = streamBatches.get(session.id);
+  if (!batch || batch.events.length === 0) return;
+  streamBatches.delete(session.id);
+
+  // Send batched events as a single message
+  broadcastToAll(session, {
+    type: "stream_event_batch",
+    events: batch.events,
+  } as unknown as BrowserIncomingMessage);
+}
+
+/** Clean up batch timer for a session. */
+export function clearStreamBatch(sessionId: string): void {
+  const batch = streamBatches.get(sessionId);
+  if (batch) {
+    clearTimeout(batch.timer);
+    streamBatches.delete(sessionId);
+  }
+}
 
 /** Handle a stream event from CLI (thinking deltas, content deltas, etc.). */
 export function handleStreamEvent(session: ActiveSession, msg: CLIStreamEventMessage): void {
@@ -75,10 +106,19 @@ export function handleStreamEvent(session: ActiveSession, msg: CLIStreamEventMes
     /* never block */
   }
 
-  broadcastToAll(session, {
-    type: "stream_event",
+  // Buffer the event into a batch
+  let batch = streamBatches.get(session.id);
+  if (!batch) {
+    batch = {
+      events: [],
+      timer: setTimeout(() => flushStreamBatch(session), BATCH_INTERVAL_MS),
+    };
+    streamBatches.set(session.id, batch);
+  }
+
+  batch.events.push({
     event: msg.event,
-    parent_tool_use_id: msg.parent_tool_use_id,
+    parent_tool_use_id: msg.parent_tool_use_id ?? undefined,
   });
 }
 

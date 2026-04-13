@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   User,
@@ -99,7 +99,7 @@ function ThinkingSection({ blocks }: { blocks: ThinkingBlock[] }) {
         <div
           className="max-h-[500px] overflow-y-auto px-3 pb-3 text-sm leading-relaxed"
           style={{
-            borderTop: "1px solid var(--color-border)",
+            boxShadow: "0 -1px 0 var(--color-border)",
             paddingTop: 8,
           }}
         >
@@ -194,7 +194,7 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
             </button>
 
             {expanded && (
-              <div style={{ borderTop: "1px solid var(--color-border)" }}>
+              <div style={{ boxShadow: "0 -1px 0 var(--color-border)" }}>
                 {/* Input */}
                 <div className="px-3 py-2">
                   <ToolInputRenderer toolName={tool.name} input={tool.input} />
@@ -202,7 +202,7 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
 
                 {/* Result */}
                 {result && (
-                  <div className="px-3 py-2" style={{ borderTop: "1px solid var(--color-border)" }}>
+                  <div className="px-3 py-2" style={{ boxShadow: "0 -1px 0 var(--color-border)" }}>
                     <div className="mb-1 flex items-center justify-between">
                       <div
                         className="text-xs font-semibold"
@@ -362,7 +362,10 @@ function SourceBadge({ source }: { source: string }) {
 
 // ── Message Bubble ───────────────────────────────────────────────────────────
 
-function MessageBubble({
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const NOOP_REF = () => {};
+
+const MessageBubble = React.memo(function MessageBubble({
   msg,
   index,
   sessionId,
@@ -413,7 +416,7 @@ function MessageBubble({
     <div
       ref={msgRef}
       className={`flex gap-3 px-4 py-2 ${isUser ? "flex-row-reverse" : "flex-row"}`}
-      style={isPinned ? { background: "rgba(251, 188, 4, 0.06)", borderRadius: 12 } : undefined}
+      style={isPinned ? { background: "rgba(251, 188, 4, 0.06)", borderRadius: "var(--radius-2xl)" } : undefined}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -493,11 +496,21 @@ function MessageBubble({
       </div>
     </div>
   );
-}
+}, (prev, next) => {
+  return prev.msg.id === next.msg.id
+    && prev.msg.content === next.msg.content
+    && prev.msg.isStreaming === next.msg.isStreaming
+    && prev.msg.thinkingBlocks?.length === next.msg.thinkingBlocks?.length
+    && prev.msg.toolUseBlocks?.length === next.msg.toolUseBlocks?.length
+    && prev.msg.toolResultBlocks?.length === next.msg.toolResultBlocks?.length
+    && prev.msg.costUsd === next.msg.costUsd
+    && prev.index === next.index
+    && prev.sessionId === next.sessionId;
+});
 
 // ── Virtualization threshold ─────────────────────────────────────────────────
 
-const VIRTUALIZE_THRESHOLD = 50;
+const VIRTUALIZE_THRESHOLD = 20;
 
 // ── Message Feed ─────────────────────────────────────────────────────────────
 
@@ -562,7 +575,7 @@ export function MessageFeed({ messages, sessionId = "", onScrollToRef }: Message
       <div ref={parentRef} className="flex flex-1 flex-col overflow-y-auto py-4">
         {messages.map((msg, index) => (
           <div key={msg.id} data-msg-index={index}>
-            <MessageBubble msg={msg} index={index} sessionId={sessionId} msgRef={() => {}} />
+            <MessageBubble msg={msg} index={index} sessionId={sessionId} msgRef={NOOP_REF} />
           </div>
         ))}
       </div>
@@ -603,7 +616,7 @@ export function MessageFeed({ messages, sessionId = "", onScrollToRef }: Message
                   msg={msg}
                   index={virtualRow.index}
                   sessionId={sessionId}
-                  msgRef={() => {}}
+                  msgRef={NOOP_REF}
                 />
               </div>
             );

@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Z } from "@/lib/z-index";
 import { ChartBar, X, ArrowRight } from "@phosphor-icons/react";
 import { useSessionStore } from "@/lib/stores/session-store";
+import { useShallow } from "zustand/react/shallow";
 import Link from "next/link";
 
-const ACTIVE_STATUSES = ["starting", "running", "waiting", "idle", "busy", "error"];
+const ACTIVE_STATUSES = new Set(["starting", "running", "waiting", "idle", "busy", "error"]);
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -25,22 +26,25 @@ function fmtTokens(n: number): string {
 // ── Stats Watermark (collapsed pill → simple active session summary) ──────
 
 export function BottomStatsBar() {
-  const sessions = useSessionStore((s) => s.sessions);
+  const { activeCount, totalCost, totalTurns, totalTokens } = useSessionStore(
+    useShallow((s) => {
+      let activeCount = 0;
+      let totalCost = 0;
+      let totalTurns = 0;
+      let totalTokens = 0;
+      for (const sess of Object.values(s.sessions)) {
+        if (ACTIVE_STATUSES.has(sess.status)) {
+          activeCount++;
+          totalCost += sess.state?.total_cost_usd ?? 0;
+          totalTurns += sess.state?.num_turns ?? 0;
+          totalTokens += (sess.state?.total_input_tokens ?? 0) + (sess.state?.total_output_tokens ?? 0);
+        }
+      }
+      return { activeCount, totalCost: Math.round(totalCost * 100) / 100, totalTurns, totalTokens };
+    }),
+  );
   const [expanded, setExpanded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const { activeCount, totalCost, totalTurns, totalTokens } = useMemo(() => {
-    const active = Object.values(sessions).filter((s) => ACTIVE_STATUSES.includes(s.status));
-    return {
-      activeCount: active.length,
-      totalCost: active.reduce((sum, s) => sum + (s.state?.total_cost_usd ?? 0), 0),
-      totalTurns: active.reduce((sum, s) => sum + (s.state?.num_turns ?? 0), 0),
-      totalTokens: active.reduce(
-        (sum, s) => sum + (s.state?.total_input_tokens ?? 0) + (s.state?.total_output_tokens ?? 0),
-        0,
-      ),
-    };
-  }, [sessions]);
 
   // Click outside to collapse
   useEffect(() => {
@@ -72,7 +76,7 @@ export function BottomStatsBar() {
       {expanded ? (
         /* ── Expanded: simple active session summary ── */
         <div
-          className="rounded-radius-xl shadow-soft flex items-stretch"
+          className="rounded-xl shadow-soft flex items-stretch"
           style={{
             background: "var(--glass-bg-heavy)",
             backdropFilter: "blur(var(--glass-blur))",
@@ -113,11 +117,11 @@ export function BottomStatsBar() {
         /* ── Collapsed watermark pill ── */
         <button
           onClick={() => setExpanded(true)}
-          className="text-text-muted rounded-radius-pill shadow-soft border-glass-border flex cursor-pointer items-center gap-1.5 border px-3 py-1.5 font-mono font-semibold transition-all"
+          className="text-text-muted rounded-full shadow-soft flex cursor-pointer items-center gap-1.5 px-3 py-1.5 font-mono font-semibold transition-all"
           style={{
             background: "var(--glass-bg)",
-            backdropFilter: "blur(4px)",
-            WebkitBackdropFilter: "blur(4px)",
+            backdropFilter: "blur(var(--glass-blur-sm))",
+            WebkitBackdropFilter: "blur(var(--glass-blur-sm))",
             opacity: 0.4,
             transition: "opacity 200ms ease, transform 200ms ease",
             fontSize: 12,

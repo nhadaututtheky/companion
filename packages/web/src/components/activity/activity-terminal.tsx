@@ -18,6 +18,7 @@ import {
   type ActivityLogType,
 } from "@/lib/stores/activity-store";
 import { useSessionStore } from "@/lib/stores/session-store";
+import { useShallow } from "zustand/react/shallow";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -137,15 +138,7 @@ function FilterSelect({
     <select
       value={value ?? ""}
       onChange={(e) => onChange(e.target.value || null)}
-      className="text-text-secondary bg-bg-elevated cursor-pointer"
-      style={{
-        border: "1px solid var(--color-border-strong)",
-        borderRadius: 4,
-        padding: "2px 6px",
-        fontSize: 11,
-        fontFamily: "var(--font-mono, monospace)",
-        outline: "none",
-      }}
+      className="text-text-secondary bg-bg-elevated border-border-strong cursor-pointer rounded border px-1.5 py-px font-mono text-[11px] outline-none"
       aria-label={placeholder}
     >
       <option value="">{placeholder}</option>
@@ -171,19 +164,16 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
   const filterType = useActivityStore((s) => s.filterType);
   const clearLogs = useActivityStore((s) => s.clearLogs);
   const setFilter = useActivityStore((s) => s.setFilter);
-  const sessions = useSessionStore((s) => s.sessions);
+  const sessionOptions = useSessionStore(
+    useShallow((s) =>
+      Object.values(s.sessions).map((sess) => ({
+        value: sess.id,
+        label: sess.projectName ?? sess.id.slice(0, 8),
+      })),
+    ),
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
-
-  // Build session options from store
-  const sessionOptions = useMemo(
-    () =>
-      Object.values(sessions).map((s) => ({
-        value: s.id,
-        label: s.projectName ?? s.id.slice(0, 8),
-      })),
-    [sessions],
-  );
 
   const typeOptions: { value: string; label: string }[] = [
     { value: "thinking", label: "Thinking" },
@@ -231,7 +221,7 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
 
   return (
     <div
-      className="rounded-radius-xl shadow-soft flex shrink-0 overflow-hidden"
+      className="rounded-xl shadow-soft flex shrink-0 overflow-hidden"
       style={{
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
@@ -247,7 +237,7 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
         className="flex flex-shrink-0 select-none items-center gap-2 px-3"
         style={{
           height: 32,
-          borderBottom: open ? "1px solid var(--glass-border)" : "none",
+          boxShadow: open ? "0 1px 0 var(--glass-border)" : "none",
           background: "var(--glass-bg-heavy)",
         }}
       >
@@ -278,13 +268,7 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
 
         {/* Log count badge */}
         <span
-          className="text-text-muted bg-bg-hover border-border border"
-          style={{
-            borderRadius: 4,
-            padding: "0 6px",
-            fontSize: 10,
-            fontFamily: "var(--font-mono, monospace)",
-          }}
+          className="text-text-muted bg-bg-hover rounded px-1.5 font-mono text-[10px]"
         >
           {displayLogs.length}
         </span>
@@ -318,7 +302,7 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
                 background: "none",
                 border: "none",
                 padding: "2px 4px",
-                borderRadius: 4,
+                borderRadius: "var(--radius-sm)",
               }}
               aria-label="Clear activity logs"
               title="Clear logs"
@@ -335,15 +319,7 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
                     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
                   }
                 }}
-                className="text-warning cursor-pointer"
-                style={{
-                  fontSize: 10,
-                  fontFamily: "var(--font-mono, monospace)",
-                  background: "none",
-                  border: "1px solid var(--color-warning)",
-                  borderRadius: 4,
-                  padding: "1px 6px",
-                }}
+                className="text-warning cursor-pointer rounded bg-transparent px-1.5 py-px font-mono text-[10px]"
                 aria-label="Resume auto-scroll"
               >
                 resume scroll

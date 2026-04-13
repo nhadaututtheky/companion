@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { Wrench, Brain, CaretRight, CaretDown } from "@phosphor-icons/react";
 import { MarkdownMessage } from "../chat/markdown-message";
 
@@ -55,7 +56,7 @@ function CompactThinking({ blocks }: { blocks: ThinkingBlock[] }) {
         <div
           className="max-h-[300px] overflow-y-auto px-2.5 pb-2 leading-relaxed"
           style={{
-            borderTop: "1px solid var(--color-border)",
+            boxShadow: "0 -1px 0 var(--color-border)",
             paddingTop: 6,
             fontSize: 13,
           }}
@@ -67,7 +68,7 @@ function CompactThinking({ blocks }: { blocks: ThinkingBlock[] }) {
   );
 }
 
-function CompactBubble({ msg }: { msg: Message }) {
+const CompactBubble = React.memo(function CompactBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === "user";
   const isTool = msg.role === "tool";
   const isSystem = msg.role === "system";
@@ -140,7 +141,15 @@ function CompactBubble({ msg }: { msg: Message }) {
       </div>
     </div>
   );
-}
+}, (prev, next) => {
+  // Only re-render if message content actually changed
+  return prev.msg.id === next.msg.id
+    && prev.msg.content === next.msg.content
+    && prev.msg.isStreaming === next.msg.isStreaming
+    && prev.msg.thinkingBlocks?.length === next.msg.thinkingBlocks?.length;
+});
+
+const VIRTUALIZE_THRESHOLD = 20;
 
 interface CompactMessageFeedProps {
   messages: Message[];
@@ -148,6 +157,33 @@ interface CompactMessageFeedProps {
 }
 
 export function CompactMessageFeed({ messages, feedRef }: CompactMessageFeedProps) {
+  const parentRef = useRef<HTMLDivElement>(null);
+  const prevCountRef = useRef(0);
+  const shouldVirtualize = messages.length >= VIRTUALIZE_THRESHOLD;
+
+  const virtualizer = useVirtualizer({
+    count: shouldVirtualize ? messages.length : 0,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 48,
+    overscan: 5,
+    enabled: shouldVirtualize,
+  });
+
+  // Auto-scroll on new messages
+  useEffect(() => {
+    if (messages.length > prevCountRef.current && messages.length > 0) {
+      if (shouldVirtualize) {
+        virtualizer.scrollToIndex(messages.length - 1, { align: "end" });
+      } else {
+        requestAnimationFrame(() => {
+          const el = (feedRef.current ?? parentRef.current);
+          if (el) el.scrollTop = el.scrollHeight;
+        });
+      }
+    }
+    prevCountRef.current = messages.length;
+  }, [messages.length, shouldVirtualize, virtualizer, feedRef]);
+
   if (messages.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -158,11 +194,33 @@ export function CompactMessageFeed({ messages, feedRef }: CompactMessageFeedProp
     );
   }
 
+  // Small list — plain render
+  if (!shouldVirtualize) {
+    return (
+      <div ref={feedRef} className="flex flex-1 flex-col gap-1 overflow-y-auto py-2">
+        {messages.map((msg) => (
+          <CompactBubble key={msg.id} msg={msg} />
+        ))}
+      </div>
+    );
+  }
+
+  // Large list — virtualized
+  const items = virtualizer.getVirtualItems();
   return (
-    <div ref={feedRef} className="flex flex-1 flex-col gap-1 overflow-y-auto py-2">
-      {messages.map((msg) => (
-        <CompactBubble key={msg.id} msg={msg} />
-      ))}
+    <div ref={parentRef} className="flex-1 overflow-y-auto">
+      <div className="relative" style={{ height: virtualizer.getTotalSize() }}>
+        <div
+          className="absolute left-0 top-0 w-full"
+          style={{ transform: `translateY(${items[0]?.start ?? 0}px)` }}
+        >
+          {items.map((row) => (
+            <div key={row.key} data-index={row.index} ref={virtualizer.measureElement}>
+              <CompactBubble msg={messages[row.index]} />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

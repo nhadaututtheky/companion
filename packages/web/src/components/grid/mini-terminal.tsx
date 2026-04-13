@@ -11,6 +11,7 @@ import {
 } from "@phosphor-icons/react";
 import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
+import { useShallow } from "zustand/react/shallow";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { SessionHeader } from "./session-header";
@@ -45,7 +46,7 @@ function CompactPermissionGate({
     <div
       className="flex flex-shrink-0 items-center gap-2 px-3 py-2"
       style={{
-        borderTop: "1px solid var(--glass-border)",
+        boxShadow: "0 -1px 0 var(--glass-border)",
         background: "color-mix(in srgb, var(--color-warning) 6%, transparent)",
         borderRadius: "0 0 var(--radius-xl) var(--radius-xl)",
       }}
@@ -142,7 +143,7 @@ function CompactComposer({
     <div
       ref={wrapperRef}
       className="relative flex flex-shrink-0 items-end gap-2 px-3 py-2.5"
-      style={{ borderTop: "1px solid var(--glass-border)" }}
+      style={{ boxShadow: "0 -1px 0 var(--glass-border)" }}
     >
       <SlashCommandMenu
         query={slashQuery}
@@ -152,8 +153,9 @@ function CompactComposer({
         anchorRef={wrapperRef}
       />
       <div
-        className="bg-bg-elevated rounded-radius-pill flex flex-1 items-end gap-1 px-2.5 py-1.5"
+        className="bg-bg-elevated flex flex-1 items-end gap-1 px-2.5 py-1.5"
         style={{
+          borderRadius: "var(--radius-md)",
           border: isFocused
             ? "1px solid color-mix(in srgb, var(--color-accent) 50%, transparent)"
             : "1px solid var(--glass-border)",
@@ -236,20 +238,34 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
   const { messages, pendingPermissions, wsStatus, sendMessage, respondPermission, setModel } =
     activeHook;
 
-  const session = useSessionStore((s) => s.sessions[sessionId]);
-  const childIds = useSessionStore((s) => s.sessions[sessionId]?.childSessionIds);
-  const flashType = useSessionStore((s) => s.sessions[sessionId]?.flashType);
+  const { session, childIds, flashType } = useSessionStore(
+    useShallow((s) => {
+      const sess = s.sessions[sessionId];
+      return {
+        session: sess,
+        childIds: sess?.childSessionIds,
+        flashType: sess?.flashType,
+      };
+    }),
+  );
   const isRunning = session?.status === "running" || session?.status === "busy";
   const hasChildren = !!childIds && childIds.length > 0;
 
-  // Context meter calculation
+  // Context meter — prefer real-time data from CLI polling (per-turn delta = actual context usage)
+  // Fallback to cumulative totals only when real-time data hasn't arrived yet
   const contextData = (() => {
+    if (session?.contextTokens != null && session?.contextMaxTokens != null) {
+      if (session.contextTokens === 0) return undefined;
+      return {
+        contextPercent: session.contextUsedPercent ?? 0,
+        totalTokens: session.contextTokens,
+        maxTokens: session.contextMaxTokens,
+      };
+    }
+    // Fallback: estimate from cumulative state (less accurate, inflates quickly)
     const state = session?.state;
     if (!state) return undefined;
-    const totalTokens =
-      (state.total_input_tokens ?? 0) +
-      (state.total_output_tokens ?? 0) +
-      (state.cache_read_tokens ?? 0);
+    const totalTokens = (state.total_input_tokens ?? 0) + (state.total_output_tokens ?? 0);
     if (totalTokens === 0) return undefined;
     const maxTokens = getMaxContextTokens(state.model ?? "");
     const contextPercent = Math.min(100, (totalTokens / maxTokens) * 100);
@@ -326,19 +342,16 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
     <div
       className="relative flex flex-col overflow-hidden"
       style={{
-        background: "var(--glass-bg-heavy)",
-        backdropFilter: "blur(var(--glass-blur))",
-        WebkitBackdropFilter: "blur(var(--glass-blur))",
-        border:
-          session?.status === "error"
-            ? "1px solid var(--color-danger)"
-            : hasSharedContext
-              ? `2px dashed ${sessionColor}`
-              : "1px solid var(--glass-border)",
+        background: "var(--color-bg-card)",
+        border: session?.status === "error"
+          ? "1px solid var(--color-danger)"
+          : "none",
         borderRadius: "var(--radius-xl)",
         boxShadow: flashType
           ? `0 0 0 3px ${flashType === "error" ? "#EA4335" : flashType === "success" ? "#34A853" : "var(--color-accent)"}60, var(--shadow-float)`
-          : "var(--shadow-float)",
+          : sessionColor
+            ? `0 0 0 1px color-mix(in srgb, ${sessionColor} 15%, transparent), 0 1px 4px color-mix(in srgb, ${sessionColor} 8%, transparent), var(--shadow-float)`
+            : "var(--shadow-float)",
         transition: "box-shadow 300ms ease",
         height: "100%",
         minHeight: 0,

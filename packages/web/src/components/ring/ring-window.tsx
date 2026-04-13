@@ -41,7 +41,6 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   const setExpanded = useRingStore((s) => s.setExpanded);
   const mode = useRingStore((s) => s.mode);
   const sessionsMap = useSessionStore((s) => s.sessions);
-  const sessions = Object.values(sessionsMap);
 
   const setMode = useRingStore((s) => s.setMode);
   const setDebateChannelId = useRingStore((s) => s.setDebateChannelId);
@@ -114,7 +113,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
       await Promise.all(
         linkedSessionIds.map(async (sid) => {
           await api.sessions.message(sid, content);
-          const session = sessions.find((s) => s.id === sid);
+          const session = sessionsMap[sid];
           addSharedMessage({
             id: `confirm-${sid}-${Date.now()}`,
             sessionId: sid,
@@ -208,7 +207,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
 
       {/* Dock: session bubbles to the LEFT of ring — macOS magnification */}
       {linkedSessionIds.map((sid, i) => {
-        const session = sessions.find((s) => s.id === sid);
+        const session = sessionsMap[sid];
         const color = getSessionColor(sid);
         const delay = i * 0.05;
 
@@ -566,14 +565,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                     setDebateChannelId(null);
                     setMode("broadcast");
                   }}
-                  className="border-border cursor-pointer border"
-                  style={{
-                    padding: "3px 10px",
-                    fontSize: 11,
-                    borderRadius: 6,
-                    background: "transparent",
-                    color: "var(--color-text-secondary, #666)",
-                  }}
+                  className="border-border text-text-secondary cursor-pointer rounded-md border bg-transparent px-2.5 py-0.5 text-[11px]"
                 >
                   Back
                 </button>

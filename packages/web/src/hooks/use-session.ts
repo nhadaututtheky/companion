@@ -81,11 +81,17 @@ interface UseSessionReturn {
   lockStatus: LockStatus;
   lastScanResult: ScanResultState | null;
   spectatorCount: number;
-  sendMessage: (text: string) => void;
+  sendMessage: (text: string, images?: Array<{ data: string; mediaType: string; name: string }>) => void;
   respondPermission: (requestId: string, behavior: "allow" | "deny") => void;
   setModel: (model: string) => void;
   setThinkingMode: (mode: ThinkingMode) => void;
 }
+
+const MODEL_RATES: Record<string, { input: number; output: number }> = {
+  "claude-haiku-4-5": { input: 0.8 / 1_000_000, output: 4.0 / 1_000_000 },
+  "claude-sonnet-4-6": { input: 3.0 / 1_000_000, output: 15.0 / 1_000_000 },
+  "claude-opus-4-6": { input: 15.0 / 1_000_000, output: 75.0 / 1_000_000 },
+};
 
 function makeSystemMessage(content: string): Message {
   return {
@@ -131,7 +137,11 @@ export function useSession(sessionId: string): UseSessionReturn {
     setMessages((prev) => {
       const last = prev[prev.length - 1];
       if (last?.isStreaming && last.role === "assistant") {
-        return [...prev.slice(0, -1), { ...last, content: last.content + buffered }];
+        // Update only the last element — avoid copying entire array
+        const updated = { ...last, content: last.content + buffered };
+        const next = prev.slice();
+        next[next.length - 1] = updated;
+        return next;
       }
       const newId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}-stream`;
       activeStreamIdRef.current = newId;
@@ -203,6 +213,44 @@ export function useSession(sessionId: string): UseSessionReturn {
     (raw: unknown) => {
       const msg = raw as BrowserIncomingMessage;
 
+      // Shared stream event processor (used by both stream_event and stream_event_batch)
+      const processStreamEvent = (event: unknown) => {
+        const ev = event as {
+          type?: string;
+          delta?: { text?: string; type?: string; thinking?: string };
+          content_block?: { type?: string };
+        };
+        const text = ev?.delta?.text ?? "";
+
+        if (
+          ev?.type === "content_block_start" &&
+          (ev as { content_block?: { type?: string } }).content_block?.type === "thinking"
+        ) {
+          addLog({
+            sessionId,
+            sessionName: getSessionName(),
+            timestamp: Date.now(),
+            type: "thinking",
+            content: "Thinking...",
+          });
+        } else if (ev?.delta?.type === "thinking_delta" && ev.delta.thinking) {
+          addLog({
+            sessionId,
+            sessionName: getSessionName(),
+            timestamp: Date.now(),
+            type: "thinking",
+            content: ev.delta.thinking.slice(0, 120),
+          });
+        }
+
+        if (text) {
+          streamBufferRef.current += text;
+          if (!flushTimerRef.current) {
+            flushTimerRef.current = setTimeout(flushStreamBuffer, 50);
+          }
+        }
+      };
+
       switch (msg.type) {
         case "assistant": {
           // Flush any buffered stream text before processing final message
@@ -254,11 +302,6 @@ export function useSession(sessionId: string): UseSessionReturn {
           }
 
           // Get cost from usage using model-specific rates
-          const MODEL_RATES: Record<string, { input: number; output: number }> = {
-            "claude-haiku-4-5": { input: 0.8 / 1_000_000, output: 4.0 / 1_000_000 },
-            "claude-sonnet-4-6": { input: 3.0 / 1_000_000, output: 15.0 / 1_000_000 },
-            "claude-opus-4-6": { input: 15.0 / 1_000_000, output: 75.0 / 1_000_000 },
-          };
           const sessionModel = useSessionStore.getState().sessions[sessionId]?.model ?? "";
           const rates = MODEL_RATES[sessionModel] ?? MODEL_RATES["claude-sonnet-4-6"]!;
           const usage = msg.message?.usage;
@@ -305,40 +348,15 @@ export function useSession(sessionId: string): UseSessionReturn {
         }
 
         case "stream_event": {
-          const event = msg.event as {
-            type?: string;
-            delta?: { text?: string; type?: string; thinking?: string };
-            content_block?: { type?: string };
-          };
-          const text = event?.delta?.text ?? "";
+          processStreamEvent(msg.event);
+          break;
+        }
 
-          // Log thinking blocks
-          if (
-            event?.type === "content_block_start" &&
-            (event as { content_block?: { type?: string } }).content_block?.type === "thinking"
-          ) {
-            addLog({
-              sessionId,
-              sessionName: getSessionName(),
-              timestamp: Date.now(),
-              type: "thinking",
-              content: "Thinking...",
-            });
-          } else if (event?.delta?.type === "thinking_delta" && event.delta.thinking) {
-            addLog({
-              sessionId,
-              sessionName: getSessionName(),
-              timestamp: Date.now(),
-              type: "thinking",
-              content: event.delta.thinking.slice(0, 120),
-            });
-          }
-
-          if (text) {
-            // Buffer tokens and flush every 50ms to reduce re-renders
-            streamBufferRef.current += text;
-            if (!flushTimerRef.current) {
-              flushTimerRef.current = setTimeout(flushStreamBuffer, 50);
+        case "stream_event_batch": {
+          const batch = msg as { events?: Array<{ event: unknown }> };
+          if (batch.events) {
+            for (const entry of batch.events) {
+              processStreamEvent(entry.event);
             }
           }
           break;
@@ -936,7 +954,7 @@ export function useSession(sessionId: string): UseSessionReturn {
   });
 
   const sendMessage = useCallback(
-    (text: string) => {
+    (text: string, images?: Array<{ data: string; mediaType: string; name: string }>) => {
       setLastScanResult(null); // Clear previous scan result
       const msg: Message = {
         id: `${Date.now()}-user`,
@@ -946,7 +964,11 @@ export function useSession(sessionId: string): UseSessionReturn {
       };
       setMessages((prev) => [...prev, msg]);
 
-      send({ type: "user_message", content: text });
+      send({
+        type: "user_message",
+        content: text,
+        ...(images && images.length > 0 ? { images } : {}),
+      });
     },
     [send],
   );

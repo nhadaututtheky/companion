@@ -1,23 +1,29 @@
 "use client";
-import { useMemo } from "react";
 import { MagnifyingGlass, Gear, List, Timer } from "@phosphor-icons/react";
 import { TemplateQuickPicker } from "./template-quick-picker";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
+import { useShallow } from "zustand/react/shallow";
 import { CompanionLogo } from "./companion-logo";
 
-export function HeaderStats() {
-  const sessions = useSessionStore((s) => s.sessions);
+const ACTIVE_STATUSES = new Set(["starting", "running", "waiting", "idle", "busy"]);
 
-  const { activeCount, totalCost, totalTurns } = useMemo(() => {
-    const all = Object.values(sessions);
-    const active = all.filter((s) =>
-      ["starting", "running", "waiting", "idle", "busy"].includes(s.status),
-    );
-    const cost = active.reduce((sum, s) => sum + (s.state?.total_cost_usd ?? 0), 0);
-    const turns = active.reduce((sum, s) => sum + (s.state?.num_turns ?? 0), 0);
-    return { activeCount: active.length, totalCost: cost, totalTurns: turns };
-  }, [sessions]);
+export function HeaderStats() {
+  const { activeCount, totalCost, totalTurns } = useSessionStore(
+    useShallow((s) => {
+      let activeCount = 0;
+      let totalCost = 0;
+      let totalTurns = 0;
+      for (const sess of Object.values(s.sessions)) {
+        if (ACTIVE_STATUSES.has(sess.status)) {
+          activeCount++;
+          totalCost += sess.state?.total_cost_usd ?? 0;
+          totalTurns += sess.state?.num_turns ?? 0;
+        }
+      }
+      return { activeCount, totalCost: Math.round(totalCost * 100) / 100, totalTurns };
+    }),
+  );
 
   return (
     <div className="header-stats flex items-center gap-4 px-3">
@@ -66,7 +72,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
   return (
     <header
-      className="rounded-radius-xl shadow-soft relative z-10 flex h-12 items-center gap-3 px-5"
+      className="rounded-xl shadow-soft relative z-10 flex h-12 items-center gap-3 px-5"
       style={{
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
@@ -94,7 +100,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
       {/* Center: Search trigger (⌘K) */}
       <button
         onClick={() => setCommandPaletteOpen(true)}
-        className="text-text-muted bg-bg-elevated rounded-radius-md shadow-soft border-glass-border flex min-h-[44px] cursor-pointer items-center gap-2 border px-3 py-1.5 text-sm transition-colors"
+        className="text-text-muted bg-bg-elevated rounded-md shadow-soft flex min-h-[44px] cursor-pointer items-center gap-2 px-3 py-1.5 text-sm transition-colors"
         style={{
           minWidth: 44,
         }}
@@ -103,7 +109,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <MagnifyingGlass size={14} weight="bold" />
         <span className="hidden sm:inline">Search...</span>
         <span
-          className="bg-bg-base rounded-radius-sm shadow-soft border-glass-border ml-auto hidden border text-xs sm:inline"
+          className="bg-bg-base rounded-sm shadow-soft ml-auto hidden text-xs sm:inline"
           style={{
             padding: "1px 5px",
           }}
@@ -127,7 +133,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
               key={item.id}
               data-nav-trigger
               onClick={() => toggleNavMenu(item.id)}
-              className="rounded-radius-md flex cursor-pointer items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all"
+              className="rounded-md flex cursor-pointer items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all"
               style={{
                 background: isOpen
                   ? "var(--color-text-primary)"
@@ -155,7 +161,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <TemplateQuickPicker />
         <button
           onClick={() => useUiStore.getState().setSchedulesModalOpen(true)}
-          className="text-text-secondary rounded-radius-md flex min-h-[44px] cursor-pointer items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all"
+          className="text-text-secondary rounded-md flex min-h-[44px] cursor-pointer items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all"
           style={{
             background: "transparent",
             border: "1px solid transparent",
@@ -169,7 +175,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <button
           data-guide-trigger
           onClick={() => setFeatureGuideOpen(!featureGuideOpen)}
-          className="rounded-radius-md flex min-h-[44px] cursor-pointer items-center px-3 py-1.5 text-xs font-medium transition-all"
+          className="rounded-md flex min-h-[44px] cursor-pointer items-center px-3 py-1.5 text-xs font-medium transition-all"
           style={{
             background: featureGuideOpen ? "var(--color-accent)" : "transparent",
             color: featureGuideOpen ? "#fff" : "var(--color-text-secondary)",
