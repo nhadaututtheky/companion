@@ -20,8 +20,6 @@ const dbMockFactory = () => ({
   schema: {},
 });
 mock.module("../db/client.js", dbMockFactory);
-if (process.platform !== "win32")
-  mock.module(import.meta.resolve("../db/client.js"), dbMockFactory);
 
 // Import AFTER mock
 import { getSetting, getSettingInt, getSettingBool } from "./settings-helpers.js";

@@ -14,8 +14,6 @@ const dbClientMockFactory = () => ({
   schema: {},
 });
 mock.module("../db/client.js", dbClientMockFactory);
-if (process.platform !== "win32")
-  mock.module(import.meta.resolve("../db/client.js"), dbClientMockFactory);
 
 const { trackError, flushErrors, getErrors, clearErrors } =
   await import("../services/error-tracker.js");

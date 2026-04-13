@@ -20,8 +20,6 @@ const dbClientMockFactory = () => ({
   schema: {},
 });
 mock.module("../db/client.js", dbClientMockFactory);
-if (process.platform !== "win32")
-  mock.module(import.meta.resolve("../db/client.js"), dbClientMockFactory);
 
 // Import AFTER mock
 import {

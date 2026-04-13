@@ -10,8 +10,6 @@ const wsBroadcastMockFactory = () => ({
   broadcastToSubscribers: mock(() => {}),
 });
 mock.module("./ws-broadcast.js", wsBroadcastMockFactory);
-if (process.platform !== "win32")
-  mock.module(import.meta.resolve("./ws-broadcast.js"), wsBroadcastMockFactory);
 
 const pulseEstimatorMockFactory = () => ({
   getOrCreatePulse: () => ({
