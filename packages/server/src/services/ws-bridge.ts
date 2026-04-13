@@ -6,9 +6,10 @@
 import { randomUUID } from "crypto";
 import { createLogger } from "../logger.js";
 import { createDefaultPipeline, getRTKConfig, type RTKPipeline } from "../rtk/index.js";
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- used in typeof
 import { createPlanModeWatcher } from "./cli-launcher.js";
-import { type SdkSessionHandle } from "./sdk-engine.js";
-import { type CompactBridge } from "./compact-manager.js";
+import type { SdkSessionHandle } from "./sdk-engine.js";
+import type { CompactBridge } from "./compact-manager.js";
 import {
   broadcastToAll as _broadcastToAll,
   broadcastToSubscribers as _broadcastToSubscribers,
@@ -186,8 +187,6 @@ export class WsBridge {
     this.messageHandler = new MessageHandler(messageHandlerBridge);
 
     // Build the bridge interface for UserMessageHandler
-    // Use arrow-function getters so they capture `this` (WsBridge) lazily at call time
-    const self = this;
     const userMessageBridge: UserMessageBridge = {
       broadcastToAll: this.broadcastToAll.bind(this),
       broadcastToSubscribers: this.broadcastToSubscribers.bind(this),
@@ -196,18 +195,20 @@ export class WsBridge {
       emitContextInjection: this.emitContextInjection.bind(this),
       clearIdleTimer: this.clearIdleTimer.bind(this),
       getSessionRecord: (sessionId) => getSessionRecord(sessionId),
-      getSdkHandle: (sessionId) => self.sdkHandles.get(sessionId),
+      getSdkHandle: (sessionId) => this.sdkHandles.get(sessionId),
       startSessionWithSdk: this.startSessionWithSdk.bind(this),
-      getSessionSettings: (sessionId) => self.getSessionSettings(sessionId),
+      getSessionSettings: (sessionId) => this.getSessionSettings(sessionId),
       sendToCLI: this.sendToCLI.bind(this),
       sendUserMessage: this.sendUserMessage.bind(this),
       get permBridge() {
-        return self.permBridge;
+        return _permBridge();
       },
       get multiBrainBridge() {
-        return self.multiBrainBridge;
+        return _multiBrainBridge();
       },
     };
+    const _permBridge = () => this.permBridge;
+    const _multiBrainBridge = () => this.multiBrainBridge;
     this.userMessageHandler = new UserMessageHandler(userMessageBridge);
 
     // Build the bridge interface for SessionLifecycleManager
