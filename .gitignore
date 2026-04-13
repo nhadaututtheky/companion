@@ -15,7 +15,6 @@ data/.trial
 .vscode/
 .idea/
 *.tsbuildinfo
-bun.lockb
 .claude/settings.json
 .claude/settings.local.json
 test-results/
