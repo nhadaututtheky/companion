@@ -10,6 +10,9 @@ import { createTestDb } from "./test-db.js";
 const testDbResult = createTestDb();
 const dbClientMockFactory = () => ({
   getDb: () => testDbResult.db,
+  getSqlite: () => testDbResult.sqlite,
+  closeDb: () => {},
+  schema: {},
 });
 mock.module("../db/client.js", dbClientMockFactory);
 if (process.platform !== "win32")

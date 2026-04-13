@@ -7,6 +7,13 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 // Mock spectator-bridge (external dependency)
 const spectatorBridgeMockFactory = () => ({
   broadcastToSpectators: mock(() => {}),
+  addSpectator: mock(() => {}),
+  removeSpectator: mock(() => {}),
+  getSpectatorCount: mock(() => 0),
+  disconnectAllSpectators: mock(() => {}),
+  disconnectByToken: mock(() => {}),
+  isSpectatorAuthorized: mock(() => false),
+  onSpectatorCountChange: mock(() => {}),
 });
 mock.module("./spectator-bridge.js", spectatorBridgeMockFactory);
 if (process.platform !== "win32")

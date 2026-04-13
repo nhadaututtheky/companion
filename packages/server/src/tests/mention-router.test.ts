@@ -15,6 +15,7 @@ const shortIdMockFactory = () => ({
     };
     return map[shortId] ?? null;
   },
+  generateShortId: () => "mock-short-id",
 });
 mock.module("../services/short-id.js", shortIdMockFactory);
 if (process.platform !== "win32")
@@ -27,6 +28,20 @@ const sessionStoreMockFactory = () => ({
     }
     return null;
   },
+  getAllActiveSessions: mock(() => []),
+  removeActiveSession: mock(() => {}),
+  createActiveSession: mock(() => ({})),
+  pushMessageHistory: mock(() => {}),
+  persistSession: mock(() => {}),
+  flushAllWriters: mock(() => {}),
+  createSessionRecord: mock(() => ({})),
+  endSessionRecord: mock(() => {}),
+  updateSessionCostWarned: mock(() => {}),
+  countActiveSessions: mock(() => 0),
+  bulkEndSessions: mock(() => 0),
+  listSessions: mock(() => []),
+  storeMessage: mock(() => {}),
+  getSessionMessages: mock(() => []),
 });
 mock.module("../services/session-store.js", sessionStoreMockFactory);
 if (process.platform !== "win32")
@@ -43,6 +58,9 @@ const debateEngineMockFactory = () => ({
     },
   ],
   injectHumanMessage: mock(() => true),
+  getActiveDebate: mock(() => undefined),
+  startDebate: mock(() => Promise.resolve()),
+  concludeDebate: mock(() => Promise.resolve()),
 });
 mock.module("../services/debate-engine.js", debateEngineMockFactory);
 if (process.platform !== "win32")

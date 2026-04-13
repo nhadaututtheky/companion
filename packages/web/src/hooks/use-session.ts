@@ -122,6 +122,8 @@ export function useSession(sessionId: string): UseSessionReturn {
   const addLog = useActivityStore((s) => s.addLog);
   // Track whether WS message_history replay populated messages
   const historyReceivedRef = useRef(false);
+  // Track whether CLI has connected at least once (to distinguish first connect from reconnect)
+  const cliConnectedOnceRef = useRef(false);
   // Ref for REST fallback timer so it can be cleared across effect re-runs
   const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -169,6 +171,12 @@ export function useSession(sessionId: string): UseSessionReturn {
       }
     };
   }, []);
+
+  // Reset connection tracking when session changes
+  useEffect(() => {
+    cliConnectedOnceRef.current = false;
+    historyReceivedRef.current = false;
+  }, [sessionId]);
 
   // REST fallback: when WS connects but message_history replay is empty, load from DB
   useEffect(() => {
@@ -605,17 +613,19 @@ export function useSession(sessionId: string): UseSessionReturn {
 
         case "cli_connected": {
           setWsStatus("connected");
-          // If messages exist, this is a resume (not first connect)
-          setMessages((prev) => {
-            if (prev.length === 0) return prev;
-            // Check if the last system message is already a "resumed" message
-            const last = prev[prev.length - 1];
-            if (last?.role === "system" && last.content.includes("resumed")) return prev;
-            return [
-              ...prev,
-              makeSystemMessage(`Session resumed — continuing from where it left off.`),
-            ];
-          });
+          // Only show "resumed" on reconnect (not the first connect for this session)
+          if (cliConnectedOnceRef.current) {
+            setMessages((prev) => {
+              if (prev.length === 0) return prev;
+              const last = prev[prev.length - 1];
+              if (last?.role === "system" && last.content.includes("resumed")) return prev;
+              return [
+                ...prev,
+                makeSystemMessage(`Session resumed — continuing from where it left off.`),
+              ];
+            });
+          }
+          cliConnectedOnceRef.current = true;
           break;
         }
 

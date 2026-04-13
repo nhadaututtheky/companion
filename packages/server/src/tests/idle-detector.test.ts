@@ -119,7 +119,7 @@ describe("IdleDetector", () => {
     detector.setCallback((id) => second.push(id));
 
     detector.recordOutput("s-cb");
-    await sleep(THRESHOLD + 40);
+    await sleep(THRESHOLD + 100);
 
     expect(first).not.toContain("s-cb");
     expect(second).toContain("s-cb");

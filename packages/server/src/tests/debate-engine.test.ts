@@ -39,6 +39,8 @@ const aiClientMockFactory = () => ({
   callAI: mock(async () => ({ text: "test response", costUsd: 0.001 })),
   callAIWithModel: mock(async () => ({ text: "test response", costUsd: 0.001 })),
   getOpenRouterConfig: mock(() => null),
+  isAIConfigured: mock(() => false),
+  translateViToEn: mock(async () => null),
 });
 mock.module("../services/ai-client.js", aiClientMockFactory);
 if (process.platform !== "win32")
@@ -47,6 +49,11 @@ if (process.platform !== "win32")
 const providerRegistryMockFactory = () => ({
   resolveModelProvider: mock(() => null),
   getProviderOverride: mock(() => null),
+  getProviders: mock(() => []),
+  getModels: mock(() => []),
+  getModelsGrouped: mock(() => ({ providers: [], ungrouped: [] })),
+  invalidateCache: mock(() => {}),
+  checkProvidersHealth: mock(async () => []),
 });
 mock.module("../services/provider-registry.js", providerRegistryMockFactory);
 if (process.platform !== "win32")
@@ -54,6 +61,12 @@ if (process.platform !== "win32")
 
 const customPersonasMockFactory = () => ({
   resolvePersona: mock(() => null),
+  listCustomPersonas: mock(() => []),
+  getCustomPersona: mock(() => undefined),
+  createCustomPersona: mock(() => ({})),
+  updateCustomPersona: mock(() => null),
+  deleteCustomPersona: mock(() => false),
+  cloneBuiltInPersona: mock(() => ({})),
 });
 mock.module("../services/custom-personas.js", customPersonasMockFactory);
 if (process.platform !== "win32")

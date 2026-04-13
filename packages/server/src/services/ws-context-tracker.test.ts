@@ -8,6 +8,7 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 const mockBroadcastToAll = mock(() => {});
 const wsBroadcastMockFactory = () => ({
   broadcastToAll: mockBroadcastToAll,
+  broadcastToSubscribers: mock(() => {}),
 });
 mock.module("./ws-broadcast.js", wsBroadcastMockFactory);
 if (process.platform !== "win32")
@@ -17,7 +18,13 @@ const pulseEstimatorMockFactory = () => ({
   getOrCreatePulse: () => ({
     recordContextUpdate: () => {},
     recordThinking: () => {},
+    setBlocked: () => {},
   }),
+  getPulse: () => undefined,
+  cleanupPulse: () => {},
+  getLatestReading: () => null,
+  getAllReadings: () => new Map(),
+  finalizePulseTurn: () => {},
 });
 mock.module("./pulse-estimator.js", pulseEstimatorMockFactory);
 if (process.platform !== "win32")
@@ -33,6 +40,21 @@ if (process.platform !== "win32")
 
 const sessionStoreMockFactory = () => ({
   updateSessionCostWarned: mock(() => {}),
+  getActiveSession: mock(() => undefined),
+  getAllActiveSessions: mock(() => []),
+  removeActiveSession: mock(() => {}),
+  createActiveSession: mock(() => ({})),
+  pushMessageHistory: mock(() => {}),
+  persistSession: mock(() => {}),
+  flushAllWriters: mock(() => {}),
+  createSessionRecord: mock(() => ({})),
+  endSessionRecord: mock(() => {}),
+  getSessionRecord: mock(() => null),
+  countActiveSessions: mock(() => 0),
+  bulkEndSessions: mock(() => 0),
+  listSessions: mock(() => []),
+  storeMessage: mock(() => {}),
+  getSessionMessages: mock(() => []),
 });
 mock.module("./session-store.js", sessionStoreMockFactory);
 if (process.platform !== "win32")

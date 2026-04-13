@@ -19,6 +19,11 @@ const mockStartDebate = mock(() =>
 );
 const workflowEngineMockFactory = () => ({
   startWorkflow: mockStartWorkflow,
+  initWorkflowEngine: mock(() => {}),
+  onWorkflowSessionIdle: mock(() => Promise.resolve()),
+  cancelWorkflow: mock(() => Promise.resolve(false)),
+  getWorkflowStatus: mock(() => null),
+  listWorkflows: mock(() => []),
 });
 mock.module("../services/workflow-engine.js", workflowEngineMockFactory);
 if (process.platform !== "win32")
@@ -26,6 +31,10 @@ if (process.platform !== "win32")
 
 const debateEngineMockFactory = () => ({
   startDebate: mockStartDebate,
+  getActiveDebate: mock(() => undefined),
+  listActiveDebates: mock(() => []),
+  concludeDebate: mock(() => Promise.resolve()),
+  injectHumanMessage: mock(() => false),
 });
 mock.module("../services/debate-engine.js", debateEngineMockFactory);
 if (process.platform !== "win32")
@@ -41,13 +50,15 @@ const settingsHelpersMockFactory = () => ({
     };
     return settings[key] ?? null;
   },
+  getSettingInt: (_key: string, fallback: number) => fallback,
+  getSettingBool: (_key: string, fallback: boolean) => fallback,
 });
 mock.module("../services/settings-helpers.js", settingsHelpersMockFactory);
 if (process.platform !== "win32")
   mock.module(import.meta.resolve("../services/settings-helpers.js"), settingsHelpersMockFactory);
 
 const eventBusMockFactory = () => ({
-  eventBus: { emit: mock(() => {}) },
+  eventBus: { emit: mock(() => {}), on: mock(() => {}), off: mock(() => {}) },
 });
 mock.module("../services/event-bus.js", eventBusMockFactory);
 if (process.platform !== "win32")
@@ -55,7 +66,10 @@ if (process.platform !== "win32")
 
 const aiClientMockFactory = () => ({
   callAI: mock(() => Promise.resolve({ text: "{}", costUsd: 0, inputTokens: 0 })),
+  callAIWithModel: mock(() => Promise.resolve({ text: "{}", costUsd: 0, inputTokens: 0 })),
   isAIConfigured: () => false,
+  getOpenRouterConfig: mock(() => null),
+  translateViToEn: mock(() => Promise.resolve(null)),
 });
 mock.module("../services/ai-client.js", aiClientMockFactory);
 if (process.platform !== "win32")
@@ -63,6 +77,7 @@ if (process.platform !== "win32")
 
 const shortIdMockFactory = () => ({
   resolveShortId: (id: string) => (id === "fox" ? "session-fox-123" : null),
+  generateShortId: () => "mock-short-id",
 });
 mock.module("../services/short-id.js", shortIdMockFactory);
 if (process.platform !== "win32")
@@ -75,6 +90,20 @@ const sessionStoreMockFactory = () => ({
     }
     return null;
   },
+  getAllActiveSessions: mock(() => []),
+  removeActiveSession: mock(() => {}),
+  createActiveSession: mock(() => ({})),
+  pushMessageHistory: mock(() => {}),
+  persistSession: mock(() => {}),
+  flushAllWriters: mock(() => {}),
+  createSessionRecord: mock(() => ({})),
+  endSessionRecord: mock(() => {}),
+  updateSessionCostWarned: mock(() => {}),
+  countActiveSessions: mock(() => 0),
+  bulkEndSessions: mock(() => 0),
+  listSessions: mock(() => []),
+  storeMessage: mock(() => {}),
+  getSessionMessages: mock(() => []),
 });
 mock.module("../services/session-store.js", sessionStoreMockFactory);
 if (process.platform !== "win32")

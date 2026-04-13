@@ -8,15 +8,19 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 const mockBroadcastToAll = mock(() => {});
 const wsBroadcastMockFactory = () => ({
   broadcastToAll: mockBroadcastToAll,
+  broadcastToSubscribers: mock(() => {}),
 });
 mock.module("./ws-broadcast.js", wsBroadcastMockFactory);
 if (process.platform !== "win32")
   mock.module(import.meta.resolve("./ws-broadcast.js"), wsBroadcastMockFactory);
 
 const pulseEstimatorMockFactory = () => ({
-  getOrCreatePulse: () => ({
-    setBlocked: () => {},
-  }),
+  getOrCreatePulse: () => ({ setBlocked: () => {}, recordThinking: () => {}, recordContextUpdate: () => {} }),
+  getPulse: () => undefined,
+  cleanupPulse: () => {},
+  getLatestReading: () => null,
+  getAllReadings: () => new Map(),
+  finalizePulseTurn: () => {},
 });
 mock.module("./pulse-estimator.js", pulseEstimatorMockFactory);
 if (process.platform !== "win32")

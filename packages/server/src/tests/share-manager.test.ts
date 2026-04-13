@@ -12,6 +12,9 @@ let testDbResult: ReturnType<typeof createTestDb>;
 // Mock DB before importing service
 const dbClientMockFactory = () => ({
   getDb: () => testDbResult.db,
+  getSqlite: () => testDbResult?.sqlite ?? null,
+  closeDb: () => {},
+  schema: {},
 });
 mock.module("../db/client.js", dbClientMockFactory);
 if (process.platform !== "win32")
