@@ -14,7 +14,11 @@ if (process.platform !== "win32")
   mock.module(import.meta.resolve("./ws-broadcast.js"), wsBroadcastMockFactory);
 
 const pulseEstimatorMockFactory = () => ({
-  getOrCreatePulse: () => ({ recordThinking: () => {}, recordContextUpdate: () => {}, setBlocked: () => {} }),
+  getOrCreatePulse: () => ({
+    recordThinking: () => {},
+    recordContextUpdate: () => {},
+    setBlocked: () => {},
+  }),
   getPulse: () => undefined,
   cleanupPulse: () => {},
   getLatestReading: () => null,
