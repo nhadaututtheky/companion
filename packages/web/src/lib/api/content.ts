@@ -193,12 +193,7 @@ export const savedPrompts = {
       }>;
     }>(`/api/saved-prompts${project ? `?project=${encodeURIComponent(project)}` : ""}`),
 
-  create: (body: {
-    name: string;
-    content: string;
-    projectSlug?: string | null;
-    tags?: string[];
-  }) =>
+  create: (body: { name: string; content: string; projectSlug?: string | null; tags?: string[] }) =>
     request<{ success: boolean; data: { id: string } }>("/api/saved-prompts", {
       method: "POST",
       body: JSON.stringify(body),
@@ -381,8 +376,7 @@ export const wiki = {
     }),
   deleteDomain: (domain: string) =>
     request<{ success: boolean }>(`/api/wiki/${domain}`, { method: "DELETE" }),
-  getIndex: (domain: string) =>
-    request<{ success: boolean; data: unknown }>(`/api/wiki/${domain}`),
+  getIndex: (domain: string) => request<{ success: boolean; data: unknown }>(`/api/wiki/${domain}`),
   listArticles: (domain: string) =>
     request<{
       success: boolean;

@@ -14,10 +14,7 @@ export class TelegramForumTopics {
   private readonly bot: { api: import("grammy").Api };
   private readonly streamSubscriptions: Map<string, string>;
 
-  constructor(
-    bot: { api: import("grammy").Api },
-    streamSubscriptions: Map<string, string>,
-  ) {
+  constructor(bot: { api: import("grammy").Api }, streamSubscriptions: Map<string, string>) {
     this.bot = bot;
     this.streamSubscriptions = streamSubscriptions;
   }

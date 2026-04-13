@@ -83,7 +83,11 @@ export interface UserMessageBridge {
       cliSessionId?: string;
     },
   ) => string;
-  getSessionSettings: (sessionId: string) => { idleTimeoutMs: number; keepAlive: boolean; autoReinjectOnCompact: boolean };
+  getSessionSettings: (sessionId: string) => {
+    idleTimeoutMs: number;
+    keepAlive: boolean;
+    autoReinjectOnCompact: boolean;
+  };
   sendToCLI: (session: ActiveSession, ndjson: string) => void;
   sendUserMessage: (sessionId: string, content: string, source?: string) => void;
   /** Permission bridge for handlePermissionResponse / handleInterrupt */
@@ -347,7 +351,11 @@ export class UserMessageHandler {
     const lockOwner = `${source ?? "web"}-${Date.now()}`;
 
     const sendWithLock = async (finalContent: string) => {
-      if (!getSessionRecord(session.id) && !session.cliSend && !this.bridge.getSdkHandle(session.id)) {
+      if (
+        !getSessionRecord(session.id) &&
+        !session.cliSend &&
+        !this.bridge.getSdkHandle(session.id)
+      ) {
         // Session gone — skip silently
         return;
       }

@@ -38,8 +38,7 @@ export const terminal = {
     request<{ data: { terminals: Array<{ id: string; cwd: string; createdAt: number }> } }>(
       "/api/terminal",
     ),
-  kill: (id: string) =>
-    request<{ success: boolean }>(`/api/terminal/${id}`, { method: "DELETE" }),
+  kill: (id: string) => request<{ success: boolean }>(`/api/terminal/${id}`, { method: "DELETE" }),
 };
 
 export const codegraph = {

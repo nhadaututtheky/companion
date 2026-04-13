@@ -6,11 +6,7 @@
 import { createLogger } from "../logger.js";
 import { broadcastToAll } from "./ws-broadcast.js";
 import { terminalLock } from "./terminal-lock.js";
-import {
-  getActiveSession,
-  getAllActiveSessions,
-  removeActiveSession,
-} from "./session-store.js";
+import { getActiveSession, getAllActiveSessions, removeActiveSession } from "./session-store.js";
 import { HEALTH_CHECK_INTERVAL_MS } from "@companion/shared";
 import type { ActiveSession } from "./session-store.js";
 import type { BrowserIncomingMessage, CLIProcess } from "@companion/shared";

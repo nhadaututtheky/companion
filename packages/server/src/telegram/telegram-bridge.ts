@@ -186,7 +186,13 @@ export class TelegramBridge {
     // Wire up callbacks to avoid circular dependency at construction time
     this.subscriptionManager.onMessage = (chatId, topicId, sessionId, msg) =>
       this.handleSessionMessage(chatId, topicId, sessionId, msg);
-    this.subscriptionManager.onSetStreamMapping = (chatId, topicId, sessionId, projectSlug, model) => {
+    this.subscriptionManager.onSetStreamMapping = (
+      chatId,
+      topicId,
+      sessionId,
+      projectSlug,
+      model,
+    ) => {
       if (!this.getMapping(chatId, topicId)) {
         this.mappings.set(this.mapKey(chatId, topicId), {
           sessionId,

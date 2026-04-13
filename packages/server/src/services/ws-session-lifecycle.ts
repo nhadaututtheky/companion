@@ -21,11 +21,7 @@ import { isGraphReady } from "../codegraph/index.js";
 import { removeTracker } from "../codegraph/event-collector.js";
 import { disconnectAllSpectators } from "./spectator-bridge.js";
 import { revokeAllForSession } from "./share-manager.js";
-import {
-  connectCli,
-  disconnectCli,
-  getWorkspaceForSession,
-} from "./workspace-store.js";
+import { connectCli, disconnectCli, getWorkspaceForSession } from "./workspace-store.js";
 import { getWorkspaceContext } from "./workspace-context.js";
 import { eventBus } from "./event-bus.js";
 import { cleanupPulse } from "./pulse-estimator.js";
@@ -41,10 +37,7 @@ import {
   pushMessageHistory,
   getSessionMessages,
 } from "./session-store.js";
-import {
-  clearEarlyResult,
-  clearStreamBatch,
-} from "./ws-stream-handler.js";
+import { clearEarlyResult, clearStreamBatch } from "./ws-stream-handler.js";
 import { clearPrevTokens } from "./ws-context-tracker.js";
 import type { SdkSessionHandle } from "./sdk-engine.js";
 import type { ActiveSession } from "./session-store.js";
@@ -94,7 +87,10 @@ export interface SessionLifecycleBridge {
     label: string,
     size: number,
   ) => void;
-  handleSystemInit: (session: ActiveSession, msg: import("@companion/shared").CLISystemInitMessage) => void;
+  handleSystemInit: (
+    session: ActiveSession,
+    msg: import("@companion/shared").CLISystemInitMessage,
+  ) => void;
   handleAssistant: (session: ActiveSession, msg: CLIAssistantMessage) => void;
   handleResult: (session: ActiveSession, msg: CLIResultMessage) => void;
   handleStreamEvent: (session: ActiveSession, msg: CLIStreamEventMessage) => void;
@@ -117,18 +113,40 @@ export interface SessionLifecycleBridge {
   getPlanWatcher: (sessionId: string) => ReturnType<typeof createPlanModeWatcher> | undefined;
   setPlanWatcher: (sessionId: string, watcher: ReturnType<typeof createPlanModeWatcher>) => void;
   deletePlanWatcher: (sessionId: string) => void;
-  getPermissionResolver: (id: string) => ((response: { behavior: "allow" | "deny"; updatedPermissions?: unknown[]; message?: string }) => void) | undefined;
-  setPermissionResolver: (id: string, fn: (response: { behavior: "allow" | "deny"; updatedPermissions?: unknown[]; message?: string }) => void) => void;
+  getPermissionResolver: (
+    id: string,
+  ) =>
+    | ((response: {
+        behavior: "allow" | "deny";
+        updatedPermissions?: unknown[];
+        message?: string;
+      }) => void)
+    | undefined;
+  setPermissionResolver: (
+    id: string,
+    fn: (response: {
+      behavior: "allow" | "deny";
+      updatedPermissions?: unknown[];
+      message?: string;
+    }) => void,
+  ) => void;
   deletePermissionResolver: (id: string) => void;
   getRtkPipeline: () => import("../rtk/index.js").RTKPipeline;
   getHooksBaseUrl: () => string;
-  getSessionSettings: (sessionId: string) => { idleTimeoutMs: number; keepAlive: boolean; autoReinjectOnCompact: boolean };
+  getSessionSettings: (sessionId: string) => {
+    idleTimeoutMs: number;
+    keepAlive: boolean;
+    autoReinjectOnCompact: boolean;
+  };
   killSession: (sessionId: string) => void;
   clearIdleTimer: (sessionId: string) => void;
   stopIdleTracking: (sessionId: string) => void;
   deleteSessionSettings: (sessionId: string) => void;
   notifyParentOfChildEnd: (childSessionId: string, status: string, preEndShortId?: string) => void;
-  setSessionSettings: (sessionId: string, settings: { idleTimeoutMs: number; keepAlive: boolean; autoReinjectOnCompact: boolean }) => void;
+  setSessionSettings: (
+    sessionId: string,
+    settings: { idleTimeoutMs: number; keepAlive: boolean; autoReinjectOnCompact: boolean },
+  ) => void;
   cancelCleanupTimer: (sessionId: string) => void;
   clearSessionCache: (sessionId: string) => void;
 }

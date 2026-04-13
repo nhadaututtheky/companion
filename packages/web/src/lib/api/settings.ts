@@ -282,9 +282,7 @@ export const cliPlatforms = {
 
 export const features = {
   getToggles: () =>
-    request<{ success: boolean; data: Record<string, boolean> }>(
-      "/api/settings/features/toggles",
-    ),
+    request<{ success: boolean; data: Record<string, boolean> }>("/api/settings/features/toggles"),
   setToggle: (feature: string, enabled: boolean) =>
     request<{ success: boolean }>(`/api/settings/features/toggles/${feature}`, {
       method: "PUT",

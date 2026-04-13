@@ -211,10 +211,10 @@ export const workspaces = {
     }>(`/api/workspaces/${encodeURIComponent(id)}`),
 
   create: (body: import("@companion/shared").WorkspaceCreateBody) =>
-    request<{ success: boolean; data: import("@companion/shared").Workspace }>(
-      "/api/workspaces",
-      { method: "POST", body: JSON.stringify(body) },
-    ),
+    request<{ success: boolean; data: import("@companion/shared").Workspace }>("/api/workspaces", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 
   update: (id: string, body: import("@companion/shared").WorkspaceUpdateBody) =>
     request<{ success: boolean; data: import("@companion/shared").Workspace }>(

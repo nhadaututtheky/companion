@@ -28,21 +28,13 @@ import {
 } from "../codegraph/agent-context-provider.js";
 import { isGraphReady } from "../codegraph/index.js";
 import { processToolEvent } from "../codegraph/event-collector.js";
-import {
-  getOrCreatePulse,
-  finalizePulseTurn,
-} from "./pulse-estimator.js";
-import {
-  bufferEarlyResult,
-  clearEarlyResult,
-} from "./ws-stream-handler.js";
+import { getOrCreatePulse, finalizePulseTurn } from "./pulse-estimator.js";
+import { bufferEarlyResult, clearEarlyResult } from "./ws-stream-handler.js";
 import {
   handleStreamEvent as _handleStreamEvent,
   handleToolProgress as _handleToolProgress,
 } from "./ws-stream-handler.js";
-import {
-  handleControlRequest as _handleControlRequest,
-} from "./ws-permission-handler.js";
+import { handleControlRequest as _handleControlRequest } from "./ws-permission-handler.js";
 import {
   handleControlResponse as _handleControlResponse,
   emitContextInjection as _emitContextInjection,
@@ -101,7 +93,9 @@ export interface MessageHandlerBridge {
   reloadRTKConfig: () => void;
   getRtkPipeline: () => RTKPipeline;
   getIdleDetector: () => IdleDetector;
-  getPlanWatcher: (sessionId: string) => ReturnType<typeof import("./cli-launcher.js").createPlanModeWatcher> | undefined;
+  getPlanWatcher: (
+    sessionId: string,
+  ) => ReturnType<typeof import("./cli-launcher.js").createPlanModeWatcher> | undefined;
   getSessionSettings: (sessionId: string) => SessionSettings;
   handleStreamEvent: (session: ActiveSession, msg: CLIStreamEventMessage) => void;
   handleControlRequest: (session: ActiveSession, msg: CLIControlRequestMessage) => void;
