@@ -134,14 +134,11 @@ export function SlashCommandMenu({
   return (
     <div
       ref={menuRef}
-      style={{
-        position: "absolute",
+      className="bg-bg-elevated border border-border absolute" style={{
         bottom: "100%",
         left: 0,
         right: 0,
         marginBottom: 4,
-        background: "var(--color-bg-elevated)",
-        border: "1px solid var(--color-border)",
         borderRadius: 12,
         boxShadow: "var(--shadow-lg)",
         maxHeight: 280,
@@ -153,8 +150,7 @@ export function SlashCommandMenu({
         {grouped.map((group) => (
           <div key={group.category}>
             <div
-              className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider"
-              style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+              className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted" style={{ fontSize: 10 }}
             >
               {group.label}
             </div>
@@ -172,19 +168,17 @@ export function SlashCommandMenu({
                   onClick={() => onSelect(cmd.command)}
                 >
                   <span
-                    className="text-sm font-mono font-semibold flex-shrink-0"
-                    style={{ color: "var(--color-accent)", minWidth: 80 }}
+                    className="text-sm font-mono font-semibold flex-shrink-0 text-accent" style={{ minWidth: 80 }}
                   >
                     {cmd.command}
                   </span>
                   <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="text-sm" style={{ color: "var(--color-text-primary)" }}>
+                    <span className="text-sm text-text-primary">
                       {cmd.description}
                     </span>
                     {cmd.usage && (
                       <span
-                        className="text-xs font-mono truncate"
-                        style={{ color: "var(--color-text-muted)" }}
+                        className="text-xs font-mono truncate text-text-muted"
                       >
                         {cmd.usage}
                       </span>

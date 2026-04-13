@@ -47,31 +47,25 @@ function SkillTreeGroup({
       {/* Group header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 w-full px-3 py-2 text-sm font-semibold transition-colors cursor-pointer rounded-lg"
-        style={{
-          color: "var(--color-text-primary)",
+        className="flex items-center gap-2 w-full px-3 py-2 text-sm font-semibold transition-colors cursor-pointer rounded-lg text-text-primary" style={{
           background: "transparent",
         }}
         aria-expanded={expanded}
         aria-controls={`skill-group-${group.id}`}
       >
         {expanded ? (
-          <CaretDown size={12} weight="bold" style={{ color: "var(--color-text-muted)" }} />
+          <CaretDown size={12} weight="bold" className="text-text-muted" />
         ) : (
-          <CaretRight size={12} weight="bold" style={{ color: "var(--color-text-muted)" }} />
+          <CaretRight size={12} weight="bold" className="text-text-muted" />
         )}
         {expanded ? (
-          <FolderOpen size={15} weight="duotone" style={{ color: "var(--color-accent)" }} />
+          <FolderOpen size={15} weight="duotone" className="text-accent" />
         ) : (
-          <Folder size={15} weight="duotone" style={{ color: "var(--color-accent)" }} />
+          <Folder size={15} weight="duotone" className="text-accent" />
         )}
         <span>{group.label}</span>
         <span
-          className="ml-auto text-xs px-1.5 py-0.5 rounded-md"
-          style={{
-            background: "var(--color-bg-elevated)",
-            color: "var(--color-text-muted)",
-          }}
+          className="ml-auto text-xs px-1.5 py-0.5 rounded-md text-text-muted bg-bg-elevated"
         >
           {group.skills.length}
         </span>
@@ -81,7 +75,7 @@ function SkillTreeGroup({
       {expanded && (
         <div id={`skill-group-${group.id}`} role="group" aria-label={group.label}>
           {/* Source path */}
-          <div className="text-xs px-3 pl-9 pb-1" style={{ color: "var(--color-text-muted)" }}>
+          <div className="text-xs px-3 pl-9 pb-1 text-text-muted">
             {group.source}
           </div>
 
@@ -106,10 +100,9 @@ function SkillTreeGroup({
                   <FileText
                     size={14}
                     weight={isSelected ? "fill" : "regular"}
-                    style={{
+                    className="shrink-0" style={{
                       color: isSelected ? "var(--color-accent)" : "var(--color-text-muted)",
-                      flexShrink: 0,
-                    }}
+                      }}
                   />
                   <span className="truncate">{skill.name}</span>
                 </button>
@@ -136,8 +129,7 @@ function SkillPreview({
   if (!skill) {
     return (
       <div
-        className="flex flex-col items-center justify-center h-full gap-2"
-        style={{ color: "var(--color-text-muted)" }}
+        className="flex flex-col items-center justify-center h-full gap-2 text-text-muted"
       >
         <Package size={32} weight="duotone" />
         <span className="text-sm">Select a skill to preview</span>
@@ -151,8 +143,7 @@ function SkillPreview({
         <CircleNotch
           size={24}
           weight="bold"
-          className="animate-spin"
-          style={{ color: "var(--color-accent)" }}
+          className="animate-spin text-accent"
         />
       </div>
     );
@@ -162,17 +153,15 @@ function SkillPreview({
     <div className="h-full overflow-y-auto">
       {/* Header */}
       <div
-        className="px-4 py-3 sticky top-0"
-        style={{
-          background: "var(--color-bg-card)",
+        className="px-4 py-3 sticky top-0 bg-bg-card" style={{
           borderBottom: "1px solid var(--glass-border)",
         }}
       >
-        <h3 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+        <h3 className="text-sm font-semibold text-text-primary">
           {skill.name}
         </h3>
         {skill.description && (
-          <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+          <p className="text-xs mt-0.5 text-text-muted">
             {skill.description}
           </p>
         )}
@@ -180,9 +169,7 @@ function SkillPreview({
 
       {/* Content — plain preformatted markdown */}
       <pre
-        className="px-4 py-3 text-xs leading-relaxed whitespace-pre-wrap break-words"
-        style={{
-          color: "var(--color-text-secondary)",
+        className="px-4 py-3 text-xs leading-relaxed whitespace-pre-wrap break-words text-text-secondary" style={{
           fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
         }}
       >
@@ -197,21 +184,20 @@ function SkillPreview({
 function EmptyState() {
   return (
     <div
-      className="flex flex-col items-center justify-center h-64 gap-3 text-center px-6"
-      style={{ color: "var(--color-text-muted)" }}
+      className="flex flex-col items-center justify-center h-64 gap-3 text-center px-6 text-text-muted"
     >
       <Package size={40} weight="duotone" />
       <div>
-        <p className="text-sm font-medium" style={{ color: "var(--color-text-secondary)" }}>
+        <p className="text-sm font-medium text-text-secondary">
           No skills found
         </p>
         <p className="text-xs mt-1">
           Skills are loaded from{" "}
-          <code className="px-1 py-0.5 rounded" style={{ background: "var(--color-bg-elevated)" }}>
+          <code className="px-1 py-0.5 rounded bg-bg-elevated">
             ~/.claude/skills/
           </code>{" "}
           and{" "}
-          <code className="px-1 py-0.5 rounded" style={{ background: "var(--color-bg-elevated)" }}>
+          <code className="px-1 py-0.5 rounded bg-bg-elevated">
             ~/.rune/skills/
           </code>
         </p>
@@ -312,8 +298,7 @@ export function SkillsTab() {
         <CircleNotch
           size={24}
           weight="bold"
-          className="animate-spin"
-          style={{ color: "var(--color-accent)" }}
+          className="animate-spin text-accent"
         />
       </div>
     );
@@ -322,8 +307,7 @@ export function SkillsTab() {
   if (error) {
     return (
       <div
-        className="flex flex-col items-center justify-center h-64 gap-2"
-        style={{ color: "var(--color-text-muted)" }}
+        className="flex flex-col items-center justify-center h-64 gap-2 text-text-muted"
       >
         <Warning size={32} weight="duotone" style={{ color: "var(--color-danger, #ef4444)" }} />
         <span className="text-sm">{error}</span>
@@ -342,45 +326,34 @@ export function SkillsTab() {
             <MagnifyingGlass
               size={14}
               weight="bold"
-              className="absolute left-3 top-1/2 -translate-y-1/2"
-              style={{ color: "var(--color-text-muted)" }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
             />
             <input
               type="text"
               placeholder="Filter skills..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:outline-none"
-              style={{
-                background: "var(--color-bg-base)",
-                border: "1px solid var(--glass-border)",
-                color: "var(--color-text-primary)",
-              }}
+              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:outline-none text-text-primary bg-bg-base border border-glass-border"
               aria-label="Filter skills by name"
             />
           </div>
 
           {/* Tree browser */}
           <div
-            className="flex rounded-xl overflow-hidden"
-            style={{
-              border: "1px solid var(--glass-border)",
+            className="flex rounded-xl overflow-hidden border border-glass-border" style={{
               height: "min(480px, 60vh)",
             }}
           >
             {/* Left: Tree */}
             <div
-              className="shrink-0 overflow-y-auto py-2"
-              style={{
+              className="shrink-0 overflow-y-auto py-2 bg-bg-base" style={{
                 width: "clamp(180px, 35%, 280px)",
                 borderRight: "1px solid var(--glass-border)",
-                background: "var(--color-bg-base)",
-              }}
+                }}
             >
               {filteredGroups.length === 0 ? (
                 <div
-                  className="flex flex-col items-center justify-center h-32 gap-1"
-                  style={{ color: "var(--color-text-muted)" }}
+                  className="flex flex-col items-center justify-center h-32 gap-1 text-text-muted"
                 >
                   <MagnifyingGlass size={20} weight="duotone" />
                   <span className="text-xs">No matches</span>
@@ -398,7 +371,7 @@ export function SkillsTab() {
             </div>
 
             {/* Right: Preview */}
-            <div className="flex-1 min-w-0" style={{ background: "var(--color-bg-card)" }}>
+            <div className="flex-1 min-w-0 bg-bg-card">
               <SkillPreview
                 skill={selectedSkill}
                 content={previewContent}

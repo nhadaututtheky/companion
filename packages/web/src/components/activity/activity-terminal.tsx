@@ -93,19 +93,15 @@ function LogLine({ log }: { log: ActivityLog }) {
       }}
     >
       {/* Timestamp */}
-      <span style={{ color: "var(--color-text-muted)", flexShrink: 0, userSelect: "none" }}>
+      <span className="text-text-muted select-none" style={{ flexShrink: 0 }}>
         [{formatTs(log.timestamp)}]
       </span>
       {/* Session */}
       <span
-        style={{
-          color: "var(--color-text-secondary)",
-          flexShrink: 0,
+        className="text-text-secondary overflow-hidden whitespace-nowrap shrink-0" style={{
           maxWidth: 100,
-          overflow: "hidden",
           textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
+          }}
         title={log.sessionName}
       >
         [{log.sessionName}]
@@ -113,10 +109,10 @@ function LogLine({ log }: { log: ActivityLog }) {
       {/* Type badge + icon */}
       <span className="flex items-center gap-1 flex-shrink-0" style={{ color, minWidth: 56 }}>
         <LogTypeIcon type={log.type} />
-        <span style={{ fontSize: 10, fontWeight: 700 }}>{label}</span>
+        <span className="font-bold" style={{ fontSize: 10 }}>{label}</span>
       </span>
       {/* Content */}
-      <span className="flex-1 min-w-0 break-words" style={{ color: "var(--color-text-primary)" }}>
+      <span className="flex-1 min-w-0 break-words text-text-primary">
         {log.content}
       </span>
     </div>
@@ -140,11 +136,8 @@ function FilterSelect({
     <select
       value={value ?? ""}
       onChange={(e) => onChange(e.target.value || null)}
-      className="cursor-pointer"
-      style={{
-        background: "var(--color-bg-elevated)",
+      className="cursor-pointer text-text-secondary bg-bg-elevated" style={{
         border: "1px solid var(--color-border-strong)",
-        color: "var(--color-text-secondary)",
         borderRadius: 4,
         padding: "2px 6px",
         fontSize: 11,
@@ -236,37 +229,28 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
 
   return (
     <div
-      style={{
+      className="rounded-radius-xl border border-glass-border overflow-hidden shrink-0 flex" style={{
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
-        border: "1px solid var(--glass-border)",
-        borderRadius: "var(--radius-xl)",
         boxShadow: "var(--shadow-float)",
-        display: "flex",
         flexDirection: "column",
-        flexShrink: 0,
         height: open ? 220 : 32,
         transition: "height 200ms ease",
-        overflow: "hidden",
-      }}
+        }}
     >
       {/* Header bar */}
       <div
-        className="flex items-center gap-2 px-3 flex-shrink-0"
-        style={{
+        className="flex items-center gap-2 px-3 flex-shrink-0 select-none" style={{
           height: 32,
           borderBottom: open ? "1px solid var(--glass-border)" : "none",
           background: "var(--glass-bg-heavy)",
-          userSelect: "none",
-        }}
+          }}
       >
         {/* Toggle button */}
         <button
           onClick={onToggle}
-          className="flex items-center gap-1.5 cursor-pointer transition-opacity hover:opacity-80"
-          style={{
-            color: "var(--color-text-secondary)",
+          className="flex items-center gap-1.5 cursor-pointer transition-opacity hover:opacity-80 text-text-secondary" style={{
             background: "none",
             border: "none",
             padding: 0,
@@ -274,13 +258,11 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
           aria-label={open ? "Collapse activity terminal" : "Expand activity terminal"}
         >
           {open ? <CaretDown size={11} weight="bold" /> : <CaretRight size={11} weight="bold" />}
-          <Terminal size={13} style={{ color: "var(--color-accent)" }} weight="bold" />
+          <Terminal size={13} className="text-accent" weight="bold" />
           <span
-            style={{
+            className="text-text-secondary font-semibold" style={{
               fontFamily: "var(--font-mono, monospace)",
               fontSize: 11,
-              fontWeight: 600,
-              color: "var(--color-text-secondary)",
               letterSpacing: "0.05em",
             }}
           >
@@ -290,15 +272,12 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
 
         {/* Log count badge */}
         <span
-          style={{
-            background: "var(--color-bg-hover)",
-            border: "1px solid var(--color-border)",
+          className="text-text-muted bg-bg-hover border border-border" style={{
             borderRadius: 4,
             padding: "0 6px",
             fontSize: 10,
             fontFamily: "var(--font-mono, monospace)",
-            color: "var(--color-text-muted)",
-          }}
+            }}
         >
           {displayLogs.length}
         </span>
@@ -327,9 +306,7 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
             {/* Clear */}
             <button
               onClick={handleClear}
-              className="flex items-center gap-1 cursor-pointer transition-opacity hover:opacity-80"
-              style={{
-                color: "var(--color-text-muted)",
+              className="flex items-center gap-1 cursor-pointer transition-opacity hover:opacity-80 text-text-muted" style={{
                 background: "none",
                 border: "none",
                 padding: "2px 4px",
@@ -350,16 +327,14 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
                     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
                   }
                 }}
-                style={{
+                className="text-warning cursor-pointer" style={{
                   fontSize: 10,
                   fontFamily: "var(--font-mono, monospace)",
-                  color: "var(--color-warning)",
                   background: "none",
                   border: "1px solid var(--color-warning)",
                   borderRadius: 4,
                   padding: "1px 6px",
-                  cursor: "pointer",
-                }}
+                  }}
                 aria-label="Resume auto-scroll"
               >
                 resume scroll
@@ -382,9 +357,7 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
         >
           {displayLogs.length === 0 ? (
             <div
-              className="flex items-center justify-center h-full"
-              style={{
-                color: "var(--color-text-muted)",
+              className="flex items-center justify-center h-full text-text-muted" style={{
                 fontFamily: "var(--font-mono, monospace)",
                 fontSize: 12,
               }}

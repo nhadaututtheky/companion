@@ -36,8 +36,7 @@ export function ContextMeter({
       </div>
       {/* Stacked progress bar: input (blue) + output (purple) */}
       <div
-        className="w-full rounded-full overflow-hidden flex"
-        style={{ height: 4, background: "var(--color-bg-elevated)" }}
+        className="w-full rounded-full overflow-hidden flex bg-bg-elevated" style={{ height: 4 }}
       >
         <div
           className="h-full transition-all duration-300"
@@ -54,25 +53,23 @@ export function ContextMeter({
       <div className="flex items-center gap-3 mt-1.5">
         <div className="flex items-center gap-1">
           <span
-            style={{
+            className="inline-block" style={{
               width: 6,
               height: 6,
               borderRadius: 2,
               background: "#4285F4",
-              display: "inline-block",
-            }}
+              }}
           />
           <span className="text-xs font-mono">{formatK(inputTokens)} in</span>
         </div>
         <div className="flex items-center gap-1">
           <span
-            style={{
+            className="inline-block" style={{
               width: 6,
               height: 6,
               borderRadius: 2,
               background: "#A855F7",
-              display: "inline-block",
-            }}
+              }}
           />
           <span className="text-xs font-mono">{formatK(outputTokens)} out</span>
         </div>

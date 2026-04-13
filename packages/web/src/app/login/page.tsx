@@ -57,17 +57,14 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div
-        className="w-full max-w-sm flex flex-col gap-6 p-8 rounded-xl"
-        style={{
-          background: "var(--color-bg-card)",
-          border: "1px solid var(--color-border)",
+        className="w-full max-w-sm flex flex-col gap-6 p-8 rounded-xl bg-bg-card border border-border" style={{
           boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
         }}
       >
         {/* Logo + title */}
         <div className="flex flex-col items-center gap-2 text-center">
           <CompanionLogo size="lg" />
-          <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+          <p className="text-sm leading-relaxed text-text-secondary">
             Enter your PIN to continue
           </p>
         </div>
@@ -96,9 +93,7 @@ export default function LoginPage() {
                 placeholder="Enter PIN"
                 autoComplete="current-password"
                 spellCheck={false}
-                className="w-full rounded-lg pl-9 pr-10 py-2.5 text-sm text-center tracking-widest input-bordered transition-colors"
-                style={{
-                  background: "var(--color-bg-elevated)",
+                className="w-full rounded-lg pl-9 pr-10 py-2.5 text-sm text-center tracking-widest input-bordered transition-colors bg-bg-elevated" style={{
                   ...(error ? { borderColor: "var(--color-danger)" } : {}),
                   color: "var(--color-text-primary)",
                   fontFamily: "var(--font-mono)",
@@ -120,8 +115,7 @@ export default function LoginPage() {
             {error && (
               <div
                 id="pin-error"
-                className="flex items-center gap-1.5 text-xs"
-                style={{ color: "var(--color-danger)" }}
+                className="flex items-center gap-1.5 text-xs text-danger"
                 role="alert"
               >
                 <WarningCircle size={13} weight="fill" aria-hidden="true" />
@@ -153,7 +147,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <p className="text-center text-xs text-text-muted">
           Set your PIN in Settings. Remove it to disable authentication.
         </p>
       </div>

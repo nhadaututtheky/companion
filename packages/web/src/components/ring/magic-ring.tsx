@@ -32,7 +32,7 @@ function SiriOrb({ sessionIds, size }: { sessionIds: string[]; size: number }) {
   const r = size / 2 - 2;
 
   return (
-    <svg width={size} height={size} style={{ position: "absolute", inset: 0 }} aria-hidden="true">
+    <svg width={size} height={size} className="absolute" style={{ inset: 0 }} aria-hidden="true">
       <defs>
         {/* Animated gradient for the orb glow */}
         <radialGradient id="orb-base" cx="40%" cy="35%" r="60%">
@@ -238,23 +238,20 @@ export function MagicRing() {
             ? `Shared Context — ${linkedSessionIds.length} sessions linked`
             : "Shared Context — click to link sessions"
         }
-        style={{
+        className="rounded-full select-none flex" style={{
           position: "fixed",
           left: pos.x,
           top: pos.y,
           width: activeSize,
           height: activeSize,
-          borderRadius: "50%",
           border: "none",
           zIndex: Z.popover,
           cursor: dragging ? "grabbing" : "pointer",
           padding: 0,
-          display: "flex",
           alignItems: "center",
           justifyContent: "center",
           background: "transparent",
           animation: useLottie ? undefined : "siri-glow 3s ease-in-out infinite",
-          userSelect: "none",
           touchAction: "none",
           outline: "none",
         }}
@@ -268,8 +265,7 @@ export function MagicRing() {
         {/* Unread badge — shows when debate has new messages while collapsed */}
         {unreadCount > 0 && !isExpanded && (
           <span
-            style={{
-              position: "absolute",
+            className="absolute font-bold flex font-mono" style={{
               top: -2,
               right: -2,
               minWidth: 18,
@@ -278,14 +274,11 @@ export function MagicRing() {
               background: "#EA4335",
               color: "#fff",
               fontSize: 10,
-              fontWeight: 700,
-              display: "flex",
               alignItems: "center",
               justifyContent: "center",
               padding: "0 4px",
               boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
-              fontFamily: "var(--font-mono)",
-            }}
+              }}
             role="status"
             aria-live="polite"
             aria-label={`${unreadCount} unread debate messages`}

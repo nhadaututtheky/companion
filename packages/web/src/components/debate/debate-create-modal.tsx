@@ -138,10 +138,7 @@ export function DebateCreateModal({
       aria-label="Start Debate"
     >
       <div
-        className="flex flex-col w-full max-w-lg max-h-[85vh] rounded-2xl overflow-hidden"
-        style={{
-          background: "var(--color-bg-base)",
-          border: "1px solid var(--color-border)",
+        className="flex flex-col w-full max-w-lg max-h-[85vh] rounded-2xl overflow-hidden bg-bg-base border border-border" style={{
           boxShadow: "0 25px 50px rgba(0,0,0,0.3)",
         }}
       >
@@ -150,13 +147,12 @@ export function DebateCreateModal({
           className="flex items-center justify-between px-5 py-3 flex-shrink-0"
           style={{ borderBottom: "1px solid var(--color-border)" }}
         >
-          <h2 className="text-sm font-bold" style={{ color: "var(--color-text-primary)" }}>
+          <h2 className="text-sm font-bold text-text-primary">
             Start CLI Debate
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg transition-all cursor-pointer"
-            style={{ color: "var(--color-text-muted)" }}
+            className="p-1.5 rounded-lg transition-all cursor-pointer text-text-muted"
             aria-label="Close dialog"
           >
             <X size={16} weight="bold" />
@@ -168,8 +164,7 @@ export function DebateCreateModal({
           {/* Topic */}
           <div className="flex flex-col gap-1">
             <label
-              className="text-xs font-semibold"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="text-xs font-semibold text-text-secondary"
             >
               Topic
             </label>
@@ -178,11 +173,7 @@ export function DebateCreateModal({
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="e.g. How should we implement auth in this app?"
-              className="rounded-lg px-3 py-2 text-sm input-bordered"
-              style={{
-                background: "var(--color-bg-card)",
-                color: "var(--color-text-primary)",
-              }}
+              className="rounded-lg px-3 py-2 text-sm input-bordered text-text-primary bg-bg-card"
               autoFocus
             />
           </div>
@@ -191,8 +182,7 @@ export function DebateCreateModal({
           <div className="flex gap-3">
             <div className="flex flex-col gap-1 flex-1">
               <label
-                className="text-xs font-semibold"
-                style={{ color: "var(--color-text-secondary)" }}
+                className="text-xs font-semibold text-text-secondary"
               >
                 Format
               </label>
@@ -200,11 +190,7 @@ export function DebateCreateModal({
                 <select
                   value={format}
                   onChange={(e) => setFormat(e.target.value as DebateFormat)}
-                  className="w-full appearance-none rounded-lg px-3 py-2 text-sm input-bordered cursor-pointer"
-                  style={{
-                    background: "var(--color-bg-card)",
-                    color: "var(--color-text-primary)",
-                  }}
+                  className="w-full appearance-none rounded-lg px-3 py-2 text-sm input-bordered cursor-pointer text-text-primary bg-bg-card"
                 >
                   {FORMAT_OPTIONS.map((f) => (
                     <option key={f.value} value={f.value}>
@@ -220,15 +206,14 @@ export function DebateCreateModal({
             </div>
             <div className="flex flex-col gap-1 flex-1">
               <label
-                className="text-xs font-semibold"
-                style={{ color: "var(--color-text-secondary)" }}
+                className="text-xs font-semibold text-text-secondary"
               >
                 Working Directory
               </label>
               <div className="flex items-center gap-1">
                 <FolderSimple
                   size={14}
-                  style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
+                  className="text-text-muted shrink-0"
                   aria-hidden="true"
                 />
                 <input
@@ -236,18 +221,14 @@ export function DebateCreateModal({
                   value={workingDir}
                   onChange={(e) => setWorkingDir(e.target.value)}
                   placeholder="/home/user/project"
-                  className="flex-1 rounded-lg px-2 py-2 text-sm input-bordered"
-                  style={{
-                    background: "var(--color-bg-card)",
-                    color: "var(--color-text-primary)",
-                  }}
+                  className="flex-1 rounded-lg px-2 py-2 text-sm input-bordered text-text-primary bg-bg-card"
                 />
               </div>
             </div>
           </div>
 
           {/* Format description */}
-          <p className="text-xs" style={{ color: "var(--color-text-muted)", marginTop: -8 }}>
+          <p className="text-xs text-text-muted" style={{ marginTop: -8 }}>
             {FORMAT_OPTIONS.find((f) => f.value === format)?.desc}
           </p>
 
@@ -255,19 +236,14 @@ export function DebateCreateModal({
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <label
-                className="text-xs font-semibold"
-                style={{ color: "var(--color-text-secondary)" }}
+                className="text-xs font-semibold text-text-secondary"
               >
                 Agents ({agents.length}/4)
               </label>
               {agents.length < 4 && (
                 <button
                   onClick={addAgent}
-                  className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs cursor-pointer transition-all"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    color: "var(--color-text-secondary)",
-                  }}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs cursor-pointer transition-all text-text-secondary bg-bg-elevated"
                 >
                   <Plus size={11} weight="bold" aria-hidden="true" />
                   Add
@@ -279,10 +255,9 @@ export function DebateCreateModal({
               <div className="flex items-center gap-2 py-4 justify-center">
                 <CircleNotch
                   size={16}
-                  className="animate-spin"
-                  style={{ color: "var(--color-text-muted)" }}
+                  className="animate-spin text-text-muted"
                 />
-                <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                <span className="text-xs text-text-muted">
                   Detecting CLI platforms...
                 </span>
               </div>
@@ -306,8 +281,7 @@ export function DebateCreateModal({
           {/* Max rounds */}
           <div className="flex items-center gap-3">
             <label
-              className="text-xs font-semibold"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="text-xs font-semibold text-text-secondary"
             >
               Max Rounds
             </label>
@@ -317,13 +291,9 @@ export function DebateCreateModal({
               max={10}
               value={maxRounds}
               onChange={(e) => setMaxRounds(Math.max(1, Math.min(10, Number(e.target.value))))}
-              className="w-16 rounded-lg px-2 py-1 text-xs text-center input-bordered"
-              style={{
-                background: "var(--color-bg-card)",
-                color: "var(--color-text-primary)",
-              }}
+              className="w-16 rounded-lg px-2 py-1 text-xs text-center input-bordered text-text-primary bg-bg-card"
             />
-            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs text-text-muted">
               (CLI debates are slower — 3 recommended)
             </span>
           </div>
@@ -336,11 +306,7 @@ export function DebateCreateModal({
         >
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-secondary)",
-            }}
+            className="px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all text-text-secondary bg-bg-elevated"
           >
             Cancel
           </button>

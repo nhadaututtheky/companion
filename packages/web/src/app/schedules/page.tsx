@@ -94,14 +94,11 @@ export default function SchedulesPage() {
 
   return (
     <div
-      className="min-h-screen"
-      style={{ background: "var(--color-bg-base)", color: "var(--color-text-primary)" }}
+      className="min-h-screen text-text-primary" style={{ background: "var(--color-bg-base)" }}
     >
       {/* Header */}
       <div
-        className="px-6 py-4 flex items-center justify-between"
-        style={{
-          background: "var(--color-bg-card)",
+        className="px-6 py-4 flex items-center justify-between bg-bg-card" style={{
           borderBottom: "1px solid var(--color-border)",
         }}
       >
@@ -114,11 +111,7 @@ export default function SchedulesPage() {
             <h1 className="text-base font-semibold">Schedules</h1>
           </div>
           <span
-            className="text-xs px-2 py-0.5 rounded-full"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-muted)",
-            }}
+            className="text-xs px-2 py-0.5 rounded-full text-text-muted bg-bg-elevated"
           >
             {activeCount} active
           </span>
@@ -169,11 +162,7 @@ export default function SchedulesPage() {
               {/* Upcoming runs */}
               {upcoming.length > 0 && (
                 <div
-                  className="rounded-xl p-3"
-                  style={{
-                    background: "var(--color-bg-card)",
-                    border: "1px solid var(--color-border)",
-                  }}
+                  className="rounded-xl p-3 bg-bg-card border border-border"
                 >
                   <div className="flex items-center gap-1.5 mb-2">
                     <CalendarBlank size={12} style={{ color: "#4285F4" }} />
@@ -187,8 +176,7 @@ export default function SchedulesPage() {
                       >
                         <span className="text-xs truncate max-w-32">{run.name}</span>
                         <span
-                          className="text-xs font-mono"
-                          style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                          className="text-xs font-mono text-text-muted" style={{ fontSize: 10 }}
                         >
                           {new Date(run.nextRunAt).toLocaleDateString("en-US", {
                             month: "short",

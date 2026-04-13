@@ -95,13 +95,13 @@ export function TipBanner({ context = "dashboard", conditions }: TipBannerProps)
       <Lightbulb
         size={16}
         weight="fill"
-        style={{ color: colors.accent, flexShrink: 0, marginTop: 1 }}
+        className="shrink-0" style={{ color: colors.accent, marginTop: 1 }}
       />
       <div className="flex-1 min-w-0">
-        <div className="font-medium" style={{ color: "var(--color-text-primary)" }}>
+        <div className="font-medium text-text-primary">
           {currentTip.title}
         </div>
-        <div className="mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
+        <div className="mt-0.5 text-text-secondary">
           {currentTip.body}
         </div>
         {currentTip.action && (
@@ -117,8 +117,7 @@ export function TipBanner({ context = "dashboard", conditions }: TipBannerProps)
       </div>
       <button
         onClick={handleDismiss}
-        className="p-0.5 rounded cursor-pointer hover:bg-[var(--color-bg-elevated)]"
-        style={{ color: "var(--color-text-secondary)" }}
+        className="p-0.5 rounded cursor-pointer hover:bg-[var(--color-bg-elevated)] text-text-secondary"
         aria-label="Dismiss tip"
       >
         <X size={14} />

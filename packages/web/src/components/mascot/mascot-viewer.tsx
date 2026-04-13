@@ -15,12 +15,9 @@ interface MascotViewerProps {
 export function MascotViewer({ lottieFile, size = 120, className }: MascotViewerProps) {
   return (
     <div
-      className={className}
-      style={{
+      className={`${className || ""} rounded-full overflow-hidden`} style={{
         width: size,
         height: size,
-        borderRadius: "50%",
-        overflow: "hidden",
         pointerEvents: "none",
       }}
     >

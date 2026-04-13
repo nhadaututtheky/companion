@@ -60,7 +60,7 @@ function EmptyCenter() {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-6 px-8">
       <CompanionLogo size="lg" />
-      <p className="text-base text-center" style={{ color: "var(--color-text-secondary)" }}>
+      <p className="text-base text-center text-text-secondary">
         Select a session or start a new one
       </p>
       <div className="w-full max-w-md mt-2">
@@ -120,11 +120,11 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
         <TelegramLogo
           size={12}
           weight="fill"
-          style={{ color: "var(--color-accent)" }}
+          className="text-accent"
           aria-label="From Telegram"
         />
       );
-    return <Globe size={12} style={{ color: "var(--color-text-muted)" }} aria-label="From Web" />;
+    return <Globe size={12} className="text-text-muted" aria-label="From Web" />;
   };
 
   return (
@@ -138,20 +138,18 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
       <div className="flex items-center gap-2 px-4 py-2">
         <ArrowCounterClockwise
           size={14}
-          style={{ color: "var(--color-accent)" }}
+          className="text-accent"
           weight="bold"
           aria-hidden="true"
         />
-        <span className="text-xs font-semibold flex-1" style={{ color: "var(--color-accent)" }}>
+        <span className="text-xs font-semibold flex-1 text-accent">
           {sessions.length === 1
             ? "1 session can be resumed"
             : `${sessions.length} sessions can be resumed`}
         </span>
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="text-xs font-medium px-2 py-0.5 rounded cursor-pointer transition-colors"
-          style={{
-            color: "var(--color-accent)",
+          className="text-xs font-medium px-2 py-0.5 rounded cursor-pointer transition-colors text-accent" style={{
             background: "color-mix(in srgb, var(--color-accent) 8%, transparent)",
           }}
           aria-expanded={expanded}
@@ -187,14 +185,12 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
               <SourceIcon source={s.source} />
               <div className="flex flex-col flex-1 min-w-0">
                 <span
-                  className="text-xs font-semibold truncate"
-                  style={{ color: "var(--color-text-primary)" }}
+                  className="text-xs font-semibold truncate text-text-primary"
                 >
                   {projectLabel(s)}
                 </span>
                 <span
-                  className="text-xs truncate"
-                  style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-mono)" }}
+                  className="text-xs truncate text-text-muted" style={{ fontFamily: "var(--font-mono)" }}
                 >
                   {modelShort(s.model)} &bull;{" "}
                   {new Date(s.endedAt).toLocaleDateString(undefined, {
@@ -207,8 +203,7 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
               </div>
               <button
                 onClick={() => onDismissOne(s.id)}
-                className="p-1.5 rounded cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
-                style={{ color: "var(--color-text-muted)" }}
+                className="p-1.5 rounded cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)] text-text-muted"
                 aria-label={`Dismiss session ${projectLabel(s)}`}
               >
                 <Trash size={12} weight="bold" aria-hidden="true" />
@@ -547,23 +542,18 @@ export default function DashboardPage() {
       <FloatingStatsBar />
 
       <div
-        style={{
+        className="overflow-hidden flex" style={{
           flex: 1,
-          overflow: "hidden",
-          display: "flex",
           flexDirection: "column",
           padding: "8px 12px 12px 12px",
           gap: 8,
         }}
       >
         <div
-          style={{
+          className="rounded-radius-xl overflow-hidden flex" style={{
             flex: 1,
-            overflow: "hidden",
-            display: "flex",
             gap: 8,
-            borderRadius: "var(--radius-xl)",
-          }}
+            }}
         >
           {/* Mobile sidebar overlay backdrop */}
           {mobileSidebarOpen && (
@@ -589,13 +579,10 @@ export default function DashboardPage() {
               mobileSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
               "transition-transform duration-200 ease-in-out",
               "mobile-sidebar-overlay",
-            ].join(" ")}
-            style={{
+            , "rounded-radius-xl", "border border-glass-border"].join(" ")} style={{
               background: "var(--glass-bg-heavy)",
               backdropFilter: "blur(var(--glass-blur))",
               WebkitBackdropFilter: "blur(var(--glass-blur))",
-              border: "1px solid var(--glass-border)",
-              borderRadius: "var(--radius-xl)",
               boxShadow: "var(--shadow-float)",
             }}
             aria-label="Project sidebar"
@@ -606,15 +593,13 @@ export default function DashboardPage() {
               style={{ borderBottom: "1px solid var(--color-border)", width: "100%" }}
             >
               <span
-                className="text-xs font-semibold"
-                style={{ color: "var(--color-text-secondary)" }}
+                className="text-xs font-semibold text-text-secondary"
               >
                 Projects
               </span>
               <button
                 onClick={() => setMobileSidebarOpen(false)}
-                className="p-2 rounded-lg cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
-                style={{ color: "var(--color-text-muted)" }}
+                className="p-2 rounded-lg cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center text-text-muted"
                 aria-label="Close sidebar"
               >
                 <X size={16} weight="bold" />
@@ -637,13 +622,7 @@ export default function DashboardPage() {
 
           {/* Main grid area */}
           <main
-            className="flex flex-col flex-1 min-w-0 overflow-hidden"
-            style={{
-              position: "relative",
-              background: "var(--color-bg-base)",
-              border: "1px solid var(--glass-border)",
-              borderRadius: "var(--radius-xl)",
-            }}
+            className="flex flex-col flex-1 min-w-0 overflow-hidden bg-bg-base rounded-radius-xl border border-glass-border relative"
           >
             {/* Stats watermark — centered behind sessions, click to expand */}
             <BottomStatsBar />
@@ -674,8 +653,7 @@ export default function DashboardPage() {
           {/* Right panel — File Explorer, Browser Preview, or Search (desktop only, hidden on mobile to save space) */}
           {rightPanelMode !== "none" && (
             <aside
-              className="hidden md:flex flex-col flex-shrink-0 overflow-hidden"
-              style={{
+              className="hidden md:flex flex-col flex-shrink-0 overflow-hidden rounded-radius-xl border border-glass-border" style={{
                 width:
                   rightPanelMode === "browser" || rightPanelMode === "terminal"
                     ? 600
@@ -685,8 +663,6 @@ export default function DashboardPage() {
                 background: "var(--glass-bg-heavy)",
                 backdropFilter: "blur(var(--glass-blur))",
                 WebkitBackdropFilter: "blur(var(--glass-blur))",
-                border: "1px solid var(--glass-border)",
-                borderRadius: "var(--radius-xl)",
                 boxShadow: "var(--shadow-float)",
                 transition: "width 200ms ease",
               }}

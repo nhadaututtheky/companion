@@ -148,9 +148,7 @@ function NavPill({
       onClick={onClick}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
-      className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium cursor-pointer transition-all"
-      style={{
-        borderRadius: "var(--radius-md)",
+      className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium cursor-pointer transition-all rounded-radius-md" style={{
         background: isActive ? "var(--color-text-primary)" : "var(--glass-bg)",
         backdropFilter: isActive ? "none" : "blur(var(--glass-blur))",
         WebkitBackdropFilter: isActive ? "none" : "blur(var(--glass-blur))",
@@ -173,14 +171,11 @@ function NavPill({
 function DetailCard({ children, index }: { children: ReactNode; index: number }) {
   return (
     <div
-      style={{
+      className="rounded-radius-xl border border-glass-border shrink-0" style={{
         width: 240,
-        flexShrink: 0,
         background: "var(--glass-bg)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
-        border: "1px solid var(--glass-border)",
-        borderRadius: "var(--radius-xl)",
         boxShadow: "var(--shadow-float)",
         padding: 16,
         animation: `navPillStaggerIn 250ms ease-out ${index * 60}ms both`,
@@ -234,34 +229,25 @@ function PanelsContent() {
                     : "var(--color-text-secondary)",
               }}
             />
-            <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            <span className="text-sm font-semibold text-text-primary">
               {active.label}
             </span>
             {rightPanelMode === active.id && (
               <span
-                className="flex items-center gap-1 text-xs font-medium px-2 py-0.5"
-                style={{
-                  borderRadius: "var(--radius-pill)",
+                className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 text-success rounded-radius-pill" style={{
                   background: "color-mix(in srgb, var(--color-success) 15%, transparent)",
-                  color: "var(--color-success)",
-                }}
+                  }}
               >
                 <Check size={10} weight="bold" /> Active
               </span>
             )}
           </div>
-          <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
+          <p className="text-xs leading-relaxed text-text-muted">
             {active.description}
           </p>
           {active.shortcut && (
             <span
-              className="inline-block text-xs font-mono px-2 py-1 mt-3"
-              style={{
-                borderRadius: "var(--radius-sm)",
-                background: "var(--color-bg-elevated)",
-                border: "1px solid var(--glass-border)",
-                color: "var(--color-text-muted)",
-              }}
+              className="inline-block text-xs font-mono px-2 py-1 mt-3 text-text-muted bg-bg-elevated rounded-radius-sm border border-glass-border"
             >
               {active.shortcut}
             </span>
@@ -315,25 +301,22 @@ function AIContent() {
             <active.icon
               size={16}
               weight={isItemActive(active.id) ? "fill" : "regular"}
-              style={{ color: "var(--color-accent)" }}
+              className="text-accent"
             />
-            <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            <span className="text-sm font-semibold text-text-primary">
               {active.label}
             </span>
             {isItemActive(active.id) && (
               <span
-                className="flex items-center gap-1 text-xs font-medium px-2 py-0.5"
-                style={{
-                  borderRadius: "var(--radius-pill)",
+                className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 text-success rounded-radius-pill" style={{
                   background: "color-mix(in srgb, var(--color-success) 15%, transparent)",
-                  color: "var(--color-success)",
-                }}
+                  }}
               >
                 <Check size={10} weight="bold" /> Active
               </span>
             )}
           </div>
-          <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
+          <p className="text-xs leading-relaxed text-text-muted">
             {active.description}
           </p>
         </DetailCard>
@@ -386,12 +369,10 @@ function LayoutContent() {
 
   return (
     <div
-      style={{
+      className="rounded-radius-xl border border-glass-border" style={{
         background: "var(--glass-bg)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
-        border: "1px solid var(--glass-border)",
-        borderRadius: "var(--radius-xl)",
         boxShadow: "var(--shadow-float)",
         padding: 16,
         width: 480,
@@ -403,8 +384,7 @@ function LayoutContent() {
         {/* Layout presets */}
         <div className="flex-1">
           <span
-            className="text-[10px] font-semibold uppercase tracking-wider mb-2 block"
-            style={{ color: "var(--color-text-muted)" }}
+            className="text-[10px] font-semibold uppercase tracking-wider mb-2 block text-text-muted"
           >
             Layout
           </span>
@@ -415,9 +395,7 @@ function LayoutContent() {
                 <button
                   key={item.id}
                   onClick={() => setMode(item.mode)}
-                  className="flex items-center gap-2 px-3 py-2 text-[11px] font-medium cursor-pointer transition-all"
-                  style={{
-                    borderRadius: "var(--radius-md)",
+                  className="flex items-center gap-2 px-3 py-2 text-[11px] font-medium cursor-pointer transition-all rounded-radius-md" style={{
                     background: isActive ? "var(--color-accent)" : "transparent",
                     color: isActive ? "#fff" : "var(--color-text-secondary)",
                     border: isActive
@@ -433,9 +411,7 @@ function LayoutContent() {
             {/* Activity Log toggle */}
             <button
               onClick={() => setActivityTerminalOpen(!activityTerminalOpen)}
-              className="flex items-center gap-2 px-3 py-2 text-[11px] font-medium cursor-pointer transition-all col-span-2"
-              style={{
-                borderRadius: "var(--radius-md)",
+              className="flex items-center gap-2 px-3 py-2 text-[11px] font-medium cursor-pointer transition-all col-span-2 rounded-radius-md" style={{
                 background: activityTerminalOpen
                   ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
                   : "transparent",
@@ -454,8 +430,7 @@ function LayoutContent() {
         {/* Mode toggle */}
         <div style={{ width: 120 }}>
           <span
-            className="text-[10px] font-semibold uppercase tracking-wider mb-2 block"
-            style={{ color: "var(--color-text-muted)" }}
+            className="text-[10px] font-semibold uppercase tracking-wider mb-2 block text-text-muted"
           >
             Mode
           </span>
@@ -470,9 +445,7 @@ function LayoutContent() {
                 <button
                   key={m.id}
                   onClick={() => handleThemeMode(m.id)}
-                  className="flex items-center gap-2 px-3 py-2 text-[11px] font-medium cursor-pointer transition-all"
-                  style={{
-                    borderRadius: "var(--radius-md)",
+                  className="flex items-center gap-2 px-3 py-2 text-[11px] font-medium cursor-pointer transition-all rounded-radius-md" style={{
                     background: isActive ? "var(--color-accent)" : "transparent",
                     color: isActive ? "#fff" : "var(--color-text-secondary)",
                     border: isActive
@@ -495,8 +468,7 @@ function LayoutContent() {
       {/* Theme palette row */}
       <div>
         <span
-          className="text-[10px] font-semibold uppercase tracking-wider mb-2 block"
-          style={{ color: "var(--color-text-muted)" }}
+          className="text-[10px] font-semibold uppercase tracking-wider mb-2 block text-text-muted"
         >
           Theme
         </span>
@@ -514,11 +486,9 @@ function LayoutContent() {
               >
                 {/* Color swatch */}
                 <div
-                  className="relative"
-                  style={{
+                  className="relative rounded-radius-md" style={{
                     width: 36,
                     height: 36,
-                    borderRadius: "var(--radius-md)",
                     background: colors.bgBase,
                     border: isActive
                       ? `2px solid ${colors.accent}`
@@ -531,8 +501,7 @@ function LayoutContent() {
                 >
                   {/* Accent stripe */}
                   <div
-                    style={{
-                      position: "absolute",
+                    className="absolute" style={{
                       bottom: 0,
                       left: 0,
                       right: 0,

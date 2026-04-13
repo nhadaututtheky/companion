@@ -96,16 +96,14 @@ export default function SessionsPage() {
 
   return (
     <div
-      className="flex flex-col"
-      style={{ minHeight: "100vh", background: "var(--color-bg-base)" }}
+      className="flex flex-col bg-bg-base" style={{ minHeight: "100vh" }}
     >
       <Header />
 
       <div className="flex-1 px-6 py-6 max-w-5xl mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
           <h1
-            className="text-2xl font-bold"
-            style={{ fontFamily: "Outfit, sans-serif", color: "var(--color-text-primary)" }}
+            className="text-2xl font-bold text-text-primary" style={{ fontFamily: "Outfit, sans-serif" }}
           >
             Sessions
           </h1>
@@ -125,12 +123,7 @@ export default function SessionsPage() {
             placeholder="Search sessions..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg text-sm mb-3"
-            style={{
-              background: "var(--color-bg-card)",
-              border: "1px solid var(--color-border)",
-              color: "var(--color-text-primary)",
-            }}
+            className="w-full px-3 py-2 rounded-lg text-sm mb-3 text-text-primary bg-bg-card border border-border"
           />
         </div>
         <div className="flex gap-2 mb-4">
@@ -156,8 +149,7 @@ export default function SessionsPage() {
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-16 rounded-2xl animate-pulse"
-                style={{ background: "var(--color-bg-card)" }}
+                className="h-16 rounded-2xl animate-pulse bg-bg-card"
               />
             ))}
           </div>
@@ -172,11 +164,7 @@ export default function SessionsPage() {
               <button
                 key={s.id}
                 onClick={() => router.push(`/sessions/${s.id}`)}
-                className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left transition-colors cursor-pointer"
-                style={{
-                  background: "var(--color-bg-card)",
-                  border: "1px solid var(--color-border)",
-                }}
+                className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left transition-colors cursor-pointer bg-bg-card border border-border"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
@@ -190,8 +178,7 @@ export default function SessionsPage() {
                   </div>
                 </div>
                 <div
-                  className="flex items-center gap-1 font-mono text-sm font-semibold"
-                  style={{ color: "var(--color-success)" }}
+                  className="flex items-center gap-1 font-mono text-sm font-semibold text-success"
                 >
                   <CurrencyDollar size={14} weight="bold" />
                   {s.totalCostUsd.toFixed(4)}

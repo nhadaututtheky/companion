@@ -40,30 +40,22 @@ export function SessionPane({ sessionId, onClose }: SessionPaneProps) {
 
   return (
     <div
-      className="flex flex-col h-full"
-      style={{
-        background: "var(--color-bg-base)",
-        border: "1px solid var(--color-border)",
+      className="flex flex-col h-full bg-bg-base border border-border overflow-hidden" style={{
         borderRadius: 8,
-        overflow: "hidden",
-      }}
+        }}
     >
       {/* Pane header */}
       <div
-        className="flex items-center gap-2 px-3 py-1.5 shrink-0"
-        style={{
-          background: "var(--color-bg-card)",
+        className="flex items-center gap-2 px-3 py-1.5 shrink-0 bg-bg-card" style={{
           borderBottom: "1px solid var(--color-border)",
         }}
       >
         <span
-          style={{
+          className="rounded-full shrink-0" style={{
             width: 6,
             height: 6,
-            borderRadius: "50%",
             background: statusColor,
-            flexShrink: 0,
-          }}
+            }}
           aria-hidden="true"
         />
         <span className="text-xs font-semibold truncate flex-1">
@@ -94,8 +86,7 @@ export function SessionPane({ sessionId, onClose }: SessionPaneProps) {
         </Link>
         <button
           onClick={onClose}
-          className="p-1 rounded cursor-pointer transition-colors"
-          style={{ color: "var(--color-text-muted)", background: "none", border: "none" }}
+          className="p-1 rounded cursor-pointer transition-colors text-text-muted" style={{ background: "none", border: "none" }}
           aria-label="Unpin session from pane"
           title="Unpin"
         >

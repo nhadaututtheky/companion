@@ -90,18 +90,15 @@ export function AgentTabBar({
 
               {/* Status indicator */}
               {isEnded ? (
-                <Check size={9} weight="bold" style={{ color: "var(--color-success)" }} />
+                <Check size={9} weight="bold" className="text-success" />
               ) : isError ? (
-                <XCircle size={9} weight="bold" style={{ color: "var(--color-danger)" }} />
+                <XCircle size={9} weight="bold" className="text-danger" />
               ) : (
                 <span
-                  style={{
-                    display: "inline-block",
+                  className="rounded-full shrink-0 inline-block" style={{
                     width: 6,
                     height: 6,
-                    borderRadius: "50%",
                     background: sStyle.dot,
-                    flexShrink: 0,
                     animation: sStyle.pulse ? "pulse 1.5s ease-in-out infinite" : "none",
                     boxShadow: sStyle.pulse ? `0 0 4px ${sStyle.dot}` : "none",
                   }}
@@ -116,8 +113,7 @@ export function AgentTabBar({
                   e.stopPropagation();
                   onCloseTab(childId);
                 }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-sm p-0.5"
-                style={{ color: "var(--color-text-muted)", marginLeft: 2 }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-sm p-0.5 text-text-muted" style={{ marginLeft: 2 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.color = "var(--color-danger)";
                   e.currentTarget.style.background =

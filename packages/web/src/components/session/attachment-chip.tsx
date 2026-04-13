@@ -36,7 +36,7 @@ export function AttachmentChip({ attachment, onRemove }: AttachmentChipProps) {
       }}
       title={preview}
     >
-      <Icon size={12} weight="bold" style={{ color, flexShrink: 0 }} />
+      <Icon size={12} weight="bold" className="shrink-0" style={{ color }} />
       <span className="truncate font-medium" style={{ color }}>
         {attachment.label}
       </span>

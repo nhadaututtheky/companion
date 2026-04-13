@@ -103,34 +103,25 @@ function BreakdownRow({
     <div className="flex items-center justify-between gap-2 py-1">
       <div className="flex items-center gap-1.5 min-w-0">
         <span
-          style={{
-            display: "inline-block",
+          className="shrink-0 inline-block" style={{
             width: 8,
             height: 8,
             borderRadius: 2,
             background: color,
-            flexShrink: 0,
-          }}
+            }}
           aria-hidden="true"
         />
         <span className="text-xs truncate">{label}</span>
       </div>
       <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
         <span
-          className="text-xs font-medium"
-          style={{
-            color: "var(--color-text-secondary)",
-            fontFamily: "var(--font-mono)",
-          }}
+          className="text-xs font-medium text-text-secondary font-mono"
         >
           {fmtTokens(tokens)}
         </span>
         {note && (
           <span
-            className="text-xs"
-            style={{
-              color: "var(--color-text-muted)",
-              fontFamily: "var(--font-mono)",
+            className="text-xs text-text-muted font-mono" style={{
               fontSize: 10,
             }}
           >
@@ -166,11 +157,9 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
       >
         <CurrencyDollar size={12} weight="bold" aria-hidden="true" />
         <span
-          style={{
-            fontFamily: "var(--font-mono)",
+          className="text-text-muted font-mono" style={{
             fontSize: 12,
-            color: "var(--color-text-muted)",
-          }}
+            }}
         >
           {fmtCost(totalCost)}
         </span>
@@ -196,13 +185,12 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
         <CurrencyDollar
           size={16}
           weight="bold"
-          style={{ color: "#34A853", flexShrink: 0 }}
+          className="shrink-0" style={{ color: "#34A853" }}
           aria-hidden="true"
         />
         <span className="text-xs flex-1 text-left">Total Cost</span>
         <span
-          className="text-sm font-semibold"
-          style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-mono)" }}
+          className="text-sm font-semibold text-text-primary" style={{ fontFamily: "var(--font-mono)" }}
         >
           {fmtCost(totalCost)}
         </span>

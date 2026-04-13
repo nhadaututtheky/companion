@@ -99,10 +99,8 @@ export function RTKSettings() {
     <div className="flex flex-col gap-5">
       {/* Enable/Disable */}
       <div
-        className="p-5 rounded-xl"
-        style={{
+        className="p-5 rounded-xl border border-glass-border" style={{
           background: "var(--glass-bg-heavy)",
-          border: "1px solid var(--glass-border)",
           boxShadow: "var(--shadow-soft)",
         }}
       >
@@ -147,11 +145,7 @@ export function RTKSettings() {
       {/* Compression Level — Pro only */}
       {enabled && isPro && (
         <div
-          className="p-5 rounded-xl"
-          style={{
-            background: "var(--color-bg-card)",
-            border: "1px solid var(--color-border)",
-          }}
+          className="p-5 rounded-xl bg-bg-card border border-border"
         >
           <h2 className="text-sm font-semibold mb-1">Compression Level</h2>
           <p className="text-xs mb-4">Controls the maximum token budget per tool output.</p>
@@ -187,11 +181,7 @@ export function RTKSettings() {
       {/* Strategy Toggle */}
       {enabled && (
         <div
-          className="p-5 rounded-xl"
-          style={{
-            background: "var(--color-bg-card)",
-            border: "1px solid var(--color-border)",
-          }}
+          className="p-5 rounded-xl bg-bg-card border border-border"
         >
           <h2 className="text-sm font-semibold mb-1">Compression Strategies</h2>
           <p className="text-xs mb-4">

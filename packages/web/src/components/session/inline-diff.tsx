@@ -29,11 +29,7 @@ export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }
 
   return (
     <div
-      className="my-1.5 rounded-lg overflow-hidden"
-      style={{
-        background: "var(--color-bg-elevated)",
-        border: "1px solid var(--color-border)",
-      }}
+      className="my-1.5 rounded-lg overflow-hidden bg-bg-elevated border border-border"
     >
       {/* Header */}
       <button
@@ -43,7 +39,7 @@ export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }
         aria-label={`Toggle diff for ${fileName}`}
       >
         <GitDiff size={14} weight="bold" style={{ color: "#4285F4" }} />
-        <File size={12} style={{ color: "var(--color-text-muted)", flexShrink: 0 }} />
+        <File size={12} className="text-text-muted shrink-0" />
         <code
           className="font-mono truncate flex-1 text-left"
           style={{ color: "#4285F4" }}
@@ -62,7 +58,7 @@ export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }
           </span>
         )}
         {!expanded && totalChanged > 0 && (
-          <span className="opacity-50 text-xs" style={{ whiteSpace: "nowrap" }}>
+          <span className="opacity-50 text-xs whitespace-nowrap">
             {totalChanged} line{totalChanged !== 1 ? "s" : ""} changed
           </span>
         )}
@@ -110,20 +106,16 @@ export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }
                   style={{ background: bg, borderLeft, fontSize: 12 }}
                 >
                   <span
-                    className="select-none text-right px-1.5 flex-shrink-0"
-                    style={{
+                    className="select-none text-right px-1.5 flex-shrink-0 text-text-muted" style={{
                       width: 36,
-                      color: "var(--color-text-muted)",
                       opacity: 0.5,
                     }}
                   >
                     {line.type !== "add" ? line.oldNum : ""}
                   </span>
                   <span
-                    className="select-none text-right px-1.5 flex-shrink-0"
-                    style={{
+                    className="select-none text-right px-1.5 flex-shrink-0 text-text-muted" style={{
                       width: 36,
-                      color: "var(--color-text-muted)",
                       opacity: 0.5,
                     }}
                   >

@@ -56,12 +56,7 @@ export function TelegramStatus() {
         <button
           onClick={refresh}
           disabled={loading}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-          style={{
-            background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
-            color: "var(--color-text-secondary)",
-          }}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer text-text-secondary bg-bg-elevated border border-border"
           aria-label="Refresh status"
         >
           <ArrowsClockwise
@@ -85,16 +80,12 @@ export function TelegramStatus() {
           {status.bots.map((bot) => (
             <div
               key={bot.botId}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
-              style={{
-                background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
-              }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-bg-elevated border border-border"
             >
               <TelegramLogo
                 size={16}
                 weight="fill"
-                style={{ color: "var(--color-accent)", flexShrink: 0 }}
+                className="text-accent shrink-0"
                 aria-hidden="true"
               />
               <div className="flex-1 min-w-0">
@@ -108,7 +99,7 @@ export function TelegramStatus() {
                   <CheckCircle
                     size={16}
                     weight="fill"
-                    style={{ color: "var(--color-success)" }}
+                    className="text-success"
                     aria-label="Running"
                   />
                 ) : (

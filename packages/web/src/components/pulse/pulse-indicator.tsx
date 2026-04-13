@@ -78,10 +78,7 @@ export function PulseIndicator({ sessionId }: PulseIndicatorProps) {
       {/* Sparkline popover */}
       {showSparkline && history && history.length > 1 && (
         <div
-          className="absolute top-full right-0 mt-1 p-2.5 rounded-lg z-50 flex flex-col gap-2"
-          style={{
-            background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
+          className="absolute top-full right-0 mt-1 p-2.5 rounded-lg z-50 flex flex-col gap-2 bg-bg-elevated border border-border" style={{
             boxShadow: "var(--shadow-lg)",
             minWidth: 200,
             maxWidth: 260,
@@ -91,7 +88,7 @@ export function PulseIndicator({ sessionId }: PulseIndicatorProps) {
             <span className="text-xs font-semibold" style={{ color }}>
               {label}
             </span>
-            <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs font-mono text-text-muted">
               Turn {reading.turn}
             </span>
           </div>
@@ -103,8 +100,7 @@ export function PulseIndicator({ sessionId }: PulseIndicatorProps) {
             return (
               <div className="flex flex-col gap-1">
                 <p
-                  className="text-[11px] leading-snug"
-                  style={{ color: "var(--color-text-secondary)" }}
+                  className="text-[11px] leading-snug text-text-secondary"
                 >
                   {guide.advice}
                 </p>

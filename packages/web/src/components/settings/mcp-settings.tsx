@@ -218,10 +218,8 @@ export function McpSettings() {
       >
         {/* Left: Server list */}
         <div
-          className="rounded-xl overflow-hidden"
-          style={{
+          className="rounded-xl overflow-hidden border border-glass-border" style={{
             background: "var(--glass-bg-heavy)",
-            border: "1px solid var(--glass-border)",
             boxShadow: "var(--shadow-soft)",
           }}
         >
@@ -270,20 +268,17 @@ export function McpSettings() {
                         {server.name}
                       </div>
                       <div
-                        className="text-xs truncate"
-                        style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                        className="text-xs truncate text-text-muted" style={{ fontSize: 10 }}
                       >
                         {TYPE_LABELS[server.type]}
                       </div>
                     </div>
                     <span
-                      style={{
+                      className="rounded-full shrink-0" style={{
                         width: 6,
                         height: 6,
-                        borderRadius: "50%",
                         background: server.enabled ? "#34A853" : "#9CA3AF",
-                        flexShrink: 0,
-                      }}
+                        }}
                     />
                   </button>
                 );
@@ -294,10 +289,8 @@ export function McpSettings() {
 
         {/* Right: Editor */}
         <div
-          className="rounded-xl"
-          style={{
+          className="rounded-xl border border-glass-border" style={{
             background: "var(--glass-bg-heavy)",
-            border: "1px solid var(--glass-border)",
             boxShadow: "var(--shadow-soft)",
           }}
         >
@@ -341,23 +334,21 @@ function DetectedServersSection({
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <Plugs size={14} weight="duotone" style={{ color: "var(--color-text-muted)" }} />
+        <Plugs size={14} weight="duotone" className="text-text-muted" />
         <span
-          className="text-xs font-semibold uppercase tracking-wider"
-          style={{ color: "var(--color-text-muted)" }}
+          className="text-xs font-semibold uppercase tracking-wider text-text-muted"
         >
           Detected from Claude Config
         </span>
         <span
-          className="text-xs px-1.5 py-0.5 rounded-md"
-          style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-muted)" }}
+          className="text-xs px-1.5 py-0.5 rounded-md text-text-muted" style={{ background: "var(--color-bg-elevated)" }}
         >
           {servers.length}
         </span>
       </div>
 
       {notImported.length === 0 ? (
-        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <p className="text-xs text-text-muted">
           All detected servers are already imported.
         </p>
       ) : (
@@ -368,30 +359,22 @@ function DetectedServersSection({
             return (
               <div
                 key={`${server.id}-${server.source}`}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                style={{
-                  border: "1px solid var(--glass-border)",
-                  background: "var(--color-bg-base)",
-                }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-bg-base border border-glass-border"
               >
                 <Icon
                   size={14}
                   weight="duotone"
-                  style={{ color: "var(--color-text-secondary)", flexShrink: 0 }}
+                  className="text-text-secondary shrink-0"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span
-                      className="text-xs font-medium truncate"
-                      style={{ color: "var(--color-text-primary)" }}
+                      className="text-xs font-medium truncate text-text-primary"
                     >
                       {server.name}
                     </span>
                     <span
-                      className="text-xs px-1.5 py-0.5 rounded shrink-0"
-                      style={{
-                        background: "var(--color-bg-elevated)",
-                        color: "var(--color-text-muted)",
+                      className="text-xs px-1.5 py-0.5 rounded shrink-0 text-text-muted bg-bg-elevated" style={{
                         fontSize: 10,
                       }}
                     >
@@ -403,8 +386,7 @@ function DetectedServersSection({
                     </span>
                   </div>
                   <div
-                    className="text-xs truncate mt-0.5"
-                    style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                    className="text-xs truncate mt-0.5 text-text-muted" style={{ fontSize: 10 }}
                   >
                     {server.source}
                     {server.command && ` · ${server.command}`}
@@ -497,11 +479,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
             value={server.name}
             onChange={(e) => update({ name: e.target.value })}
             placeholder="e.g. My MCP Server"
-            className="w-full px-3 py-2 rounded-lg text-xs input-bordered"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-primary)",
-            }}
+            className="w-full px-3 py-2 rounded-lg text-xs input-bordered text-text-primary bg-bg-elevated"
           />
         </FieldGroup>
 
@@ -539,11 +517,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 value={server.command ?? ""}
                 onChange={(e) => update({ command: e.target.value })}
                 placeholder="e.g. bun, node, npx"
-                className="w-full px-3 py-2 rounded-lg text-xs font-mono input-bordered"
-                style={{
-                  background: "var(--color-bg-elevated)",
-                  color: "var(--color-text-primary)",
-                }}
+                className="w-full px-3 py-2 rounded-lg text-xs font-mono input-bordered text-text-primary bg-bg-elevated"
               />
             </FieldGroup>
             <FieldGroup label="Arguments (one per line)">
@@ -556,11 +530,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 }
                 placeholder={"run\npath/to/server.ts"}
                 rows={3}
-                className="w-full px-3 py-2 rounded-lg text-xs font-mono input-bordered resize-none"
-                style={{
-                  background: "var(--color-bg-elevated)",
-                  color: "var(--color-text-primary)",
-                }}
+                className="w-full px-3 py-2 rounded-lg text-xs font-mono input-bordered resize-none text-text-primary bg-bg-elevated"
               />
             </FieldGroup>
           </>
@@ -574,11 +544,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
               value={server.url ?? ""}
               onChange={(e) => update({ url: e.target.value })}
               placeholder="https://example.com/mcp"
-              className="w-full px-3 py-2 rounded-lg text-xs font-mono input-bordered"
-              style={{
-                background: "var(--color-bg-elevated)",
-                color: "var(--color-text-primary)",
-              }}
+              className="w-full px-3 py-2 rounded-lg text-xs font-mono input-bordered text-text-primary bg-bg-elevated"
             />
           </FieldGroup>
         )}
@@ -590,11 +556,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
             value={server.description ?? ""}
             onChange={(e) => update({ description: e.target.value })}
             placeholder="What this server does..."
-            className="w-full px-3 py-2 rounded-lg text-xs input-bordered"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-primary)",
-            }}
+            className="w-full px-3 py-2 rounded-lg text-xs input-bordered text-text-primary bg-bg-elevated"
           />
         </FieldGroup>
 
@@ -608,10 +570,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
           {Object.entries(server.env ?? {}).map(([key, val]) => (
             <div key={key} className="flex items-center gap-2">
               <span
-                className="text-xs font-mono px-2 py-1 rounded"
-                style={{
-                  background: "var(--color-bg-base)",
-                  color: "var(--color-text-secondary)",
+                className="text-xs font-mono px-2 py-1 rounded text-text-secondary bg-bg-base" style={{
                   minWidth: 80,
                 }}
               >
@@ -633,10 +592,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
               value={newEnvKey}
               onChange={(e) => setNewEnvKey(e.target.value)}
               placeholder="KEY"
-              className="px-2 py-1 rounded text-xs font-mono input-bordered"
-              style={{
-                background: "var(--color-bg-base)",
-                color: "var(--color-text-primary)",
+              className="px-2 py-1 rounded text-xs font-mono input-bordered text-text-primary bg-bg-base" style={{
                 width: 100,
               }}
             />
@@ -645,11 +601,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
               value={newEnvVal}
               onChange={(e) => setNewEnvVal(e.target.value)}
               placeholder="value"
-              className="flex-1 px-2 py-1 rounded text-xs font-mono input-bordered"
-              style={{
-                background: "var(--color-bg-base)",
-                color: "var(--color-text-primary)",
-              }}
+              className="flex-1 px-2 py-1 rounded text-xs font-mono input-bordered text-text-primary bg-bg-base"
             />
             <button
               onClick={addEnvVar}
@@ -676,10 +628,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
             {Object.entries(server.headers ?? {}).map(([key, val]) => (
               <div key={key} className="flex items-center gap-2">
                 <span
-                  className="text-xs font-mono px-2 py-1 rounded"
-                  style={{
-                    background: "var(--color-bg-base)",
-                    color: "var(--color-text-secondary)",
+                  className="text-xs font-mono px-2 py-1 rounded text-text-secondary bg-bg-base" style={{
                     minWidth: 80,
                   }}
                 >
@@ -701,10 +650,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 value={newHeaderKey}
                 onChange={(e) => setNewHeaderKey(e.target.value)}
                 placeholder="Header-Name"
-                className="px-2 py-1 rounded text-xs font-mono input-bordered"
-                style={{
-                  background: "var(--color-bg-base)",
-                  color: "var(--color-text-primary)",
+                className="px-2 py-1 rounded text-xs font-mono input-bordered text-text-primary bg-bg-base" style={{
                   width: 120,
                 }}
               />
@@ -713,11 +659,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 value={newHeaderVal}
                 onChange={(e) => setNewHeaderVal(e.target.value)}
                 placeholder="value"
-                className="flex-1 px-2 py-1 rounded text-xs font-mono input-bordered"
-                style={{
-                  background: "var(--color-bg-base)",
-                  color: "var(--color-text-primary)",
-                }}
+                className="flex-1 px-2 py-1 rounded text-xs font-mono input-bordered text-text-primary bg-bg-base"
               />
               <button
                 onClick={addHeader}
@@ -753,13 +695,11 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
             aria-label="Enable server"
           >
             <span
-              style={{
-                position: "absolute",
+              className="rounded-full absolute" style={{
                 top: 2,
                 left: server.enabled ? 18 : 2,
                 width: 14,
                 height: 14,
-                borderRadius: "50%",
                 background: "#fff",
                 transition: "left 150ms ease",
               }}
@@ -840,10 +780,7 @@ function CollapsibleSection({
         <span className="text-xs font-medium">{title}</span>
         {count > 0 && (
           <span
-            className="text-xs px-1.5 rounded-full"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-muted)",
+            className="text-xs px-1.5 rounded-full text-text-muted bg-bg-elevated" style={{
               fontSize: 10,
             }}
           >

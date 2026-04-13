@@ -48,18 +48,12 @@ export function StepReview(props: StepReviewProps) {
     <div className="flex flex-col gap-4 px-5 py-4">
       {/* Summary card */}
       <div
-        className="rounded-xl p-4 flex flex-col gap-3"
-        style={{
-          background: "var(--color-bg-elevated)",
-          border: "1px solid var(--color-border)",
-        }}
+        className="rounded-xl p-4 flex flex-col gap-3 bg-bg-elevated border border-border"
       >
         <h3
-          className="text-sm font-bold"
-          style={{
+          className="text-sm font-bold text-text-primary" style={{
             fontFamily: "var(--font-display)",
-            color: "var(--color-text-primary)",
-          }}
+            }}
         >
           {projectName || "Unnamed project"}
         </h3>
@@ -138,12 +132,7 @@ export function StepReview(props: StepReviewProps) {
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer"
-          style={{
-            background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
-            color: "var(--color-text-secondary)",
-          }}
+          className="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer text-text-secondary bg-bg-elevated border border-border"
         >
           Back
         </button>

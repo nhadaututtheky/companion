@@ -163,22 +163,19 @@ function WorkspacePanel({
                 if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                 if (e.key === "Escape") setRenaming(false);
               }}
-              className="text-sm font-semibold bg-transparent border-b outline-none"
-              style={{
-                color: "var(--color-text-primary)",
+              className="text-sm font-semibold bg-transparent border-b outline-none text-text-primary" style={{
                 borderColor: "var(--color-primary, #6366f1)",
               }}
               autoFocus
             />
           ) : (
             <span
-              className="text-sm font-semibold truncate"
-              style={{ color: "var(--color-text-primary)" }}
+              className="text-sm font-semibold truncate text-text-primary"
             >
               {workspace.name}
             </span>
           )}
-          <span className="text-[10px] truncate" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-[10px] truncate text-text-muted">
             {workspace.cliSlots.length} CLI{workspace.cliSlots.length !== 1 ? "s" : ""} configured
           </span>
         </div>
@@ -194,12 +191,8 @@ function WorkspacePanel({
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
               <div
-                className="absolute right-0 top-full mt-1 z-50 py-1"
-                style={{
+                className="absolute right-0 top-full mt-1 z-50 py-1 bg-bg-card rounded-radius-md border border-glass-border" style={{
                   width: 160,
-                  background: "var(--color-bg-card)",
-                  border: "1px solid var(--glass-border)",
-                  borderRadius: "var(--radius-md)",
                   boxShadow: "var(--shadow-float)",
                 }}
               >
@@ -209,8 +202,7 @@ function WorkspacePanel({
                     setRenameValue(workspace.name);
                     setRenaming(true);
                   }}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 text-xs cursor-pointer"
-                  style={{ color: "var(--color-text-primary)" }}
+                  className="flex items-center gap-2 w-full px-3 py-1.5 text-xs cursor-pointer text-text-primary"
                 >
                   <PencilSimple size={12} weight="bold" />
                   Rename
@@ -237,8 +229,7 @@ function WorkspacePanel({
       {/* CLI Slots */}
       <div className="px-3 py-2" style={{ borderBottom: "1px solid var(--glass-border)" }}>
         <span
-          className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block"
-          style={{ color: "var(--color-text-muted)" }}
+          className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block text-text-muted"
         >
           CLI Agents
         </span>
@@ -272,14 +263,12 @@ function WorkspacePanel({
                 }}
               >
                 <span
-                  style={{
+                  className="rounded-full shrink-0" style={{
                     width: 6,
                     height: 6,
-                    borderRadius: "50%",
                     background: dotColor,
                     opacity: dotOpacity,
-                    flexShrink: 0,
-                  }}
+                    }}
                 />
                 <span
                   className="text-xs flex-1 truncate"
@@ -291,12 +280,12 @@ function WorkspacePanel({
                   {CLI_LABELS[cli]}
                 </span>
                 {isActive ? (
-                  <PlugsConnected size={11} weight="bold" style={{ color, flexShrink: 0 }} />
+                  <PlugsConnected size={11} weight="bold" className="shrink-0" style={{ color }} />
                 ) : (
                   <Plugs
                     size={11}
                     weight="regular"
-                    style={{ color: "var(--color-text-muted)", opacity: 0.5, flexShrink: 0 }}
+                    className="text-text-muted shrink-0" style={{ opacity: 0.5 }}
                   />
                 )}
               </div>
@@ -308,10 +297,9 @@ function WorkspacePanel({
             <CircleDashed
               size={10}
               weight="bold"
-              className="animate-spin"
-              style={{ color: "var(--color-text-muted)" }}
+              className="animate-spin text-text-muted"
             />
-            <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-[10px] text-text-muted">
               Loading...
             </span>
           </div>
@@ -384,8 +372,7 @@ function ProjectPanel({
         </span>
         <div className="flex flex-col flex-1 min-w-0">
           <span
-            className="text-sm font-semibold truncate"
-            style={{ color: "var(--color-text-primary)" }}
+            className="text-sm font-semibold truncate text-text-primary"
           >
             {group.name}
           </span>

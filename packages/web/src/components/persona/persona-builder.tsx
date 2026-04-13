@@ -120,18 +120,13 @@ function EditableList({
               onChange(next);
             }}
             placeholder={placeholder}
-            className="flex-1 rounded-lg px-2.5 py-1.5 text-xs input-bordered"
-            style={{
-              background: "var(--color-bg-card)",
-              color: "var(--color-text-primary)",
-            }}
+            className="flex-1 rounded-lg px-2.5 py-1.5 text-xs input-bordered text-text-primary bg-bg-card"
           />
           {items.length > 1 && (
             <button
               type="button"
               onClick={() => onChange(items.filter((_, idx) => idx !== i))}
-              className="p-1 rounded transition-colors cursor-pointer"
-              style={{ color: "var(--color-text-muted)" }}
+              className="p-1 rounded transition-colors cursor-pointer text-text-muted"
               aria-label="Remove item"
             >
               <Trash size={12} />
@@ -143,8 +138,7 @@ function EditableList({
         <button
           type="button"
           onClick={() => onChange([...items, ""])}
-          className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg cursor-pointer transition-colors"
-          style={{ color: "var(--color-accent)" }}
+          className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg cursor-pointer transition-colors text-accent"
         >
           <Plus size={11} weight="bold" /> Add item
         </button>
@@ -228,21 +222,16 @@ export function PersonaBuilder({
 
   return (
     <div
-      className="flex flex-col gap-4 rounded-xl p-5"
-      style={{
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
-      }}
+      className="flex flex-col gap-4 rounded-xl p-5 bg-bg-card border border-border"
     >
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+        <h3 className="text-sm font-semibold text-text-primary">
           {editing ? "Edit Persona" : "Create Custom Persona"}
         </h3>
         <button
           onClick={onCancel}
-          className="p-1.5 rounded-lg cursor-pointer transition-colors"
-          style={{ color: "var(--color-text-muted)" }}
+          className="p-1.5 rounded-lg cursor-pointer transition-colors text-text-muted"
           aria-label="Cancel"
         >
           <X size={16} weight="bold" />
@@ -299,11 +288,7 @@ export function PersonaBuilder({
         <button
           onClick={() => step > 0 && setStep(step - 1)}
           disabled={step === 0}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors disabled:opacity-30"
-          style={{
-            background: "var(--color-bg-elevated)",
-            color: "var(--color-text-secondary)",
-          }}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors disabled:opacity-30 text-text-secondary bg-bg-elevated"
         >
           <ArrowLeft size={12} weight="bold" /> Back
         </button>
@@ -344,7 +329,7 @@ function StepIdentity({ form, update }: StepProps) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+        <label className="text-xs font-medium text-text-secondary">
           Name *
         </label>
         <input
@@ -360,14 +345,13 @@ function StepIdentity({ form, update }: StepProps) {
             }
           }}
           placeholder="e.g. Security Auditor"
-          className="rounded-lg px-2.5 py-2 text-sm input-bordered"
-          style={{ background: "var(--color-bg-base)", color: "var(--color-text-primary)" }}
+          className="rounded-lg px-2.5 py-2 text-sm input-bordered text-text-primary" style={{ background: "var(--color-bg-base)" }}
           autoFocus
         />
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+        <label className="text-xs font-medium text-text-secondary">
           Title *
         </label>
         <input
@@ -375,13 +359,12 @@ function StepIdentity({ form, update }: StepProps) {
           value={form.title}
           onChange={(e) => update("title", e.target.value)}
           placeholder="e.g. Senior Security Engineer — Threat Modeling Expert"
-          className="rounded-lg px-2.5 py-2 text-sm input-bordered"
-          style={{ background: "var(--color-bg-base)", color: "var(--color-text-primary)" }}
+          className="rounded-lg px-2.5 py-2 text-sm input-bordered text-text-primary" style={{ background: "var(--color-bg-base)" }}
         />
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+        <label className="text-xs font-medium text-text-secondary">
           Icon
         </label>
         <div className="flex flex-wrap gap-1.5">
@@ -403,7 +386,7 @@ function StepIdentity({ form, update }: StepProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+        <label className="text-xs font-medium text-text-secondary">
           Intro (optional)
         </label>
         <textarea
@@ -411,13 +394,12 @@ function StepIdentity({ form, update }: StepProps) {
           onChange={(e) => update("intro", e.target.value)}
           placeholder="2-3 sentences describing this persona's thinking style…"
           rows={2}
-          className="rounded-lg px-2.5 py-2 text-xs input-bordered resize-none"
-          style={{ background: "var(--color-bg-base)", color: "var(--color-text-primary)" }}
+          className="rounded-lg px-2.5 py-2 text-xs input-bordered resize-none text-text-primary" style={{ background: "var(--color-bg-base)" }}
         />
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+        <label className="text-xs font-medium text-text-secondary">
           Strength (one-liner)
         </label>
         <input
@@ -425,8 +407,7 @@ function StepIdentity({ form, update }: StepProps) {
           value={form.strength}
           onChange={(e) => update("strength", e.target.value)}
           placeholder="e.g. Finds the vulnerability no one else sees"
-          className="rounded-lg px-2.5 py-2 text-xs input-bordered"
-          style={{ background: "var(--color-bg-base)", color: "var(--color-text-primary)" }}
+          className="rounded-lg px-2.5 py-2 text-xs input-bordered text-text-primary" style={{ background: "var(--color-bg-base)" }}
         />
       </div>
     </div>
@@ -439,7 +420,7 @@ function StepAvatar({ form, update, preview }: StepProps & { preview: Persona })
       <div className="flex items-center gap-4">
         <PersonaAvatar persona={preview} size={64} />
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+          <label className="text-xs font-medium text-text-secondary">
             Initials *
           </label>
           <input
@@ -447,14 +428,13 @@ function StepAvatar({ form, update, preview }: StepProps & { preview: Persona })
             value={form.avatarInitials}
             onChange={(e) => update("avatarInitials", e.target.value.toUpperCase().slice(0, 3))}
             maxLength={3}
-            className="w-20 rounded-lg px-2.5 py-2 text-sm font-bold text-center input-bordered"
-            style={{ background: "var(--color-bg-base)", color: "var(--color-text-primary)" }}
+            className="w-20 rounded-lg px-2.5 py-2 text-sm font-bold text-center input-bordered text-text-primary" style={{ background: "var(--color-bg-base)" }}
           />
         </div>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+        <label className="text-xs font-medium text-text-secondary">
           Gradient preset
         </label>
         <div className="flex flex-wrap gap-2">
@@ -480,7 +460,7 @@ function StepAvatar({ form, update, preview }: StepProps & { preview: Persona })
 
       <div className="flex gap-3">
         <div className="flex flex-col gap-1 flex-1">
-          <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+          <label className="text-xs font-medium text-text-secondary">
             Color 1
           </label>
           <div className="flex items-center gap-2">
@@ -490,13 +470,13 @@ function StepAvatar({ form, update, preview }: StepProps & { preview: Persona })
               onChange={(e) => update("avatarGradient", [e.target.value, form.avatarGradient[1]])}
               className="w-8 h-8 rounded cursor-pointer"
             />
-            <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs font-mono text-text-muted">
               {form.avatarGradient[0]}
             </span>
           </div>
         </div>
         <div className="flex flex-col gap-1 flex-1">
-          <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+          <label className="text-xs font-medium text-text-secondary">
             Color 2
           </label>
           <div className="flex items-center gap-2">
@@ -506,7 +486,7 @@ function StepAvatar({ form, update, preview }: StepProps & { preview: Persona })
               onChange={(e) => update("avatarGradient", [form.avatarGradient[0], e.target.value])}
               className="w-8 h-8 rounded cursor-pointer"
             />
-            <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs font-mono text-text-muted">
               {form.avatarGradient[1]}
             </span>
           </div>
@@ -514,7 +494,7 @@ function StepAvatar({ form, update, preview }: StepProps & { preview: Persona })
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+        <label className="text-xs font-medium text-text-secondary">
           Best for (tags)
         </label>
         <EditableList
@@ -531,7 +511,7 @@ function StepAvatar({ form, update, preview }: StepProps & { preview: Persona })
 function StepSystemPrompt({ form, update }: StepProps) {
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+      <label className="text-xs font-medium text-text-secondary">
         System Prompt * — defines how this persona thinks and communicates
       </label>
       <textarea
@@ -551,11 +531,10 @@ function StepSystemPrompt({ form, update }: StepProps) {
 ## How You Communicate
 ...`}
         rows={14}
-        className="rounded-lg px-3 py-2.5 text-xs font-mono leading-relaxed input-bordered resize-y"
-        style={{ background: "var(--color-bg-base)", color: "var(--color-text-primary)" }}
+        className="rounded-lg px-3 py-2.5 text-xs font-mono leading-relaxed input-bordered resize-y text-text-primary" style={{ background: "var(--color-bg-base)" }}
         autoFocus
       />
-      <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+      <p className="text-xs text-text-muted">
         {form.systemPrompt.length}/10,000 characters
       </p>
     </div>
@@ -566,7 +545,7 @@ function StepMentalModels({ form, update }: StepProps) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+        <label className="text-xs font-medium text-text-secondary">
           Mental Models — how this persona frames problems
         </label>
         <EditableList
@@ -583,7 +562,7 @@ function StepFrameworkStyle({ form, update }: StepProps) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+        <label className="text-xs font-medium text-text-secondary">
           Decision Framework — how this persona evaluates options
         </label>
         <textarea
@@ -594,13 +573,12 @@ function StepFrameworkStyle({ form, update }: StepProps) {
 2. What's the blast radius if this fails?
 3. ..."
           rows={6}
-          className="rounded-lg px-2.5 py-2 text-xs input-bordered resize-y"
-          style={{ background: "var(--color-bg-base)", color: "var(--color-text-primary)" }}
+          className="rounded-lg px-2.5 py-2 text-xs input-bordered resize-y text-text-primary" style={{ background: "var(--color-bg-base)" }}
         />
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+        <label className="text-xs font-medium text-text-secondary">
           Communication Style — tone and delivery
         </label>
         <textarea
@@ -608,8 +586,7 @@ function StepFrameworkStyle({ form, update }: StepProps) {
           onChange={(e) => update("communicationStyle", e.target.value)}
           placeholder="e.g. Direct and urgent. Uses security severity ratings. Always provides remediation steps alongside findings."
           rows={3}
-          className="rounded-lg px-2.5 py-2 text-xs input-bordered resize-y"
-          style={{ background: "var(--color-bg-base)", color: "var(--color-text-primary)" }}
+          className="rounded-lg px-2.5 py-2 text-xs input-bordered resize-y text-text-primary" style={{ background: "var(--color-bg-base)" }}
         />
       </div>
     </div>
@@ -620,7 +597,7 @@ function StepRedFlagsBlindSpots({ form, update }: StepProps) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+        <label className="text-xs font-medium text-text-secondary">
           Red Flags — what this persona immediately calls out
         </label>
         <EditableList
@@ -631,7 +608,7 @@ function StepRedFlagsBlindSpots({ form, update }: StepProps) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+        <label className="text-xs font-medium text-text-secondary">
           Blind Spots — known weaknesses of this thinking style
         </label>
         <EditableList
@@ -650,27 +627,27 @@ function StepReview({ persona }: { persona: Persona }) {
       <div className="flex items-center gap-3">
         <PersonaAvatar persona={persona} size={48} />
         <div>
-          <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <p className="text-sm font-semibold text-text-primary">
             {persona.name || "Unnamed"} {persona.icon}
           </p>
-          <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+          <p className="text-xs text-text-secondary">
             {persona.title || "No title"}
           </p>
         </div>
       </div>
 
       {persona.intro && (
-        <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+        <p className="text-xs text-text-secondary">
           {persona.intro}
         </p>
       )}
 
       {persona.strength && (
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-xs font-medium text-text-muted">
             Strength:
           </span>
-          <span className="text-xs" style={{ color: "var(--color-text-primary)" }}>
+          <span className="text-xs text-text-primary">
             {persona.strength}
           </span>
         </div>
@@ -685,15 +662,11 @@ function StepReview({ persona }: { persona: Persona }) {
 
       {persona.systemPrompt && (
         <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-xs font-medium text-text-muted">
             System Prompt Preview
           </span>
           <pre
-            className="text-xs rounded-lg p-2.5 overflow-auto max-h-32"
-            style={{
-              background: "var(--color-bg-base)",
-              color: "var(--color-text-secondary)",
-              whiteSpace: "pre-wrap",
+            className="text-xs rounded-lg p-2.5 overflow-auto max-h-32 text-text-secondary bg-bg-base whitespace-pre-wrap" style={{
               wordBreak: "break-word",
             }}
           >
@@ -710,11 +683,11 @@ function ReviewSection({ title, items }: { title: string; items: string[] }) {
   if (items.length === 0) return null;
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-xs font-medium" style={{ color: "var(--color-text-muted)" }}>
+      <span className="text-xs font-medium text-text-muted">
         {title}
       </span>
       {items.map((item, i) => (
-        <span key={i} className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+        <span key={i} className="text-xs text-text-secondary">
           • {item}
         </span>
       ))}

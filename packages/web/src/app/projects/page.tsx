@@ -69,11 +69,7 @@ function ProjectCard({
 
   return (
     <div
-      className="flex items-start justify-between p-5 rounded-2xl transition-all"
-      style={{
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
-      }}
+      className="flex items-start justify-between p-5 rounded-2xl transition-all bg-bg-card border border-border"
     >
       <div className="flex gap-4 min-w-0">
         <div
@@ -96,20 +92,12 @@ function ProjectCard({
           </div>
           <div className="flex gap-2">
             <span
-              className="text-xs px-2 py-0.5 rounded-full"
-              style={{
-                background: "var(--color-bg-elevated)",
-                color: "var(--color-text-secondary)",
-              }}
+              className="text-xs px-2 py-0.5 rounded-full text-text-secondary bg-bg-elevated"
             >
               {modelLabel}
             </span>
             <span
-              className="text-xs px-2 py-0.5 rounded-full"
-              style={{
-                background: "var(--color-bg-elevated)",
-                color: "var(--color-text-secondary)",
-              }}
+              className="text-xs px-2 py-0.5 rounded-full text-text-secondary bg-bg-elevated"
             >
               {project.permissionMode}
             </span>
@@ -185,11 +173,7 @@ function ProjectDialog({
     >
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col gap-4 p-6 rounded-2xl shadow-lg w-full max-w-md"
-        style={{
-          background: "var(--color-bg-card)",
-          border: "1px solid var(--color-border)",
-        }}
+        className="flex flex-col gap-4 p-6 rounded-2xl shadow-lg w-full max-w-md bg-bg-card border border-border"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -211,11 +195,7 @@ function ProjectDialog({
             value={form.name ?? ""}
             onChange={(e) => updateField("name", e.target.value)}
             placeholder="My Awesome Project"
-            className="px-3 py-2 rounded-lg text-sm input-bordered"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-primary)",
-            }}
+            className="px-3 py-2 rounded-lg text-sm input-bordered text-text-primary bg-bg-elevated"
             autoFocus
           />
         </label>
@@ -235,11 +215,7 @@ function ProjectDialog({
             }}
             placeholder="my-awesome-project"
             disabled={isEdit}
-            className="px-3 py-2 rounded-lg text-sm input-bordered font-mono disabled:opacity-50"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-primary)",
-            }}
+            className="px-3 py-2 rounded-lg text-sm input-bordered font-mono disabled:opacity-50 text-text-primary bg-bg-elevated"
           />
         </label>
 
@@ -253,11 +229,7 @@ function ProjectDialog({
             value={form.dir ?? ""}
             onChange={(e) => updateField("dir", e.target.value)}
             placeholder="/home/user/projects/my-project"
-            className="px-3 py-2 rounded-lg text-sm input-bordered font-mono"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-primary)",
-            }}
+            className="px-3 py-2 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-elevated"
           />
           <span className="text-[11px]">Absolute path to the project folder on this machine</span>
         </label>
@@ -268,11 +240,7 @@ function ProjectDialog({
           <select
             value={form.defaultModel ?? "claude-sonnet-4-6"}
             onChange={(e) => updateField("defaultModel", e.target.value)}
-            className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-primary)",
-            }}
+            className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer text-text-primary bg-bg-elevated"
           >
             {MODELS.map((m) => (
               <option key={m.value} value={m.value}>
@@ -288,11 +256,7 @@ function ProjectDialog({
           <select
             value={form.permissionMode ?? "default"}
             onChange={(e) => updateField("permissionMode", e.target.value)}
-            className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-primary)",
-            }}
+            className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer text-text-primary bg-bg-elevated"
           >
             {PERMISSION_MODES.map((m) => (
               <option key={m.value} value={m.value}>
@@ -314,12 +278,7 @@ function ProjectDialog({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2 rounded-xl text-sm font-semibold cursor-pointer"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-secondary)",
-              border: "1px solid var(--color-border)",
-            }}
+            className="flex-1 py-2 rounded-xl text-sm font-semibold cursor-pointer text-text-secondary bg-bg-elevated border border-border"
           >
             Cancel
           </button>
@@ -347,11 +306,7 @@ function DeleteConfirmDialog({
       onClick={onCancel}
     >
       <div
-        className="flex flex-col gap-4 p-6 rounded-2xl shadow-lg w-full max-w-sm"
-        style={{
-          background: "var(--color-bg-card)",
-          border: "1px solid var(--color-border)",
-        }}
+        className="flex flex-col gap-4 p-6 rounded-2xl shadow-lg w-full max-w-sm bg-bg-card border border-border"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3">
@@ -381,12 +336,7 @@ function DeleteConfirmDialog({
           </button>
           <button
             onClick={onCancel}
-            className="flex-1 py-2 rounded-xl text-sm font-semibold cursor-pointer"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-secondary)",
-              border: "1px solid var(--color-border)",
-            }}
+            className="flex-1 py-2 rounded-xl text-sm font-semibold cursor-pointer text-text-secondary bg-bg-elevated border border-border"
           >
             Cancel
           </button>
@@ -445,16 +395,14 @@ export default function ProjectsPage() {
 
   return (
     <div
-      className="flex flex-col"
-      style={{ minHeight: "100vh", background: "var(--color-bg-base)" }}
+      className="flex flex-col bg-bg-base" style={{ minHeight: "100vh" }}
     >
       <Header />
 
       <div className="flex-1 px-6 py-6 max-w-3xl mx-auto w-full">
         <div className="flex items-center justify-between mb-6">
           <h1
-            className="text-2xl font-bold"
-            style={{ fontFamily: "Outfit, sans-serif", color: "var(--color-text-primary)" }}
+            className="text-2xl font-bold text-text-primary" style={{ fontFamily: "Outfit, sans-serif" }}
           >
             Projects
           </h1>
@@ -478,22 +426,17 @@ export default function ProjectsPage() {
 
         {/* Telegram sync info banner */}
         <div
-          className="flex items-start gap-3 p-4 rounded-xl mb-5"
-          style={{
-            background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
-          }}
+          className="flex items-start gap-3 p-4 rounded-xl mb-5 bg-bg-elevated border border-border"
         >
           <TelegramLogo
             size={20}
             weight="fill"
-            style={{ color: "#29B6F6", flexShrink: 0, marginTop: 1 }}
+            className="shrink-0" style={{ color: "#29B6F6", marginTop: 1 }}
           />
           <p className="text-xs leading-relaxed">
             Projects you add here will automatically appear in your Telegram bot&apos;s{" "}
             <code
-              className="px-1 py-0.5 rounded text-[11px]"
-              style={{ background: "var(--color-bg-card)" }}
+              className="px-1 py-0.5 rounded text-[11px] bg-bg-card"
             >
               /start
             </code>{" "}
@@ -506,15 +449,13 @@ export default function ProjectsPage() {
             {[1, 2].map((i) => (
               <div
                 key={i}
-                className="h-24 rounded-2xl animate-pulse"
-                style={{ background: "var(--color-bg-card)" }}
+                className="h-24 rounded-2xl animate-pulse bg-bg-card"
               />
             ))}
           </div>
         ) : projects.length === 0 ? (
           <div
-            className="flex flex-col items-center justify-center py-16 gap-4 rounded-2xl"
-            style={{ background: "var(--color-bg-card)", border: "1px solid var(--color-border)" }}
+            className="flex flex-col items-center justify-center py-16 gap-4 rounded-2xl bg-bg-card border border-border"
           >
             <div
               className="flex items-center justify-center rounded-2xl"

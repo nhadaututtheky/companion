@@ -172,11 +172,7 @@ export function DomainTab() {
                       value={tunnelToken}
                       onChange={(e) => setTunnelToken(e.target.value)}
                       placeholder="eyJhIjoiN..."
-                      className="w-full px-3 py-2 pr-10 rounded-lg text-sm input-bordered font-mono"
-                      style={{
-                        background: "var(--color-bg-elevated)",
-                        color: "var(--color-text-primary)",
-                      }}
+                      className="w-full px-3 py-2 pr-10 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-elevated"
                     />
                     <button
                       type="button"
@@ -226,10 +222,8 @@ export function DomainTab() {
                         placeholder="you@example.com (optional)"
                       />
                       <div
-                        className="px-3 py-2.5 rounded-lg text-xs"
-                        style={{
+                        className="px-3 py-2.5 rounded-lg text-xs text-text-secondary" style={{
                           background: "#34A85310",
-                          color: "var(--color-text-secondary)",
                           border: "1px solid #34A85330",
                         }}
                       >
@@ -240,18 +234,14 @@ export function DomainTab() {
                     </div>
                   ) : (
                     <div
-                      className="px-3 py-2.5 rounded-lg text-xs"
-                      style={{
-                        background: "var(--color-bg-elevated)",
-                        color: "var(--color-text-muted)",
-                      }}
+                      className="px-3 py-2.5 rounded-lg text-xs text-text-muted bg-bg-elevated"
                     >
                       Place SSL certificates in{" "}
-                      <code className="px-1 rounded" style={{ background: "var(--color-bg-base)" }}>
+                      <code className="px-1 rounded bg-bg-base">
                         nginx/certs/origin.pem
                       </code>{" "}
                       and{" "}
-                      <code className="px-1 rounded" style={{ background: "var(--color-bg-base)" }}>
+                      <code className="px-1 rounded bg-bg-base">
                         nginx/certs/origin.key
                       </code>
                       <br />
@@ -301,12 +291,10 @@ export function DomainTab() {
 
             {/* Command to run */}
             <div
-              className="flex items-center justify-between px-3 py-2.5 rounded-lg font-mono text-xs"
-              style={{
+              className="flex items-center justify-between px-3 py-2.5 rounded-lg font-mono text-xs border border-glass-border" style={{
                 background: "#1a1a2e",
                 color: "#34A853",
-                border: "1px solid var(--glass-border)",
-              }}
+                }}
             >
               <code>docker compose up -d</code>
               <button
@@ -314,11 +302,7 @@ export function DomainTab() {
                   navigator.clipboard.writeText("docker compose up -d");
                   toast.success("Copied!");
                 }}
-                className="px-2 py-1 rounded text-xs cursor-pointer"
-                style={{
-                  background: "var(--color-bg-elevated)",
-                  color: "var(--color-text-secondary)",
-                }}
+                className="px-2 py-1 rounded text-xs cursor-pointer text-text-secondary bg-bg-elevated"
               >
                 Copy
               </button>
@@ -381,12 +365,7 @@ export function DomainTab() {
         {mode !== "off" && saved && (
           <button
             onClick={handleApply}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-primary)",
-              border: "1px solid var(--glass-border)",
-            }}
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer text-text-primary bg-bg-elevated border border-glass-border"
           >
             <ArrowsClockwise size={16} weight="bold" />
           </button>

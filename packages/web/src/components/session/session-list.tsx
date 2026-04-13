@@ -81,15 +81,13 @@ function StatusDot({ status }: { status: string }) {
   return (
     <span
       title={config.label}
-      style={{ position: "relative", display: "inline-flex", flexShrink: 0, width: 8, height: 8 }}
+      className="shrink-0 relative inline-flex" style={{ width: 8, height: 8 }}
     >
       {isActive && (
         <span
           aria-hidden="true"
-          style={{
-            position: "absolute",
+          className="rounded-full absolute" style={{
             inset: 0,
-            borderRadius: "50%",
             background: config.color,
             opacity: 0.4,
             animation: "ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite",
@@ -97,14 +95,11 @@ function StatusDot({ status }: { status: string }) {
         />
       )}
       <span
-        style={{
-          display: "inline-block",
+        className="rounded-full relative inline-block" style={{
           width: 8,
           height: 8,
-          borderRadius: "50%",
           background: config.color,
-          position: "relative",
-        }}
+          }}
       />
     </span>
   );
@@ -182,7 +177,7 @@ function TagInput({ onAdd, onClose }: TagInputProps) {
   };
 
   return (
-    <div className="flex items-center gap-1 mt-1" style={{ position: "relative" }}>
+    <div className="flex items-center gap-1 mt-1 relative">
       <input
         ref={inputRef}
         type="text"
@@ -192,11 +187,7 @@ function TagInput({ onAdd, onClose }: TagInputProps) {
         onBlur={onClose}
         placeholder="Tag name…"
         maxLength={50}
-        className="text-xs px-2 py-0.5 rounded w-24 input-bordered"
-        style={{
-          background: "var(--color-bg-elevated)",
-          color: "var(--color-text-primary)",
-        }}
+        className="text-xs px-2 py-0.5 rounded w-24 input-bordered text-text-primary bg-bg-elevated"
         aria-label="Enter tag name"
       />
     </div>
@@ -251,8 +242,7 @@ function SessionTags({ sessionId, tags }: SessionTagsProps) {
     return (
       <button
         onClick={handleAddClick}
-        className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded cursor-pointer transition-opacity opacity-0 group-hover:opacity-60 hover:!opacity-100"
-        style={{ color: "var(--color-text-muted)", background: "transparent" }}
+        className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded cursor-pointer transition-opacity opacity-0 group-hover:opacity-60 hover:!opacity-100 text-text-muted" style={{ background: "transparent" }}
         aria-label="Add tag"
         title="Add tag"
       >
@@ -285,8 +275,7 @@ function SessionTags({ sessionId, tags }: SessionTagsProps) {
       })}
       <button
         onClick={handleAddClick}
-        className="flex items-center text-xs px-1 py-0.5 rounded cursor-pointer transition-colors"
-        style={{ color: "var(--color-text-muted)", background: "transparent" }}
+        className="flex items-center text-xs px-1 py-0.5 rounded cursor-pointer transition-colors text-text-muted" style={{ background: "transparent" }}
         aria-label="Add tag"
         title="Add tag"
       >
@@ -371,14 +360,11 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
       {/* Header row: search + filter toggle + new */}
       <div className="flex items-center gap-1.5 px-3 pt-3 pb-2">
         <div
-          className="flex items-center gap-1.5 flex-1 px-2 py-1.5 rounded-lg input-wrapper"
-          style={{
-            background: "var(--color-bg-elevated)",
-          }}
+          className="flex items-center gap-1.5 flex-1 px-2 py-1.5 rounded-lg input-wrapper bg-bg-elevated"
         >
           <MagnifyingGlass
             size={12}
-            style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
+            className="text-text-muted shrink-0"
             aria-hidden="true"
           />
           <input
@@ -386,15 +372,13 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
             value={searchRaw}
             onChange={(e) => setSearchRaw(e.target.value)}
             placeholder="Search..."
-            className="flex-1 text-xs bg-transparent outline-none"
-            style={{ color: "var(--color-text-primary)", minWidth: 0 }}
+            className="flex-1 text-xs bg-transparent outline-none text-text-primary" style={{ minWidth: 0 }}
             aria-label="Search sessions"
           />
           {searchRaw && (
             <button
               onClick={() => setSearchRaw("")}
-              className="cursor-pointer opacity-60 hover:opacity-100"
-              style={{ color: "var(--color-text-muted)", lineHeight: 1 }}
+              className="cursor-pointer opacity-60 hover:opacity-100 text-text-muted" style={{ lineHeight: 1 }}
               aria-label="Clear search"
             >
               <X size={10} weight="bold" aria-hidden="true" />
@@ -475,11 +459,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
               {tagFilter !== null && (
                 <button
                   onClick={() => setTagFilter(null)}
-                  className="px-1.5 py-0.5 rounded-full text-xs font-medium cursor-pointer"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    color: "var(--color-text-secondary)",
-                  }}
+                  className="px-1.5 py-0.5 rounded-full text-xs font-medium cursor-pointer text-text-secondary bg-bg-elevated"
                   aria-label="Clear tag filter"
                 >
                   All
@@ -544,11 +524,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
                 <StatusDot status={s.status} />
                 {s.shortId && (
                   <span
-                    className="text-xs font-mono px-1.5 py-0.5 rounded shrink-0"
-                    style={{
-                      background: "var(--color-bg-elevated)",
-                      color: "var(--color-success)",
-                    }}
+                    className="text-xs font-mono px-1.5 py-0.5 rounded shrink-0 text-success bg-bg-elevated"
                     title={`@${s.shortId} — use in chat to mention this session`}
                   >
                     @{s.shortId}
@@ -563,12 +539,10 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
               <div className="flex items-center gap-2 pl-4">
                 {/* Model badge: S / O / H */}
                 <span
-                  className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0"
-                  style={{
+                  className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0 text-center" style={{
                     background: badge.bg,
                     color: badge.color,
                     minWidth: 18,
-                    textAlign: "center",
                     lineHeight: 1.4,
                   }}
                   title={s.model}

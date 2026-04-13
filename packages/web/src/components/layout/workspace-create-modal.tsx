@@ -98,10 +98,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
       aria-label="Create Workspace"
     >
       <div
-        className="flex flex-col w-full max-w-md max-h-[85vh] rounded-2xl overflow-hidden"
-        style={{
-          background: "var(--color-bg-base)",
-          border: "1px solid var(--color-border)",
+        className="flex flex-col w-full max-w-md max-h-[85vh] rounded-2xl overflow-hidden bg-bg-base border border-border" style={{
           boxShadow: "0 25px 50px rgba(0,0,0,0.3)",
         }}
       >
@@ -110,13 +107,12 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
           className="flex items-center justify-between px-5 py-3 flex-shrink-0"
           style={{ borderBottom: "1px solid var(--color-border)" }}
         >
-          <h2 className="text-sm font-bold" style={{ color: "var(--color-text-primary)" }}>
+          <h2 className="text-sm font-bold text-text-primary">
             Create Workspace
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg transition-all cursor-pointer"
-            style={{ color: "var(--color-text-muted)" }}
+            className="p-1.5 rounded-lg transition-all cursor-pointer text-text-muted"
             aria-label="Close dialog"
           >
             <X size={16} weight="bold" />
@@ -129,8 +125,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
           <div className="flex flex-col gap-1">
             <label
               htmlFor="ws-name"
-              className="text-xs font-semibold"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="text-xs font-semibold text-text-secondary"
             >
               Workspace Name
             </label>
@@ -140,12 +135,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Companion Dev"
-              className="rounded-lg px-3 py-2 text-sm"
-              style={{
-                background: "var(--color-bg-card)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-text-primary)",
-              }}
+              className="rounded-lg px-3 py-2 text-sm text-text-primary bg-bg-card border border-border"
               autoFocus
             />
           </div>
@@ -154,8 +144,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
           <div className="flex flex-col gap-1">
             <label
               htmlFor="ws-project"
-              className="text-xs font-semibold"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="text-xs font-semibold text-text-secondary"
             >
               Project
             </label>
@@ -163,15 +152,14 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
               <div className="flex items-center gap-2 py-2">
                 <CircleNotch
                   size={14}
-                  className="animate-spin"
-                  style={{ color: "var(--color-text-muted)" }}
+                  className="animate-spin text-text-muted"
                 />
-                <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                <span className="text-xs text-text-muted">
                   Loading projects...
                 </span>
               </div>
             ) : projects.length === 0 ? (
-              <p className="text-xs py-2" style={{ color: "var(--color-text-muted)" }}>
+              <p className="text-xs py-2 text-text-muted">
                 No projects configured. Create a session first.
               </p>
             ) : (
@@ -179,12 +167,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
                 id="ws-project"
                 value={projectSlug}
                 onChange={(e) => setProjectSlug(e.target.value)}
-                className="rounded-lg px-3 py-2 text-sm cursor-pointer"
-                style={{
-                  background: "var(--color-bg-card)",
-                  border: "1px solid var(--color-border)",
-                  color: "var(--color-text-primary)",
-                }}
+                className="rounded-lg px-3 py-2 text-sm cursor-pointer text-text-primary bg-bg-card border border-border"
               >
                 {projects.map((p) => (
                   <option key={p.slug} value={p.slug}>
@@ -195,8 +178,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
             )}
             {selectedProject && (
               <span
-                className="flex items-center gap-1 text-[10px] mt-0.5"
-                style={{ color: "var(--color-text-muted)" }}
+                className="flex items-center gap-1 text-[10px] mt-0.5 text-text-muted"
               >
                 <FolderSimple size={10} weight="bold" />
                 {selectedProject.dir}
@@ -207,8 +189,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
           {/* CLI Slots */}
           <div className="flex flex-col gap-1.5">
             <label
-              className="text-xs font-semibold"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="text-xs font-semibold text-text-secondary"
             >
               CLI Agents
             </label>
@@ -249,12 +230,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
         >
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all"
-            style={{
-              color: "var(--color-text-secondary)",
-              background: "var(--color-bg-card)",
-              border: "1px solid var(--color-border)",
-            }}
+            className="px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all text-text-secondary bg-bg-card border border-border"
           >
             Cancel
           </button>

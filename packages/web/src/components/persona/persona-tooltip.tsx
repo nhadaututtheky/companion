@@ -45,7 +45,7 @@ export function PersonaTooltip({ persona, children, placement = "bottom" }: Pers
 
   return (
     <div
-      style={{ position: "relative", display: "inline-flex" }}
+      className="relative" style={{ display: "inline-flex" }}
       onMouseEnter={show}
       onMouseLeave={hide}
       onFocusCapture={show}
@@ -55,16 +55,13 @@ export function PersonaTooltip({ persona, children, placement = "bottom" }: Pers
 
       {visible && (
         <div
-          className="persona-tooltip"
+          className="persona-tooltip bg-bg-card border border-border absolute"
           role="tooltip"
-          style={{
-            position: "absolute",
+            style={{
             ...placementStyles[placement],
             width: 280,
             padding: 12,
             borderRadius: 12,
-            background: "var(--color-bg-card)",
-            border: "1px solid var(--color-border)",
             boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
             zIndex: Z.overlay,
             pointerEvents: "auto",
@@ -75,8 +72,7 @@ export function PersonaTooltip({ persona, children, placement = "bottom" }: Pers
             <PersonaAvatar persona={persona} size={36} showBadge={false} />
             <div className="flex flex-col flex-1 min-w-0">
               <span
-                className="text-sm font-semibold truncate"
-                style={{ color: "var(--color-text-primary)" }}
+                className="text-sm font-semibold truncate text-text-primary"
               >
                 {persona.name}
               </span>
@@ -95,16 +91,14 @@ export function PersonaTooltip({ persona, children, placement = "bottom" }: Pers
 
           {/* Title */}
           <p
-            className="text-xs font-medium mb-1.5"
-            style={{ color: "var(--color-text-primary)", lineHeight: 1.4 }}
+            className="text-xs font-medium mb-1.5 text-text-primary" style={{ lineHeight: 1.4 }}
           >
             {persona.title}
           </p>
 
           {/* Intro */}
           <p
-            className="text-xs mb-2"
-            style={{ color: "var(--color-text-secondary)", lineHeight: 1.5 }}
+            className="text-xs mb-2 text-text-secondary" style={{ lineHeight: 1.5 }}
           >
             {persona.intro}
           </p>
@@ -113,8 +107,7 @@ export function PersonaTooltip({ persona, children, placement = "bottom" }: Pers
           <div className="flex items-start gap-1.5 mb-2">
             <span style={{ fontSize: 11, lineHeight: 1 }}>💪</span>
             <span
-              className="text-xs font-medium"
-              style={{ color: "var(--color-text-primary)", lineHeight: 1.4 }}
+              className="text-xs font-medium text-text-primary" style={{ lineHeight: 1.4 }}
             >
               {persona.strength}
             </span>
@@ -125,10 +118,7 @@ export function PersonaTooltip({ persona, children, placement = "bottom" }: Pers
             {persona.bestFor.map((tag) => (
               <span
                 key={tag}
-                className="text-xs px-1.5 py-0.5 rounded-full"
-                style={{
-                  background: "var(--color-bg-elevated)",
-                  color: "var(--color-text-muted)",
+                className="text-xs px-1.5 py-0.5 rounded-full text-text-muted bg-bg-elevated" style={{
                   fontSize: 10,
                 }}
               >

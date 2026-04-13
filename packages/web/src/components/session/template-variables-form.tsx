@@ -52,10 +52,7 @@ export function TemplateVariablesForm({ variables, values, onChange }: TemplateV
               }
               placeholder={`{{${variable.key}}}`}
               required={variable.required}
-              className="w-full px-3 py-2 rounded-lg text-sm input-bordered"
-              style={{
-                background: "var(--color-bg-elevated)",
-                color: "var(--color-text-primary)",
+              className="w-full px-3 py-2 rounded-lg text-sm input-bordered text-text-primary bg-bg-elevated" style={{
                 fontFamily: "var(--font-body)",
               }}
               aria-label={variable.label}

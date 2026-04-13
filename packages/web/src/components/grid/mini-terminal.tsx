@@ -50,7 +50,7 @@ function CompactPermissionGate({
         borderRadius: "0 0 var(--radius-xl) var(--radius-xl)",
       }}
     >
-      <Lock size={11} weight="bold" style={{ color: "#FBBC04", flexShrink: 0 }} />
+      <Lock size={11} weight="bold" className="shrink-0" style={{ color: "#FBBC04" }} />
       <span className="text-xs font-medium truncate flex-1">{req.toolName}</span>
       <button
         onClick={() => onRespond(req.requestId, "allow")}
@@ -62,9 +62,7 @@ function CompactPermissionGate({
       </button>
       <button
         onClick={() => onRespond(req.requestId, "deny")}
-        className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold cursor-pointer flex-shrink-0"
-        style={{
-          background: "var(--color-bg-elevated)",
+        className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold cursor-pointer flex-shrink-0 bg-bg-elevated" style={{
           color: "#EA4335",
           border: "1px solid #EA433530",
         }}
@@ -153,13 +151,10 @@ function CompactComposer({
         anchorRef={wrapperRef}
       />
       <div
-        className="flex items-end gap-1 flex-1 px-2.5 py-1.5"
-        style={{
-          background: "var(--color-bg-elevated)",
+        className="flex items-end gap-1 flex-1 px-2.5 py-1.5 bg-bg-elevated rounded-radius-pill" style={{
           border: isFocused
             ? "1px solid color-mix(in srgb, var(--color-accent) 50%, transparent)"
             : "1px solid var(--glass-border)",
-          borderRadius: "var(--radius-pill)",
           boxShadow: isFocused
             ? "0 0 0 3px color-mix(in srgb, var(--color-accent) 10%, transparent)"
             : "none",
@@ -179,10 +174,8 @@ function CompactComposer({
           onBlur={() => setIsFocused(false)}
           placeholder={isRunning ? "Type to interrupt…" : "Message…"}
           rows={1}
-          className="flex-1 resize-none bg-transparent leading-snug composer-textarea"
-          style={{
+          className="flex-1 resize-none bg-transparent leading-snug composer-textarea text-text-primary" style={{
             fontSize: 12,
-            color: "var(--color-text-primary)",
             maxHeight: 72,
             minHeight: 18,
             fontFamily: "var(--font-body)",
@@ -328,9 +321,7 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
 
   return (
     <div
-      className="flex flex-col overflow-hidden"
-      style={{
-        position: "relative",
+      className="flex flex-col overflow-hidden relative" style={{
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
@@ -413,11 +404,11 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
       {/* Error state — session crashed before starting */}
       {session?.status === "error" && messages.length === 0 ? (
         <div className="flex flex-col items-center justify-center flex-1 gap-2 px-4 py-6 text-center">
-          <Warning size={24} weight="bold" style={{ color: "var(--color-danger)" }} />
-          <p className="text-xs font-medium" style={{ color: "var(--color-danger)" }}>
+          <Warning size={24} weight="bold" className="text-danger" />
+          <p className="text-xs font-medium text-danger">
             Session failed to start
           </p>
-          <p className="text-xs" style={{ color: "var(--color-text-muted)", maxWidth: 240 }}>
+          <p className="text-xs text-text-muted" style={{ maxWidth: 240 }}>
             Check that the CLI is installed and authenticated. Click X to close.
           </p>
         </div>
@@ -427,10 +418,8 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
           <div className="flex flex-col flex-1 min-h-0 relative">
             {session?.state?.source === "telegram" && (
               <div
-                style={{
-                  position: "absolute",
+                className="absolute flex" style={{
                   inset: 0,
-                  display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   pointerEvents: "none",
@@ -440,7 +429,7 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
                 <TelegramLogo
                   size={120}
                   weight="thin"
-                  style={{ color: "var(--color-text-muted)", opacity: 0.06 }}
+                  className="text-text-muted" style={{ opacity: 0.06 }}
                 />
               </div>
             )}

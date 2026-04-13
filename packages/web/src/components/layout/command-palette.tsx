@@ -205,7 +205,7 @@ export function CommandPalette() {
 
   return (
     <div
-      className="command-palette-overlay"
+      className="command-palette-overlay flex"
       onClick={(e) => {
         if (e.target === e.currentTarget) setOpen(false);
       }}
@@ -214,7 +214,6 @@ export function CommandPalette() {
         inset: 0,
         zIndex: Z.commandPalette,
         background: "rgba(0, 0, 0, 0.4)",
-        display: "flex",
         alignItems: "flex-start",
         justifyContent: "center",
         paddingTop: "15vh",
@@ -222,25 +221,21 @@ export function CommandPalette() {
       }}
     >
       <div
-        style={{
+        className="rounded-radius-xl border border-glass-border overflow-hidden" style={{
           width: "100%",
           maxWidth: "560px",
           margin: "0 16px",
           background: "var(--glass-bg-heavy)",
           backdropFilter: "blur(var(--glass-blur))",
           WebkitBackdropFilter: "blur(var(--glass-blur))",
-          border: "1px solid var(--glass-border)",
-          borderRadius: "var(--radius-xl)",
           boxShadow: "var(--shadow-float)",
-          overflow: "hidden",
-        }}
+          }}
         onClick={(e) => e.stopPropagation()}
       >
         <Command label="Command palette" style={{ fontFamily: "var(--font-body)" }}>
           {/* Search input row */}
           <div
-            style={{
-              display: "flex",
+            className="flex" style={{
               alignItems: "center",
               padding: "12px 16px",
               borderBottom: "1px solid var(--glass-border)",
@@ -250,24 +245,18 @@ export function CommandPalette() {
             <Terminal size={16} color="var(--color-text-muted)" aria-hidden="true" />
             <Command.Input
               placeholder="Type a command..."
-              style={{
+              className="text-text-primary" style={{
                 flex: 1,
                 border: "none",
                 outline: "none",
                 background: "transparent",
                 fontFamily: "var(--font-body)",
                 fontSize: "14px",
-                color: "var(--color-text-primary)",
-              }}
+                }}
             />
             <kbd
-              style={{
-                fontFamily: "var(--font-mono)",
+              className="text-text-muted bg-bg-elevated rounded-radius-sm border border-glass-border font-mono" style={{
                 fontSize: "11px",
-                color: "var(--color-text-muted)",
-                background: "var(--color-bg-elevated)",
-                border: "1px solid var(--glass-border)",
-                borderRadius: "var(--radius-sm)",
                 padding: "2px 6px",
               }}
             >
@@ -283,12 +272,10 @@ export function CommandPalette() {
             }}
           >
             <Command.Empty
-              style={{
+              className="text-text-muted text-center" style={{
                 padding: "24px",
-                textAlign: "center",
                 fontSize: "13px",
-                color: "var(--color-text-muted)",
-              }}
+                }}
             >
               No results found.
             </Command.Empty>
@@ -362,11 +349,10 @@ export function CommandPalette() {
                     </div>
                     <span style={metaStyle}>{s.model.split("-").slice(-1)[0]}</span>
                     <span
-                      style={{
+                      className="font-semibold" style={{
                         ...metaStyle,
                         color: statusColor(s.status),
-                        fontWeight: 600,
-                      }}
+                        }}
                     >
                       {s.status}
                     </span>
@@ -531,23 +517,19 @@ export function CommandPalette() {
                     <div style={itemInnerStyle}>
                       <span
                         aria-hidden="true"
-                        style={{
-                          display: "flex",
+                        className="shrink-0 flex" style={{
                           gap: "2px",
-                          flexShrink: 0,
-                        }}
+                          }}
                       >
                         {[colors.bgBase, colors.accent, colors.success, colors.danger].map(
                           (c, i) => (
                             <span
                               key={i}
-                              style={{
+                              className="rounded-full border border-border" style={{
                                 width: 8,
                                 height: 8,
-                                borderRadius: "50%",
                                 background: c,
-                                border: "1px solid var(--color-border)",
-                              }}
+                                }}
                             />
                           ),
                         )}
@@ -650,17 +632,12 @@ function statusColor(status: string): string {
 
 function ShortcutBadge({ keys }: { keys: string[] }) {
   return (
-    <span style={{ display: "flex", gap: "3px", flexShrink: 0 }}>
+    <span className="shrink-0 flex" style={{ gap: "3px" }}>
       {keys.map((k) => (
         <kbd
           key={k}
-          style={{
-            fontFamily: "var(--font-mono)",
+          className="text-text-muted bg-bg-base rounded-radius-sm border border-glass-border font-mono" style={{
             fontSize: "10px",
-            color: "var(--color-text-muted)",
-            background: "var(--color-bg-base)",
-            border: "1px solid var(--glass-border)",
-            borderRadius: "var(--radius-sm)",
             padding: "1px 5px",
           }}
         >
@@ -675,15 +652,11 @@ function ActiveBadge({ active }: { active: boolean }) {
   if (!active) return null;
   return (
     <span
-      style={{
+      className="text-accent rounded-radius-pill shrink-0 font-semibold" style={{
         fontSize: "10px",
-        fontWeight: 600,
-        color: "var(--color-accent)",
         background: "color-mix(in srgb, var(--color-accent) 12%, transparent)",
-        borderRadius: "var(--radius-pill)",
         padding: "1px 6px",
-        flexShrink: 0,
-      }}
+        }}
     >
       ON
     </span>

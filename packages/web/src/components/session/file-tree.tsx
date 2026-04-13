@@ -82,10 +82,8 @@ function TreeItem({
     <>
       <button
         onClick={handleClick}
-        className="flex items-center gap-1 w-full text-left py-0.5 px-1 rounded transition-colors cursor-pointer"
-        style={{
+        className="flex items-center gap-1 w-full text-left py-0.5 px-1 rounded transition-colors cursor-pointer text-text-secondary" style={{
           paddingLeft: depth * 16 + 4,
-          color: "var(--color-text-secondary)",
           fontSize: 12,
         }}
         onMouseEnter={(e) => {
@@ -97,7 +95,7 @@ function TreeItem({
       >
         {node.isDir ? (
           <>
-            <span style={{ color: "var(--color-text-muted)", width: 12 }}>
+            <span className="text-text-muted" style={{ width: 12 }}>
               {expanded ? (
                 <CaretDown size={10} weight="bold" />
               ) : (
@@ -135,8 +133,7 @@ function TreeItem({
           ))}
           {node.children.length === 0 && node.loaded && (
             <div
-              className="text-xs italic py-0.5"
-              style={{ paddingLeft: (depth + 1) * 16 + 4, color: "var(--color-text-muted)" }}
+              className="text-xs italic py-0.5 text-text-muted" style={{ paddingLeft: (depth + 1) * 16 + 4 }}
             >
               (empty)
             </div>
@@ -200,12 +197,7 @@ export function FileTree({ rootPath, onFileSelect }: FileTreeProps) {
     return (
       <button
         onClick={handleExpand}
-        className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-        style={{
-          background: "var(--color-bg-elevated)",
-          border: "1px solid var(--color-border)",
-          color: "var(--color-text-secondary)",
-        }}
+        className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-text-secondary bg-bg-elevated border border-border"
       >
         <FolderSimple size={14} weight="bold" />
         {loading ? "Loading..." : "Browse project files"}
@@ -215,21 +207,15 @@ export function FileTree({ rootPath, onFileSelect }: FileTreeProps) {
 
   return (
     <div
-      className="flex flex-col rounded-lg overflow-hidden"
-      style={{
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
+      className="flex flex-col rounded-lg overflow-hidden bg-bg-card border border-border" style={{
         maxHeight: 300,
         overflowY: "auto",
       }}
     >
       <div
-        className="px-3 py-1.5 text-xs font-semibold sticky top-0 z-10"
-        style={{
-          background: "var(--color-bg-elevated)",
+        className="px-3 py-1.5 text-xs font-semibold sticky top-0 z-10 text-text-muted bg-bg-elevated" style={{
           borderBottom: "1px solid var(--color-border)",
-          color: "var(--color-text-muted)",
-        }}
+          }}
       >
         {rootPath.split(/[\\/]/).pop()}
       </div>

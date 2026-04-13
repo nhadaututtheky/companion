@@ -177,11 +177,7 @@ export function AIProviderTab() {
                 value={apiKeyVal}
                 onChange={(e) => setApiKeyVal(e.target.value)}
                 placeholder="sk-..."
-                className="w-full px-3 py-2 pr-10 rounded-lg text-sm input-bordered font-mono"
-                style={{
-                  background: "var(--color-bg-elevated)",
-                  color: "var(--color-text-primary)",
-                }}
+                className="w-full px-3 py-2 pr-10 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-elevated"
               />
               <button
                 type="button"
@@ -205,11 +201,7 @@ export function AIProviderTab() {
                   if (!modelFast) setModelFast(e.target.value);
                   if (!modelStrong) setModelStrong(e.target.value);
                 }}
-                className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
-                style={{
-                  background: "var(--color-bg-elevated)",
-                  color: "var(--color-text-primary)",
-                }}
+                className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer text-text-primary bg-bg-elevated"
               >
                 <option value="">Select model...</option>
                 {suggestedModels.map((m) => (
@@ -224,11 +216,7 @@ export function AIProviderTab() {
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 placeholder="model-name"
-                className="px-3 py-2 rounded-lg text-sm input-bordered font-mono"
-                style={{
-                  background: "var(--color-bg-elevated)",
-                  color: "var(--color-text-primary)",
-                }}
+                className="px-3 py-2 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-elevated"
               />
             )}
           </div>

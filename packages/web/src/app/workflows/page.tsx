@@ -63,7 +63,7 @@ export default function WorkflowsPage() {
   }, [load]);
 
   return (
-    <div className="flex flex-col" style={{ height: "100vh", background: "var(--color-bg-base)" }}>
+    <div className="flex flex-col bg-bg-base" style={{ height: "100vh" }}>
       <Header />
       <div
         className="flex-1 overflow-auto"
@@ -75,8 +75,7 @@ export default function WorkflowsPage() {
           <h1 className="text-lg font-bold flex-1">Workflows</h1>
           <button
             onClick={() => load()}
-            className="p-2 rounded-lg cursor-pointer"
-            style={{ background: "none", border: "none", color: "var(--color-text-muted)" }}
+            className="p-2 rounded-lg cursor-pointer text-text-muted" style={{ background: "none", border: "none" }}
             aria-label="Refresh"
           >
             <ArrowClockwise size={16} />
@@ -114,18 +113,17 @@ export default function WorkflowsPage() {
           <div className="flex justify-center py-12">
             <CircleNotch
               size={24}
-              style={{ animation: "spin 1s linear infinite", color: "var(--color-text-muted)" }}
+              className="text-text-muted" style={{ animation: "spin 1s linear infinite" }}
             />
           </div>
         ) : workflows.length === 0 ? (
           <div
-            className="text-center py-12 rounded-xl"
-            style={{ background: "var(--color-bg-card)", border: "1px solid var(--color-border)" }}
+            className="text-center py-12 rounded-xl bg-bg-card border border-border"
           >
             <Lightning
               size={32}
               weight="light"
-              style={{ color: "var(--color-text-muted)", margin: "0 auto 8px" }}
+              className="text-text-muted" style={{ margin: "0 auto 8px" }}
             />
             <p className="text-sm">No workflows yet. Start one from a template.</p>
           </div>
@@ -142,10 +140,7 @@ export default function WorkflowsPage() {
                 <Link
                   key={w.channelId}
                   href={`/workflows/${w.channelId}`}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors cursor-pointer"
-                  style={{
-                    background: "var(--color-bg-card)",
-                    border: "1px solid var(--color-border)",
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors cursor-pointer bg-bg-card border border-border" style={{
                     textDecoration: "none",
                   }}
                 >
@@ -159,13 +154,11 @@ export default function WorkflowsPage() {
 
                   {/* Progress bar */}
                   <div
-                    style={{
+                    className="bg-bg-elevated overflow-hidden" style={{
                       width: 80,
                       height: 6,
                       borderRadius: 3,
-                      background: "var(--color-bg-elevated)",
-                      overflow: "hidden",
-                    }}
+                      }}
                   >
                     <div
                       style={{
@@ -180,15 +173,13 @@ export default function WorkflowsPage() {
                   </div>
 
                   <span
-                    className="text-xs font-mono"
-                    style={{ color: "var(--color-text-muted)", minWidth: 40, textAlign: "right" }}
+                    className="text-xs font-mono text-text-muted text-right" style={{ minWidth: 40 }}
                   >
                     {completedSteps}/{totalSteps}
                   </span>
 
                   <span
-                    className="text-xs"
-                    style={{ color: "var(--color-text-muted)", whiteSpace: "nowrap" }}
+                    className="text-xs text-text-muted whitespace-nowrap"
                   >
                     {new Date(w.createdAt).toLocaleDateString(undefined, {
                       month: "short",

@@ -139,7 +139,7 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
           <StatusDot status={cdpStatus} />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 8 }}>
+        <div className="grid" style={{ gridTemplateColumns: "1fr auto auto", gap: 8 }}>
           <FieldInput label="Host" value={cdpHost} onChange={setCdpHost} placeholder="127.0.0.1" />
           <FieldInput
             label="Base Port"
@@ -158,11 +158,7 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
         <button
           onClick={handleTestCdp}
           disabled={testing}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors w-fit"
-          style={{
-            background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
-            color: "var(--color-text-secondary)",
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors w-fit text-text-secondary bg-bg-elevated border border-border" style={{
             opacity: testing ? 0.7 : 1,
           }}
         >
@@ -294,11 +290,7 @@ function FieldInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="px-3 py-1.5 rounded-lg text-xs input-bordered font-mono"
-        style={{
-          background: "var(--color-bg-elevated)",
-          color: "var(--color-text-primary)",
-        }}
+        className="px-3 py-1.5 rounded-lg text-xs input-bordered font-mono text-text-primary bg-bg-elevated"
       />
     </div>
   );

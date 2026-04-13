@@ -106,20 +106,18 @@ function ChannelFeed({ messages }: { messages: ChannelMessage[] }) {
         return (
           <div
             key={msg.id}
-            className="flex flex-col gap-0.5 rounded-lg p-2"
-            style={{
-              background: "var(--color-bg-card)",
+            className="flex flex-col gap-0.5 rounded-lg p-2 bg-bg-card" style={{
               border: `1px solid var(--color-border)`,
               borderLeft: `3px solid ${roleColor}`,
             }}
           >
             <div className="flex items-center gap-1.5">
               {isHuman ? (
-                <User size={11} style={{ color: roleColor, flexShrink: 0 }} />
+                <User size={11} className="shrink-0" style={{ color: roleColor }} />
               ) : persona ? (
                 <PersonaAvatar persona={persona} size={14} showBadge={false} />
               ) : (
-                <Robot size={11} style={{ color: roleColor, flexShrink: 0 }} />
+                <Robot size={11} className="shrink-0" style={{ color: roleColor }} />
               )}
               <span className="text-xs font-semibold capitalize" style={{ color: roleColor }}>
                 {msg.role}
@@ -128,8 +126,7 @@ function ChannelFeed({ messages }: { messages: ChannelMessage[] }) {
               <span className="text-xs flex-shrink-0">{formatRelativeTime(msg.timestamp)}</span>
             </div>
             <p
-              className="text-xs leading-relaxed"
-              style={{ color: "var(--color-text-primary)", whiteSpace: "pre-wrap" }}
+              className="text-xs leading-relaxed text-text-primary whitespace-pre-wrap"
             >
               {msg.content}
             </p>
@@ -186,10 +183,7 @@ function MessageComposer({ channelId, onPosted }: { channelId: string; onPosted:
         disabled={posting}
         placeholder="Post to channel… (Enter to send)"
         rows={2}
-        className="flex-1 resize-none rounded-lg px-2 py-1.5 text-xs input-bordered"
-        style={{
-          background: "var(--color-bg-card)",
-          color: "var(--color-text-primary)",
+        className="flex-1 resize-none rounded-lg px-2 py-1.5 text-xs input-bordered text-text-primary bg-bg-card" style={{
           fontFamily: "var(--font-body)",
         }}
         aria-label="Channel message input"
@@ -267,10 +261,7 @@ function CreateChannelForm({
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
           placeholder="e.g. Review auth implementation"
-          className="rounded-lg px-2 py-1.5 text-xs input-bordered"
-          style={{
-            background: "var(--color-bg-card)",
-            color: "var(--color-text-primary)",
+          className="rounded-lg px-2 py-1.5 text-xs input-bordered text-text-primary bg-bg-card" style={{
             fontFamily: "var(--font-body)",
           }}
           onKeyDown={(e) => {
@@ -292,10 +283,7 @@ function CreateChannelForm({
             onChange={(e) =>
               setType(e.target.value as "debate" | "review" | "red_team" | "brainstorm")
             }
-            className="w-full appearance-none rounded-lg px-2 py-1.5 text-xs input-bordered cursor-pointer"
-            style={{
-              background: "var(--color-bg-card)",
-              color: "var(--color-text-primary)",
+            className="w-full appearance-none rounded-lg px-2 py-1.5 text-xs input-bordered cursor-pointer text-text-primary bg-bg-card" style={{
               fontFamily: "var(--font-body)",
             }}
           >
@@ -323,11 +311,7 @@ function CreateChannelForm({
         </button>
         <button
           onClick={onCancel}
-          className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer"
-          style={{
-            background: "var(--color-bg-elevated)",
-            color: "var(--color-text-secondary)",
-          }}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer text-text-secondary bg-bg-elevated"
         >
           Cancel
         </button>
@@ -398,10 +382,7 @@ function LinkSessionSelector({ channelId, alreadyLinked, onLinked }: LinkSession
         <select
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
-          className="w-full appearance-none rounded-lg px-2 py-1.5 text-xs input-bordered cursor-pointer"
-          style={{
-            background: "var(--color-bg-card)",
-            color: "var(--color-text-primary)",
+          className="w-full appearance-none rounded-lg px-2 py-1.5 text-xs input-bordered cursor-pointer text-text-primary bg-bg-card" style={{
             fontFamily: "var(--font-body)",
           }}
           aria-label="Select session to link"
@@ -567,7 +548,7 @@ export function ChannelPanel({
         style={{ borderBottom: "1px solid var(--color-border)" }}
       >
         <div className="flex items-center gap-2">
-          <LinkSimple size={13} style={{ color: statusColor, flexShrink: 0 }} aria-hidden="true" />
+          <LinkSimple size={13} className="shrink-0" style={{ color: statusColor }} aria-hidden="true" />
           <span className="text-xs font-semibold flex-1 truncate" title={channel.topic}>
             {channel.topic}
           </span>
@@ -595,16 +576,13 @@ export function ChannelPanel({
 
         <div className="flex items-center gap-2">
           <span
-            className="text-xs px-1.5 py-0.5 rounded-full capitalize"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-muted)",
+            className="text-xs px-1.5 py-0.5 rounded-full capitalize text-text-muted bg-bg-elevated" style={{
               fontSize: 10,
             }}
           >
             {TYPE_LABELS[channel.type] ?? channel.type}
           </span>
-          <span className="text-xs" style={{ color: "var(--color-text-muted)", fontSize: 10 }}>
+          <span className="text-xs text-text-muted" style={{ fontSize: 10 }}>
             {channel.linkedSessions.length} session
             {channel.linkedSessions.length !== 1 ? "s" : ""}
           </span>

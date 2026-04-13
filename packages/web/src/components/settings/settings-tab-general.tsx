@@ -128,7 +128,7 @@ function LicenseSection() {
             <span className="font-bold" style={{ color: tierColors[license.tier] }}>
               {license.tier === "pro" ? "PRO" : license.tier === "trial" ? "TRIAL" : "FREE"}
             </span>
-            <span style={{ color: "var(--color-text-secondary)" }}>
+            <span className="text-text-secondary">
               {isPro
                 ? license.maxSessions < 0
                   ? "Unlimited sessions"
@@ -139,7 +139,7 @@ function LicenseSection() {
             </span>
           </div>
           {license.expiresAt && (
-            <span style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-text-muted">
               {isPro || isTrial ? `Expires ${license.expiresAt.split("T")[0]}` : ""}
             </span>
           )}
@@ -149,25 +149,22 @@ function LicenseSection() {
       {/* Upgrade card — only show for free/trial */}
       {!isPro && (
         <div
-          className="mb-4 p-4 rounded-xl"
-          style={{
+          className="mb-4 p-4 rounded-xl border border-glass-border" style={{
             background: "linear-gradient(135deg, #6366f108, #8b5cf610, #ec489808)",
-            border: "1px solid var(--glass-border)",
-          }}
+            }}
         >
           <div className="flex items-center justify-between mb-3">
             <div>
-              <span className="text-sm font-bold" style={{ color: "var(--color-text-primary)" }}>
+              <span className="text-sm font-bold text-text-primary">
                 Companion Pro
               </span>
-              <span className="ml-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <span className="ml-2 text-xs text-text-muted">
                 $5/mo · $39/yr (save 35%)
               </span>
             </div>
           </div>
           <div
-            className="grid grid-cols-2 gap-1.5 mb-3 text-xs"
-            style={{ color: "var(--color-text-secondary)" }}
+            className="grid grid-cols-2 gap-1.5 mb-3 text-xs text-text-secondary"
           >
             <span>Unlimited sessions</span>
             <span>Multi-bot Telegram</span>
@@ -196,11 +193,7 @@ function LicenseSection() {
               href="https://pay.theio.vn/checkout/companion-pro"
               target="_blank"
               rel="noopener"
-              className="flex items-center justify-center px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer"
-              style={{
-                background: "var(--color-bg-elevated)",
-                color: "var(--color-text-secondary)",
-                border: "1px solid var(--glass-border)",
+              className="flex items-center justify-center px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer text-text-secondary bg-bg-elevated border border-glass-border" style={{
                 textDecoration: "none",
               }}
             >
@@ -217,12 +210,7 @@ function LicenseSection() {
           value={licenseKey}
           onChange={(e) => setLicenseKey(e.target.value)}
           placeholder="cmp_pro_XXXX_XXXX_XXXX"
-          className="flex-1 px-3 py-2 rounded-lg text-sm input-bordered"
-          style={{
-            background: "var(--color-bg-elevated)",
-            color: "var(--color-text-primary)",
-            fontFamily: "var(--font-mono)",
-          }}
+          className="flex-1 px-3 py-2 rounded-lg text-sm input-bordered text-text-primary bg-bg-elevated font-mono"
           onKeyDown={(e) => e.key === "Enter" && handleActivate()}
         />
         <button
@@ -240,7 +228,7 @@ function LicenseSection() {
         </button>
       </div>
 
-      <p className="text-xs mt-2" style={{ color: "var(--color-text-muted)" }}>
+      <p className="text-xs mt-2 text-text-muted">
         Already purchased? Enter your license key above to activate.
       </p>
     </SettingSection>
@@ -275,16 +263,14 @@ function TipsSection() {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Lightbulb size={16} weight="fill" style={{ color: "var(--color-warning)" }} />
+          <Lightbulb size={16} weight="fill" className="text-warning" />
           <span className="text-sm font-medium">Show Tips</span>
         </div>
         <button
           onClick={handleToggle}
-          className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer"
-          style={{
+          className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer border border-glass-border" style={{
             background: enabled ? "var(--color-accent)" : "var(--color-bg-elevated)",
-            border: "1px solid var(--glass-border)",
-          }}
+            }}
           role="switch"
           aria-checked={enabled}
           aria-label="Toggle tips"
@@ -300,8 +286,7 @@ function TipsSection() {
       </div>
       <button
         onClick={handleReset}
-        className="mt-2 text-xs cursor-pointer"
-        style={{ color: "var(--color-text-muted)", background: "none", border: "none" }}
+        className="mt-2 text-xs cursor-pointer text-text-muted" style={{ background: "none", border: "none" }}
       >
         Reset dismissed tips
       </button>
@@ -396,7 +381,7 @@ export function GeneralTab() {
           <Link
             size={16}
             weight="bold"
-            style={{ color: "var(--color-text-muted)", marginTop: 8, flexShrink: 0 }}
+            className="text-text-muted shrink-0" style={{ marginTop: 8 }}
           />
           <div className="flex-1">
             <InputField
@@ -412,7 +397,7 @@ export function GeneralTab() {
               }}
               placeholder="https://companion.mylab.dev"
             />
-            <span className="text-xs" style={{ color: "var(--color-text-muted)", opacity: 0.7 }}>
+            <span className="text-xs text-text-muted opacity-70">
               Used by Telegram bot to generate clickable review links
             </span>
           </div>
@@ -428,7 +413,7 @@ export function GeneralTab() {
           <Key
             size={16}
             weight="bold"
-            style={{ color: "var(--color-text-muted)", marginTop: 8, flexShrink: 0 }}
+            className="text-text-muted shrink-0" style={{ marginTop: 8 }}
           />
           <div className="flex-1">
             <InputField
@@ -446,10 +431,7 @@ export function GeneralTab() {
       <SettingSection title="Appearance" description="Customize colors and theme.">
         <button
           onClick={() => useUiStore.getState().setSettingsActiveTab("appearance")}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer"
-          style={{
-            color: "var(--color-text-secondary)",
-            border: "1px solid var(--glass-border)",
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer text-text-secondary border border-glass-border" style={{
             background: "none",
           }}
         >
@@ -484,11 +466,9 @@ export function GeneralTab() {
                 toast.error("Failed to update setting");
               }
             }}
-            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer"
-            style={{
+            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer border border-glass-border" style={{
               background: promptScanEnabled ? "var(--color-accent)" : "var(--color-bg-elevated)",
-              border: "1px solid var(--glass-border)",
-            }}
+              }}
             role="switch"
             aria-checked={promptScanEnabled}
             aria-label="Toggle prompt scanning"
@@ -507,10 +487,7 @@ export function GeneralTab() {
           href="/settings/errors"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer"
-          style={{
-            color: "var(--color-text-secondary)",
-            border: "1px solid var(--glass-border)",
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer text-text-secondary border border-glass-border" style={{
             textDecoration: "none",
             marginTop: 12,
           }}

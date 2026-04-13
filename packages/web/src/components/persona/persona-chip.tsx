@@ -76,12 +76,9 @@ export function PersonaChip({ personaId, onSwitch, disabled }: PersonaChipProps)
 
       {open && (
         <div
-          className="absolute left-0 mt-1 rounded-lg overflow-hidden"
-          style={{
+          className="absolute left-0 mt-1 rounded-lg overflow-hidden bg-bg-card border border-border" style={{
             top: "100%",
             width: 260,
-            background: "var(--color-bg-card)",
-            border: "1px solid var(--color-border)",
             boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
             zIndex: Z.popover,
             maxHeight: 320,
@@ -98,19 +95,15 @@ export function PersonaChip({ personaId, onSwitch, disabled }: PersonaChipProps)
             aria-label="Default Claude (no persona)"
           >
             <div
-              className="flex items-center justify-center rounded-full flex-shrink-0"
-              style={{
+              className="flex items-center justify-center rounded-full flex-shrink-0 text-text-muted bg-bg-elevated border border-border" style={{
                 width: 24,
                 height: 24,
-                background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
                 fontSize: 10,
-                color: "var(--color-text-muted)",
-              }}
+                }}
             >
               —
             </div>
-            <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+            <span className="text-xs font-medium text-text-secondary">
               Default Claude (no persona)
             </span>
           </button>
@@ -160,8 +153,7 @@ function PersonaOption({
             {persona.icon} {persona.name}
           </span>
           <span
-            className="text-xs truncate"
-            style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+            className="text-xs truncate text-text-muted" style={{ fontSize: 10 }}
           >
             {persona.strength}
           </span>

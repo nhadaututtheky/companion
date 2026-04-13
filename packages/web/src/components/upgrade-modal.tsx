@@ -155,18 +155,14 @@ export function UpgradeModal() {
       onClick={handleBackdrop}
     >
       <div
-        className="relative w-full max-w-md mx-4 rounded-2xl overflow-hidden"
-        style={{
-          background: "var(--color-bg-card)",
-          border: "1px solid var(--color-border)",
+        className="relative w-full max-w-md mx-4 rounded-2xl overflow-hidden bg-bg-card border border-border" style={{
           boxShadow: "0 25px 50px rgba(0,0,0,0.3)",
         }}
       >
         {/* Close */}
         <button
           onClick={handleClose}
-          className="absolute top-3 right-3 p-1.5 rounded-lg cursor-pointer transition-colors z-10"
-          style={{ color: "var(--color-text-muted)" }}
+          className="absolute top-3 right-3 p-1.5 rounded-lg cursor-pointer transition-colors z-10 text-text-muted"
           aria-label="Close"
         >
           <X size={16} weight="bold" />
@@ -182,12 +178,12 @@ export function UpgradeModal() {
             >
               <div className="flex items-center gap-2 mb-2">
                 <Sparkle size={20} weight="fill" style={{ color: "#8b5cf6" }} />
-                <h2 className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+                <h2 className="text-lg font-bold text-text-primary">
                   Upgrade to Pro
                 </h2>
               </div>
               {upgradeReason && (
-                <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                <p className="text-xs text-text-secondary">
                   {upgradeReason}
                 </p>
               )}
@@ -198,7 +194,7 @@ export function UpgradeModal() {
               {PRO_FEATURE_HIGHLIGHTS.map((f) => (
                 <div key={f.label} className="flex items-center gap-2">
                   <span style={{ color: f.color }}>{f.icon}</span>
-                  <span className="text-xs" style={{ color: "var(--color-text-primary)" }}>
+                  <span className="text-xs text-text-primary">
                     {f.label}
                   </span>
                 </div>
@@ -208,25 +204,20 @@ export function UpgradeModal() {
             {/* Pricing */}
             <div className="px-6 pb-4">
               <div
-                className="flex items-center justify-between p-4 rounded-xl"
-                style={{
-                  background: "var(--color-bg-elevated)",
-                  border: "1px solid var(--color-border)",
-                }}
+                className="flex items-center justify-between p-4 rounded-xl bg-bg-elevated border border-border"
               >
                 <div>
                   <div className="flex items-baseline gap-2">
                     <span
-                      className="text-2xl font-bold"
-                      style={{ color: "var(--color-text-primary)" }}
+                      className="text-2xl font-bold text-text-primary"
                     >
                       $5
                     </span>
-                    <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                    <span className="text-xs text-text-muted">
                       /month
                     </span>
                   </div>
-                  <div className="text-xs mt-0.5" style={{ color: "var(--color-text-secondary)" }}>
+                  <div className="text-xs mt-0.5 text-text-secondary">
                     or <strong>$39/year</strong>{" "}
                     <span style={{ color: "#34A853" }}>(save 35%)</span>
                   </div>
@@ -252,11 +243,7 @@ export function UpgradeModal() {
                   href={POLAR_MONTHLY_URL}
                   target="_blank"
                   rel="noopener"
-                  className="flex-1 flex items-center justify-center py-2.5 rounded-xl text-xs font-semibold cursor-pointer"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    color: "var(--color-text-secondary)",
-                    border: "1px solid var(--color-border)",
+                  className="flex-1 flex items-center justify-center py-2.5 rounded-xl text-xs font-semibold cursor-pointer text-text-secondary bg-bg-elevated border border-border" style={{
                     textDecoration: "none",
                   }}
                 >
@@ -264,18 +251,13 @@ export function UpgradeModal() {
                 </a>
                 <button
                   onClick={() => setStep("sepay-email")}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    color: "var(--color-text-secondary)",
-                    border: "1px solid var(--color-border)",
-                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold cursor-pointer text-text-secondary bg-bg-elevated border border-border"
                 >
                   <CreditCard size={14} weight="bold" />
                   Bank Transfer (VN)
                 </button>
               </div>
-              <p className="text-center text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
+              <p className="text-center text-xs mt-1 text-text-muted">
                 Secure checkout via Polar.sh &middot; Cancel anytime
               </p>
             </div>
@@ -288,13 +270,12 @@ export function UpgradeModal() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setStep("features")}
-                className="p-1 rounded cursor-pointer"
-                style={{ color: "var(--color-text-muted)" }}
+                className="p-1 rounded cursor-pointer text-text-muted"
                 aria-label="Back"
               >
                 <ArrowLeft size={16} weight="bold" />
               </button>
-              <h2 className="text-sm font-bold" style={{ color: "var(--color-text-primary)" }}>
+              <h2 className="text-sm font-bold text-text-primary">
                 Bank Transfer — Companion Pro (975,000đ/yr)
               </h2>
             </div>
@@ -302,8 +283,7 @@ export function UpgradeModal() {
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
                 <label
-                  className="text-xs font-medium"
-                  style={{ color: "var(--color-text-secondary)" }}
+                  className="text-xs font-medium text-text-secondary"
                 >
                   Email (to receive license key)
                 </label>
@@ -312,20 +292,14 @@ export function UpgradeModal() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="px-3 py-2.5 rounded-lg text-sm"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    color: "var(--color-text-primary)",
-                    border: "1px solid var(--color-border)",
-                  }}
+                  className="px-3 py-2.5 rounded-lg text-sm text-text-primary bg-bg-elevated border border-border"
                   onKeyDown={(e) => e.key === "Enter" && handleCreateOrder()}
                   autoFocus
                 />
               </div>
               <div className="flex flex-col gap-1.5">
                 <label
-                  className="text-xs font-medium"
-                  style={{ color: "var(--color-text-secondary)" }}
+                  className="text-xs font-medium text-text-secondary"
                 >
                   Name (optional)
                 </label>
@@ -334,12 +308,7 @@ export function UpgradeModal() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your name"
-                  className="px-3 py-2.5 rounded-lg text-sm"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    color: "var(--color-text-primary)",
-                    border: "1px solid var(--color-border)",
-                  }}
+                  className="px-3 py-2.5 rounded-lg text-sm text-text-primary bg-bg-elevated border border-border"
                   onKeyDown={(e) => e.key === "Enter" && handleCreateOrder()}
                 />
               </div>
@@ -377,13 +346,12 @@ export function UpgradeModal() {
                   pollRef.current = null;
                   setStep("sepay-email");
                 }}
-                className="p-1 rounded cursor-pointer"
-                style={{ color: "var(--color-text-muted)" }}
+                className="p-1 rounded cursor-pointer text-text-muted"
                 aria-label="Back"
               >
                 <ArrowLeft size={16} weight="bold" />
               </button>
-              <h2 className="text-sm font-bold" style={{ color: "var(--color-text-primary)" }}>
+              <h2 className="text-sm font-bold text-text-primary">
                 Scan QR to pay
               </h2>
             </div>
@@ -401,24 +369,19 @@ export function UpgradeModal() {
 
             {/* Details */}
             <div
-              className="flex flex-col gap-2 p-3 rounded-xl text-xs"
-              style={{
-                background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
-              }}
+              className="flex flex-col gap-2 p-3 rounded-xl text-xs bg-bg-elevated border border-border"
             >
               <div className="flex items-center justify-between">
-                <span style={{ color: "var(--color-text-muted)" }}>Amount</span>
-                <span className="font-bold" style={{ color: "var(--color-text-primary)" }}>
+                <span className="text-text-muted">Amount</span>
+                <span className="font-bold text-text-primary">
                   {amount.toLocaleString("vi-VN")}đ
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span style={{ color: "var(--color-text-muted)" }}>Transfer content</span>
+                <span className="text-text-muted">Transfer content</span>
                 <div className="flex items-center gap-1.5">
                   <code
-                    className="px-2 py-0.5 rounded font-bold"
-                    style={{ background: "var(--color-bg-base)", color: "#8b5cf6", fontSize: 11 }}
+                    className="px-2 py-0.5 rounded font-bold bg-bg-base" style={{ color: "#8b5cf6", fontSize: 11 }}
                   >
                     {orderCode}
                   </code>
@@ -427,8 +390,7 @@ export function UpgradeModal() {
                       navigator.clipboard.writeText(orderCode);
                       toast.success("Copied!");
                     }}
-                    className="p-1 rounded cursor-pointer"
-                    style={{ color: "var(--color-text-muted)" }}
+                    className="p-1 rounded cursor-pointer text-text-muted"
                     aria-label="Copy order code"
                   >
                     <Copy size={12} weight="bold" />
@@ -436,8 +398,8 @@ export function UpgradeModal() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span style={{ color: "var(--color-text-muted)" }}>Bank</span>
-                <span style={{ color: "var(--color-text-secondary)" }}>
+                <span className="text-text-muted">Bank</span>
+                <span className="text-text-secondary">
                   TPBank — {BANK_ACCOUNT}
                 </span>
               </div>
@@ -463,22 +425,17 @@ export function UpgradeModal() {
             >
               <Check size={28} weight="bold" style={{ color: "#34A853" }} />
             </div>
-            <h2 className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+            <h2 className="text-lg font-bold text-text-primary">
               Payment received!
             </h2>
-            <p className="text-xs text-center" style={{ color: "var(--color-text-secondary)" }}>
+            <p className="text-xs text-center text-text-secondary">
               Your license key has been sent to <strong>{email}</strong>
             </p>
 
             {licenseKey && (
               <div className="w-full flex flex-col gap-2">
                 <div
-                  className="flex items-center justify-between px-3 py-2.5 rounded-lg"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    border: "1px solid var(--color-border)",
-                    fontFamily: "var(--font-mono)",
-                  }}
+                  className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-bg-elevated border border-border font-mono"
                 >
                   <code className="text-xs font-bold" style={{ color: "#8b5cf6" }}>
                     {licenseKey}
@@ -488,14 +445,13 @@ export function UpgradeModal() {
                       navigator.clipboard.writeText(licenseKey);
                       toast.success("License key copied!");
                     }}
-                    className="p-1 rounded cursor-pointer"
-                    style={{ color: "var(--color-text-muted)" }}
+                    className="p-1 rounded cursor-pointer text-text-muted"
                     aria-label="Copy license key"
                   >
                     <Copy size={14} weight="bold" />
                   </button>
                 </div>
-                <p className="text-xs text-center" style={{ color: "var(--color-text-muted)" }}>
+                <p className="text-xs text-center text-text-muted">
                   Go to Settings → License to activate
                 </p>
               </div>
@@ -503,12 +459,7 @@ export function UpgradeModal() {
 
             <button
               onClick={handleClose}
-              className="w-full py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
-              style={{
-                background: "var(--color-bg-elevated)",
-                color: "var(--color-text-primary)",
-                border: "1px solid var(--color-border)",
-              }}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold cursor-pointer text-text-primary bg-bg-elevated border border-border"
             >
               Done
             </button>

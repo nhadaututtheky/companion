@@ -95,16 +95,14 @@ export default function ReviewPage() {
   if (!projectSlug) {
     return (
       <div
-        className="flex items-center justify-center h-screen"
-        style={{ color: "var(--color-text-secondary)" }}
+        className="flex items-center justify-center h-screen text-text-secondary"
       >
         <div className="text-center">
           <FolderOpen size={48} weight="duotone" style={{ margin: "0 auto 12px", opacity: 0.4 }} />
           <p className="text-sm">
             Add{" "}
             <code
-              className="px-1.5 py-0.5 rounded text-xs"
-              style={{ background: "var(--color-bg-elevated)" }}
+              className="px-1.5 py-0.5 rounded text-xs bg-bg-elevated"
             >
               ?project=slug&file=path.md
             </code>{" "}
@@ -118,15 +116,13 @@ export default function ReviewPage() {
   // ── Layout ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-screen" style={{ background: "var(--color-bg-base)" }}>
+    <div className="flex h-screen bg-bg-base">
       {/* Sidebar — file list */}
       <aside
-        className="flex-shrink-0 overflow-y-auto"
-        style={{
+        className="flex-shrink-0 overflow-y-auto bg-bg-card" style={{
           width: 260,
           borderRight: "1px solid var(--color-border)",
-          background: "var(--color-bg-card)",
-        }}
+          }}
       >
         {/* Header */}
         <div
@@ -138,9 +134,9 @@ export default function ReviewPage() {
             className="p-1 rounded hover:opacity-70 transition-opacity"
             aria-label="Back to dashboard"
           >
-            <ArrowLeft size={16} style={{ color: "var(--color-text-secondary)" }} />
+            <ArrowLeft size={16} className="text-text-secondary" />
           </a>
-          <span className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <span className="text-sm font-semibold text-text-primary">
             {projectSlug}
           </span>
         </div>
@@ -148,8 +144,7 @@ export default function ReviewPage() {
         {/* File list */}
         <div className="p-2">
           <div
-            className="px-2 py-1 text-xs font-medium uppercase tracking-wider"
-            style={{ color: "var(--color-text-secondary)", opacity: 0.6 }}
+            className="px-2 py-1 text-xs font-medium uppercase tracking-wider text-text-secondary" style={{ opacity: 0.6 }}
           >
             Reviewable Files
           </div>
@@ -166,15 +161,14 @@ export default function ReviewPage() {
               <File size={14} weight={activeFile === f.path ? "fill" : "regular"} />
               <span className="truncate flex-1">{f.name}</span>
               <span
-                className="text-xs"
-                style={{ color: "var(--color-text-secondary)", opacity: 0.5 }}
+                className="text-xs text-text-secondary opacity-50"
               >
                 {(f.size / 1024).toFixed(1)}K
               </span>
             </button>
           ))}
           {files.length === 0 && (
-            <p className="px-3 py-4 text-xs" style={{ color: "var(--color-text-secondary)" }}>
+            <p className="px-3 py-4 text-xs text-text-secondary">
               No .md files found
             </p>
           )}
@@ -187,8 +181,7 @@ export default function ReviewPage() {
           <div className="flex items-center justify-center py-20">
             <SpinnerGap
               size={24}
-              className="animate-spin"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="animate-spin text-text-secondary"
             />
           </div>
         )}
@@ -212,7 +205,7 @@ export default function ReviewPage() {
               style={{ borderBottom: "1px solid var(--color-border)" }}
             >
               <File size={18} weight="duotone" style={{ color: "#4285F4" }} />
-              <span className="text-sm font-mono" style={{ color: "var(--color-text-secondary)" }}>
+              <span className="text-sm font-mono text-text-secondary">
                 {activeFile}
               </span>
             </div>
@@ -224,8 +217,7 @@ export default function ReviewPage() {
 
         {!loading && !error && content === null && (
           <div
-            className="flex items-center justify-center h-full"
-            style={{ color: "var(--color-text-secondary)" }}
+            className="flex items-center justify-center h-full text-text-secondary"
           >
             <div className="text-center">
               <File size={40} weight="duotone" style={{ margin: "0 auto 12px", opacity: 0.3 }} />

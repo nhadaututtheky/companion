@@ -95,7 +95,7 @@ export function TelegramTab() {
   return (
     <div className="flex flex-col gap-5">
       {/* Top row: 2 columns — Preview + Status/Streaming */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         {/* Left column */}
         <SettingSection title="Preview" description="How your bot looks in Telegram.">
           <TelegramPreview />
@@ -117,11 +117,7 @@ export function TelegramTab() {
                   <select
                     value={expandedBotId ?? configs[0]?.id ?? ""}
                     onChange={(e) => setExpandedBotId(e.target.value)}
-                    className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
-                    style={{
-                      background: "var(--color-bg-elevated)",
-                      color: "var(--color-text-primary)",
-                    }}
+                    className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer text-text-primary bg-bg-elevated"
                   >
                     {configs.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -155,10 +151,8 @@ export function TelegramTab() {
               {/* Add bot button */}
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer w-fit"
-                style={{
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer w-fit border border-glass-border" style={{
                   background: showAddForm ? "var(--color-bg-elevated)" : "var(--color-accent)",
-                  border: "1px solid var(--glass-border)",
                   color: showAddForm ? "var(--color-text-secondary)" : "#fff",
                 }}
               >
@@ -169,11 +163,7 @@ export function TelegramTab() {
               {/* Add bot form */}
               {showAddForm && (
                 <div
-                  className="flex flex-col gap-3 p-4 rounded-xl"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    border: "1px solid var(--glass-border)",
-                  }}
+                  className="flex flex-col gap-3 p-4 rounded-xl bg-bg-elevated border border-glass-border"
                 >
                   <h3 className="text-xs font-semibold">New Bot</h3>
 
@@ -184,11 +174,7 @@ export function TelegramTab() {
                       value={newLabel}
                       onChange={(e) => setNewLabel(e.target.value)}
                       placeholder="My Claude Bot"
-                      className="px-3 py-2 rounded-lg text-sm input-bordered"
-                      style={{
-                        background: "var(--color-bg-card)",
-                        color: "var(--color-text-primary)",
-                      }}
+                      className="px-3 py-2 rounded-lg text-sm input-bordered text-text-primary bg-bg-card"
                     />
                   </div>
 
@@ -201,11 +187,7 @@ export function TelegramTab() {
                           e.target.value as "claude" | "codex" | "gemini" | "opencode" | "general",
                         )
                       }
-                      className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
-                      style={{
-                        background: "var(--color-bg-card)",
-                        color: "var(--color-text-primary)",
-                      }}
+                      className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer text-text-primary bg-bg-card"
                     >
                       <option value="claude">Claude Code — Anthropic CLI</option>
                       <option value="codex">Codex CLI — OpenAI CLI</option>
@@ -223,11 +205,7 @@ export function TelegramTab() {
                         value={newToken}
                         onChange={(e) => setNewToken(e.target.value)}
                         placeholder="1234567890:ABCdefGHI..."
-                        className="w-full px-3 py-2 pr-10 rounded-lg text-sm input-bordered font-mono"
-                        style={{
-                          background: "var(--color-bg-card)",
-                          color: "var(--color-text-primary)",
-                        }}
+                        className="w-full px-3 py-2 pr-10 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-card"
                       />
                       <button
                         type="button"
@@ -249,11 +227,7 @@ export function TelegramTab() {
                       value={newChatIds}
                       onChange={(e) => setNewChatIds(e.target.value)}
                       placeholder="-100123456789"
-                      className="px-3 py-2 rounded-lg text-sm input-bordered font-mono"
-                      style={{
-                        background: "var(--color-bg-card)",
-                        color: "var(--color-text-primary)",
-                      }}
+                      className="px-3 py-2 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-card"
                     />
                   </div>
 
@@ -266,11 +240,7 @@ export function TelegramTab() {
                       value={newUserIds}
                       onChange={(e) => setNewUserIds(e.target.value)}
                       placeholder="123456789"
-                      className="px-3 py-2 rounded-lg text-sm input-bordered font-mono"
-                      style={{
-                        background: "var(--color-bg-card)",
-                        color: "var(--color-text-primary)",
-                      }}
+                      className="px-3 py-2 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-card"
                     />
                     <span className="text-xs">
                       Get your ID: send /start to @userinfobot on Telegram

@@ -175,18 +175,14 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
       ref={popoverRef}
       role="dialog"
       aria-label="Session settings"
-      style={{
-        position: "absolute",
+      className="bg-bg-card border border-border overflow-hidden absolute" style={{
         top: "calc(100% + 4px)",
         right: 0,
         zIndex: Z.popover,
         width: 260,
         borderRadius: 10,
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
         boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-        overflow: "hidden",
-      }}
+        }}
     >
       {/* Header */}
       <div
@@ -242,7 +238,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
             <div className="flex items-start gap-2">
               <TelegramLogo
                 size={12}
-                style={{ color: "#2AABEE", marginTop: 1, flexShrink: 0 }}
+                className="shrink-0" style={{ color: "#2AABEE", marginTop: 1 }}
                 aria-hidden="true"
               />
               <div className="flex flex-col gap-0.5">
@@ -342,11 +338,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
                   if (e.key === "Enter") handleBudgetSubmit();
                 }}
                 placeholder="No limit"
-                className="flex-1 text-xs px-2 py-1 rounded bg-transparent input-bordered"
-                style={{
-                  color: "var(--color-text-primary)",
-                  fontFamily: "var(--font-mono)",
-                }}
+                className="flex-1 text-xs px-2 py-1 rounded bg-transparent input-bordered text-text-primary font-mono"
                 aria-label="Cost budget in USD"
               />
             </div>
@@ -373,7 +365,7 @@ export function SessionSettingsButton({ sessionId }: SessionSettingsButtonProps)
   const btnRef = useRef<HTMLButtonElement>(null);
 
   return (
-    <div style={{ position: "relative" }}>
+    <div className="relative">
       <button
         ref={btnRef}
         onClick={() => setOpen((v) => !v)}

@@ -107,16 +107,13 @@ function ContextStatusBar({
 
   return (
     <div
-      className="flex items-center gap-3 px-4 py-1.5"
-      style={{
-        background: "var(--color-bg-card)",
+      className="flex items-center gap-3 px-4 py-1.5 bg-bg-card" style={{
         borderBottom: "1px solid var(--color-border)",
       }}
     >
       {/* Progress bar */}
       <div
-        className="flex-1 rounded-full overflow-hidden"
-        style={{ height: 3, background: "var(--color-bg-elevated)", maxWidth: 120 }}
+        className="flex-1 rounded-full overflow-hidden bg-bg-elevated" style={{ height: 3, maxWidth: 120 }}
       >
         <div
           className="h-full rounded-full transition-all duration-500"
@@ -261,8 +258,7 @@ export function SessionPageClient({ params }: PageProps) {
       {/* ── Chat Page (slides left when preview opens) ── */}
       <div className="session-slide-page session-slide-chat">
         <div
-          className="flex flex-col"
-          style={{ height: "100vh", background: "var(--color-bg-base)" }}
+          className="flex flex-col bg-bg-base" style={{ height: "100vh" }}
         >
           <Header />
 
@@ -271,9 +267,7 @@ export function SessionPageClient({ params }: PageProps) {
             <div className="flex flex-col flex-1 min-w-0">
               {/* Sub-header */}
               <div
-                className="flex items-center gap-3 px-4 py-2.5 border-b"
-                style={{
-                  background: "var(--color-bg-card)",
+                className="flex items-center gap-3 px-4 py-2.5 border-b bg-bg-card" style={{
                   borderColor: "var(--color-border)",
                 }}
               >
@@ -329,11 +323,7 @@ export function SessionPageClient({ params }: PageProps) {
                   )}
                   <button
                     onClick={() => setShareModalOpen(true)}
-                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
-                    style={{
-                      color: "var(--color-text-muted)",
-                      border: "1px solid var(--color-border)",
-                    }}
+                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)] text-text-muted border border-border"
                     aria-label="Share session"
                     title="Share session"
                   >
@@ -393,14 +383,12 @@ export function SessionPageClient({ params }: PageProps) {
                   Preview
                   {previewArtifactCount > 0 && (
                     <span
-                      className="font-mono font-bold px-1 rounded-full leading-tight"
-                      style={{
+                      className="font-mono font-bold px-1 rounded-full leading-tight text-center" style={{
                         background: "#a855f7",
                         color: "#fff",
                         fontSize: 9,
                         minWidth: 16,
-                        textAlign: "center",
-                      }}
+                        }}
                     >
                       {previewArtifactCount}
                     </span>
@@ -463,14 +451,12 @@ export function SessionPageClient({ params }: PageProps) {
                   <PushPin size={16} weight={pinCount > 0 ? "fill" : "bold"} />
                   {pinCount > 0 && (
                     <span
-                      className="absolute -top-0.5 -right-0.5 text-xs font-mono font-bold px-1 rounded-full leading-tight"
-                      style={{
+                      className="absolute -top-0.5 -right-0.5 text-xs font-mono font-bold px-1 rounded-full leading-tight text-center" style={{
                         background: "#FBBC04",
                         color: "#000",
                         fontSize: 9,
                         minWidth: 14,
-                        textAlign: "center",
-                      }}
+                        }}
                     >
                       {pinCount}
                     </span>
@@ -495,12 +481,11 @@ export function SessionPageClient({ params }: PageProps) {
               {/* Terminal panel — collapsible bottom section */}
               {terminalOpen && (
                 <div
-                  style={{
+                  className="shrink-0" style={{
                     height: 240,
                     minHeight: 120,
                     borderTop: "1px solid var(--color-border)",
-                    flexShrink: 0,
-                  }}
+                    }}
                 >
                   <PanelErrorBoundary name="Terminal">
                     <TerminalPanel defaultCwd={session?.state?.cwd} onClose={toggleTerminal} />
@@ -523,10 +508,8 @@ export function SessionPageClient({ params }: PageProps) {
 
             {/* Right panel */}
             <aside
-              className="flex flex-col flex-shrink-0 overflow-y-auto border-l"
-              style={{
+              className="flex flex-col flex-shrink-0 overflow-y-auto border-l bg-bg-sidebar" style={{
                 width: 300,
-                background: "var(--color-bg-sidebar)",
                 borderColor: "var(--color-border)",
               }}
             >

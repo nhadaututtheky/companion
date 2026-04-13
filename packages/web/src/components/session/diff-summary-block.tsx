@@ -106,11 +106,7 @@ export function DiffSummaryBlock({ tools }: DiffSummaryBlockProps) {
 
   return (
     <div
-      className="my-2 rounded-lg overflow-hidden"
-      style={{
-        background: "var(--color-bg-elevated)",
-        border: "1px solid var(--color-border)",
-      }}
+      className="my-2 rounded-lg overflow-hidden bg-bg-elevated border border-border"
     >
       {/* Header */}
       <div
@@ -118,7 +114,7 @@ export function DiffSummaryBlock({ tools }: DiffSummaryBlockProps) {
         style={{ borderBottom: "1px solid var(--color-border)" }}
       >
         <GitDiff size={14} weight="bold" style={{ color: "#4285F4" }} />
-        <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+        <span className="text-xs font-semibold text-text-primary">
           Modified{" "}
           <span className="font-mono">
             {entries.length} file{entries.length !== 1 ? "s" : ""}
@@ -157,8 +153,8 @@ export function DiffSummaryBlock({ tools }: DiffSummaryBlockProps) {
                 <PencilSimple size={13} weight="bold" style={{ color: "#FBBC04" }} />
               )}
               <span className="flex-1 truncate font-mono" title={entry.filePath}>
-                <span style={{ color: "var(--color-text-muted)" }}>{entry.dirPath}</span>
-                <span style={{ color: "var(--color-text-primary)", fontWeight: 600 }}>
+                <span className="text-text-muted">{entry.dirPath}</span>
+                <span className="text-text-primary font-semibold">
                   {entry.fileName}
                 </span>
               </span>
@@ -174,20 +170,18 @@ export function DiffSummaryBlock({ tools }: DiffSummaryBlockProps) {
               {expanded ? (
                 <CaretDown
                   size={10}
-                  className="shrink-0"
-                  style={{ color: "var(--color-text-muted)" }}
+                  className="shrink-0 text-text-muted"
                 />
               ) : (
                 <CaretRight
                   size={10}
-                  className="shrink-0"
-                  style={{ color: "var(--color-text-muted)" }}
+                  className="shrink-0 text-text-muted"
                 />
               )}
             </button>
 
             {expanded && (
-              <div className="px-2 py-2" style={{ background: "var(--color-bg-base)" }}>
+              <div className="px-2 py-2 bg-bg-base">
                 <InlineDiff
                   filePath={entry.filePath}
                   oldContent={entry.oldContent}

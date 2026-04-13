@@ -74,11 +74,7 @@ function ThinkingSection({ blocks }: { blocks: ThinkingBlock[] }) {
 
   return (
     <div
-      className="my-2 rounded-lg overflow-hidden"
-      style={{
-        background: "var(--color-bg-elevated)",
-        border: "1px solid var(--color-border)",
-      }}
+      className="my-2 rounded-lg overflow-hidden bg-bg-elevated border border-border"
     >
       <button
         onClick={() => setExpanded(!expanded)}
@@ -160,9 +156,7 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
         return (
           <div
             key={tool.id}
-            className="rounded-lg overflow-hidden"
-            style={{
-              background: "var(--color-bg-elevated)",
+            className="rounded-lg overflow-hidden bg-bg-elevated" style={{
               border: `1px solid ${result?.isError ? "var(--color-danger, #ef4444)" : "var(--color-border)"}`,
             }}
           >
@@ -179,8 +173,7 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
               </code>
               {!expanded && summary && (
                 <span
-                  className="truncate opacity-60 ml-1 font-mono"
-                  style={{ maxWidth: 400, color: "var(--color-text-secondary)" }}
+                  className="truncate opacity-60 ml-1 font-mono text-text-secondary" style={{ maxWidth: 400 }}
                 >
                   {summary}
                 </span>
@@ -281,11 +274,7 @@ function CostBadge({ costUsd }: { costUsd: number }) {
   if (costUsd <= 0) return null;
   return (
     <span
-      className="inline-flex items-center gap-0.5 text-xs font-mono px-1.5 py-0.5 rounded ml-2"
-      style={{
-        background: "var(--color-bg-elevated)",
-        color: "var(--color-text-muted)",
-      }}
+      className="inline-flex items-center gap-0.5 text-xs font-mono px-1.5 py-0.5 rounded ml-2 text-text-muted bg-bg-elevated"
     >
       <CurrencyDollar size={10} />
       {costUsd.toFixed(4)}
@@ -345,8 +334,7 @@ function SourceBadge({ source }: { source: string }) {
   if (source === "api") {
     return (
       <span
-        className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ml-1"
-        style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-muted)" }}
+        className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ml-1 text-text-muted" style={{ background: "var(--color-bg-elevated)" }}
       >
         via API
       </span>
@@ -365,8 +353,7 @@ function SourceBadge({ source }: { source: string }) {
   // Fallback for unknown sources (debate, agent, etc.)
   return (
     <span
-      className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ml-1"
-      style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-muted)" }}
+      className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ml-1 text-text-muted" style={{ background: "var(--color-bg-elevated)" }}
     >
       via {source}
     </span>
@@ -396,10 +383,7 @@ function MessageBubble({
     return (
       <div className="flex justify-center py-2" ref={msgRef}>
         <span
-          className="text-xs px-3 py-1.5 rounded-lg text-center"
-          style={{
-            background: "var(--color-bg-elevated)",
-            color: "var(--color-text-muted)",
+          className="text-xs px-3 py-1.5 rounded-lg text-center text-text-muted bg-bg-elevated" style={{
             maxWidth: "80%",
             lineHeight: 1.5,
           }}
@@ -414,13 +398,9 @@ function MessageBubble({
     return (
       <div
         ref={msgRef}
-        className="flex gap-2 mx-4 my-1.5 p-3 rounded-xl"
-        style={{
-          background: "var(--color-bg-elevated)",
-          border: "1px solid var(--color-border)",
-        }}
+        className="flex gap-2 mx-4 my-1.5 p-3 rounded-xl bg-bg-elevated border border-border"
       >
-        <Wrench size={14} weight="bold" style={{ color: "#4285F4", flexShrink: 0, marginTop: 2 }} />
+        <Wrench size={14} weight="bold" className="shrink-0" style={{ color: "#4285F4", marginTop: 2 }} />
         <pre className="text-xs font-mono m-0 whitespace-pre-wrap">{msg.content}</pre>
       </div>
     );
@@ -474,8 +454,7 @@ function MessageBubble({
             {isUser ? msg.content : <MarkdownMessage content={msg.content} />}
             {msg.isStreaming && (
               <span
-                style={{
-                  display: "inline-block",
+                className="inline-block" style={{
                   width: 8,
                   height: 14,
                   background: "currentColor",
@@ -592,15 +571,13 @@ export function MessageFeed({ messages, sessionId = "", onScrollToRef }: Message
   return (
     <div ref={parentRef} className="flex-1 overflow-y-auto">
       <div
-        style={{
+        className="relative" style={{
           height: virtualizer.getTotalSize(),
           width: "100%",
-          position: "relative",
-        }}
+          }}
       >
         <div
-          style={{
-            position: "absolute",
+          className="absolute" style={{
             top: 0,
             left: 0,
             width: "100%",

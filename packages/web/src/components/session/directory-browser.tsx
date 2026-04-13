@@ -77,19 +77,14 @@ function SkeletonRow() {
   return (
     <div className="flex items-center gap-3 px-4 py-2.5" aria-hidden="true">
       <div
-        className="rounded"
-        style={{
+        className="rounded bg-bg-elevated shrink-0" style={{
           width: 16,
           height: 16,
-          background: "var(--color-bg-elevated)",
-          flexShrink: 0,
-        }}
+          }}
       />
       <div
-        className="rounded"
-        style={{
+        className="rounded bg-bg-elevated" style={{
           height: 12,
-          background: "var(--color-bg-elevated)",
           width: `${40 + Math.random() * 40}%`, // eslint-disable-line react-hooks/purity
         }}
       />
@@ -202,12 +197,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
         {canGoBack && (
           <button
             onClick={navigateBack}
-            className="flex items-center justify-center p-1.5 rounded-md transition-colors cursor-pointer"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-secondary)",
-              border: "1px solid var(--color-border)",
-            }}
+            className="flex items-center justify-center p-1.5 rounded-md transition-colors cursor-pointer text-text-secondary bg-bg-elevated border border-border"
             aria-label="Go back"
           >
             <ArrowLeft size={14} weight="bold" aria-hidden="true" />
@@ -220,13 +210,11 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
             setEntries([]);
             setHistory([]);
           }}
-          className="flex items-center justify-center p-1.5 rounded-md transition-colors cursor-pointer"
-          style={{
+          className="flex items-center justify-center p-1.5 rounded-md transition-colors cursor-pointer border border-border" style={{
             background: currentPath === null ? "var(--color-bg-hover)" : "var(--color-bg-elevated)",
             color:
               currentPath === null ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-            border: "1px solid var(--color-border)",
-          }}
+            }}
           aria-label="Go to drives / root folders"
         >
           <House size={14} weight="bold" aria-hidden="true" />
@@ -253,8 +241,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
 
         {error && !loading && (
           <div
-            className="flex items-center justify-center h-full text-sm"
-            style={{ color: "var(--color-danger)" }}
+            className="flex items-center justify-center h-full text-sm text-danger"
           >
             {error}
           </div>
@@ -275,7 +262,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
                   (e.currentTarget as HTMLButtonElement).style.background = "transparent";
                 }}
               >
-                <House size={16} style={{ color: "#4285F4", flexShrink: 0 }} aria-hidden="true" />
+                <House size={16} className="shrink-0" style={{ color: "#4285F4" }} aria-hidden="true" />
                 <span className="text-sm font-medium flex-1 truncate">{root.label}</span>
                 <span className="text-xs font-mono truncate max-w-36">{root.path}</span>
               </button>
@@ -307,7 +294,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
               >
                 <FolderSimple
                   size={16}
-                  style={{ color: "#FBBC04", flexShrink: 0 }}
+                  className="shrink-0" style={{ color: "#FBBC04" }}
                   aria-hidden="true"
                 />
                 <span className="text-sm flex-1 truncate">{entry.name}</span>

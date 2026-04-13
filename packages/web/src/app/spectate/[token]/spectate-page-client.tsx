@@ -271,8 +271,7 @@ export function SpectatePageClient({ params }: { params: Promise<{ token: string
             }}
           >
             <div
-              className="rounded-xl px-3 py-2 text-sm"
-              style={{
+              className="rounded-xl px-3 py-2 text-sm whitespace-pre-wrap" style={{
                 background:
                   msg.role === "user"
                     ? "#2196f320"
@@ -283,8 +282,7 @@ export function SpectatePageClient({ params }: { params: Promise<{ token: string
                 border: "1px solid #2a3f52",
                 maxWidth: "80vw",
                 wordBreak: "break-word",
-                whiteSpace: "pre-wrap",
-              }}
+                }}
             >
               {msg.content}
             </div>

@@ -199,10 +199,7 @@ export function MessageComposer({
       }}
     >
       <div
-        className="flex flex-col rounded-xl px-4 py-2.5"
-        style={{
-          position: "relative",
-          background: "var(--color-bg-elevated)",
+        className="flex flex-col rounded-xl px-4 py-2.5 bg-bg-elevated relative" style={{
           border: isDragOver
             ? "1.5px solid var(--color-accent)"
             : isFocused
@@ -216,20 +213,18 @@ export function MessageComposer({
       >
         {isDragOver && (
           <div
-            style={{
-              position: "absolute",
+            className="absolute flex" style={{
               inset: 0,
               background: "rgba(66, 133, 244, 0.08)",
               border: "2px dashed var(--color-accent)",
               borderRadius: 12,
-              display: "flex",
               alignItems: "center",
               justifyContent: "center",
               zIndex: Z.dropdown,
               pointerEvents: "none",
             }}
           >
-            <span style={{ color: "var(--color-accent)", fontWeight: 600, fontSize: 13 }}>
+            <span className="text-accent font-semibold" style={{ fontSize: 13 }}>
               Drop file to attach
             </span>
           </div>
@@ -285,9 +280,7 @@ export function MessageComposer({
                     : placeholder
             }
             rows={1}
-            className="flex-1 resize-none bg-transparent text-sm leading-relaxed composer-textarea"
-            style={{
-              color: "var(--color-text-primary)",
+            className="flex-1 resize-none bg-transparent text-sm leading-relaxed composer-textarea text-text-primary" style={{
               maxHeight: 200,
               minHeight: 22,
               fontFamily: "var(--font-body)",
@@ -370,7 +363,7 @@ export function MessageComposer({
             disabled={disabled}
           />
         )}
-        <p className="flex-1 text-center text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <p className="flex-1 text-center text-xs text-text-muted">
           {listening ? (
             <span style={{ color: "#EA4335" }}>Recording... click mic to stop</span>
           ) : isRunning ? (

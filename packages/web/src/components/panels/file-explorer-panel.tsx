@@ -65,17 +65,13 @@ function CodeViewer({ content, ext }: { content: string; ext: string }) {
 
   return (
     <div
-      className="flex overflow-auto"
-      style={{ fontFamily: "var(--font-mono)", fontSize: 12, lineHeight: 1.6 }}
+      className="flex overflow-auto font-mono" style={{ fontSize: 12, lineHeight: 1.6 }}
     >
       {/* Line numbers gutter */}
       <div
-        className="shrink-0 text-right select-none pr-3 py-2"
-        style={{
+        className="shrink-0 text-right select-none pr-3 py-2 text-text-muted bg-bg-elevated" style={{
           width: gutterWidth,
-          color: "var(--color-text-muted)",
           borderRight: "1px solid var(--color-border)",
-          background: "var(--color-bg-elevated)",
           opacity: 0.6,
         }}
       >
@@ -286,12 +282,12 @@ function TreeNode({
           <span style={{ width: 10 }} />
         )}
         {entry.isDir ? (
-          <FolderOpen size={13} weight="regular" style={{ color: "#FBBC04", flexShrink: 0 }} />
+          <FolderOpen size={13} weight="regular" className="shrink-0" style={{ color: "#FBBC04" }} />
         ) : (
           fileIcon(entry.ext ?? "", 13)
         )}
         <span className="truncate">{entry.name}</span>
-        {loading && <span style={{ color: "var(--color-text-muted)", fontSize: 10 }}>...</span>}
+        {loading && <span className="text-text-muted" style={{ fontSize: 10 }}>...</span>}
       </button>
 
       {expanded && children && (
@@ -453,9 +449,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
     <div className="flex flex-col h-full">
       {/* Top bar */}
       <div
-        className="flex items-center gap-2 px-3 py-2 shrink-0"
-        style={{
-          background: "var(--color-bg-card)",
+        className="flex items-center gap-2 px-3 py-2 shrink-0 bg-bg-card" style={{
           borderBottom: "1px solid var(--glass-border)",
         }}
       >
@@ -465,11 +459,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
           onChange={(e) => {
             setCurrentRoot(e.target.value);
           }}
-          className="text-xs px-2 py-1 rounded cursor-pointer"
-          style={{
-            background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
-            color: "var(--color-text-primary)",
+          className="text-xs px-2 py-1 rounded cursor-pointer text-text-primary bg-bg-elevated border border-border" style={{
             maxWidth: 120,
           }}
           aria-label="Root directory"
@@ -490,9 +480,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
                 onClick={() => {
                   setCurrentRoot(bc.path);
                 }}
-                className="truncate cursor-pointer hover:underline"
-                style={{
-                  color: "var(--color-text-secondary)",
+                className="truncate cursor-pointer hover:underline text-text-secondary" style={{
                   background: "none",
                   border: "none",
                   padding: 0,
@@ -508,13 +496,11 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
         <div className="relative">
           <MagnifyingGlass
             size={12}
-            style={{
-              position: "absolute",
+            className="text-text-muted absolute" style={{
               left: 6,
               top: "50%",
               transform: "translateY(-50%)",
-              color: "var(--color-text-muted)",
-            }}
+              }}
             aria-hidden="true"
           />
           <input
@@ -522,12 +508,9 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Filter..."
-            className="text-xs pl-6 pr-2 py-1 rounded input-bordered"
-            style={{
+            className="text-xs pl-6 pr-2 py-1 rounded input-bordered text-text-primary bg-bg-elevated" style={{
               width: 120,
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-primary)",
-            }}
+              }}
             aria-label="Filter files"
           />
         </div>
@@ -582,9 +565,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
             <>
               {/* File header */}
               <div
-                className="flex items-center justify-between px-3 py-1.5 shrink-0"
-                style={{
-                  background: "var(--color-bg-elevated)",
+                className="flex items-center justify-between px-3 py-1.5 shrink-0 bg-bg-elevated" style={{
                   borderBottom: "1px solid var(--glass-border)",
                 }}
               >
@@ -637,15 +618,12 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
 
               {/* Footer: full path */}
               <div
-                className="px-3 py-1 shrink-0"
-                style={{
+                className="px-3 py-1 shrink-0 bg-bg-elevated" style={{
                   borderTop: "1px solid var(--glass-border)",
-                  background: "var(--color-bg-elevated)",
-                }}
+                  }}
               >
                 <span
-                  className="font-mono"
-                  style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                  className="font-mono text-text-muted" style={{ fontSize: 10 }}
                 >
                   {activeTab.path}
                 </span>

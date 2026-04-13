@@ -133,11 +133,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
       {/* Header — click to expand/collapse */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="flex items-center justify-between w-full cursor-pointer px-3 py-2 rounded-lg transition-colors"
-        style={{
-          background: "var(--color-bg-elevated)",
-          border: "1px solid var(--color-border)",
-        }}
+        className="flex items-center justify-between w-full cursor-pointer px-3 py-2 rounded-lg transition-colors bg-bg-elevated border border-border"
       >
         <span className="flex items-center gap-2">
           <span className="text-sm font-medium">{botLabel}</span>
@@ -173,11 +169,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
                   value={targetChatId}
                   onChange={(e) => setTargetChatId(e.target.value)}
                   placeholder="-100123456789"
-                  className="px-3 py-2 rounded-lg text-sm input-bordered font-mono"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    color: "var(--color-text-primary)",
-                  }}
+                  className="px-3 py-2 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-elevated"
                 />
               </div>
 
@@ -191,11 +183,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
                   value={targetTopicId}
                   onChange={(e) => setTargetTopicId(e.target.value)}
                   placeholder="12345"
-                  className="px-3 py-2 rounded-lg text-sm input-bordered font-mono"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    color: "var(--color-text-primary)",
-                  }}
+                  className="px-3 py-2 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-elevated"
                 />
               </div>
 
@@ -207,11 +195,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
                   onChange={(e) =>
                     setMessageFormat(e.target.value as "compact" | "full" | "code_only")
                   }
-                  className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    color: "var(--color-text-primary)",
-                  }}
+                  className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer text-text-primary bg-bg-elevated"
                 >
                   <option value="compact">Compact — brief summaries</option>
                   <option value="full">Full — complete message content</option>
@@ -227,12 +211,10 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
                     <button
                       key={key}
                       onClick={() => toggleEvent(key)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-                      style={{
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer border border-border" style={{
                         background: events.has(key)
                           ? "var(--color-accent)"
                           : "var(--color-bg-elevated)",
-                        border: "1px solid var(--color-border)",
                         color: events.has(key) ? "#fff" : "var(--color-text-secondary)",
                       }}
                       aria-pressed={events.has(key)}

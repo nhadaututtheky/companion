@@ -193,19 +193,15 @@ export function SessionHeader({
       >
         {/* Left: status dot + project name */}
         <span
-          style={{
-            display: "inline-block",
+          className="rounded-full shrink-0 inline-block" style={{
             width: 7,
             height: 7,
-            borderRadius: "50%",
             background: dotColor,
-            flexShrink: 0,
-          }}
+            }}
         />
         {shortId && (
           <span
-            className="text-xs font-mono px-1.5 py-0.5 rounded-full flex-shrink-0"
-            style={{ background: "var(--color-bg-elevated)", color: "var(--color-success)" }}
+            className="text-xs font-mono px-1.5 py-0.5 rounded-full flex-shrink-0 text-success" style={{ background: "var(--color-bg-elevated)" }}
             title={`@${shortId} — mention this session in other chats`}
           >
             @{shortId}
@@ -214,9 +210,7 @@ export function SessionHeader({
         {editing ? (
           <input
             ref={inputRef}
-            className="text-sm font-semibold flex-1 bg-transparent outline-none border-b"
-            style={{
-              color: "var(--color-text-primary)",
+            className="text-sm font-semibold flex-1 bg-transparent outline-none border-b text-text-primary" style={{
               borderColor: "var(--color-border)",
               minWidth: 0,
             }}
@@ -242,15 +236,13 @@ export function SessionHeader({
               <TelegramLogo
                 size={13}
                 weight="fill"
-                style={{ color: "#2AABEE", flexShrink: 0 }}
+                className="shrink-0" style={{ color: "#2AABEE" }}
                 aria-label="Telegram session"
               />
             )}
             {isThinking && (
               <span
-                className="text-xs font-normal flex-shrink-0"
-                style={{
-                  color: "var(--color-accent)",
+                className="text-xs font-normal flex-shrink-0 text-accent" style={{
                   animation: "pulse 1.5s ease-in-out infinite",
                 }}
               >
@@ -264,11 +256,9 @@ export function SessionHeader({
         <div ref={modelDropdownRef} className="relative flex-shrink-0">
           <button
             onClick={() => isActive && onSetModel && setModelDropdownOpen(!modelDropdownOpen)}
-            className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium transition-colors cursor-pointer"
-            style={{
+            className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium transition-colors cursor-pointer font-mono" style={{
               background: modelDropdownOpen ? "var(--color-accent)" : "var(--color-bg-elevated)",
               color: modelDropdownOpen ? "#fff" : "var(--color-text-muted)",
-              fontFamily: "var(--font-mono)",
               border: modelDropdownOpen ? "1px solid var(--color-accent)" : "1px solid transparent",
             }}
             title={isActive && onSetModel ? "Click to switch model" : modelName}
@@ -293,16 +283,13 @@ export function SessionHeader({
           {/* Model dropdown */}
           {modelDropdownOpen && (
             <div
-              style={{
-                position: "absolute",
+              className="rounded-radius-lg border border-glass-border absolute" style={{
                 top: "calc(100% + 4px)",
                 right: 0,
                 zIndex: Z.popover,
                 background: "var(--glass-bg-heavy)",
                 backdropFilter: "blur(var(--glass-blur))",
                 WebkitBackdropFilter: "blur(var(--glass-blur))",
-                border: "1px solid var(--glass-border)",
-                borderRadius: "var(--radius-lg)",
                 boxShadow: "var(--shadow-float)",
                 minWidth: 180,
                 padding: "4px",
@@ -343,13 +330,12 @@ export function SessionHeader({
                   >
                     <span>{opt.emoji}</span>
                     <span className="font-semibold">{opt.label}</span>
-                    <span style={{ color: "var(--color-text-muted)" }}>{opt.desc}</span>
+                    <span className="text-text-muted">{opt.desc}</span>
                     {isCurrent && (
                       <Check
                         size={12}
                         weight="bold"
-                        className="ml-auto"
-                        style={{ color: "var(--color-accent)" }}
+                        className="ml-auto text-accent"
                       />
                     )}
                   </button>
@@ -400,8 +386,7 @@ export function SessionHeader({
         {isActive && onSpawnClick && (
           <button
             onClick={onSpawnClick}
-            className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"
-            style={{ color: "var(--color-text-muted)" }}
+            className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer text-text-muted"
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.color = "var(--color-accent)";
             }}
@@ -459,11 +444,10 @@ export function SessionHeader({
       {/* Context meter — thin progress bar */}
       {contextPercent !== undefined && contextBarColor && (
         <div
-          style={{
+          className="shrink-0" style={{
             height: 2,
             background: "var(--glass-border)",
-            flexShrink: 0,
-          }}
+            }}
           title={contextTooltip}
           aria-label={contextTooltip}
           role="progressbar"
@@ -485,10 +469,8 @@ export function SessionHeader({
       {/* Compact warning banner */}
       {contextPercent !== undefined && contextPercent >= 80 && (
         <div
-          className="flex items-center justify-center px-3 py-0.5 flex-shrink-0 text-xs font-medium"
-          style={{
+          className="flex items-center justify-center px-3 py-0.5 flex-shrink-0 text-xs font-medium text-danger" style={{
             background: "color-mix(in srgb, var(--color-danger) 6%, transparent)",
-            color: "var(--color-danger)",
             borderBottom: "1px solid var(--glass-border)",
             fontSize: 10,
           }}

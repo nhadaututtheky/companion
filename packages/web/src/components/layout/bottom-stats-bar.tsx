@@ -60,9 +60,7 @@ export function BottomStatsBar() {
   return (
     <div
       ref={containerRef}
-      className="hidden sm:flex"
-      style={{
-        position: "absolute",
+      className="hidden sm:flex absolute" style={{
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
@@ -73,13 +71,10 @@ export function BottomStatsBar() {
       {expanded ? (
         /* ── Expanded: simple active session summary ── */
         <div
-          className="flex items-stretch"
-          style={{
+          className="flex items-stretch rounded-radius-xl border border-glass-border" style={{
             background: "var(--glass-bg-heavy)",
             backdropFilter: "blur(var(--glass-blur))",
             WebkitBackdropFilter: "blur(var(--glass-blur))",
-            border: "1px solid var(--glass-border)",
-            borderRadius: "var(--radius-xl)",
             boxShadow: "var(--shadow-float)",
             padding: "2px 6px",
             animation: "slideUpFade 200ms ease forwards",
@@ -96,8 +91,7 @@ export function BottomStatsBar() {
 
           <Link
             href="/analytics"
-            className="flex items-center gap-1 px-3 py-2 text-xs font-medium cursor-pointer"
-            style={{ color: "var(--color-accent)" }}
+            className="flex items-center gap-1 px-3 py-2 text-xs font-medium cursor-pointer text-accent"
             title="View full analytics"
           >
             Full <ArrowRight size={10} weight="bold" />
@@ -107,8 +101,7 @@ export function BottomStatsBar() {
 
           <button
             onClick={() => setExpanded(false)}
-            className="flex items-center justify-center px-2 py-2 cursor-pointer"
-            style={{ color: "var(--color-text-muted)" }}
+            className="flex items-center justify-center px-2 py-2 cursor-pointer text-text-muted"
             aria-label="Close stats"
           >
             <X size={12} weight="bold" />
@@ -118,20 +111,14 @@ export function BottomStatsBar() {
         /* ── Collapsed watermark pill ── */
         <button
           onClick={() => setExpanded(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 cursor-pointer transition-all"
-          style={{
+          className="flex items-center gap-1.5 px-3 py-1.5 cursor-pointer transition-all text-text-muted rounded-radius-pill border border-glass-border font-semibold font-mono" style={{
             background: "var(--glass-bg)",
             backdropFilter: "blur(4px)",
             WebkitBackdropFilter: "blur(4px)",
-            border: "1px solid var(--glass-border)",
-            borderRadius: "var(--radius-pill)",
             opacity: 0.4,
             transition: "opacity 200ms ease, transform 200ms ease",
-            fontFamily: "var(--font-mono)",
             fontSize: 12,
-            fontWeight: 600,
-            color: "var(--color-text-muted)",
-          }}
+            }}
           onMouseEnter={(e) => {
             e.currentTarget.style.opacity = "0.85";
             e.currentTarget.style.transform = "scale(1.05)";
@@ -157,14 +144,12 @@ function StatBlock({ label, value, accent }: { label: string; value: string; acc
   return (
     <div className="flex flex-col items-center gap-0.5 px-3 py-2">
       <span
-        className="text-[10px] font-medium uppercase tracking-wider"
-        style={{ color: "var(--color-text-muted)" }}
+        className="text-[10px] font-medium uppercase tracking-wider text-text-muted"
       >
         {label}
       </span>
       <span
-        className="text-sm font-bold tabular-nums leading-none"
-        style={{ fontFamily: "var(--font-mono)", color: accent ?? "var(--color-text-primary)" }}
+        className="text-sm font-bold tabular-nums leading-none font-mono" style={{ color: accent ?? "var(--color-text-primary)" }}
       >
         {value}
       </span>

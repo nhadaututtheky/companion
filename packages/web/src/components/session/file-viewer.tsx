@@ -69,17 +69,13 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
 
   return (
     <div
-      className="flex flex-col h-full"
-      style={{
-        background: "var(--color-bg-base)",
+      className="flex flex-col h-full bg-bg-base" style={{
         borderLeft: "1px solid var(--color-border)",
       }}
     >
       {/* Header */}
       <div
-        className="flex items-center justify-between px-3 py-2 shrink-0"
-        style={{
-          background: "var(--color-bg-elevated)",
+        className="flex items-center justify-between px-3 py-2 shrink-0 bg-bg-elevated" style={{
           borderBottom: "1px solid var(--color-border)",
         }}
       >
@@ -160,15 +156,12 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
 
       {/* Footer — file path */}
       <div
-        className="px-3 py-1.5 shrink-0"
-        style={{
+        className="px-3 py-1.5 shrink-0 bg-bg-elevated" style={{
           borderTop: "1px solid var(--color-border)",
-          background: "var(--color-bg-elevated)",
-        }}
+          }}
       >
         <span
-          className="text-xs font-mono truncate block"
-          style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+          className="text-xs font-mono truncate block text-text-muted" style={{ fontSize: 10 }}
           title={filePath}
         >
           {filePath}

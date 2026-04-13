@@ -79,20 +79,16 @@ export function ModelBar({
 
   return (
     <div
-      className="flex items-center gap-1.5 px-1 py-0.5 text-xs"
-      style={{ color: "var(--color-text-muted)" }}
+      className="flex items-center gap-1.5 px-1 py-0.5 text-xs text-text-muted"
     >
       {/* Main session model chip */}
       <span
-        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-medium"
-        style={{
-          background: "var(--color-bg-elevated)",
-          color: "var(--color-text-secondary)",
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-medium text-text-secondary bg-bg-elevated" style={{
           fontSize: 11,
         }}
         title={`Main session: ${mainModel}`}
       >
-        <Lightning size={11} weight="fill" style={{ color: "var(--color-accent)" }} />
+        <Lightning size={11} weight="fill" className="text-accent" />
         {mainModelLabel}
       </span>
 
@@ -113,9 +109,8 @@ export function ModelBar({
             {persona && <PersonaAvatar persona={persona} size={14} showBadge={false} />}
             {p.free && (
               <span
-                style={{
+                className="font-bold" style={{
                   fontSize: 9,
-                  fontWeight: 700,
                   padding: "0 3px",
                   borderRadius: 3,
                   background: "#10b98120",
@@ -142,9 +137,7 @@ export function ModelBar({
         <button
           onClick={handleOpenDropdown}
           disabled={disabled}
-          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md transition-colors cursor-pointer disabled:opacity-40"
-          style={{
-            color: "var(--color-text-muted)",
+          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md transition-colors cursor-pointer disabled:opacity-40 text-text-muted" style={{
             fontSize: 11,
           }}
           onMouseEnter={(e) => {

@@ -57,11 +57,10 @@ export function FileTabBar({ tabs, activeTabId, onSwitch, onClose }: FileTabBarP
 
   return (
     <div
-      className="flex overflow-x-auto shrink-0"
+      className="flex overflow-x-auto shrink-0 bg-bg-elevated"
       role="tablist"
       aria-label="Open file tabs"
-      style={{
-        background: "var(--color-bg-elevated)",
+       style={{
         borderBottom: "1px solid var(--glass-border)",
         scrollbarWidth: "none",
       }}
@@ -101,7 +100,7 @@ export function FileTabBar({ tabs, activeTabId, onSwitch, onClose }: FileTabBarP
             </span>
 
             {/* Name */}
-            <span className="truncate" style={{ maxWidth: 100, fontFamily: "var(--font-mono)" }}>
+            <span className="truncate font-mono" style={{ maxWidth: 100 }}>
               {tab.name}
             </span>
 
@@ -114,12 +113,10 @@ export function FileTabBar({ tabs, activeTabId, onSwitch, onClose }: FileTabBarP
                 e.stopPropagation();
                 onClose(tab.id);
               }}
-              className="shrink-0 flex items-center justify-center rounded cursor-pointer"
-              style={{
+              className="shrink-0 flex items-center justify-center rounded cursor-pointer text-text-muted" style={{
                 width: 14,
                 height: 14,
                 opacity: isActive ? 1 : 0,
-                color: "var(--color-text-muted)",
                 transition: "opacity 150ms ease",
               }}
               // Show close button for all tabs on hover via CSS class trick

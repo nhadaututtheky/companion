@@ -34,7 +34,7 @@ const STEP_STATUS_ICON: Record<string, React.ReactNode> = {
   completed: <CheckCircle size={16} weight="fill" style={{ color: "#34a853" }} />,
   failed: <XCircle size={16} weight="fill" style={{ color: "#ea4335" }} />,
   skipped: (
-    <Clock size={16} weight="light" style={{ color: "var(--color-text-muted)", opacity: 0.4 }} />
+    <Clock size={16} weight="light" className="text-text-muted" style={{ opacity: 0.4 }} />
   ),
 };
 
@@ -92,14 +92,13 @@ export function WorkflowPageClient({ params }: PageProps) {
   if (loading) {
     return (
       <div
-        className="flex flex-col"
-        style={{ height: "100vh", background: "var(--color-bg-base)" }}
+        className="flex flex-col bg-bg-base" style={{ height: "100vh" }}
       >
         <Header />
         <div className="flex justify-center items-center flex-1">
           <CircleNotch
             size={28}
-            style={{ animation: "spin 1s linear infinite", color: "var(--color-text-muted)" }}
+            className="text-text-muted" style={{ animation: "spin 1s linear infinite" }}
           />
         </div>
       </div>
@@ -109,8 +108,7 @@ export function WorkflowPageClient({ params }: PageProps) {
   if (!workflow || !workflow.workflowState) {
     return (
       <div
-        className="flex flex-col"
-        style={{ height: "100vh", background: "var(--color-bg-base)" }}
+        className="flex flex-col bg-bg-base" style={{ height: "100vh" }}
       >
         <Header />
         <div className="flex flex-col items-center justify-center flex-1 gap-3">
@@ -128,7 +126,7 @@ export function WorkflowPageClient({ params }: PageProps) {
   const isActive = workflow.status === "active";
 
   return (
-    <div className="flex flex-col" style={{ height: "100vh", background: "var(--color-bg-base)" }}>
+    <div className="flex flex-col bg-bg-base" style={{ height: "100vh" }}>
       <Header />
       <div
         className="flex-1 overflow-auto"
@@ -159,8 +157,7 @@ export function WorkflowPageClient({ params }: PageProps) {
           )}
           <button
             onClick={load}
-            className="p-2 rounded-lg cursor-pointer"
-            style={{ background: "none", border: "none", color: "var(--color-text-muted)" }}
+            className="p-2 rounded-lg cursor-pointer text-text-muted" style={{ background: "none", border: "none" }}
             aria-label="Refresh"
           >
             <ArrowClockwise size={16} />
@@ -169,16 +166,14 @@ export function WorkflowPageClient({ params }: PageProps) {
 
         {/* Pipeline visualization */}
         <div
-          className="rounded-xl p-5 mb-6"
-          style={{ background: "var(--color-bg-card)", border: "1px solid var(--color-border)" }}
+          className="rounded-xl p-5 mb-6 bg-bg-card border border-border"
         >
           <div className="flex items-center gap-0">
             {state.steps.map((step, i) => (
               <div key={i} className="flex items-center" style={{ flex: 1 }}>
                 {/* Step node */}
                 <div
-                  className="flex flex-col items-center"
-                  style={{ flex: 1, position: "relative" }}
+                  className="flex flex-col items-center relative" style={{ flex: 1 }}
                 >
                   {/* Circle */}
                   <div
@@ -197,8 +192,7 @@ export function WorkflowPageClient({ params }: PageProps) {
                   </div>
                   <span className="text-xs font-semibold">{step.role}</span>
                   <span
-                    className="text-xs"
-                    style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                    className="text-xs text-text-muted" style={{ fontSize: 10 }}
                   >
                     {step.status}
                   </span>
@@ -206,14 +200,13 @@ export function WorkflowPageClient({ params }: PageProps) {
                 {/* Arrow */}
                 {i < state.steps.length - 1 && (
                   <div
-                    style={{
+                    className="shrink-0" style={{
                       width: 32,
                       height: 2,
                       background:
                         step.status === "completed"
                           ? STEP_STATUS_COLOR.completed
                           : "var(--color-border)",
-                      flexShrink: 0,
                       marginBottom: 24,
                     }}
                   />
@@ -228,9 +221,7 @@ export function WorkflowPageClient({ params }: PageProps) {
           {state.steps.map((step, i) => (
             <div
               key={i}
-              className="rounded-xl px-4 py-3"
-              style={{
-                background: "var(--color-bg-card)",
+              className="rounded-xl px-4 py-3 bg-bg-card" style={{
                 border: `1px solid ${step.status === "running" ? STEP_STATUS_COLOR.running + "60" : "var(--color-border)"}`,
               }}
             >
@@ -242,8 +233,7 @@ export function WorkflowPageClient({ params }: PageProps) {
                 {step.sessionId && (
                   <Link
                     href={`/sessions/${step.sessionId}`}
-                    className="text-xs font-mono"
-                    style={{ color: "var(--color-accent)", marginLeft: "auto" }}
+                    className="text-xs font-mono text-accent" style={{ marginLeft: "auto" }}
                   >
                     View session →
                   </Link>
@@ -258,13 +248,9 @@ export function WorkflowPageClient({ params }: PageProps) {
               )}
               {step.output && (
                 <div
-                  className="mt-2 text-xs rounded-lg p-3"
-                  style={{
-                    background: "var(--color-bg-base)",
-                    color: "var(--color-text-secondary)",
+                  className="mt-2 text-xs rounded-lg p-3 text-text-secondary bg-bg-base whitespace-pre-wrap" style={{
                     maxHeight: 120,
                     overflow: "auto",
-                    whiteSpace: "pre-wrap",
                     wordBreak: "break-word",
                   }}
                 >
@@ -277,8 +263,7 @@ export function WorkflowPageClient({ params }: PageProps) {
 
         {/* Summary card */}
         <div
-          className="rounded-xl px-4 py-3 mt-4"
-          style={{ background: "var(--color-bg-card)", border: "1px solid var(--color-border)" }}
+          className="rounded-xl px-4 py-3 mt-4 bg-bg-card border border-border"
         >
           <div className="flex items-center gap-4 text-xs">
             <span>

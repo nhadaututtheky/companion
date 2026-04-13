@@ -81,20 +81,14 @@ interface KpiCardProps {
 function KpiCard({ label, value, sub, icon, accent = "#4285f4" }: KpiCardProps) {
   return (
     <div
-      className="flex flex-col gap-1 rounded-lg p-3 flex-1 min-w-0"
-      style={{
-        background: "var(--color-bg-elevated)",
-        border: "1px solid var(--glass-border)",
-      }}
+      className="flex flex-col gap-1 rounded-lg p-3 flex-1 min-w-0 bg-bg-elevated border border-glass-border"
     >
       <div className="flex items-center justify-between gap-1">
         <span className="text-xs">{label}</span>
         <span style={{ color: accent, opacity: 0.7 }}>{icon}</span>
       </div>
       <span
-        className="text-lg font-bold leading-tight"
-        style={{
-          color: "var(--color-text-primary)",
+        className="text-lg font-bold leading-tight text-text-primary" style={{
           fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
         }}
       >
@@ -137,8 +131,7 @@ export function StatsPanel({ onClose }: StatsPanelProps) {
 
   return (
     <div
-      className="flex flex-col h-full"
-      style={{ background: "var(--color-bg-card)", color: "var(--color-text-primary)" }}
+      className="flex flex-col h-full text-text-primary" style={{ background: "var(--color-bg-card)" }}
     >
       {/* Header */}
       <div
@@ -241,12 +234,7 @@ export function StatsPanel({ onClose }: StatsPanelProps) {
             {/* Link to full analytics */}
             <Link
               href="/analytics"
-              className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-              style={{
-                color: "var(--color-accent)",
-                background: "var(--color-bg-elevated)",
-                border: "1px solid var(--glass-border)",
-              }}
+              className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-accent bg-bg-elevated border border-glass-border"
             >
               <ChartBar size={12} weight="bold" aria-hidden="true" />
               View full analytics
@@ -266,12 +254,10 @@ function ActivityHeatmap({ data }: { data: StatsData["dailyActivity"] }) {
 
   return (
     <div
-      className="rounded-lg p-3"
-      style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--glass-border)" }}
+      className="rounded-lg p-3 bg-bg-elevated border border-glass-border"
     >
       <div
-        style={{
-          display: "grid",
+        className="grid" style={{
           gridTemplateColumns: "repeat(10, 1fr)",
           gap: 3,
         }}
@@ -301,14 +287,12 @@ function ActivityHeatmap({ data }: { data: StatsData["dailyActivity"] }) {
         {[0, 1, 3, 5, 7].map((n) => (
           <div
             key={n}
-            style={{
+            className="border border-border shrink-0" style={{
               width: 10,
               height: 10,
               borderRadius: 2,
               background: heatmapColor(n),
-              border: "1px solid var(--color-border)",
-              flexShrink: 0,
-            }}
+              }}
             aria-hidden="true"
           />
         ))}
@@ -326,8 +310,7 @@ function ModelBreakdown({ breakdown }: { breakdown: StatsData["modelBreakdown"] 
 
   return (
     <div
-      className="flex flex-col gap-2 rounded-lg p-3"
-      style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--glass-border)" }}
+      className="flex flex-col gap-2 rounded-lg p-3 bg-bg-elevated border border-glass-border"
     >
       {breakdown.map((m) => {
         const pct = total > 0 ? Math.round((m.count / total) * 100) : 0;
@@ -336,9 +319,7 @@ function ModelBreakdown({ breakdown }: { breakdown: StatsData["modelBreakdown"] 
           <div key={m.model} className="flex flex-col gap-1">
             <div className="flex items-center justify-between">
               <span
-                className="text-xs font-semibold"
-                style={{
-                  color: "var(--color-text-primary)",
+                className="text-xs font-semibold text-text-primary" style={{
                   fontFamily: "var(--font-mono, monospace)",
                 }}
               >
@@ -349,8 +330,7 @@ function ModelBreakdown({ breakdown }: { breakdown: StatsData["modelBreakdown"] 
               </span>
             </div>
             <div
-              className="w-full rounded-full overflow-hidden"
-              style={{ height: 6, background: "var(--color-bg-card)" }}
+              className="w-full rounded-full overflow-hidden bg-bg-card" style={{ height: 6 }}
             >
               <div
                 style={{
@@ -378,23 +358,20 @@ function TopProjects({ projects }: { projects: StatsData["topProjects"] }) {
 
   return (
     <div
-      className="flex flex-col gap-1.5 rounded-lg p-3"
-      style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--glass-border)" }}
+      className="flex flex-col gap-1.5 rounded-lg p-3 bg-bg-elevated border border-glass-border"
     >
       {projects.map((p) => {
         const pct = max > 0 ? Math.round((p.sessions / max) * 100) : 0;
         return (
           <div key={p.name} className="flex items-center gap-3">
             <span
-              className="text-xs truncate"
-              style={{ color: "var(--color-text-secondary)", minWidth: 0, flex: "1 1 0" }}
+              className="text-xs truncate text-text-secondary" style={{ minWidth: 0, flex: "1 1 0" }}
               title={p.name}
             >
               {p.name}
             </span>
             <div
-              className="flex-shrink-0 rounded-full overflow-hidden"
-              style={{ width: 80, height: 4, background: "var(--color-bg-card)" }}
+              className="flex-shrink-0 rounded-full overflow-hidden bg-bg-card" style={{ width: 80, height: 4 }}
             >
               <div
                 style={{
@@ -409,13 +386,10 @@ function TopProjects({ projects }: { projects: StatsData["topProjects"] }) {
               />
             </div>
             <span
-              className="text-xs flex-shrink-0 font-semibold"
-              style={{
-                color: "var(--color-text-muted)",
+              className="text-xs flex-shrink-0 font-semibold text-text-muted text-right" style={{
                 fontFamily: "var(--font-mono, monospace)",
                 minWidth: 20,
-                textAlign: "right",
-              }}
+                }}
             >
               {p.sessions}
             </span>

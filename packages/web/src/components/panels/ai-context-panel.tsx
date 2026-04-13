@@ -133,8 +133,7 @@ function SourceCard({
       <div className="text-xs">{statusText}</div>
       {detail && (
         <div
-          className="text-xs mt-0.5 font-mono"
-          style={{ color: "var(--color-text-secondary)", fontSize: 10 }}
+          className="text-xs mt-0.5 font-mono text-text-secondary" style={{ fontSize: 10 }}
         >
           {detail}
         </div>
@@ -224,8 +223,7 @@ function HotFilesList({ files }: { files: HotFile[] }) {
                 <div className="min-w-0">
                   <span className="text-xs font-medium truncate block">{name}</span>
                   <span
-                    className="text-xs truncate block"
-                    style={{ color: "var(--color-text-secondary)", fontSize: 10 }}
+                    className="text-xs truncate block text-text-secondary" style={{ fontSize: 10 }}
                   >
                     {dir}
                   </span>
@@ -254,9 +252,7 @@ function SymbolResults({ results }: { results: SearchResult[] }) {
       {results.map((r) => (
         <div
           key={r.id}
-          className="rounded-lg overflow-hidden"
-          style={{
-            background: "var(--color-bg-elevated)",
+          className="rounded-lg overflow-hidden bg-bg-elevated" style={{
             border: "1px solid var(--color-border-strong, var(--color-border))",
           }}
         >
@@ -352,11 +348,7 @@ function QuickScrape() {
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleScrape()}
           placeholder="https://docs.example.com"
-          className="flex-1 text-xs px-2.5 py-1.5 rounded-md input-bordered"
-          style={{
-            background: "var(--color-bg-base)",
-            color: "var(--color-text-primary)",
-          }}
+          className="flex-1 text-xs px-2.5 py-1.5 rounded-md input-bordered text-text-primary bg-bg-base"
           aria-label="URL to scrape"
         />
         <button
@@ -387,18 +379,14 @@ function QuickScrape() {
             <span className="truncate flex-1 text-left">
               {typeof result.metadata?.title === "string" ? result.metadata.title : result.url}
             </span>
-            <span style={{ color: "var(--color-text-muted)", fontFamily: "var(--font-mono)" }}>
+            <span className="text-text-muted" style={{ fontFamily: "var(--font-mono)" }}>
               {wordCount.toLocaleString()} words
             </span>
           </button>
           {expanded && content && (
             <pre
-              className="mt-2 text-xs p-2 rounded overflow-auto"
-              style={{
-                background: "var(--color-bg-base)",
-                color: "var(--color-text-primary)",
+              className="mt-2 text-xs p-2 rounded overflow-auto text-text-primary bg-bg-base whitespace-pre-wrap" style={{
                 maxHeight: 300,
-                whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
               }}
             >
@@ -450,11 +438,7 @@ function QuickResearch() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleResearch()}
           placeholder="Search query..."
-          className="flex-1 text-xs px-2.5 py-1.5 rounded-md input-bordered"
-          style={{
-            background: "var(--color-bg-base)",
-            color: "var(--color-text-primary)",
-          }}
+          className="flex-1 text-xs px-2.5 py-1.5 rounded-md input-bordered text-text-primary bg-bg-base"
           aria-label="Research query"
         />
         <button
@@ -505,12 +489,8 @@ function QuickResearch() {
                 ))}
               </div>
               <pre
-                className="text-xs p-2 rounded overflow-auto"
-                style={{
-                  background: "var(--color-bg-base)",
-                  color: "var(--color-text-primary)",
+                className="text-xs p-2 rounded overflow-auto text-text-primary bg-bg-base whitespace-pre-wrap" style={{
                   maxHeight: 300,
-                  whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
                 }}
               >
@@ -567,8 +547,7 @@ function FeedTab({ filterSessionId }: { filterSessionId?: string }) {
         {events.length > 0 && (
           <button
             onClick={clear}
-            className="text-xs px-2 py-0.5 rounded cursor-pointer"
-            style={{ color: "var(--color-text-muted)", background: "var(--color-bg-elevated)" }}
+            className="text-xs px-2 py-0.5 rounded cursor-pointer text-text-muted" style={{ background: "var(--color-bg-elevated)" }}
           >
             Clear
           </button>
@@ -598,16 +577,14 @@ function FeedTab({ filterSessionId }: { filterSessionId?: string }) {
                       {meta.label}
                     </span>
                     <span
-                      className="text-xs font-mono"
-                      style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                      className="text-xs font-mono text-text-muted" style={{ fontSize: 10 }}
                     >
                       ~{evt.tokenEstimate} tokens
                     </span>
                   </div>
                   <div className="text-xs mt-0.5 truncate">{evt.summary}</div>
                   <div
-                    className="text-xs mt-0.5"
-                    style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                    className="text-xs mt-0.5 text-text-muted" style={{ fontSize: 10 }}
                   >
                     {evt.sessionId.slice(0, 8)}... · {formatTimeAgo(evt.timestamp)}
                   </div>
@@ -800,8 +777,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
           <span className="text-xs font-mono w-14 text-right">{config.maxContextTokens}</span>
         </div>
         <div
-          className="flex justify-between text-xs mt-1"
-          style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+          className="flex justify-between text-xs mt-1 text-text-muted" style={{ fontSize: 10 }}
         >
           <span>200</span>
           <span>2000</span>
@@ -824,11 +800,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
               }
             }}
             placeholder="**/test/** or **/*.spec.ts"
-            className="flex-1 text-xs px-2.5 py-1.5 rounded-md input-bordered"
-            style={{
-              background: "var(--color-bg-base)",
-              color: "var(--color-text-primary)",
-            }}
+            className="flex-1 text-xs px-2.5 py-1.5 rounded-md input-bordered text-text-primary bg-bg-base"
             aria-label="Add exclude pattern"
           />
           <button
@@ -922,9 +894,9 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
         <span className="text-xs font-semibold">Docs Engine Setup</span>
       </div>
 
-      <p className="text-xs mb-3" style={{ color: "var(--color-text-secondary)" }}>
+      <p className="text-xs mb-3 text-text-secondary">
         Docs Engine auto-injects library documentation into your AI sessions. Works out of the box —{" "}
-        <strong style={{ color: "var(--color-text-primary)" }}>no API key needed</strong> for
+        <strong className="text-text-primary">no API key needed</strong> for
         scraping, docs, and crawling.
       </p>
 
@@ -956,14 +928,14 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
           )}
 
           {/* Advanced: API key (collapsed by default) */}
-          <details className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-            <summary className="cursor-pointer py-1" style={{ color: "var(--color-text-muted)" }}>
+          <details className="text-xs text-text-muted">
+            <summary className="cursor-pointer py-1 text-text-muted">
               Advanced: Web Search API key (optional)
             </summary>
             <div className="mt-1.5 flex flex-col gap-1.5">
-              <p style={{ color: "var(--color-text-muted)", fontSize: 11 }}>
+              <p className="text-text-muted" style={{ fontSize: 11 }}>
                 Only needed for{" "}
-                <code className="px-1 rounded" style={{ background: "var(--color-bg-base)" }}>
+                <code className="px-1 rounded bg-bg-base">
                   /research
                 </code>{" "}
                 command. Scraping, docs, and crawling work without it.
@@ -973,11 +945,7 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="Leave empty — not required"
-                className="w-full text-xs px-2.5 py-1.5 rounded-md input-bordered"
-                style={{
-                  background: "var(--color-bg-base)",
-                  color: "var(--color-text-primary)",
-                }}
+                className="w-full text-xs px-2.5 py-1.5 rounded-md input-bordered text-text-primary bg-bg-base"
                 aria-label="Webclaw API key for web search"
               />
             </div>
@@ -1000,12 +968,7 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
           </button>
           {showManual && (
             <pre
-              className="text-xs p-2 rounded overflow-auto"
-              style={{
-                background: "var(--color-bg-base)",
-                color: "var(--color-text-primary)",
-                whiteSpace: "pre-wrap",
-              }}
+              className="text-xs p-2 rounded overflow-auto text-text-primary bg-bg-base whitespace-pre-wrap"
             >
               {`# Install Docker: https://docs.docker.com/get-docker/
 
@@ -1227,11 +1190,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
         <select
           value={selectedSlug}
           onChange={(e) => setSelectedSlug(e.target.value)}
-          className="w-full text-xs py-1.5 px-2 rounded-md input-bordered cursor-pointer"
-          style={{
-            background: "var(--color-bg-elevated)",
-            color: "var(--color-text-primary)",
-          }}
+          className="w-full text-xs py-1.5 px-2 rounded-md input-bordered cursor-pointer text-text-primary bg-bg-elevated"
           aria-label="Select project"
         >
           <option value="">Select a project...</option>
@@ -1326,11 +1285,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                       placeholder="Search symbols..."
-                      className="w-full pl-8 pr-3 py-1.5 rounded-lg text-sm input-bordered"
-                      style={{
-                        background: "var(--color-bg-elevated)",
-                        color: "var(--color-text-primary)",
-                      }}
+                      className="w-full pl-8 pr-3 py-1.5 rounded-lg text-sm input-bordered text-text-primary bg-bg-elevated"
                       aria-label="Search symbols"
                     />
                   </div>

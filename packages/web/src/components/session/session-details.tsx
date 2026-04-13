@@ -132,7 +132,7 @@ function CompactModeControl({ sessionId }: { sessionId: string }) {
         onClick={() => setExpanded(!expanded)}
       >
         {expanded ? <CaretDown size={10} weight="bold" /> : <CaretRight size={10} weight="bold" />}
-        <span className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
+        <span className="text-xs font-semibold text-text-secondary">
           Auto-Compact
         </span>
         <span
@@ -144,8 +144,7 @@ function CompactModeControl({ sessionId }: { sessionId: string }) {
       </button>
       {expanded && (
         <div
-          className="mt-2 p-3 rounded-lg flex flex-col gap-2"
-          style={{ background: "var(--color-bg-card)", border: "1px solid var(--color-border)" }}
+          className="mt-2 p-3 rounded-lg flex flex-col gap-2 bg-bg-card border border-border"
         >
           <div className="flex gap-1">
             {(["manual", "smart", "aggressive"] as const).map((m) => (
@@ -167,7 +166,7 @@ function CompactModeControl({ sessionId }: { sessionId: string }) {
           </div>
           {mode !== "manual" && (
             <div className="flex items-center gap-2">
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-xs text-text-muted">
                 Threshold
               </span>
               <input
@@ -184,8 +183,7 @@ function CompactModeControl({ sessionId }: { sessionId: string }) {
                 className="flex-1"
               />
               <span
-                className="text-xs font-mono w-8 text-right"
-                style={{ color: "var(--color-text-primary)" }}
+                className="text-xs font-mono w-8 text-right text-text-primary"
               >
                 {threshold}%
               </span>
@@ -209,15 +207,11 @@ function RTKSavingsCard({
   if (tokensSaved === 0 && compressions === 0) {
     return (
       <div
-        className="p-3 rounded-xl"
-        style={{
-          background: "var(--color-bg-card)",
-          border: "1px solid var(--color-border)",
-        }}
+        className="p-3 rounded-xl bg-bg-card border border-border"
       >
         <div className="flex items-center gap-2">
-          <span style={{ color: "var(--color-text-muted)", fontSize: 14 }}>⚡</span>
-          <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-text-muted" style={{ fontSize: 14 }}>⚡</span>
+          <span className="text-xs text-text-muted">
             RTK compression stats will appear here
           </span>
         </div>
@@ -238,22 +232,21 @@ function RTKSavingsCard({
     >
       <div className="flex items-center gap-2 mb-2">
         <span
-          className="rounded-full"
-          style={{ width: 6, height: 6, background: "var(--color-success)", flexShrink: 0 }}
+          className="rounded-full shrink-0" style={{ width: 6, height: 6, background: "var(--color-success)" }}
         />
-        <span style={{ color: "var(--color-success)", fontSize: 14 }}>⚡</span>
+        <span className="text-success" style={{ fontSize: 14 }}>⚡</span>
         <span className="text-xs font-semibold">RTK Savings</span>
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div>
           <p className="text-xs">Tokens</p>
-          <p className="text-sm font-semibold font-mono" style={{ color: "var(--color-success)" }}>
+          <p className="text-sm font-semibold font-mono text-success">
             {formatTokens(tokensSaved)}
           </p>
         </div>
         <div>
           <p className="text-xs">Est. Saved</p>
-          <p className="text-sm font-semibold font-mono" style={{ color: "var(--color-success)" }}>
+          <p className="text-sm font-semibold font-mono text-success">
             ${costSaved < 0.01 ? "<0.01" : costSaved.toFixed(2)}
           </p>
         </div>
@@ -435,7 +428,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
                       (e.currentTarget as HTMLElement).style.background = "transparent";
                     }}
                   >
-                    <span className="text-xs" style={{ color: "var(--color-warning)" }}>
+                    <span className="text-xs text-warning">
                       ~
                     </span>
                     <span className="text-xs font-mono truncate">{f.split("/").pop()}</span>
@@ -456,7 +449,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
                         (e.currentTarget as HTMLElement).style.background = "transparent";
                       }}
                     >
-                      <span className="text-xs" style={{ color: "var(--color-accent)" }}>
+                      <span className="text-xs text-accent">
                         ○
                       </span>
                       <span className="text-xs font-mono truncate">{f.split("/").pop()}</span>
@@ -501,12 +494,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
             <a
               href={`${typeof window !== "undefined" ? localStorage.getItem("api_url") || "" : ""}/api/sessions/${session.id}/export`}
               download
-              className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-              style={{
-                background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-text-secondary)",
-              }}
+              className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-text-secondary bg-bg-elevated border border-border"
             >
               <DownloadSimple size={14} weight="bold" />
               Export as Markdown
@@ -577,12 +565,7 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
           &larr; Back to snapshots
         </button>
         <pre
-          className="text-xs font-mono whitespace-pre-wrap p-3 rounded-lg max-h-[400px] overflow-y-auto"
-          style={{
-            background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
-            color: "var(--color-text-secondary)",
-          }}
+          className="text-xs font-mono whitespace-pre-wrap p-3 rounded-lg max-h-[400px] overflow-y-auto text-text-secondary bg-bg-elevated border border-border"
         >
           {viewingContent}
         </pre>
@@ -608,12 +591,7 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
           <button
             onClick={handleCapture}
             disabled={capturing}
-            className="text-xs px-2 py-1 rounded cursor-pointer transition-colors disabled:opacity-50"
-            style={{
-              background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
-              color: "var(--color-text-secondary)",
-            }}
+            className="text-xs px-2 py-1 rounded cursor-pointer transition-colors disabled:opacity-50 text-text-secondary bg-bg-elevated border border-border"
             title="Capture terminal snapshot"
             aria-label="Capture snapshot"
           >
@@ -637,7 +615,7 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
             >
               <Camera
                 size={12}
-                style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
+                className="text-text-muted shrink-0"
                 aria-hidden="true"
               />
               <div className="flex-1 min-w-0">
@@ -726,12 +704,7 @@ function StreamToTelegramButton({ sessionId }: { sessionId: string }) {
   if (loading) {
     return (
       <div
-        className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs"
-        style={{
-          background: "var(--color-bg-elevated)",
-          border: "1px solid var(--color-border)",
-          color: "var(--color-text-muted)",
-        }}
+        className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs text-text-muted bg-bg-elevated border border-border"
       >
         <TelegramLogo size={14} weight="bold" />
         Loading...
@@ -804,12 +777,7 @@ function SessionSummaryPanel({ sessionId }: { sessionId: string }) {
       </button>
       {expanded && (
         <div
-          className="mt-2 p-3 rounded-lg text-xs leading-relaxed"
-          style={{
-            background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
-            color: "var(--color-text-secondary)",
-          }}
+          className="mt-2 p-3 rounded-lg text-xs leading-relaxed text-text-secondary bg-bg-elevated border border-border"
         >
           <p>{summary.summary}</p>
           {summary.keyDecisions.length > 0 && (

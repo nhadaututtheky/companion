@@ -65,10 +65,7 @@ export function ModelDropdown({
   return (
     <div
       ref={ref}
-      className="absolute bottom-full left-0 mb-1 rounded-lg overflow-hidden shadow-lg z-50"
-      style={{
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
+      className="absolute bottom-full left-0 mb-1 rounded-lg overflow-hidden shadow-lg z-50 bg-bg-card border border-border" style={{
         minWidth: 260,
         maxHeight: 340,
         overflowY: "auto",
@@ -76,8 +73,7 @@ export function ModelDropdown({
     >
       {loading ? (
         <div
-          className="flex items-center justify-center gap-2 py-6"
-          style={{ color: "var(--color-text-muted)" }}
+          className="flex items-center justify-center gap-2 py-6 text-text-muted"
         >
           <CircleNotch size={16} className="animate-spin" />
           <span className="text-xs">Loading models...</span>
@@ -88,10 +84,7 @@ export function ModelDropdown({
           {freeByProvider.size > 0 && (
             <>
               <div
-                className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider"
-                style={{
-                  color: "var(--color-text-muted)",
-                  background: "var(--color-bg-base)",
+                className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted bg-bg-base" style={{
                   borderBottom: "1px solid var(--color-border)",
                 }}
               >
@@ -100,8 +93,7 @@ export function ModelDropdown({
               {Array.from(freeByProvider.entries()).map(([providerName, providerModels]) => (
                 <div key={providerName}>
                   <div
-                    className="px-3 py-1 text-xs"
-                    style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                    className="px-3 py-1 text-xs text-text-muted" style={{ fontSize: 10 }}
                   >
                     {providerName}
                   </div>
@@ -123,10 +115,7 @@ export function ModelDropdown({
           {configuredByProvider.size > 0 && (
             <>
               <div
-                className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider"
-                style={{
-                  color: "var(--color-text-muted)",
-                  background: "var(--color-bg-base)",
+                className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted bg-bg-base" style={{
                   borderBottom: "1px solid var(--color-border)",
                   borderTop: freeByProvider.size > 0 ? "1px solid var(--color-border)" : undefined,
                 }}
@@ -136,8 +125,7 @@ export function ModelDropdown({
               {Array.from(configuredByProvider.entries()).map(([providerName, providerModels]) => (
                 <div key={providerName}>
                   <div
-                    className="px-3 py-1 text-xs"
-                    style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                    className="px-3 py-1 text-xs text-text-muted" style={{ fontSize: 10 }}
                   >
                     {providerName}
                   </div>
@@ -158,8 +146,7 @@ export function ModelDropdown({
           {/* Empty state */}
           {models.length === 0 && !loading && (
             <div
-              className="px-3 py-4 text-xs text-center"
-              style={{ color: "var(--color-text-muted)" }}
+              className="px-3 py-4 text-xs text-center text-text-muted"
             >
               No models available. Check provider settings.
             </div>
@@ -210,7 +197,7 @@ function ModelRow({
       <span className="flex-1 font-medium truncate">{model.name}</span>
 
       {/* Capability hints */}
-      <span className="flex items-center gap-1" style={{ color: "var(--color-text-muted)" }}>
+      <span className="flex items-center gap-1 text-text-muted">
         {(model.capabilities as Record<string, boolean>).reasoning && (
           <span title="Reasoning">
             <Lightning size={10} weight="fill" style={{ color: "#f59e0b" }} />
@@ -251,7 +238,7 @@ function ModelRow({
       {isActive && <span style={{ color: "#10b981", fontSize: 11 }}>✓</span>}
 
       {isMainModel && (
-        <span className="font-medium" style={{ fontSize: 9, color: "var(--color-text-muted)" }}>
+        <span className="font-medium text-text-muted" style={{ fontSize: 9 }}>
           main
         </span>
       )}

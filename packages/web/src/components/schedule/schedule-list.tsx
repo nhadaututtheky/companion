@@ -58,11 +58,7 @@ export function ScheduleList({
 
   return (
     <div
-      className="rounded-xl overflow-hidden"
-      style={{
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
-      }}
+      className="rounded-xl overflow-hidden bg-bg-card border border-border"
     >
       <table className="w-full">
         <thead>
@@ -70,8 +66,7 @@ export function ScheduleList({
             {["Name", "Trigger", "Next Run", "Runs", "Status", "Actions"].map((h) => (
               <th
                 key={h}
-                className="text-left px-3 py-2"
-                style={{ color: "var(--color-text-muted)", fontSize: 10, fontWeight: 600 }}
+                className="text-left px-3 py-2 text-text-muted font-semibold" style={{ fontSize: 10 }}
               >
                 {h}
               </th>
@@ -107,8 +102,7 @@ export function ScheduleList({
                     </span>
                     {s.projectSlug && (
                       <span
-                        className="text-xs"
-                        style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                        className="text-xs text-text-muted" style={{ fontSize: 10 }}
                       >
                         {s.projectSlug}
                       </span>
@@ -160,13 +154,11 @@ export function ScheduleList({
                     aria-label={`${s.enabled ? "Disable" : "Enable"} ${s.name}`}
                   >
                     <span
-                      style={{
-                        position: "absolute",
+                      className="rounded-full absolute" style={{
                         top: 2,
                         left: s.enabled ? 15 : 2,
                         width: 12,
                         height: 12,
-                        borderRadius: "50%",
                         background: "#fff",
                         transition: "left 150ms ease",
                       }}

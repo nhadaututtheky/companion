@@ -103,24 +103,14 @@ function TemplateForm({
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={100}
-            className="w-full px-3 py-2 rounded-lg text-sm"
-            style={{
-              background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
-              color: "var(--color-text-primary)",
-            }}
+            className="w-full px-3 py-2 rounded-lg text-sm text-text-primary bg-bg-elevated border border-border"
           />
 
           {/* Model override */}
           <select
             value={model}
             onChange={(e) => setModel(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg text-sm cursor-pointer"
-            style={{
-              background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
-              color: "var(--color-text-primary)",
-            }}
+            className="w-full px-3 py-2 rounded-lg text-sm cursor-pointer text-text-primary bg-bg-elevated border border-border"
           >
             <option value="">Model: project default</option>
             <option value="claude-sonnet-4-6">Sonnet 4.6</option>
@@ -137,11 +127,7 @@ function TemplateForm({
         onChange={(e) => setPrompt(e.target.value)}
         maxLength={10000}
         rows={4}
-        className="w-full px-3 py-2 rounded-lg text-sm resize-y"
-        style={{
-          background: "var(--color-bg-elevated)",
-          border: "1px solid var(--color-border)",
-          color: "var(--color-text-primary)",
+        className="w-full px-3 py-2 rounded-lg text-sm resize-y text-text-primary bg-bg-elevated border border-border" style={{
           minHeight: "80px",
         }}
       />
@@ -151,12 +137,7 @@ function TemplateForm({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors"
-          style={{
-            background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
-            color: "var(--color-text-secondary)",
-          }}
+          className="px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors text-text-secondary bg-bg-elevated border border-border"
         >
           <X size={14} className="inline mr-1" />
           Cancel
@@ -203,11 +184,7 @@ function TemplateCard({
 
   return (
     <div
-      className="p-4 rounded-xl transition-all hover:scale-[1.01]"
-      style={{
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
-      }}
+      className="p-4 rounded-xl transition-all hover:scale-[1.01] bg-bg-card border border-border"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
@@ -218,22 +195,14 @@ function TemplateCard({
               <span className="text-xs font-mono">{template.slug}</span>
               {template.projectSlug && (
                 <span
-                  className="text-xs px-1.5 py-0.5 rounded"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    color: "var(--color-text-secondary)",
-                  }}
+                  className="text-xs px-1.5 py-0.5 rounded text-text-secondary bg-bg-elevated"
                 >
                   {template.projectSlug}
                 </span>
               )}
               {template.model && (
                 <span
-                  className="text-xs px-1.5 py-0.5 rounded"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    color: "var(--color-accent)",
-                  }}
+                  className="text-xs px-1.5 py-0.5 rounded text-accent bg-bg-elevated"
                 >
                   {template.model.includes("opus")
                     ? "Opus"
@@ -284,21 +253,16 @@ function PersonaCard({ persona, onClone }: { persona: Persona; onClone?: (id: st
   return (
     <PersonaTooltip persona={persona} placement="bottom">
       <div
-        className="flex items-center gap-3 p-3 rounded-xl persona-card w-full group"
-        style={{
-          background: "var(--color-bg-card)",
-          border: "1px solid var(--color-border)",
-        }}
+        className="flex items-center gap-3 p-3 rounded-xl persona-card w-full group bg-bg-card border border-border"
       >
         <PersonaAvatar persona={persona} size={40} />
         <div className="flex flex-col flex-1 min-w-0">
           <span
-            className="text-sm font-semibold truncate"
-            style={{ color: "var(--color-text-primary)" }}
+            className="text-sm font-semibold truncate text-text-primary"
           >
             {persona.name}
           </span>
-          <span className="text-xs truncate" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-xs truncate text-text-muted">
             {persona.strength}
           </span>
         </div>
@@ -309,11 +273,7 @@ function PersonaCard({ persona, onClone }: { persona: Persona; onClone?: (id: st
               e.stopPropagation();
               onClone(persona.id);
             }}
-            className="opacity-0 group-hover:opacity-100 px-2 py-1 rounded-md text-xs font-medium cursor-pointer transition-all flex-shrink-0"
-            style={{
-              background: "var(--color-bg-elevated)",
-              color: "var(--color-text-secondary)",
-            }}
+            className="opacity-0 group-hover:opacity-100 px-2 py-1 rounded-md text-xs font-medium cursor-pointer transition-all flex-shrink-0 text-text-secondary bg-bg-elevated"
             aria-label={`Clone ${persona.name}`}
           >
             Clone
@@ -335,10 +295,10 @@ function PersonaSection({ onClone }: { onClone?: (id: string) => void }) {
         return (
           <div key={cat}>
             <div className="flex items-center gap-2 mb-2.5">
-              <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+              <h2 className="text-sm font-semibold text-text-primary">
                 {meta.label}
               </h2>
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-xs text-text-muted">
                 {meta.description}
               </span>
             </div>
@@ -376,29 +336,23 @@ function CustomPersonaCard({
 
   return (
     <div
-      className="flex items-center gap-3 p-3 rounded-xl group"
-      style={{
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
-      }}
+      className="flex items-center gap-3 p-3 rounded-xl group bg-bg-card border border-border"
     >
       <PersonaAvatar persona={persona} size={40} />
       <div className="flex flex-col flex-1 min-w-0">
         <span
-          className="text-sm font-semibold truncate"
-          style={{ color: "var(--color-text-primary)" }}
+          className="text-sm font-semibold truncate text-text-primary"
         >
           {persona.name} {persona.icon}
         </span>
-        <span className="text-xs truncate" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs truncate text-text-muted">
           {persona.title}
         </span>
       </div>
       <div className="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={onEdit}
-          className="p-1.5 rounded-md cursor-pointer transition-colors"
-          style={{ color: "var(--color-text-muted)" }}
+          className="p-1.5 rounded-md cursor-pointer transition-colors text-text-muted"
           aria-label={`Edit ${persona.name}`}
         >
           <PencilSimple size={14} />
@@ -565,9 +519,7 @@ export default function TemplatesPage() {
     <div className="min-h-screen">
       {/* Header */}
       <div
-        className="sticky top-0 z-10 px-6 py-4 flex items-center justify-between"
-        style={{
-          background: "var(--color-bg-base)",
+        className="sticky top-0 z-10 px-6 py-4 flex items-center justify-between bg-bg-base" style={{
           borderBottom: "1px solid var(--color-border)",
         }}
       >
@@ -639,10 +591,10 @@ export default function TemplatesPage() {
         {customPersonas.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-2.5">
-              <h2 className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+              <h2 className="text-sm font-semibold text-text-primary">
                 Your Custom Personas
               </h2>
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-xs text-text-muted">
                 {customPersonas.length}/50
               </span>
             </div>
@@ -668,7 +620,7 @@ export default function TemplatesPage() {
         {/* Divider */}
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px" style={{ background: "var(--color-border)" }} />
-          <span className="text-xs font-semibold" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-xs font-semibold text-text-muted">
             Custom Prompts
           </span>
           <div className="flex-1 h-px" style={{ background: "var(--color-border)" }} />
@@ -677,9 +629,7 @@ export default function TemplatesPage() {
         {/* Create/Edit Template Form */}
         {(showForm || editingTemplate) && (
           <div
-            className="p-5 rounded-xl"
-            style={{
-              background: "var(--color-bg-card)",
+            className="p-5 rounded-xl bg-bg-card" style={{
               border: "1px solid var(--color-accent)",
             }}
           >

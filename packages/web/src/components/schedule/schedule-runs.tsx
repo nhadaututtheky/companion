@@ -74,10 +74,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="rounded-xl w-full max-w-md max-h-[70vh] flex flex-col"
-        style={{
-          background: "var(--color-bg-card)",
-          border: "1px solid var(--color-border)",
+        className="rounded-xl w-full max-w-md max-h-[70vh] flex flex-col bg-bg-card border border-border" style={{
           boxShadow: "0 16px 48px rgba(0,0,0,0.2)",
         }}
       >
@@ -90,11 +87,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
             <ClockCounterClockwise size={14} style={{ color: "#4285F4" }} />
             <span className="text-sm font-semibold">Run History</span>
             <span
-              className="text-xs px-1.5 py-0.5 rounded"
-              style={{
-                background: "var(--color-bg-elevated)",
-                color: "var(--color-text-muted)",
-              }}
+              className="text-xs px-1.5 py-0.5 rounded text-text-muted bg-bg-elevated"
             >
               {scheduleName}
             </span>
@@ -141,7 +134,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
                     style={{ borderBottom: "1px solid var(--color-border)" }}
                   >
                     {/* Status icon */}
-                    <Icon size={16} weight="fill" style={{ color: cfg.color, flexShrink: 0 }} />
+                    <Icon size={16} weight="fill" className="shrink-0" style={{ color: cfg.color }} />
 
                     {/* Details */}
                     <div className="flex-1 min-w-0">
@@ -149,8 +142,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
                         <span className="text-xs font-medium">{cfg.label}</span>
                         {run.sessionId && (
                           <span
-                            className="text-xs font-mono truncate max-w-24"
-                            style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                            className="text-xs font-mono truncate max-w-24 text-text-muted" style={{ fontSize: 10 }}
                           >
                             {run.sessionId.slice(0, 8)}
                           </span>
@@ -158,8 +150,7 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
                       </div>
                       {run.reason && (
                         <p
-                          className="text-xs truncate"
-                          style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                          className="text-xs truncate text-text-muted" style={{ fontSize: 10 }}
                           title={run.reason}
                         >
                           {run.reason}
@@ -170,14 +161,12 @@ export function ScheduleRuns({ scheduleId, onClose, scheduleName }: ScheduleRuns
                     {/* Time */}
                     <div className="flex flex-col items-end flex-shrink-0">
                       <span
-                        className="text-xs"
-                        style={{ color: "var(--color-text-secondary)", fontSize: 10 }}
+                        className="text-xs text-text-secondary" style={{ fontSize: 10 }}
                       >
                         {formatRelative(run.startedAt)}
                       </span>
                       <span
-                        className="text-xs font-mono"
-                        style={{ color: "var(--color-text-muted)", fontSize: 9 }}
+                        className="text-xs font-mono text-text-muted" style={{ fontSize: 9 }}
                       >
                         {formatTime(run.startedAt)}
                       </span>

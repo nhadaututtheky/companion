@@ -131,9 +131,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
     <div className="flex flex-col h-full">
       {/* Navigation bar */}
       <div
-        className="flex items-center gap-2 px-3 py-2 shrink-0"
-        style={{
-          background: "var(--color-bg-card)",
+        className="flex items-center gap-2 px-3 py-2 shrink-0 bg-bg-card" style={{
           borderBottom: "1px solid var(--glass-border)",
         }}
       >
@@ -142,8 +140,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
           <button
             onClick={goBack}
             disabled={historyIndex <= 0}
-            className="p-1.5 rounded cursor-pointer transition-colors disabled:opacity-30"
-            style={{ color: "var(--color-text-secondary)", background: "none", border: "none" }}
+            className="p-1.5 rounded cursor-pointer transition-colors disabled:opacity-30 text-text-secondary" style={{ background: "none", border: "none" }}
             aria-label="Back"
           >
             <ArrowLeft size={13} weight="bold" />
@@ -151,16 +148,14 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
           <button
             onClick={goForward}
             disabled={historyIndex >= history.length - 1}
-            className="p-1.5 rounded cursor-pointer transition-colors disabled:opacity-30"
-            style={{ color: "var(--color-text-secondary)", background: "none", border: "none" }}
+            className="p-1.5 rounded cursor-pointer transition-colors disabled:opacity-30 text-text-secondary" style={{ background: "none", border: "none" }}
             aria-label="Forward"
           >
             <ArrowRight size={13} weight="bold" />
           </button>
           <button
             onClick={refresh}
-            className="p-1.5 rounded cursor-pointer transition-colors"
-            style={{ color: "var(--color-text-secondary)", background: "none", border: "none" }}
+            className="p-1.5 rounded cursor-pointer transition-colors text-text-secondary" style={{ background: "none", border: "none" }}
             aria-label="Refresh"
           >
             <ArrowClockwise size={13} weight="bold" />
@@ -170,13 +165,9 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
         {/* URL bar */}
         <form onSubmit={handleSubmit} className="flex-1 flex items-center">
           <div
-            className="flex items-center gap-1.5 flex-1 px-2.5 py-1.5 rounded-lg"
-            style={{
-              background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
-            }}
+            className="flex items-center gap-1.5 flex-1 px-2.5 py-1.5 rounded-lg bg-bg-elevated border border-border"
           >
-            <Globe size={12} style={{ color: "var(--color-text-muted)", flexShrink: 0 }} />
+            <Globe size={12} className="text-text-muted shrink-0" />
             <input
               type="text"
               value={inputUrl}
@@ -219,8 +210,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
 
           <button
             onClick={handleScreenshot}
-            className="p-1.5 rounded cursor-pointer transition-colors"
-            style={{ color: "var(--color-text-muted)", background: "none", border: "none" }}
+            className="p-1.5 rounded cursor-pointer transition-colors text-text-muted" style={{ background: "none", border: "none" }}
             aria-label="Screenshot"
             title="Screenshot"
           >
@@ -228,8 +218,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
           </button>
           <button
             onClick={openExternal}
-            className="p-1.5 rounded cursor-pointer transition-colors"
-            style={{ color: "var(--color-text-muted)", background: "none", border: "none" }}
+            className="p-1.5 rounded cursor-pointer transition-colors text-text-muted" style={{ background: "none", border: "none" }}
             aria-label="Open in browser"
             title="Open in browser"
           >
@@ -237,8 +226,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 rounded cursor-pointer transition-colors"
-            style={{ color: "var(--color-text-muted)", background: "none", border: "none" }}
+            className="p-1.5 rounded cursor-pointer transition-colors text-text-muted" style={{ background: "none", border: "none" }}
             aria-label="Close"
           >
             <X size={13} weight="bold" />
@@ -252,7 +240,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
         style={{ background: "var(--color-bg-elevated, #1a1a2e)" }}
       >
         <div
-          style={{
+          className="border border-border overflow-hidden" style={{
             width: currentViewport.width,
             height: currentViewport.height,
             maxWidth: "100%",
@@ -260,9 +248,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
             transition: "width 300ms ease, height 300ms ease",
             ...(viewport !== "desktop"
               ? {
-                  border: "1px solid var(--color-border)",
                   borderRadius: 8,
-                  overflow: "hidden",
                   margin: 16,
                   boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
                 }
@@ -294,21 +280,17 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
 
       {/* Bottom status bar */}
       <div
-        className="flex items-center justify-between px-3 py-1 shrink-0"
-        style={{
-          background: "var(--color-bg-elevated)",
+        className="flex items-center justify-between px-3 py-1 shrink-0 bg-bg-elevated" style={{
           borderTop: "1px solid var(--glass-border)",
         }}
       >
         <span
-          className="text-xs font-mono truncate"
-          style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+          className="text-xs font-mono truncate text-text-muted" style={{ fontSize: 10 }}
         >
           {url}
         </span>
         <span
-          className="text-xs shrink-0"
-          style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+          className="text-xs shrink-0 text-text-muted" style={{ fontSize: 10 }}
         >
           {viewport !== "desktop" && `${currentViewport.width} × ${currentViewport.height}`}
         </span>

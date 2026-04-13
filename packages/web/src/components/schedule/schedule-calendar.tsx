@@ -107,11 +107,7 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
 
   return (
     <div
-      className="rounded-xl"
-      style={{
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
-      }}
+      className="rounded-xl bg-bg-card border border-border"
     >
       {/* Header */}
       <div
@@ -142,8 +138,7 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
         {WEEKDAYS.map((d) => (
           <div
             key={d}
-            className="text-center py-1"
-            style={{ color: "var(--color-text-muted)", fontSize: 10, fontWeight: 600 }}
+            className="text-center py-1 text-text-muted font-semibold" style={{ fontSize: 10 }}
           >
             {d}
           </div>
@@ -180,16 +175,15 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
                   {runs.slice(0, 3).map((_, j) => (
                     <span
                       key={j}
-                      style={{
+                      className="rounded-full" style={{
                         width: 4,
                         height: 4,
-                        borderRadius: "50%",
                         background: "#4285F4",
                       }}
                     />
                   ))}
                   {runs.length > 3 && (
-                    <span style={{ fontSize: 8, color: "var(--color-text-muted)" }}>+</span>
+                    <span className="text-text-muted" style={{ fontSize: 8 }}>+</span>
                   )}
                 </div>
               )}

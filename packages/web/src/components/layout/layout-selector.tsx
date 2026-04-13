@@ -126,13 +126,11 @@ export function LayoutSelector() {
       {/* Trigger button */}
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer transition-colors"
-        style={{
+        className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer transition-colors text-text-secondary" style={{
           background: open ? "var(--color-bg-elevated)" : "transparent",
           border: "1px solid",
           borderColor: open ? "var(--color-border)" : "transparent",
-          color: "var(--color-text-secondary)",
-        }}
+          }}
         aria-label="Layout presets"
         title="Layout Presets"
       >
@@ -146,10 +144,7 @@ export function LayoutSelector() {
       {/* Dropdown */}
       {open && (
         <div
-          className="absolute right-0 top-full mt-1 rounded-xl overflow-hidden"
-          style={{
-            background: "var(--color-bg-card)",
-            border: "1px solid var(--color-border)",
+          className="absolute right-0 top-full mt-1 rounded-xl overflow-hidden bg-bg-card border border-border" style={{
             boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
             minWidth: 200,
             zIndex: Z.popover,
@@ -158,8 +153,7 @@ export function LayoutSelector() {
           {/* Built-in presets */}
           <div className="px-2 pt-2 pb-1">
             <span
-              className="text-xs font-semibold px-2"
-              style={{ color: "var(--color-text-muted)", fontSize: 10, letterSpacing: "0.05em" }}
+              className="text-xs font-semibold px-2 text-text-muted" style={{ fontSize: 10, letterSpacing: "0.05em" }}
             >
               BUILT-IN LAYOUTS
             </span>
@@ -196,9 +190,7 @@ export function LayoutSelector() {
               <div style={{ height: 1, background: "var(--color-border)", margin: "4px 12px" }} />
               <div className="px-2 pt-1 pb-1">
                 <span
-                  className="text-xs font-semibold px-2"
-                  style={{
-                    color: "var(--color-text-muted)",
+                  className="text-xs font-semibold px-2 text-text-muted" style={{
                     fontSize: 10,
                     letterSpacing: "0.05em",
                   }}
@@ -259,11 +251,7 @@ export function LayoutSelector() {
                   value={saveName}
                   onChange={(e) => setSaveName(e.target.value)}
                   placeholder="Preset name..."
-                  className="flex-1 text-xs px-2 py-1 rounded-md input-bordered"
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    color: "var(--color-text-primary)",
-                  }}
+                  className="flex-1 text-xs px-2 py-1 rounded-md input-bordered text-text-primary bg-bg-elevated"
                 />
                 <button
                   type="submit"

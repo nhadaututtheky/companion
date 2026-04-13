@@ -78,21 +78,16 @@ function CommentInput({
       }}
     >
       <div
-        className="rounded-lg shadow-lg overflow-hidden"
-        style={{
+        className="rounded-lg shadow-lg overflow-hidden bg-bg-elevated border border-border" style={{
           width: 340,
-          background: "var(--color-bg-elevated)",
-          border: "1px solid var(--color-border)",
-        }}
+          }}
       >
         {/* Selected text preview */}
         {popup.selectedText && (
           <div
-            className="px-3 py-2 text-xs"
-            style={{
+            className="px-3 py-2 text-xs text-text-secondary" style={{
               background: "rgba(66,133,244,0.08)",
               borderBottom: "1px solid var(--color-border)",
-              color: "var(--color-text-secondary)",
               fontStyle: "italic",
             }}
           >
@@ -113,12 +108,7 @@ function CommentInput({
             }}
             placeholder="Add comment..."
             rows={2}
-            className="flex-1 resize-none rounded px-2 py-1.5 text-sm outline-none"
-            style={{
-              background: "var(--color-bg-card)",
-              border: "1px solid var(--color-border)",
-              color: "var(--color-text-primary)",
-            }}
+            className="flex-1 resize-none rounded px-2 py-1.5 text-sm outline-none text-text-primary bg-bg-card border border-border"
           />
           <div className="flex flex-col gap-1">
             <button
@@ -135,8 +125,7 @@ function CommentInput({
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded cursor-pointer transition-colors"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="p-1.5 rounded cursor-pointer transition-colors text-text-secondary"
               aria-label="Cancel"
             >
               <X size={16} />
@@ -145,8 +134,7 @@ function CommentInput({
         </div>
 
         <div
-          className="px-3 py-1 text-xs"
-          style={{ color: "var(--color-text-secondary)", opacity: 0.6 }}
+          className="px-3 py-1 text-xs text-text-secondary" style={{ opacity: 0.6 }}
         >
           Ctrl+Enter to submit
         </div>
@@ -281,12 +269,10 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
     <div ref={containerRef} className="relative">
       {/* Toolbar hint */}
       <div
-        className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg text-xs"
-        style={{
+        className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg text-xs text-text-secondary" style={{
           background: "rgba(66,133,244,0.06)",
           border: "1px solid rgba(66,133,244,0.15)",
-          color: "var(--color-text-secondary)",
-        }}
+          }}
       >
         <ChatText size={14} weight="duotone" style={{ color: "#4285F4" }} />
         Select text to add inline comments. Agents will see your comments in the file.
@@ -323,14 +309,12 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
                       </div>
                     )}
                     <pre
-                      className="overflow-auto p-3 m-0"
-                      style={{
+                      className="overflow-auto p-3 m-0 font-mono" style={{
                         background: "#1e1e1e",
                         color: "#d4d4d4",
                         fontSize: 14,
                         lineHeight: 1.55,
-                        fontFamily: "var(--font-mono)",
-                      }}
+                        }}
                     >
                       <code {...props}>{codeText}</code>
                     </pre>
@@ -341,14 +325,11 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
 
               return (
                 <code
-                  style={{
-                    background: "var(--color-bg-elevated)",
-                    border: "1px solid var(--color-border)",
+                  className="bg-bg-elevated border border-border font-mono" style={{
                     borderRadius: 4,
                     padding: "1px 5px",
                     fontSize: "0.9em",
-                    fontFamily: "var(--font-mono)",
-                  }}
+                    }}
                   {...props}
                 >
                   {children}
@@ -374,8 +355,7 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
             thead({ children }) {
               return (
                 <thead
-                  style={{
-                    background: "var(--color-bg-elevated)",
+                  className="bg-bg-elevated" style={{
                     borderBottom: "2px solid var(--color-border)",
                   }}
                 >
@@ -386,13 +366,9 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
             th({ children }) {
               return (
                 <th
-                  className="text-left"
-                  style={{
+                  className="text-left text-text-primary whitespace-nowrap font-semibold" style={{
                     padding: "8px 14px",
-                    fontWeight: 600,
-                    color: "var(--color-text-primary)",
-                    whiteSpace: "nowrap",
-                  }}
+                    }}
                 >
                   {children}
                 </th>
@@ -401,11 +377,10 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
             td({ children }) {
               return (
                 <td
-                  style={{
+                  className="text-text-primary" style={{
                     padding: "8px 14px",
                     borderBottom: "1px solid var(--color-border)",
-                    color: "var(--color-text-primary)",
-                  }}
+                    }}
                 >
                   {children}
                 </td>
@@ -488,12 +463,10 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
                 <LineBlock
                   node={node as unknown as AstNode}
                   tag="h1"
-                  style={{
+                  className="text-text-primary font-bold" style={{
                     fontSize: 24,
-                    fontWeight: 700,
                     margin: "20px 0 8px",
-                    color: "var(--color-text-primary)",
-                  }}
+                    }}
                 >
                   {children}
                 </LineBlock>
@@ -504,14 +477,12 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
                 <LineBlock
                   node={node as unknown as AstNode}
                   tag="h2"
-                  style={{
+                  className="text-text-primary font-semibold" style={{
                     fontSize: 20,
-                    fontWeight: 600,
                     margin: "18px 0 6px",
                     paddingBottom: 6,
                     borderBottom: "1px solid var(--color-border)",
-                    color: "var(--color-text-primary)",
-                  }}
+                    }}
                 >
                   {children}
                 </LineBlock>
@@ -522,12 +493,10 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
                 <LineBlock
                   node={node as unknown as AstNode}
                   tag="h3"
-                  style={{
+                  className="text-text-primary font-semibold" style={{
                     fontSize: 17,
-                    fontWeight: 600,
                     margin: "14px 0 4px",
-                    color: "var(--color-text-primary)",
-                  }}
+                    }}
                 >
                   {children}
                 </LineBlock>
@@ -538,12 +507,10 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
                 <LineBlock
                   node={node as unknown as AstNode}
                   tag="h4"
-                  style={{
+                  className="text-text-primary font-semibold" style={{
                     fontSize: 15,
-                    fontWeight: 600,
                     margin: "12px 0 4px",
-                    color: "var(--color-text-primary)",
-                  }}
+                    }}
                 >
                   {children}
                 </LineBlock>
@@ -553,7 +520,7 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
             // ── Inline ───────────────────────────────────────
             strong({ children }) {
               return (
-                <strong style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>
+                <strong className="text-text-primary font-semibold">
                   {children}
                 </strong>
               );

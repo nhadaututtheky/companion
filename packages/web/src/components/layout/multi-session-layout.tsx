@@ -24,12 +24,9 @@ function ResizeHandle({ orientation }: { orientation: "horizontal" | "vertical" 
   const isHorizontal = orientation === "horizontal";
   return (
     <Separator
-      className="group"
-      style={{
-        display: "flex",
+      className="group shrink-0 flex" style={{
         alignItems: isHorizontal ? "center" : "stretch",
         justifyContent: "center",
-        flexShrink: 0,
         ...(isHorizontal
           ? { width: 6, cursor: "col-resize" }
           : { height: 6, cursor: "row-resize" }),
@@ -68,12 +65,7 @@ function EmptyPane({
             <button
               key={s.id}
               onClick={() => pinToPane(paneIndex, s.id)}
-              className="text-xs font-mono px-3 py-2 rounded-lg cursor-pointer transition-colors text-left truncate"
-              style={{
-                background: "var(--color-bg-card)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-text-secondary)",
-              }}
+              className="text-xs font-mono px-3 py-2 rounded-lg cursor-pointer transition-colors text-left truncate text-text-secondary bg-bg-card border border-border"
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.borderColor = "var(--color-accent)";
               }}

@@ -60,9 +60,7 @@ function StepPills({ current }: { current: Step }) {
             />
           )}
           <div
-            className="flex items-center gap-1.5 px-2.5 py-1"
-            style={{
-              borderRadius: "var(--radius-pill)",
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-radius-pill" style={{
               background:
                 current === n
                   ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
@@ -456,11 +454,10 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
       />
 
       <div
-        style={{
+        className="flex" style={{
           position: "fixed",
           inset: 0,
           zIndex: Z.modalContent,
-          display: "flex",
           alignItems: "center",
           justifyContent: "center",
           padding: "16px",
@@ -473,11 +470,10 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
           role="dialog"
           aria-modal="true"
           aria-label="New Session"
-          style={{
+          className="overflow-hidden dark:bg-glass-dark" style={{
             width: "100%",
             maxWidth: 600,
             borderRadius: 16,
-            overflow: "hidden",
             pointerEvents: "auto",
             background: "rgba(255,255,255,0.92)",
             backdropFilter: "blur(20px)",
@@ -485,7 +481,7 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
             border: "1px solid rgba(255,255,255,0.18)",
             boxShadow: "0 8px 40px rgba(0,0,0,0.18), inset 0 0 0 1px rgba(255,255,255,0.1)",
           }}
-          className="dark:bg-glass-dark"
+          
         >
           {/* Header */}
           <div
@@ -494,8 +490,7 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
           >
             <div>
               <h2
-                className="text-base font-bold"
-                style={{ fontFamily: "var(--font-display)", color: "var(--color-text-primary)" }}
+                className="text-base font-bold text-text-primary" style={{ fontFamily: "var(--font-display)" }}
               >
                 New Session
               </h2>
@@ -509,12 +504,7 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
               <StepPills current={step} />
               <button
                 onClick={onClose}
-                className="flex items-center justify-center p-2 rounded-lg transition-colors cursor-pointer"
-                style={{
-                  background: "var(--color-bg-elevated)",
-                  color: "var(--color-text-secondary)",
-                  border: "1px solid var(--color-border)",
-                }}
+                className="flex items-center justify-center p-2 rounded-lg transition-colors cursor-pointer text-text-secondary bg-bg-elevated border border-border"
                 aria-label="Close modal"
               >
                 <X size={14} weight="bold" aria-hidden="true" />

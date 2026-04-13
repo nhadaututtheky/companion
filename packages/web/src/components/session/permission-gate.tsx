@@ -42,15 +42,13 @@ function PermissionCard({
 
   return (
     <div
-      className="flex flex-col gap-2 p-3 rounded-xl"
-      style={{
-        background: "var(--color-bg-card)",
+      className="flex flex-col gap-2 p-3 rounded-xl bg-bg-card" style={{
         border: "1px solid #FBBC04",
         boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
     >
       <div className="flex items-center gap-2">
-        <Lock size={14} weight="bold" style={{ color: "#FBBC04", flexShrink: 0 }} />
+        <Lock size={14} weight="bold" className="shrink-0" style={{ color: "#FBBC04" }} />
         <span className="text-sm font-semibold">{req.toolName}</span>
         {autoApproveSeconds && countdown > 0 && (
           <span
@@ -74,9 +72,7 @@ function PermissionCard({
         </button>
         <button
           onClick={() => onRespond(req.requestId, "deny")}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity cursor-pointer"
-          style={{
-            background: "var(--color-bg-elevated)",
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity cursor-pointer bg-bg-elevated" style={{
             color: "#EA4335",
             border: "1px solid #EA433530",
           }}

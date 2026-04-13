@@ -54,12 +54,11 @@ export function SessionGrid({ sessions, onExpand }: SessionGridProps) {
         {sessions.map((s) => (
           <div
             key={s.id}
-            style={{
+            className="overflow-hidden" style={{
               opacity: expandedSessionId && expandedSessionId !== s.id ? 0.6 : 1,
               transition: "opacity 250ms ease",
               minHeight: 200,
-              overflow: "hidden",
-            }}
+              }}
           >
             <MiniTerminal sessionId={s.id} onExpand={onExpand} />
           </div>

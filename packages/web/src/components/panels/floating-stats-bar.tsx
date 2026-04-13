@@ -86,23 +86,18 @@ function StatBlock({
       <div className="flex items-center gap-1.5">
         <span style={{ color: accent, opacity: 0.7 }}>{icon}</span>
         <span
-          className="text-[10px] font-medium uppercase tracking-wider"
-          style={{ color: "var(--color-text-muted)" }}
+          className="text-[10px] font-medium uppercase tracking-wider text-text-muted"
         >
           {label}
         </span>
       </div>
       <span
-        className="text-lg font-bold tabular-nums leading-none"
-        style={{
-          fontFamily: "var(--font-mono)",
-          color: "var(--color-text-primary)",
-        }}
+        className="text-lg font-bold tabular-nums leading-none text-text-primary font-mono"
       >
         {value}
       </span>
       {sub && (
-        <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-[10px] text-text-muted">
           {sub}
         </span>
       )}
@@ -121,8 +116,7 @@ function MiniHeatmap({ data }: { data: StatsData["dailyActivity"] }) {
   return (
     <div className="flex flex-col items-center gap-1 px-3 py-2">
       <span
-        className="text-[10px] font-medium uppercase tracking-wider"
-        style={{ color: "var(--color-text-muted)" }}
+        className="text-[10px] font-medium uppercase tracking-wider text-text-muted"
       >
         14-day
       </span>
@@ -157,16 +151,14 @@ function ModelPills({ breakdown }: { breakdown: StatsData["modelBreakdown"] }) {
         return (
           <div
             key={m.model}
-            className="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold"
-            style={{
-              borderRadius: "var(--radius-pill)",
+            className="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold rounded-radius-pill" style={{
               background: `color-mix(in srgb, ${modelColor(m.model)} 12%, transparent)`,
               color: modelColor(m.model),
               fontFamily: "var(--font-mono)",
             }}
           >
             {modelLabel(m.model)}
-            <span style={{ opacity: 0.7 }}>{pct}%</span>
+            <span className="opacity-70">{pct}%</span>
           </div>
         );
       })}
@@ -202,8 +194,7 @@ export function FloatingStatsBar() {
 
   return (
     <div
-      className="hidden sm:flex items-stretch"
-      style={{
+      className="hidden sm:flex items-stretch rounded-radius-xl border border-glass-border" style={{
         position: "fixed",
         bottom: 80,
         left: "50%",
@@ -212,8 +203,6 @@ export function FloatingStatsBar() {
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
-        border: "1px solid var(--glass-border)",
-        borderRadius: "var(--radius-xl)",
         boxShadow: "var(--shadow-float)",
         padding: "2px 6px",
         maxWidth: "90vw",
@@ -222,8 +211,8 @@ export function FloatingStatsBar() {
     >
       {/* Title + close */}
       <div className="flex items-center gap-1.5 px-3 py-2">
-        <ChartBar size={14} weight="bold" style={{ color: "var(--color-accent)" }} />
-        <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+        <ChartBar size={14} weight="bold" className="text-accent" />
+        <span className="text-xs font-semibold text-text-primary">
           Stats
         </span>
       </div>
@@ -234,10 +223,9 @@ export function FloatingStatsBar() {
         <div className="flex items-center gap-2 px-4 py-2">
           <CircleNotch
             size={14}
-            className="animate-spin"
-            style={{ color: "var(--color-text-muted)" }}
+            className="animate-spin text-text-muted"
           />
-          <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-xs text-text-muted">
             Loading...
           </span>
         </div>
@@ -301,8 +289,7 @@ export function FloatingStatsBar() {
       {/* Analytics link */}
       <Link
         href="/analytics"
-        className="flex items-center gap-1 px-3 py-2 text-xs font-medium cursor-pointer transition-colors"
-        style={{ color: "var(--color-accent)" }}
+        className="flex items-center gap-1 px-3 py-2 text-xs font-medium cursor-pointer transition-colors text-accent"
       >
         Full
         <ArrowRight size={10} weight="bold" />
@@ -313,8 +300,7 @@ export function FloatingStatsBar() {
       {/* Close */}
       <button
         onClick={() => setOpen(false)}
-        className="flex items-center justify-center px-2 py-2 cursor-pointer transition-colors"
-        style={{ color: "var(--color-text-muted)" }}
+        className="flex items-center justify-center px-2 py-2 cursor-pointer transition-colors text-text-muted"
         aria-label="Close stats bar"
       >
         <X size={12} weight="bold" />

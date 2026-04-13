@@ -156,10 +156,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="rounded-xl w-full max-w-lg max-h-[85vh] flex flex-col"
-        style={{
-          background: "var(--color-bg-card)",
-          border: "1px solid var(--color-border)",
+        className="rounded-xl w-full max-w-lg max-h-[85vh] flex flex-col bg-bg-card border border-border" style={{
           boxShadow: "0 16px 48px rgba(0,0,0,0.2)",
         }}
       >
@@ -284,11 +281,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
                   <button
                     key={preset.value}
                     onClick={() => setCronExpression(preset.value)}
-                    className="px-2 py-0.5 rounded text-xs cursor-pointer transition-colors"
-                    style={{
-                      background: "var(--color-bg-elevated)",
-                      border: "1px solid var(--color-border)",
-                      color: "var(--color-text-muted)",
+                    className="px-2 py-0.5 rounded text-xs cursor-pointer transition-colors text-text-muted bg-bg-elevated border border-border" style={{
                       fontSize: 10,
                     }}
                   >

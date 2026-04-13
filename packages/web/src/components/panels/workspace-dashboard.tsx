@@ -99,13 +99,11 @@ function CliCard({
     >
       <div className="flex items-center gap-2">
         <span
-          style={{
+          className="rounded-full shrink-0" style={{
             width: 8,
             height: 8,
-            borderRadius: "50%",
             background: dotColor,
-            flexShrink: 0,
-          }}
+            }}
         />
         <span className="text-xs font-bold flex-1 truncate" style={{ color }}>
           {CLI_LABELS[cli.platform]}
@@ -126,26 +124,26 @@ function CliCard({
       {session && isActive ? (
         <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
           <div>
-            <span style={{ color: "var(--color-text-muted)" }}>Cost</span>
-            <div className="font-mono font-bold" style={{ color: "var(--color-text-primary)" }}>
+            <span className="text-text-muted">Cost</span>
+            <div className="font-mono font-bold text-text-primary">
               {fmtCost(session.totalCostUsd)}
             </div>
           </div>
           <div>
-            <span style={{ color: "var(--color-text-muted)" }}>Turns</span>
-            <div className="font-mono font-bold" style={{ color: "var(--color-text-primary)" }}>
+            <span className="text-text-muted">Turns</span>
+            <div className="font-mono font-bold text-text-primary">
               {session.numTurns}
             </div>
           </div>
           <div>
-            <span style={{ color: "var(--color-text-muted)" }}>Uptime</span>
-            <div className="font-mono font-bold" style={{ color: "var(--color-text-primary)" }}>
+            <span className="text-text-muted">Uptime</span>
+            <div className="font-mono font-bold text-text-primary">
               {fmtUptime(session.createdAt)}
             </div>
           </div>
           <div>
-            <span style={{ color: "var(--color-text-muted)" }}>Model</span>
-            <div className="font-bold truncate" style={{ color: "var(--color-text-primary)" }}>
+            <span className="text-text-muted">Model</span>
+            <div className="font-bold truncate text-text-primary">
               {session.model.replace("claude-", "").replace("-latest", "")}
             </div>
           </div>
@@ -155,9 +153,9 @@ function CliCard({
           <Plugs
             size={10}
             weight="regular"
-            style={{ color: "var(--color-text-muted)", opacity: 0.5 }}
+            className="text-text-muted opacity-50"
           />
-          <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+          <span className="text-[10px] text-text-muted">
             Not connected
           </span>
         </div>
@@ -219,8 +217,7 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
   if (!activeWorkspaceId) {
     return (
       <div
-        className="flex flex-col h-full items-center justify-center gap-3"
-        style={{ background: "var(--color-bg-card)", color: "var(--color-text-muted)" }}
+        className="flex flex-col h-full items-center justify-center gap-3 text-text-muted" style={{ background: "var(--color-bg-card)" }}
       >
         <SquaresFour size={32} weight="duotone" />
         <span className="text-sm">Select a workspace</span>
@@ -230,8 +227,7 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
 
   return (
     <div
-      className="flex flex-col h-full"
-      style={{ background: "var(--color-bg-card)", color: "var(--color-text-primary)" }}
+      className="flex flex-col h-full text-text-primary" style={{ background: "var(--color-bg-card)" }}
     >
       {/* Header */}
       <div
@@ -248,14 +244,14 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
             className="p-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
             aria-label="Refresh workspace"
           >
-            <ArrowsClockwise size={14} weight="bold" style={{ color: "var(--color-text-muted)" }} />
+            <ArrowsClockwise size={14} weight="bold" className="text-text-muted" />
           </button>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
             aria-label="Close workspace panel"
           >
-            <X size={14} weight="bold" style={{ color: "var(--color-text-muted)" }} />
+            <X size={14} weight="bold" className="text-text-muted" />
           </button>
         </div>
       </div>
@@ -266,19 +262,17 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
           <div className="flex items-center justify-center py-8">
             <CircleNotch
               size={20}
-              className="animate-spin"
-              style={{ color: "var(--color-text-muted)" }}
+              className="animate-spin text-text-muted"
             />
           </div>
         ) : detail ? (
           <>
             {/* Cost summary */}
             <div
-              className="flex items-center gap-3 px-3 py-2 rounded-lg"
-              style={{ background: "var(--color-bg-elevated)" }}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg bg-bg-elevated"
             >
               <Lightning size={14} weight="bold" style={{ color: "#f59e0b" }} />
-              <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+              <span className="text-xs text-text-secondary">
                 Total workspace cost
               </span>
               <span className="ml-auto text-sm font-mono font-bold">{fmtCost(totalCost)}</span>
@@ -287,8 +281,7 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
             {/* CLI Cards */}
             <div>
               <span
-                className="text-[10px] font-semibold uppercase tracking-wider mb-2 block"
-                style={{ color: "var(--color-text-muted)" }}
+                className="text-[10px] font-semibold uppercase tracking-wider mb-2 block text-text-muted"
               >
                 CLI Agents
               </span>
@@ -307,8 +300,7 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
             {recentActivity.length > 0 && (
               <div>
                 <span
-                  className="text-[10px] font-semibold uppercase tracking-wider mb-2 block"
-                  style={{ color: "var(--color-text-muted)" }}
+                  className="text-[10px] font-semibold uppercase tracking-wider mb-2 block text-text-muted"
                 >
                   Active Sessions
                 </span>
@@ -316,18 +308,16 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
                   {recentActivity.map((s) => (
                     <div
                       key={s.id}
-                      className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs"
-                      style={{ background: "var(--color-bg-elevated)" }}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs bg-bg-elevated"
                     >
                       <PlugsConnected
                         size={10}
                         weight="bold"
-                        style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
+                        className="text-text-muted shrink-0"
                       />
                       <span className="flex-1 truncate">{s.model.replace("claude-", "")}</span>
                       <span
-                        className="font-mono text-[10px]"
-                        style={{ color: "var(--color-text-muted)" }}
+                        className="font-mono text-[10px] text-text-muted"
                       >
                         {s.numTurns}t · {fmtCost(s.totalCostUsd)}
                       </span>
@@ -338,7 +328,7 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
             )}
           </>
         ) : (
-          <div className="text-center py-8 text-xs" style={{ color: "var(--color-text-muted)" }}>
+          <div className="text-center py-8 text-xs text-text-muted">
             Workspace not found
           </div>
         )}

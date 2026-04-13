@@ -50,12 +50,7 @@ export function ModelSelector({ currentModel, onModelChange, disabled }: ModelSe
       <button
         onClick={() => !disabled && setOpen(!open)}
         disabled={disabled}
-        className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        style={{
-          background: "var(--color-bg-elevated)",
-          border: "1px solid var(--color-border)",
-          color: "var(--color-text-secondary)",
-        }}
+        className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-text-secondary bg-bg-elevated border border-border"
         aria-label={`Current model: ${display.label}. Click to change.`}
         title="Switch model"
       >
@@ -65,10 +60,7 @@ export function ModelSelector({ currentModel, onModelChange, disabled }: ModelSe
 
       {open && (
         <div
-          className="absolute top-full left-0 mt-1 rounded-lg overflow-hidden shadow-lg z-50"
-          style={{
-            background: "var(--color-bg-card)",
-            border: "1px solid var(--color-border)",
+          className="absolute top-full left-0 mt-1 rounded-lg overflow-hidden shadow-lg z-50 bg-bg-card border border-border" style={{
             minWidth: 160,
           }}
         >
@@ -95,12 +87,10 @@ export function ModelSelector({ currentModel, onModelChange, disabled }: ModelSe
                 }}
               >
                 <span
-                  className="font-mono font-bold"
-                  style={{
+                  className="font-mono font-bold inline-flex" style={{
                     width: 18,
                     height: 18,
                     borderRadius: 4,
-                    display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: 10,

@@ -115,10 +115,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
       }}
     >
       <div
-        className="flex flex-col gap-4 rounded-2xl p-5 w-full max-w-md max-h-[80vh] overflow-y-auto"
-        style={{
-          background: "var(--color-bg-card)",
-          border: "1px solid var(--color-border)",
+        className="flex flex-col gap-4 rounded-2xl p-5 w-full max-w-md max-h-[80vh] overflow-y-auto bg-bg-card border border-border" style={{
           boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
         }}
       >
@@ -139,23 +136,14 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
 
         {/* Create new share */}
         <div
-          className="flex flex-col gap-3 rounded-xl p-3"
-          style={{
-            background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
-          }}
+          className="flex flex-col gap-3 rounded-xl p-3 bg-bg-elevated border border-border"
         >
           <span className="text-xs font-semibold uppercase tracking-wide">New Share Link</span>
           <div className="flex items-center gap-3">
             <select
               value={permission}
               onChange={(e) => setPermission(e.target.value as "read-only" | "interactive")}
-              className="flex-1 text-xs px-2 py-1.5 rounded-lg cursor-pointer"
-              style={{
-                background: "var(--color-bg-card)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-text-primary)",
-              }}
+              className="flex-1 text-xs px-2 py-1.5 rounded-lg cursor-pointer text-text-primary bg-bg-card border border-border"
               aria-label="Permission level"
             >
               <option value="read-only">Read-only (view stream)</option>
@@ -164,12 +152,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
             <select
               value={expiresInHours}
               onChange={(e) => setExpiresInHours(Number(e.target.value))}
-              className="text-xs px-2 py-1.5 rounded-lg cursor-pointer"
-              style={{
-                background: "var(--color-bg-card)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-text-primary)",
-              }}
+              className="text-xs px-2 py-1.5 rounded-lg cursor-pointer text-text-primary bg-bg-card border border-border"
               aria-label="Expiry time"
             >
               <option value={1}>1 hour</option>
@@ -210,10 +193,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
             />
             <div className="flex items-center gap-2">
               <span
-                className="text-[10px] px-2 py-1 rounded-lg truncate max-w-[200px]"
-                style={{
-                  background: "var(--color-bg-elevated)",
-                  color: "var(--color-text-muted)",
+                className="text-[10px] px-2 py-1 rounded-lg truncate max-w-[200px] text-text-muted bg-bg-elevated" style={{
                   fontFamily: "var(--font-mono, monospace)",
                 }}
               >
@@ -255,12 +235,10 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
             {shares.map((s) => (
               <div
                 key={s.token}
-                className="flex items-center gap-2 rounded-lg px-3 py-2"
-                style={{
+                className="flex items-center gap-2 rounded-lg px-3 py-2 border border-border" style={{
                   background:
                     selectedToken === s.token ? "var(--color-bg-elevated)" : "transparent",
-                  border: "1px solid var(--color-border)",
-                }}
+                  }}
               >
                 <span style={{ color: s.permission === "interactive" ? "#a78bfa" : "#4285f4" }}>
                   {s.permission === "interactive" ? (
@@ -270,9 +248,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
                   )}
                 </span>
                 <span
-                  className="text-[10px] flex-1 truncate"
-                  style={{
-                    color: "var(--color-text-secondary)",
+                  className="text-[10px] flex-1 truncate text-text-secondary" style={{
                     fontFamily: "var(--font-mono, monospace)",
                   }}
                 >

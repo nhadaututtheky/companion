@@ -102,7 +102,7 @@ export function StepProject(props: StepProjectProps) {
       >
         <MagnifyingGlass
           size={14}
-          style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
+          className="text-text-muted shrink-0"
           aria-hidden="true"
         />
         <input
@@ -110,9 +110,7 @@ export function StepProject(props: StepProjectProps) {
           value={projectSearch}
           onChange={(e: ChangeEvent<HTMLInputElement>) => onProjectSearchChange(e.target.value)}
           placeholder="Search projects..."
-          className="flex-1 bg-transparent outline-none text-sm"
-          style={{
-            color: "var(--color-text-primary)",
+          className="flex-1 bg-transparent outline-none text-sm text-text-primary" style={{
             fontFamily: "var(--font-body)",
           }}
           aria-label="Search projects"
@@ -157,7 +155,7 @@ export function StepProject(props: StepProjectProps) {
                   <div className="flex items-center gap-2">
                     <FolderSimple
                       size={15}
-                      style={{ color: "#FBBC04", flexShrink: 0 }}
+                      className="shrink-0" style={{ color: "#FBBC04" }}
                       aria-hidden="true"
                     />
                     <span className="text-sm font-semibold truncate">{p.name}</span>
@@ -214,12 +212,7 @@ export function StepProject(props: StepProjectProps) {
       >
         <button
           onClick={() => onShowDirBrowser(true)}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
-          style={{
-            background: "var(--color-bg-elevated)",
-            color: "var(--color-text-primary)",
-            border: "1px solid var(--color-border)",
-          }}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer text-text-primary bg-bg-elevated border border-border"
         >
           <FolderOpen size={14} aria-hidden="true" />
           Browse folder...
@@ -227,12 +220,9 @@ export function StepProject(props: StepProjectProps) {
 
         <button
           onClick={() => onShowGithubInput((v) => !v)}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
-          style={{
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer text-text-primary border border-border" style={{
             background: showGithubInput ? "var(--color-bg-hover)" : "var(--color-bg-elevated)",
-            color: "var(--color-text-primary)",
-            border: "1px solid var(--color-border)",
-          }}
+            }}
         >
           <GithubLogo size={14} aria-hidden="true" />
           Add from GitHub
@@ -245,10 +235,7 @@ export function StepProject(props: StepProjectProps) {
               value={githubUrl}
               onChange={(e: ChangeEvent<HTMLInputElement>) => onGithubUrlChange(e.target.value)}
               placeholder="https://github.com/owner/repo"
-              className="flex-1 px-2.5 py-1.5 rounded-md text-sm input-bordered"
-              style={{
-                background: "var(--color-bg-card)",
-                color: "var(--color-text-primary)",
+              className="flex-1 px-2.5 py-1.5 rounded-md text-sm input-bordered text-text-primary bg-bg-card" style={{
                 fontFamily: "var(--font-body)",
               }}
               onKeyDown={(e) => {

@@ -147,8 +147,7 @@ const COMMAND_REFERENCE: CommandCategory[] = [
 function TypingIndicator() {
   return (
     <span
-      style={{
-        display: "inline-flex",
+      className="inline-flex" style={{
         alignItems: "center",
         gap: 3,
         marginLeft: 4,
@@ -159,12 +158,10 @@ function TypingIndicator() {
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          style={{
+          className="rounded-full inline-block" style={{
             width: 5,
             height: 5,
-            borderRadius: "50%",
             background: "#8d9eaa",
-            display: "inline-block",
             animation: "tg-bounce 1.2s ease-in-out infinite",
             animationDelay: `${i * 0.2}s`,
           }}
@@ -176,14 +173,14 @@ function TypingIndicator() {
 
 function InlineKeyboard({ rows }: { rows: InlineButton[][] }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
+    <div className="flex" style={{ flexDirection: "column", gap: 4, marginTop: 8 }}>
       {rows.map((row, ri) => (
-        <div key={ri} style={{ display: "flex", gap: 4 }}>
+        <div key={ri} className="flex" style={{ gap: 4 }}>
           {row.map((btn, bi) => (
             <button
               key={bi}
               aria-label={btn.label}
-              style={{
+              className="overflow-hidden whitespace-nowrap" style={{
                 flex: 1,
                 padding: "5px 10px",
                 borderRadius: 6,
@@ -193,8 +190,6 @@ function InlineKeyboard({ rows }: { rows: InlineButton[][] }) {
                 fontSize: 12,
                 fontFamily: "inherit",
                 cursor: "default",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
                 textOverflow: "ellipsis",
               }}
             >
@@ -235,8 +230,7 @@ function Bubble({ msg }: { msg: ChatMessage }) {
 
   return (
     <div
-      style={{
-        display: "flex",
+      className="flex" style={{
         flexDirection: "column",
         alignItems: isIn ? "flex-start" : "flex-end",
         gap: 2,
@@ -246,10 +240,9 @@ function Bubble({ msg }: { msg: ChatMessage }) {
       {/* Sender label on first incoming message */}
       {isIn && msg.showSenderLabel && (
         <span
-          style={{
+          className="font-semibold" style={{
             fontSize: 11,
             color: "#2AABEE",
-            fontWeight: 600,
             paddingLeft: 2,
             fontFamily: "inherit",
           }}
@@ -267,8 +260,7 @@ function Bubble({ msg }: { msg: ChatMessage }) {
 
         {/* Timestamp + read ticks */}
         <div
-          style={{
-            display: "flex",
+          className="flex" style={{
             alignItems: "center",
             justifyContent: "flex-end",
             gap: 3,
@@ -294,7 +286,7 @@ function Bubble({ msg }: { msg: ChatMessage }) {
 
 export function TelegramPreview() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <div className="flex" style={{ flexDirection: "column", gap: 20 }}>
       {/* Keyframe injection */}
       <style>{`
         @keyframes tg-bounce {
@@ -305,10 +297,9 @@ export function TelegramPreview() {
 
       {/* ── Phone mockup ── */}
       <div
-        style={{
+        className="overflow-hidden" style={{
           background: "#17212b",
           borderRadius: 14,
-          overflow: "hidden",
           border: "1px solid #2a3f52",
           fontFamily:
             "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
@@ -318,38 +309,33 @@ export function TelegramPreview() {
       >
         {/* Header bar */}
         <div
-          style={{
+          className="flex" style={{
             background: "#17212b",
             borderBottom: "1px solid #1e2e3d",
             padding: "10px 14px",
-            display: "flex",
             alignItems: "center",
             gap: 10,
           }}
         >
           {/* Avatar */}
           <div
-            style={{
+            className="rounded-full shrink-0 flex" style={{
               width: 36,
               height: 36,
-              borderRadius: "50%",
               background: "#2b5278",
-              display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              flexShrink: 0,
-            }}
+              }}
             aria-hidden="true"
           >
             <Robot size={20} weight="fill" color="#2AABEE" />
           </div>
 
           {/* Name + status */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <div className="flex" style={{ flexDirection: "column", gap: 1 }}>
             <span
-              style={{
+              className="font-semibold" style={{
                 fontSize: 14,
-                fontWeight: 600,
                 color: "#e3ecf3",
                 lineHeight: 1,
               }}
@@ -370,11 +356,10 @@ export function TelegramPreview() {
 
         {/* Chat area */}
         <div
-          style={{
+          className="flex" style={{
             maxHeight: 400,
             overflowY: "auto",
             padding: "12px 10px",
-            display: "flex",
             flexDirection: "column",
             gap: 6,
             background: "#0e1621",
@@ -387,11 +372,10 @@ export function TelegramPreview() {
 
         {/* Input bar (decorative) */}
         <div
-          style={{
+          className="flex" style={{
             background: "#17212b",
             borderTop: "1px solid #1e2e3d",
             padding: "8px 12px",
-            display: "flex",
             alignItems: "center",
             gap: 8,
           }}
@@ -411,16 +395,13 @@ export function TelegramPreview() {
             Message
           </div>
           <div
-            style={{
+            className="rounded-full shrink-0 flex" style={{
               width: 32,
               height: 32,
-              borderRadius: "50%",
               background: "#2AABEE",
-              display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              flexShrink: 0,
-            }}
+              }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
               <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
@@ -431,12 +412,9 @@ export function TelegramPreview() {
 
       {/* ── Command Reference ── */}
       <div
-        style={{
-          background: "var(--color-bg-elevated)",
-          border: "1px solid var(--color-border)",
+        className="bg-bg-elevated border border-border overflow-hidden" style={{
           borderRadius: 10,
-          overflow: "hidden",
-        }}
+          }}
       >
         <div
           style={{
@@ -445,11 +423,9 @@ export function TelegramPreview() {
           }}
         >
           <span
-            style={{
+            className="text-text-primary font-semibold" style={{
               fontSize: 12,
-              fontWeight: 600,
-              color: "var(--color-text-primary)",
-            }}
+              }}
           >
             Command Reference
           </span>
@@ -460,14 +436,12 @@ export function TelegramPreview() {
             <div key={group.category}>
               {/* Category header */}
               <div
-                style={{
+                className="text-text-muted font-bold" style={{
                   padding: "6px 14px 3px",
                   fontSize: 10,
-                  fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
-                  color: "var(--color-text-muted)",
-                }}
+                  }}
               >
                 {group.category}
               </div>
@@ -476,28 +450,25 @@ export function TelegramPreview() {
               {group.commands.map((entry) => (
                 <div
                   key={entry.cmd}
-                  style={{
-                    display: "flex",
+                  className="flex" style={{
                     alignItems: "baseline",
                     gap: 10,
                     padding: "4px 14px",
                   }}
                 >
                   <code
-                    style={{
+                    className="shrink-0" style={{
                       fontSize: 11,
                       fontFamily: "JetBrains Mono, Fira Code, monospace",
                       color: "#2AABEE",
-                      flexShrink: 0,
                       minWidth: 110,
                     }}
                   >
                     {entry.cmd}
                   </code>
                   <span
-                    style={{
+                    className="text-text-secondary" style={{
                       fontSize: 11,
-                      color: "var(--color-text-secondary)",
                       lineHeight: 1.4,
                     }}
                   >

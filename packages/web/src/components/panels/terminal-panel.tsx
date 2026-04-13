@@ -210,9 +210,7 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
     <div className="flex flex-col h-full" style={{ background: "#0c1419" }}>
       {/* Header */}
       <div
-        className="flex items-center justify-between px-3 py-1.5 shrink-0"
-        style={{
-          background: "var(--color-bg-card)",
+        className="flex items-center justify-between px-3 py-1.5 shrink-0 bg-bg-card" style={{
           borderBottom: "1px solid var(--glass-border)",
         }}
       >
@@ -221,18 +219,14 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
           <span className="text-xs font-semibold">Terminal</span>
           <span
             aria-hidden="true"
-            style={{
+            className="rounded-full shrink-0 inline-block" style={{
               width: 6,
               height: 6,
-              borderRadius: "50%",
               background: connected ? "#34A853" : connecting ? "#FBBC04" : "#9CA3AF",
-              display: "inline-block",
-              flexShrink: 0,
-            }}
+              }}
           />
           <span
-            className="text-xs"
-            style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+            className="text-xs text-text-muted" style={{ fontSize: 10 }}
             aria-live="polite"
           >
             {connected ? "Connected" : connecting ? "Connecting..." : "Disconnected"}
@@ -242,8 +236,7 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
         <div className="flex items-center gap-0.5">
           <button
             onClick={handleNewTerminal}
-            className="p-1 rounded cursor-pointer transition-colors"
-            style={{ color: "var(--color-text-muted)", background: "none", border: "none" }}
+            className="p-1 rounded cursor-pointer transition-colors text-text-muted" style={{ background: "none", border: "none" }}
             aria-label="New terminal"
             title="New Terminal"
           >
@@ -252,8 +245,7 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
           <button
             onClick={handleKill}
             disabled={!terminalId}
-            className="p-1 rounded cursor-pointer transition-colors disabled:opacity-30"
-            style={{ color: "var(--color-text-muted)", background: "none", border: "none" }}
+            className="p-1 rounded cursor-pointer transition-colors disabled:opacity-30 text-text-muted" style={{ background: "none", border: "none" }}
             aria-label="Kill terminal"
             title="Kill Terminal"
           >
@@ -261,8 +253,7 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
           </button>
           <button
             onClick={onClose}
-            className="p-1 rounded cursor-pointer transition-colors"
-            style={{ color: "var(--color-text-muted)", background: "none", border: "none" }}
+            className="p-1 rounded cursor-pointer transition-colors text-text-muted" style={{ background: "none", border: "none" }}
             aria-label="Close terminal panel"
           >
             <X size={13} weight="bold" />

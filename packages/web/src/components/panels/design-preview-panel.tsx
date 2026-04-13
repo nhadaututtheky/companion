@@ -83,14 +83,12 @@ function ArtifactRenderer({
 function SourceViewer({ artifact }: { artifact: PreviewArtifact }) {
   return (
     <div
-      className="h-full overflow-auto p-4"
-      style={{ background: "var(--color-bg-elevated)" }}
+      className="h-full overflow-auto p-4 bg-bg-elevated"
       role="region"
       aria-label="Artifact source code"
     >
       <pre
-        className="text-xs font-mono whitespace-pre-wrap leading-relaxed"
-        style={{ color: "var(--color-text-primary)" }}
+        className="text-xs font-mono whitespace-pre-wrap leading-relaxed text-text-primary"
       >
         {artifact.content}
       </pre>
@@ -175,21 +173,15 @@ export function DesignPreviewPanel() {
   if (!artifact) {
     return (
       <div
-        className="flex flex-col items-center justify-center h-full gap-4"
-        style={{ background: "var(--color-bg-base)" }}
+        className="flex flex-col items-center justify-center h-full gap-4 bg-bg-base"
       >
-        <Eye size={48} style={{ color: "var(--color-text-muted)" }} />
-        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+        <Eye size={48} className="text-text-muted" />
+        <p className="text-sm text-text-muted">
           No preview artifacts yet
         </p>
         <button
           onClick={closePanel}
-          className="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors"
-          style={{
-            background: "var(--color-bg-elevated)",
-            color: "var(--color-text-primary)",
-            border: "1px solid var(--color-border)",
-          }}
+          className="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors text-text-primary bg-bg-elevated border border-border"
         >
           Back to Chat
         </button>
@@ -200,28 +192,20 @@ export function DesignPreviewPanel() {
   return (
     <div
       ref={panelRef}
-      className="flex flex-col h-full"
-      style={{ background: "var(--color-bg-base)" }}
+      className="flex flex-col h-full bg-bg-base"
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
       {/* Top bar */}
       <div
-        className="flex items-center gap-3 px-4 py-2.5 shrink-0"
-        style={{
-          background: "var(--color-bg-card)",
+        className="flex items-center gap-3 px-4 py-2.5 shrink-0 bg-bg-card" style={{
           borderBottom: "1px solid var(--color-border)",
         }}
       >
         {/* Back button */}
         <button
           onClick={closePanel}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer transition-colors"
-          style={{
-            color: "var(--color-text-primary)",
-            background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
-          }}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer transition-colors text-text-primary bg-bg-elevated border border-border"
           aria-label="Back to chat"
         >
           <ArrowLeft size={14} weight="bold" />
@@ -233,8 +217,7 @@ export function DesignPreviewPanel() {
           <span className="text-sm font-semibold truncate">{artifact.label}</span>
           {artifactCounter && (
             <span
-              className="text-xs font-mono px-2 py-0.5 rounded-full"
-              style={{ background: "var(--color-bg-elevated)", color: "var(--color-text-muted)" }}
+              className="text-xs font-mono px-2 py-0.5 rounded-full text-text-muted" style={{ background: "var(--color-bg-elevated)" }}
             >
               {artifactCounter}
             </span>
@@ -266,8 +249,7 @@ export function DesignPreviewPanel() {
             <button
               onClick={goPrev}
               disabled={activeIndex <= 0}
-              className="p-1.5 rounded cursor-pointer transition-colors disabled:opacity-30"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="p-1.5 rounded cursor-pointer transition-colors disabled:opacity-30 text-text-secondary"
               aria-label="Previous artifact"
             >
               <CaretLeft size={14} weight="bold" />
@@ -275,8 +257,7 @@ export function DesignPreviewPanel() {
             <button
               onClick={goNext}
               disabled={activeIndex >= artifacts.length - 1}
-              className="p-1.5 rounded cursor-pointer transition-colors disabled:opacity-30"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="p-1.5 rounded cursor-pointer transition-colors disabled:opacity-30 text-text-secondary"
               aria-label="Next artifact"
             >
               <CaretRight size={14} weight="bold" />
@@ -314,23 +295,20 @@ export function DesignPreviewPanel() {
           <button
             onClick={zoomOut}
             disabled={zoomIndex <= 0}
-            className="p-1.5 rounded cursor-pointer transition-colors disabled:opacity-30"
-            style={{ color: "var(--color-text-secondary)" }}
+            className="p-1.5 rounded cursor-pointer transition-colors disabled:opacity-30 text-text-secondary"
             aria-label="Zoom out"
           >
             <MagnifyingGlassMinus size={14} weight="bold" />
           </button>
           <span
-            className="text-xs font-mono min-w-[3ch] text-center"
-            style={{ color: "var(--color-text-muted)" }}
+            className="text-xs font-mono min-w-[3ch] text-center text-text-muted"
           >
             {Math.round(zoom * 100)}%
           </span>
           <button
             onClick={zoomIn}
             disabled={zoomIndex >= ZOOM_LEVELS.length - 1}
-            className="p-1.5 rounded cursor-pointer transition-colors disabled:opacity-30"
-            style={{ color: "var(--color-text-secondary)" }}
+            className="p-1.5 rounded cursor-pointer transition-colors disabled:opacity-30 text-text-secondary"
             aria-label="Zoom in"
           >
             <MagnifyingGlassPlus size={14} weight="bold" />
@@ -377,8 +355,7 @@ export function DesignPreviewPanel() {
         {/* Open external */}
         <button
           onClick={handleOpenExternal}
-          className="p-1.5 rounded cursor-pointer transition-colors"
-          style={{ color: "var(--color-text-muted)" }}
+          className="p-1.5 rounded cursor-pointer transition-colors text-text-muted"
           aria-label="Open in new tab"
           title="Open in new tab"
         >
@@ -388,8 +365,7 @@ export function DesignPreviewPanel() {
         {/* Delete */}
         <button
           onClick={handleDelete}
-          className="p-1.5 rounded cursor-pointer transition-colors"
-          style={{ color: "var(--color-text-muted)" }}
+          className="p-1.5 rounded cursor-pointer transition-colors text-text-muted"
           aria-label="Remove artifact"
           title="Remove artifact"
         >
@@ -400,19 +376,16 @@ export function DesignPreviewPanel() {
       {/* Preview area */}
       <div className="flex-1 overflow-hidden flex items-start justify-center">
         <div
-          className="h-full overflow-auto"
-          style={{
+          className="h-full overflow-auto border border-border overflow-hidden" style={{
             width: currentViewport.width,
             maxWidth: "100%",
             transition: "width 300ms ease",
             ...(viewport !== "desktop"
               ? {
                   margin: "16px auto",
-                  border: "1px solid var(--color-border)",
                   borderRadius: 12,
                   boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
-                  overflow: "hidden",
-                }
+                  }
               : {}),
           }}
         >
@@ -427,9 +400,7 @@ export function DesignPreviewPanel() {
       {/* Bottom artifact strip — thumbnails when multiple artifacts */}
       {artifacts.length > 1 && (
         <div
-          className="flex items-center gap-2 px-4 py-2 shrink-0 overflow-x-auto"
-          style={{
-            background: "var(--color-bg-card)",
+          className="flex items-center gap-2 px-4 py-2 shrink-0 overflow-x-auto bg-bg-card" style={{
             borderTop: "1px solid var(--color-border)",
           }}
         >

@@ -28,8 +28,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div
-          style={{
-            display: "flex",
+          className="flex" style={{
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
@@ -40,31 +39,28 @@ export class ErrorBoundary extends Component<Props, State> {
             background: "var(--color-bg-base, #faf8f3)",
           }}
         >
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "0.5rem" }}>
+          <h1 className="font-bold" style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>
             Something went wrong
           </h1>
           <p
-            style={{
+            className="text-center" style={{
               fontSize: "0.875rem",
               color: "var(--color-text-secondary, #666)",
               marginBottom: "1rem",
               maxWidth: "400px",
-              textAlign: "center",
-            }}
+              }}
           >
             {this.state.error?.message ?? "An unexpected error occurred."}
           </p>
           <button
             onClick={() => window.location.reload()}
-            style={{
+            className="cursor-pointer font-medium" style={{
               padding: "0.5rem 1.5rem",
               borderRadius: "8px",
               border: "1px solid var(--color-border, #ddd)",
               background: "var(--color-bg-card, #fff)",
-              cursor: "pointer",
               fontSize: "0.875rem",
-              fontWeight: 500,
-            }}
+              }}
           >
             Reload page
           </button>

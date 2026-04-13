@@ -136,10 +136,8 @@ export function UpdateBanner() {
 
   return (
     <div
-      className="fixed bottom-4 right-4 flex items-start gap-3 rounded-xl px-4 py-3 max-w-sm"
-      style={{
+      className="fixed bottom-4 right-4 flex items-start gap-3 rounded-xl px-4 py-3 max-w-sm bg-bg-card" style={{
         zIndex: Z.overlay,
-        background: "var(--color-bg-card)",
         border: "1px solid var(--color-accent)",
         boxShadow: "0 8px 32px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.05)",
         animation: "slideUp 300ms ease",
@@ -150,19 +148,17 @@ export function UpdateBanner() {
         className="flex-shrink-0 p-1.5 rounded-lg mt-0.5"
         style={{ background: "var(--color-accent)15" }}
       >
-        <Rocket size={18} weight="fill" style={{ color: "var(--color-accent)" }} />
+        <Rocket size={18} weight="fill" className="text-accent" />
       </div>
 
       <div className="flex flex-col gap-1 flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold" style={{ color: "var(--color-text-primary)" }}>
+          <span className="text-xs font-bold text-text-primary">
             Update Available
           </span>
           <span
-            className="text-xs px-1.5 py-0.5 rounded-full font-mono"
-            style={{
+            className="text-xs px-1.5 py-0.5 rounded-full font-mono text-accent" style={{
               background: "var(--color-accent)20",
-              color: "var(--color-accent)",
               fontSize: 10,
             }}
           >
@@ -170,7 +166,7 @@ export function UpdateBanner() {
           </span>
         </div>
 
-        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <p className="text-xs text-text-muted">
           You&apos;re on v{update.currentVersion}.{relativeTime ? ` Released ${relativeTime}.` : ""}
         </p>
 
@@ -187,8 +183,7 @@ export function UpdateBanner() {
           </a>
           <button
             onClick={() => dismiss(update.latestVersion)}
-            className="px-2 py-1 rounded-lg text-xs cursor-pointer transition-all"
-            style={{ color: "var(--color-text-muted)" }}
+            className="px-2 py-1 rounded-lg text-xs cursor-pointer transition-all text-text-muted"
             aria-label="Dismiss update notification"
           >
             Later
@@ -198,8 +193,7 @@ export function UpdateBanner() {
 
       <button
         onClick={() => dismiss(update.latestVersion)}
-        className="flex-shrink-0 p-0.5 rounded transition-all cursor-pointer"
-        style={{ color: "var(--color-text-muted)" }}
+        className="flex-shrink-0 p-0.5 rounded transition-all cursor-pointer text-text-muted"
         aria-label="Close"
       >
         <X size={14} />

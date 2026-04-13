@@ -131,7 +131,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
   }, [query, glob, runSearch]);
 
   return (
-    <div className="flex flex-col h-full" style={{ background: "var(--color-bg-card)" }}>
+    <div className="flex flex-col h-full bg-bg-card">
       {/* Header */}
       <div
         className="flex items-center gap-2 px-3 py-3 flex-shrink-0"
@@ -140,7 +140,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
         <MagnifyingGlass
           size={15}
           weight="bold"
-          style={{ color: "var(--color-accent)", flexShrink: 0 }}
+          className="text-accent shrink-0"
           aria-hidden="true"
         />
         <span className="text-sm font-semibold flex-1">Search Files</span>
@@ -163,10 +163,8 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
           <MagnifyingGlass
             size={14}
             weight="regular"
-            style={{
-              position: "absolute",
+            className="text-text-muted absolute" style={{
               left: 10,
-              color: "var(--color-text-muted)",
               pointerEvents: "none",
             }}
             aria-hidden="true"
@@ -177,11 +175,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search..."
-            className="w-full text-sm rounded-md"
-            style={{
-              background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
-              color: "var(--color-text-primary)",
+            className="w-full text-sm rounded-md text-text-primary bg-bg-elevated border border-border" style={{
               padding: "6px 10px 6px 32px",
               outline: "none",
             }}
@@ -204,11 +198,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
           value={glob}
           onChange={(e) => setGlob(e.target.value)}
           placeholder="File filter: *.ts, *.tsx"
-          className="w-full text-xs rounded-md"
-          style={{
-            background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
-            color: "var(--color-text-secondary)",
+          className="w-full text-xs rounded-md text-text-secondary bg-bg-elevated border border-border" style={{
             padding: "5px 10px",
             outline: "none",
           }}
@@ -247,11 +237,9 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
           <>
             {/* Results count */}
             <div
-              className="flex items-center gap-1.5 px-3 py-2 text-xs flex-shrink-0"
-              style={{
+              className="flex items-center gap-1.5 px-3 py-2 text-xs flex-shrink-0 text-text-muted" style={{
                 borderBottom: "1px solid var(--glass-border)",
-                color: "var(--color-text-muted)",
-              }}
+                }}
             >
               <span>
                 {matches.length} result{matches.length !== 1 ? "s" : ""}
@@ -274,7 +262,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
                       <FileText
                         size={12}
                         weight="regular"
-                        style={{ color: "var(--color-accent)", flexShrink: 0 }}
+                        className="text-accent shrink-0"
                         aria-hidden="true"
                       />
                       <span
@@ -300,11 +288,9 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
 
       {/* Search root footer */}
       <div
-        className="flex items-center gap-1.5 px-3 py-2 flex-shrink-0 text-xs truncate"
-        style={{
+        className="flex items-center gap-1.5 px-3 py-2 flex-shrink-0 text-xs truncate text-text-muted" style={{
           borderTop: "1px solid var(--glass-border)",
-          color: "var(--color-text-muted)",
-        }}
+          }}
         title={searchRoot}
       >
         <span className="truncate">{searchRoot || "No root set"}</span>

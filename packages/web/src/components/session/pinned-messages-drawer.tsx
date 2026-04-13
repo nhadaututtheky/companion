@@ -61,10 +61,8 @@ export function PinnedMessagesDrawer({
 
       {/* Drawer panel */}
       <div
-        className="fixed top-0 right-0 bottom-0 z-50 flex flex-col"
-        style={{
+        className="fixed top-0 right-0 bottom-0 z-50 flex flex-col bg-bg-card" style={{
           width: 320,
-          background: "var(--color-bg-card)",
           borderLeft: "1px solid var(--color-border)",
           boxShadow: "-8px 0 32px rgba(0,0,0,0.15)",
         }}
@@ -111,11 +109,10 @@ export function PinnedMessagesDrawer({
         <div className="flex-1 overflow-y-auto">
           {pinnedMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-3 px-6">
-              <PushPin size={32} style={{ color: "var(--color-text-muted)", opacity: 0.4 }} />
+              <PushPin size={32} className="text-text-muted" style={{ opacity: 0.4 }} />
               <p className="text-sm text-center">No pinned messages</p>
               <p
-                className="text-xs text-center"
-                style={{ color: "var(--color-text-muted)", opacity: 0.7 }}
+                className="text-xs text-center text-text-muted opacity-70"
               >
                 Hover a message and click the pin icon to save it here
               </p>
@@ -127,11 +124,7 @@ export function PinnedMessagesDrawer({
                 return (
                   <div
                     key={idx}
-                    className="rounded-xl p-3 flex flex-col gap-2"
-                    style={{
-                      background: "var(--color-bg-elevated)",
-                      border: "1px solid var(--color-border)",
-                    }}
+                    className="rounded-xl p-3 flex flex-col gap-2 bg-bg-elevated border border-border"
                   >
                     {/* Role badge + index */}
                     <div className="flex items-center justify-between">
@@ -161,8 +154,7 @@ export function PinnedMessagesDrawer({
                         </span>
                       </div>
                       <span
-                        className="text-xs font-mono"
-                        style={{ color: "var(--color-text-muted)", opacity: 0.5 }}
+                        className="text-xs font-mono text-text-muted opacity-50"
                       >
                         #{idx}
                       </span>

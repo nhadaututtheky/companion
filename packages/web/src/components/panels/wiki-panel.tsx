@@ -71,14 +71,12 @@ export function WikiPanel({ onClose }: WikiPanelProps) {
         : (activeDomain ?? "Wiki KB");
 
   return (
-    <div className="flex flex-col h-full" style={{ background: "var(--color-bg-base)" }}>
+    <div className="flex flex-col h-full bg-bg-base">
       {/* Header */}
       <div
-        className="flex items-center gap-2 px-3 py-1.5 shrink-0"
-        style={{
+        className="flex items-center gap-2 px-3 py-1.5 shrink-0 bg-bg-elevated" style={{
           borderBottom: "1px solid var(--color-border)",
-          background: "var(--color-bg-elevated)",
-        }}
+          }}
       >
         {(view === "article" || view === "raw") && (
           <button
@@ -89,10 +87,9 @@ export function WikiPanel({ onClose }: WikiPanelProps) {
             <ArrowLeft size={14} />
           </button>
         )}
-        <BookOpen size={14} style={{ color: WIKI_ACCENT, flexShrink: 0 }} />
+        <BookOpen size={14} className="shrink-0" style={{ color: WIKI_ACCENT }} />
         <span
-          className="text-xs font-semibold truncate flex-1"
-          style={{ color: "var(--color-text-primary)" }}
+          className="text-xs font-semibold truncate flex-1 text-text-primary"
         >
           {title}
         </span>
@@ -209,8 +206,7 @@ function BrowseView() {
   if (loading && domains.length === 0 && !activeDomain) {
     return (
       <div
-        className="flex items-center justify-center p-8 gap-2 text-xs"
-        style={{ color: "var(--color-text-secondary)" }}
+        className="flex items-center justify-center p-8 gap-2 text-xs text-text-secondary"
       >
         <CircleNotch size={14} className="animate-spin" /> Loading...
       </div>
@@ -222,16 +218,12 @@ function BrowseView() {
     return (
       <div className="p-3 flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+          <span className="text-xs font-medium text-text-secondary">
             Domains
           </span>
           <button
             onClick={() => setShowNewDomain(true)}
-            className="flex items-center gap-1 text-xs px-2 py-1 rounded cursor-pointer"
-            style={{
-              background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
-            }}
+            className="flex items-center gap-1 text-xs px-2 py-1 rounded cursor-pointer bg-bg-elevated border border-border"
           >
             <Plus size={12} /> New
           </button>
@@ -248,7 +240,7 @@ function BrowseView() {
         )}
 
         {domains.length === 0 && !showNewDomain && (
-          <div className="text-xs p-4 text-center" style={{ color: "var(--color-text-secondary)" }}>
+          <div className="text-xs p-4 text-center text-text-secondary">
             No wiki domains yet. Create one to start building your knowledge base.
           </div>
         )}
@@ -257,26 +249,21 @@ function BrowseView() {
           <button
             key={d.slug}
             onClick={() => selectDomain(d.slug)}
-            className="flex items-center gap-3 p-3 rounded-lg text-left cursor-pointer"
-            style={{
-              background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
-            }}
+            className="flex items-center gap-3 p-3 rounded-lg text-left cursor-pointer bg-bg-elevated border border-border"
           >
-            <BookOpen size={18} style={{ color: WIKI_ACCENT, flexShrink: 0 }} />
+            <BookOpen size={18} className="shrink-0" style={{ color: WIKI_ACCENT }} />
             <div className="flex-1 min-w-0">
               <div
-                className="text-sm font-medium truncate"
-                style={{ color: "var(--color-text-primary)" }}
+                className="text-sm font-medium truncate text-text-primary"
               >
                 {d.name}
               </div>
-              <div className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+              <div className="text-xs text-text-secondary">
                 {d.articleCount} articles &middot; {fmtTokens(d.totalTokens)} tokens
               </div>
             </div>
             {d.hasCore && (
-              <ShieldCheck size={14} style={{ color: "#10b981", flexShrink: 0 }} weight="fill" />
+              <ShieldCheck size={14} className="shrink-0" style={{ color: "#10b981" }} weight="fill" />
             )}
           </button>
         ))}
@@ -295,36 +282,30 @@ function BrowseView() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveDomain(null)}
-            className="text-xs cursor-pointer hover:underline"
-            style={{ color: "var(--color-text-secondary)" }}
+            className="text-xs cursor-pointer hover:underline text-text-secondary"
           >
             All domains
           </button>
-          <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+          <span className="text-xs text-text-secondary">
             /
           </span>
-          <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <span className="text-xs font-semibold text-text-primary">
             {activeDomain}
           </span>
         </div>
 
         {/* Search */}
         <div
-          className="flex items-center gap-2 rounded px-2 py-1"
-          style={{
-            background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
-          }}
+          className="flex items-center gap-2 rounded px-2 py-1 bg-bg-elevated border border-border"
         >
-          <MagnifyingGlass size={12} style={{ color: "var(--color-text-secondary)" }} />
+          <MagnifyingGlass size={12} className="text-text-secondary" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search articles..."
             aria-label="Search wiki articles"
-            className="flex-1 text-xs bg-transparent outline-none"
-            style={{ color: "var(--color-text-primary)" }}
+            className="flex-1 text-xs bg-transparent outline-none text-text-primary"
           />
         </div>
 
@@ -332,11 +313,7 @@ function BrowseView() {
         <div className="flex gap-2 relative">
           <button
             onClick={() => setView("raw")}
-            className="flex items-center gap-1 text-xs px-2 py-1 rounded cursor-pointer"
-            style={{
-              background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
-            }}
+            className="flex items-center gap-1 text-xs px-2 py-1 rounded cursor-pointer bg-bg-elevated border border-border"
           >
             <Upload size={12} /> Raw Files
           </button>
@@ -348,8 +325,7 @@ function BrowseView() {
       {/* Loading articles */}
       {loading && (
         <div
-          className="flex items-center justify-center p-4 gap-2 text-xs"
-          style={{ color: "var(--color-text-secondary)" }}
+          className="flex items-center justify-center p-4 gap-2 text-xs text-text-secondary"
         >
           <CircleNotch size={14} className="animate-spin" /> Loading articles...
         </div>
@@ -383,12 +359,11 @@ function BrowseView() {
         >
           <ShieldCheck size={14} style={{ color: "#10b981" }} weight="fill" />
           <span
-            className="text-xs font-medium flex-1"
-            style={{ color: "var(--color-text-primary)" }}
+            className="text-xs font-medium flex-1 text-text-primary"
           >
             Core Rules (L0)
           </span>
-          <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+          <span className="text-xs text-text-secondary">
             {fmtTokens(Math.ceil(coreContent.length / 4))} tokens
           </span>
         </button>
@@ -396,7 +371,7 @@ function BrowseView() {
 
       {/* Article list */}
       {!loading && filteredArticles.length === 0 && (
-        <div className="text-xs p-4 text-center" style={{ color: "var(--color-text-secondary)" }}>
+        <div className="text-xs p-4 text-center text-text-secondary">
           {searchQuery
             ? "No articles match your search."
             : "No articles yet. Add raw material and compile."}
@@ -413,13 +388,12 @@ function BrowseView() {
           >
             <File
               size={14}
-              style={{ color: "var(--color-text-secondary)", marginTop: 1, flexShrink: 0 }}
+              className="text-text-secondary shrink-0" style={{ marginTop: 1 }}
             />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1">
                 <div
-                  className="text-xs font-medium truncate"
-                  style={{ color: "var(--color-text-primary)" }}
+                  className="text-xs font-medium truncate text-text-primary"
                 >
                   {a.title}
                 </div>
@@ -427,7 +401,7 @@ function BrowseView() {
                   <Warning
                     size={12}
                     weight="fill"
-                    style={{ color: "var(--color-warning, #f59e0b)", flexShrink: 0 }}
+                    className="shrink-0" style={{ color: "var(--color-warning, #f59e0b)" }}
                   />
                 )}
               </div>
@@ -436,11 +410,7 @@ function BrowseView() {
                   {a.tags.slice(0, 4).map((t) => (
                     <span
                       key={t}
-                      className="text-[10px] px-1.5 py-0.5 rounded"
-                      style={{
-                        background: "var(--color-bg-elevated)",
-                        color: "var(--color-text-secondary)",
-                      }}
+                      className="text-[10px] px-1.5 py-0.5 rounded text-text-secondary bg-bg-elevated"
                     >
                       {t}
                     </span>
@@ -449,7 +419,7 @@ function BrowseView() {
               )}
             </div>
             <div className="flex flex-col items-end gap-0.5 shrink-0 mt-0.5">
-              <span className="text-[10px]" style={{ color: "var(--color-text-secondary)" }}>
+              <span className="text-[10px] text-text-secondary">
                 {fmtTokens(a.tokens)}
               </span>
               {a.confidence && (
@@ -508,8 +478,7 @@ function NewDomainForm({ onCreated, onCancel }: { onCreated: () => void; onCance
 
   return (
     <div
-      className="flex flex-col gap-2 p-3 rounded-lg"
-      style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
+      className="flex flex-col gap-2 p-3 rounded-lg bg-bg-elevated border border-border"
     >
       <input
         type="text"
@@ -517,8 +486,7 @@ function NewDomainForm({ onCreated, onCancel }: { onCreated: () => void; onCance
         onChange={(e) => setName(e.target.value)}
         placeholder="Domain name (e.g. Trading)"
         aria-label="Domain name"
-        className="text-xs bg-transparent outline-none px-2 py-1 rounded"
-        style={{ border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+        className="text-xs bg-transparent outline-none px-2 py-1 rounded text-text-primary border border-border"
         autoFocus
       />
       <input
@@ -527,14 +495,12 @@ function NewDomainForm({ onCreated, onCancel }: { onCreated: () => void; onCance
         onChange={(e) => setSlug(e.target.value)}
         placeholder={`Slug: ${autoSlug || "trading"}`}
         aria-label="Domain slug"
-        className="text-xs bg-transparent outline-none px-2 py-1 rounded"
-        style={{ border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+        className="text-xs bg-transparent outline-none px-2 py-1 rounded text-text-primary border border-border"
       />
       <div className="flex gap-2 justify-end">
         <button
           onClick={onCancel}
-          className="text-xs px-2 py-1 rounded cursor-pointer"
-          style={{ color: "var(--color-text-secondary)" }}
+          className="text-xs px-2 py-1 rounded cursor-pointer text-text-secondary"
         >
           Cancel
         </button>
@@ -636,16 +602,14 @@ function LintButton({ domain }: { domain: string }) {
       <button
         onClick={handleLint}
         disabled={linting}
-        className="flex items-center gap-1 text-xs px-2 py-1 rounded cursor-pointer relative"
-        style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)" }}
+        className="flex items-center gap-1 text-xs px-2 py-1 rounded cursor-pointer relative bg-bg-elevated border border-border"
         title="Check for stale articles"
       >
         {linting ? <CircleNotch size={12} className="animate-spin" /> : <Warning size={12} />}
         Lint
         {issues !== null && warningCount > 0 && (
           <span
-            className="text-[9px] font-bold px-1 py-0.5 rounded-full leading-none"
-            style={{ background: "#f59e0b", color: "#000", minWidth: 14, textAlign: "center" }}
+            className="text-[9px] font-bold px-1 py-0.5 rounded-full leading-none text-center" style={{ background: "#f59e0b", color: "#000", minWidth: 14 }}
           >
             {warningCount}
           </span>
@@ -654,10 +618,7 @@ function LintButton({ domain }: { domain: string }) {
 
       {showResults && issues !== null && (
         <div
-          className="fixed z-50 rounded-lg p-3 flex flex-col gap-1.5 max-h-48 overflow-y-auto"
-          style={{
-            background: "var(--color-bg-base)",
-            border: "1px solid var(--color-border)",
+          className="fixed z-50 rounded-lg p-3 flex flex-col gap-1.5 max-h-48 overflow-y-auto bg-bg-base border border-border" style={{
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
             width: "min(400px, calc(100vw - 2rem))",
             top: "auto",
@@ -665,13 +626,12 @@ function LintButton({ domain }: { domain: string }) {
           }}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+            <span className="text-xs font-semibold text-text-primary">
               Lint Results
             </span>
             <button
               onClick={() => setShowResults(false)}
-              className="text-xs cursor-pointer"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="text-xs cursor-pointer text-text-secondary"
               aria-label="Close lint results"
             >
               <X size={12} />
@@ -685,8 +645,7 @@ function LintButton({ domain }: { domain: string }) {
             issues.map((issue, i) => (
               <div
                 key={`${issue.target}-${issue.code}-${i}`}
-                className="text-[11px] flex items-start gap-1.5"
-                style={{ color: "var(--color-text-secondary)" }}
+                className="text-[11px] flex items-start gap-1.5 text-text-secondary"
               >
                 <span
                   style={{
@@ -735,7 +694,7 @@ function ArticleView() {
 
   if (!article) {
     return (
-      <div className="p-4 text-xs text-center" style={{ color: "var(--color-text-secondary)" }}>
+      <div className="p-4 text-xs text-center text-text-secondary">
         No article selected.
       </div>
     );
@@ -745,22 +704,20 @@ function ArticleView() {
     <div className="flex flex-col gap-0">
       {/* Meta bar */}
       <div
-        className="px-3 py-2 flex flex-wrap gap-x-4 gap-y-1"
-        style={{
+        className="px-3 py-2 flex flex-wrap gap-x-4 gap-y-1 bg-bg-elevated" style={{
           borderBottom: "1px solid var(--color-border)",
-          background: "var(--color-bg-elevated)",
-        }}
+          }}
       >
-        <span className="text-[10px]" style={{ color: "var(--color-text-secondary)" }}>
+        <span className="text-[10px] text-text-secondary">
           {fmtTokens(article.meta.tokens)} tokens
         </span>
         {article.meta.compiledBy !== "manual" && (
-          <span className="text-[10px]" style={{ color: "var(--color-text-secondary)" }}>
+          <span className="text-[10px] text-text-secondary">
             by {article.meta.compiledBy}
           </span>
         )}
         {article.meta.compiledAt && (
-          <span className="text-[10px]" style={{ color: "var(--color-text-secondary)" }}>
+          <span className="text-[10px] text-text-secondary">
             {new Date(article.meta.compiledAt).toLocaleDateString()}
           </span>
         )}
@@ -798,12 +755,11 @@ function ArticleView() {
         )}
         {article.meta.tags.length > 0 && (
           <div className="flex items-center gap-1">
-            <Tag size={10} style={{ color: "var(--color-text-secondary)" }} />
+            <Tag size={10} className="text-text-secondary" />
             {article.meta.tags.map((t) => (
               <span
                 key={t}
-                className="text-[10px]"
-                style={{ color: "var(--color-text-secondary)" }}
+                className="text-[10px] text-text-secondary"
               >
                 {t}
               </span>
@@ -819,8 +775,7 @@ function ArticleView() {
               setEditing(false);
             }
           }}
-          className="ml-auto flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded cursor-pointer"
-          style={{ background: "var(--color-bg-base)", color: "var(--color-text-secondary)" }}
+          className="ml-auto flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded cursor-pointer text-text-secondary" style={{ background: "var(--color-bg-base)" }}
         >
           <PencilSimple size={10} /> {editing ? "Cancel" : "Edit"}
         </button>
@@ -832,8 +787,7 @@ function ArticleView() {
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="w-full text-xs bg-transparent outline-none rounded p-2 font-mono min-h-[300px] resize-y"
-            style={{ border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+            className="w-full text-xs bg-transparent outline-none rounded p-2 font-mono min-h-[300px] resize-y text-text-primary border border-border"
           />
           <button
             onClick={handleSave}
@@ -846,8 +800,7 @@ function ArticleView() {
         </div>
       ) : (
         <div
-          className="p-3 text-xs leading-relaxed whitespace-pre-wrap"
-          style={{ color: "var(--color-text-primary)" }}
+          className="p-3 text-xs leading-relaxed whitespace-pre-wrap text-text-primary"
         >
           {article.content}
         </div>
@@ -857,8 +810,7 @@ function ArticleView() {
       {article.meta.compiledFrom.length > 0 && (
         <div className="px-3 py-2" style={{ borderTop: "1px solid var(--color-border)" }}>
           <span
-            className="text-[10px] font-medium"
-            style={{ color: "var(--color-text-secondary)" }}
+            className="text-[10px] font-medium text-text-secondary"
           >
             Compiled from:
           </span>
@@ -866,8 +818,7 @@ function ArticleView() {
             {article.meta.compiledFrom.map((f) => (
               <span
                 key={f}
-                className="text-[10px] font-mono"
-                style={{ color: "var(--color-text-secondary)" }}
+                className="text-[10px] font-mono text-text-secondary"
               >
                 {f}
               </span>
@@ -962,20 +913,18 @@ function RawView() {
     <div className="flex flex-col gap-0">
       {/* Drop zone */}
       <div
-        className="m-3 p-4 rounded-lg flex flex-col items-center gap-2 cursor-pointer"
-        style={{
+        className="m-3 p-4 rounded-lg flex flex-col items-center gap-2 cursor-pointer bg-bg-elevated" style={{
           border: "2px dashed var(--color-border)",
-          background: "var(--color-bg-elevated)",
-        }}
+          }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleFileDrop}
         onClick={() => setPasteMode(true)}
       >
-        <Upload size={20} style={{ color: "var(--color-text-secondary)" }} />
-        <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+        <Upload size={20} className="text-text-secondary" />
+        <span className="text-xs text-text-secondary">
           Drop files here or click to paste text
         </span>
-        <span className="text-[10px]" style={{ color: "var(--color-text-secondary)" }}>
+        <span className="text-[10px] text-text-secondary">
           Supports .md, .txt, .json (max 1 MB)
         </span>
       </div>
@@ -983,11 +932,7 @@ function RawView() {
       {/* Paste form */}
       {pasteMode && (
         <div
-          className="mx-3 mb-3 flex flex-col gap-2 p-3 rounded-lg"
-          style={{
-            background: "var(--color-bg-elevated)",
-            border: "1px solid var(--color-border)",
-          }}
+          className="mx-3 mb-3 flex flex-col gap-2 p-3 rounded-lg bg-bg-elevated border border-border"
         >
           <input
             type="text"
@@ -995,8 +940,7 @@ function RawView() {
             onChange={(e) => setPasteName(e.target.value)}
             placeholder="Filename (e.g. research-notes)"
             aria-label="Raw file name"
-            className="text-xs bg-transparent outline-none px-2 py-1 rounded"
-            style={{ border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+            className="text-xs bg-transparent outline-none px-2 py-1 rounded text-text-primary border border-border"
             autoFocus
           />
           <textarea
@@ -1004,8 +948,7 @@ function RawView() {
             onChange={(e) => setPasteContent(e.target.value)}
             placeholder="Paste your raw material here..."
             aria-label="Raw file content"
-            className="w-full text-xs bg-transparent outline-none rounded p-2 font-mono min-h-[120px] resize-y"
-            style={{ border: "1px solid var(--color-border)", color: "var(--color-text-primary)" }}
+            className="w-full text-xs bg-transparent outline-none rounded p-2 font-mono min-h-[120px] resize-y text-text-primary border border-border"
           />
           <div className="flex gap-2 justify-end">
             <button
@@ -1014,8 +957,7 @@ function RawView() {
                 setPasteContent("");
                 setPasteName("");
               }}
-              className="text-xs px-2 py-1 rounded cursor-pointer"
-              style={{ color: "var(--color-text-secondary)" }}
+              className="text-xs px-2 py-1 rounded cursor-pointer text-text-secondary"
             >
               Cancel
             </button>
@@ -1038,13 +980,12 @@ function RawView() {
       {/* File list */}
       {loading ? (
         <div
-          className="flex items-center justify-center p-4 gap-2 text-xs"
-          style={{ color: "var(--color-text-secondary)" }}
+          className="flex items-center justify-center p-4 gap-2 text-xs text-text-secondary"
         >
           <CircleNotch size={14} className="animate-spin" /> Loading...
         </div>
       ) : rawFiles.length === 0 ? (
-        <div className="text-xs p-4 text-center" style={{ color: "var(--color-text-secondary)" }}>
+        <div className="text-xs p-4 text-center text-text-secondary">
           No raw files yet. Drop files or paste text above.
         </div>
       ) : (
@@ -1054,12 +995,12 @@ function RawView() {
             className="flex items-center gap-2 px-3 py-2"
             style={{ borderBottom: "1px solid var(--color-border)" }}
           >
-            <File size={14} style={{ color: "var(--color-text-secondary)", flexShrink: 0 }} />
+            <File size={14} className="text-text-secondary shrink-0" />
             <div className="flex-1 min-w-0">
-              <div className="text-xs truncate" style={{ color: "var(--color-text-primary)" }}>
+              <div className="text-xs truncate text-text-primary">
                 {f.name}
               </div>
-              <div className="text-[10px]" style={{ color: "var(--color-text-secondary)" }}>
+              <div className="text-[10px] text-text-secondary">
                 {fmtBytes(f.sizeBytes)} &middot; {new Date(f.modifiedAt).toLocaleDateString()}
               </div>
             </div>
@@ -1068,7 +1009,7 @@ function RawView() {
               className="p-1 rounded cursor-pointer hover:bg-[var(--color-bg-elevated)]"
               aria-label={`Delete ${f.name}`}
             >
-              <Trash size={12} style={{ color: "var(--color-text-secondary)" }} />
+              <Trash size={12} className="text-text-secondary" />
             </button>
           </div>
         ))

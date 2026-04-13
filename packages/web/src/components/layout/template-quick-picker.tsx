@@ -72,11 +72,8 @@ export function TemplateQuickPicker() {
       {/* Header button */}
       <button
         onClick={() => setOpen(true)}
-        className="px-3 py-1.5 text-xs font-medium transition-all cursor-pointer min-h-[44px] flex items-center gap-1"
-        style={{
-          borderRadius: "var(--radius-md)",
+        className="px-3 py-1.5 text-xs font-medium transition-all cursor-pointer min-h-[44px] flex items-center gap-1 text-text-secondary rounded-radius-md" style={{
           background: "transparent",
-          color: "var(--color-text-secondary)",
           border: "1px solid transparent",
         }}
         aria-label="Expert Modes"
@@ -103,7 +100,7 @@ export function TemplateQuickPicker() {
 
             {/* Panel */}
             <div
-              style={{
+              className="bg-bg-card rounded-radius-xl border border-glass-border overflow-hidden flex" style={{
                 position: "fixed",
                 top: "50%",
                 left: "50%",
@@ -111,14 +108,9 @@ export function TemplateQuickPicker() {
                 width: "min(640px, 90vw)",
                 maxHeight: "80vh",
                 zIndex: Z.overlayContent,
-                borderRadius: "var(--radius-xl)",
-                background: "var(--color-bg-card)",
-                border: "1px solid var(--glass-border)",
                 boxShadow: "0 24px 64px rgba(0,0,0,0.3)",
-                display: "flex",
                 flexDirection: "column",
-                overflow: "hidden",
-              }}
+                }}
             >
               {/* Header */}
               <div
@@ -129,11 +121,7 @@ export function TemplateQuickPicker() {
                   <Rocket size={18} weight="bold" style={{ color: "#4285F4" }} />
                   <h2 className="text-sm font-semibold">Expert Modes</h2>
                   <span
-                    className="text-xs px-2 py-0.5 rounded-full"
-                    style={{
-                      background: "var(--color-bg-elevated)",
-                      color: "var(--color-text-muted)",
-                    }}
+                    className="text-xs px-2 py-0.5 rounded-full text-text-muted bg-bg-elevated"
                   >
                     {BUILT_IN_PERSONAS.length} experts
                   </span>
@@ -144,20 +132,14 @@ export function TemplateQuickPicker() {
                       setOpen(false);
                       router.push("/templates");
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
-                    style={{
-                      background: "var(--color-bg-elevated)",
-                      border: "1px solid var(--glass-border)",
-                      color: "var(--color-text-secondary)",
-                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors text-text-secondary bg-bg-elevated border border-glass-border"
                   >
                     <PencilSimple size={12} weight="bold" aria-hidden="true" />
                     Manage
                   </button>
                   <button
                     onClick={() => setOpen(false)}
-                    className="p-1.5 rounded-lg cursor-pointer transition-colors"
-                    style={{ color: "var(--color-text-muted)" }}
+                    className="p-1.5 rounded-lg cursor-pointer transition-colors text-text-muted"
                     aria-label="Close expert modes"
                   >
                     <X size={16} weight="bold" />
@@ -173,24 +155,18 @@ export function TemplateQuickPicker() {
                     <button
                       key={persona.id}
                       onClick={() => handleSelectPersona(persona)}
-                      className="flex items-center gap-3 p-3 rounded-xl text-left cursor-pointer transition-all"
-                      style={{
-                        background: "var(--color-bg-elevated)",
-                        border: "1px solid var(--glass-border)",
-                      }}
+                      className="flex items-center gap-3 p-3 rounded-xl text-left cursor-pointer transition-all bg-bg-elevated border border-glass-border"
                       title={persona.strength}
                     >
                       <PersonaAvatar persona={persona} size={36} showBadge={false} />
                       <div className="flex flex-col flex-1 min-w-0">
                         <span
-                          className="text-xs font-semibold truncate"
-                          style={{ color: "var(--color-text-primary)" }}
+                          className="text-xs font-semibold truncate text-text-primary"
                         >
                           {persona.icon} {persona.name}
                         </span>
                         <span
-                          className="text-xs truncate"
-                          style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                          className="text-xs truncate text-text-muted" style={{ fontSize: 10 }}
                         >
                           {persona.strength}
                         </span>
@@ -203,15 +179,14 @@ export function TemplateQuickPicker() {
                 {(loading || templates.length > 0) && (
                   <div className="mt-4">
                     <span
-                      className="text-xs font-semibold mb-2 block"
-                      style={{ color: "var(--color-text-muted)" }}
+                      className="text-xs font-semibold mb-2 block text-text-muted"
                     >
                       Custom Prompts
                     </span>
 
                     {loading && (
                       <div className="py-4 text-center">
-                        <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+                        <span className="text-xs text-text-muted">
                           Loading...
                         </span>
                       </div>
@@ -222,18 +197,13 @@ export function TemplateQuickPicker() {
                         <button
                           key={tpl.id}
                           onClick={() => handleSelectTemplate(tpl)}
-                          className="flex items-center gap-3 p-3 rounded-xl text-left cursor-pointer transition-all"
-                          style={{
-                            background: "var(--color-bg-elevated)",
-                            border: "1px solid var(--glass-border)",
-                          }}
+                          className="flex items-center gap-3 p-3 rounded-xl text-left cursor-pointer transition-all bg-bg-elevated border border-glass-border"
                         >
-                          <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>
+                          <span className="shrink-0" style={{ fontSize: 20, lineHeight: 1 }}>
                             {tpl.icon || "\uD83D\uDCDD"}
                           </span>
                           <span
-                            className="text-xs font-medium truncate"
-                            style={{ color: "var(--color-text-primary)" }}
+                            className="text-xs font-medium truncate text-text-primary"
                           >
                             {tpl.name}
                           </span>

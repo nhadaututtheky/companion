@@ -65,13 +65,12 @@ function StepWelcome() {
   return (
     <div className="flex flex-col items-center gap-6 text-center px-2">
       <div
-        style={{
+        className="flex" style={{
           width: 64,
           height: 64,
           borderRadius: 16,
           background: "linear-gradient(135deg, #4285F420, #34A85320)",
           border: "1px solid #4285F430",
-          display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
@@ -80,15 +79,13 @@ function StepWelcome() {
       </div>
       <div>
         <h2
-          className="text-2xl font-bold mb-2"
-          style={{
-            color: "var(--color-text-primary)",
+          className="text-2xl font-bold mb-2 text-text-primary" style={{
             fontFamily: "var(--font-display)",
           }}
         >
           Welcome to Companion!
         </h2>
-        <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+        <p className="text-sm leading-relaxed text-text-secondary">
           Companion lets you run Claude Code sessions from anywhere — web UI, Telegram, or API.
           <br />
           <br />
@@ -96,8 +93,7 @@ function StepWelcome() {
         </p>
       </div>
       <ul
-        className="text-left w-full text-sm flex flex-col gap-3"
-        style={{ color: "var(--color-text-secondary)" }}
+        className="text-left w-full text-sm flex flex-col gap-3 text-text-secondary"
       >
         {[
           "Check Claude CLI is installed",
@@ -106,20 +102,16 @@ function StepWelcome() {
         ].map((item, i) => (
           <li key={i} className="flex items-center gap-3">
             <span
-              style={{
+              className="rounded-full shrink-0 font-bold inline-flex" style={{
                 width: 22,
                 height: 22,
-                borderRadius: "50%",
                 background: "var(--color-bg-elevated, #1a2332)",
                 border: "1px solid var(--color-border, #2a3f52)",
-                display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: 11,
-                fontWeight: 700,
                 color: "var(--color-accent, #4285F4)",
-                flexShrink: 0,
-              }}
+                }}
             >
               {i + 1}
             </span>
@@ -158,10 +150,10 @@ function StepClaudeCLI({ available }: { available: boolean }) {
           />
         </div>
         <div>
-          <h2 className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+          <h2 className="text-lg font-bold text-text-primary">
             Claude CLI
           </h2>
-          <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+          <p className="text-xs text-text-secondary">
             Required to run AI sessions
           </p>
         </div>
@@ -196,22 +188,18 @@ function StepClaudeCLI({ available }: { available: boolean }) {
       ) : (
         <div className="flex flex-col gap-3">
           <div
-            className="rounded-lg px-4 py-3 text-sm"
-            style={{
+            className="rounded-lg px-4 py-3 text-sm text-text-secondary" style={{
               background: "#FBBC0410",
               border: "1px solid #FBBC0430",
-              color: "var(--color-text-secondary)",
-            }}
+              }}
           >
             Claude CLI was not found. Install it to use Companion.
           </div>
           <div
-            className="rounded-lg px-4 py-3 text-xs font-mono"
-            style={{
+            className="rounded-lg px-4 py-3 text-xs font-mono text-text-primary" style={{
               background: "var(--color-bg-elevated, #1a2332)",
               border: "1px solid var(--color-border, #2a3f52)",
-              color: "var(--color-text-primary)",
-            }}
+              }}
           >
             npm install -g @anthropic-ai/claude-code
           </div>
@@ -260,10 +248,10 @@ function StepProjects({ hasProjects }: { hasProjects: boolean }) {
           />
         </div>
         <div>
-          <h2 className="text-lg font-bold" style={{ color: "var(--color-text-primary)" }}>
+          <h2 className="text-lg font-bold text-text-primary">
             Project Directories
           </h2>
-          <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+          <p className="text-xs text-text-secondary">
             Map local folders to Claude sessions
           </p>
         </div>
@@ -291,12 +279,10 @@ function StepProjects({ hasProjects }: { hasProjects: boolean }) {
       ) : (
         <div className="flex flex-col gap-4">
           <div
-            className="rounded-lg px-4 py-3 text-sm"
-            style={{
+            className="rounded-lg px-4 py-3 text-sm text-text-secondary" style={{
               background: "#4285F410",
               border: "1px solid #4285F430",
-              color: "var(--color-text-secondary)",
-            }}
+              }}
           >
             No projects yet. Projects let Claude work inside your code directories.
           </div>
@@ -309,12 +295,10 @@ function StepProjects({ hasProjects }: { hasProjects: boolean }) {
               Docker mount example
             </p>
             <div
-              className="rounded-lg px-4 py-3 text-xs font-mono leading-relaxed"
-              style={{
+              className="rounded-lg px-4 py-3 text-xs font-mono leading-relaxed text-text-primary" style={{
                 background: "var(--color-bg-elevated, #1a2332)",
                 border: "1px solid var(--color-border, #2a3f52)",
-                color: "var(--color-text-primary)",
-              }}
+                }}
             >
               {`# docker-compose.yml\nvolumes:\n  - /path/to/your/code:/workspace`}
             </div>
@@ -327,7 +311,7 @@ function StepProjects({ hasProjects }: { hasProjects: boolean }) {
             >
               Then add a project via Settings
             </p>
-            <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+            <p className="text-xs text-text-secondary">
               Go to <strong>Settings → Projects</strong> and add a project pointing to{" "}
               <code>/workspace</code> (or any mounted directory). Projects can also be added via the
               API or Telegram.
@@ -351,13 +335,12 @@ function StepFirstSession({
   return (
     <div className="flex flex-col items-center gap-6 text-center px-2">
       <div
-        style={{
+        className="flex" style={{
           width: 64,
           height: 64,
           borderRadius: 16,
           background: "linear-gradient(135deg, #4285F420, #34A85320)",
           border: "1px solid #34A85330",
-          display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
@@ -366,15 +349,13 @@ function StepFirstSession({
       </div>
       <div>
         <h2
-          className="text-2xl font-bold mb-2"
-          style={{
-            color: "var(--color-text-primary)",
+          className="text-2xl font-bold mb-2 text-text-primary" style={{
             fontFamily: "var(--font-display)",
           }}
         >
           You're all set!
         </h2>
-        <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+        <p className="text-sm leading-relaxed text-text-secondary">
           {hasProjects
             ? "Start your first Claude session. Select a project directory and give Claude a task."
             : "You can start a quick session without a project, or configure projects first."}
@@ -452,13 +433,12 @@ export function OnboardingWizard({ onOpenNewSession }: OnboardingWizardProps) {
   return (
     // Backdrop
     <div
-      style={{
+      className="flex" style={{
         position: "fixed",
         inset: 0,
         zIndex: Z.overlay,
         background: "rgba(0,0,0,0.55)",
         backdropFilter: "blur(4px)",
-        display: "flex",
         alignItems: "center",
         justifyContent: "center",
         padding: 16,
@@ -469,15 +449,14 @@ export function OnboardingWizard({ onOpenNewSession }: OnboardingWizardProps) {
     >
       {/* Modal */}
       <div
-        style={{
+        className="overflow-hidden" style={{
           width: "100%",
           maxWidth: 460,
           borderRadius: 16,
           background: "var(--color-bg-card, #121a20)",
           border: "1px solid var(--color-border, #2a3f52)",
           boxShadow: "0 24px 64px rgba(0,0,0,0.4)",
-          overflow: "hidden",
-        }}
+          }}
       >
         {/* Header */}
         <div
@@ -531,10 +510,8 @@ export function OnboardingWizard({ onOpenNewSession }: OnboardingWizardProps) {
           <button
             onClick={() => setStep((s) => s - 1)}
             disabled={!canGoBack}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
-            style={{
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer transition-opacity disabled:opacity-30 disabled:cursor-not-allowed text-text-secondary" style={{
               background: "var(--color-bg-elevated, #1a2332)",
-              color: "var(--color-text-secondary)",
               border: "1px solid var(--color-border, #2a3f52)",
             }}
             aria-label="Previous step"

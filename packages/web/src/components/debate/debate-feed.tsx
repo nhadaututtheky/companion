@@ -93,10 +93,7 @@ function DebateMessageBubble({ msg }: { msg: DebateMessage }) {
 
   return (
     <div
-      className="flex flex-col gap-1 rounded-xl p-3"
-      style={{
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
+      className="flex flex-col gap-1 rounded-xl p-3 bg-bg-card border border-border" style={{
         borderLeft: `3px solid ${badge!.color}`,
       }}
     >
@@ -113,8 +110,7 @@ function DebateMessageBubble({ msg }: { msg: DebateMessage }) {
           {msg.role}
         </span>
         <span
-          className="text-xs ml-auto"
-          style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+          className="text-xs ml-auto text-text-muted" style={{ fontSize: 10 }}
         >
           R{msg.round}
         </span>
@@ -125,24 +121,18 @@ function DebateMessageBubble({ msg }: { msg: DebateMessage }) {
         block.type === "text" ? (
           <p
             key={i}
-            className="text-xs leading-relaxed"
-            style={{ color: "var(--color-text-primary)", whiteSpace: "pre-wrap" }}
+            className="text-xs leading-relaxed text-text-primary whitespace-pre-wrap"
           >
             {block.text}
           </p>
         ) : (
           <div
             key={i}
-            className="flex items-center gap-1.5 px-2 py-1 rounded-lg"
-            style={{
-              background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
-            }}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-bg-elevated border border-border"
           >
-            <Wrench size={11} style={{ color: "var(--color-text-muted)" }} aria-hidden="true" />
+            <Wrench size={11} className="text-text-muted" aria-hidden="true" />
             <span
-              className="text-xs font-mono"
-              style={{ color: "var(--color-text-secondary)", fontSize: 10 }}
+              className="text-xs font-mono text-text-secondary" style={{ fontSize: 10 }}
             >
               {block.toolName}
             </span>
@@ -160,10 +150,7 @@ function RoundDivider({ round, maxRounds }: { round: number; maxRounds: number }
     <div className="flex items-center gap-2 py-1">
       <div className="flex-1 h-px" style={{ background: "var(--color-border)" }} />
       <span
-        className="text-xs font-bold px-2 py-0.5 rounded-full"
-        style={{
-          background: "var(--color-bg-elevated)",
-          color: "var(--color-text-secondary)",
+        className="text-xs font-bold px-2 py-0.5 rounded-full text-text-secondary bg-bg-elevated" style={{
           fontSize: 10,
         }}
       >
@@ -225,8 +212,7 @@ export function DebateFeed({ channelId }: DebateFeedProps) {
       <div className="flex items-center justify-center py-12">
         <ArrowClockwise
           size={20}
-          className="animate-spin"
-          style={{ color: "var(--color-text-muted)" }}
+          className="animate-spin text-text-muted"
         />
       </div>
     );
@@ -235,8 +221,8 @@ export function DebateFeed({ channelId }: DebateFeedProps) {
   if (!channel) {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-2">
-        <ChatTeardropDots size={28} style={{ color: "var(--color-text-muted)" }} />
-        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <ChatTeardropDots size={28} className="text-text-muted" />
+        <p className="text-xs text-text-muted">
           Debate not found.
         </p>
       </div>
@@ -257,10 +243,10 @@ export function DebateFeed({ channelId }: DebateFeedProps) {
         style={{ borderBottom: "1px solid var(--color-border)" }}
       >
         <div className="flex flex-col">
-          <span className="text-xs font-bold" style={{ color: "var(--color-text-primary)" }}>
+          <span className="text-xs font-bold text-text-primary">
             {channel.topic}
           </span>
-          <span className="text-xs" style={{ color: "var(--color-text-muted)", fontSize: 10 }}>
+          <span className="text-xs text-text-muted" style={{ fontSize: 10 }}>
             {isActive ? "Live" : channel.status} · {messages.length} messages
           </span>
         </div>
@@ -268,8 +254,7 @@ export function DebateFeed({ channelId }: DebateFeedProps) {
           {isActive && (
             <button
               onClick={() => void handleAbort()}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all"
-              style={{ background: "var(--color-danger)20", color: "var(--color-danger)" }}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all text-danger" style={{ background: "var(--color-danger)20" }}
               aria-label="Abort debate"
             >
               <Stop size={12} weight="fill" />
@@ -283,8 +268,8 @@ export function DebateFeed({ channelId }: DebateFeedProps) {
       <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 flex flex-col gap-2">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 gap-2">
-            <Robot size={28} style={{ color: "var(--color-text-muted)" }} />
-            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <Robot size={28} className="text-text-muted" />
+            <p className="text-xs text-text-muted">
               {isActive ? "Agents are preparing their arguments..." : "No messages in this debate."}
             </p>
           </div>
@@ -313,7 +298,7 @@ export function DebateFeed({ channelId }: DebateFeedProps) {
               className="w-2 h-2 rounded-full animate-pulse"
               style={{ background: "var(--color-accent)" }}
             />
-            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs text-text-muted">
               Agents are debating...
             </span>
           </div>

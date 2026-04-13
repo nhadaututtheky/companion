@@ -23,7 +23,7 @@ function ColorDot({ color, label }: { color: string; label: string }) {
         }}
         title={`${label}: ${color}`}
       />
-      <span style={{ fontSize: 9, color: "var(--color-text-muted)" }}>{label}</span>
+      <span className="text-text-muted" style={{ fontSize: 9 }}>{label}</span>
     </div>
   );
 }
@@ -193,7 +193,7 @@ export default function ThemeSettingsPage() {
   const allThemes = [...BUILTIN_THEMES, ...customThemes];
 
   return (
-    <div className="flex flex-col" style={{ height: "100vh", background: "var(--color-bg-base)" }}>
+    <div className="flex flex-col bg-bg-base" style={{ height: "100vh" }}>
       <Header />
       <div
         className="flex-1 overflow-auto"
@@ -225,14 +225,12 @@ export default function ThemeSettingsPage() {
               {!BUILTIN_THEMES.find((t) => t.id === theme.id) && (
                 <button
                   onClick={() => handleDeleteCustom(theme.id)}
-                  className="absolute -top-2 -right-2 text-xs px-1.5 py-0.5 rounded-full cursor-pointer"
-                  style={{
+                  className="absolute -top-2 -right-2 text-xs px-1.5 py-0.5 rounded-full cursor-pointer font-bold" style={{
                     background: "var(--color-danger)",
                     color: "#fff",
                     border: "none",
                     fontSize: 10,
-                    fontWeight: 700,
-                  }}
+                    }}
                   aria-label={`Delete ${theme.name}`}
                 >
                   x
@@ -244,8 +242,7 @@ export default function ThemeSettingsPage() {
 
         {/* Import VS Code theme */}
         <div
-          className="rounded-xl p-4"
-          style={{ border: "1px solid var(--color-border)", background: "var(--color-bg-card)" }}
+          className="rounded-xl p-4 bg-bg-card border border-border"
         >
           <h2 className="text-sm font-semibold mb-2">Import VS Code Theme</h2>
           <p className="text-xs mb-3">
@@ -253,12 +250,7 @@ export default function ThemeSettingsPage() {
             &quot;colors&quot; key will be mapped to Companion&apos;s CSS variables.
           </p>
           <label
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer transition-colors"
-            style={{
-              background: "var(--color-bg-elevated)",
-              border: "1px solid var(--color-border)",
-              color: "var(--color-text-secondary)",
-            }}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer transition-colors text-text-secondary bg-bg-elevated border border-border"
           >
             <UploadSimple size={16} />
             Choose File

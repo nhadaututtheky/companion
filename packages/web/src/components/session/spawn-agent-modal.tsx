@@ -111,13 +111,10 @@ export function SpawnAgentModal({
       }}
     >
       <div
-        className="flex flex-col gap-4 p-5 overflow-y-auto"
-        style={{
+        className="flex flex-col gap-4 p-5 overflow-y-auto rounded-radius-xl border border-glass-border" style={{
           background: "var(--glass-bg-heavy)",
           backdropFilter: "blur(var(--glass-blur))",
           WebkitBackdropFilter: "blur(var(--glass-blur))",
-          border: "1px solid var(--glass-border)",
-          borderRadius: "var(--radius-xl)",
           boxShadow: "var(--shadow-float)",
           width: 400,
           maxWidth: "calc(100% - 24px)",
@@ -128,13 +125,12 @@ export function SpawnAgentModal({
         {/* Header */}
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold flex items-center gap-2">
-            <Rocket size={16} weight="bold" style={{ color: "var(--color-accent)" }} />
+            <Rocket size={16} weight="bold" className="text-accent" />
             Spawn Agent
           </h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-md cursor-pointer"
-            style={{ color: "var(--color-text-muted)" }}
+            className="p-1 rounded-md cursor-pointer text-text-muted"
             aria-label="Close"
           >
             <X size={14} weight="bold" />
@@ -144,8 +140,7 @@ export function SpawnAgentModal({
         {/* Quick Templates */}
         <div className="flex flex-col gap-1.5">
           <label
-            className="text-xs font-medium flex items-center gap-1"
-            style={{ color: "var(--color-text-secondary)" }}
+            className="text-xs font-medium flex items-center gap-1 text-text-secondary"
           >
             <Lightning size={12} weight="bold" /> Quick Templates
           </label>
@@ -155,12 +150,7 @@ export function SpawnAgentModal({
                 key={t.id}
                 onClick={() => handleSpawnTemplate(t.id)}
                 disabled={!!spawningTemplate}
-                className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs cursor-pointer transition-colors text-left disabled:opacity-50"
-                style={{
-                  background: "var(--color-bg-elevated)",
-                  border: "1px solid var(--glass-border)",
-                  color: "var(--color-text-secondary)",
-                }}
+                className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs cursor-pointer transition-colors text-left disabled:opacity-50 text-text-secondary bg-bg-elevated border border-glass-border"
               >
                 <span className="text-base">{t.icon}</span>
                 <div className="flex flex-col min-w-0">
@@ -184,7 +174,7 @@ export function SpawnAgentModal({
           </div>
         </div>
 
-        <div className="flex items-center gap-2" style={{ color: "var(--color-text-muted)" }}>
+        <div className="flex items-center gap-2 text-text-muted">
           <div className="flex-1 h-px" style={{ background: "var(--glass-border)" }} />
           <span className="text-xs">or manual</span>
           <div className="flex-1 h-px" style={{ background: "var(--glass-border)" }} />
@@ -192,7 +182,7 @@ export function SpawnAgentModal({
 
         {/* Name */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+          <label className="text-xs font-medium text-text-secondary">
             Agent Name
           </label>
           <input
@@ -200,19 +190,14 @@ export function SpawnAgentModal({
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Backend Engineer"
             maxLength={100}
-            className="px-3 py-2 rounded-lg text-sm outline-none"
-            style={{
-              background: "var(--color-bg-elevated)",
-              border: "1px solid var(--glass-border)",
-              color: "var(--color-text-primary)",
-            }}
+            className="px-3 py-2 rounded-lg text-sm outline-none text-text-primary bg-bg-elevated border border-glass-border"
             autoFocus
           />
         </div>
 
         {/* Role */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+          <label className="text-xs font-medium text-text-secondary">
             Role
           </label>
           <div className="flex gap-2">
@@ -242,7 +227,7 @@ export function SpawnAgentModal({
 
         {/* Model */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
+          <label className="text-xs font-medium text-text-secondary">
             Model
           </label>
           <div className="flex gap-2">
@@ -271,8 +256,8 @@ export function SpawnAgentModal({
 
         {/* Initial instructions */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium" style={{ color: "var(--color-text-secondary)" }}>
-            Instructions <span style={{ color: "var(--color-text-muted)" }}>(optional)</span>
+          <label className="text-xs font-medium text-text-secondary">
+            Instructions <span className="text-text-muted">(optional)</span>
           </label>
           <textarea
             value={prompt}
@@ -280,11 +265,7 @@ export function SpawnAgentModal({
             placeholder="e.g. Implement the payment API with Stripe integration"
             rows={3}
             maxLength={10000}
-            className="px-3 py-2 rounded-lg text-sm outline-none resize-none"
-            style={{
-              background: "var(--color-bg-elevated)",
-              border: "1px solid var(--glass-border)",
-              color: "var(--color-text-primary)",
+            className="px-3 py-2 rounded-lg text-sm outline-none resize-none text-text-primary bg-bg-elevated border border-glass-border" style={{
               fontFamily: "var(--font-body)",
             }}
           />

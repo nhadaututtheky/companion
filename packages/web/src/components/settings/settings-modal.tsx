@@ -116,14 +116,12 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
       role="dialog"
       aria-modal="true"
       aria-label="Settings"
-      className="flex flex-col overflow-hidden rounded-2xl"
-      style={{
+      className="flex flex-col overflow-hidden rounded-2xl border border-glass-border" style={{
         width: "min(calc(100vw - 32px), 1100px)",
         height: "min(85vh, calc(100vh - 32px))",
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
-        border: "1px solid var(--glass-border)",
         boxShadow: "var(--shadow-float)",
       }}
     >
@@ -133,15 +131,13 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
         style={{ borderBottom: "1px solid var(--color-border)" }}
       >
         <h2
-          className="text-base font-semibold"
-          style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-display)" }}
+          className="text-base font-semibold text-text-primary" style={{ fontFamily: "var(--font-display)" }}
         >
           Settings
         </h2>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-lg transition-colors cursor-pointer"
-          style={{ color: "var(--color-text-secondary)" }}
+          className="p-1.5 rounded-lg transition-colors cursor-pointer text-text-secondary"
           aria-label="Close settings"
         >
           <X size={18} weight="bold" />
@@ -164,15 +160,13 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-all cursor-pointer"
-              style={{
+              className="flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-all cursor-pointer rounded-radius-md" style={{
                 color: activeTab === tab.id ? "var(--color-accent)" : "var(--color-text-secondary)",
                 background:
                   activeTab === tab.id
                     ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
                     : "transparent",
                 fontWeight: activeTab === tab.id ? 600 : 400,
-                borderRadius: "var(--radius-md)",
                 margin: "0 8px",
               }}
               role="tab"

@@ -102,7 +102,7 @@ export default function ErrorsPage() {
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
   return (
-    <div className="flex flex-col" style={{ height: "100vh", background: "var(--color-bg-base)" }}>
+    <div className="flex flex-col bg-bg-base" style={{ height: "100vh" }}>
       <Header />
       <div
         className="flex-1 overflow-auto"
@@ -132,15 +132,11 @@ export default function ErrorsPage() {
                 setSourceFilter(e.target.value);
                 setOffset(0);
               }}
-              style={{
-                background: "var(--color-bg-card)",
-                border: "1px solid var(--color-border)",
+              className="text-text-primary bg-bg-card border border-border cursor-pointer" style={{
                 borderRadius: 6,
                 padding: "4px 8px",
-                color: "var(--color-text-primary)",
                 fontSize: 13,
-                cursor: "pointer",
-              }}
+                }}
               aria-label="Filter by source"
             >
               <option value="">All sources</option>
@@ -153,12 +149,7 @@ export default function ErrorsPage() {
 
           <button
             onClick={handleExport}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm cursor-pointer transition-colors"
-            style={{
-              background: "var(--color-bg-card)",
-              border: "1px solid var(--color-border)",
-              color: "var(--color-text-secondary)",
-            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm cursor-pointer transition-colors text-text-secondary bg-bg-card border border-border"
             aria-label="Export errors as JSON"
           >
             <DownloadSimple size={14} />
@@ -168,10 +159,8 @@ export default function ErrorsPage() {
           <button
             onClick={handleClear}
             disabled={total === 0}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm cursor-pointer transition-colors"
-            style={{
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm cursor-pointer transition-colors border border-border" style={{
               background: total > 0 ? "#ef444420" : "var(--color-bg-card)",
-              border: "1px solid var(--color-border)",
               color: total > 0 ? "#ef4444" : "var(--color-text-muted)",
               cursor: total === 0 ? "default" : "pointer",
             }}
@@ -187,34 +176,31 @@ export default function ErrorsPage() {
           <div className="flex justify-center py-12">
             <CircleNotch
               size={24}
-              style={{ animation: "spin 1s linear infinite", color: "var(--color-text-secondary)" }}
+              className="text-text-secondary" style={{ animation: "spin 1s linear infinite" }}
             />
           </div>
         ) : errors.length === 0 ? (
           <div
-            className="text-center py-12 rounded-xl"
-            style={{ background: "var(--color-bg-card)", border: "1px solid var(--color-border)" }}
+            className="text-center py-12 rounded-xl bg-bg-card border border-border"
           >
             <Bug
               size={32}
               weight="light"
-              style={{ color: "var(--color-text-muted)", margin: "0 auto 8px" }}
+              className="text-text-muted" style={{ margin: "0 auto 8px" }}
             />
             <p className="text-sm">No errors recorded</p>
           </div>
         ) : (
           <div
-            className="rounded-xl overflow-hidden"
-            style={{ border: "1px solid var(--color-border)" }}
+            className="rounded-xl overflow-hidden border border-border"
           >
             {errors.map((err) => (
               <div
                 key={err.id}
-                style={{
+                className="cursor-pointer" style={{
                   borderBottom: "1px solid var(--color-border)",
                   background: expandedId === err.id ? "var(--color-bg-card)" : "transparent",
-                  cursor: "pointer",
-                }}
+                  }}
                 onClick={() => setExpandedId(expandedId === err.id ? null : err.id)}
               >
                 {/* Summary row */}
@@ -240,9 +226,7 @@ export default function ErrorsPage() {
                     {err.level}
                   </span>
                   <span
-                    className="text-sm flex-1 truncate"
-                    style={{
-                      color: "var(--color-text-primary)",
+                    className="text-sm flex-1 truncate text-text-primary" style={{
                       fontFamily: "var(--font-mono, monospace)",
                     }}
                   >
@@ -263,23 +247,19 @@ export default function ErrorsPage() {
                 {expandedId === err.id && (
                   <div className="px-4 pb-3" style={{ fontSize: 12 }}>
                     {err.sessionId && (
-                      <p style={{ color: "var(--color-text-secondary)", marginBottom: 4 }}>
+                      <p className="text-text-secondary" style={{ marginBottom: 4 }}>
                         Session: <span className="font-mono">{err.sessionId.slice(0, 12)}...</span>
                       </p>
                     )}
                     {err.stack && (
                       <pre
-                        style={{
-                          background: "var(--color-bg-base)",
-                          border: "1px solid var(--color-border)",
+                        className="text-text-secondary bg-bg-base border border-border whitespace-pre-wrap" style={{
                           borderRadius: 6,
                           padding: 12,
                           overflow: "auto",
                           maxHeight: 200,
-                          color: "var(--color-text-secondary)",
                           fontSize: 11,
                           lineHeight: 1.5,
-                          whiteSpace: "pre-wrap",
                           wordBreak: "break-all",
                         }}
                       >
@@ -288,14 +268,11 @@ export default function ErrorsPage() {
                     )}
                     {err.context && (
                       <pre
-                        style={{
-                          background: "var(--color-bg-base)",
-                          border: "1px solid var(--color-border)",
+                        className="text-text-secondary bg-bg-base border border-border" style={{
                           borderRadius: 6,
                           padding: 12,
                           overflow: "auto",
                           maxHeight: 120,
-                          color: "var(--color-text-secondary)",
                           fontSize: 11,
                           lineHeight: 1.5,
                           marginTop: 8,
@@ -314,8 +291,7 @@ export default function ErrorsPage() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div
-            className="flex items-center justify-center gap-3 py-4"
-            style={{ color: "var(--color-text-secondary)", fontSize: 13 }}
+            className="flex items-center justify-center gap-3 py-4 text-text-secondary" style={{ fontSize: 13 }}
           >
             <button
               disabled={currentPage <= 1}

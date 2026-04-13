@@ -130,14 +130,13 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
             onClick={() => toggleSession(session.id)}
             onMouseEnter={() => setHoveredBubble(i)}
             onMouseLeave={() => setHoveredBubble(-1)}
-            style={{
+            className="rounded-full" style={{
               position: "fixed",
               left: baseX,
               top: baseY,
               width: size,
               height: size,
               zIndex: Z.ringWindow,
-              borderRadius: "50%",
               border: isSelected ? `3px solid ${color}` : "2px solid transparent",
               background: isSelected ? `${color}20` : "transparent",
               boxShadow: isHovered
@@ -162,8 +161,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
             title={session.projectName ?? session.id}
           >
             <div
-              style={{
-                position: "absolute",
+              className="absolute" style={{
                 inset: -4,
                 opacity: 0.85,
                 pointerEvents: "none",
@@ -177,17 +175,15 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
               />
             </div>
             <div
-              style={{ width: 7, height: 7, borderRadius: "50%", background: color, zIndex: Z.base }}
+              className="rounded-full" style={{ width: 7, height: 7, background: color, zIndex: Z.base }}
             />
             <span
-              style={{
+              className="overflow-hidden whitespace-nowrap" style={{
                 fontSize: isHovered ? 8 : 7,
                 fontWeight: isSelected ? 700 : 500,
                 color: isSelected ? color : "var(--color-text-secondary, #555)",
                 maxWidth: size - 10,
-                overflow: "hidden",
                 textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
                 zIndex: Z.base,
               }}
             >
@@ -196,22 +192,18 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
             {/* Selection checkmark */}
             {isSelected && (
               <div
-                style={{
-                  position: "absolute",
+                className="rounded-full absolute font-bold flex" style={{
                   bottom: -2,
                   right: -2,
                   width: 12,
                   height: 12,
-                  borderRadius: "50%",
                   background: color,
                   border: "1.5px solid #fff",
-                  display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   fontSize: 8,
                   color: "#fff",
-                  fontWeight: 700,
-                }}
+                  }}
               >
                 ✓
               </div>
@@ -222,7 +214,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
 
       {/* Card above dock */}
       <div
-        style={{
+        className="flex" style={{
           position: "fixed",
           left: cardLeft,
           top: cardTop,
@@ -233,7 +225,6 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
           border: "1px solid var(--color-border, rgba(0,0,0,0.08))",
           boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
           padding: 14,
-          display: "flex",
           flexDirection: "column",
           gap: 8,
           transform: open ? "translateY(0) scale(1)" : "translateY(20px) scale(0.9)",
@@ -241,12 +232,11 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
           transition: reducedMotion ? "none" : "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <div className="flex" style={{ alignItems: "center", gap: 6 }}>
           <LinkSimple size={14} weight="bold" style={{ color: "#4285F4" }} />
           <span
-            style={{
+            className="font-bold" style={{
               fontSize: 12,
-              fontWeight: 700,
               color: "var(--color-text-primary, #333)",
               flex: 1,
             }}
@@ -255,14 +245,12 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
           </span>
           <button
             onClick={() => setSelecting(false)}
-            style={{
+            className="cursor-pointer flex" style={{
               background: "none",
               border: "none",
-              cursor: "pointer",
               padding: 2,
               color: "#999",
-              display: "flex",
-            }}
+              }}
             aria-label="Close"
           >
             <X size={12} weight="bold" />
@@ -286,7 +274,7 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
         />
 
         {activeSessions.length === 0 && (
-          <p style={{ fontSize: 11, color: "#999", textAlign: "center", padding: 8 }}>
+          <p className="text-center" style={{ fontSize: 11, color: "#999", padding: 8 }}>
             No active sessions — start one first
           </p>
         )}
@@ -297,16 +285,15 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
           </p>
         )}
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+        <div className="flex" style={{ alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
           <button
             onClick={() => setSelecting(false)}
-            style={{
+            className="cursor-pointer" style={{
               padding: "5px 14px",
               fontSize: 11,
               borderRadius: 8,
               border: "1px solid var(--color-border, rgba(0,0,0,0.1))",
               background: "transparent",
-              cursor: "pointer",
               color: "#666",
             }}
           >
@@ -315,10 +302,9 @@ export function RingSelector({ anchorX, anchorY }: RingSelectorProps) {
           <button
             onClick={handleLink}
             disabled={selected.size === 0}
-            style={{
+            className="font-semibold" style={{
               padding: "5px 14px",
               fontSize: 11,
-              fontWeight: 600,
               borderRadius: 8,
               border: "none",
               background: selected.size > 0 ? "#4285F4" : "#ccc",

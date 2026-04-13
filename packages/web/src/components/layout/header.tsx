@@ -66,13 +66,10 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
   return (
     <header
-      className="flex items-center px-5 gap-3 h-12 relative z-10"
-      style={{
+      className="flex items-center px-5 gap-3 h-12 relative z-10 rounded-radius-xl border border-glass-border" style={{
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
-        border: "1px solid var(--glass-border)",
-        borderRadius: "var(--radius-xl)",
         boxShadow: "var(--shadow-float)",
         margin: "8px 12px 0 12px",
       }}
@@ -96,12 +93,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
       {/* Center: Search trigger (⌘K) */}
       <button
         onClick={() => setCommandPaletteOpen(true)}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm transition-colors cursor-pointer min-h-[44px]"
-        style={{
-          borderRadius: "var(--radius-md)",
-          background: "var(--color-bg-elevated)",
-          color: "var(--color-text-muted)",
-          border: "1px solid var(--glass-border)",
+        className="flex items-center gap-2 px-3 py-1.5 text-sm transition-colors cursor-pointer min-h-[44px] text-text-muted bg-bg-elevated rounded-radius-md border border-glass-border" style={{
           minWidth: 44,
         }}
         aria-label="Open command palette"
@@ -109,13 +101,9 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <MagnifyingGlass size={14} weight="bold" />
         <span className="hidden sm:inline">Search...</span>
         <span
-          className="ml-auto text-xs hidden sm:inline"
-          style={{
-            background: "var(--color-bg-base)",
-            border: "1px solid var(--glass-border)",
+          className="ml-auto text-xs hidden sm:inline bg-bg-base rounded-radius-sm border border-glass-border" style={{
             padding: "1px 5px",
-            borderRadius: "var(--radius-sm)",
-          }}
+            }}
         >
           ⌘K
         </span>
@@ -136,9 +124,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
               key={item.id}
               data-nav-trigger
               onClick={() => toggleNavMenu(item.id)}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all cursor-pointer"
-              style={{
-                borderRadius: "var(--radius-md)",
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all cursor-pointer rounded-radius-md" style={{
                 background: isOpen
                   ? "var(--color-text-primary)"
                   : item.isActive
@@ -165,11 +151,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <TemplateQuickPicker />
         <button
           onClick={() => useUiStore.getState().setSchedulesModalOpen(true)}
-          className="px-3 py-1.5 text-xs font-medium transition-all cursor-pointer min-h-[44px] flex items-center gap-1"
-          style={{
-            borderRadius: "var(--radius-md)",
+          className="px-3 py-1.5 text-xs font-medium transition-all cursor-pointer min-h-[44px] flex items-center gap-1 text-text-secondary rounded-radius-md" style={{
             background: "transparent",
-            color: "var(--color-text-secondary)",
             border: "1px solid transparent",
           }}
           aria-label="Schedules"
@@ -181,9 +164,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <button
           data-guide-trigger
           onClick={() => setFeatureGuideOpen(!featureGuideOpen)}
-          className="px-3 py-1.5 text-xs font-medium transition-all cursor-pointer min-h-[44px] flex items-center"
-          style={{
-            borderRadius: "var(--radius-md)",
+          className="px-3 py-1.5 text-xs font-medium transition-all cursor-pointer min-h-[44px] flex items-center rounded-radius-md" style={{
             background: featureGuideOpen ? "var(--color-accent)" : "transparent",
             color: featureGuideOpen ? "#fff" : "var(--color-text-secondary)",
             border: featureGuideOpen ? "1px solid var(--color-accent)" : "1px solid transparent",

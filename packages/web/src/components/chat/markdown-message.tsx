@@ -63,14 +63,12 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
                     </div>
                   )}
                   <pre
-                    className="overflow-auto p-3 m-0"
-                    style={{
+                    className="overflow-auto p-3 m-0 font-mono" style={{
                       background: "#1e1e1e",
                       color: "#d4d4d4",
                       fontSize: compact ? 13 : 14,
                       lineHeight: 1.55,
-                      fontFamily: "var(--font-mono)",
-                    }}
+                      }}
                   >
                     <code {...props}>{codeText}</code>
                   </pre>
@@ -82,14 +80,11 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
             // Inline code
             return (
               <code
-                style={{
-                  background: "var(--color-bg-elevated)",
-                  border: "1px solid var(--color-border)",
+                className="bg-bg-elevated border border-border font-mono" style={{
                   borderRadius: 4,
                   padding: "1px 5px",
                   fontSize: "0.9em",
-                  fontFamily: "var(--font-mono)",
-                }}
+                  }}
                 {...props}
               >
                 {children}
@@ -117,8 +112,7 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
           thead({ children }) {
             return (
               <thead
-                style={{
-                  background: "var(--color-bg-elevated)",
+                className="bg-bg-elevated" style={{
                   borderBottom: "2px solid var(--color-border)",
                 }}
               >
@@ -129,13 +123,9 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
           th({ children }) {
             return (
               <th
-                className="text-left"
-                style={{
+                className="text-left text-text-primary whitespace-nowrap font-semibold" style={{
                   padding: compact ? "6px 10px" : "8px 14px",
-                  fontWeight: 600,
-                  color: "var(--color-text-primary)",
-                  whiteSpace: "nowrap",
-                }}
+                  }}
               >
                 {children}
               </th>
@@ -144,11 +134,10 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
           td({ children }) {
             return (
               <td
-                style={{
+                className="text-text-primary" style={{
                   padding: compact ? "6px 10px" : "8px 14px",
                   borderBottom: "1px solid var(--color-border)",
-                  color: "var(--color-text-primary)",
-                }}
+                  }}
               >
                 {children}
               </td>
@@ -165,11 +154,10 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
           blockquote({ children }) {
             return (
               <blockquote
-                style={{
+                className="text-text-secondary" style={{
                   borderLeft: "3px solid #4285F4",
                   paddingLeft: 12,
                   margin: "8px 0",
-                  color: "var(--color-text-secondary)",
                   fontStyle: "italic",
                 }}
               >
@@ -190,7 +178,7 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
           // ── Inline elements ─────────────────────────────
           strong({ children }) {
             return (
-              <strong style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>
+              <strong className="text-text-primary font-semibold">
                 {children}
               </strong>
             );
@@ -220,21 +208,21 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
           // ── Headings (scale down for chat) ──────────────
           h1({ children }) {
             return (
-              <h3 style={{ fontSize: compact ? 18 : 20, fontWeight: 700, margin: "12px 0 6px" }}>
+              <h3 className="font-bold" style={{ fontSize: compact ? 18 : 20, margin: "12px 0 6px" }}>
                 {children}
               </h3>
             );
           },
           h2({ children }) {
             return (
-              <h4 style={{ fontSize: compact ? 16 : 18, fontWeight: 600, margin: "10px 0 4px" }}>
+              <h4 className="font-semibold" style={{ fontSize: compact ? 16 : 18, margin: "10px 0 4px" }}>
                 {children}
               </h4>
             );
           },
           h3({ children }) {
             return (
-              <h5 style={{ fontSize: compact ? 15 : 16, fontWeight: 600, margin: "8px 0 3px" }}>
+              <h5 className="font-semibold" style={{ fontSize: compact ? 15 : 16, margin: "8px 0 3px" }}>
                 {children}
               </h5>
             );

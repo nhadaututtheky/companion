@@ -109,18 +109,14 @@ export function FeatureGuideModal() {
       {activeCategory && (
         <div
           key={activeCategory}
-          style={{
+          className="rounded-radius-xl border border-glass-border overflow-hidden flex" style={{
             background: "var(--glass-bg-heavy)",
             backdropFilter: "blur(var(--glass-blur))",
             WebkitBackdropFilter: "blur(var(--glass-blur))",
-            border: "1px solid var(--glass-border)",
-            borderRadius: "var(--radius-xl)",
             boxShadow: "var(--shadow-float)",
             marginBottom: 8,
             width: 540,
             maxHeight: 360,
-            overflow: "hidden",
-            display: "flex",
             flexDirection: "column",
             animation: "guideContentSlideUp 200ms ease forwards",
           }}
@@ -131,32 +127,27 @@ export function FeatureGuideModal() {
             style={{ borderBottom: "1px solid var(--glass-border)" }}
           >
             <span
-              className="text-xs font-semibold uppercase tracking-wider"
-              style={{ color: "var(--color-accent)" }}
+              className="text-xs font-semibold uppercase tracking-wider text-accent"
             >
               {CATEGORY_LABELS[activeCategory]}
             </span>
-            <span className="text-[10px] tabular-nums" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-[10px] tabular-nums text-text-muted">
               {filteredFeatures.length}
             </span>
             <div className="flex-1" />
             {/* Search within category */}
             <div
-              className="flex items-center gap-1.5 px-2 py-1 text-xs"
-              style={{
-                borderRadius: "var(--radius-md)",
+              className="flex items-center gap-1.5 px-2 py-1 text-xs rounded-radius-md border border-glass-border" style={{
                 background: "color-mix(in srgb, var(--color-bg-elevated) 60%, transparent)",
-                border: "1px solid var(--glass-border)",
-              }}
+                }}
             >
-              <MagnifyingGlass size={10} style={{ color: "var(--color-text-muted)" }} />
+              <MagnifyingGlass size={10} className="text-text-muted" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Filter..."
-                className="bg-transparent outline-none text-xs"
-                style={{ color: "var(--color-text-primary)", width: 80 }}
+                className="bg-transparent outline-none text-xs text-text-primary" style={{ width: 80 }}
                 aria-label="Filter features"
               />
             </div>
@@ -165,8 +156,7 @@ export function FeatureGuideModal() {
                 setActiveCategory(null);
                 setSearch("");
               }}
-              className="p-1 cursor-pointer rounded"
-              style={{ color: "var(--color-text-muted)" }}
+              className="p-1 cursor-pointer rounded text-text-muted"
               aria-label="Close category"
             >
               <CaretDown size={12} weight="bold" />
@@ -177,8 +167,7 @@ export function FeatureGuideModal() {
           <div className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-1.5">
             {filteredFeatures.length === 0 && (
               <div
-                className="text-xs py-4 text-center"
-                style={{ color: "var(--color-text-muted)" }}
+                className="text-xs py-4 text-center text-text-muted"
               >
                 No features match
               </div>
@@ -196,17 +185,14 @@ export function FeatureGuideModal() {
 
       {/* Category pills bar — always visible */}
       <div
-        className="flex items-center gap-1.5 px-3 py-2"
-        style={{
+        className="flex items-center gap-1.5 px-3 py-2 rounded-radius-xl border border-glass-border" style={{
           background: "var(--glass-bg-heavy)",
           backdropFilter: "blur(var(--glass-blur))",
           WebkitBackdropFilter: "blur(var(--glass-blur))",
-          border: "1px solid var(--glass-border)",
-          borderRadius: "var(--radius-xl)",
           boxShadow: "var(--shadow-float)",
         }}
       >
-        <span className="text-xs font-semibold px-2" style={{ color: "var(--color-text-primary)" }}>
+        <span className="text-xs font-semibold px-2 text-text-primary">
           Guide
         </span>
 
@@ -222,9 +208,7 @@ export function FeatureGuideModal() {
                 setActiveCategory(isActive ? null : cat);
                 setSearch("");
               }}
-              className="text-[11px] px-2.5 py-1 cursor-pointer transition-all font-medium"
-              style={{
-                borderRadius: "var(--radius-md)",
+              className="text-[11px] px-2.5 py-1 cursor-pointer transition-all font-medium rounded-radius-md" style={{
                 background: isActive ? "var(--color-accent)" : "transparent",
                 color: isActive ? "#fff" : "var(--color-text-secondary)",
                 border: isActive ? "1px solid var(--color-accent)" : "1px solid transparent",
@@ -241,8 +225,7 @@ export function FeatureGuideModal() {
         {/* Close */}
         <button
           onClick={() => setOpen(false)}
-          className="p-1 cursor-pointer rounded"
-          style={{ color: "var(--color-text-muted)" }}
+          className="p-1 cursor-pointer rounded text-text-muted"
           aria-label="Close guide"
         >
           <X size={12} weight="bold" />
@@ -275,13 +258,11 @@ function FeatureRow({ feature, onAction }: { feature: FeatureDef; onAction: () =
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold" style={{ color: "var(--color-text-primary)" }}>
+          <span className="text-xs font-semibold text-text-primary">
             {feature.name}
           </span>
           <span
-            className="text-[9px] px-1.5 py-0.5 font-medium"
-            style={{
-              borderRadius: "var(--radius-pill)",
+            className="text-[9px] px-1.5 py-0.5 font-medium rounded-radius-pill" style={{
               background:
                 feature.tier === "pro" ? "rgba(234, 179, 8, 0.12)" : "rgba(16, 185, 129, 0.12)",
               color: feature.tier === "pro" ? "#eab308" : "#10b981",
@@ -296,7 +277,7 @@ function FeatureRow({ feature, onAction }: { feature: FeatureDef; onAction: () =
             )}
           </span>
         </div>
-        <p className="text-[11px] mt-0.5 truncate" style={{ color: "var(--color-text-muted)" }}>
+        <p className="text-[11px] mt-0.5 truncate text-text-muted">
           {feature.description}
         </p>
       </div>
@@ -304,9 +285,7 @@ function FeatureRow({ feature, onAction }: { feature: FeatureDef; onAction: () =
       {hasAction && (
         <button
           onClick={onAction}
-          className="shrink-0 flex items-center gap-1 text-[10px] px-2 py-1 rounded cursor-pointer transition-colors"
-          style={{
-            color: "var(--color-accent)",
+          className="shrink-0 flex items-center gap-1 text-[10px] px-2 py-1 rounded cursor-pointer transition-colors text-accent" style={{
             background: "color-mix(in srgb, var(--color-accent) 8%, transparent)",
             border: "1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)",
           }}

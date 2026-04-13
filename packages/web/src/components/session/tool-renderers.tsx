@@ -153,8 +153,8 @@ export function ToolInputRenderer({
           className="rounded-md px-3 py-2 font-mono text-xs"
           style={{ background: "rgba(0,0,0,0.3)" }}
         >
-          <span style={{ color: "#34A853", userSelect: "none" }}>$ </span>
-          <span style={{ color: "var(--color-text-primary)" }}>
+          <span className="select-none" style={{ color: "#34A853" }}>$ </span>
+          <span className="text-text-primary">
             {String(input.command ?? "").slice(0, 2000)}
           </span>
         </div>
@@ -168,7 +168,7 @@ export function ToolInputRenderer({
             {String(input.file_path ?? "")}
           </code>
           {input.offset != null && (
-            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs text-text-muted">
               L{String(input.offset)}
               {input.limit ? `–${Number(input.offset) + Number(input.limit)}` : ""}
             </span>
@@ -187,12 +187,12 @@ export function ToolInputRenderer({
               /{String(input.pattern ?? "")}/
             </code>
             {input.glob != null && (
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-xs text-text-muted">
                 in {String(input.glob)}
               </span>
             )}
             {input.path != null && (
-              <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-xs text-text-muted">
                 in {String(input.path)}
               </span>
             )}
@@ -210,7 +210,7 @@ export function ToolInputRenderer({
             {String(input.pattern ?? "")}
           </code>
           {input.path != null && (
-            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs text-text-muted">
               in {String(input.path)}
             </span>
           )}
@@ -222,8 +222,7 @@ export function ToolInputRenderer({
   const str = JSON.stringify(input, null, 2);
   return (
     <pre
-      className="text-xs font-mono whitespace-pre-wrap m-0 max-h-[200px] overflow-y-auto"
-      style={{ color: "var(--color-text-secondary)" }}
+      className="text-xs font-mono whitespace-pre-wrap m-0 max-h-[200px] overflow-y-auto text-text-secondary"
     >
       {str.slice(0, 3000)}
     </pre>
@@ -268,8 +267,7 @@ export function ToolOutputRenderer({
     default:
       return (
         <pre
-          className="text-xs font-mono whitespace-pre-wrap m-0 max-h-[300px] overflow-y-auto"
-          style={{ color: "var(--color-text-secondary)" }}
+          className="text-xs font-mono whitespace-pre-wrap m-0 max-h-[300px] overflow-y-auto text-text-secondary"
         >
           {text}
           {truncated && "\n... (truncated)"}
@@ -289,7 +287,7 @@ function BashOutput({ content, truncated }: { content: string; truncated: boolea
       <pre className="whitespace-pre-wrap m-0 px-3 py-2" style={{ color: "#e0e0e0" }}>
         {content}
         {truncated && (
-          <span style={{ color: "var(--color-text-muted)" }}>{"\n... (truncated)"}</span>
+          <span className="text-text-muted">{"\n... (truncated)"}</span>
         )}
       </pre>
     </div>
@@ -310,12 +308,11 @@ function ReadOutput({ content, truncated }: { content: string; truncated: boolea
         style={{ background: "rgba(0,0,0,0.2)" }}
       >
         <pre
-          className="text-xs font-mono whitespace-pre m-0 px-3 py-2"
-          style={{ color: "var(--color-text-primary)" }}
+          className="text-xs font-mono whitespace-pre m-0 px-3 py-2 text-text-primary"
         >
           {content}
           {truncated && (
-            <span style={{ color: "var(--color-text-muted)" }}>{"\n... (truncated)"}</span>
+            <span className="text-text-muted">{"\n... (truncated)"}</span>
           )}
         </pre>
       </div>
@@ -337,23 +334,21 @@ function ReadOutput({ content, truncated }: { content: string; truncated: boolea
           return (
             <div key={idx} className="flex font-mono leading-5" style={{ fontSize: 12 }}>
               <span
-                className="select-none text-right px-2 flex-shrink-0"
-                style={{
+                className="select-none text-right px-2 flex-shrink-0 text-text-muted" style={{
                   width: 40,
-                  color: "var(--color-text-muted)",
                   opacity: 0.4,
                 }}
               >
                 {lineNum}
               </span>
-              <span className="whitespace-pre pr-3" style={{ color: "var(--color-text-primary)" }}>
+              <span className="whitespace-pre pr-3 text-text-primary">
                 {code}
               </span>
             </div>
           );
         })}
       {truncated && (
-        <div className="px-3 py-1 text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <div className="px-3 py-1 text-xs text-text-muted">
           ... (truncated)
         </div>
       )}
@@ -380,8 +375,7 @@ function GrepOutput({ content, truncated }: { content: string; truncated: boolea
 
     return (
       <pre
-        className="text-xs font-mono whitespace-pre-wrap m-0 max-h-[300px] overflow-y-auto"
-        style={{ color: "var(--color-text-secondary)" }}
+        className="text-xs font-mono whitespace-pre-wrap m-0 max-h-[300px] overflow-y-auto text-text-secondary"
       >
         {content}
         {truncated && "\n... (truncated)"}
@@ -405,8 +399,7 @@ function GrepOutput({ content, truncated }: { content: string; truncated: boolea
       {Array.from(groups.entries()).map(([file, matches]) => (
         <div key={file}>
           <div
-            className="text-xs font-mono px-2 py-1 sticky top-0"
-            style={{ color: "#4285F4", background: "var(--color-bg-elevated)" }}
+            className="text-xs font-mono px-2 py-1 sticky top-0 bg-bg-elevated" style={{ color: "#4285F4" }}
           >
             {file}
           </div>
@@ -419,8 +412,7 @@ function GrepOutput({ content, truncated }: { content: string; truncated: boolea
                 {m.num}
               </span>
               <span
-                className="whitespace-pre-wrap pr-2"
-                style={{ color: "var(--color-text-primary)" }}
+                className="whitespace-pre-wrap pr-2 text-text-primary"
               >
                 {m.text}
               </span>
@@ -429,7 +421,7 @@ function GrepOutput({ content, truncated }: { content: string; truncated: boolea
         </div>
       ))}
       {truncated && (
-        <div className="px-3 py-1 text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <div className="px-3 py-1 text-xs text-text-muted">
           ... (truncated)
         </div>
       )}
@@ -455,15 +447,15 @@ function GlobOutput({ content, truncated }: { content: string; truncated: boolea
             <FileText
               size={11}
               weight="regular"
-              style={{ color: "var(--color-text-muted)", flexShrink: 0 }}
+              className="text-text-muted shrink-0"
             />
-            <span style={{ color: "var(--color-text-muted)" }}>{dir}</span>
-            <span style={{ color: "var(--color-text-primary)" }}>{name}</span>
+            <span className="text-text-muted">{dir}</span>
+            <span className="text-text-primary">{name}</span>
           </div>
         );
       })}
       {truncated && (
-        <div className="px-3 py-1 text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <div className="px-3 py-1 text-xs text-text-muted">
           ... (truncated)
         </div>
       )}

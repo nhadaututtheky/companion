@@ -31,10 +31,8 @@ export function SettingSection({
 }) {
   return (
     <div
-      className="p-5 rounded-xl"
-      style={{
+      className="p-5 rounded-xl border border-glass-border" style={{
         background: "var(--glass-bg-heavy)",
-        border: "1px solid var(--glass-border)",
         boxShadow: "var(--shadow-soft)",
       }}
     >
@@ -66,11 +64,7 @@ export function InputField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="px-3 py-2 rounded-lg text-sm input-bordered transition-colors"
-        style={{
-          background: "var(--color-bg-elevated)",
-          color: "var(--color-text-primary)",
-        }}
+        className="px-3 py-2 rounded-lg text-sm input-bordered transition-colors text-text-primary bg-bg-elevated"
       />
     </div>
   );
@@ -136,18 +130,13 @@ export function AppearanceTab() {
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-0.5">
             <span className="text-sm font-medium">Color mode</span>
-            <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+            <span className="text-xs text-text-muted">
               Switch between light and dark mode
             </span>
           </div>
           <button
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
-            style={{
-              background: "var(--color-bg-elevated)",
-              border: "1px solid var(--glass-border)",
-              color: "var(--color-text-primary)",
-            }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer text-text-primary bg-bg-elevated border border-glass-border"
           >
             <Robot size={14} weight="bold" aria-hidden="true" />
             {theme === "light" ? "Dark" : "Light"}
@@ -213,8 +202,7 @@ export function AppearanceTab() {
                 {/* Label */}
                 <span className="text-xs font-semibold">{option.label}</span>
                 <span
-                  className="text-xs text-center leading-tight"
-                  style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                  className="text-xs text-center leading-tight text-text-muted" style={{ fontSize: 10 }}
                 >
                   {option.description}
                 </span>
@@ -224,9 +212,7 @@ export function AppearanceTab() {
                   <CheckCircle
                     size={16}
                     weight="fill"
-                    style={{
-                      color: "var(--color-accent)",
-                      position: "absolute",
+                    className="text-accent absolute" style={{
                       bottom: 8,
                       right: 8,
                     }}

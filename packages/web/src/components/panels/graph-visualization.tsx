@@ -503,7 +503,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
             {labelMode === "feature" ? (
               <Sparkle size={12} style={{ color: "#10B981" }} />
             ) : (
-              <TextAa size={12} style={{ color: "var(--color-text-muted)" }} />
+              <TextAa size={12} className="text-text-muted" />
             )}
             <span
               className="text-xs"
@@ -528,7 +528,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
             {fogEnabled ? (
               <EyeSlash size={12} style={{ color: "#6366F1" }} />
             ) : (
-              <Eye size={12} style={{ color: "var(--color-text-muted)" }} />
+              <Eye size={12} className="text-text-muted" />
             )}
             <span
               className="text-xs"
@@ -577,7 +577,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
           .map(([type, color]) => (
             <div key={type} className="flex items-center gap-1">
               <span className="rounded-full" style={{ width: 6, height: 6, background: color }} />
-              <span className="text-xs" style={{ color: "var(--color-text-muted)", fontSize: 10 }}>
+              <span className="text-xs text-text-muted" style={{ fontSize: 10 }}>
                 {type}
               </span>
             </div>
@@ -593,8 +593,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
                   style={{ width: 6, height: 6, background: color, boxShadow: `0 0 4px ${color}` }}
                 />
                 <span
-                  className="text-xs"
-                  style={{ color: "var(--color-text-muted)", fontSize: 10 }}
+                  className="text-xs text-text-muted" style={{ fontSize: 10 }}
                 >
                   {action}
                 </span>
@@ -606,8 +605,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
 
       {/* Graph */}
       <div
-        className="flex-1 rounded-lg overflow-hidden"
-        style={{ border: "1px solid var(--color-border)" }}
+        className="flex-1 rounded-lg overflow-hidden border border-border"
       >
         <ReactFlow
           nodes={nodes}
@@ -623,14 +621,11 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
           <Background color="var(--color-border)" gap={20} size={1} />
           <Controls
             showInteractive={false}
-            style={{ background: "var(--color-bg-elevated)", borderColor: "var(--color-border)" }}
+            className="bg-bg-elevated" style={{ borderColor: "var(--color-border)" }}
           />
           <MiniMap
             nodeStrokeWidth={3}
-            style={{
-              background: "var(--color-bg-base)",
-              border: "1px solid var(--color-border)",
-            }}
+            className="bg-bg-base border border-border"
           />
         </ReactFlow>
       </div>

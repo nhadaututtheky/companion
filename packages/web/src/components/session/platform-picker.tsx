@@ -24,10 +24,9 @@ export function PlatformPicker({ platforms, loading, selected, onSelect }: Platf
       <div className="flex items-center justify-center py-4 gap-2">
         <CircleNotch
           size={16}
-          className="animate-spin"
-          style={{ color: "var(--color-text-muted)" }}
+          className="animate-spin text-text-muted"
         />
-        <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-xs text-text-muted">
           Detecting CLI platforms...
         </span>
       </div>
@@ -40,8 +39,7 @@ export function PlatformPicker({ platforms, loading, selected, onSelect }: Platf
   return (
     <div>
       <label
-        className="text-xs font-semibold uppercase tracking-wider mb-2 block"
-        style={{ color: "var(--color-text-muted)" }}
+        className="text-xs font-semibold uppercase tracking-wider mb-2 block text-text-muted"
       >
         Platform
       </label>
@@ -101,7 +99,7 @@ export function PlatformPicker({ platforms, loading, selected, onSelect }: Platf
               </span>
 
               {/* Version / Status */}
-              <span className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+              <span className="text-[10px] text-text-muted">
                 {available ? (
                   <>
                     <span style={{ color: "#34A853" }}>●</span>{" "}
