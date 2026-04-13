@@ -72,7 +72,7 @@ export function TemplateQuickPicker() {
       {/* Header button */}
       <button
         onClick={() => setOpen(true)}
-        className="text-text-secondary rounded-md flex min-h-[44px] cursor-pointer items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all"
+        className="text-text-secondary flex min-h-[44px] cursor-pointer items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all"
         style={{
           background: "transparent",
           border: "1px solid transparent",
@@ -101,7 +101,7 @@ export function TemplateQuickPicker() {
 
             {/* Panel */}
             <div
-              className="bg-bg-card rounded-xl shadow-soft flex overflow-hidden "
+              className="bg-bg-card shadow-soft flex overflow-hidden rounded-xl"
               style={{
                 position: "fixed",
                 top: "50%",

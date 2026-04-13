@@ -141,7 +141,7 @@ function ModelPills({ breakdown }: { breakdown: StatsData["modelBreakdown"] }) {
         return (
           <div
             key={m.model}
-            className="rounded-full flex items-center gap-1 px-2 py-1 text-[10px] font-semibold"
+            className="flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-semibold"
             style={{
               background: `color-mix(in srgb, ${modelColor(m.model)} 12%, transparent)`,
               color: modelColor(m.model),
@@ -185,7 +185,7 @@ export function FloatingStatsBar() {
 
   return (
     <div
-      className="rounded-xl shadow-soft hidden items-stretch sm:flex"
+      className="shadow-soft hidden items-stretch rounded-xl sm:flex"
       style={{
         position: "fixed",
         bottom: 80,

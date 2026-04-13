@@ -50,10 +50,7 @@ const sharedComponents: Partial<Components> = {
   },
   thead({ children }) {
     return (
-      <thead
-        className="bg-bg-elevated"
-        style={{ borderBottom: "2px solid var(--color-border)" }}
-      >
+      <thead className="bg-bg-elevated" style={{ borderBottom: "2px solid var(--color-border)" }}>
         {children}
       </thead>
     );
@@ -200,30 +197,21 @@ function buildComponents(compact: boolean): Partial<Components> {
     },
     h1({ children }) {
       return (
-        <h3
-          className="font-bold"
-          style={{ fontSize: compact ? 18 : 20, margin: "12px 0 6px" }}
-        >
+        <h3 className="font-bold" style={{ fontSize: compact ? 18 : 20, margin: "12px 0 6px" }}>
           {children}
         </h3>
       );
     },
     h2({ children }) {
       return (
-        <h4
-          className="font-semibold"
-          style={{ fontSize: compact ? 16 : 18, margin: "10px 0 4px" }}
-        >
+        <h4 className="font-semibold" style={{ fontSize: compact ? 16 : 18, margin: "10px 0 4px" }}>
           {children}
         </h4>
       );
     },
     h3({ children }) {
       return (
-        <h5
-          className="font-semibold"
-          style={{ fontSize: compact ? 15 : 16, margin: "8px 0 3px" }}
-        >
+        <h5 className="font-semibold" style={{ fontSize: compact ? 15 : 16, margin: "8px 0 3px" }}>
           {children}
         </h5>
       );

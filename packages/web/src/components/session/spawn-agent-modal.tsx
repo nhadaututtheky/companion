@@ -111,7 +111,7 @@ export function SpawnAgentModal({
       }}
     >
       <div
-        className="rounded-xl shadow-soft flex flex-col gap-4 overflow-y-auto p-5"
+        className="shadow-soft flex flex-col gap-4 overflow-y-auto rounded-xl p-5"
         style={{
           background: "var(--glass-bg-heavy)",
           backdropFilter: "blur(var(--glass-blur))",

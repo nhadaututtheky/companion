@@ -1,7 +1,13 @@
 "use client";
 import { useState, useRef, useCallback, useEffect, type KeyboardEvent } from "react";
 import { Z } from "@/lib/z-index";
-import { PaperPlaneTilt, Stop, Microphone, MicrophoneSlash, Paperclip } from "@phosphor-icons/react";
+import {
+  PaperPlaneTilt,
+  Stop,
+  Microphone,
+  MicrophoneSlash,
+  Paperclip,
+} from "@phosphor-icons/react";
 import { useVoiceInput } from "@/hooks/use-voice-input";
 import {
   useComposerStore,

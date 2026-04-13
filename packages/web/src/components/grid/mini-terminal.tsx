@@ -343,9 +343,7 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
       className="relative flex flex-col overflow-hidden"
       style={{
         background: "var(--color-bg-card)",
-        border: session?.status === "error"
-          ? "1px solid var(--color-danger)"
-          : "none",
+        border: session?.status === "error" ? "1px solid var(--color-danger)" : "none",
         borderRadius: "var(--radius-xl)",
         boxShadow: flashType
           ? `0 0 0 3px ${flashType === "error" ? "#EA4335" : flashType === "success" ? "#34A853" : "var(--color-accent)"}60, var(--shadow-float)`

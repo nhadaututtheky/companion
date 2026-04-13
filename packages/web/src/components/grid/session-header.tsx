@@ -291,7 +291,7 @@ export function SessionHeader({
           {/* Model dropdown */}
           {modelDropdownOpen && (
             <div
-              className="rounded-lg shadow-float absolute "
+              className="shadow-float absolute rounded-lg"
               style={{
                 top: "calc(100% + 4px)",
                 right: 0,

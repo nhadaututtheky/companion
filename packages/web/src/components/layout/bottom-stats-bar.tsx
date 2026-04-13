@@ -37,7 +37,8 @@ export function BottomStatsBar() {
           activeCount++;
           totalCost += sess.state?.total_cost_usd ?? 0;
           totalTurns += sess.state?.num_turns ?? 0;
-          totalTokens += (sess.state?.total_input_tokens ?? 0) + (sess.state?.total_output_tokens ?? 0);
+          totalTokens +=
+            (sess.state?.total_input_tokens ?? 0) + (sess.state?.total_output_tokens ?? 0);
         }
       }
       return { activeCount, totalCost: Math.round(totalCost * 100) / 100, totalTurns, totalTokens };
@@ -76,7 +77,7 @@ export function BottomStatsBar() {
       {expanded ? (
         /* ── Expanded: simple active session summary ── */
         <div
-          className="rounded-xl shadow-soft flex items-stretch"
+          className="shadow-soft flex items-stretch rounded-xl"
           style={{
             background: "var(--glass-bg-heavy)",
             backdropFilter: "blur(var(--glass-blur))",
@@ -117,7 +118,7 @@ export function BottomStatsBar() {
         /* ── Collapsed watermark pill ── */
         <button
           onClick={() => setExpanded(true)}
-          className="text-text-muted rounded-full shadow-soft flex cursor-pointer items-center gap-1.5 px-3 py-1.5 font-mono font-semibold transition-all"
+          className="text-text-muted shadow-soft flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 font-mono font-semibold transition-all"
           style={{
             background: "var(--glass-bg)",
             backdropFilter: "blur(var(--glass-blur-sm))",

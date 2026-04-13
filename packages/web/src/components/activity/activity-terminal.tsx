@@ -221,7 +221,7 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
 
   return (
     <div
-      className="rounded-xl shadow-soft flex shrink-0 overflow-hidden"
+      className="shadow-soft flex shrink-0 overflow-hidden rounded-xl"
       style={{
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
@@ -267,9 +267,7 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
         </button>
 
         {/* Log count badge */}
-        <span
-          className="text-text-muted bg-bg-hover rounded px-1.5 font-mono text-[10px]"
-        >
+        <span className="text-text-muted bg-bg-hover rounded px-1.5 font-mono text-[10px]">
           {displayLogs.length}
         </span>
 

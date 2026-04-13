@@ -286,7 +286,7 @@ function ActivityHeatmap({ data }: { data: StatsData["dailyActivity"] }) {
         {[0, 1, 3, 5, 7].map((n) => (
           <div
             key={n}
-            className="border-border size-2.5 shrink-0 rounded-sm "
+            className="border-border size-2.5 shrink-0 rounded-sm"
             style={{
               background: heatmapColor(n),
             }}

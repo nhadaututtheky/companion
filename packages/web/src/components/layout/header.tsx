@@ -72,7 +72,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
   return (
     <header
-      className="rounded-xl shadow-soft relative z-10 flex h-12 items-center gap-3 px-5"
+      className="shadow-soft relative z-10 flex h-12 items-center gap-3 rounded-xl px-5"
       style={{
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
@@ -100,7 +100,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
       {/* Center: Search trigger (⌘K) */}
       <button
         onClick={() => setCommandPaletteOpen(true)}
-        className="text-text-muted bg-bg-elevated rounded-md shadow-soft flex min-h-[44px] cursor-pointer items-center gap-2 px-3 py-1.5 text-sm transition-colors"
+        className="text-text-muted bg-bg-elevated shadow-soft flex min-h-[44px] cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors"
         style={{
           minWidth: 44,
         }}
@@ -109,7 +109,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <MagnifyingGlass size={14} weight="bold" />
         <span className="hidden sm:inline">Search...</span>
         <span
-          className="bg-bg-base rounded-sm shadow-soft ml-auto hidden text-xs sm:inline"
+          className="bg-bg-base shadow-soft ml-auto hidden rounded-sm text-xs sm:inline"
           style={{
             padding: "1px 5px",
           }}
@@ -133,7 +133,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
               key={item.id}
               data-nav-trigger
               onClick={() => toggleNavMenu(item.id)}
-              className="rounded-md flex cursor-pointer items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all"
+              className="flex cursor-pointer items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all"
               style={{
                 background: isOpen
                   ? "var(--color-text-primary)"
@@ -161,7 +161,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <TemplateQuickPicker />
         <button
           onClick={() => useUiStore.getState().setSchedulesModalOpen(true)}
-          className="text-text-secondary rounded-md flex min-h-[44px] cursor-pointer items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all"
+          className="text-text-secondary flex min-h-[44px] cursor-pointer items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all"
           style={{
             background: "transparent",
             border: "1px solid transparent",
@@ -175,7 +175,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <button
           data-guide-trigger
           onClick={() => setFeatureGuideOpen(!featureGuideOpen)}
-          className="rounded-md flex min-h-[44px] cursor-pointer items-center px-3 py-1.5 text-xs font-medium transition-all"
+          className="flex min-h-[44px] cursor-pointer items-center rounded-md px-3 py-1.5 text-xs font-medium transition-all"
           style={{
             background: featureGuideOpen ? "var(--color-accent)" : "transparent",
             color: featureGuideOpen ? "#fff" : "var(--color-text-secondary)",

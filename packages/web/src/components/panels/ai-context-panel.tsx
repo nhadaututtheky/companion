@@ -1175,10 +1175,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
       </div>
 
       {/* Project Selector */}
-      <div
-        className="flex-shrink-0 px-4 py-2"
-        style={{ boxShadow: "0 1px 0 var(--color-border)" }}
-      >
+      <div className="flex-shrink-0 px-4 py-2" style={{ boxShadow: "0 1px 0 var(--color-border)" }}>
         <select
           value={selectedSlug}
           onChange={(e) => setSelectedSlug(e.target.value)}

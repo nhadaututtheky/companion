@@ -612,7 +612,7 @@ export default function DashboardPage() {
           </aside>
 
           {/* Main grid area */}
-          <main className="bg-bg-base rounded-xl shadow-soft relative flex min-w-0 flex-1 flex-col overflow-hidden">
+          <main className="bg-bg-base shadow-soft relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl">
             {/* Stats watermark — centered behind sessions, click to expand */}
             <BottomStatsBar />
 
@@ -642,7 +642,7 @@ export default function DashboardPage() {
           {/* Right panel — File Explorer, Browser Preview, or Search (desktop only, hidden on mobile to save space) */}
           {rightPanelMode !== "none" && (
             <aside
-              className="rounded-xl shadow-soft hidden flex-shrink-0 flex-col overflow-hidden md:flex"
+              className="shadow-soft hidden flex-shrink-0 flex-col overflow-hidden rounded-xl md:flex"
               style={{
                 width:
                   rightPanelMode === "browser" || rightPanelMode === "terminal"

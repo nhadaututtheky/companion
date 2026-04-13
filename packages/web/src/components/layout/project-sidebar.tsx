@@ -190,7 +190,7 @@ function WorkspacePanel({
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
               <div
-                className="bg-bg-card rounded-md shadow-float absolute right-0 top-full z-50 mt-1 py-1"
+                className="bg-bg-card shadow-float absolute right-0 top-full z-50 mt-1 rounded-md py-1"
                 style={{
                   width: 160,
                   boxShadow: "var(--shadow-float)",

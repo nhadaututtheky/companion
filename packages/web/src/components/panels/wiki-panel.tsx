@@ -269,10 +269,7 @@ function BrowseView() {
   return (
     <div className="flex flex-col gap-0">
       {/* Domain header + actions */}
-      <div
-        className="flex flex-col gap-2 p-3"
-        style={{ boxShadow: "0 1px 0 var(--color-border)" }}
-      >
+      <div className="flex flex-col gap-2 p-3" style={{ boxShadow: "0 1px 0 var(--color-border)" }}>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveDomain(null)}

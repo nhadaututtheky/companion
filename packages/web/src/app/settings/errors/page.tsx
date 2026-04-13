@@ -249,16 +249,12 @@ export default function ErrorsPage() {
                       </p>
                     )}
                     {err.stack && (
-                      <pre
-                        className="text-text-secondary bg-bg-base border-border max-h-[200px] overflow-auto whitespace-pre-wrap break-all rounded-md border p-3 text-[11px] leading-normal"
-                      >
+                      <pre className="text-text-secondary bg-bg-base border-border max-h-[200px] overflow-auto whitespace-pre-wrap break-all rounded-md border p-3 text-[11px] leading-normal">
                         {err.stack}
                       </pre>
                     )}
                     {err.context && (
-                      <pre
-                        className="text-text-secondary bg-bg-base border-border mt-2 max-h-[120px] overflow-auto rounded-md border p-3 text-[11px] leading-normal"
-                      >
+                      <pre className="text-text-secondary bg-bg-base border-border mt-2 max-h-[120px] overflow-auto rounded-md border p-3 text-[11px] leading-normal">
                         {JSON.stringify(err.context, null, 2)}
                       </pre>
                     )}

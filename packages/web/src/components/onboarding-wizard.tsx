@@ -426,9 +426,7 @@ export function OnboardingWizard({ onOpenNewSession }: OnboardingWizardProps) {
       aria-label="Onboarding wizard"
     >
       {/* Modal */}
-      <div
-        className="border-border bg-bg-card w-full max-w-[460px] overflow-hidden rounded-2xl border shadow-[0_24px_64px_rgba(0,0,0,0.4)]"
-      >
+      <div className="border-border bg-bg-card w-full max-w-[460px] overflow-hidden rounded-2xl border shadow-[0_24px_64px_rgba(0,0,0,0.4)]">
         {/* Header */}
         <div
           className="flex items-center justify-between px-5 py-4"

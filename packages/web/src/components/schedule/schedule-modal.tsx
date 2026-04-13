@@ -118,7 +118,7 @@ export function ScheduleModal() {
 
       {/* Modal */}
       <div
-        className="bg-bg-card rounded-xl shadow-float flex overflow-hidden"
+        className="bg-bg-card shadow-float flex overflow-hidden rounded-xl"
         style={{
           position: "fixed",
           top: "50%",

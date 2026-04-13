@@ -144,9 +144,7 @@ function SkillPreview({
   return (
     <div className="h-full overflow-y-auto">
       {/* Header */}
-      <div
-        className="bg-bg-card shadow-soft sticky top-0 px-4 py-3"
-      >
+      <div className="bg-bg-card shadow-soft sticky top-0 px-4 py-3">
         <h3 className="text-text-primary text-sm font-semibold">{skill.name}</h3>
         {skill.description && <p className="text-text-muted mt-0.5 text-xs">{skill.description}</p>}
       </div>
@@ -310,7 +308,7 @@ export function SkillsTab() {
 
           {/* Tree browser */}
           <div
-            className="shadow-soft flex overflow-hidden rounded-xl "
+            className="shadow-soft flex overflow-hidden rounded-xl"
             style={{
               height: "min(480px, 60vh)",
             }}

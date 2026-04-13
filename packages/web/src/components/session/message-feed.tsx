@@ -365,148 +365,160 @@ function SourceBadge({ source }: { source: string }) {
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const NOOP_REF = () => {};
 
-const MessageBubble = React.memo(function MessageBubble({
-  msg,
-  index,
-  sessionId,
-  msgRef,
-}: {
-  msg: Message;
-  index: number;
-  sessionId: string;
-  msgRef: (el: HTMLDivElement | null) => void;
-}) {
-  const [hovered, setHovered] = useState(false);
-  const isUser = msg.role === "user";
-  const isTool = msg.role === "tool";
-  const isSystem = msg.role === "system";
-  const isPinned = usePinnedMessagesStore((s) => s.isPinned(sessionId, index));
+const MessageBubble = React.memo(
+  function MessageBubble({
+    msg,
+    index,
+    sessionId,
+    msgRef,
+  }: {
+    msg: Message;
+    index: number;
+    sessionId: string;
+    msgRef: (el: HTMLDivElement | null) => void;
+  }) {
+    const [hovered, setHovered] = useState(false);
+    const isUser = msg.role === "user";
+    const isTool = msg.role === "tool";
+    const isSystem = msg.role === "system";
+    const isPinned = usePinnedMessagesStore((s) => s.isPinned(sessionId, index));
 
-  if (isSystem) {
-    return (
-      <div className="flex justify-center py-2" ref={msgRef}>
-        <span
-          className="text-text-muted bg-bg-elevated rounded-lg px-3 py-1.5 text-center text-xs"
-          style={{
-            maxWidth: "80%",
-            lineHeight: 1.5,
-          }}
-        >
-          {msg.content}
-        </span>
-      </div>
-    );
-  }
-
-  if (isTool) {
-    return (
-      <div ref={msgRef} className="bg-bg-elevated mx-4 my-1.5 flex gap-2 rounded-xl p-3 shadow-sm">
-        <Wrench
-          size={14}
-          weight="bold"
-          className="shrink-0"
-          style={{ color: "#4285F4", marginTop: 2 }}
-        />
-        <pre className="m-0 whitespace-pre-wrap font-mono text-xs">{msg.content}</pre>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      ref={msgRef}
-      className={`flex gap-3 px-4 py-2 ${isUser ? "flex-row-reverse" : "flex-row"}`}
-      style={isPinned ? { background: "rgba(251, 188, 4, 0.06)", borderRadius: "var(--radius-2xl)" } : undefined}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      {/* Avatar */}
-      <div
-        className="flex flex-shrink-0 items-center justify-center rounded-full"
-        style={{
-          width: 28,
-          height: 28,
-          background: isUser ? "#4285F420" : "#34A85320",
-          color: isUser ? "#4285F4" : "#34A853",
-          marginTop: 2,
-        }}
-      >
-        {isUser ? <User size={14} weight="bold" /> : <Robot size={14} weight="bold" />}
-      </div>
-
-      {/* Bubble */}
-      <div
-        className={`flex-1 ${isUser ? "items-end" : "items-start"} flex flex-col gap-1`}
-        style={{ maxWidth: "78%" }}
-      >
-        {/* Thinking blocks (before text) */}
-        {!isUser && msg.thinkingBlocks && msg.thinkingBlocks.length > 0 && (
-          <ThinkingSection blocks={msg.thinkingBlocks} />
-        )}
-
-        {/* Main content bubble */}
-        {msg.content && (
-          <div
-            className="rounded-2xl px-3 py-2.5 text-sm leading-relaxed"
+    if (isSystem) {
+      return (
+        <div className="flex justify-center py-2" ref={msgRef}>
+          <span
+            className="text-text-muted bg-bg-elevated rounded-lg px-3 py-1.5 text-center text-xs"
             style={{
-              background: isUser ? "#4285F4" : "var(--color-bg-card)",
-              color: isUser ? "#fff" : "var(--color-text-primary)",
-              border: isUser ? "none" : "1px solid var(--color-border)",
-              borderBottomRightRadius: isUser ? 6 : 16,
-              borderBottomLeftRadius: isUser ? 16 : 6,
-              wordBreak: "break-word",
+              maxWidth: "80%",
+              lineHeight: 1.5,
             }}
           >
-            {isUser ? msg.content : <MarkdownMessage content={msg.content} />}
-            {msg.isStreaming && (
-              <span
-                className="inline-block"
-                style={{
-                  width: 8,
-                  height: 14,
-                  background: "currentColor",
-                  opacity: 0.7,
-                  marginLeft: 2,
-                  verticalAlign: "text-bottom",
-                  animation: "blink 1s step-end infinite",
-                }}
-              />
-            )}
-          </div>
-        )}
-
-        {/* Tool use blocks (after text) */}
-        {!isUser && msg.toolUseBlocks && msg.toolUseBlocks.length > 0 && (
-          <ToolUseSection tools={msg.toolUseBlocks} results={msg.toolResultBlocks} />
-        )}
-
-        {/* Timestamp + source badge + cost + pin */}
-        <div className="flex items-center gap-1">
-          <span className="text-xs">
-            {new Date(msg.timestamp).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            {msg.content}
           </span>
-          {msg.source && msg.source !== "web" && <SourceBadge source={msg.source} />}
-          {msg.costUsd !== undefined && msg.costUsd > 0 && <CostBadge costUsd={msg.costUsd} />}
-          {/* Pin button — shows on hover or when already pinned */}
-          <PinButton sessionId={sessionId} messageIndex={index} visible={hovered} />
+        </div>
+      );
+    }
+
+    if (isTool) {
+      return (
+        <div
+          ref={msgRef}
+          className="bg-bg-elevated mx-4 my-1.5 flex gap-2 rounded-xl p-3 shadow-sm"
+        >
+          <Wrench
+            size={14}
+            weight="bold"
+            className="shrink-0"
+            style={{ color: "#4285F4", marginTop: 2 }}
+          />
+          <pre className="m-0 whitespace-pre-wrap font-mono text-xs">{msg.content}</pre>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        ref={msgRef}
+        className={`flex gap-3 px-4 py-2 ${isUser ? "flex-row-reverse" : "flex-row"}`}
+        style={
+          isPinned
+            ? { background: "rgba(251, 188, 4, 0.06)", borderRadius: "var(--radius-2xl)" }
+            : undefined
+        }
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        {/* Avatar */}
+        <div
+          className="flex flex-shrink-0 items-center justify-center rounded-full"
+          style={{
+            width: 28,
+            height: 28,
+            background: isUser ? "#4285F420" : "#34A85320",
+            color: isUser ? "#4285F4" : "#34A853",
+            marginTop: 2,
+          }}
+        >
+          {isUser ? <User size={14} weight="bold" /> : <Robot size={14} weight="bold" />}
+        </div>
+
+        {/* Bubble */}
+        <div
+          className={`flex-1 ${isUser ? "items-end" : "items-start"} flex flex-col gap-1`}
+          style={{ maxWidth: "78%" }}
+        >
+          {/* Thinking blocks (before text) */}
+          {!isUser && msg.thinkingBlocks && msg.thinkingBlocks.length > 0 && (
+            <ThinkingSection blocks={msg.thinkingBlocks} />
+          )}
+
+          {/* Main content bubble */}
+          {msg.content && (
+            <div
+              className="rounded-2xl px-3 py-2.5 text-sm leading-relaxed"
+              style={{
+                background: isUser ? "#4285F4" : "var(--color-bg-card)",
+                color: isUser ? "#fff" : "var(--color-text-primary)",
+                border: isUser ? "none" : "1px solid var(--color-border)",
+                borderBottomRightRadius: isUser ? 6 : 16,
+                borderBottomLeftRadius: isUser ? 16 : 6,
+                wordBreak: "break-word",
+              }}
+            >
+              {isUser ? msg.content : <MarkdownMessage content={msg.content} />}
+              {msg.isStreaming && (
+                <span
+                  className="inline-block"
+                  style={{
+                    width: 8,
+                    height: 14,
+                    background: "currentColor",
+                    opacity: 0.7,
+                    marginLeft: 2,
+                    verticalAlign: "text-bottom",
+                    animation: "blink 1s step-end infinite",
+                  }}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Tool use blocks (after text) */}
+          {!isUser && msg.toolUseBlocks && msg.toolUseBlocks.length > 0 && (
+            <ToolUseSection tools={msg.toolUseBlocks} results={msg.toolResultBlocks} />
+          )}
+
+          {/* Timestamp + source badge + cost + pin */}
+          <div className="flex items-center gap-1">
+            <span className="text-xs">
+              {new Date(msg.timestamp).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+            {msg.source && msg.source !== "web" && <SourceBadge source={msg.source} />}
+            {msg.costUsd !== undefined && msg.costUsd > 0 && <CostBadge costUsd={msg.costUsd} />}
+            {/* Pin button — shows on hover or when already pinned */}
+            <PinButton sessionId={sessionId} messageIndex={index} visible={hovered} />
+          </div>
         </div>
       </div>
-    </div>
-  );
-}, (prev, next) => {
-  return prev.msg.id === next.msg.id
-    && prev.msg.content === next.msg.content
-    && prev.msg.isStreaming === next.msg.isStreaming
-    && prev.msg.thinkingBlocks?.length === next.msg.thinkingBlocks?.length
-    && prev.msg.toolUseBlocks?.length === next.msg.toolUseBlocks?.length
-    && prev.msg.toolResultBlocks?.length === next.msg.toolResultBlocks?.length
-    && prev.msg.costUsd === next.msg.costUsd
-    && prev.index === next.index
-    && prev.sessionId === next.sessionId;
-});
+    );
+  },
+  (prev, next) => {
+    return (
+      prev.msg.id === next.msg.id &&
+      prev.msg.content === next.msg.content &&
+      prev.msg.isStreaming === next.msg.isStreaming &&
+      prev.msg.thinkingBlocks?.length === next.msg.thinkingBlocks?.length &&
+      prev.msg.toolUseBlocks?.length === next.msg.toolUseBlocks?.length &&
+      prev.msg.toolResultBlocks?.length === next.msg.toolResultBlocks?.length &&
+      prev.msg.costUsd === next.msg.costUsd &&
+      prev.index === next.index &&
+      prev.sessionId === next.sessionId
+    );
+  },
+);
 
 // ── Virtualization threshold ─────────────────────────────────────────────────
 

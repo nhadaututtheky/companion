@@ -109,7 +109,7 @@ export function FeatureGuideModal() {
       {activeCategory && (
         <div
           key={activeCategory}
-          className="rounded-xl shadow-soft flex overflow-hidden"
+          className="shadow-soft flex overflow-hidden rounded-xl"
           style={{
             background: "var(--glass-bg-heavy)",
             backdropFilter: "blur(var(--glass-blur))",
@@ -136,7 +136,7 @@ export function FeatureGuideModal() {
             <div className="flex-1" />
             {/* Search within category */}
             <div
-              className="rounded-md flex items-center gap-1.5 px-2 py-1 text-xs"
+              className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs"
               style={{
                 background: "color-mix(in srgb, var(--color-bg-elevated) 60%, transparent)",
               }}
@@ -182,7 +182,7 @@ export function FeatureGuideModal() {
 
       {/* Category pills bar — always visible */}
       <div
-        className="rounded-xl shadow-soft flex items-center gap-1.5 px-3 py-2"
+        className="shadow-soft flex items-center gap-1.5 rounded-xl px-3 py-2"
         style={{
           background: "var(--glass-bg-heavy)",
           backdropFilter: "blur(var(--glass-blur))",
@@ -204,7 +204,7 @@ export function FeatureGuideModal() {
                 setActiveCategory(isActive ? null : cat);
                 setSearch("");
               }}
-              className="rounded-md cursor-pointer px-2.5 py-1 text-[11px] font-medium transition-all"
+              className="cursor-pointer rounded-md px-2.5 py-1 text-[11px] font-medium transition-all"
               style={{
                 background: isActive ? "var(--color-accent)" : "transparent",
                 color: isActive ? "#fff" : "var(--color-text-secondary)",

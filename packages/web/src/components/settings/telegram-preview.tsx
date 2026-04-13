@@ -424,9 +424,7 @@ export function TelegramPreview() {
       </div>
 
       {/* ── Command Reference ── */}
-      <div
-        className="bg-bg-elevated border-border overflow-hidden rounded-xl border"
-      >
+      <div className="bg-bg-elevated border-border overflow-hidden rounded-xl border">
         <div
           style={{
             padding: "10px 14px",

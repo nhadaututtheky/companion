@@ -1234,7 +1234,12 @@ export class TelegramBridge {
   ): Promise<void> {
     try {
       // Reset busy watchdog + idle timer on any sign of CLI activity
-      if (msg.type === "assistant" || msg.type === "tool_progress" || msg.type === "stream_event" || msg.type === "stream_event_batch") {
+      if (
+        msg.type === "assistant" ||
+        msg.type === "tool_progress" ||
+        msg.type === "stream_event" ||
+        msg.type === "stream_event_batch"
+      ) {
         this.resetBusyWatchdog(sessionId, chatId, topicId);
 
         // Debounce idle timer reset — stream events fire rapidly, only reset every 30s
@@ -1257,7 +1262,9 @@ export class TelegramBridge {
 
         case "stream_event_batch": {
           // Unpack batched stream events and process each one
-          const batch = msg as unknown as { events: Array<{ event: unknown; parent_tool_use_id?: string }> };
+          const batch = msg as unknown as {
+            events: Array<{ event: unknown; parent_tool_use_id?: string }>;
+          };
           for (const entry of batch.events) {
             await handleStreamEvent(this, chatId, topicId, {
               type: "stream_event",

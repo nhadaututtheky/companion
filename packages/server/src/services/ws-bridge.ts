@@ -445,7 +445,12 @@ export class WsBridge {
                 model: "",
                 stop_reason: "end_turn",
                 stop_sequence: null,
-                usage: { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+                usage: {
+                  input_tokens: 0,
+                  output_tokens: 0,
+                  cache_creation_input_tokens: 0,
+                  cache_read_input_tokens: 0,
+                },
               },
             });
           }

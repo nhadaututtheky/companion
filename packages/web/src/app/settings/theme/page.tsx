@@ -64,9 +64,30 @@ function ThemeCard({
       {/* Preview */}
       <div style={{ background: colors.bgBase, padding: 12 }}>
         <div className="mb-2 flex gap-2">
-          <div style={{ width: 40, height: 6, borderRadius: "var(--radius-xs)", background: colors.accent }} />
-          <div style={{ width: 24, height: 6, borderRadius: "var(--radius-xs)", background: colors.success }} />
-          <div style={{ width: 16, height: 6, borderRadius: "var(--radius-xs)", background: colors.danger }} />
+          <div
+            style={{
+              width: 40,
+              height: 6,
+              borderRadius: "var(--radius-xs)",
+              background: colors.accent,
+            }}
+          />
+          <div
+            style={{
+              width: 24,
+              height: 6,
+              borderRadius: "var(--radius-xs)",
+              background: colors.success,
+            }}
+          />
+          <div
+            style={{
+              width: 16,
+              height: 6,
+              borderRadius: "var(--radius-xs)",
+              background: colors.danger,
+            }}
+          />
         </div>
         <div
           style={{

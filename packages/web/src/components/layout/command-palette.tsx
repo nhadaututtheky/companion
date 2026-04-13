@@ -221,7 +221,7 @@ export function CommandPalette() {
       }}
     >
       <div
-        className="rounded-xl shadow-soft overflow-hidden"
+        className="shadow-soft overflow-hidden rounded-xl"
         style={{
           width: "100%",
           maxWidth: "560px",
@@ -532,7 +532,7 @@ export function CommandPalette() {
                           (c, i) => (
                             <span
                               key={i}
-                              className="border-border rounded-full "
+                              className="border-border rounded-full"
                               style={{
                                 width: 8,
                                 height: 8,
@@ -661,7 +661,7 @@ function ActiveBadge({ active }: { active: boolean }) {
   if (!active) return null;
   return (
     <span
-      className="text-accent rounded-full shrink-0 font-semibold"
+      className="text-accent shrink-0 rounded-full font-semibold"
       style={{
         fontSize: "10px",
         background: "color-mix(in srgb, var(--color-accent) 12%, transparent)",

@@ -44,9 +44,7 @@ export class PanelErrorBoundary extends Component<
     const name = this.props.name ?? "Panel";
 
     return (
-      <div
-        className="bg-bg-elevated border-border flex h-full min-h-[120px] flex-col items-center justify-center gap-3 rounded-lg border p-6"
-      >
+      <div className="bg-bg-elevated border-border flex h-full min-h-[120px] flex-col items-center justify-center gap-3 rounded-lg border p-6">
         <WarningCircle
           size={28}
           weight="bold"

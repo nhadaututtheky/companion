@@ -127,9 +127,7 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
       }}
     >
       {/* Title bar */}
-      <div
-        className="flex shrink-0 items-center justify-between px-6 py-4"
-      >
+      <div className="flex shrink-0 items-center justify-between px-6 py-4">
         <h2
           className="text-text-primary text-base font-semibold"
           style={{ fontFamily: "var(--font-display)" }}
@@ -160,7 +158,7 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="rounded-md flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-sm transition-all"
+              className="flex w-full cursor-pointer items-center gap-3 rounded-md px-4 py-2.5 text-sm transition-all"
               style={{
                 color: activeTab === tab.id ? "var(--color-accent)" : "var(--color-text-secondary)",
                 background:
@@ -180,9 +178,7 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
         </nav>
 
         {/* Mobile tab selector (visible below sm breakpoint) */}
-        <div
-          className="flex shrink-0 gap-1 overflow-x-auto px-4 py-2 sm:hidden"
-        >
+        <div className="flex shrink-0 gap-1 overflow-x-auto px-4 py-2 sm:hidden">
           {TABS.map((tab) => (
             <button
               key={tab.id}

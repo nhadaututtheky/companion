@@ -68,86 +68,91 @@ function CompactThinking({ blocks }: { blocks: ThinkingBlock[] }) {
   );
 }
 
-const CompactBubble = React.memo(function CompactBubble({ msg }: { msg: Message }) {
-  const isUser = msg.role === "user";
-  const isTool = msg.role === "tool";
-  const isSystem = msg.role === "system";
+const CompactBubble = React.memo(
+  function CompactBubble({ msg }: { msg: Message }) {
+    const isUser = msg.role === "user";
+    const isTool = msg.role === "tool";
+    const isSystem = msg.role === "system";
 
-  if (isSystem) {
+    if (isSystem) {
+      return (
+        <div className="flex justify-center py-2">
+          <span
+            className="text-text-muted bg-bg-elevated rounded-lg px-3 py-1 text-center"
+            style={{
+              fontSize: 12,
+              maxWidth: "85%",
+              lineHeight: 1.4,
+            }}
+          >
+            {msg.content}
+          </span>
+        </div>
+      );
+    }
+
+    if (isTool) {
+      return (
+        <div className="bg-bg-elevated border-border mx-3 my-1 flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5">
+          <Wrench size={12} weight="bold" className="shrink-0" style={{ color: "#4285F4" }} />
+          <span className="text-text-secondary truncate" style={{ fontSize: 13 }}>
+            {msg.content.slice(0, 80)}
+            {msg.content.length > 80 ? "…" : ""}
+          </span>
+        </div>
+      );
+    }
+
     return (
-      <div className="flex justify-center py-2">
-        <span
-          className="text-text-muted bg-bg-elevated rounded-lg px-3 py-1 text-center"
-          style={{
-            fontSize: 12,
-            maxWidth: "85%",
-            lineHeight: 1.4,
-          }}
-        >
-          {msg.content}
-        </span>
-      </div>
-    );
-  }
-
-  if (isTool) {
-    return (
-      <div className="bg-bg-elevated border-border mx-3 my-1 flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5">
-        <Wrench size={12} weight="bold" className="shrink-0" style={{ color: "#4285F4" }} />
-        <span className="text-text-secondary truncate" style={{ fontSize: 13 }}>
-          {msg.content.slice(0, 80)}
-          {msg.content.length > 80 ? "…" : ""}
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
-      {/* Thinking blocks (assistant only) */}
-      {!isUser && msg.thinkingBlocks && msg.thinkingBlocks.length > 0 && (
-        <CompactThinking blocks={msg.thinkingBlocks} />
-      )}
-      <div className={`flex px-3 py-1 ${isUser ? "justify-end" : "justify-start"} w-full`}>
-        <div
-          className="rounded-2xl px-3 py-2 leading-relaxed"
-          style={{
-            background: isUser ? "#4285F4" : "var(--color-bg-card)",
-            color: isUser ? "#fff" : "var(--color-text-primary)",
-            border: isUser ? "none" : "1px solid var(--color-border)",
-            fontSize: 14,
-            maxWidth: "85%",
-            wordBreak: "break-word",
-            borderBottomRightRadius: isUser ? 4 : 16,
-            borderBottomLeftRadius: isUser ? 16 : 4,
-          }}
-        >
-          {isUser ? msg.content : <MarkdownMessage content={msg.content} compact />}
-          {msg.isStreaming && (
-            <span
-              className="inline-block"
-              style={{
-                width: 6,
-                height: 14,
-                background: "currentColor",
-                opacity: 0.7,
-                marginLeft: 2,
-                verticalAlign: "text-bottom",
-                animation: "blink 1s step-end infinite",
-              }}
-            />
-          )}
+      <div className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
+        {/* Thinking blocks (assistant only) */}
+        {!isUser && msg.thinkingBlocks && msg.thinkingBlocks.length > 0 && (
+          <CompactThinking blocks={msg.thinkingBlocks} />
+        )}
+        <div className={`flex px-3 py-1 ${isUser ? "justify-end" : "justify-start"} w-full`}>
+          <div
+            className="rounded-2xl px-3 py-2 leading-relaxed"
+            style={{
+              background: isUser ? "#4285F4" : "var(--color-bg-card)",
+              color: isUser ? "#fff" : "var(--color-text-primary)",
+              border: isUser ? "none" : "1px solid var(--color-border)",
+              fontSize: 14,
+              maxWidth: "85%",
+              wordBreak: "break-word",
+              borderBottomRightRadius: isUser ? 4 : 16,
+              borderBottomLeftRadius: isUser ? 16 : 4,
+            }}
+          >
+            {isUser ? msg.content : <MarkdownMessage content={msg.content} compact />}
+            {msg.isStreaming && (
+              <span
+                className="inline-block"
+                style={{
+                  width: 6,
+                  height: 14,
+                  background: "currentColor",
+                  opacity: 0.7,
+                  marginLeft: 2,
+                  verticalAlign: "text-bottom",
+                  animation: "blink 1s step-end infinite",
+                }}
+              />
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  );
-}, (prev, next) => {
-  // Only re-render if message content actually changed
-  return prev.msg.id === next.msg.id
-    && prev.msg.content === next.msg.content
-    && prev.msg.isStreaming === next.msg.isStreaming
-    && prev.msg.thinkingBlocks?.length === next.msg.thinkingBlocks?.length;
-});
+    );
+  },
+  (prev, next) => {
+    // Only re-render if message content actually changed
+    return (
+      prev.msg.id === next.msg.id &&
+      prev.msg.content === next.msg.content &&
+      prev.msg.isStreaming === next.msg.isStreaming &&
+      prev.msg.thinkingBlocks?.length === next.msg.thinkingBlocks?.length
+    );
+  },
+);
 
 const VIRTUALIZE_THRESHOLD = 20;
 
@@ -176,7 +181,7 @@ export function CompactMessageFeed({ messages, feedRef }: CompactMessageFeedProp
         virtualizer.scrollToIndex(messages.length - 1, { align: "end" });
       } else {
         requestAnimationFrame(() => {
-          const el = (feedRef.current ?? parentRef.current);
+          const el = feedRef.current ?? parentRef.current;
           if (el) el.scrollTop = el.scrollHeight;
         });
       }

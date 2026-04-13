@@ -140,7 +140,7 @@ function ExpandedModelSwitcher({
 
       {open && (
         <div
-          className="rounded-lg shadow-float absolute "
+          className="shadow-float absolute rounded-lg"
           style={{
             top: "calc(100% + 4px)",
             right: 0,
@@ -465,7 +465,9 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
           <div className="flex-shrink-0">
             <ContextMeter
               inputTokens={session?.contextTokens ?? session?.state?.total_input_tokens ?? 0}
-              outputTokens={session?.contextTokens != null ? 0 : (session?.state?.total_output_tokens ?? 0)}
+              outputTokens={
+                session?.contextTokens != null ? 0 : (session?.state?.total_output_tokens ?? 0)
+              }
               maxTokens={session?.contextMaxTokens}
             />
           </div>

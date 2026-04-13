@@ -218,7 +218,7 @@ export function McpSettings() {
       >
         {/* Left: Server list */}
         <div
-          className="shadow-soft overflow-hidden rounded-xl "
+          className="shadow-soft overflow-hidden rounded-xl"
           style={{
             background: "var(--glass-bg-heavy)",
             boxShadow: "var(--shadow-soft)",
@@ -289,7 +289,7 @@ export function McpSettings() {
 
         {/* Right: Editor */}
         <div
-          className="shadow-soft rounded-xl "
+          className="shadow-soft rounded-xl"
           style={{
             background: "var(--glass-bg-heavy)",
             boxShadow: "var(--shadow-soft)",
@@ -701,9 +701,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
       </div>
 
       {/* Footer actions */}
-      <div
-        className="flex items-center justify-between px-4 py-3"
-      >
+      <div className="flex items-center justify-between px-4 py-3">
         {!isNew ? (
           <button
             onClick={onDelete}

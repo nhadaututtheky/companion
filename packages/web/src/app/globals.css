@@ -68,8 +68,8 @@
 
   /* Overlay scrims */
   --overlay-light: rgba(0, 0, 0, 0.35);
-  --overlay-medium: rgba(0, 0, 0, 0.50);
-  --overlay-heavy: rgba(0, 0, 0, 0.60);
+  --overlay-medium: rgba(0, 0, 0, 0.5);
+  --overlay-heavy: rgba(0, 0, 0, 0.6);
 
   /* Typography scale — bumped for readability (TW4 defaults: xs=12px, sm=14px) */
   --text-xs: 0.8125rem;
@@ -539,15 +539,29 @@ p {
 }
 
 /* ── Section separators — box-shadow trick for dividers in glass/flex contexts */
-.sep-b { box-shadow: 0 1px 0 var(--color-border); }
-.sep-t { box-shadow: 0 -1px 0 var(--color-border); }
-.sep-b-glass { box-shadow: 0 1px 0 var(--glass-border); }
-.sep-t-glass { box-shadow: 0 -1px 0 var(--glass-border); }
+.sep-b {
+  box-shadow: 0 1px 0 var(--color-border);
+}
+.sep-t {
+  box-shadow: 0 -1px 0 var(--color-border);
+}
+.sep-b-glass {
+  box-shadow: 0 1px 0 var(--glass-border);
+}
+.sep-t-glass {
+  box-shadow: 0 -1px 0 var(--glass-border);
+}
 
 /* ── Overlay scrims — modal/drawer backdrops */
-.overlay-light { background: var(--overlay-light); }
-.overlay-medium { background: var(--overlay-medium); }
-.overlay-heavy { background: var(--overlay-heavy); }
+.overlay-light {
+  background: var(--overlay-light);
+}
+.overlay-medium {
+  background: var(--overlay-medium);
+}
+.overlay-heavy {
+  background: var(--overlay-heavy);
+}
 .overlay-blur {
   background: var(--overlay-medium);
   backdrop-filter: blur(var(--glass-blur-sm));

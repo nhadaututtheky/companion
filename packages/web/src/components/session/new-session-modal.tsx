@@ -60,7 +60,7 @@ function StepPills({ current }: { current: Step }) {
             />
           )}
           <div
-            className="rounded-full flex items-center gap-1.5 px-2.5 py-1"
+            className="flex items-center gap-1.5 rounded-full px-2.5 py-1"
             style={{
               background:
                 current === n

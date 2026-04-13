@@ -81,7 +81,10 @@ interface UseSessionReturn {
   lockStatus: LockStatus;
   lastScanResult: ScanResultState | null;
   spectatorCount: number;
-  sendMessage: (text: string, images?: Array<{ data: string; mediaType: string; name: string }>) => void;
+  sendMessage: (
+    text: string,
+    images?: Array<{ data: string; mediaType: string; name: string }>,
+  ) => void;
   respondPermission: (requestId: string, behavior: "allow" | "deny") => void;
   setModel: (model: string) => void;
   setThinkingMode: (mode: ThinkingMode) => void;

@@ -39,13 +39,9 @@ export function SessionPane({ sessionId, onClose }: SessionPaneProps) {
           : "var(--color-text-muted)";
 
   return (
-    <div
-      className="bg-bg-base shadow-soft flex h-full flex-col overflow-hidden rounded-lg"
-    >
+    <div className="bg-bg-base shadow-soft flex h-full flex-col overflow-hidden rounded-lg">
       {/* Pane header */}
-      <div
-        className="bg-bg-card flex shrink-0 items-center gap-2 px-3 py-1.5"
-      >
+      <div className="bg-bg-card flex shrink-0 items-center gap-2 px-3 py-1.5">
         <span
           className="shrink-0 rounded-full"
           style={{

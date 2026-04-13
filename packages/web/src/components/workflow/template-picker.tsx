@@ -105,9 +105,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div
-        className="bg-bg-card border-border flex max-h-[80vh] w-[640px] flex-col overflow-hidden rounded-2xl border"
-      >
+      <div className="bg-bg-card border-border flex max-h-[80vh] w-[640px] flex-col overflow-hidden rounded-2xl border">
         {/* Header */}
         <div
           className="flex items-center gap-3 px-5 py-4"
