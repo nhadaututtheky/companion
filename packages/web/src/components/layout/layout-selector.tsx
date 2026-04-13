@@ -126,16 +126,17 @@ export function LayoutSelector() {
       {/* Trigger button */}
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer transition-colors text-text-secondary" style={{
+        className="text-text-secondary flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors"
+        style={{
           background: open ? "var(--color-bg-elevated)" : "transparent",
           border: "1px solid",
           borderColor: open ? "var(--color-border)" : "transparent",
-          }}
+        }}
         aria-label="Layout presets"
         title="Layout Presets"
       >
         <ModeIcon size={14} weight={activePresetId ? "fill" : "regular"} />
-        <span className="text-xs font-medium hidden lg:inline">
+        <span className="hidden text-xs font-medium lg:inline">
           {activePreset?.name ?? "Custom"}
         </span>
         <CaretDown size={10} weight="bold" />
@@ -144,16 +145,18 @@ export function LayoutSelector() {
       {/* Dropdown */}
       {open && (
         <div
-          className="absolute right-0 top-full mt-1 rounded-xl overflow-hidden bg-bg-card shadow-lg border border-glass-border" style={{
+          className="bg-bg-card border-glass-border absolute right-0 top-full mt-1 overflow-hidden rounded-xl border shadow-lg"
+          style={{
             boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
             minWidth: 200,
             zIndex: Z.popover,
           }}
         >
           {/* Built-in presets */}
-          <div className="px-2 pt-2 pb-1">
+          <div className="px-2 pb-1 pt-2">
             <span
-              className="text-xs font-semibold px-2 text-text-muted" style={{ fontSize: 10, letterSpacing: "0.05em" }}
+              className="text-text-muted px-2 text-xs font-semibold"
+              style={{ fontSize: 10, letterSpacing: "0.05em" }}
             >
               BUILT-IN LAYOUTS
             </span>
@@ -165,7 +168,7 @@ export function LayoutSelector() {
               <button
                 key={preset.id}
                 onClick={() => handleApplyPreset(preset)}
-                className="flex items-center gap-2 w-full px-3 py-2 cursor-pointer transition-colors text-left"
+                className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left transition-colors"
                 style={{
                   color: isActive ? "#4285F4" : "var(--color-text-secondary)",
                   background: isActive ? "#4285F410" : "transparent",
@@ -178,7 +181,7 @@ export function LayoutSelector() {
                 }}
               >
                 <Icon size={14} weight={isActive ? "fill" : "regular"} />
-                <span className="text-xs font-medium flex-1">{preset.name}</span>
+                <span className="flex-1 text-xs font-medium">{preset.name}</span>
                 {isActive && <Check size={12} weight="bold" />}
               </button>
             );
@@ -188,9 +191,10 @@ export function LayoutSelector() {
           {customPresets.length > 0 && (
             <>
               <div style={{ height: 1, background: "var(--color-border)", margin: "4px 12px" }} />
-              <div className="px-2 pt-1 pb-1">
+              <div className="px-2 pb-1 pt-1">
                 <span
-                  className="text-xs font-semibold px-2 text-text-muted" style={{
+                  className="text-text-muted px-2 text-xs font-semibold"
+                  style={{
                     fontSize: 10,
                     letterSpacing: "0.05em",
                   }}
@@ -204,7 +208,7 @@ export function LayoutSelector() {
                 return (
                   <div
                     key={preset.id}
-                    className="flex items-center gap-2 px-3 py-2 group"
+                    className="group flex items-center gap-2 px-3 py-2"
                     style={{
                       color: isActive ? "#4285F4" : "var(--color-text-secondary)",
                       background: isActive ? "#4285F410" : "transparent",
@@ -212,10 +216,10 @@ export function LayoutSelector() {
                   >
                     <button
                       onClick={() => handleApplyPreset(preset)}
-                      className="flex items-center gap-2 flex-1 cursor-pointer text-left"
+                      className="flex flex-1 cursor-pointer items-center gap-2 text-left"
                     >
                       <Icon size={14} weight={isActive ? "fill" : "regular"} />
-                      <span className="text-xs font-medium flex-1">{preset.name}</span>
+                      <span className="flex-1 text-xs font-medium">{preset.name}</span>
                       {isActive && <Check size={12} weight="bold" />}
                     </button>
                     <button
@@ -223,7 +227,7 @@ export function LayoutSelector() {
                         e.stopPropagation();
                         deleteCustomPreset(preset.id);
                       }}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded cursor-pointer transition-opacity"
+                      className="cursor-pointer rounded p-0.5 opacity-0 transition-opacity group-hover:opacity-100"
                       aria-label={`Delete ${preset.name}`}
                     >
                       <Trash size={12} />
@@ -251,12 +255,12 @@ export function LayoutSelector() {
                   value={saveName}
                   onChange={(e) => setSaveName(e.target.value)}
                   placeholder="Preset name..."
-                  className="flex-1 text-xs px-2 py-1 rounded-md input-bordered text-text-primary bg-bg-elevated"
+                  className="input-bordered text-text-primary bg-bg-elevated flex-1 rounded-md px-2 py-1 text-xs"
                 />
                 <button
                   type="submit"
                   disabled={!saveName.trim()}
-                  className="text-xs px-2 py-1 rounded-md font-medium cursor-pointer"
+                  className="cursor-pointer rounded-md px-2 py-1 text-xs font-medium"
                   style={{
                     background: saveName.trim() ? "#4285F4" : "var(--color-bg-elevated)",
                     color: saveName.trim() ? "#fff" : "var(--color-text-muted)",
@@ -269,7 +273,7 @@ export function LayoutSelector() {
           ) : (
             <button
               onClick={() => setSaving(true)}
-              className="flex items-center gap-2 w-full px-3 py-2 cursor-pointer transition-colors text-left"
+              className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left transition-colors"
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "var(--color-bg-elevated)";
               }}
@@ -294,7 +298,7 @@ export function LayoutSelector() {
                     setMode(m);
                     setOpen(false);
                   }}
-                  className="p-1.5 rounded-md cursor-pointer transition-colors"
+                  className="cursor-pointer rounded-md p-1.5 transition-colors"
                   style={{
                     color: mode === m ? "#4285F4" : "var(--color-text-muted)",
                     background: mode === m ? "#4285F415" : "transparent",

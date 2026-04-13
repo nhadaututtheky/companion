@@ -153,10 +153,10 @@ export function ToolInputRenderer({
           className="rounded-md px-3 py-2 font-mono text-xs"
           style={{ background: "rgba(0,0,0,0.3)" }}
         >
-          <span className="select-none" style={{ color: "#34A853" }}>$ </span>
-          <span className="text-text-primary">
-            {String(input.command ?? "").slice(0, 2000)}
+          <span className="select-none" style={{ color: "#34A853" }}>
+            ${" "}
           </span>
+          <span className="text-text-primary">{String(input.command ?? "").slice(0, 2000)}</span>
         </div>
       );
 
@@ -164,11 +164,11 @@ export function ToolInputRenderer({
       return (
         <div className="flex items-center gap-2">
           <FileText size={12} weight="bold" style={{ color: "#4285F4" }} />
-          <code className="text-xs font-mono" style={{ color: "#4285F4" }}>
+          <code className="font-mono text-xs" style={{ color: "#4285F4" }}>
             {String(input.file_path ?? "")}
           </code>
           {input.offset != null && (
-            <span className="text-xs text-text-muted">
+            <span className="text-text-muted text-xs">
               L{String(input.offset)}
               {input.limit ? `–${Number(input.offset) + Number(input.limit)}` : ""}
             </span>
@@ -179,22 +179,18 @@ export function ToolInputRenderer({
     case "Grep":
       return (
         <div className="space-y-1">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-wrap items-center gap-2">
             <code
-              className="text-xs font-mono px-1.5 py-0.5 rounded"
+              className="rounded px-1.5 py-0.5 font-mono text-xs"
               style={{ background: "rgba(34,211,238,0.1)", color: "#22D3EE" }}
             >
               /{String(input.pattern ?? "")}/
             </code>
             {input.glob != null && (
-              <span className="text-xs text-text-muted">
-                in {String(input.glob)}
-              </span>
+              <span className="text-text-muted text-xs">in {String(input.glob)}</span>
             )}
             {input.path != null && (
-              <span className="text-xs text-text-muted">
-                in {String(input.path)}
-              </span>
+              <span className="text-text-muted text-xs">in {String(input.path)}</span>
             )}
           </div>
         </div>
@@ -204,15 +200,13 @@ export function ToolInputRenderer({
       return (
         <div className="flex items-center gap-2">
           <code
-            className="text-xs font-mono px-1.5 py-0.5 rounded"
+            className="rounded px-1.5 py-0.5 font-mono text-xs"
             style={{ background: "rgba(249,115,22,0.1)", color: "#F97316" }}
           >
             {String(input.pattern ?? "")}
           </code>
           {input.path != null && (
-            <span className="text-xs text-text-muted">
-              in {String(input.path)}
-            </span>
+            <span className="text-text-muted text-xs">in {String(input.path)}</span>
           )}
         </div>
       );
@@ -221,9 +215,7 @@ export function ToolInputRenderer({
   // Fallback: generic JSON
   const str = JSON.stringify(input, null, 2);
   return (
-    <pre
-      className="text-xs font-mono whitespace-pre-wrap m-0 max-h-[200px] overflow-y-auto text-text-secondary"
-    >
+    <pre className="text-text-secondary m-0 max-h-[200px] overflow-y-auto whitespace-pre-wrap font-mono text-xs">
       {str.slice(0, 3000)}
     </pre>
   );
@@ -246,7 +238,7 @@ export function ToolOutputRenderer({
   if (isError) {
     return (
       <pre
-        className="text-xs font-mono whitespace-pre-wrap m-0 max-h-[300px] overflow-y-auto"
+        className="m-0 max-h-[300px] overflow-y-auto whitespace-pre-wrap font-mono text-xs"
         style={{ color: "#ef4444" }}
       >
         {text}
@@ -266,9 +258,7 @@ export function ToolOutputRenderer({
       return <GlobOutput content={text} truncated={truncated} />;
     default:
       return (
-        <pre
-          className="text-xs font-mono whitespace-pre-wrap m-0 max-h-[300px] overflow-y-auto text-text-secondary"
-        >
+        <pre className="text-text-secondary m-0 max-h-[300px] overflow-y-auto whitespace-pre-wrap font-mono text-xs">
           {text}
           {truncated && "\n... (truncated)"}
         </pre>
@@ -281,14 +271,12 @@ export function ToolOutputRenderer({
 function BashOutput({ content, truncated }: { content: string; truncated: boolean }) {
   return (
     <div
-      className="rounded-md max-h-[300px] overflow-y-auto font-mono text-xs"
+      className="max-h-[300px] overflow-y-auto rounded-md font-mono text-xs"
       style={{ background: "rgba(0,0,0,0.25)" }}
     >
-      <pre className="whitespace-pre-wrap m-0 px-3 py-2" style={{ color: "#e0e0e0" }}>
+      <pre className="m-0 whitespace-pre-wrap px-3 py-2" style={{ color: "#e0e0e0" }}>
         {content}
-        {truncated && (
-          <span className="text-text-muted">{"\n... (truncated)"}</span>
-        )}
+        {truncated && <span className="text-text-muted">{"\n... (truncated)"}</span>}
       </pre>
     </div>
   );
@@ -304,16 +292,12 @@ function ReadOutput({ content, truncated }: { content: string; truncated: boolea
   if (!isCatN) {
     return (
       <div
-        className="rounded-md max-h-[300px] overflow-y-auto overflow-x-auto"
+        className="max-h-[300px] overflow-x-auto overflow-y-auto rounded-md"
         style={{ background: "rgba(0,0,0,0.2)" }}
       >
-        <pre
-          className="text-xs font-mono whitespace-pre m-0 px-3 py-2 text-text-primary"
-        >
+        <pre className="text-text-primary m-0 whitespace-pre px-3 py-2 font-mono text-xs">
           {content}
-          {truncated && (
-            <span className="text-text-muted">{"\n... (truncated)"}</span>
-          )}
+          {truncated && <span className="text-text-muted">{"\n... (truncated)"}</span>}
         </pre>
       </div>
     );
@@ -321,7 +305,7 @@ function ReadOutput({ content, truncated }: { content: string; truncated: boolea
 
   return (
     <div
-      className="rounded-md max-h-[300px] overflow-y-auto overflow-x-auto"
+      className="max-h-[300px] overflow-x-auto overflow-y-auto rounded-md"
       style={{ background: "rgba(0,0,0,0.2)" }}
     >
       {lines
@@ -334,24 +318,19 @@ function ReadOutput({ content, truncated }: { content: string; truncated: boolea
           return (
             <div key={idx} className="flex font-mono leading-5" style={{ fontSize: 12 }}>
               <span
-                className="select-none text-right px-2 flex-shrink-0 text-text-muted" style={{
+                className="text-text-muted flex-shrink-0 select-none px-2 text-right"
+                style={{
                   width: 40,
                   opacity: 0.4,
                 }}
               >
                 {lineNum}
               </span>
-              <span className="whitespace-pre pr-3 text-text-primary">
-                {code}
-              </span>
+              <span className="text-text-primary whitespace-pre pr-3">{code}</span>
             </div>
           );
         })}
-      {truncated && (
-        <div className="px-3 py-1 text-xs text-text-muted">
-          ... (truncated)
-        </div>
-      )}
+      {truncated && <div className="text-text-muted px-3 py-1 text-xs">... (truncated)</div>}
     </div>
   );
 }
@@ -374,9 +353,7 @@ function GrepOutput({ content, truncated }: { content: string; truncated: boolea
     }
 
     return (
-      <pre
-        className="text-xs font-mono whitespace-pre-wrap m-0 max-h-[300px] overflow-y-auto text-text-secondary"
-      >
+      <pre className="text-text-secondary m-0 max-h-[300px] overflow-y-auto whitespace-pre-wrap font-mono text-xs">
         {content}
         {truncated && "\n... (truncated)"}
       </pre>
@@ -395,36 +372,29 @@ function GrepOutput({ content, truncated }: { content: string; truncated: boolea
   }
 
   return (
-    <div className="max-h-[300px] overflow-y-auto space-y-1">
+    <div className="max-h-[300px] space-y-1 overflow-y-auto">
       {Array.from(groups.entries()).map(([file, matches]) => (
         <div key={file}>
           <div
-            className="text-xs font-mono px-2 py-1 sticky top-0 bg-bg-elevated" style={{ color: "#4285F4" }}
+            className="bg-bg-elevated sticky top-0 px-2 py-1 font-mono text-xs"
+            style={{ color: "#4285F4" }}
           >
             {file}
           </div>
           {matches.map((m, idx) => (
             <div key={idx} className="flex font-mono leading-5" style={{ fontSize: 12 }}>
               <span
-                className="select-none text-right px-2 flex-shrink-0"
+                className="flex-shrink-0 select-none px-2 text-right"
                 style={{ width: 40, color: "#22D3EE", opacity: 0.7 }}
               >
                 {m.num}
               </span>
-              <span
-                className="whitespace-pre-wrap pr-2 text-text-primary"
-              >
-                {m.text}
-              </span>
+              <span className="text-text-primary whitespace-pre-wrap pr-2">{m.text}</span>
             </div>
           ))}
         </div>
       ))}
-      {truncated && (
-        <div className="px-3 py-1 text-xs text-text-muted">
-          ... (truncated)
-        </div>
-      )}
+      {truncated && <div className="text-text-muted px-3 py-1 text-xs">... (truncated)</div>}
     </div>
   );
 }
@@ -444,21 +414,13 @@ function GlobOutput({ content, truncated }: { content: string; truncated: boolea
             key={idx}
             className="flex items-center gap-1.5 px-2 py-0.5 font-mono text-xs hover:bg-white/5"
           >
-            <FileText
-              size={11}
-              weight="regular"
-              className="text-text-muted shrink-0"
-            />
+            <FileText size={11} weight="regular" className="text-text-muted shrink-0" />
             <span className="text-text-muted">{dir}</span>
             <span className="text-text-primary">{name}</span>
           </div>
         );
       })}
-      {truncated && (
-        <div className="px-3 py-1 text-xs text-text-muted">
-          ... (truncated)
-        </div>
-      )}
+      {truncated && <div className="text-text-muted px-3 py-1 text-xs">... (truncated)</div>}
     </div>
   );
 }

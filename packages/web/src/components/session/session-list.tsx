@@ -81,12 +81,14 @@ function StatusDot({ status }: { status: string }) {
   return (
     <span
       title={config.label}
-      className="shrink-0 relative inline-flex" style={{ width: 8, height: 8 }}
+      className="relative inline-flex shrink-0"
+      style={{ width: 8, height: 8 }}
     >
       {isActive && (
         <span
           aria-hidden="true"
-          className="rounded-full absolute" style={{
+          className="absolute rounded-full"
+          style={{
             inset: 0,
             background: config.color,
             opacity: 0.4,
@@ -95,11 +97,12 @@ function StatusDot({ status }: { status: string }) {
         />
       )}
       <span
-        className="rounded-full relative inline-block" style={{
+        className="relative inline-block rounded-full"
+        style={{
           width: 8,
           height: 8,
           background: config.color,
-          }}
+        }}
       />
     </span>
   );
@@ -177,7 +180,7 @@ function TagInput({ onAdd, onClose }: TagInputProps) {
   };
 
   return (
-    <div className="flex items-center gap-1 mt-1 relative">
+    <div className="relative mt-1 flex items-center gap-1">
       <input
         ref={inputRef}
         type="text"
@@ -187,7 +190,7 @@ function TagInput({ onAdd, onClose }: TagInputProps) {
         onBlur={onClose}
         placeholder="Tag name…"
         maxLength={50}
-        className="text-xs px-2 py-0.5 rounded w-24 input-bordered text-text-primary bg-bg-elevated"
+        className="input-bordered text-text-primary bg-bg-elevated w-24 rounded px-2 py-0.5 text-xs"
         aria-label="Enter tag name"
       />
     </div>
@@ -242,7 +245,8 @@ function SessionTags({ sessionId, tags }: SessionTagsProps) {
     return (
       <button
         onClick={handleAddClick}
-        className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded cursor-pointer transition-opacity opacity-0 group-hover:opacity-60 hover:!opacity-100 text-text-muted" style={{ background: "transparent" }}
+        className="text-text-muted flex cursor-pointer items-center gap-0.5 rounded px-1.5 py-0.5 text-xs opacity-0 transition-opacity hover:!opacity-100 group-hover:opacity-60"
+        style={{ background: "transparent" }}
         aria-label="Add tag"
         title="Add tag"
       >
@@ -258,13 +262,13 @@ function SessionTags({ sessionId, tags }: SessionTagsProps) {
         return (
           <span
             key={tag}
-            className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded-full font-medium"
+            className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium"
             style={{ background: color.bg, color: color.text }}
           >
             {tag}
             <button
               onClick={(e) => handleRemoveTag(tag, e)}
-              className="ml-0.5 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+              className="ml-0.5 cursor-pointer opacity-70 transition-opacity hover:opacity-100"
               aria-label={`Remove tag ${tag}`}
               style={{ lineHeight: 1 }}
             >
@@ -275,7 +279,8 @@ function SessionTags({ sessionId, tags }: SessionTagsProps) {
       })}
       <button
         onClick={handleAddClick}
-        className="flex items-center text-xs px-1 py-0.5 rounded cursor-pointer transition-colors text-text-muted" style={{ background: "transparent" }}
+        className="text-text-muted flex cursor-pointer items-center rounded px-1 py-0.5 text-xs transition-colors"
+        style={{ background: "transparent" }}
         aria-label="Add tag"
         title="Add tag"
       >
@@ -349,7 +354,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
   const hasFilters = filter !== "active" || sortKey !== "date" || tagFilter !== null;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* Keyframe for pulsing dot — injected once */}
       <style>{`
         @keyframes ping {
@@ -358,27 +363,23 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
       `}</style>
 
       {/* Header row: search + filter toggle + new */}
-      <div className="flex items-center gap-1.5 px-3 pt-3 pb-2">
-        <div
-          className="flex items-center gap-1.5 flex-1 px-2 py-1.5 rounded-lg input-wrapper bg-bg-elevated"
-        >
-          <MagnifyingGlass
-            size={12}
-            className="text-text-muted shrink-0"
-            aria-hidden="true"
-          />
+      <div className="flex items-center gap-1.5 px-3 pb-2 pt-3">
+        <div className="input-wrapper bg-bg-elevated flex flex-1 items-center gap-1.5 rounded-lg px-2 py-1.5">
+          <MagnifyingGlass size={12} className="text-text-muted shrink-0" aria-hidden="true" />
           <input
             type="text"
             value={searchRaw}
             onChange={(e) => setSearchRaw(e.target.value)}
             placeholder="Search..."
-            className="flex-1 text-xs bg-transparent outline-none text-text-primary" style={{ minWidth: 0 }}
+            className="text-text-primary flex-1 bg-transparent text-xs outline-none"
+            style={{ minWidth: 0 }}
             aria-label="Search sessions"
           />
           {searchRaw && (
             <button
               onClick={() => setSearchRaw("")}
-              className="cursor-pointer opacity-60 hover:opacity-100 text-text-muted" style={{ lineHeight: 1 }}
+              className="text-text-muted cursor-pointer opacity-60 hover:opacity-100"
+              style={{ lineHeight: 1 }}
               aria-label="Clear search"
             >
               <X size={10} weight="bold" aria-hidden="true" />
@@ -387,7 +388,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
         </div>
         <button
           onClick={() => setShowFilters((v) => !v)}
-          className="p-1.5 rounded-lg cursor-pointer transition-colors"
+          className="cursor-pointer rounded-lg p-1.5 transition-colors"
           style={{
             background: showFilters || hasFilters ? "var(--color-bg-elevated)" : "transparent",
             color: hasFilters ? "var(--color-accent)" : "var(--color-text-muted)",
@@ -400,7 +401,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
         </button>
         <button
           onClick={onNew}
-          className="p-1.5 rounded-lg cursor-pointer transition-colors"
+          className="cursor-pointer rounded-lg p-1.5 transition-colors"
           style={{ background: "#34A853", color: "#fff" }}
           aria-label="New session"
           title="New session"
@@ -411,14 +412,14 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
 
       {/* Collapsible filter/sort controls */}
       {showFilters && (
-        <div className="px-3 pb-2 space-y-1.5">
+        <div className="space-y-1.5 px-3 pb-2">
           {/* Filter tabs + sort in one row */}
           <div className="flex items-center gap-1">
             {(["active", "all", "ended"] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className="px-2 py-0.5 rounded text-xs font-medium cursor-pointer capitalize transition-colors"
+                className="cursor-pointer rounded px-2 py-0.5 text-xs font-medium capitalize transition-colors"
                 style={{
                   background: filter === f ? "var(--color-bg-elevated)" : "transparent",
                   color: filter === f ? "var(--color-text-primary)" : "var(--color-text-muted)",
@@ -434,7 +435,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
                 <button
                   key={key}
                   onClick={() => handleSortClick(key)}
-                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs cursor-pointer transition-colors"
+                  className="flex cursor-pointer items-center gap-0.5 rounded px-1.5 py-0.5 text-xs transition-colors"
                   style={{
                     color: isActive ? "var(--color-text-primary)" : "var(--color-text-muted)",
                     fontWeight: isActive ? 600 : 400,
@@ -459,7 +460,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
               {tagFilter !== null && (
                 <button
                   onClick={() => setTagFilter(null)}
-                  className="px-1.5 py-0.5 rounded-full text-xs font-medium cursor-pointer text-text-secondary bg-bg-elevated"
+                  className="text-text-secondary bg-bg-elevated cursor-pointer rounded-full px-1.5 py-0.5 text-xs font-medium"
                   aria-label="Clear tag filter"
                 >
                   All
@@ -472,7 +473,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
                   <button
                     key={tag}
                     onClick={() => setTagFilter(isActive ? null : tag)}
-                    className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-medium cursor-pointer"
+                    className="flex cursor-pointer items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-medium"
                     style={{
                       background: isActive ? color.text : color.bg,
                       color: isActive ? "#fff" : color.text,
@@ -493,7 +494,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
       {/* List */}
       <div className="flex-1 overflow-y-auto py-1">
         {displayed.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 gap-2">
+          <div className="flex flex-col items-center justify-center gap-2 py-12">
             <FolderOpen size={28} />
             <p className="text-xs">{filter === "active" ? "No active sessions" : "No sessions"}</p>
           </div>
@@ -513,7 +514,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
               }}
               role="button"
               tabIndex={0}
-              className="group w-full flex flex-col gap-1 px-4 py-2.5 text-left transition-all cursor-pointer rounded-lg mx-2"
+              className="group mx-2 flex w-full cursor-pointer flex-col gap-1 rounded-lg px-4 py-2.5 text-left transition-all"
               style={{
                 background: activeSessionId === s.id ? "var(--color-bg-hover)" : "transparent",
                 width: "calc(100% - 16px)",
@@ -524,22 +525,23 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
                 <StatusDot status={s.status} />
                 {s.shortId && (
                   <span
-                    className="text-xs font-mono px-1.5 py-0.5 rounded shrink-0 text-success bg-bg-elevated"
+                    className="text-success bg-bg-elevated shrink-0 rounded px-1.5 py-0.5 font-mono text-xs"
                     title={`@${s.shortId} — use in chat to mention this session`}
                   >
                     @{s.shortId}
                   </span>
                 )}
-                <span className="text-sm font-medium truncate flex-1">{s.projectName}</span>
+                <span className="flex-1 truncate text-sm font-medium">{s.projectName}</span>
                 {s.totalCostUsd > 0 && (
-                  <span className="text-xs font-mono shrink-0">{formatCost(s.totalCostUsd)}</span>
+                  <span className="shrink-0 font-mono text-xs">{formatCost(s.totalCostUsd)}</span>
                 )}
               </div>
               {/* Row 2: model badge · turns · time */}
               <div className="flex items-center gap-2 pl-4">
                 {/* Model badge: S / O / H */}
                 <span
-                  className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0 text-center" style={{
+                  className="shrink-0 rounded px-1.5 py-0.5 text-center text-xs font-bold"
+                  style={{
                     background: badge.bg,
                     color: badge.color,
                     minWidth: 18,
@@ -551,7 +553,7 @@ export function SessionList({ sessions, activeSessionId, onSelect, onNew }: Sess
                   {badge.label}
                 </span>
                 <span className="text-xs text-[var(--color-text-muted)]">{s.numTurns} turns</span>
-                <span className="text-xs text-[var(--color-text-muted)] ml-auto">
+                <span className="ml-auto text-xs text-[var(--color-text-muted)]">
                   {formatTime(s.createdAt)}
                 </span>
               </div>

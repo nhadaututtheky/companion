@@ -76,13 +76,13 @@ function TemplateForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex gap-3">
         {/* Icon picker */}
-        <div className="flex flex-wrap gap-1 max-w-[200px]">
+        <div className="flex max-w-[200px] flex-wrap gap-1">
           {EMOJI_OPTIONS.map((e) => (
             <button
               key={e}
               type="button"
               onClick={() => setIcon(e)}
-              className="w-8 h-8 rounded-md flex items-center justify-center text-base cursor-pointer transition-all"
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-base transition-all"
               style={{
                 background: icon === e ? "var(--color-accent)" : "var(--color-bg-elevated)",
                 border:
@@ -103,14 +103,14 @@ function TemplateForm({
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={100}
-            className="shadow-soft w-full px-3 py-2 rounded-lg text-sm text-text-primary bg-bg-elevated"
+            className="shadow-soft text-text-primary bg-bg-elevated w-full rounded-lg px-3 py-2 text-sm"
           />
 
           {/* Model override */}
           <select
             value={model}
             onChange={(e) => setModel(e.target.value)}
-            className="shadow-soft w-full px-3 py-2 rounded-lg text-sm cursor-pointer text-text-primary bg-bg-elevated"
+            className="shadow-soft text-text-primary bg-bg-elevated w-full cursor-pointer rounded-lg px-3 py-2 text-sm"
           >
             <option value="">Model: project default</option>
             <option value="claude-sonnet-4-6">Sonnet 4.6</option>
@@ -127,31 +127,32 @@ function TemplateForm({
         onChange={(e) => setPrompt(e.target.value)}
         maxLength={10000}
         rows={4}
-        className="w-full px-3 py-2 rounded-lg text-sm resize-y text-text-primary bg-bg-elevated border border-border" style={{
+        className="text-text-primary bg-bg-elevated border-border w-full resize-y rounded-lg border px-3 py-2 text-sm"
+        style={{
           minHeight: "80px",
         }}
       />
 
       {/* Actions */}
-      <div className="flex gap-2 justify-end">
+      <div className="flex justify-end gap-2">
         <button
           type="button"
           onClick={onCancel}
-          className="shadow-soft px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors text-text-secondary bg-bg-elevated"
+          className="shadow-soft text-text-secondary bg-bg-elevated cursor-pointer rounded-lg px-4 py-2 text-sm transition-colors"
         >
-          <X size={14} className="inline mr-1" />
+          <X size={14} className="mr-1 inline" />
           Cancel
         </button>
         <button
           type="submit"
           disabled={saving || !name.trim() || !prompt.trim()}
-          className="px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors disabled:opacity-50"
+          className="cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
           style={{
             background: "var(--color-accent)",
             color: "#fff",
           }}
         >
-          <FloppyDisk size={14} className="inline mr-1" />
+          <FloppyDisk size={14} className="mr-1 inline" />
           {saving ? "Saving..." : initial ? "Update" : "Create"}
         </button>
       </div>
@@ -183,27 +184,21 @@ function TemplateCard({
   };
 
   return (
-    <div
-      className="shadow-soft p-4 rounded-xl transition-all hover:scale-[1.01] bg-bg-card"
-    >
+    <div className="shadow-soft bg-bg-card rounded-xl p-4 transition-all hover:scale-[1.01]">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-lg flex-shrink-0">{template.icon}</span>
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="flex-shrink-0 text-lg">{template.icon}</span>
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold truncate">{template.name}</h3>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-xs font-mono">{template.slug}</span>
+            <h3 className="truncate text-sm font-semibold">{template.name}</h3>
+            <div className="mt-0.5 flex items-center gap-2">
+              <span className="font-mono text-xs">{template.slug}</span>
               {template.projectSlug && (
-                <span
-                  className="text-xs px-1.5 py-0.5 rounded text-text-secondary bg-bg-elevated"
-                >
+                <span className="text-text-secondary bg-bg-elevated rounded px-1.5 py-0.5 text-xs">
                   {template.projectSlug}
                 </span>
               )}
               {template.model && (
-                <span
-                  className="text-xs px-1.5 py-0.5 rounded text-accent bg-bg-elevated"
-                >
+                <span className="text-accent bg-bg-elevated rounded px-1.5 py-0.5 text-xs">
                   {template.model.includes("opus")
                     ? "Opus"
                     : template.model.includes("haiku")
@@ -215,10 +210,10 @@ function TemplateCard({
           </div>
         </div>
 
-        <div className="flex gap-1 flex-shrink-0">
+        <div className="flex flex-shrink-0 gap-1">
           <button
             onClick={onEdit}
-            className="p-1.5 rounded-md cursor-pointer transition-colors"
+            className="cursor-pointer rounded-md p-1.5 transition-colors"
             aria-label={`Edit ${template.name}`}
           >
             <PencilSimple size={14} />
@@ -226,7 +221,7 @@ function TemplateCard({
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="p-1.5 rounded-md cursor-pointer transition-colors"
+            className="cursor-pointer rounded-md p-1.5 transition-colors"
             style={{ color: "var(--color-danger, #ef4444)" }}
             aria-label={`Delete ${template.name}`}
           >
@@ -235,7 +230,7 @@ function TemplateCard({
         </div>
       </div>
 
-      <p className="text-xs mt-2 line-clamp-2">{template.prompt}</p>
+      <p className="mt-2 line-clamp-2 text-xs">{template.prompt}</p>
     </div>
   );
 }
@@ -252,19 +247,11 @@ const CATEGORY_META: Record<string, { label: string; description: string }> = {
 function PersonaCard({ persona, onClone }: { persona: Persona; onClone?: (id: string) => void }) {
   return (
     <PersonaTooltip persona={persona} placement="bottom">
-      <div
-        className="shadow-soft flex items-center gap-3 p-3 rounded-xl persona-card w-full group bg-bg-card"
-      >
+      <div className="shadow-soft persona-card bg-bg-card group flex w-full items-center gap-3 rounded-xl p-3">
         <PersonaAvatar persona={persona} size={40} />
-        <div className="flex flex-col flex-1 min-w-0">
-          <span
-            className="text-sm font-semibold truncate text-text-primary"
-          >
-            {persona.name}
-          </span>
-          <span className="text-xs truncate text-text-muted">
-            {persona.strength}
-          </span>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="text-text-primary truncate text-sm font-semibold">{persona.name}</span>
+          <span className="text-text-muted truncate text-xs">{persona.strength}</span>
         </div>
         {onClone && persona.builtIn && (
           <button
@@ -273,7 +260,7 @@ function PersonaCard({ persona, onClone }: { persona: Persona; onClone?: (id: st
               e.stopPropagation();
               onClone(persona.id);
             }}
-            className="opacity-0 group-hover:opacity-100 px-2 py-1 rounded-md text-xs font-medium cursor-pointer transition-all flex-shrink-0 text-text-secondary bg-bg-elevated"
+            className="text-text-secondary bg-bg-elevated flex-shrink-0 cursor-pointer rounded-md px-2 py-1 text-xs font-medium opacity-0 transition-all group-hover:opacity-100"
             aria-label={`Clone ${persona.name}`}
           >
             Clone
@@ -294,15 +281,11 @@ function PersonaSection({ onClone }: { onClone?: (id: string) => void }) {
 
         return (
           <div key={cat}>
-            <div className="flex items-center gap-2 mb-2.5">
-              <h2 className="text-sm font-semibold text-text-primary">
-                {meta.label}
-              </h2>
-              <span className="text-xs text-text-muted">
-                {meta.description}
-              </span>
+            <div className="mb-2.5 flex items-center gap-2">
+              <h2 className="text-text-primary text-sm font-semibold">{meta.label}</h2>
+              <span className="text-text-muted text-xs">{meta.description}</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               {personas.map((p) => (
                 <PersonaCard key={p.id} persona={p} onClone={onClone} />
               ))}
@@ -335,24 +318,18 @@ function CustomPersonaCard({
   };
 
   return (
-    <div
-      className="shadow-soft flex items-center gap-3 p-3 rounded-xl group bg-bg-card"
-    >
+    <div className="shadow-soft bg-bg-card group flex items-center gap-3 rounded-xl p-3">
       <PersonaAvatar persona={persona} size={40} />
-      <div className="flex flex-col flex-1 min-w-0">
-        <span
-          className="text-sm font-semibold truncate text-text-primary"
-        >
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="text-text-primary truncate text-sm font-semibold">
           {persona.name} {persona.icon}
         </span>
-        <span className="text-xs truncate text-text-muted">
-          {persona.title}
-        </span>
+        <span className="text-text-muted truncate text-xs">{persona.title}</span>
       </div>
-      <div className="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex flex-shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
         <button
           onClick={onEdit}
-          className="p-1.5 rounded-md cursor-pointer transition-colors text-text-muted"
+          className="text-text-muted cursor-pointer rounded-md p-1.5 transition-colors"
           aria-label={`Edit ${persona.name}`}
         >
           <PencilSimple size={14} />
@@ -360,7 +337,7 @@ function CustomPersonaCard({
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="p-1.5 rounded-md cursor-pointer transition-colors"
+          className="cursor-pointer rounded-md p-1.5 transition-colors"
           style={{ color: "var(--color-danger, #ef4444)" }}
           aria-label={`Delete ${persona.name}`}
         >
@@ -519,17 +496,18 @@ export default function TemplatesPage() {
     <div className="min-h-screen">
       {/* Header */}
       <div
-        className="sticky top-0 z-10 px-6 py-4 flex items-center justify-between bg-bg-base" style={{
+        className="bg-bg-base sticky top-0 z-10 flex items-center justify-between px-6 py-4"
+        style={{
           borderBottom: "1px solid var(--color-border)",
         }}
       >
         <div className="flex items-center gap-3">
-          <Link href="/" className="p-2 rounded-lg transition-colors" aria-label="Back">
+          <Link href="/" className="rounded-lg p-2 transition-colors" aria-label="Back">
             <ArrowLeft size={18} />
           </Link>
           <div>
             <h1 className="text-lg font-semibold">
-              <Lightning size={20} className="inline mr-1" weight="fill" />
+              <Lightning size={20} className="mr-1 inline" weight="fill" />
               Expert Modes
             </h1>
             <p className="text-xs">Personas that change how Claude thinks, not just what it does</p>
@@ -541,7 +519,7 @@ export default function TemplatesPage() {
             setEditingPersona(undefined);
             setShowBuilder(true);
           }}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
           style={{
             background: "var(--color-accent)",
             color: "#fff",
@@ -553,7 +531,7 @@ export default function TemplatesPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-3xl mx-auto px-6 py-6 space-y-6">
+      <div className="mx-auto max-w-3xl space-y-6 px-6 py-6">
         {/* Persona Builder (modal-like inline) */}
         {showBuilder && (
           <PersonaBuilder
@@ -590,15 +568,11 @@ export default function TemplatesPage() {
         {/* Custom Personas */}
         {customPersonas.length > 0 && (
           <div>
-            <div className="flex items-center gap-2 mb-2.5">
-              <h2 className="text-sm font-semibold text-text-primary">
-                Your Custom Personas
-              </h2>
-              <span className="text-xs text-text-muted">
-                {customPersonas.length}/50
-              </span>
+            <div className="mb-2.5 flex items-center gap-2">
+              <h2 className="text-text-primary text-sm font-semibold">Your Custom Personas</h2>
+              <span className="text-text-muted text-xs">{customPersonas.length}/50</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               {customPersonas.map((p) => (
                 <CustomPersonaCard
                   key={p.id}
@@ -619,21 +593,20 @@ export default function TemplatesPage() {
 
         {/* Divider */}
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-px" style={{ background: "var(--color-border)" }} />
-          <span className="text-xs font-semibold text-text-muted">
-            Custom Prompts
-          </span>
-          <div className="flex-1 h-px" style={{ background: "var(--color-border)" }} />
+          <div className="h-px flex-1" style={{ background: "var(--color-border)" }} />
+          <span className="text-text-muted text-xs font-semibold">Custom Prompts</span>
+          <div className="h-px flex-1" style={{ background: "var(--color-border)" }} />
         </div>
 
         {/* Create/Edit Template Form */}
         {(showForm || editingTemplate) && (
           <div
-            className="p-5 rounded-xl bg-bg-card" style={{
+            className="bg-bg-card rounded-xl p-5"
+            style={{
               border: "1px solid var(--color-accent)",
             }}
           >
-            <h2 className="text-sm font-semibold mb-3">
+            <h2 className="mb-3 text-sm font-semibold">
               {editingTemplate ? "Edit Template" : "New Template"}
             </h2>
             <TemplateForm
@@ -649,12 +622,12 @@ export default function TemplatesPage() {
 
         {/* Template List */}
         {loading ? (
-          <div className="text-center py-12">Loading templates...</div>
+          <div className="py-12 text-center">Loading templates...</div>
         ) : templates.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="py-12 text-center">
             <Lightning size={32} className="mx-auto mb-3 opacity-50" />
             <p>No templates yet</p>
-            <p className="text-xs mt-1">Create one above or use /template save in Telegram</p>
+            <p className="mt-1 text-xs">Create one above or use /template save in Telegram</p>
           </div>
         ) : (
           <div className="grid gap-3">

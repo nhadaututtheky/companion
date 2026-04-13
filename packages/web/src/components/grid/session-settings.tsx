@@ -175,14 +175,15 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
       ref={popoverRef}
       role="dialog"
       aria-label="Session settings"
-      className="bg-bg-card border border-border overflow-hidden absolute" style={{
+      className="bg-bg-card border-border absolute overflow-hidden border"
+      style={{
         top: "calc(100% + 4px)",
         right: 0,
         zIndex: Z.popover,
         width: 260,
         borderRadius: 10,
         boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-        }}
+      }}
     >
       {/* Header */}
       <div
@@ -192,7 +193,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
         <span className="text-xs font-semibold uppercase">Session Settings</span>
         <button
           onClick={onClose}
-          className="p-0.5 rounded cursor-pointer"
+          className="cursor-pointer rounded p-0.5"
           aria-label="Close settings"
         >
           <X size={12} weight="bold" aria-hidden="true" />
@@ -205,7 +206,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
         <div className="flex flex-col">
           {/* Idle Timeout */}
           <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--color-border)" }}>
-            <div className="flex items-center gap-1.5 mb-2">
+            <div className="mb-2 flex items-center gap-1.5">
               <Timer size={12} aria-hidden="true" />
               <span className="text-xs font-semibold">Idle Timeout</span>
               {saving && <span className="ml-auto text-xs">Saving...</span>}
@@ -218,7 +219,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
                     key={opt.value}
                     onClick={() => handleTimeoutChange(opt.value)}
                     disabled={settings.keepAlive}
-                    className="px-2 py-0.5 rounded text-xs font-medium cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="cursor-pointer rounded px-2 py-0.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                     style={{
                       background: active ? "#4285F4" : "var(--color-bg-elevated)",
                       color: active ? "#fff" : "var(--color-text-secondary)",
@@ -238,7 +239,8 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
             <div className="flex items-start gap-2">
               <TelegramLogo
                 size={12}
-                className="shrink-0" style={{ color: "#2AABEE", marginTop: 1 }}
+                className="shrink-0"
+                style={{ color: "#2AABEE", marginTop: 1 }}
                 aria-hidden="true"
               />
               <div className="flex flex-col gap-0.5">
@@ -255,11 +257,11 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
           <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--color-border)" }}>
             <button
               onClick={handleKeepAliveToggle}
-              className="w-full flex items-center gap-2 text-left cursor-pointer"
+              className="flex w-full cursor-pointer items-center gap-2 text-left"
               aria-pressed={settings.keepAlive}
             >
               <div
-                className="flex items-center justify-center rounded flex-shrink-0"
+                className="flex flex-shrink-0 items-center justify-center rounded"
                 style={{
                   width: 16,
                   height: 16,
@@ -281,7 +283,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
 
           {/* Compact Mode */}
           <div className="px-3 py-2.5" style={{ borderBottom: "1px solid var(--color-border)" }}>
-            <div className="flex items-center gap-1.5 mb-2">
+            <div className="mb-2 flex items-center gap-1.5">
               <ArrowsClockwise size={12} aria-hidden="true" />
               <span className="text-xs font-semibold">Auto-Compact</span>
             </div>
@@ -297,7 +299,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
                   <button
                     key={mode}
                     onClick={() => handleCompactModeChange(mode)}
-                    className="px-2 py-0.5 rounded text-xs font-medium cursor-pointer transition-colors"
+                    className="cursor-pointer rounded px-2 py-0.5 text-xs font-medium transition-colors"
                     style={{
                       background: active ? "#4285F4" : "var(--color-bg-elevated)",
                       color: active ? "#fff" : "var(--color-text-secondary)",
@@ -310,7 +312,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
                 );
               })}
             </div>
-            <span className="text-xs mt-1 block">
+            <span className="mt-1 block text-xs">
               {config.compactMode === "manual" && "Warn only, you run /compact"}
               {config.compactMode === "smart" &&
                 `Handoff at idle when >${config.compactThreshold}%`}
@@ -321,7 +323,7 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
 
           {/* Cost Budget */}
           <div className="px-3 py-2.5">
-            <div className="flex items-center gap-1.5 mb-2">
+            <div className="mb-2 flex items-center gap-1.5">
               <CurrencyDollar size={12} aria-hidden="true" />
               <span className="text-xs font-semibold">Cost Budget</span>
             </div>
@@ -338,11 +340,11 @@ function SessionSettingsPopover({ sessionId, onClose, anchorRef }: SessionSettin
                   if (e.key === "Enter") handleBudgetSubmit();
                 }}
                 placeholder="No limit"
-                className="flex-1 text-xs px-2 py-1 rounded bg-transparent input-bordered text-text-primary font-mono"
+                className="input-bordered text-text-primary flex-1 rounded bg-transparent px-2 py-1 font-mono text-xs"
                 aria-label="Cost budget in USD"
               />
             </div>
-            <span className="text-xs mt-1 block">
+            <span className="mt-1 block text-xs">
               {config.costBudgetUsd
                 ? `Warn at $${(config.costBudgetUsd * 0.8).toFixed(2)} and $${config.costBudgetUsd.toFixed(2)}`
                 : "No budget set — no warnings"}
@@ -369,7 +371,7 @@ export function SessionSettingsButton({ sessionId }: SessionSettingsButtonProps)
       <button
         ref={btnRef}
         onClick={() => setOpen((v) => !v)}
-        className="flex-shrink-0 p-1 rounded-md transition-colors cursor-pointer"
+        className="flex-shrink-0 cursor-pointer rounded-md p-1 transition-colors"
         style={{
           color: open ? "#4285F4" : "var(--color-text-muted)",
           background: open ? "#4285F415" : "transparent",

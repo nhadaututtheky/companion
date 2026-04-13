@@ -91,7 +91,8 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
 
   return (
     <div
-      className="flex" style={{
+      className="flex"
+      style={{
         position: "fixed",
         inset: 0,
         zIndex: Z.overlay,
@@ -105,7 +106,8 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
       }}
     >
       <div
-        className="bg-bg-card border border-border overflow-hidden flex" style={{
+        className="bg-bg-card border-border flex overflow-hidden border"
+        style={{
           borderRadius: 16,
           width: 640,
           maxHeight: "80vh",
@@ -118,15 +120,16 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
           style={{ borderBottom: "1px solid var(--color-border)" }}
         >
           <Lightning size={20} weight="bold" />
-          <h2 className="text-base font-bold flex-1">
+          <h2 className="flex-1 text-base font-bold">
             {selected ? "Configure Workflow" : "Start Workflow"}
           </h2>
           <button
             onClick={onClose}
-            className="text-text-muted cursor-pointer" style={{
+            className="text-text-muted cursor-pointer"
+            style={{
               background: "none",
               border: "none",
-              }}
+            }}
             aria-label="Close"
           >
             <X size={18} />
@@ -138,7 +141,8 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
             <div className="flex justify-center py-12">
               <CircleNotch
                 size={24}
-                className="text-text-muted" style={{ animation: "spin 1s linear infinite" }}
+                className="text-text-muted"
+                style={{ animation: "spin 1s linear infinite" }}
               />
             </div>
           ) : !selected ? (
@@ -146,7 +150,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
             <div>
               {Object.entries(grouped).map(([category, tmpls]) => (
                 <div key={category} className="mb-5">
-                  <h3 className="text-xs font-bold uppercase tracking-wider mb-2">
+                  <h3 className="mb-2 text-xs font-bold uppercase tracking-wider">
                     {CATEGORY_LABELS[category] ?? category}
                   </h3>
                   <div
@@ -160,7 +164,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
                           setSelected(t);
                           setCostCap(t.defaultCostCapUsd ?? 1.0);
                         }}
-                        className="flex flex-col text-left p-3 rounded-xl cursor-pointer transition-colors bg-bg-base border border-border"
+                        className="bg-bg-base border-border flex cursor-pointer flex-col rounded-xl border p-3 text-left transition-colors"
                         onMouseEnter={(e) => {
                           (e.currentTarget as HTMLElement).style.borderColor =
                             "var(--color-accent)";
@@ -170,16 +174,14 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
                             "var(--color-border)";
                         }}
                       >
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="mb-1 flex items-center gap-2">
                           <span style={{ fontSize: 18 }}>{t.icon}</span>
                           <span className="text-sm font-semibold">{t.name}</span>
                         </div>
-                        <span
-                          className="text-xs text-text-muted" style={{ lineHeight: 1.3 }}
-                        >
+                        <span className="text-text-muted text-xs" style={{ lineHeight: 1.3 }}>
                           {t.description}
                         </span>
-                        <div className="flex items-center gap-1 mt-2">
+                        <div className="mt-2 flex items-center gap-1">
                           <ListBullets size={11} />
                           <span className="text-xs">
                             {t.steps.length} steps: {t.steps.map((s) => s.label).join(" → ")}
@@ -196,12 +198,13 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
             <div>
               <button
                 onClick={() => setSelected(null)}
-                className="text-xs mb-4 cursor-pointer text-accent" style={{ background: "none", border: "none" }}
+                className="text-accent mb-4 cursor-pointer text-xs"
+                style={{ background: "none", border: "none" }}
               >
                 ← Back to templates
               </button>
 
-              <div className="flex items-center gap-2 mb-4">
+              <div className="mb-4 flex items-center gap-2">
                 <span style={{ fontSize: 24 }}>{selected.icon}</span>
                 <div>
                   <h3 className="text-sm font-bold">{selected.name}</h3>
@@ -210,29 +213,30 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
               </div>
 
               {/* Steps preview */}
-              <div className="flex items-center gap-2 mb-4 overflow-x-auto">
+              <div className="mb-4 flex items-center gap-2 overflow-x-auto">
                 {selected.steps.map((s, i) => (
                   <div key={i} className="flex items-center gap-1">
-                    <span
-                      className="text-xs font-medium px-2 py-1 rounded-lg whitespace-nowrap text-text-secondary bg-bg-elevated"
-                    >
+                    <span className="text-text-secondary bg-bg-elevated whitespace-nowrap rounded-lg px-2 py-1 text-xs font-medium">
                       {s.label}
                     </span>
                     {i < selected.steps.length - 1 && (
-                      <span className="text-text-muted" style={{ fontSize: 12 }}>→</span>
+                      <span className="text-text-muted" style={{ fontSize: 12 }}>
+                        →
+                      </span>
                     )}
                   </div>
                 ))}
               </div>
 
               {/* Topic */}
-              <label className="block mb-1 text-xs font-medium">Topic / Description *</label>
+              <label className="mb-1 block text-xs font-medium">Topic / Description *</label>
               <textarea
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 placeholder="Describe the task, bug, or feature..."
                 rows={3}
-                className="text-text-primary bg-bg-base border border-border" style={{
+                className="text-text-primary bg-bg-base border-border border"
+                style={{
                   width: "100%",
                   borderRadius: 8,
                   padding: "8px 12px",
@@ -244,7 +248,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
               />
 
               {/* Cost cap */}
-              <label className="block mb-1 text-xs font-medium">
+              <label className="mb-1 block text-xs font-medium">
                 Cost Cap: ${costCap.toFixed(2)}
               </label>
               <input
@@ -267,7 +271,7 @@ export function TemplatePicker({ onClose, onStarted }: TemplatePickerProps) {
             <button
               onClick={handleStart}
               disabled={!topic.trim() || starting}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold"
               style={{
                 background:
                   !topic.trim() || starting ? "var(--color-bg-elevated)" : "var(--color-accent)",

@@ -24,7 +24,8 @@ function ResizeHandle({ orientation }: { orientation: "horizontal" | "vertical" 
   const isHorizontal = orientation === "horizontal";
   return (
     <Separator
-      className="group shrink-0 flex" style={{
+      className="group flex shrink-0"
+      style={{
         alignItems: isHorizontal ? "center" : "stretch",
         justifyContent: "center",
         ...(isHorizontal
@@ -57,15 +58,15 @@ function EmptyPane({
   const pinToPane = useLayoutStore((s) => s.pinToPane);
 
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-3 px-4">
-      <p className="text-xs text-center">Click a session to pin it here</p>
+    <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
+      <p className="text-center text-xs">Click a session to pin it here</p>
       {sessions.length > 0 && (
-        <div className="flex flex-col gap-1 w-full max-w-48">
+        <div className="flex w-full max-w-48 flex-col gap-1">
           {sessions.map((s) => (
             <button
               key={s.id}
               onClick={() => pinToPane(paneIndex, s.id)}
-              className="shadow-soft text-xs font-mono px-3 py-2 rounded-lg cursor-pointer transition-colors text-left truncate text-text-secondary bg-bg-card"
+              className="shadow-soft text-text-secondary bg-bg-card cursor-pointer truncate rounded-lg px-3 py-2 text-left font-mono text-xs transition-colors"
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.borderColor = "var(--color-accent)";
               }}

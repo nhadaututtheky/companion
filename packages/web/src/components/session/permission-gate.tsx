@@ -42,7 +42,8 @@ function PermissionCard({
 
   return (
     <div
-      className="flex flex-col gap-2 p-3 rounded-xl bg-bg-card" style={{
+      className="bg-bg-card flex flex-col gap-2 rounded-xl p-3"
+      style={{
         border: "1px solid #FBBC04",
         boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
       }}
@@ -52,7 +53,7 @@ function PermissionCard({
         <span className="text-sm font-semibold">{req.toolName}</span>
         {autoApproveSeconds && countdown > 0 && (
           <span
-            className="ml-auto text-xs font-mono px-1.5 py-0.5 rounded"
+            className="ml-auto rounded px-1.5 py-0.5 font-mono text-xs"
             style={{ background: "#FBBC0420", color: "#FBBC04" }}
           >
             {countdown}s
@@ -65,14 +66,15 @@ function PermissionCard({
       <div className="flex gap-2 pt-1">
         <button
           onClick={() => onRespond(req.requestId, "allow")}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity cursor-pointer"
+          className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-opacity"
           style={{ background: "#34A853", color: "#fff" }}
         >
           <CheckCircle size={13} weight="bold" /> Allow
         </button>
         <button
           onClick={() => onRespond(req.requestId, "deny")}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-opacity cursor-pointer bg-bg-elevated" style={{
+          className="bg-bg-elevated flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-opacity"
+          style={{
             color: "#EA4335",
             border: "1px solid #EA433530",
           }}

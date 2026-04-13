@@ -85,7 +85,7 @@ export function TipBanner({ context = "dashboard", conditions }: TipBannerProps)
 
   return (
     <div
-      className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg text-xs transition-opacity duration-300"
+      className="flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-xs transition-opacity duration-300"
       style={{
         background: colors.bg,
         border: `1px solid ${colors.accent}20`,
@@ -95,19 +95,16 @@ export function TipBanner({ context = "dashboard", conditions }: TipBannerProps)
       <Lightbulb
         size={16}
         weight="fill"
-        className="shrink-0" style={{ color: colors.accent, marginTop: 1 }}
+        className="shrink-0"
+        style={{ color: colors.accent, marginTop: 1 }}
       />
-      <div className="flex-1 min-w-0">
-        <div className="font-medium text-text-primary">
-          {currentTip.title}
-        </div>
-        <div className="mt-0.5 text-text-secondary">
-          {currentTip.body}
-        </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-text-primary font-medium">{currentTip.title}</div>
+        <div className="text-text-secondary mt-0.5">{currentTip.body}</div>
         {currentTip.action && (
           <button
             onClick={handleAction}
-            className="mt-1.5 flex items-center gap-1 font-medium cursor-pointer"
+            className="mt-1.5 flex cursor-pointer items-center gap-1 font-medium"
             style={{ color: colors.accent }}
           >
             {currentTip.action.label}
@@ -117,7 +114,7 @@ export function TipBanner({ context = "dashboard", conditions }: TipBannerProps)
       </div>
       <button
         onClick={handleDismiss}
-        className="p-0.5 rounded cursor-pointer hover:bg-[var(--color-bg-elevated)] text-text-secondary"
+        className="text-text-secondary cursor-pointer rounded p-0.5 hover:bg-[var(--color-bg-elevated)]"
         aria-label="Dismiss tip"
       >
         <X size={14} />

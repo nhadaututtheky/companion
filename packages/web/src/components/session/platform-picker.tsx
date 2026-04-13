@@ -21,14 +21,9 @@ interface PlatformPickerProps {
 export function PlatformPicker({ platforms, loading, selected, onSelect }: PlatformPickerProps) {
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-4 gap-2">
-        <CircleNotch
-          size={16}
-          className="animate-spin text-text-muted"
-        />
-        <span className="text-xs text-text-muted">
-          Detecting CLI platforms...
-        </span>
+      <div className="flex items-center justify-center gap-2 py-4">
+        <CircleNotch size={16} className="text-text-muted animate-spin" />
+        <span className="text-text-muted text-xs">Detecting CLI platforms...</span>
       </div>
     );
   }
@@ -38,9 +33,7 @@ export function PlatformPicker({ platforms, loading, selected, onSelect }: Platf
 
   return (
     <div>
-      <label
-        className="text-xs font-semibold uppercase tracking-wider mb-2 block text-text-muted"
-      >
+      <label className="text-text-muted mb-2 block text-xs font-semibold uppercase tracking-wider">
         Platform
       </label>
       <div className="grid grid-cols-4 gap-2">
@@ -55,7 +48,7 @@ export function PlatformPicker({ platforms, loading, selected, onSelect }: Platf
               key={id}
               onClick={() => available && onSelect(id)}
               disabled={!available}
-              className="flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-center transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex cursor-pointer flex-col items-center gap-1.5 rounded-xl px-2 py-3 text-center transition-all disabled:cursor-not-allowed disabled:opacity-40"
               style={{
                 background: isSelected ? `${meta.color}15` : "var(--color-bg-elevated)",
                 border: isSelected
@@ -68,7 +61,7 @@ export function PlatformPicker({ platforms, loading, selected, onSelect }: Platf
               {/* Selection indicator */}
               {isSelected && (
                 <div
-                  className="absolute top-1.5 right-1.5 flex items-center justify-center rounded-full"
+                  className="absolute right-1.5 top-1.5 flex items-center justify-center rounded-full"
                   style={{
                     width: 14,
                     height: 14,
@@ -99,7 +92,7 @@ export function PlatformPicker({ platforms, loading, selected, onSelect }: Platf
               </span>
 
               {/* Version / Status */}
-              <span className="text-[10px] text-text-muted">
+              <span className="text-text-muted text-[10px]">
                 {available ? (
                   <>
                     <span style={{ color: "#34A853" }}>●</span>{" "}
@@ -119,7 +112,7 @@ export function PlatformPicker({ platforms, loading, selected, onSelect }: Platf
               {/* Free tier badge */}
               {meta.freeLabel && available && (
                 <span
-                  className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full"
+                  className="rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase"
                   style={{ background: `${meta.color}20`, color: meta.color }}
                 >
                   {meta.freeLabel}

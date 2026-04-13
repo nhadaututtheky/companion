@@ -188,21 +188,21 @@ export function McpSettings() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold">MCP Servers</h3>
-          <p className="text-xs mt-0.5">
+          <p className="mt-0.5 text-xs">
             Manage Model Context Protocol servers for your AI sessions
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={loadServers}
-            className="p-1.5 rounded-full cursor-pointer transition-colors"
+            className="cursor-pointer rounded-full p-1.5 transition-colors"
             aria-label="Refresh"
           >
             <ArrowsClockwise size={14} />
           </button>
           <button
             onClick={handleNew}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors"
+            className="flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors"
             style={{ background: "#4285F4", color: "#fff" }}
           >
             <Plus size={12} weight="bold" />
@@ -218,7 +218,8 @@ export function McpSettings() {
       >
         {/* Left: Server list */}
         <div
-          className="rounded-xl overflow-hidden shadow-soft border border-glass-border" style={{
+          className="shadow-soft border-glass-border overflow-hidden rounded-xl border"
+          style={{
             background: "var(--glass-bg-heavy)",
             boxShadow: "var(--shadow-soft)",
           }}
@@ -226,9 +227,9 @@ export function McpSettings() {
           {loading ? (
             <div className="flex items-center justify-center py-8 text-xs">Loading...</div>
           ) : servers.length === 0 && !isNew ? (
-            <div className="flex flex-col items-center justify-center py-8 gap-2 px-4">
+            <div className="flex flex-col items-center justify-center gap-2 px-4 py-8">
               <Plugs size={24} />
-              <p className="text-xs text-center">No MCP servers configured yet</p>
+              <p className="text-center text-xs">No MCP servers configured yet</p>
             </div>
           ) : (
             <div className="flex flex-col">
@@ -239,7 +240,7 @@ export function McpSettings() {
                   <button
                     key={server.id}
                     onClick={() => handleSelect(server)}
-                    className="flex items-center gap-2.5 px-3 py-2.5 text-left cursor-pointer transition-colors w-full"
+                    className="flex w-full cursor-pointer items-center gap-2.5 px-3 py-2.5 text-left transition-colors"
                     style={{
                       background: isSelected ? "var(--color-bg-elevated)" : "transparent",
                       borderLeft: isSelected ? "2px solid #4285F4" : "2px solid transparent",
@@ -256,9 +257,9 @@ export function McpSettings() {
                           : "var(--color-text-muted)",
                       }}
                     />
-                    <div className="flex-1 min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div
-                        className="text-xs font-medium truncate"
+                        className="truncate text-xs font-medium"
                         style={{
                           color: server.enabled
                             ? "var(--color-text-primary)"
@@ -267,18 +268,17 @@ export function McpSettings() {
                       >
                         {server.name}
                       </div>
-                      <div
-                        className="text-xs truncate text-text-muted" style={{ fontSize: 10 }}
-                      >
+                      <div className="text-text-muted truncate text-xs" style={{ fontSize: 10 }}>
                         {TYPE_LABELS[server.type]}
                       </div>
                     </div>
                     <span
-                      className="rounded-full shrink-0" style={{
+                      className="shrink-0 rounded-full"
+                      style={{
                         width: 6,
                         height: 6,
                         background: server.enabled ? "#34A853" : "#9CA3AF",
-                        }}
+                      }}
                     />
                   </button>
                 );
@@ -289,7 +289,8 @@ export function McpSettings() {
 
         {/* Right: Editor */}
         <div
-          className="rounded-xl shadow-soft border border-glass-border" style={{
+          className="shadow-soft border-glass-border rounded-xl border"
+          style={{
             background: "var(--glass-bg-heavy)",
             boxShadow: "var(--shadow-soft)",
           }}
@@ -304,7 +305,7 @@ export function McpSettings() {
               onDelete={() => editing.id && handleDelete(editing.id)}
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-xs">
+            <div className="flex h-full items-center justify-center text-xs">
               Select a server to edit
             </div>
           )}
@@ -333,24 +334,21 @@ function DetectedServersSection({
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2">
+      <div className="mb-2 flex items-center gap-2">
         <Plugs size={14} weight="duotone" className="text-text-muted" />
-        <span
-          className="text-xs font-semibold uppercase tracking-wider text-text-muted"
-        >
+        <span className="text-text-muted text-xs font-semibold uppercase tracking-wider">
           Detected from Claude Config
         </span>
         <span
-          className="text-xs px-1.5 py-0.5 rounded-md text-text-muted" style={{ background: "var(--color-bg-elevated)" }}
+          className="text-text-muted rounded-md px-1.5 py-0.5 text-xs"
+          style={{ background: "var(--color-bg-elevated)" }}
         >
           {servers.length}
         </span>
       </div>
 
       {notImported.length === 0 ? (
-        <p className="text-xs text-text-muted">
-          All detected servers are already imported.
-        </p>
+        <p className="text-text-muted text-xs">All detected servers are already imported.</p>
       ) : (
         <div className="grid gap-2">
           {notImported.map((server) => {
@@ -359,22 +357,17 @@ function DetectedServersSection({
             return (
               <div
                 key={`${server.id}-${server.source}`}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-bg-base shadow-soft border border-glass-border"
+                className="bg-bg-base shadow-soft border-glass-border flex items-center gap-3 rounded-xl border px-3 py-2.5"
               >
-                <Icon
-                  size={14}
-                  weight="duotone"
-                  className="text-text-secondary shrink-0"
-                />
-                <div className="flex-1 min-w-0">
+                <Icon size={14} weight="duotone" className="text-text-secondary shrink-0" />
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span
-                      className="text-xs font-medium truncate text-text-primary"
-                    >
+                    <span className="text-text-primary truncate text-xs font-medium">
                       {server.name}
                     </span>
                     <span
-                      className="text-xs px-1.5 py-0.5 rounded shrink-0 text-text-muted bg-bg-elevated" style={{
+                      className="text-text-muted bg-bg-elevated shrink-0 rounded px-1.5 py-0.5 text-xs"
+                      style={{
                         fontSize: 10,
                       }}
                     >
@@ -385,9 +378,7 @@ function DetectedServersSection({
                           : "SSE"}
                     </span>
                   </div>
-                  <div
-                    className="text-xs truncate mt-0.5 text-text-muted" style={{ fontSize: 10 }}
-                  >
+                  <div className="text-text-muted mt-0.5 truncate text-xs" style={{ fontSize: 10 }}>
                     {server.source}
                     {server.command && ` · ${server.command}`}
                     {server.url && ` · ${server.url}`}
@@ -396,7 +387,7 @@ function DetectedServersSection({
                 <button
                   onClick={() => onImport(server.id)}
                   disabled={isImporting}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors shrink-0"
+                  className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors"
                   style={{
                     background: isImporting ? "var(--color-bg-elevated)" : "#4285F415",
                     color: isImporting ? "var(--color-text-muted)" : "#4285F4",
@@ -470,8 +461,8 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+    <div className="flex h-full flex-col">
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
         {/* Name */}
         <FieldGroup label="Name">
           <input
@@ -479,7 +470,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
             value={server.name}
             onChange={(e) => update({ name: e.target.value })}
             placeholder="e.g. My MCP Server"
-            className="w-full px-3 py-2 rounded-lg text-xs input-bordered text-text-primary bg-bg-elevated"
+            className="input-bordered text-text-primary bg-bg-elevated w-full rounded-lg px-3 py-2 text-xs"
           />
         </FieldGroup>
 
@@ -493,7 +484,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 <button
                   key={t}
                   onClick={() => update({ type: t })}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors flex-1 justify-center"
+                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs transition-colors"
                   style={{
                     background: active ? "#4285F415" : "var(--color-bg-elevated)",
                     border: `1px solid ${active ? "#4285F4" : "var(--color-border)"}`,
@@ -517,7 +508,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 value={server.command ?? ""}
                 onChange={(e) => update({ command: e.target.value })}
                 placeholder="e.g. bun, node, npx"
-                className="w-full px-3 py-2 rounded-lg text-xs font-mono input-bordered text-text-primary bg-bg-elevated"
+                className="input-bordered text-text-primary bg-bg-elevated w-full rounded-lg px-3 py-2 font-mono text-xs"
               />
             </FieldGroup>
             <FieldGroup label="Arguments (one per line)">
@@ -530,7 +521,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 }
                 placeholder={"run\npath/to/server.ts"}
                 rows={3}
-                className="w-full px-3 py-2 rounded-lg text-xs font-mono input-bordered resize-none text-text-primary bg-bg-elevated"
+                className="input-bordered text-text-primary bg-bg-elevated w-full resize-none rounded-lg px-3 py-2 font-mono text-xs"
               />
             </FieldGroup>
           </>
@@ -544,7 +535,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
               value={server.url ?? ""}
               onChange={(e) => update({ url: e.target.value })}
               placeholder="https://example.com/mcp"
-              className="w-full px-3 py-2 rounded-lg text-xs font-mono input-bordered text-text-primary bg-bg-elevated"
+              className="input-bordered text-text-primary bg-bg-elevated w-full rounded-lg px-3 py-2 font-mono text-xs"
             />
           </FieldGroup>
         )}
@@ -556,7 +547,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
             value={server.description ?? ""}
             onChange={(e) => update({ description: e.target.value })}
             placeholder="What this server does..."
-            className="w-full px-3 py-2 rounded-lg text-xs input-bordered text-text-primary bg-bg-elevated"
+            className="input-bordered text-text-primary bg-bg-elevated w-full rounded-lg px-3 py-2 text-xs"
           />
         </FieldGroup>
 
@@ -570,29 +561,31 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
           {Object.entries(server.env ?? {}).map(([key, val]) => (
             <div key={key} className="flex items-center gap-2">
               <span
-                className="text-xs font-mono px-2 py-1 rounded text-text-secondary bg-bg-base" style={{
+                className="text-text-secondary bg-bg-base rounded px-2 py-1 font-mono text-xs"
+                style={{
                   minWidth: 80,
                 }}
               >
                 {key}
               </span>
-              <span className="text-xs font-mono flex-1 truncate">{val}</span>
+              <span className="flex-1 truncate font-mono text-xs">{val}</span>
               <button
                 onClick={() => removeEnvVar(key)}
-                className="p-0.5 rounded cursor-pointer"
+                className="cursor-pointer rounded p-0.5"
                 aria-label={`Remove ${key}`}
               >
                 <Trash size={12} />
               </button>
             </div>
           ))}
-          <div className="flex items-center gap-2 mt-1">
+          <div className="mt-1 flex items-center gap-2">
             <input
               type="text"
               value={newEnvKey}
               onChange={(e) => setNewEnvKey(e.target.value)}
               placeholder="KEY"
-              className="px-2 py-1 rounded text-xs font-mono input-bordered text-text-primary bg-bg-base" style={{
+              className="input-bordered text-text-primary bg-bg-base rounded px-2 py-1 font-mono text-xs"
+              style={{
                 width: 100,
               }}
             />
@@ -601,12 +594,12 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
               value={newEnvVal}
               onChange={(e) => setNewEnvVal(e.target.value)}
               placeholder="value"
-              className="flex-1 px-2 py-1 rounded text-xs font-mono input-bordered text-text-primary bg-bg-base"
+              className="input-bordered text-text-primary bg-bg-base flex-1 rounded px-2 py-1 font-mono text-xs"
             />
             <button
               onClick={addEnvVar}
               disabled={!newEnvKey.trim()}
-              className="p-1 rounded cursor-pointer"
+              className="cursor-pointer rounded p-1"
               style={{
                 color: newEnvKey.trim() ? "#4285F4" : "var(--color-text-muted)",
               }}
@@ -628,29 +621,31 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
             {Object.entries(server.headers ?? {}).map(([key, val]) => (
               <div key={key} className="flex items-center gap-2">
                 <span
-                  className="text-xs font-mono px-2 py-1 rounded text-text-secondary bg-bg-base" style={{
+                  className="text-text-secondary bg-bg-base rounded px-2 py-1 font-mono text-xs"
+                  style={{
                     minWidth: 80,
                   }}
                 >
                   {key}
                 </span>
-                <span className="text-xs font-mono flex-1 truncate">{val}</span>
+                <span className="flex-1 truncate font-mono text-xs">{val}</span>
                 <button
                   onClick={() => removeHeader(key)}
-                  className="p-0.5 rounded cursor-pointer"
+                  className="cursor-pointer rounded p-0.5"
                   aria-label={`Remove ${key}`}
                 >
                   <Trash size={12} />
                 </button>
               </div>
             ))}
-            <div className="flex items-center gap-2 mt-1">
+            <div className="mt-1 flex items-center gap-2">
               <input
                 type="text"
                 value={newHeaderKey}
                 onChange={(e) => setNewHeaderKey(e.target.value)}
                 placeholder="Header-Name"
-                className="px-2 py-1 rounded text-xs font-mono input-bordered text-text-primary bg-bg-base" style={{
+                className="input-bordered text-text-primary bg-bg-base rounded px-2 py-1 font-mono text-xs"
+                style={{
                   width: 120,
                 }}
               />
@@ -659,12 +654,12 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
                 value={newHeaderVal}
                 onChange={(e) => setNewHeaderVal(e.target.value)}
                 placeholder="value"
-                className="flex-1 px-2 py-1 rounded text-xs font-mono input-bordered text-text-primary bg-bg-base"
+                className="input-bordered text-text-primary bg-bg-base flex-1 rounded px-2 py-1 font-mono text-xs"
               />
               <button
                 onClick={addHeader}
                 disabled={!newHeaderKey.trim()}
-                className="p-1 rounded cursor-pointer"
+                className="cursor-pointer rounded p-1"
                 style={{
                   color: newHeaderKey.trim() ? "#4285F4" : "var(--color-text-muted)",
                 }}
@@ -695,7 +690,8 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
             aria-label="Enable server"
           >
             <span
-              className="rounded-full absolute" style={{
+              className="absolute rounded-full"
+              style={{
                 top: 2,
                 left: server.enabled ? 18 : 2,
                 width: 14,
@@ -716,7 +712,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
         {!isNew ? (
           <button
             onClick={onDelete}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs cursor-pointer transition-colors"
+            className="flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-colors"
             style={{ color: "#EA4335" }}
           >
             <Trash size={12} />
@@ -728,7 +724,7 @@ function ServerEditor({ server, isNew, saving, onChange, onSave, onDelete }: Ser
         <button
           onClick={onSave}
           disabled={saving || !server.name.trim()}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium transition-colors"
           style={{
             background: saving || !server.name.trim() ? "var(--color-bg-elevated)" : "#4285F4",
             color: saving || !server.name.trim() ? "var(--color-text-muted)" : "#fff",
@@ -774,13 +770,14 @@ function CollapsibleSection({
     <div>
       <button
         onClick={onToggle}
-        className="flex items-center gap-1.5 w-full text-left cursor-pointer py-1"
+        className="flex w-full cursor-pointer items-center gap-1.5 py-1 text-left"
       >
         {open ? <CaretDown size={10} /> : <CaretRight size={10} />}
         <span className="text-xs font-medium">{title}</span>
         {count > 0 && (
           <span
-            className="text-xs px-1.5 rounded-full text-text-muted bg-bg-elevated" style={{
+            className="text-text-muted bg-bg-elevated rounded-full px-1.5 text-xs"
+            style={{
               fontSize: 10,
             }}
           >

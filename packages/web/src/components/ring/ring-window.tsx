@@ -176,7 +176,10 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
   return (
     <>
       {/* Backdrop */}
-      <div onClick={() => setExpanded(false)} style={{ position: "fixed", inset: 0, zIndex: Z.ringBackdrop }} />
+      <div
+        onClick={() => setExpanded(false)}
+        style={{ position: "fixed", inset: 0, zIndex: Z.ringBackdrop }}
+      />
 
       {/* Chrome-style color bridge connecting bubbles to ring */}
       <svg
@@ -241,7 +244,8 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
           >
             {/* Bubble */}
             <div
-              className="rounded-full" style={{
+              className="rounded-full"
+              style={{
                 width: "100%",
                 height: "100%",
                 border: `2.5px solid ${color}`,
@@ -258,12 +262,13 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
             >
               <div className="rounded-full" style={{ width: 8, height: 8, background: color }} />
               <span
-                className="overflow-hidden whitespace-nowrap font-semibold" style={{
+                className="overflow-hidden whitespace-nowrap font-semibold"
+                style={{
                   fontSize: isHovered ? 10 : 9,
                   color: "var(--color-text-secondary, #555)",
                   maxWidth: size - 8,
                   textOverflow: "ellipsis",
-                  }}
+                }}
               >
                 {(session?.projectName ?? sid).slice(0, 5)}
               </span>
@@ -273,7 +278,8 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
             {isHovered && (
               <button
                 onClick={() => unlinkSession(sid)}
-                className="rounded-full cursor-pointer absolute flex" style={{
+                className="absolute flex cursor-pointer rounded-full"
+                style={{
                   top: -4,
                   right: -4,
                   width: 16,
@@ -298,7 +304,8 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
 
       {/* Chat card — above dock area */}
       <div
-        className="overflow-hidden flex" style={{
+        className="flex overflow-hidden"
+        style={{
           position: "fixed",
           left: cardLeft,
           top: cardTop,
@@ -317,24 +324,27 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
       >
         {/* Header with mode toggle */}
         <div
-          className="shrink-0 flex" style={{
+          className="flex shrink-0"
+          style={{
             alignItems: "center",
             gap: 4,
             padding: "6px 10px",
             borderBottom: "1px solid var(--color-border, rgba(0,0,0,0.06))",
-            }}
+          }}
         >
           {linkedSessionIds.map((sid) => (
             <div
               key={sid}
-              className="rounded-full" style={{ width: 7, height: 7, background: getSessionColor(sid) }}
+              className="rounded-full"
+              style={{ width: 7, height: 7, background: getSessionColor(sid) }}
             />
           ))}
           {/* Mode tabs */}
           <div className="flex" style={{ flex: 1, gap: 2, marginLeft: 4 }}>
             <button
               onClick={() => setMode("broadcast")}
-              className="cursor-pointer" style={{
+              className="cursor-pointer"
+              style={{
                 fontSize: 11,
                 fontWeight: mode === "broadcast" ? 700 : 500,
                 padding: "2px 6px",
@@ -348,7 +358,8 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
             </button>
             <button
               onClick={() => setMode("debate")}
-              className="cursor-pointer flex" style={{
+              className="flex cursor-pointer"
+              style={{
                 fontSize: 11,
                 fontWeight: mode === "debate" ? 700 : 500,
                 padding: "2px 6px",
@@ -365,12 +376,13 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
           </div>
           <button
             onClick={() => setExpanded(false)}
-            className="cursor-pointer flex" style={{
+            className="flex cursor-pointer"
+            style={{
               background: "none",
               border: "none",
               padding: 2,
               color: "var(--color-text-muted, #999)",
-              }}
+            }}
             aria-label="Close"
           >
             <X size={12} weight="bold" />
@@ -380,7 +392,8 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
         {/* Content area — switches between broadcast chat and debate */}
         <div
           ref={chatRef}
-          className="flex" style={{
+          className="flex"
+          style={{
             flex: 1,
             minHeight: 0,
             // Debate live feed has its own scroll — disable outer scroll to prevent conflict
@@ -393,7 +406,8 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
           {/* Debate mode: topic input + start */}
           {mode === "debate" && !debateChannelId && (
             <div
-              className="flex" style={{
+              className="flex"
+              style={{
                 flexDirection: "column",
                 alignItems: "stretch",
                 justifyContent: "center",
@@ -403,13 +417,10 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
               }}
             >
               <div
-                className="flex" style={{ alignItems: "center", gap: 6, justifyContent: "center" }}
+                className="flex"
+                style={{ alignItems: "center", gap: 6, justifyContent: "center" }}
               >
-                <Scales
-                  size={20}
-                  weight="duotone"
-                  className="text-danger opacity-50"
-                />
+                <Scales size={20} weight="duotone" className="text-danger opacity-50" />
                 <span style={{ fontSize: 11, color: "var(--color-text-muted, #999)" }}>
                   Agents debate a question from opposing sides
                 </span>
@@ -443,10 +454,12 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                   return (
                     <div
                       key={agentId}
-                      className="flex" style={{ flex: 1, flexDirection: "column", gap: 2 }}
+                      className="flex"
+                      style={{ flex: 1, flexDirection: "column", gap: 2 }}
                     >
                       <span
-                        className="font-semibold" style={{ fontSize: 11, color, textTransform: "uppercase" }}
+                        className="font-semibold"
+                        style={{ fontSize: 11, color, textTransform: "uppercase" }}
                       >
                         {label}
                       </span>
@@ -486,7 +499,8 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                 <button
                   onClick={() => void handleStartDebate()}
                   disabled={!debateTopic.trim() || startingDebate}
-                  className="font-semibold" style={{
+                  className="font-semibold"
+                  style={{
                     flex: 1,
                     padding: "5px 16px",
                     fontSize: 11,
@@ -503,7 +517,8 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                 </button>
                 <button
                   onClick={() => setShowCLIDebateModal(true)}
-                  className="cursor-pointer font-semibold flex" style={{
+                  className="flex cursor-pointer font-semibold"
+                  style={{
                     flex: 1,
                     padding: "5px 16px",
                     fontSize: 11,
@@ -537,20 +552,22 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                 />
               </div>
               <div
-                className="shrink-0 flex" style={{
+                className="flex shrink-0"
+                style={{
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 6,
                   padding: "4px 8px",
                   borderTop: "1px solid var(--color-border, rgba(0,0,0,0.06))",
-                  }}
+                }}
               >
                 <button
                   onClick={() => {
                     setDebateChannelId(null);
                     setMode("broadcast");
                   }}
-                  className="border border-border cursor-pointer" style={{
+                  className="border-border cursor-pointer border"
+                  style={{
                     padding: "3px 10px",
                     fontSize: 11,
                     borderRadius: 6,
@@ -567,7 +584,8 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
           {/* Broadcast mode: chat */}
           {mode === "broadcast" && sharedMessages.length === 0 && (
             <div
-              className="flex" style={{
+              className="flex"
+              style={{
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
@@ -577,10 +595,11 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
             >
               <span style={{ fontSize: 22, opacity: 0.2 }}>✦</span>
               <span
-                className="text-center" style={{
+                className="text-center"
+                style={{
                   fontSize: 11,
                   color: "var(--color-text-muted, #999)",
-                  }}
+                }}
               >
                 Type to broadcast to all linked sessions
               </span>
@@ -590,7 +609,8 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
             sharedMessages.map((msg) => (
               <div
                 key={msg.id}
-                className="flex" style={{
+                className="flex"
+                style={{
                   flexDirection: "column",
                   alignItems: msg.role === "user" ? "flex-end" : "flex-start",
                   gap: 1,
@@ -622,11 +642,12 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
         {/* Input — broadcast mode only */}
         {mode === "broadcast" && (
           <div
-            className="shrink-0 flex" style={{
+            className="flex shrink-0"
+            style={{
               gap: 6,
               padding: "6px 8px",
               borderTop: "1px solid var(--color-border, rgba(0,0,0,0.06))",
-              }}
+            }}
           >
             <textarea
               value={input}
@@ -651,7 +672,8 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
             <button
               onClick={() => void handleSend()}
               disabled={sending || !input.trim()}
-              className="flex" style={{
+              className="flex"
+              style={{
                 background: "var(--color-accent)",
                 color: "#fff",
                 border: "none",

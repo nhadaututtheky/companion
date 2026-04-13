@@ -43,7 +43,7 @@ export function SessionGrid({ sessions, onExpand }: SessionGridProps) {
         column/row logic at md+ via a CSS custom property approach.
       */}
       <div
-        className="session-grid-inner grid gap-4 h-full min-h-0"
+        className="session-grid-inner grid h-full min-h-0 gap-4"
         style={
           {
             "--grid-cols-desktop": getGridCols(sessions.length),
@@ -54,11 +54,12 @@ export function SessionGrid({ sessions, onExpand }: SessionGridProps) {
         {sessions.map((s) => (
           <div
             key={s.id}
-            className="overflow-hidden" style={{
+            className="overflow-hidden"
+            style={{
               opacity: expandedSessionId && expandedSessionId !== s.id ? 0.6 : 1,
               transition: "opacity 250ms ease",
               minHeight: 200,
-              }}
+            }}
           >
             <MiniTerminal sessionId={s.id} onExpand={onExpand} />
           </div>

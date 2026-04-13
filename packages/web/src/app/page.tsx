@@ -58,12 +58,12 @@ const FeatureGuideModal = dynamic(
 
 function EmptyCenter() {
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-6 px-8">
+    <div className="flex h-full flex-col items-center justify-center gap-6 px-8">
       <CompanionLogo size="lg" />
-      <p className="text-base text-center text-text-secondary">
+      <p className="text-text-secondary text-center text-base">
         Select a session or start a new one
       </p>
-      <div className="w-full max-w-md mt-2">
+      <div className="mt-2 w-full max-w-md">
         <TipBanner context="dashboard" />
       </div>
     </div>
@@ -117,12 +117,7 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
   const SourceIcon = ({ source }: { source: string }) => {
     if (source === "telegram")
       return (
-        <TelegramLogo
-          size={12}
-          weight="fill"
-          className="text-accent"
-          aria-label="From Telegram"
-        />
+        <TelegramLogo size={12} weight="fill" className="text-accent" aria-label="From Telegram" />
       );
     return <Globe size={12} className="text-text-muted" aria-label="From Web" />;
   };
@@ -136,20 +131,16 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
     >
       {/* Summary row */}
       <div className="flex items-center gap-2 px-4 py-2">
-        <ArrowCounterClockwise
-          size={14}
-          className="text-accent"
-          weight="bold"
-          aria-hidden="true"
-        />
-        <span className="text-xs font-semibold flex-1 text-accent">
+        <ArrowCounterClockwise size={14} className="text-accent" weight="bold" aria-hidden="true" />
+        <span className="text-accent flex-1 text-xs font-semibold">
           {sessions.length === 1
             ? "1 session can be resumed"
             : `${sessions.length} sessions can be resumed`}
         </span>
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="text-xs font-medium px-2 py-0.5 rounded cursor-pointer transition-colors text-accent" style={{
+          className="text-accent cursor-pointer rounded px-2 py-0.5 text-xs font-medium transition-colors"
+          style={{
             background: "color-mix(in srgb, var(--color-accent) 8%, transparent)",
           }}
           aria-expanded={expanded}
@@ -158,7 +149,7 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
         </button>
         <button
           onClick={onDismiss}
-          className="p-0.5 rounded cursor-pointer"
+          className="cursor-pointer rounded p-0.5"
           style={{ color: "color-mix(in srgb, var(--color-accent) 50%, transparent)" }}
           aria-label="Dismiss resume banner"
         >
@@ -183,14 +174,13 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
               }}
             >
               <SourceIcon source={s.source} />
-              <div className="flex flex-col flex-1 min-w-0">
-                <span
-                  className="text-xs font-semibold truncate text-text-primary"
-                >
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="text-text-primary truncate text-xs font-semibold">
                   {projectLabel(s)}
                 </span>
                 <span
-                  className="text-xs truncate text-text-muted" style={{ fontFamily: "var(--font-mono)" }}
+                  className="text-text-muted truncate text-xs"
+                  style={{ fontFamily: "var(--font-mono)" }}
                 >
                   {modelShort(s.model)} &bull;{" "}
                   {new Date(s.endedAt).toLocaleDateString(undefined, {
@@ -203,7 +193,7 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
               </div>
               <button
                 onClick={() => onDismissOne(s.id)}
-                className="p-1.5 rounded cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)] text-text-muted"
+                className="text-text-muted cursor-pointer rounded p-1.5 transition-colors hover:bg-[var(--color-bg-elevated)]"
                 aria-label={`Dismiss session ${projectLabel(s)}`}
               >
                 <Trash size={12} weight="bold" aria-hidden="true" />
@@ -211,7 +201,7 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
               <button
                 onClick={() => handleResume(s.id)}
                 disabled={resumingId === s.id}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                className="flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ background: "var(--color-accent)", color: "#fff" }}
                 aria-label={`Resume session for ${projectLabel(s)}`}
               >
@@ -542,7 +532,8 @@ export default function DashboardPage() {
       <FloatingStatsBar />
 
       <div
-        className="overflow-hidden flex" style={{
+        className="flex overflow-hidden"
+        style={{
           flex: 1,
           flexDirection: "column",
           padding: "8px 12px 12px 12px",
@@ -550,10 +541,11 @@ export default function DashboardPage() {
         }}
       >
         <div
-          className="rounded-radius-xl overflow-hidden flex" style={{
+          className="rounded-radius-xl flex overflow-hidden"
+          style={{
             flex: 1,
             gap: 8,
-            }}
+          }}
         >
           {/* Mobile sidebar overlay backdrop */}
           {mobileSidebarOpen && (
@@ -581,7 +573,8 @@ export default function DashboardPage() {
               "mobile-sidebar-overlay",
               "rounded-radius-xl",
               "shadow-float",
-            ].join(" ")} style={{
+            ].join(" ")}
+            style={{
               background: "var(--glass-bg-heavy)",
               backdropFilter: "blur(var(--glass-blur))",
               WebkitBackdropFilter: "blur(var(--glass-blur))",
@@ -591,17 +584,13 @@ export default function DashboardPage() {
           >
             {/* Mobile close button */}
             <div
-              className="md:hidden flex items-center justify-between px-4 py-2"
+              className="flex items-center justify-between px-4 py-2 md:hidden"
               style={{ borderBottom: "1px solid var(--color-border)", width: "100%" }}
             >
-              <span
-                className="text-xs font-semibold text-text-secondary"
-              >
-                Projects
-              </span>
+              <span className="text-text-secondary text-xs font-semibold">Projects</span>
               <button
                 onClick={() => setMobileSidebarOpen(false)}
-                className="p-2 rounded-lg cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center text-text-muted"
+                className="text-text-muted flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-lg p-2"
                 aria-label="Close sidebar"
               >
                 <X size={16} weight="bold" />
@@ -623,9 +612,7 @@ export default function DashboardPage() {
           </aside>
 
           {/* Main grid area */}
-          <main
-            className="flex flex-col flex-1 min-w-0 overflow-hidden bg-bg-base rounded-radius-xl shadow-soft relative"
-          >
+          <main className="bg-bg-base rounded-radius-xl shadow-soft relative flex min-w-0 flex-1 flex-col overflow-hidden">
             {/* Stats watermark — centered behind sessions, click to expand */}
             <BottomStatsBar />
 
@@ -655,7 +642,8 @@ export default function DashboardPage() {
           {/* Right panel — File Explorer, Browser Preview, or Search (desktop only, hidden on mobile to save space) */}
           {rightPanelMode !== "none" && (
             <aside
-              className="hidden md:flex flex-col flex-shrink-0 overflow-hidden rounded-radius-xl shadow-soft" style={{
+              className="rounded-radius-xl shadow-soft hidden flex-shrink-0 flex-col overflow-hidden md:flex"
+              style={{
                 width:
                   rightPanelMode === "browser" || rightPanelMode === "terminal"
                     ? 600

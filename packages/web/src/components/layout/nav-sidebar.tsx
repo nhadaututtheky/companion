@@ -148,7 +148,8 @@ function NavPill({
       onClick={onClick}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
-      className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium cursor-pointer transition-all rounded-radius-md" style={{
+      className="rounded-radius-md flex cursor-pointer items-center gap-2.5 px-4 py-2.5 text-xs font-medium transition-all"
+      style={{
         background: isActive ? "var(--color-text-primary)" : "var(--glass-bg)",
         backdropFilter: isActive ? "none" : "blur(var(--glass-blur))",
         WebkitBackdropFilter: isActive ? "none" : "blur(var(--glass-blur))",
@@ -171,7 +172,8 @@ function NavPill({
 function DetailCard({ children, index }: { children: ReactNode; index: number }) {
   return (
     <div
-      className="rounded-radius-xl shadow-soft shrink-0" style={{
+      className="rounded-radius-xl shadow-soft shrink-0"
+      style={{
         width: 240,
         background: "var(--glass-bg)",
         backdropFilter: "blur(var(--glass-blur))",
@@ -197,7 +199,7 @@ function PanelsContent() {
     PANEL_ITEMS.find((p) => p.id === hovered) ?? PANEL_ITEMS.find((p) => p.id === rightPanelMode);
 
   return (
-    <div className="flex gap-2 items-start">
+    <div className="flex items-start gap-2">
       {/* Left: individual glass pills */}
       <div className="flex flex-col gap-1.5">
         {PANEL_ITEMS.map((item, i) => (
@@ -218,7 +220,7 @@ function PanelsContent() {
       {/* Right: glass detail card */}
       {active && (
         <DetailCard index={PANEL_ITEMS.length}>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="mb-3 flex items-center gap-2">
             <active.icon
               size={16}
               weight={rightPanelMode === active.id ? "fill" : "regular"}
@@ -229,26 +231,21 @@ function PanelsContent() {
                     : "var(--color-text-secondary)",
               }}
             />
-            <span className="text-sm font-semibold text-text-primary">
-              {active.label}
-            </span>
+            <span className="text-text-primary text-sm font-semibold">{active.label}</span>
             {rightPanelMode === active.id && (
               <span
-                className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 text-success rounded-radius-pill" style={{
+                className="text-success rounded-radius-pill flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
+                style={{
                   background: "color-mix(in srgb, var(--color-success) 15%, transparent)",
-                  }}
+                }}
               >
                 <Check size={10} weight="bold" /> Active
               </span>
             )}
           </div>
-          <p className="text-xs leading-relaxed text-text-muted">
-            {active.description}
-          </p>
+          <p className="text-text-muted text-xs leading-relaxed">{active.description}</p>
           {active.shortcut && (
-            <span
-              className="inline-block text-xs font-mono px-2 py-1 mt-3 text-text-muted bg-bg-elevated rounded-radius-sm border border-glass-border"
-            >
+            <span className="text-text-muted bg-bg-elevated rounded-radius-sm border-glass-border mt-3 inline-block border px-2 py-1 font-mono text-xs">
               {active.shortcut}
             </span>
           )}
@@ -280,7 +277,7 @@ function AIContent() {
   const active = AI_ITEMS.find((p) => p.id === hovered) ?? AI_ITEMS.find((p) => isItemActive(p.id));
 
   return (
-    <div className="flex gap-2 items-start">
+    <div className="flex items-start gap-2">
       <div className="flex flex-col gap-1.5">
         {AI_ITEMS.map((item, i) => (
           <NavPill
@@ -297,28 +294,25 @@ function AIContent() {
       </div>
       {active && (
         <DetailCard index={AI_ITEMS.length}>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="mb-3 flex items-center gap-2">
             <active.icon
               size={16}
               weight={isItemActive(active.id) ? "fill" : "regular"}
               className="text-accent"
             />
-            <span className="text-sm font-semibold text-text-primary">
-              {active.label}
-            </span>
+            <span className="text-text-primary text-sm font-semibold">{active.label}</span>
             {isItemActive(active.id) && (
               <span
-                className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 text-success rounded-radius-pill" style={{
+                className="text-success rounded-radius-pill flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
+                style={{
                   background: "color-mix(in srgb, var(--color-success) 15%, transparent)",
-                  }}
+                }}
               >
                 <Check size={10} weight="bold" /> Active
               </span>
             )}
           </div>
-          <p className="text-xs leading-relaxed text-text-muted">
-            {active.description}
-          </p>
+          <p className="text-text-muted text-xs leading-relaxed">{active.description}</p>
         </DetailCard>
       )}
     </div>
@@ -369,7 +363,8 @@ function LayoutContent() {
 
   return (
     <div
-      className="rounded-radius-xl shadow-soft" style={{
+      className="rounded-radius-xl shadow-soft"
+      style={{
         background: "var(--glass-bg)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
@@ -380,12 +375,10 @@ function LayoutContent() {
       }}
     >
       {/* Top row: Layout (left) + Mode (right) */}
-      <div className="flex gap-4 mb-4">
+      <div className="mb-4 flex gap-4">
         {/* Layout presets */}
         <div className="flex-1">
-          <span
-            className="text-[10px] font-semibold uppercase tracking-wider mb-2 block text-text-muted"
-          >
+          <span className="text-text-muted mb-2 block text-[10px] font-semibold uppercase tracking-wider">
             Layout
           </span>
           <div className="grid grid-cols-2 gap-1.5">
@@ -395,7 +388,8 @@ function LayoutContent() {
                 <button
                   key={item.id}
                   onClick={() => setMode(item.mode)}
-                  className="flex items-center gap-2 px-3 py-2 text-[11px] font-medium cursor-pointer transition-all rounded-radius-md" style={{
+                  className="rounded-radius-md flex cursor-pointer items-center gap-2 px-3 py-2 text-[11px] font-medium transition-all"
+                  style={{
                     background: isActive ? "var(--color-accent)" : "transparent",
                     color: isActive ? "#fff" : "var(--color-text-secondary)",
                     border: isActive
@@ -411,7 +405,8 @@ function LayoutContent() {
             {/* Activity Log toggle */}
             <button
               onClick={() => setActivityTerminalOpen(!activityTerminalOpen)}
-              className="flex items-center gap-2 px-3 py-2 text-[11px] font-medium cursor-pointer transition-all col-span-2 rounded-radius-md" style={{
+              className="rounded-radius-md col-span-2 flex cursor-pointer items-center gap-2 px-3 py-2 text-[11px] font-medium transition-all"
+              style={{
                 background: activityTerminalOpen
                   ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
                   : "transparent",
@@ -429,9 +424,7 @@ function LayoutContent() {
 
         {/* Mode toggle */}
         <div style={{ width: 120 }}>
-          <span
-            className="text-[10px] font-semibold uppercase tracking-wider mb-2 block text-text-muted"
-          >
+          <span className="text-text-muted mb-2 block text-[10px] font-semibold uppercase tracking-wider">
             Mode
           </span>
           <div className="flex flex-col gap-1">
@@ -445,7 +438,8 @@ function LayoutContent() {
                 <button
                   key={m.id}
                   onClick={() => handleThemeMode(m.id)}
-                  className="flex items-center gap-2 px-3 py-2 text-[11px] font-medium cursor-pointer transition-all rounded-radius-md" style={{
+                  className="rounded-radius-md flex cursor-pointer items-center gap-2 px-3 py-2 text-[11px] font-medium transition-all"
+                  style={{
                     background: isActive ? "var(--color-accent)" : "transparent",
                     color: isActive ? "#fff" : "var(--color-text-secondary)",
                     border: isActive
@@ -467,9 +461,7 @@ function LayoutContent() {
 
       {/* Theme palette row */}
       <div>
-        <span
-          className="text-[10px] font-semibold uppercase tracking-wider mb-2 block text-text-muted"
-        >
+        <span className="text-text-muted mb-2 block text-[10px] font-semibold uppercase tracking-wider">
           Theme
         </span>
         <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
@@ -480,13 +472,14 @@ function LayoutContent() {
               <button
                 key={t.id}
                 onClick={() => handleSelectTheme(t.id)}
-                className="flex flex-col items-center gap-1.5 cursor-pointer transition-all shrink-0"
+                className="flex shrink-0 cursor-pointer flex-col items-center gap-1.5 transition-all"
                 style={{ opacity: isActive ? 1 : 0.7 }}
                 title={t.name}
               >
                 {/* Color swatch */}
                 <div
-                  className="relative rounded-radius-md" style={{
+                  className="rounded-radius-md relative"
+                  style={{
                     width: 36,
                     height: 36,
                     background: colors.bgBase,
@@ -501,7 +494,8 @@ function LayoutContent() {
                 >
                   {/* Accent stripe */}
                   <div
-                    className="absolute" style={{
+                    className="absolute"
+                    style={{
                       bottom: 0,
                       left: 0,
                       right: 0,
@@ -510,7 +504,7 @@ function LayoutContent() {
                     }}
                   />
                   {/* Mini dots: success, danger */}
-                  <div className="flex gap-1 absolute top-1.5 left-1.5">
+                  <div className="absolute left-1.5 top-1.5 flex gap-1">
                     <div
                       style={{ width: 4, height: 4, borderRadius: 2, background: colors.success }}
                     />

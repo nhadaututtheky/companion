@@ -128,10 +128,11 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
   const currentViewport = VIEWPORTS.find((v) => v.id === viewport)!;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* Navigation bar */}
       <div
-        className="flex items-center gap-2 px-3 py-2 shrink-0 bg-bg-card" style={{
+        className="bg-bg-card flex shrink-0 items-center gap-2 px-3 py-2"
+        style={{
           borderBottom: "1px solid var(--glass-border)",
         }}
       >
@@ -140,7 +141,8 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
           <button
             onClick={goBack}
             disabled={historyIndex <= 0}
-            className="p-1.5 rounded cursor-pointer transition-colors disabled:opacity-30 text-text-secondary" style={{ background: "none", border: "none" }}
+            className="text-text-secondary cursor-pointer rounded p-1.5 transition-colors disabled:opacity-30"
+            style={{ background: "none", border: "none" }}
             aria-label="Back"
           >
             <ArrowLeft size={13} weight="bold" />
@@ -148,14 +150,16 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
           <button
             onClick={goForward}
             disabled={historyIndex >= history.length - 1}
-            className="p-1.5 rounded cursor-pointer transition-colors disabled:opacity-30 text-text-secondary" style={{ background: "none", border: "none" }}
+            className="text-text-secondary cursor-pointer rounded p-1.5 transition-colors disabled:opacity-30"
+            style={{ background: "none", border: "none" }}
             aria-label="Forward"
           >
             <ArrowRight size={13} weight="bold" />
           </button>
           <button
             onClick={refresh}
-            className="p-1.5 rounded cursor-pointer transition-colors text-text-secondary" style={{ background: "none", border: "none" }}
+            className="text-text-secondary cursor-pointer rounded p-1.5 transition-colors"
+            style={{ background: "none", border: "none" }}
             aria-label="Refresh"
           >
             <ArrowClockwise size={13} weight="bold" />
@@ -163,17 +167,15 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
         </div>
 
         {/* URL bar */}
-        <form onSubmit={handleSubmit} className="flex-1 flex items-center">
-          <div
-            className="flex items-center gap-1.5 flex-1 px-2.5 py-1.5 rounded-lg bg-bg-elevated border border-border"
-          >
+        <form onSubmit={handleSubmit} className="flex flex-1 items-center">
+          <div className="bg-bg-elevated border-border flex flex-1 items-center gap-1.5 rounded-lg border px-2.5 py-1.5">
             <Globe size={12} className="text-text-muted shrink-0" />
             <input
               type="text"
               value={inputUrl}
               onChange={(e) => setInputUrl(e.target.value)}
               placeholder="http://localhost:3000"
-              className="flex-1 text-xs outline-none bg-transparent font-mono"
+              className="flex-1 bg-transparent font-mono text-xs outline-none"
             />
             {loading && <span className="text-xs">...</span>}
           </div>
@@ -186,7 +188,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
             <button
               key={vp.id}
               onClick={() => setViewport(vp.id as typeof viewport)}
-              className="p-1.5 rounded cursor-pointer transition-colors"
+              className="cursor-pointer rounded p-1.5 transition-colors"
               style={{
                 color: viewport === vp.id ? "var(--color-accent)" : "var(--color-text-muted)",
                 background: viewport === vp.id ? "var(--color-accent-alpha)" : "none",
@@ -210,7 +212,8 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
 
           <button
             onClick={handleScreenshot}
-            className="p-1.5 rounded cursor-pointer transition-colors text-text-muted" style={{ background: "none", border: "none" }}
+            className="text-text-muted cursor-pointer rounded p-1.5 transition-colors"
+            style={{ background: "none", border: "none" }}
             aria-label="Screenshot"
             title="Screenshot"
           >
@@ -218,7 +221,8 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
           </button>
           <button
             onClick={openExternal}
-            className="p-1.5 rounded cursor-pointer transition-colors text-text-muted" style={{ background: "none", border: "none" }}
+            className="text-text-muted cursor-pointer rounded p-1.5 transition-colors"
+            style={{ background: "none", border: "none" }}
             aria-label="Open in browser"
             title="Open in browser"
           >
@@ -226,7 +230,8 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 rounded cursor-pointer transition-colors text-text-muted" style={{ background: "none", border: "none" }}
+            className="text-text-muted cursor-pointer rounded p-1.5 transition-colors"
+            style={{ background: "none", border: "none" }}
             aria-label="Close"
           >
             <X size={13} weight="bold" />
@@ -236,11 +241,12 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
 
       {/* Iframe container */}
       <div
-        className="flex-1 flex items-start justify-center overflow-auto"
+        className="flex flex-1 items-start justify-center overflow-auto"
         style={{ background: "var(--color-bg-elevated, #1a1a2e)" }}
       >
         <div
-          className="border border-border overflow-hidden" style={{
+          className="border-border overflow-hidden border"
+          style={{
             width: currentViewport.width,
             height: currentViewport.height,
             maxWidth: "100%",
@@ -259,7 +265,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
             <iframe
               ref={iframeRef}
               src={url}
-              className="w-full h-full"
+              className="h-full w-full"
               style={{
                 border: "none",
                 background: "#fff",
@@ -271,7 +277,7 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
               title="Browser Preview"
             />
           ) : (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex h-full items-center justify-center">
               <span className="text-sm">Enter a URL to preview</span>
             </div>
           )}
@@ -280,18 +286,15 @@ export function BrowserPreviewPanel({ initialUrl = "", onClose }: BrowserPreview
 
       {/* Bottom status bar */}
       <div
-        className="flex items-center justify-between px-3 py-1 shrink-0 bg-bg-elevated" style={{
+        className="bg-bg-elevated flex shrink-0 items-center justify-between px-3 py-1"
+        style={{
           borderTop: "1px solid var(--glass-border)",
         }}
       >
-        <span
-          className="text-xs font-mono truncate text-text-muted" style={{ fontSize: 10 }}
-        >
+        <span className="text-text-muted truncate font-mono text-xs" style={{ fontSize: 10 }}>
           {url}
         </span>
-        <span
-          className="text-xs shrink-0 text-text-muted" style={{ fontSize: 10 }}
-        >
+        <span className="text-text-muted shrink-0 text-xs" style={{ fontSize: 10 }}>
           {viewport !== "desktop" && `${currentViewport.width} × ${currentViewport.height}`}
         </span>
       </div>

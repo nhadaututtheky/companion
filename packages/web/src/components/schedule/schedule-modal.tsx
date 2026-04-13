@@ -118,7 +118,8 @@ export function ScheduleModal() {
 
       {/* Modal */}
       <div
-        className="bg-bg-card rounded-radius-xl shadow-soft border border-glass-border overflow-hidden flex" style={{
+        className="bg-bg-card rounded-radius-xl shadow-soft border-glass-border flex overflow-hidden border"
+        style={{
           position: "fixed",
           top: "50%",
           left: "50%",
@@ -128,19 +129,17 @@ export function ScheduleModal() {
           zIndex: Z.overlayContent,
           boxShadow: "0 24px 64px rgba(0,0,0,0.3)",
           flexDirection: "column",
-          }}
+        }}
       >
         {/* Header */}
         <div
-          className="px-5 py-3 flex items-center justify-between flex-shrink-0"
+          className="flex flex-shrink-0 items-center justify-between px-5 py-3"
           style={{ borderBottom: "1px solid var(--glass-border)" }}
         >
           <div className="flex items-center gap-2">
             <Timer size={18} weight="bold" style={{ color: "#4285F4" }} />
             <h2 className="text-sm font-semibold">Schedules</h2>
-            <span
-              className="text-xs px-2 py-0.5 rounded-full text-text-muted bg-bg-elevated"
-            >
+            <span className="text-text-muted bg-bg-elevated rounded-full px-2 py-0.5 text-xs">
               {activeCount} active
             </span>
           </div>
@@ -150,7 +149,7 @@ export function ScheduleModal() {
                 setEditingSchedule(null);
                 setFormOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
               style={{ background: "#4285F4", color: "#fff" }}
             >
               <Plus size={12} weight="bold" />
@@ -158,7 +157,7 @@ export function ScheduleModal() {
             </button>
             <button
               onClick={() => setOpen(false)}
-              className="p-1.5 rounded-lg cursor-pointer transition-colors text-text-muted"
+              className="text-text-muted cursor-pointer rounded-lg p-1.5 transition-colors"
               aria-label="Close schedules"
             >
               <X size={16} weight="bold" />
@@ -195,10 +194,8 @@ export function ScheduleModal() {
                 <ScheduleCalendar upcoming={upcoming} />
 
                 {upcoming.length > 0 && (
-                  <div
-                    className="rounded-xl p-3 bg-bg-elevated shadow-soft border border-glass-border"
-                  >
-                    <div className="flex items-center gap-1.5 mb-2">
+                  <div className="bg-bg-elevated shadow-soft border-glass-border rounded-xl border p-3">
+                    <div className="mb-2 flex items-center gap-1.5">
                       <CalendarBlank size={12} style={{ color: "#4285F4" }} />
                       <span className="text-xs font-semibold">Upcoming</span>
                     </div>
@@ -208,9 +205,10 @@ export function ScheduleModal() {
                           key={`${run.scheduleId}-${i}`}
                           className="flex items-center justify-between"
                         >
-                          <span className="text-xs truncate max-w-32">{run.name}</span>
+                          <span className="max-w-32 truncate text-xs">{run.name}</span>
                           <span
-                            className="text-xs font-mono text-text-muted" style={{ fontSize: 10 }}
+                            className="text-text-muted font-mono text-xs"
+                            style={{ fontSize: 10 }}
                           >
                             {new Date(run.nextRunAt).toLocaleDateString("en-US", {
                               month: "short",

@@ -13,7 +13,7 @@ const CodeViewer = dynamic(() => import("./code-viewer").then((m) => ({ default:
 
 function CodeViewerFallback() {
   return (
-    <div className="flex items-center justify-center h-32">
+    <div className="flex h-32 items-center justify-center">
       <span className="text-xs">Loading editor...</span>
     </div>
   );
@@ -69,23 +69,25 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
 
   return (
     <div
-      className="flex flex-col h-full bg-bg-base" style={{
+      className="bg-bg-base flex h-full flex-col"
+      style={{
         borderLeft: "1px solid var(--color-border)",
       }}
     >
       {/* Header */}
       <div
-        className="flex items-center justify-between px-3 py-2 shrink-0 bg-bg-elevated" style={{
+        className="bg-bg-elevated flex shrink-0 items-center justify-between px-3 py-2"
+        style={{
           borderBottom: "1px solid var(--color-border)",
         }}
       >
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-xs font-mono font-semibold truncate" title={filePath}>
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="truncate font-mono text-xs font-semibold" title={filePath}>
             {fileName}
           </span>
           {isMarkdown && (
             <span
-              className="text-xs px-1.5 py-0.5 rounded"
+              className="rounded px-1.5 py-0.5 text-xs"
               style={{
                 background: "#4285F420",
                 color: "#4285F4",
@@ -96,11 +98,11 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex shrink-0 items-center gap-1">
           <button
             onClick={handleSendToAI}
             disabled={!content}
-            className="p-1 rounded cursor-pointer transition-colors hover:brightness-125"
+            className="cursor-pointer rounded p-1 transition-colors hover:brightness-125"
             style={{ color: "#34A853" }}
             aria-label="Send to AI"
             title="Send to AI"
@@ -110,7 +112,7 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
           <button
             onClick={handleCopy}
             disabled={!content}
-            className="p-1 rounded cursor-pointer transition-colors"
+            className="cursor-pointer rounded p-1 transition-colors"
             style={{ color: copied ? "#34A853" : "var(--color-text-muted)" }}
             aria-label="Copy file contents"
           >
@@ -118,7 +120,7 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
           </button>
           <button
             onClick={onClose}
-            className="p-1 rounded cursor-pointer transition-colors"
+            className="cursor-pointer rounded p-1 transition-colors"
             aria-label="Close file viewer"
           >
             <X size={14} weight="bold" />
@@ -129,13 +131,13 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
       {/* Content */}
       <div className="flex-1 overflow-auto px-3 py-3">
         {loading && (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex h-full items-center justify-center">
             <span className="text-xs">Loading...</span>
           </div>
         )}
         {error && (
           <div
-            className="text-xs p-3 rounded-lg"
+            className="rounded-lg p-3 text-xs"
             style={{
               background: "#EA433510",
               border: "1px solid #EA433530",
@@ -156,12 +158,14 @@ export function FileViewer({ filePath, fileName, onClose }: FileViewerProps) {
 
       {/* Footer — file path */}
       <div
-        className="px-3 py-1.5 shrink-0 bg-bg-elevated" style={{
+        className="bg-bg-elevated shrink-0 px-3 py-1.5"
+        style={{
           borderTop: "1px solid var(--color-border)",
-          }}
+        }}
       >
         <span
-          className="text-xs font-mono truncate block text-text-muted" style={{ fontSize: 10 }}
+          className="text-text-muted block truncate font-mono text-xs"
+          style={{ fontSize: 10 }}
           title={filePath}
         >
           {filePath}

@@ -33,7 +33,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="absolute top-2 right-2 p-1 rounded cursor-pointer transition-opacity opacity-0 group-hover:opacity-100"
+      className="absolute right-2 top-2 cursor-pointer rounded p-1 opacity-0 transition-opacity group-hover:opacity-100"
       style={{
         background: "rgba(255,255,255,0.1)",
         color: copied ? "#34A853" : "rgba(255,255,255,0.6)",
@@ -78,14 +78,16 @@ function CommentInput({
       }}
     >
       <div
-        className="rounded-lg shadow-lg overflow-hidden bg-bg-elevated" style={{
+        className="bg-bg-elevated overflow-hidden rounded-lg shadow-lg"
+        style={{
           width: 340,
-          }}
+        }}
       >
         {/* Selected text preview */}
         {popup.selectedText && (
           <div
-            className="px-3 py-2 text-xs text-text-secondary" style={{
+            className="text-text-secondary px-3 py-2 text-xs"
+            style={{
               background: "rgba(66,133,244,0.08)",
               borderBottom: "1px solid var(--color-border)",
               fontStyle: "italic",
@@ -97,7 +99,7 @@ function CommentInput({
         )}
 
         {/* Comment input */}
-        <div className="p-2 flex gap-2 items-end">
+        <div className="flex items-end gap-2 p-2">
           <textarea
             ref={inputRef}
             value={text}
@@ -108,13 +110,13 @@ function CommentInput({
             }}
             placeholder="Add comment..."
             rows={2}
-            className="flex-1 resize-none rounded px-2 py-1.5 text-sm outline-none text-text-primary bg-bg-card border border-border"
+            className="text-text-primary bg-bg-card border-border flex-1 resize-none rounded border px-2 py-1.5 text-sm outline-none"
           />
           <div className="flex flex-col gap-1">
             <button
               onClick={handleSubmit}
               disabled={!text.trim()}
-              className="p-1.5 rounded cursor-pointer transition-colors"
+              className="cursor-pointer rounded p-1.5 transition-colors"
               style={{
                 background: text.trim() ? "#4285F4" : "transparent",
                 color: text.trim() ? "#fff" : "var(--color-text-secondary)",
@@ -125,7 +127,7 @@ function CommentInput({
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded cursor-pointer transition-colors text-text-secondary"
+              className="text-text-secondary cursor-pointer rounded p-1.5 transition-colors"
               aria-label="Cancel"
             >
               <X size={16} />
@@ -133,9 +135,7 @@ function CommentInput({
           </div>
         </div>
 
-        <div
-          className="px-3 py-1 text-xs text-text-secondary" style={{ opacity: 0.6 }}
-        >
+        <div className="text-text-secondary px-3 py-1 text-xs" style={{ opacity: 0.6 }}>
           Ctrl+Enter to submit
         </div>
       </div>
@@ -269,10 +269,11 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
     <div ref={containerRef} className="relative">
       {/* Toolbar hint */}
       <div
-        className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg text-xs text-text-secondary" style={{
+        className="text-text-secondary mb-4 flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
+        style={{
           background: "rgba(66,133,244,0.06)",
           border: "1px solid rgba(66,133,244,0.15)",
-          }}
+        }}
       >
         <ChatText size={14} weight="duotone" style={{ color: "#4285F4" }} />
         Select text to add inline comments. Agents will see your comments in the file.
@@ -298,23 +299,24 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
                   <LineBlock
                     node={node as unknown as AstNode}
                     tag="div"
-                    className="relative group my-3 rounded-lg overflow-hidden"
+                    className="group relative my-3 overflow-hidden rounded-lg"
                   >
                     {lang && (
                       <div
-                        className="px-3 py-1 text-xs font-mono"
+                        className="px-3 py-1 font-mono text-xs"
                         style={{ background: "#2d2d2d", color: "#999" }}
                       >
                         {lang}
                       </div>
                     )}
                     <pre
-                      className="overflow-auto p-3 m-0 font-mono" style={{
+                      className="m-0 overflow-auto p-3 font-mono"
+                      style={{
                         background: "#1e1e1e",
                         color: "#d4d4d4",
                         fontSize: 14,
                         lineHeight: 1.55,
-                        }}
+                      }}
                     >
                       <code {...props}>{codeText}</code>
                     </pre>
@@ -325,11 +327,12 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
 
               return (
                 <code
-                  className="bg-bg-elevated border border-border font-mono" style={{
+                  className="bg-bg-elevated border-border border font-mono"
+                  style={{
                     borderRadius: 4,
                     padding: "1px 5px",
                     fontSize: "0.9em",
-                    }}
+                  }}
                   {...props}
                 >
                   {children}
@@ -343,7 +346,7 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
                 <LineBlock
                   node={node as unknown as AstNode}
                   tag="div"
-                  className="overflow-x-auto my-3"
+                  className="my-3 overflow-x-auto"
                   style={{ maxWidth: "100%" }}
                 >
                   <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "inherit" }}>
@@ -355,7 +358,8 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
             thead({ children }) {
               return (
                 <thead
-                  className="bg-bg-elevated" style={{
+                  className="bg-bg-elevated"
+                  style={{
                     borderBottom: "2px solid var(--color-border)",
                   }}
                 >
@@ -366,9 +370,10 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
             th({ children }) {
               return (
                 <th
-                  className="text-left text-text-primary whitespace-nowrap font-semibold" style={{
+                  className="text-text-primary whitespace-nowrap text-left font-semibold"
+                  style={{
                     padding: "8px 14px",
-                    }}
+                  }}
                 >
                   {children}
                 </th>
@@ -377,10 +382,11 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
             td({ children }) {
               return (
                 <td
-                  className="text-text-primary" style={{
+                  className="text-text-primary"
+                  style={{
                     padding: "8px 14px",
                     borderBottom: "1px solid var(--color-border)",
-                    }}
+                  }}
                 >
                   {children}
                 </td>
@@ -463,10 +469,11 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
                 <LineBlock
                   node={node as unknown as AstNode}
                   tag="h1"
-                  className="text-text-primary font-bold" style={{
+                  className="text-text-primary font-bold"
+                  style={{
                     fontSize: 24,
                     margin: "20px 0 8px",
-                    }}
+                  }}
                 >
                   {children}
                 </LineBlock>
@@ -477,12 +484,13 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
                 <LineBlock
                   node={node as unknown as AstNode}
                   tag="h2"
-                  className="text-text-primary font-semibold" style={{
+                  className="text-text-primary font-semibold"
+                  style={{
                     fontSize: 20,
                     margin: "18px 0 6px",
                     paddingBottom: 6,
                     borderBottom: "1px solid var(--color-border)",
-                    }}
+                  }}
                 >
                   {children}
                 </LineBlock>
@@ -493,10 +501,11 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
                 <LineBlock
                   node={node as unknown as AstNode}
                   tag="h3"
-                  className="text-text-primary font-semibold" style={{
+                  className="text-text-primary font-semibold"
+                  style={{
                     fontSize: 17,
                     margin: "14px 0 4px",
-                    }}
+                  }}
                 >
                   {children}
                 </LineBlock>
@@ -507,10 +516,11 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
                 <LineBlock
                   node={node as unknown as AstNode}
                   tag="h4"
-                  className="text-text-primary font-semibold" style={{
+                  className="text-text-primary font-semibold"
+                  style={{
                     fontSize: 15,
                     margin: "12px 0 4px",
-                    }}
+                  }}
                 >
                   {children}
                 </LineBlock>
@@ -519,11 +529,7 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
 
             // ── Inline ───────────────────────────────────────
             strong({ children }) {
-              return (
-                <strong className="text-text-primary font-semibold">
-                  {children}
-                </strong>
-              );
+              return <strong className="text-text-primary font-semibold">{children}</strong>;
             },
             a({ href, children }) {
               return (

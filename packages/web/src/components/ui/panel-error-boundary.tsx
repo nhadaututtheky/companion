@@ -45,11 +45,12 @@ export class PanelErrorBoundary extends Component<
 
     return (
       <div
-        className="flex flex-col items-center justify-center gap-3 p-6 bg-bg-elevated border border-border" style={{
+        className="bg-bg-elevated border-border flex flex-col items-center justify-center gap-3 border p-6"
+        style={{
           height: "100%",
           minHeight: 120,
           borderRadius: "var(--radius-lg, 8px)",
-          }}
+        }}
       >
         <WarningCircle
           size={28}
@@ -57,19 +58,13 @@ export class PanelErrorBoundary extends Component<
           style={{ color: "var(--color-warning, #FBBC04)" }}
           aria-hidden="true"
         />
-        <p
-          className="text-sm font-medium text-center text-text-primary"
-        >
-          {name} crashed
-        </p>
-        <p
-          className="text-xs text-center text-text-muted" style={{ maxWidth: 280 }}
-        >
+        <p className="text-text-primary text-center text-sm font-medium">{name} crashed</p>
+        <p className="text-text-muted text-center text-xs" style={{ maxWidth: 280 }}>
           {this.state.error?.message ?? "An unexpected error occurred."}
         </p>
         <button
           onClick={this.handleRetry}
-          className="shadow-soft inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors text-text-primary bg-bg-card"
+          className="shadow-soft text-text-primary bg-bg-card inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
         >
           <ArrowClockwise size={12} weight="bold" aria-hidden="true" />
           Retry

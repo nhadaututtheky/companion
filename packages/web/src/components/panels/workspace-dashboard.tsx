@@ -89,7 +89,7 @@ function CliCard({
 
   return (
     <div
-      className="flex flex-col gap-2 p-3 rounded-xl"
+      className="flex flex-col gap-2 rounded-xl p-3"
       style={{
         background: isActive
           ? `color-mix(in srgb, ${color} 6%, var(--color-bg-elevated))`
@@ -99,17 +99,18 @@ function CliCard({
     >
       <div className="flex items-center gap-2">
         <span
-          className="rounded-full shrink-0" style={{
+          className="shrink-0 rounded-full"
+          style={{
             width: 8,
             height: 8,
             background: dotColor,
-            }}
+          }}
         />
-        <span className="text-xs font-bold flex-1 truncate" style={{ color }}>
+        <span className="flex-1 truncate text-xs font-bold" style={{ color }}>
           {CLI_LABELS[cli.platform]}
         </span>
         <span
-          className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+          className="rounded px-1.5 py-0.5 text-[10px] font-medium"
           style={{
             background: isActive
               ? `color-mix(in srgb, ${color} 15%, transparent)`
@@ -125,39 +126,31 @@ function CliCard({
         <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
           <div>
             <span className="text-text-muted">Cost</span>
-            <div className="font-mono font-bold text-text-primary">
+            <div className="text-text-primary font-mono font-bold">
               {fmtCost(session.totalCostUsd)}
             </div>
           </div>
           <div>
             <span className="text-text-muted">Turns</span>
-            <div className="font-mono font-bold text-text-primary">
-              {session.numTurns}
-            </div>
+            <div className="text-text-primary font-mono font-bold">{session.numTurns}</div>
           </div>
           <div>
             <span className="text-text-muted">Uptime</span>
-            <div className="font-mono font-bold text-text-primary">
+            <div className="text-text-primary font-mono font-bold">
               {fmtUptime(session.createdAt)}
             </div>
           </div>
           <div>
             <span className="text-text-muted">Model</span>
-            <div className="font-bold truncate text-text-primary">
+            <div className="text-text-primary truncate font-bold">
               {session.model.replace("claude-", "").replace("-latest", "")}
             </div>
           </div>
         </div>
       ) : (
         <div className="flex items-center gap-1.5 py-1">
-          <Plugs
-            size={10}
-            weight="regular"
-            className="text-text-muted opacity-50"
-          />
-          <span className="text-[10px] text-text-muted">
-            Not connected
-          </span>
+          <Plugs size={10} weight="regular" className="text-text-muted opacity-50" />
+          <span className="text-text-muted text-[10px]">Not connected</span>
         </div>
       )}
     </div>
@@ -217,7 +210,8 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
   if (!activeWorkspaceId) {
     return (
       <div
-        className="flex flex-col h-full items-center justify-center gap-3 text-text-muted" style={{ background: "var(--color-bg-card)" }}
+        className="text-text-muted flex h-full flex-col items-center justify-center gap-3"
+        style={{ background: "var(--color-bg-card)" }}
       >
         <SquaresFour size={32} weight="duotone" />
         <span className="text-sm">Select a workspace</span>
@@ -227,11 +221,12 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
 
   return (
     <div
-      className="flex flex-col h-full text-text-primary" style={{ background: "var(--color-bg-card)" }}
+      className="text-text-primary flex h-full flex-col"
+      style={{ background: "var(--color-bg-card)" }}
     >
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+        className="flex flex-shrink-0 items-center justify-between px-4 py-3"
         style={{ borderBottom: "1px solid var(--glass-border)" }}
       >
         <div className="flex items-center gap-2">
@@ -241,14 +236,14 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
         <div className="flex items-center gap-1">
           <button
             onClick={() => activeWorkspaceId && fetchWorkspaceDetail(activeWorkspaceId)}
-            className="p-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
+            className="cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-[var(--color-bg-elevated)]"
             aria-label="Refresh workspace"
           >
             <ArrowsClockwise size={14} weight="bold" className="text-text-muted" />
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
+            className="cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-[var(--color-bg-elevated)]"
             aria-label="Close workspace panel"
           >
             <X size={14} weight="bold" className="text-text-muted" />
@@ -257,32 +252,23 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-4">
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 py-3">
         {detailLoading && !detail ? (
           <div className="flex items-center justify-center py-8">
-            <CircleNotch
-              size={20}
-              className="animate-spin text-text-muted"
-            />
+            <CircleNotch size={20} className="text-text-muted animate-spin" />
           </div>
         ) : detail ? (
           <>
             {/* Cost summary */}
-            <div
-              className="flex items-center gap-3 px-3 py-2 rounded-lg bg-bg-elevated"
-            >
+            <div className="bg-bg-elevated flex items-center gap-3 rounded-lg px-3 py-2">
               <Lightning size={14} weight="bold" style={{ color: "#f59e0b" }} />
-              <span className="text-xs text-text-secondary">
-                Total workspace cost
-              </span>
-              <span className="ml-auto text-sm font-mono font-bold">{fmtCost(totalCost)}</span>
+              <span className="text-text-secondary text-xs">Total workspace cost</span>
+              <span className="ml-auto font-mono text-sm font-bold">{fmtCost(totalCost)}</span>
             </div>
 
             {/* CLI Cards */}
             <div>
-              <span
-                className="text-[10px] font-semibold uppercase tracking-wider mb-2 block text-text-muted"
-              >
+              <span className="text-text-muted mb-2 block text-[10px] font-semibold uppercase tracking-wider">
                 CLI Agents
               </span>
               <div className="grid grid-cols-2 gap-2">
@@ -299,16 +285,14 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
             {/* Recent sessions */}
             {recentActivity.length > 0 && (
               <div>
-                <span
-                  className="text-[10px] font-semibold uppercase tracking-wider mb-2 block text-text-muted"
-                >
+                <span className="text-text-muted mb-2 block text-[10px] font-semibold uppercase tracking-wider">
                   Active Sessions
                 </span>
                 <div className="flex flex-col gap-1">
                   {recentActivity.map((s) => (
                     <div
                       key={s.id}
-                      className="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs bg-bg-elevated"
+                      className="bg-bg-elevated flex items-center gap-2 rounded-md px-2 py-1.5 text-xs"
                     >
                       <PlugsConnected
                         size={10}
@@ -316,9 +300,7 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
                         className="text-text-muted shrink-0"
                       />
                       <span className="flex-1 truncate">{s.model.replace("claude-", "")}</span>
-                      <span
-                        className="font-mono text-[10px] text-text-muted"
-                      >
+                      <span className="text-text-muted font-mono text-[10px]">
                         {s.numTurns}t · {fmtCost(s.totalCostUsd)}
                       </span>
                     </div>
@@ -328,9 +310,7 @@ export function WorkspaceDashboard({ onClose, sessions }: WorkspaceDashboardProp
             )}
           </>
         ) : (
-          <div className="text-center py-8 text-xs text-text-muted">
-            Workspace not found
-          </div>
+          <div className="text-text-muted py-8 text-center text-xs">Workspace not found</div>
         )}
       </div>
     </div>

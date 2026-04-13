@@ -33,9 +33,7 @@ const STEP_STATUS_ICON: Record<string, React.ReactNode> = {
   ),
   completed: <CheckCircle size={16} weight="fill" style={{ color: "#34a853" }} />,
   failed: <XCircle size={16} weight="fill" style={{ color: "#ea4335" }} />,
-  skipped: (
-    <Clock size={16} weight="light" className="text-text-muted" style={{ opacity: 0.4 }} />
-  ),
+  skipped: <Clock size={16} weight="light" className="text-text-muted" style={{ opacity: 0.4 }} />,
 };
 
 const STEP_STATUS_COLOR: Record<string, string> = {
@@ -91,14 +89,13 @@ export function WorkflowPageClient({ params }: PageProps) {
 
   if (loading) {
     return (
-      <div
-        className="flex flex-col bg-bg-base" style={{ height: "100vh" }}
-      >
+      <div className="bg-bg-base flex flex-col" style={{ height: "100vh" }}>
         <Header />
-        <div className="flex justify-center items-center flex-1">
+        <div className="flex flex-1 items-center justify-center">
           <CircleNotch
             size={28}
-            className="text-text-muted" style={{ animation: "spin 1s linear infinite" }}
+            className="text-text-muted"
+            style={{ animation: "spin 1s linear infinite" }}
           />
         </div>
       </div>
@@ -107,11 +104,9 @@ export function WorkflowPageClient({ params }: PageProps) {
 
   if (!workflow || !workflow.workflowState) {
     return (
-      <div
-        className="flex flex-col bg-bg-base" style={{ height: "100vh" }}
-      >
+      <div className="bg-bg-base flex flex-col" style={{ height: "100vh" }}>
         <Header />
-        <div className="flex flex-col items-center justify-center flex-1 gap-3">
+        <div className="flex flex-1 flex-col items-center justify-center gap-3">
           <XCircle size={32} weight="light" />
           <p>Workflow not found</p>
           <Link href="/workflows" className="text-sm">
@@ -126,15 +121,15 @@ export function WorkflowPageClient({ params }: PageProps) {
   const isActive = workflow.status === "active";
 
   return (
-    <div className="flex flex-col bg-bg-base" style={{ height: "100vh" }}>
+    <div className="bg-bg-base flex flex-col" style={{ height: "100vh" }}>
       <Header />
       <div
         className="flex-1 overflow-auto"
         style={{ padding: "24px 32px", maxWidth: 800, margin: "0 auto", width: "100%" }}
       >
         {/* Back + Title */}
-        <div className="flex items-center gap-3 mb-6">
-          <Link href="/workflows" className="p-1.5 rounded-lg cursor-pointer" aria-label="Back">
+        <div className="mb-6 flex items-center gap-3">
+          <Link href="/workflows" className="cursor-pointer rounded-lg p-1.5" aria-label="Back">
             <ArrowLeft size={18} weight="bold" />
           </Link>
           <Lightning size={20} weight="bold" />
@@ -148,7 +143,7 @@ export function WorkflowPageClient({ params }: PageProps) {
           {isActive && (
             <button
               onClick={handleCancel}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm cursor-pointer"
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm"
               style={{ background: "#ea433520", color: "#ea4335", border: "1px solid #ea433540" }}
             >
               <Stop size={14} weight="fill" />
@@ -157,7 +152,8 @@ export function WorkflowPageClient({ params }: PageProps) {
           )}
           <button
             onClick={load}
-            className="p-2 rounded-lg cursor-pointer text-text-muted" style={{ background: "none", border: "none" }}
+            className="text-text-muted cursor-pointer rounded-lg p-2"
+            style={{ background: "none", border: "none" }}
             aria-label="Refresh"
           >
             <ArrowClockwise size={16} />
@@ -165,19 +161,15 @@ export function WorkflowPageClient({ params }: PageProps) {
         </div>
 
         {/* Pipeline visualization */}
-        <div
-          className="shadow-soft rounded-xl p-5 mb-6 bg-bg-card"
-        >
+        <div className="shadow-soft bg-bg-card mb-6 rounded-xl p-5">
           <div className="flex items-center gap-0">
             {state.steps.map((step, i) => (
               <div key={i} className="flex items-center" style={{ flex: 1 }}>
                 {/* Step node */}
-                <div
-                  className="flex flex-col items-center relative" style={{ flex: 1 }}
-                >
+                <div className="relative flex flex-col items-center" style={{ flex: 1 }}>
                   {/* Circle */}
                   <div
-                    className="flex items-center justify-center rounded-full mb-2"
+                    className="mb-2 flex items-center justify-center rounded-full"
                     style={{
                       width: 40,
                       height: 40,
@@ -191,16 +183,15 @@ export function WorkflowPageClient({ params }: PageProps) {
                     {STEP_STATUS_ICON[step.status]}
                   </div>
                   <span className="text-xs font-semibold">{step.role}</span>
-                  <span
-                    className="text-xs text-text-muted" style={{ fontSize: 10 }}
-                  >
+                  <span className="text-text-muted text-xs" style={{ fontSize: 10 }}>
                     {step.status}
                   </span>
                 </div>
                 {/* Arrow */}
                 {i < state.steps.length - 1 && (
                   <div
-                    className="shrink-0" style={{
+                    className="shrink-0"
+                    style={{
                       width: 32,
                       height: 2,
                       background:
@@ -221,11 +212,12 @@ export function WorkflowPageClient({ params }: PageProps) {
           {state.steps.map((step, i) => (
             <div
               key={i}
-              className="rounded-xl px-4 py-3 bg-bg-card" style={{
+              className="bg-bg-card rounded-xl px-4 py-3"
+              style={{
                 border: `1px solid ${step.status === "running" ? STEP_STATUS_COLOR.running + "60" : "var(--color-border)"}`,
               }}
             >
-              <div className="flex items-center gap-2 mb-1">
+              <div className="mb-1 flex items-center gap-2">
                 {STEP_STATUS_ICON[step.status]}
                 <span className="text-sm font-semibold">
                   Step {i + 1}: {step.role}
@@ -233,7 +225,8 @@ export function WorkflowPageClient({ params }: PageProps) {
                 {step.sessionId && (
                   <Link
                     href={`/sessions/${step.sessionId}`}
-                    className="text-xs font-mono text-accent" style={{ marginLeft: "auto" }}
+                    className="text-accent font-mono text-xs"
+                    style={{ marginLeft: "auto" }}
                   >
                     View session →
                   </Link>
@@ -248,7 +241,8 @@ export function WorkflowPageClient({ params }: PageProps) {
               )}
               {step.output && (
                 <div
-                  className="mt-2 text-xs rounded-lg p-3 text-text-secondary bg-bg-base whitespace-pre-wrap" style={{
+                  className="text-text-secondary bg-bg-base mt-2 whitespace-pre-wrap rounded-lg p-3 text-xs"
+                  style={{
                     maxHeight: 120,
                     overflow: "auto",
                     wordBreak: "break-word",
@@ -262,9 +256,7 @@ export function WorkflowPageClient({ params }: PageProps) {
         </div>
 
         {/* Summary card */}
-        <div
-          className="shadow-soft rounded-xl px-4 py-3 mt-4 bg-bg-card"
-        >
+        <div className="shadow-soft bg-bg-card mt-4 rounded-xl px-4 py-3">
           <div className="flex items-center gap-4 text-xs">
             <span>
               Cost: <strong className="font-mono">${state.totalCostUsd.toFixed(3)}</strong> / $

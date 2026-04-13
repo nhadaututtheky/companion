@@ -57,16 +57,15 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
       <div
-        className="shadow-float w-full max-w-sm flex flex-col gap-6 p-8 rounded-xl bg-bg-card" style={{
+        className="shadow-float bg-bg-card flex w-full max-w-sm flex-col gap-6 rounded-xl p-8"
+        style={{
           boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
         }}
       >
         {/* Logo + title */}
         <div className="flex flex-col items-center gap-2 text-center">
           <CompanionLogo size="lg" />
-          <p className="text-sm leading-relaxed text-text-secondary">
-            Enter your PIN to continue
-          </p>
+          <p className="text-text-secondary text-sm leading-relaxed">Enter your PIN to continue</p>
         </div>
 
         {/* Form */}
@@ -77,7 +76,7 @@ export default function LoginPage() {
             </label>
             <div className="relative flex items-center">
               <span
-                className="absolute left-3 flex items-center pointer-events-none"
+                className="pointer-events-none absolute left-3 flex items-center"
                 aria-hidden="true"
               >
                 <LockSimple size={15} />
@@ -93,7 +92,8 @@ export default function LoginPage() {
                 placeholder="Enter PIN"
                 autoComplete="current-password"
                 spellCheck={false}
-                className="w-full rounded-lg pl-9 pr-10 py-2.5 text-sm text-center tracking-widest input-bordered transition-colors bg-bg-elevated" style={{
+                className="input-bordered bg-bg-elevated w-full rounded-lg py-2.5 pl-9 pr-10 text-center text-sm tracking-widest transition-colors"
+                style={{
                   ...(error ? { borderColor: "var(--color-danger)" } : {}),
                   color: "var(--color-text-primary)",
                   fontFamily: "var(--font-mono)",
@@ -106,7 +106,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPin((v) => !v)}
-                className="absolute right-3 flex items-center cursor-pointer rounded p-0.5"
+                className="absolute right-3 flex cursor-pointer items-center rounded p-0.5"
                 aria-label={showPin ? "Hide PIN" : "Show PIN"}
               >
                 {showPin ? <EyeSlash size={15} /> : <Eye size={15} />}
@@ -115,7 +115,7 @@ export default function LoginPage() {
             {error && (
               <div
                 id="pin-error"
-                className="flex items-center gap-1.5 text-xs text-danger"
+                className="text-danger flex items-center gap-1.5 text-xs"
                 role="alert"
               >
                 <WarningCircle size={13} weight="fill" aria-hidden="true" />
@@ -127,7 +127,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading || !pin.trim()}
-            className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+            className="flex cursor-pointer items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
             style={{
               background: "var(--color-google-blue)",
               color: "#fff",
@@ -136,7 +136,7 @@ export default function LoginPage() {
             {loading ? (
               <>
                 <span
-                  className="inline-block w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin"
+                  className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white"
                   aria-hidden="true"
                 />
                 Verifying...
@@ -147,7 +147,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-xs text-text-muted">
+        <p className="text-text-muted text-center text-xs">
           Set your PIN in Settings. Remove it to disable authentication.
         </p>
       </div>

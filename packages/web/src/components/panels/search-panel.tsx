@@ -131,10 +131,10 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
   }, [query, glob, runSearch]);
 
   return (
-    <div className="flex flex-col h-full bg-bg-card">
+    <div className="bg-bg-card flex h-full flex-col">
       {/* Header */}
       <div
-        className="flex items-center gap-2 px-3 py-3 flex-shrink-0"
+        className="flex flex-shrink-0 items-center gap-2 px-3 py-3"
         style={{ borderBottom: "1px solid var(--glass-border)" }}
       >
         <MagnifyingGlass
@@ -143,10 +143,10 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
           className="text-accent shrink-0"
           aria-hidden="true"
         />
-        <span className="text-sm font-semibold flex-1">Search Files</span>
+        <span className="flex-1 text-sm font-semibold">Search Files</span>
         <button
           onClick={onClose}
-          className="p-1 rounded transition-colors cursor-pointer"
+          className="cursor-pointer rounded p-1 transition-colors"
           aria-label="Close search panel"
         >
           <X size={15} weight="bold" aria-hidden="true" />
@@ -155,7 +155,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
 
       {/* Inputs */}
       <div
-        className="flex flex-col gap-2 px-3 py-3 flex-shrink-0"
+        className="flex flex-shrink-0 flex-col gap-2 px-3 py-3"
         style={{ borderBottom: "1px solid var(--glass-border)" }}
       >
         {/* Query input */}
@@ -163,7 +163,8 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
           <MagnifyingGlass
             size={14}
             weight="regular"
-            className="text-text-muted absolute" style={{
+            className="text-text-muted absolute"
+            style={{
               left: 10,
               pointerEvents: "none",
             }}
@@ -175,7 +176,8 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search..."
-            className="shadow-soft w-full text-sm rounded-md text-text-primary bg-bg-elevated" style={{
+            className="shadow-soft text-text-primary bg-bg-elevated w-full rounded-md text-sm"
+            style={{
               padding: "6px 10px 6px 32px",
               outline: "none",
             }}
@@ -198,7 +200,8 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
           value={glob}
           onChange={(e) => setGlob(e.target.value)}
           placeholder="File filter: *.ts, *.tsx"
-          className="shadow-soft w-full text-xs rounded-md text-text-secondary bg-bg-elevated" style={{
+          className="shadow-soft text-text-secondary bg-bg-elevated w-full rounded-md text-xs"
+          style={{
             padding: "5px 10px",
             outline: "none",
           }}
@@ -218,7 +221,7 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
 
         {/* Error */}
         {!loading && error && (
-          <div className="flex flex-col items-center justify-center gap-2 py-8 px-4 text-center">
+          <div className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center">
             <WarningCircle size={24} weight="regular" aria-hidden="true" />
             <span className="text-sm">{error}</span>
           </div>
@@ -237,9 +240,10 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
           <>
             {/* Results count */}
             <div
-              className="flex items-center gap-1.5 px-3 py-2 text-xs flex-shrink-0 text-text-muted" style={{
+              className="text-text-muted flex flex-shrink-0 items-center gap-1.5 px-3 py-2 text-xs"
+              style={{
                 borderBottom: "1px solid var(--glass-border)",
-                }}
+              }}
             >
               <span>
                 {matches.length} result{matches.length !== 1 ? "s" : ""}
@@ -253,12 +257,12 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
                 <li key={`${match.file}:${match.line}:${idx}`}>
                   <button
                     onClick={() => onOpenFile(match.file)}
-                    className="w-full text-left px-3 py-2.5 transition-colors cursor-pointer hover:bg-[var(--color-bg-elevated)]"
+                    className="w-full cursor-pointer px-3 py-2.5 text-left transition-colors hover:bg-[var(--color-bg-elevated)]"
                     style={{ borderBottom: "1px solid var(--glass-border)" }}
                     aria-label={`Open ${fileBasename(match.file)} at line ${match.line}`}
                   >
                     {/* File + line */}
-                    <div className="flex items-center gap-1.5 mb-1 min-w-0">
+                    <div className="mb-1 flex min-w-0 items-center gap-1.5">
                       <FileText
                         size={12}
                         weight="regular"
@@ -266,16 +270,16 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
                         aria-hidden="true"
                       />
                       <span
-                        className="text-xs font-semibold truncate"
+                        className="truncate text-xs font-semibold"
                         title={fileRelative(match.file, searchRoot)}
                       >
                         {fileRelative(match.file, searchRoot)}
                       </span>
-                      <span className="text-xs flex-shrink-0 font-mono">:{match.line}</span>
+                      <span className="flex-shrink-0 font-mono text-xs">:{match.line}</span>
                     </div>
 
                     {/* Matching line text */}
-                    <div className="text-xs font-mono truncate" title={match.text.trim()}>
+                    <div className="truncate font-mono text-xs" title={match.text.trim()}>
                       <HighlightedText text={match.text.trim()} query={query} />
                     </div>
                   </button>
@@ -288,9 +292,10 @@ export function SearchPanel({ searchRoot, onOpenFile, onClose }: SearchPanelProp
 
       {/* Search root footer */}
       <div
-        className="flex items-center gap-1.5 px-3 py-2 flex-shrink-0 text-xs truncate text-text-muted" style={{
+        className="text-text-muted flex flex-shrink-0 items-center gap-1.5 truncate px-3 py-2 text-xs"
+        style={{
           borderTop: "1px solid var(--glass-border)",
-          }}
+        }}
         title={searchRoot}
       >
         <span className="truncate">{searchRoot || "No root set"}</span>

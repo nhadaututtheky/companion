@@ -102,17 +102,17 @@ export default function ErrorsPage() {
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
   return (
-    <div className="flex flex-col bg-bg-base" style={{ height: "100vh" }}>
+    <div className="bg-bg-base flex flex-col" style={{ height: "100vh" }}>
       <Header />
       <div
         className="flex-1 overflow-auto"
         style={{ padding: "24px 32px", maxWidth: 960, margin: "0 auto", width: "100%" }}
       >
         {/* Back + Title */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="mb-6 flex items-center gap-3">
           <Link
             href="/settings"
-            className="p-1.5 rounded-lg transition-colors cursor-pointer"
+            className="cursor-pointer rounded-lg p-1.5 transition-colors"
             aria-label="Back to settings"
           >
             <ArrowLeft size={18} weight="bold" />
@@ -123,7 +123,7 @@ export default function ErrorsPage() {
         </div>
 
         {/* Toolbar */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="mb-4 flex items-center gap-3">
           <div className="flex items-center gap-2" style={{ flex: 1 }}>
             <Funnel size={14} />
             <select
@@ -132,11 +132,12 @@ export default function ErrorsPage() {
                 setSourceFilter(e.target.value);
                 setOffset(0);
               }}
-              className="text-text-primary bg-bg-card border border-border cursor-pointer" style={{
+              className="text-text-primary bg-bg-card border-border cursor-pointer border"
+              style={{
                 borderRadius: 6,
                 padding: "4px 8px",
                 fontSize: 13,
-                }}
+              }}
               aria-label="Filter by source"
             >
               <option value="">All sources</option>
@@ -149,7 +150,7 @@ export default function ErrorsPage() {
 
           <button
             onClick={handleExport}
-            className="shadow-soft flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm cursor-pointer transition-colors text-text-secondary bg-bg-card"
+            className="shadow-soft text-text-secondary bg-bg-card flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors"
             aria-label="Export errors as JSON"
           >
             <DownloadSimple size={14} />
@@ -159,7 +160,8 @@ export default function ErrorsPage() {
           <button
             onClick={handleClear}
             disabled={total === 0}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm cursor-pointer transition-colors border border-border" style={{
+            className="border-border flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors"
+            style={{
               background: total > 0 ? "#ef444420" : "var(--color-bg-card)",
               color: total > 0 ? "#ef4444" : "var(--color-text-muted)",
               cursor: total === 0 ? "default" : "pointer",
@@ -176,37 +178,36 @@ export default function ErrorsPage() {
           <div className="flex justify-center py-12">
             <CircleNotch
               size={24}
-              className="text-text-secondary" style={{ animation: "spin 1s linear infinite" }}
+              className="text-text-secondary"
+              style={{ animation: "spin 1s linear infinite" }}
             />
           </div>
         ) : errors.length === 0 ? (
-          <div
-            className="shadow-soft text-center py-12 rounded-xl bg-bg-card"
-          >
+          <div className="shadow-soft bg-bg-card rounded-xl py-12 text-center">
             <Bug
               size={32}
               weight="light"
-              className="text-text-muted" style={{ margin: "0 auto 8px" }}
+              className="text-text-muted"
+              style={{ margin: "0 auto 8px" }}
             />
             <p className="text-sm">No errors recorded</p>
           </div>
         ) : (
-          <div
-            className="rounded-xl overflow-hidden border border-border"
-          >
+          <div className="border-border overflow-hidden rounded-xl border">
             {errors.map((err) => (
               <div
                 key={err.id}
-                className="cursor-pointer" style={{
+                className="cursor-pointer"
+                style={{
                   borderBottom: "1px solid var(--color-border)",
                   background: expandedId === err.id ? "var(--color-bg-card)" : "transparent",
-                  }}
+                }}
                 onClick={() => setExpandedId(expandedId === err.id ? null : err.id)}
               >
                 {/* Summary row */}
                 <div className="flex items-center gap-3 px-4 py-3">
                   <span
-                    className="text-xs font-mono font-bold px-2 py-0.5 rounded"
+                    className="rounded px-2 py-0.5 font-mono text-xs font-bold"
                     style={{
                       background: `${SOURCE_COLORS[err.source] ?? "#666"}20`,
                       color: SOURCE_COLORS[err.source] ?? "#666",
@@ -217,7 +218,7 @@ export default function ErrorsPage() {
                     {err.source}
                   </span>
                   <span
-                    className="text-xs font-bold px-1.5 py-0.5 rounded"
+                    className="rounded px-1.5 py-0.5 text-xs font-bold"
                     style={{
                       background: err.level === "fatal" ? "#ef444430" : "#f59e0b20",
                       color: err.level === "fatal" ? "#ef4444" : "#f59e0b",
@@ -226,13 +227,14 @@ export default function ErrorsPage() {
                     {err.level}
                   </span>
                   <span
-                    className="text-sm flex-1 truncate text-text-primary" style={{
+                    className="text-text-primary flex-1 truncate text-sm"
+                    style={{
                       fontFamily: "var(--font-mono, monospace)",
                     }}
                   >
                     {err.message}
                   </span>
-                  <span className="text-xs whitespace-nowrap">
+                  <span className="whitespace-nowrap text-xs">
                     {new Date(err.timestamp).toLocaleString(undefined, {
                       month: "short",
                       day: "numeric",
@@ -253,7 +255,8 @@ export default function ErrorsPage() {
                     )}
                     {err.stack && (
                       <pre
-                        className="text-text-secondary bg-bg-base border border-border whitespace-pre-wrap" style={{
+                        className="text-text-secondary bg-bg-base border-border whitespace-pre-wrap border"
+                        style={{
                           borderRadius: 6,
                           padding: 12,
                           overflow: "auto",
@@ -268,7 +271,8 @@ export default function ErrorsPage() {
                     )}
                     {err.context && (
                       <pre
-                        className="text-text-secondary bg-bg-base border border-border" style={{
+                        className="text-text-secondary bg-bg-base border-border border"
+                        style={{
                           borderRadius: 6,
                           padding: 12,
                           overflow: "auto",
@@ -291,7 +295,8 @@ export default function ErrorsPage() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div
-            className="flex items-center justify-center gap-3 py-4 text-text-secondary" style={{ fontSize: 13 }}
+            className="text-text-secondary flex items-center justify-center gap-3 py-4"
+            style={{ fontSize: 13 }}
           >
             <button
               disabled={currentPage <= 1}

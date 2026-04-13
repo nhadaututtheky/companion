@@ -106,7 +106,8 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
 
   return (
     <div
-      className="flex" style={{
+      className="flex"
+      style={{
         flexDirection: "column",
         height: "100%",
         background: "var(--bg-base)",
@@ -114,17 +115,19 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
     >
       {/* Header */}
       <div
-        className="shrink-0 flex" style={{
+        className="flex shrink-0"
+        style={{
           alignItems: "center",
           gap: 8,
           padding: "8px 12px",
           borderBottom: "1px solid var(--border-color)",
-          }}
+        }}
       >
         <ClockCounterClockwise
           size={16}
           weight="bold"
-          className="shrink-0" style={{ color: "var(--text-secondary)" }}
+          className="shrink-0"
+          style={{ color: "var(--text-secondary)" }}
         />
         <span className="font-semibold" style={{ fontSize: 13, color: "var(--text-primary)" }}>
           Prompt History
@@ -134,7 +137,8 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
         </span>
         <button
           onClick={onClose}
-          className="cursor-pointer" style={{
+          className="cursor-pointer"
+          style={{
             background: "none",
             border: "none",
             color: "var(--text-secondary)",
@@ -149,13 +153,15 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
 
       {/* Search */}
       <div
-        className="shrink-0" style={{
+        className="shrink-0"
+        style={{
           padding: "8px 12px",
           borderBottom: "1px solid var(--border-color)",
-          }}
+        }}
       >
         <div
-          className="flex" style={{
+          className="flex"
+          style={{
             alignItems: "center",
             gap: 6,
             background: "var(--bg-card)",
@@ -164,7 +170,11 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
             padding: "4px 8px",
           }}
         >
-          <MagnifyingGlass size={14} className="shrink-0" style={{ color: "var(--text-secondary)" }} />
+          <MagnifyingGlass
+            size={14}
+            className="shrink-0"
+            style={{ color: "var(--text-secondary)" }}
+          />
           <input
             ref={inputRef}
             type="text"
@@ -184,7 +194,8 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
           {query && (
             <button
               onClick={() => setQuery("")}
-              className="cursor-pointer" style={{
+              className="cursor-pointer"
+              style={{
                 background: "none",
                 border: "none",
                 color: "var(--text-secondary)",
@@ -209,7 +220,8 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
           </div>
         ) : prompts.length === 0 && hasSearched ? (
           <div
-            className="text-center" style={{
+            className="text-center"
+            style={{
               padding: 24,
               color: "var(--text-secondary)",
               fontSize: 13,
@@ -235,7 +247,8 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
             >
               {/* Meta row */}
               <div
-                className="flex" style={{
+                className="flex"
+                style={{
                   alignItems: "center",
                   gap: 6,
                   marginBottom: 4,
@@ -245,13 +258,14 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
               >
                 {!sessionId && p.sessionName && (
                   <span
-                    className="overflow-hidden whitespace-nowrap font-medium" style={{
+                    className="overflow-hidden whitespace-nowrap font-medium"
+                    style={{
                       background: "var(--bg-elevated, var(--bg-card))",
                       padding: "1px 6px",
                       borderRadius: 4,
                       maxWidth: 140,
                       textOverflow: "ellipsis",
-                      }}
+                    }}
                   >
                     {p.sessionName}
                   </span>
@@ -269,7 +283,8 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
 
               {/* Content */}
               <div
-                className="overflow-hidden whitespace-pre-wrap" style={{
+                className="overflow-hidden whitespace-pre-wrap"
+                style={{
                   fontSize: 13,
                   color: "var(--text-primary)",
                   lineHeight: 1.4,
@@ -285,7 +300,8 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
               <div className="flex" style={{ gap: 4, marginTop: 6 }}>
                 <button
                   onClick={() => handleCopy(p.content, p.id)}
-                  className="cursor-pointer flex" style={{
+                  className="flex cursor-pointer"
+                  style={{
                     alignItems: "center",
                     gap: 4,
                     background: "none",
@@ -304,7 +320,8 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
                 {onResend && (
                   <button
                     onClick={() => onResend(p.content)}
-                    className="cursor-pointer flex" style={{
+                    className="flex cursor-pointer"
+                    style={{
                       alignItems: "center",
                       gap: 4,
                       background: "none",
@@ -329,7 +346,8 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
       {/* Pagination */}
       {totalPages > 1 && (
         <div
-          className="shrink-0 flex" style={{
+          className="flex shrink-0"
+          style={{
             alignItems: "center",
             justifyContent: "center",
             gap: 8,
@@ -337,7 +355,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
             borderTop: "1px solid var(--border-color)",
             fontSize: 12,
             color: "var(--text-secondary)",
-            }}
+          }}
         >
           <button
             disabled={currentPage <= 1}

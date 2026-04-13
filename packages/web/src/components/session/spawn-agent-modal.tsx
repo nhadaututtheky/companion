@@ -111,7 +111,8 @@ export function SpawnAgentModal({
       }}
     >
       <div
-        className="flex flex-col gap-4 p-5 overflow-y-auto rounded-radius-xl shadow-soft border border-glass-border" style={{
+        className="rounded-radius-xl shadow-soft border-glass-border flex flex-col gap-4 overflow-y-auto border p-5"
+        style={{
           background: "var(--glass-bg-heavy)",
           backdropFilter: "blur(var(--glass-blur))",
           WebkitBackdropFilter: "blur(var(--glass-blur))",
@@ -124,13 +125,13 @@ export function SpawnAgentModal({
       >
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
             <Rocket size={16} weight="bold" className="text-accent" />
             Spawn Agent
           </h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-md cursor-pointer text-text-muted"
+            className="text-text-muted cursor-pointer rounded-md p-1"
             aria-label="Close"
           >
             <X size={14} weight="bold" />
@@ -139,9 +140,7 @@ export function SpawnAgentModal({
 
         {/* Quick Templates */}
         <div className="flex flex-col gap-1.5">
-          <label
-            className="text-xs font-medium flex items-center gap-1 text-text-secondary"
-          >
+          <label className="text-text-secondary flex items-center gap-1 text-xs font-medium">
             <Lightning size={12} weight="bold" /> Quick Templates
           </label>
           <div className="grid grid-cols-2 gap-1.5">
@@ -150,12 +149,12 @@ export function SpawnAgentModal({
                 key={t.id}
                 onClick={() => handleSpawnTemplate(t.id)}
                 disabled={!!spawningTemplate}
-                className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs cursor-pointer transition-colors text-left disabled:opacity-50 text-text-secondary bg-bg-elevated shadow-soft border border-glass-border"
+                className="text-text-secondary bg-bg-elevated shadow-soft border-glass-border flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-xs transition-colors disabled:opacity-50"
               >
                 <span className="text-base">{t.icon}</span>
-                <div className="flex flex-col min-w-0">
+                <div className="flex min-w-0 flex-col">
                   <span
-                    className="font-medium truncate"
+                    className="truncate font-medium"
                     style={{
                       color:
                         spawningTemplate === t.id
@@ -174,38 +173,34 @@ export function SpawnAgentModal({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-text-muted">
-          <div className="flex-1 h-px" style={{ background: "var(--glass-border)" }} />
+        <div className="text-text-muted flex items-center gap-2">
+          <div className="h-px flex-1" style={{ background: "var(--glass-border)" }} />
           <span className="text-xs">or manual</span>
-          <div className="flex-1 h-px" style={{ background: "var(--glass-border)" }} />
+          <div className="h-px flex-1" style={{ background: "var(--glass-border)" }} />
         </div>
 
         {/* Name */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-text-secondary">
-            Agent Name
-          </label>
+          <label className="text-text-secondary text-xs font-medium">Agent Name</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Backend Engineer"
             maxLength={100}
-            className="px-3 py-2 rounded-lg text-sm outline-none text-text-primary bg-bg-elevated shadow-soft border border-glass-border"
+            className="text-text-primary bg-bg-elevated shadow-soft border-glass-border rounded-lg border px-3 py-2 text-sm outline-none"
             autoFocus
           />
         </div>
 
         {/* Role */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-text-secondary">
-            Role
-          </label>
+          <label className="text-text-secondary text-xs font-medium">Role</label>
           <div className="flex gap-2">
             {ROLES.map((r) => (
               <button
                 key={r.id}
                 onClick={() => setRole(r.id)}
-                className="flex-1 flex flex-col items-center gap-1 px-2 py-2 rounded-lg text-xs cursor-pointer transition-colors"
+                className="flex flex-1 cursor-pointer flex-col items-center gap-1 rounded-lg px-2 py-2 text-xs transition-colors"
                 style={{
                   background:
                     role === r.id
@@ -227,15 +222,13 @@ export function SpawnAgentModal({
 
         {/* Model */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-text-secondary">
-            Model
-          </label>
+          <label className="text-text-secondary text-xs font-medium">Model</label>
           <div className="flex gap-2">
             {MODELS.map((m) => (
               <button
                 key={m.id}
                 onClick={() => setModel(m.id)}
-                className="flex-1 px-2 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+                className="flex-1 cursor-pointer rounded-lg px-2 py-1.5 text-xs font-medium transition-colors"
                 style={{
                   background:
                     model === m.id
@@ -256,7 +249,7 @@ export function SpawnAgentModal({
 
         {/* Initial instructions */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-text-secondary">
+          <label className="text-text-secondary text-xs font-medium">
             Instructions <span className="text-text-muted">(optional)</span>
           </label>
           <textarea
@@ -265,7 +258,8 @@ export function SpawnAgentModal({
             placeholder="e.g. Implement the payment API with Stripe integration"
             rows={3}
             maxLength={10000}
-            className="px-3 py-2 rounded-lg text-sm outline-none resize-none text-text-primary bg-bg-elevated shadow-soft border border-glass-border" style={{
+            className="text-text-primary bg-bg-elevated shadow-soft border-glass-border resize-none rounded-lg border px-3 py-2 text-sm outline-none"
+            style={{
               fontFamily: "var(--font-body)",
             }}
           />
@@ -275,7 +269,7 @@ export function SpawnAgentModal({
         <button
           onClick={handleSubmit}
           disabled={!name.trim() || loading}
-          className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer transition-colors disabled:opacity-50"
+          className="flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50"
           style={{
             background: "var(--color-accent)",
             color: "#fff",

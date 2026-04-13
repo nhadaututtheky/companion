@@ -28,7 +28,7 @@ export function AttachmentChip({ attachment, onRemove }: AttachmentChipProps) {
 
   return (
     <div
-      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs max-w-[280px]"
+      className="inline-flex max-w-[280px] items-center gap-1.5 rounded-lg px-2 py-1 text-xs"
       style={{
         background: `${color}12`,
         border: `1px solid ${color}30`,
@@ -42,7 +42,7 @@ export function AttachmentChip({ attachment, onRemove }: AttachmentChipProps) {
       </span>
       <button
         onClick={() => onRemove(attachment.id)}
-        className="p-0.5 rounded hover:bg-[rgba(0,0,0,0.1)] transition-colors cursor-pointer flex-shrink-0"
+        className="flex-shrink-0 cursor-pointer rounded p-0.5 transition-colors hover:bg-[rgba(0,0,0,0.1)]"
         aria-label={`Remove ${attachment.label}`}
       >
         <X size={10} weight="bold" />

@@ -158,7 +158,8 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
         <button
           onClick={handleTestCdp}
           disabled={testing}
-          className="shadow-soft flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors w-fit text-text-secondary bg-bg-elevated" style={{
+          className="shadow-soft text-text-secondary bg-bg-elevated flex w-fit cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+          style={{
             opacity: testing ? 0.7 : 1,
           }}
         >
@@ -240,7 +241,7 @@ export function TelegramAntiSettings({ botId }: TelegramAntiSettingsProps) {
       <button
         onClick={handleSave}
         disabled={saving}
-        className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+        className="flex cursor-pointer items-center justify-center gap-2 rounded-lg py-2 text-xs font-semibold transition-colors"
         style={{
           background: saved ? "var(--color-success)" : "var(--color-accent)",
           color: "#fff",
@@ -290,7 +291,7 @@ function FieldInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="px-3 py-1.5 rounded-lg text-xs input-bordered font-mono text-text-primary bg-bg-elevated"
+        className="input-bordered text-text-primary bg-bg-elevated rounded-lg px-3 py-1.5 font-mono text-xs"
       />
     </div>
   );
@@ -306,7 +307,7 @@ function ToggleRow({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label className="flex items-center gap-2 cursor-pointer">
+    <label className="flex cursor-pointer items-center gap-2">
       <input
         type="checkbox"
         checked={checked}
@@ -328,7 +329,7 @@ function StatusDot({ status }: { status: "unknown" | "connected" | "disconnected
   if (status === "unknown") return null;
   return (
     <span
-      className="w-2 h-2 rounded-full"
+      className="h-2 w-2 rounded-full"
       style={{ background: colors[status] }}
       aria-label={`CDP ${status}`}
     />

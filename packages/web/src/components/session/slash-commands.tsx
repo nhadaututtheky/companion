@@ -134,7 +134,8 @@ export function SlashCommandMenu({
   return (
     <div
       ref={menuRef}
-      className="bg-bg-elevated border border-border absolute" style={{
+      className="bg-bg-elevated border-border absolute border"
+      style={{
         bottom: "100%",
         left: 0,
         right: 0,
@@ -150,7 +151,8 @@ export function SlashCommandMenu({
         {grouped.map((group) => (
           <div key={group.category}>
             <div
-              className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted" style={{ fontSize: 10 }}
+              className="text-text-muted px-3 py-1.5 text-xs font-semibold uppercase tracking-wider"
+              style={{ fontSize: 10 }}
             >
               {group.label}
             </div>
@@ -160,7 +162,7 @@ export function SlashCommandMenu({
               return (
                 <button
                   key={cmd.command}
-                  className="w-full text-left px-3 py-2 flex items-start gap-3 cursor-pointer transition-colors"
+                  className="flex w-full cursor-pointer items-start gap-3 px-3 py-2 text-left transition-colors"
                   style={{
                     background: isSelected ? "var(--color-bg-hover)" : "transparent",
                   }}
@@ -168,18 +170,15 @@ export function SlashCommandMenu({
                   onClick={() => onSelect(cmd.command)}
                 >
                   <span
-                    className="text-sm font-mono font-semibold flex-shrink-0 text-accent" style={{ minWidth: 80 }}
+                    className="text-accent flex-shrink-0 font-mono text-sm font-semibold"
+                    style={{ minWidth: 80 }}
                   >
                     {cmd.command}
                   </span>
-                  <div className="flex flex-col gap-0.5 min-w-0">
-                    <span className="text-sm text-text-primary">
-                      {cmd.description}
-                    </span>
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <span className="text-text-primary text-sm">{cmd.description}</span>
                     {cmd.usage && (
-                      <span
-                        className="text-xs font-mono truncate text-text-muted"
-                      >
+                      <span className="text-text-muted truncate font-mono text-xs">
                         {cmd.usage}
                       </span>
                     )}

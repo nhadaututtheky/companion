@@ -69,14 +69,14 @@ function StatCard({
 }) {
   return (
     <div
-      className="relative flex items-center gap-3 p-3 rounded-xl overflow-hidden"
+      className="relative flex items-center gap-3 overflow-hidden rounded-xl p-3"
       style={{
         background: `color-mix(in srgb, ${color} 6%, var(--color-bg-card))`,
         border: `1px solid color-mix(in srgb, ${color} 15%, transparent)`,
       }}
     >
       <span
-        className="absolute top-2.5 left-2.5 rounded-full"
+        className="absolute left-2.5 top-2.5 rounded-full"
         style={{ width: 6, height: 6, background: color }}
       />
       <span className="ml-2" style={{ color }}>
@@ -84,7 +84,7 @@ function StatCard({
       </span>
       <div>
         <p className="text-xs">{label}</p>
-        <p className="text-sm font-semibold font-mono">{value}</p>
+        <p className="font-mono text-sm font-semibold">{value}</p>
       </div>
     </div>
   );
@@ -128,29 +128,25 @@ function CompactModeControl({ sessionId }: { sessionId: string }) {
   return (
     <div className="px-4 pb-2">
       <button
-        className="flex items-center gap-2 w-full text-left cursor-pointer"
+        className="flex w-full cursor-pointer items-center gap-2 text-left"
         onClick={() => setExpanded(!expanded)}
       >
         {expanded ? <CaretDown size={10} weight="bold" /> : <CaretRight size={10} weight="bold" />}
-        <span className="text-xs font-semibold text-text-secondary">
-          Auto-Compact
-        </span>
+        <span className="text-text-secondary text-xs font-semibold">Auto-Compact</span>
         <span
-          className="text-xs ml-auto font-mono"
+          className="ml-auto font-mono text-xs"
           style={{ color: mode === "manual" ? "var(--color-text-muted)" : "var(--color-accent)" }}
         >
           {mode}
         </span>
       </button>
       {expanded && (
-        <div
-          className="shadow-soft mt-2 p-3 rounded-lg flex flex-col gap-2 bg-bg-card"
-        >
+        <div className="shadow-soft bg-bg-card mt-2 flex flex-col gap-2 rounded-lg p-3">
           <div className="flex gap-1">
             {(["manual", "smart", "aggressive"] as const).map((m) => (
               <button
                 key={m}
-                className="flex-1 text-xs py-1 rounded cursor-pointer transition-colors capitalize"
+                className="flex-1 cursor-pointer rounded py-1 text-xs capitalize transition-colors"
                 style={{
                   background: mode === m ? "var(--color-accent)" : "var(--color-bg-elevated)",
                   color: mode === m ? "var(--color-bg-base)" : "var(--color-text-secondary)",
@@ -166,9 +162,7 @@ function CompactModeControl({ sessionId }: { sessionId: string }) {
           </div>
           {mode !== "manual" && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-text-muted">
-                Threshold
-              </span>
+              <span className="text-text-muted text-xs">Threshold</span>
               <input
                 type="range"
                 min={50}
@@ -182,9 +176,7 @@ function CompactModeControl({ sessionId }: { sessionId: string }) {
                 }}
                 className="flex-1"
               />
-              <span
-                className="text-xs font-mono w-8 text-right text-text-primary"
-              >
+              <span className="text-text-primary w-8 text-right font-mono text-xs">
                 {threshold}%
               </span>
             </div>
@@ -206,14 +198,12 @@ function RTKSavingsCard({
 }) {
   if (tokensSaved === 0 && compressions === 0) {
     return (
-      <div
-        className="shadow-soft p-3 rounded-xl bg-bg-card"
-      >
+      <div className="shadow-soft bg-bg-card rounded-xl p-3">
         <div className="flex items-center gap-2">
-          <span className="text-text-muted" style={{ fontSize: 14 }}>⚡</span>
-          <span className="text-xs text-text-muted">
-            RTK compression stats will appear here
+          <span className="text-text-muted" style={{ fontSize: 14 }}>
+            ⚡
           </span>
+          <span className="text-text-muted text-xs">RTK compression stats will appear here</span>
         </div>
       </div>
     );
@@ -224,37 +214,40 @@ function RTKSavingsCard({
 
   return (
     <div
-      className="relative p-3 rounded-xl overflow-hidden"
+      className="relative overflow-hidden rounded-xl p-3"
       style={{
         background: "color-mix(in srgb, var(--color-success) 6%, var(--color-bg-card))",
         border: "1px solid color-mix(in srgb, var(--color-success) 15%, transparent)",
       }}
     >
-      <div className="flex items-center gap-2 mb-2">
+      <div className="mb-2 flex items-center gap-2">
         <span
-          className="rounded-full shrink-0" style={{ width: 6, height: 6, background: "var(--color-success)" }}
+          className="shrink-0 rounded-full"
+          style={{ width: 6, height: 6, background: "var(--color-success)" }}
         />
-        <span className="text-success" style={{ fontSize: 14 }}>⚡</span>
+        <span className="text-success" style={{ fontSize: 14 }}>
+          ⚡
+        </span>
         <span className="text-xs font-semibold">RTK Savings</span>
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div>
           <p className="text-xs">Tokens</p>
-          <p className="text-sm font-semibold font-mono text-success">
+          <p className="text-success font-mono text-sm font-semibold">
             {formatTokens(tokensSaved)}
           </p>
         </div>
         <div>
           <p className="text-xs">Est. Saved</p>
-          <p className="text-sm font-semibold font-mono text-success">
+          <p className="text-success font-mono text-sm font-semibold">
             ${costSaved < 0.01 ? "<0.01" : costSaved.toFixed(2)}
           </p>
         </div>
         <div>
           <p className="text-xs">Compressed</p>
-          <p className="text-sm font-semibold font-mono">
+          <p className="font-mono text-sm font-semibold">
             {compressions}
-            {cacheHits > 0 && <span className="text-xs ml-1">({cacheHits} cached)</span>}
+            {cacheHits > 0 && <span className="ml-1 text-xs">({cacheHits} cached)</span>}
           </p>
         </div>
       </div>
@@ -272,9 +265,9 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
 
   if (!session) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-3 px-4">
+      <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
         <Robot size={36} />
-        <p className="text-sm text-center">Select a session to view details</p>
+        <p className="text-center text-sm">Select a session to view details</p>
       </div>
     );
   }
@@ -297,7 +290,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
   return (
     <div className="flex flex-col gap-0">
       {/* Tab bar */}
-      <div className="flex border-b shrink-0">
+      <div className="flex shrink-0 border-b">
         {[
           {
             id: "overview" as const,
@@ -309,7 +302,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold cursor-pointer transition-colors flex-1 justify-center"
+            className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-semibold transition-colors"
             style={{
               color: activeTab === tab.id ? "var(--color-accent)" : "var(--color-text-muted)",
               borderBottom:
@@ -330,12 +323,12 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
       {activeTab === "overview" && (
         <>
           {/* Session header */}
-          <div className="px-4 py-4 border-b">
+          <div className="border-b px-4 py-4">
             <p className="text-sm font-semibold">{session.projectName}</p>
-            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{session.model}</p>
-            <div className="flex items-center gap-2 mt-2">
+            <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">{session.model}</p>
+            <div className="mt-2 flex items-center gap-2">
               <StatusBadge status={session.status} />
-              <span className="text-xs text-[var(--color-text-muted)] font-mono">
+              <span className="font-mono text-xs text-[var(--color-text-muted)]">
                 #{session.id.slice(0, 8)}
               </span>
             </div>
@@ -394,12 +387,12 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
             s.files_modified.length > 0 ||
             s.files_created.length > 0) && (
             <div className="px-4 pb-4">
-              <p className="text-xs font-semibold mb-2">Files</p>
+              <p className="mb-2 text-xs font-semibold">Files</p>
               <div className="flex flex-col gap-1">
                 {s.files_created.map((f) => (
                   <button
                     key={`c-${f}`}
-                    className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
+                    className="flex w-full cursor-pointer items-center gap-2 rounded px-1 text-left transition-colors"
                     onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLElement).style.background =
@@ -412,13 +405,13 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
                     <span className="text-xs" style={{ color: "#34A853" }}>
                       +
                     </span>
-                    <span className="text-xs font-mono truncate">{f.split("/").pop()}</span>
+                    <span className="truncate font-mono text-xs">{f.split("/").pop()}</span>
                   </button>
                 ))}
                 {s.files_modified.map((f) => (
                   <button
                     key={`m-${f}`}
-                    className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
+                    className="flex w-full cursor-pointer items-center gap-2 rounded px-1 text-left transition-colors"
                     onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLElement).style.background =
@@ -428,10 +421,8 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
                       (e.currentTarget as HTMLElement).style.background = "transparent";
                     }}
                   >
-                    <span className="text-xs text-warning">
-                      ~
-                    </span>
-                    <span className="text-xs font-mono truncate">{f.split("/").pop()}</span>
+                    <span className="text-warning text-xs">~</span>
+                    <span className="truncate font-mono text-xs">{f.split("/").pop()}</span>
                   </button>
                 ))}
                 {s.files_read
@@ -439,7 +430,7 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
                   .map((f) => (
                     <button
                       key={`r-${f}`}
-                      className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-1 transition-colors"
+                      className="flex w-full cursor-pointer items-center gap-2 rounded px-1 text-left transition-colors"
                       onClick={() => handleFileSelect(f, f.split("/").pop() ?? f)}
                       onMouseEnter={(e) => {
                         (e.currentTarget as HTMLElement).style.background =
@@ -449,10 +440,8 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
                         (e.currentTarget as HTMLElement).style.background = "transparent";
                       }}
                     >
-                      <span className="text-xs text-accent">
-                        ○
-                      </span>
-                      <span className="text-xs font-mono truncate">{f.split("/").pop()}</span>
+                      <span className="text-accent text-xs">○</span>
+                      <span className="truncate font-mono text-xs">{f.split("/").pop()}</span>
                     </button>
                   ))}
               </div>
@@ -462,11 +451,11 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
           {/* Project file browser */}
           {s.cwd && (
             <div className="px-4 pb-4">
-              <p className="text-xs font-semibold mb-2">
+              <p className="mb-2 text-xs font-semibold">
                 <FolderSimple
                   size={12}
                   weight="bold"
-                  className="inline mr-1"
+                  className="mr-1 inline"
                   style={{ verticalAlign: "middle" }}
                 />
                 Project Files
@@ -489,12 +478,12 @@ export function SessionDetails({ session, messages }: SessionDetailsProps) {
           {session.status === "ended" && <SessionSummaryPanel sessionId={session.id} />}
 
           {/* Actions */}
-          <div className="px-4 pb-4 flex flex-col gap-2">
+          <div className="flex flex-col gap-2 px-4 pb-4">
             <StreamToTelegramButton sessionId={session.id} />
             <a
               href={`${typeof window !== "undefined" ? localStorage.getItem("api_url") || "" : ""}/api/sessions/${session.id}/export`}
               download
-              className="shadow-soft flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-text-secondary bg-bg-elevated"
+              className="shadow-soft text-text-secondary bg-bg-elevated flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors"
             >
               <DownloadSimple size={14} weight="bold" />
               Export as Markdown
@@ -561,12 +550,10 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
   if (viewingContent !== null) {
     return (
       <div className="px-4 pb-3">
-        <button onClick={() => setViewingContent(null)} className="text-xs mb-2 cursor-pointer">
+        <button onClick={() => setViewingContent(null)} className="mb-2 cursor-pointer text-xs">
           &larr; Back to snapshots
         </button>
-        <pre
-          className="text-xs font-mono whitespace-pre-wrap p-3 rounded-lg max-h-[400px] overflow-y-auto text-text-secondary bg-bg-elevated border border-border"
-        >
+        <pre className="text-text-secondary bg-bg-elevated border-border max-h-[400px] overflow-y-auto whitespace-pre-wrap rounded-lg border p-3 font-mono text-xs">
           {viewingContent}
         </pre>
       </div>
@@ -578,12 +565,12 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
       <div className="flex items-center gap-2">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-2 flex-1 text-left cursor-pointer"
+          className="flex flex-1 cursor-pointer items-center gap-2 text-left"
         >
           <Camera size={14} weight="bold" />
           <span className="text-xs font-semibold">Snapshots</span>
           {snapshots.length > 0 && <span className="text-xs">({snapshots.length})</span>}
-          <span className="text-xs ml-auto">
+          <span className="ml-auto text-xs">
             {expanded ? <CaretDown size={12} /> : <CaretRight size={12} />}
           </span>
         </button>
@@ -591,7 +578,7 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
           <button
             onClick={handleCapture}
             disabled={capturing}
-            className="text-xs px-2 py-1 rounded cursor-pointer transition-colors disabled:opacity-50 text-text-secondary bg-bg-elevated border border-border"
+            className="text-text-secondary bg-bg-elevated border-border cursor-pointer rounded border px-2 py-1 text-xs transition-colors disabled:opacity-50"
             title="Capture terminal snapshot"
             aria-label="Capture snapshot"
           >
@@ -605,7 +592,7 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
             <button
               key={snap.id}
               onClick={() => handleView(snap.id)}
-              className="flex items-center gap-2 w-full text-left cursor-pointer rounded px-2 py-1.5 transition-colors"
+              className="flex w-full cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-left transition-colors"
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.background = "var(--color-bg-card)";
               }}
@@ -613,16 +600,12 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
                 (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
               }}
             >
-              <Camera
-                size={12}
-                className="text-text-muted shrink-0"
-                aria-hidden="true"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-mono truncate">
+              <Camera size={12} className="text-text-muted shrink-0" aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-mono text-xs">
                   {snap.label || new Date(snap.createdAt).toLocaleTimeString()}
                 </p>
-                <p className="text-xs truncate">{snap.contentPreview.slice(0, 60)}...</p>
+                <p className="truncate text-xs">{snap.contentPreview.slice(0, 60)}...</p>
               </div>
             </button>
           ))}
@@ -703,9 +686,7 @@ function StreamToTelegramButton({ sessionId }: { sessionId: string }) {
 
   if (loading) {
     return (
-      <div
-        className="shadow-soft flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs text-text-muted bg-bg-elevated"
-      >
+      <div className="shadow-soft text-text-muted bg-bg-elevated flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs">
         <TelegramLogo size={14} weight="bold" />
         Loading...
       </div>
@@ -719,7 +700,7 @@ function StreamToTelegramButton({ sessionId }: { sessionId: string }) {
       onClick={handleToggle}
       disabled={toggling || notConfigured}
       title={notConfigured ? "Configure in Settings → Session Streaming" : undefined}
-      className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
       style={{
         background: streaming
           ? "color-mix(in srgb, var(--color-accent) 8%, transparent)"
@@ -769,21 +750,19 @@ function SessionSummaryPanel({ sessionId }: { sessionId: string }) {
     <div className="px-4 pb-3">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 w-full text-left cursor-pointer"
+        className="flex w-full cursor-pointer items-center gap-2 text-left"
       >
         <Notebook size={14} weight="bold" />
         <span className="text-xs font-semibold">Summary</span>
-        <span className="text-xs ml-auto">{expanded ? "▲" : "▼"}</span>
+        <span className="ml-auto text-xs">{expanded ? "▲" : "▼"}</span>
       </button>
       {expanded && (
-        <div
-          className="shadow-sm mt-2 p-3 rounded-lg text-xs leading-relaxed text-text-secondary bg-bg-elevated"
-        >
+        <div className="text-text-secondary bg-bg-elevated mt-2 rounded-lg p-3 text-xs leading-relaxed shadow-sm">
           <p>{summary.summary}</p>
           {summary.keyDecisions.length > 0 && (
             <div className="mt-2">
               <p className="font-semibold">Decisions</p>
-              <ul className="list-disc pl-4 mt-1">
+              <ul className="mt-1 list-disc pl-4">
                 {summary.keyDecisions.map((d, i) => (
                   <li key={i}>{d}</li>
                 ))}

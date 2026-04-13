@@ -238,7 +238,8 @@ export function MagicRing() {
             ? `Shared Context — ${linkedSessionIds.length} sessions linked`
             : "Shared Context — click to link sessions"
         }
-        className="rounded-full select-none flex" style={{
+        className="flex select-none rounded-full"
+        style={{
           position: "fixed",
           left: pos.x,
           top: pos.y,
@@ -265,7 +266,8 @@ export function MagicRing() {
         {/* Unread badge — shows when debate has new messages while collapsed */}
         {unreadCount > 0 && !isExpanded && (
           <span
-            className="absolute font-bold flex font-mono" style={{
+            className="absolute flex font-mono font-bold"
+            style={{
               top: -2,
               right: -2,
               minWidth: 18,
@@ -278,7 +280,7 @@ export function MagicRing() {
               justifyContent: "center",
               padding: "0 4px",
               boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
-              }}
+            }}
             role="status"
             aria-live="polite"
             aria-label={`${unreadCount} unread debate messages`}

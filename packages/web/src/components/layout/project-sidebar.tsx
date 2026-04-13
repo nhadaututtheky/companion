@@ -127,14 +127,14 @@ function WorkspacePanel({
   );
 
   return (
-    <div className="flex flex-col flex-1 min-w-0 overflow-hidden project-panel" role="tabpanel">
+    <div className="project-panel flex min-w-0 flex-1 flex-col overflow-hidden" role="tabpanel">
       {/* Header */}
       <div
         className="flex items-center gap-2 px-3 py-2.5"
         style={{ borderBottom: "1px solid var(--glass-border)" }}
       >
         <span
-          className="flex items-center justify-center rounded-md flex-shrink-0"
+          className="flex flex-shrink-0 items-center justify-center rounded-md"
           style={{
             width: 28,
             height: 28,
@@ -147,7 +147,7 @@ function WorkspacePanel({
         >
           {getInitial(workspace.name)}
         </span>
-        <div className="flex flex-col flex-1 min-w-0">
+        <div className="flex min-w-0 flex-1 flex-col">
           {renaming ? (
             <input
               type="text"
@@ -163,26 +163,25 @@ function WorkspacePanel({
                 if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                 if (e.key === "Escape") setRenaming(false);
               }}
-              className="text-sm font-semibold bg-transparent border-b outline-none text-text-primary" style={{
+              className="text-text-primary border-b bg-transparent text-sm font-semibold outline-none"
+              style={{
                 borderColor: "var(--color-primary, #6366f1)",
               }}
               autoFocus
             />
           ) : (
-            <span
-              className="text-sm font-semibold truncate text-text-primary"
-            >
+            <span className="text-text-primary truncate text-sm font-semibold">
               {workspace.name}
             </span>
           )}
-          <span className="text-[10px] truncate text-text-muted">
+          <span className="text-text-muted truncate text-[10px]">
             {workspace.cliSlots.length} CLI{workspace.cliSlots.length !== 1 ? "s" : ""} configured
           </span>
         </div>
         <div className="relative">
           <button
             onClick={() => setShowMenu(!showMenu)}
-            className="p-1 rounded cursor-pointer project-options-btn"
+            className="project-options-btn cursor-pointer rounded p-1"
             aria-label="Workspace options"
           >
             <DotsThree size={16} weight="bold" />
@@ -191,7 +190,8 @@ function WorkspacePanel({
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
               <div
-                className="absolute right-0 top-full mt-1 z-50 py-1 bg-bg-card rounded-radius-md shadow-float border border-glass-border" style={{
+                className="bg-bg-card rounded-radius-md shadow-float border-glass-border absolute right-0 top-full z-50 mt-1 border py-1"
+                style={{
                   width: 160,
                   boxShadow: "var(--shadow-float)",
                 }}
@@ -202,7 +202,7 @@ function WorkspacePanel({
                     setRenameValue(workspace.name);
                     setRenaming(true);
                   }}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 text-xs cursor-pointer text-text-primary"
+                  className="text-text-primary flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-xs"
                 >
                   <PencilSimple size={12} weight="bold" />
                   Rename
@@ -214,7 +214,7 @@ function WorkspacePanel({
                       deleteWorkspace(workspace.id);
                     }
                   }}
-                  className="flex items-center gap-2 w-full px-3 py-1.5 text-xs cursor-pointer"
+                  className="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-xs"
                   style={{ color: "var(--color-danger, #ef4444)" }}
                 >
                   <Trash size={12} weight="bold" />
@@ -228,9 +228,7 @@ function WorkspacePanel({
 
       {/* CLI Slots */}
       <div className="px-3 py-2" style={{ borderBottom: "1px solid var(--glass-border)" }}>
-        <span
-          className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block text-text-muted"
-        >
+        <span className="text-text-muted mb-1.5 block text-[10px] font-semibold uppercase tracking-wider">
           CLI Agents
         </span>
         <div
@@ -255,7 +253,7 @@ function WorkspacePanel({
             return (
               <div
                 key={cli}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-md"
+                className="flex items-center gap-2 rounded-md px-2 py-1.5"
                 style={{
                   background: isActive
                     ? `color-mix(in srgb, ${color} 8%, transparent)`
@@ -263,15 +261,16 @@ function WorkspacePanel({
                 }}
               >
                 <span
-                  className="rounded-full shrink-0" style={{
+                  className="shrink-0 rounded-full"
+                  style={{
                     width: 6,
                     height: 6,
                     background: dotColor,
                     opacity: dotOpacity,
-                    }}
+                  }}
                 />
                 <span
-                  className="text-xs flex-1 truncate"
+                  className="flex-1 truncate text-xs"
                   style={{
                     color: isActive ? "var(--color-text-primary)" : "var(--color-text-muted)",
                     fontWeight: isActive ? 500 : 400,
@@ -285,7 +284,8 @@ function WorkspacePanel({
                   <Plugs
                     size={11}
                     weight="regular"
-                    className="text-text-muted shrink-0" style={{ opacity: 0.5 }}
+                    className="text-text-muted shrink-0"
+                    style={{ opacity: 0.5 }}
                   />
                 )}
               </div>
@@ -293,15 +293,9 @@ function WorkspacePanel({
           })}
         </div>
         {detailLoading && (
-          <div className="flex items-center gap-1.5 mt-1.5 px-2">
-            <CircleDashed
-              size={10}
-              weight="bold"
-              className="animate-spin text-text-muted"
-            />
-            <span className="text-[10px] text-text-muted">
-              Loading...
-            </span>
+          <div className="mt-1.5 flex items-center gap-1.5 px-2">
+            <CircleDashed size={10} weight="bold" className="text-text-muted animate-spin" />
+            <span className="text-text-muted text-[10px]">Loading...</span>
           </div>
         )}
       </div>
@@ -309,7 +303,7 @@ function WorkspacePanel({
       {/* New session button */}
       <button
         onClick={onNew}
-        className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium cursor-pointer project-new-session-btn"
+        className="project-new-session-btn flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-xs font-medium"
         style={{ borderBottom: "1px solid var(--glass-border)" }}
         aria-label="New session"
       >
@@ -351,13 +345,13 @@ function ProjectPanel({
   );
 
   return (
-    <div className="flex flex-col flex-1 min-w-0 overflow-hidden project-panel" role="tabpanel">
+    <div className="project-panel flex min-w-0 flex-1 flex-col overflow-hidden" role="tabpanel">
       <div
         className="flex items-center gap-2 px-3 py-2.5"
         style={{ borderBottom: "1px solid var(--glass-border)" }}
       >
         <span
-          className="flex items-center justify-center rounded-md flex-shrink-0"
+          className="flex flex-shrink-0 items-center justify-center rounded-md"
           style={{
             width: 28,
             height: 28,
@@ -370,15 +364,11 @@ function ProjectPanel({
         >
           {group.initial}
         </span>
-        <div className="flex flex-col flex-1 min-w-0">
-          <span
-            className="text-sm font-semibold truncate text-text-primary"
-          >
-            {group.name}
-          </span>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="text-text-primary truncate text-sm font-semibold">{group.name}</span>
         </div>
         <button
-          className="p-1 rounded cursor-pointer project-options-btn"
+          className="project-options-btn cursor-pointer rounded p-1"
           aria-label="Project options"
           disabled
         >
@@ -388,7 +378,7 @@ function ProjectPanel({
 
       <button
         onClick={onNew}
-        className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium cursor-pointer project-new-session-btn"
+        className="project-new-session-btn flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-xs font-medium"
         style={{ borderBottom: "1px solid var(--glass-border)" }}
         aria-label="New session"
       >
@@ -529,7 +519,7 @@ export function ProjectSidebar({
     <div className="flex h-full">
       {/* Icon rail */}
       <div
-        className="flex flex-col items-center py-2 gap-1 flex-shrink-0 project-icon-rail"
+        className="project-icon-rail flex flex-shrink-0 flex-col items-center gap-1 py-2"
         role="tablist"
         aria-orientation="vertical"
         aria-label="Workspaces & Projects"
@@ -544,7 +534,7 @@ export function ProjectSidebar({
             <button
               key={ws.id}
               onClick={() => handleWorkspaceClick(ws)}
-              className="project-icon-btn relative flex items-center justify-center rounded-lg cursor-pointer"
+              className="project-icon-btn relative flex cursor-pointer items-center justify-center rounded-lg"
               role="tab"
               aria-selected={isActive}
               data-active={isActive || undefined}
@@ -580,7 +570,7 @@ export function ProjectSidebar({
             <button
               key={group.slug}
               onClick={() => handleProjectClick(group.slug)}
-              className="project-icon-btn relative flex items-center justify-center rounded-lg cursor-pointer"
+              className="project-icon-btn relative flex cursor-pointer items-center justify-center rounded-lg"
               role="tab"
               aria-selected={isActive}
               data-active={isActive || undefined}
@@ -600,7 +590,7 @@ export function ProjectSidebar({
         {/* New workspace */}
         <button
           onClick={() => setWorkspaceCreateModalOpen(true)}
-          className="project-icon-btn project-icon-new flex items-center justify-center rounded-lg cursor-pointer"
+          className="project-icon-btn project-icon-new flex cursor-pointer items-center justify-center rounded-lg"
           title="New workspace"
           aria-label="Create workspace"
         >
@@ -610,7 +600,7 @@ export function ProjectSidebar({
         {/* New session */}
         <button
           onClick={onNew}
-          className="project-icon-btn project-icon-new flex items-center justify-center rounded-lg cursor-pointer"
+          className="project-icon-btn project-icon-new flex cursor-pointer items-center justify-center rounded-lg"
           title="New session (Ctrl+O)"
           aria-label="New session"
           aria-keyshortcuts="Control+O"

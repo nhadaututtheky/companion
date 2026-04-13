@@ -121,7 +121,7 @@ export function DomainTab() {
     }
   }, [checkStatus]);
 
-  if (loading) return <div className="text-xs py-8 text-center">Loading...</div>;
+  if (loading) return <div className="py-8 text-center text-xs">Loading...</div>;
 
   return (
     <div className="flex flex-col gap-5">
@@ -139,7 +139,7 @@ export function DomainTab() {
                 <button
                   key={m}
                   onClick={() => setMode(m)}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-lg px-4 py-2 text-xs font-semibold transition-colors"
                   style={{
                     background: mode === m ? "var(--color-accent)" : "var(--color-bg-elevated)",
                     color: mode === m ? "#fff" : "var(--color-text-secondary)",
@@ -172,12 +172,12 @@ export function DomainTab() {
                       value={tunnelToken}
                       onChange={(e) => setTunnelToken(e.target.value)}
                       placeholder="eyJhIjoiN..."
-                      className="w-full px-3 py-2 pr-10 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-elevated"
+                      className="input-bordered text-text-primary bg-bg-elevated w-full rounded-lg px-3 py-2 pr-10 font-mono text-sm"
                     />
                     <button
                       type="button"
                       onClick={() => setShowToken(!showToken)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-pointer"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer p-1"
                       aria-label={showToken ? "Hide" : "Show"}
                     >
                       {showToken ? <EyeSlash size={14} /> : <Eye size={14} />}
@@ -199,7 +199,7 @@ export function DomainTab() {
                         <button
                           key={m}
                           onClick={() => setSslMode(m)}
-                          className="px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer flex-1"
+                          className="flex-1 cursor-pointer rounded-lg px-3 py-2 text-xs font-medium transition-colors"
                           style={{
                             background:
                               sslMode === m ? "var(--color-accent)" : "var(--color-bg-elevated)",
@@ -222,7 +222,8 @@ export function DomainTab() {
                         placeholder="you@example.com (optional)"
                       />
                       <div
-                        className="px-3 py-2.5 rounded-lg text-xs text-text-secondary" style={{
+                        className="text-text-secondary rounded-lg px-3 py-2.5 text-xs"
+                        style={{
                           background: "#34A85310",
                           border: "1px solid #34A85330",
                         }}
@@ -233,17 +234,10 @@ export function DomainTab() {
                       </div>
                     </div>
                   ) : (
-                    <div
-                      className="px-3 py-2.5 rounded-lg text-xs text-text-muted bg-bg-elevated"
-                    >
+                    <div className="text-text-muted bg-bg-elevated rounded-lg px-3 py-2.5 text-xs">
                       Place SSL certificates in{" "}
-                      <code className="px-1 rounded bg-bg-base">
-                        nginx/certs/origin.pem
-                      </code>{" "}
-                      and{" "}
-                      <code className="px-1 rounded bg-bg-base">
-                        nginx/certs/origin.key
-                      </code>
+                      <code className="bg-bg-base rounded px-1">nginx/certs/origin.pem</code> and{" "}
+                      <code className="bg-bg-base rounded px-1">nginx/certs/origin.key</code>
                       <br />
                       Tip: Use free Cloudflare Origin Certificate (15-year validity)
                     </div>
@@ -263,7 +257,7 @@ export function DomainTab() {
               <div className="flex items-center gap-4 text-xs">
                 <div className="flex items-center gap-1.5">
                   <span
-                    className="w-2 h-2 rounded-full"
+                    className="h-2 w-2 rounded-full"
                     style={{
                       background:
                         status.gateway === "running"
@@ -278,7 +272,7 @@ export function DomainTab() {
                 {mode === "tunnel" && (
                   <div className="flex items-center gap-1.5">
                     <span
-                      className="w-2 h-2 rounded-full"
+                      className="h-2 w-2 rounded-full"
                       style={{
                         background: status.tunnel === "configured" ? "#34A853" : "#FBBC04",
                       }}
@@ -291,10 +285,11 @@ export function DomainTab() {
 
             {/* Command to run */}
             <div
-              className="flex items-center justify-between px-3 py-2.5 rounded-lg font-mono text-xs shadow-soft border border-glass-border" style={{
+              className="shadow-soft border-glass-border flex items-center justify-between rounded-lg border px-3 py-2.5 font-mono text-xs"
+              style={{
                 background: "#1a1a2e",
                 color: "#34A853",
-                }}
+              }}
             >
               <code>docker compose up -d</code>
               <button
@@ -302,7 +297,7 @@ export function DomainTab() {
                   navigator.clipboard.writeText("docker compose up -d");
                   toast.success("Copied!");
                 }}
-                className="px-2 py-1 rounded text-xs cursor-pointer text-text-secondary bg-bg-elevated"
+                className="text-text-secondary bg-bg-elevated cursor-pointer rounded px-2 py-1 text-xs"
               >
                 Copy
               </button>
@@ -318,7 +313,7 @@ export function DomainTab() {
               <button
                 onClick={handleIssueCert}
                 disabled={issuingCert}
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-semibold transition-colors"
                 style={{
                   background: "#34A85315",
                   color: "#34A853",
@@ -342,7 +337,7 @@ export function DomainTab() {
       <div className="flex gap-3">
         <button
           onClick={handleSave}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer"
+          className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-colors"
           style={{
             background: saved ? "#34A853" : "var(--color-accent)",
             color: "#fff",
@@ -365,7 +360,7 @@ export function DomainTab() {
         {mode !== "off" && saved && (
           <button
             onClick={handleApply}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer text-text-primary bg-bg-elevated shadow-soft border border-glass-border"
+            className="text-text-primary bg-bg-elevated shadow-soft border-glass-border cursor-pointer rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors"
           >
             <ArrowsClockwise size={16} weight="bold" />
           </button>

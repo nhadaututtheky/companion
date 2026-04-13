@@ -43,13 +43,13 @@ function Breadcrumbs({ path, onNavigate }: { path: string; onNavigate: (p: strin
   };
 
   return (
-    <div className="flex items-center gap-1 flex-wrap text-xs overflow-x-auto">
+    <div className="flex flex-wrap items-center gap-1 overflow-x-auto text-xs">
       {parts.map((part, idx) => (
-        <span key={idx} className="flex items-center gap-1 flex-shrink-0">
+        <span key={idx} className="flex flex-shrink-0 items-center gap-1">
           {idx > 0 && <CaretRight size={10} aria-hidden="true" />}
           <button
             onClick={() => onNavigate(getSegPath(idx))}
-            className="hover:underline cursor-pointer truncate max-w-32"
+            className="max-w-32 cursor-pointer truncate hover:underline"
             style={{
               color:
                 idx === parts.length - 1
@@ -77,13 +77,15 @@ function SkeletonRow() {
   return (
     <div className="flex items-center gap-3 px-4 py-2.5" aria-hidden="true">
       <div
-        className="rounded bg-bg-elevated shrink-0" style={{
+        className="bg-bg-elevated shrink-0 rounded"
+        style={{
           width: 16,
           height: 16,
-          }}
+        }}
       />
       <div
-        className="rounded bg-bg-elevated" style={{
+        className="bg-bg-elevated rounded"
+        style={{
           height: 12,
           width: `${40 + Math.random() * 40}%`, // eslint-disable-line react-hooks/purity
         }}
@@ -193,11 +195,11 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
   return (
     <div className="flex flex-col" style={{ height: 360 }}>
       {/* Toolbar */}
-      <div className="flex items-center gap-2 px-3 py-2 flex-shrink-0 border-b">
+      <div className="flex flex-shrink-0 items-center gap-2 border-b px-3 py-2">
         {canGoBack && (
           <button
             onClick={navigateBack}
-            className="flex items-center justify-center p-1.5 rounded-md transition-colors cursor-pointer text-text-secondary bg-bg-elevated border border-border"
+            className="text-text-secondary bg-bg-elevated border-border flex cursor-pointer items-center justify-center rounded-md border p-1.5 transition-colors"
             aria-label="Go back"
           >
             <ArrowLeft size={14} weight="bold" aria-hidden="true" />
@@ -210,17 +212,18 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
             setEntries([]);
             setHistory([]);
           }}
-          className="flex items-center justify-center p-1.5 rounded-md transition-colors cursor-pointer border border-border" style={{
+          className="border-border flex cursor-pointer items-center justify-center rounded-md border p-1.5 transition-colors"
+          style={{
             background: currentPath === null ? "var(--color-bg-hover)" : "var(--color-bg-elevated)",
             color:
               currentPath === null ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-            }}
+          }}
           aria-label="Go to drives / root folders"
         >
           <House size={14} weight="bold" aria-hidden="true" />
         </button>
 
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           {currentPath ? (
             <Breadcrumbs path={currentPath} onNavigate={navigateTo} />
           ) : (
@@ -240,11 +243,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
         )}
 
         {error && !loading && (
-          <div
-            className="flex items-center justify-center h-full text-sm text-danger"
-          >
-            {error}
-          </div>
+          <div className="text-danger flex h-full items-center justify-center text-sm">{error}</div>
         )}
 
         {!loading && !error && currentPath === null && (
@@ -253,7 +252,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
               <button
                 key={root.path}
                 onClick={() => navigateTo(root.path)}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors cursor-pointer"
+                className="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left transition-colors"
                 style={{ background: "transparent" }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLButtonElement).style.background = "var(--color-bg-hover)";
@@ -262,16 +261,21 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
                   (e.currentTarget as HTMLButtonElement).style.background = "transparent";
                 }}
               >
-                <House size={16} className="shrink-0" style={{ color: "#4285F4" }} aria-hidden="true" />
-                <span className="text-sm font-medium flex-1 truncate">{root.label}</span>
-                <span className="text-xs font-mono truncate max-w-36">{root.path}</span>
+                <House
+                  size={16}
+                  className="shrink-0"
+                  style={{ color: "#4285F4" }}
+                  aria-hidden="true"
+                />
+                <span className="flex-1 truncate text-sm font-medium">{root.label}</span>
+                <span className="max-w-36 truncate font-mono text-xs">{root.path}</span>
               </button>
             ))}
           </div>
         )}
 
         {!loading && !error && currentPath !== null && entries.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-2">
+          <div className="flex h-full flex-col items-center justify-center gap-2">
             <FolderSimple size={28} aria-hidden="true" />
             <p className="text-sm">Empty folder</p>
           </div>
@@ -283,7 +287,7 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
               <button
                 key={entry.path}
                 onClick={() => navigateTo(entry.path)}
-                className="w-full flex items-center gap-3 px-4 py-2 text-left transition-colors cursor-pointer"
+                className="flex w-full cursor-pointer items-center gap-3 px-4 py-2 text-left transition-colors"
                 style={{ background: "transparent" }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLButtonElement).style.background = "var(--color-bg-hover)";
@@ -294,13 +298,14 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
               >
                 <FolderSimple
                   size={16}
-                  className="shrink-0" style={{ color: "#FBBC04" }}
+                  className="shrink-0"
+                  style={{ color: "#FBBC04" }}
                   aria-hidden="true"
                 />
-                <span className="text-sm flex-1 truncate">{entry.name}</span>
+                <span className="flex-1 truncate text-sm">{entry.name}</span>
                 {entry.hasGit && (
                   <span
-                    className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full flex-shrink-0"
+                    className="flex flex-shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 text-xs"
                     style={{
                       background: "#34A85320",
                       color: "#34A853",
@@ -318,11 +323,11 @@ export function DirectoryBrowser({ onSelect, onCancel: _onCancel }: DirectoryBro
 
       {/* Footer: select this folder */}
       {currentPath !== null && !loading && (
-        <div className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-t">
-          <span className="text-xs truncate max-w-xs">{currentPath}</span>
+        <div className="flex flex-shrink-0 items-center justify-between border-t px-4 py-3">
+          <span className="max-w-xs truncate text-xs">{currentPath}</span>
           <button
             onClick={() => onSelect(currentPath)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors cursor-pointer flex-shrink-0"
+            className="flex flex-shrink-0 cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors"
             style={{
               background: "#4285F4",
               color: "#fff",

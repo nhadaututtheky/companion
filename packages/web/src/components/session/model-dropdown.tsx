@@ -65,16 +65,15 @@ export function ModelDropdown({
   return (
     <div
       ref={ref}
-      className="absolute bottom-full left-0 mb-1 rounded-lg overflow-hidden shadow-lg z-50 bg-bg-card border border-glass-border" style={{
+      className="bg-bg-card border-glass-border absolute bottom-full left-0 z-50 mb-1 overflow-hidden rounded-lg border shadow-lg"
+      style={{
         minWidth: 260,
         maxHeight: 340,
         overflowY: "auto",
       }}
     >
       {loading ? (
-        <div
-          className="flex items-center justify-center gap-2 py-6 text-text-muted"
-        >
+        <div className="text-text-muted flex items-center justify-center gap-2 py-6">
           <CircleNotch size={16} className="animate-spin" />
           <span className="text-xs">Loading models...</span>
         </div>
@@ -84,7 +83,8 @@ export function ModelDropdown({
           {freeByProvider.size > 0 && (
             <>
               <div
-                className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted bg-bg-base" style={{
+                className="text-text-muted bg-bg-base px-3 py-1.5 text-xs font-semibold uppercase tracking-wider"
+                style={{
                   borderBottom: "1px solid var(--color-border)",
                 }}
               >
@@ -92,9 +92,7 @@ export function ModelDropdown({
               </div>
               {Array.from(freeByProvider.entries()).map(([providerName, providerModels]) => (
                 <div key={providerName}>
-                  <div
-                    className="px-3 py-1 text-xs text-text-muted" style={{ fontSize: 10 }}
-                  >
+                  <div className="text-text-muted px-3 py-1 text-xs" style={{ fontSize: 10 }}>
                     {providerName}
                   </div>
                   {providerModels.map((m) => (
@@ -115,7 +113,8 @@ export function ModelDropdown({
           {configuredByProvider.size > 0 && (
             <>
               <div
-                className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted bg-bg-base" style={{
+                className="text-text-muted bg-bg-base px-3 py-1.5 text-xs font-semibold uppercase tracking-wider"
+                style={{
                   borderBottom: "1px solid var(--color-border)",
                   borderTop: freeByProvider.size > 0 ? "1px solid var(--color-border)" : undefined,
                 }}
@@ -124,9 +123,7 @@ export function ModelDropdown({
               </div>
               {Array.from(configuredByProvider.entries()).map(([providerName, providerModels]) => (
                 <div key={providerName}>
-                  <div
-                    className="px-3 py-1 text-xs text-text-muted" style={{ fontSize: 10 }}
-                  >
+                  <div className="text-text-muted px-3 py-1 text-xs" style={{ fontSize: 10 }}>
                     {providerName}
                   </div>
                   {providerModels.map((m) => (
@@ -145,9 +142,7 @@ export function ModelDropdown({
 
           {/* Empty state */}
           {models.length === 0 && !loading && (
-            <div
-              className="px-3 py-4 text-xs text-center text-text-muted"
-            >
+            <div className="text-text-muted px-3 py-4 text-center text-xs">
               No models available. Check provider settings.
             </div>
           )}
@@ -176,7 +171,7 @@ function ModelRow({
         if (!isActive && !isMainModel) onSelect(model);
       }}
       disabled={isActive || isMainModel}
-      className="flex items-center gap-2 w-full px-3 py-1.5 text-xs transition-colors cursor-pointer text-left disabled:cursor-default"
+      className="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors disabled:cursor-default"
       style={{
         background: isActive ? "var(--color-bg-elevated)" : "transparent",
         color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
@@ -194,10 +189,10 @@ function ModelRow({
       }}
       title={buildTooltip(model)}
     >
-      <span className="flex-1 font-medium truncate">{model.name}</span>
+      <span className="flex-1 truncate font-medium">{model.name}</span>
 
       {/* Capability hints */}
-      <span className="flex items-center gap-1 text-text-muted">
+      <span className="text-text-muted flex items-center gap-1">
         {(model.capabilities as Record<string, boolean>).reasoning && (
           <span title="Reasoning">
             <Lightning size={10} weight="fill" style={{ color: "#f59e0b" }} />
@@ -238,7 +233,7 @@ function ModelRow({
       {isActive && <span style={{ color: "#10b981", fontSize: 11 }}>✓</span>}
 
       {isMainModel && (
-        <span className="font-medium text-text-muted" style={{ fontSize: 9 }}>
+        <span className="text-text-muted font-medium" style={{ fontSize: 9 }}>
           main
         </span>
       )}

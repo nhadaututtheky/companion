@@ -82,7 +82,8 @@ function TreeItem({
     <>
       <button
         onClick={handleClick}
-        className="flex items-center gap-1 w-full text-left py-0.5 px-1 rounded transition-colors cursor-pointer text-text-secondary" style={{
+        className="text-text-secondary flex w-full cursor-pointer items-center gap-1 rounded px-1 py-0.5 text-left transition-colors"
+        style={{
           paddingLeft: depth * 16 + 4,
           fontSize: 12,
         }}
@@ -133,7 +134,8 @@ function TreeItem({
           ))}
           {node.children.length === 0 && node.loaded && (
             <div
-              className="text-xs italic py-0.5 text-text-muted" style={{ paddingLeft: (depth + 1) * 16 + 4 }}
+              className="text-text-muted py-0.5 text-xs italic"
+              style={{ paddingLeft: (depth + 1) * 16 + 4 }}
             >
               (empty)
             </div>
@@ -197,7 +199,7 @@ export function FileTree({ rootPath, onFileSelect }: FileTreeProps) {
     return (
       <button
         onClick={handleExpand}
-        className="shadow-soft flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer text-text-secondary bg-bg-elevated"
+        className="shadow-soft text-text-secondary bg-bg-elevated flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors"
       >
         <FolderSimple size={14} weight="bold" />
         {loading ? "Loading..." : "Browse project files"}
@@ -207,15 +209,17 @@ export function FileTree({ rootPath, onFileSelect }: FileTreeProps) {
 
   return (
     <div
-      className="shadow-soft flex flex-col rounded-lg overflow-hidden bg-bg-card" style={{
+      className="shadow-soft bg-bg-card flex flex-col overflow-hidden rounded-lg"
+      style={{
         maxHeight: 300,
         overflowY: "auto",
       }}
     >
       <div
-        className="px-3 py-1.5 text-xs font-semibold sticky top-0 z-10 text-text-muted bg-bg-elevated" style={{
+        className="text-text-muted bg-bg-elevated sticky top-0 z-10 px-3 py-1.5 text-xs font-semibold"
+        style={{
           borderBottom: "1px solid var(--color-border)",
-          }}
+        }}
       >
         {rootPath.split(/[\\/]/).pop()}
       </div>

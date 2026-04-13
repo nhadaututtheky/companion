@@ -124,7 +124,7 @@ export function AIProviderTab() {
     }
   }
 
-  if (loading) return <div className="text-xs py-8 text-center">Loading...</div>;
+  if (loading) return <div className="py-8 text-center text-xs">Loading...</div>;
 
   const currentPreset = PRESET_PROVIDERS.find((p) => p.name === selectedPreset);
   const suggestedModels = currentPreset?.models ?? [];
@@ -144,7 +144,7 @@ export function AIProviderTab() {
                 <button
                   key={p.name}
                   onClick={() => handlePresetChange(p.name)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                   style={{
                     background:
                       selectedPreset === p.name
@@ -177,12 +177,12 @@ export function AIProviderTab() {
                 value={apiKeyVal}
                 onChange={(e) => setApiKeyVal(e.target.value)}
                 placeholder="sk-..."
-                className="w-full px-3 py-2 pr-10 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-elevated"
+                className="input-bordered text-text-primary bg-bg-elevated w-full rounded-lg px-3 py-2 pr-10 font-mono text-sm"
               />
               <button
                 type="button"
                 onClick={() => setShowKey(!showKey)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-pointer"
+                className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer p-1"
                 aria-label={showKey ? "Hide" : "Show"}
               >
                 {showKey ? <EyeSlash size={14} /> : <Eye size={14} />}
@@ -201,7 +201,7 @@ export function AIProviderTab() {
                   if (!modelFast) setModelFast(e.target.value);
                   if (!modelStrong) setModelStrong(e.target.value);
                 }}
-                className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer text-text-primary bg-bg-elevated"
+                className="input-bordered text-text-primary bg-bg-elevated cursor-pointer rounded-lg px-3 py-2 text-sm"
               >
                 <option value="">Select model...</option>
                 {suggestedModels.map((m) => (
@@ -216,7 +216,7 @@ export function AIProviderTab() {
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
                 placeholder="model-name"
-                className="px-3 py-2 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-elevated"
+                className="input-bordered text-text-primary bg-bg-elevated rounded-lg px-3 py-2 font-mono text-sm"
               />
             )}
           </div>
@@ -250,14 +250,14 @@ export function AIProviderTab() {
         description="Toggle automatic AI-powered features. Requires a configured provider above."
       >
         <div className="flex flex-col gap-3">
-          <label className="flex items-center justify-between cursor-pointer">
+          <label className="flex cursor-pointer items-center justify-between">
             <div>
               <p className="text-xs font-medium">Auto-Summary</p>
               <p className="text-xs">Generate session summary when session ends</p>
             </div>
             <button
               onClick={() => setAutoSummary(!autoSummary)}
-              className="w-10 h-5 rounded-full transition-colors cursor-pointer"
+              className="h-5 w-10 cursor-pointer rounded-full transition-colors"
               role="switch"
               aria-checked={autoSummary}
               style={{
@@ -267,7 +267,7 @@ export function AIProviderTab() {
               }}
             >
               <span
-                className="block w-3.5 h-3.5 rounded-full transition-transform"
+                className="block h-3.5 w-3.5 rounded-full transition-transform"
                 style={{
                   background: "#fff",
                   transform: autoSummary ? "translateX(20px)" : "translateX(2px)",
@@ -277,7 +277,7 @@ export function AIProviderTab() {
             </button>
           </label>
 
-          <label className="flex items-center justify-between cursor-pointer">
+          <label className="flex cursor-pointer items-center justify-between">
             <div>
               <p className="text-xs font-medium">Inject Previous Summaries</p>
               <p className="text-xs">
@@ -286,7 +286,7 @@ export function AIProviderTab() {
             </div>
             <button
               onClick={() => setAutoInject(!autoInject)}
-              className="w-10 h-5 rounded-full transition-colors cursor-pointer"
+              className="h-5 w-10 cursor-pointer rounded-full transition-colors"
               role="switch"
               aria-checked={autoInject}
               style={{
@@ -296,7 +296,7 @@ export function AIProviderTab() {
               }}
             >
               <span
-                className="block w-3.5 h-3.5 rounded-full transition-transform"
+                className="block h-3.5 w-3.5 rounded-full transition-transform"
                 style={{
                   background: "#fff",
                   transform: autoInject ? "translateX(20px)" : "translateX(2px)",
@@ -312,7 +312,7 @@ export function AIProviderTab() {
       <button
         onClick={() => void handleSave()}
         disabled={saving || !baseUrl}
-        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer w-full"
+        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors"
         style={{
           background: baseUrl ? "var(--color-accent)" : "var(--color-bg-elevated)",
           color: baseUrl ? "#fff" : "var(--color-text-muted)",

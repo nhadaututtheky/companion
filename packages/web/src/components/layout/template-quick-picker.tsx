@@ -72,7 +72,8 @@ export function TemplateQuickPicker() {
       {/* Header button */}
       <button
         onClick={() => setOpen(true)}
-        className="px-3 py-1.5 text-xs font-medium transition-all cursor-pointer min-h-[44px] flex items-center gap-1 text-text-secondary rounded-radius-md" style={{
+        className="text-text-secondary rounded-radius-md flex min-h-[44px] cursor-pointer items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all"
+        style={{
           background: "transparent",
           border: "1px solid transparent",
         }}
@@ -100,7 +101,8 @@ export function TemplateQuickPicker() {
 
             {/* Panel */}
             <div
-              className="bg-bg-card rounded-radius-xl shadow-soft border border-glass-border overflow-hidden flex" style={{
+              className="bg-bg-card rounded-radius-xl shadow-soft border-glass-border flex overflow-hidden border"
+              style={{
                 position: "fixed",
                 top: "50%",
                 left: "50%",
@@ -110,19 +112,17 @@ export function TemplateQuickPicker() {
                 zIndex: Z.overlayContent,
                 boxShadow: "0 24px 64px rgba(0,0,0,0.3)",
                 flexDirection: "column",
-                }}
+              }}
             >
               {/* Header */}
               <div
-                className="px-5 py-3 flex items-center justify-between flex-shrink-0"
+                className="flex flex-shrink-0 items-center justify-between px-5 py-3"
                 style={{ borderBottom: "1px solid var(--glass-border)" }}
               >
                 <div className="flex items-center gap-2">
                   <Rocket size={18} weight="bold" style={{ color: "#4285F4" }} />
                   <h2 className="text-sm font-semibold">Expert Modes</h2>
-                  <span
-                    className="text-xs px-2 py-0.5 rounded-full text-text-muted bg-bg-elevated"
-                  >
+                  <span className="text-text-muted bg-bg-elevated rounded-full px-2 py-0.5 text-xs">
                     {BUILT_IN_PERSONAS.length} experts
                   </span>
                 </div>
@@ -132,14 +132,14 @@ export function TemplateQuickPicker() {
                       setOpen(false);
                       router.push("/templates");
                     }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors text-text-secondary bg-bg-elevated shadow-soft border border-glass-border"
+                    className="text-text-secondary bg-bg-elevated shadow-soft border-glass-border flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors"
                   >
                     <PencilSimple size={12} weight="bold" aria-hidden="true" />
                     Manage
                   </button>
                   <button
                     onClick={() => setOpen(false)}
-                    className="p-1.5 rounded-lg cursor-pointer transition-colors text-text-muted"
+                    className="text-text-muted cursor-pointer rounded-lg p-1.5 transition-colors"
                     aria-label="Close expert modes"
                   >
                     <X size={16} weight="bold" />
@@ -155,19 +155,15 @@ export function TemplateQuickPicker() {
                     <button
                       key={persona.id}
                       onClick={() => handleSelectPersona(persona)}
-                      className="flex items-center gap-3 p-3 rounded-xl text-left cursor-pointer transition-all bg-bg-elevated shadow-soft border border-glass-border"
+                      className="bg-bg-elevated shadow-soft border-glass-border flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-left transition-all"
                       title={persona.strength}
                     >
                       <PersonaAvatar persona={persona} size={36} showBadge={false} />
-                      <div className="flex flex-col flex-1 min-w-0">
-                        <span
-                          className="text-xs font-semibold truncate text-text-primary"
-                        >
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <span className="text-text-primary truncate text-xs font-semibold">
                           {persona.icon} {persona.name}
                         </span>
-                        <span
-                          className="text-xs truncate text-text-muted" style={{ fontSize: 10 }}
-                        >
+                        <span className="text-text-muted truncate text-xs" style={{ fontSize: 10 }}>
                           {persona.strength}
                         </span>
                       </div>
@@ -178,17 +174,13 @@ export function TemplateQuickPicker() {
                 {/* Custom templates */}
                 {(loading || templates.length > 0) && (
                   <div className="mt-4">
-                    <span
-                      className="text-xs font-semibold mb-2 block text-text-muted"
-                    >
+                    <span className="text-text-muted mb-2 block text-xs font-semibold">
                       Custom Prompts
                     </span>
 
                     {loading && (
                       <div className="py-4 text-center">
-                        <span className="text-xs text-text-muted">
-                          Loading...
-                        </span>
+                        <span className="text-text-muted text-xs">Loading...</span>
                       </div>
                     )}
 
@@ -197,14 +189,12 @@ export function TemplateQuickPicker() {
                         <button
                           key={tpl.id}
                           onClick={() => handleSelectTemplate(tpl)}
-                          className="flex items-center gap-3 p-3 rounded-xl text-left cursor-pointer transition-all bg-bg-elevated shadow-soft border border-glass-border"
+                          className="bg-bg-elevated shadow-soft border-glass-border flex cursor-pointer items-center gap-3 rounded-xl border p-3 text-left transition-all"
                         >
                           <span className="shrink-0" style={{ fontSize: 20, lineHeight: 1 }}>
                             {tpl.icon || "\uD83D\uDCDD"}
                           </span>
-                          <span
-                            className="text-xs font-medium truncate text-text-primary"
-                          >
+                          <span className="text-text-primary truncate text-xs font-medium">
                             {tpl.name}
                           </span>
                         </button>

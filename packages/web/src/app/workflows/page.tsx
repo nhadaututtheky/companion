@@ -63,26 +63,27 @@ export default function WorkflowsPage() {
   }, [load]);
 
   return (
-    <div className="flex flex-col bg-bg-base" style={{ height: "100vh" }}>
+    <div className="bg-bg-base flex flex-col" style={{ height: "100vh" }}>
       <Header />
       <div
         className="flex-1 overflow-auto"
         style={{ padding: "24px 32px", maxWidth: 960, margin: "0 auto", width: "100%" }}
       >
         {/* Title */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="mb-6 flex items-center gap-3">
           <Lightning size={22} weight="bold" />
-          <h1 className="text-lg font-bold flex-1">Workflows</h1>
+          <h1 className="flex-1 text-lg font-bold">Workflows</h1>
           <button
             onClick={() => load()}
-            className="p-2 rounded-lg cursor-pointer text-text-muted" style={{ background: "none", border: "none" }}
+            className="text-text-muted cursor-pointer rounded-lg p-2"
+            style={{ background: "none", border: "none" }}
             aria-label="Refresh"
           >
             <ArrowClockwise size={16} />
           </button>
           <button
             onClick={() => setPickerOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold cursor-pointer"
+            className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold"
             style={{ background: "var(--color-accent)", color: "#fff", border: "none" }}
           >
             <Plus size={14} weight="bold" />
@@ -91,12 +92,12 @@ export default function WorkflowsPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-2 mb-4">
+        <div className="mb-4 flex gap-2">
           {["", "active", "concluded"].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className="px-3 py-1 rounded-lg text-xs font-medium cursor-pointer"
+              className="cursor-pointer rounded-lg px-3 py-1 text-xs font-medium"
               style={{
                 background: filter === f ? "var(--color-accent)" : "var(--color-bg-card)",
                 color: filter === f ? "#fff" : "var(--color-text-secondary)",
@@ -113,17 +114,17 @@ export default function WorkflowsPage() {
           <div className="flex justify-center py-12">
             <CircleNotch
               size={24}
-              className="text-text-muted" style={{ animation: "spin 1s linear infinite" }}
+              className="text-text-muted"
+              style={{ animation: "spin 1s linear infinite" }}
             />
           </div>
         ) : workflows.length === 0 ? (
-          <div
-            className="shadow-soft text-center py-12 rounded-xl bg-bg-card"
-          >
+          <div className="shadow-soft bg-bg-card rounded-xl py-12 text-center">
             <Lightning
               size={32}
               weight="light"
-              className="text-text-muted" style={{ margin: "0 auto 8px" }}
+              className="text-text-muted"
+              style={{ margin: "0 auto 8px" }}
             />
             <p className="text-sm">No workflows yet. Start one from a template.</p>
           </div>
@@ -140,25 +141,27 @@ export default function WorkflowsPage() {
                 <Link
                   key={w.channelId}
                   href={`/workflows/${w.channelId}`}
-                  className="shadow-soft flex items-center gap-3 px-4 py-3 rounded-xl transition-colors cursor-pointer bg-bg-card" style={{
+                  className="shadow-soft bg-bg-card flex cursor-pointer items-center gap-3 rounded-xl px-4 py-3 transition-colors"
+                  style={{
                     textDecoration: "none",
                   }}
                 >
                   {STATUS_ICONS[w.status] ?? <Clock size={14} />}
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium">
                       {state?.templateName ?? "Workflow"}
                     </div>
-                    <div className="text-xs truncate">{w.topic}</div>
+                    <div className="truncate text-xs">{w.topic}</div>
                   </div>
 
                   {/* Progress bar */}
                   <div
-                    className="bg-bg-elevated overflow-hidden" style={{
+                    className="bg-bg-elevated overflow-hidden"
+                    style={{
                       width: 80,
                       height: 6,
                       borderRadius: 3,
-                      }}
+                    }}
                   >
                     <div
                       style={{
@@ -173,14 +176,13 @@ export default function WorkflowsPage() {
                   </div>
 
                   <span
-                    className="text-xs font-mono text-text-muted text-right" style={{ minWidth: 40 }}
+                    className="text-text-muted text-right font-mono text-xs"
+                    style={{ minWidth: 40 }}
                   >
                     {completedSteps}/{totalSteps}
                   </span>
 
-                  <span
-                    className="text-xs text-text-muted whitespace-nowrap"
-                  >
+                  <span className="text-text-muted whitespace-nowrap text-xs">
                     {new Date(w.createdAt).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",

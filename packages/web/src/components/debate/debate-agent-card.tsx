@@ -68,9 +68,7 @@ export function DebateAgentCard({
   };
 
   return (
-    <div
-      className="shadow-soft flex flex-col gap-2 rounded-xl p-3 bg-bg-card"
-    >
+    <div className="shadow-soft bg-bg-card flex flex-col gap-2 rounded-xl p-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -79,14 +77,16 @@ export function DebateAgentCard({
             type="text"
             value={agent.label}
             onChange={(e) => onChange({ ...agent, label: e.target.value })}
-            className="text-xs font-semibold bg-transparent border-none outline-none text-text-primary" style={{ width: 120 }}
+            className="text-text-primary border-none bg-transparent text-xs font-semibold outline-none"
+            style={{ width: 120 }}
             aria-label={`Agent ${index + 1} name`}
           />
         </div>
         <div className="flex items-center gap-1.5">
           {isCLI ? (
             <span
-              className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full text-success" style={{
+              className="text-success flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs"
+              style={{
                 background: "var(--color-success)20",
                 fontSize: 10,
               }}
@@ -96,7 +96,8 @@ export function DebateAgentCard({
             </span>
           ) : (
             <span
-              className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full text-text-muted" style={{
+              className="text-text-muted flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs"
+              style={{
                 background: "var(--color-text-muted)20",
                 fontSize: 10,
               }}
@@ -108,7 +109,7 @@ export function DebateAgentCard({
           {canRemove && (
             <button
               onClick={onRemove}
-              className="p-1 rounded transition-all cursor-pointer text-text-muted"
+              className="text-text-muted cursor-pointer rounded p-1 transition-all"
               aria-label={`Remove agent ${index + 1}`}
             >
               <Trash size={13} />
@@ -119,15 +120,15 @@ export function DebateAgentCard({
 
       {/* Platform select */}
       <div className="flex gap-2">
-        <div className="flex flex-col gap-0.5 flex-1">
-          <label className="text-xs text-text-muted" style={{ fontSize: 10 }}>
+        <div className="flex flex-1 flex-col gap-0.5">
+          <label className="text-text-muted text-xs" style={{ fontSize: 10 }}>
             Platform
           </label>
           <div className="relative">
             <select
               value={agent.platform}
               onChange={(e) => handlePlatformChange(e.target.value)}
-              className="w-full appearance-none rounded-lg px-2 py-1 text-xs input-bordered cursor-pointer text-text-primary bg-bg-elevated"
+              className="input-bordered text-text-primary bg-bg-elevated w-full cursor-pointer appearance-none rounded-lg px-2 py-1 text-xs"
               aria-label="Select platform"
             >
               {Object.entries(PLATFORM_LABELS).map(([id, info]) => (
@@ -144,15 +145,15 @@ export function DebateAgentCard({
         </div>
 
         {/* Model select */}
-        <div className="flex flex-col gap-0.5 flex-1">
-          <label className="text-xs text-text-muted" style={{ fontSize: 10 }}>
+        <div className="flex flex-1 flex-col gap-0.5">
+          <label className="text-text-muted text-xs" style={{ fontSize: 10 }}>
             Model
           </label>
           <div className="relative">
             <select
               value={agent.model}
               onChange={(e) => onChange({ ...agent, model: e.target.value })}
-              className="w-full appearance-none rounded-lg px-2 py-1 text-xs input-bordered cursor-pointer text-text-primary bg-bg-elevated"
+              className="input-bordered text-text-primary bg-bg-elevated w-full cursor-pointer appearance-none rounded-lg px-2 py-1 text-xs"
               aria-label="Select model"
             >
               {models.map((m) => (
@@ -171,14 +172,14 @@ export function DebateAgentCard({
 
       {/* Role select */}
       <div className="flex flex-col gap-0.5">
-        <label className="text-xs text-text-muted" style={{ fontSize: 10 }}>
+        <label className="text-text-muted text-xs" style={{ fontSize: 10 }}>
           Role
         </label>
         <div className="relative">
           <select
             value={agent.role}
             onChange={(e) => onChange({ ...agent, role: e.target.value })}
-            className="w-full appearance-none rounded-lg px-2 py-1 text-xs input-bordered cursor-pointer text-text-primary bg-bg-elevated"
+            className="input-bordered text-text-primary bg-bg-elevated w-full cursor-pointer appearance-none rounded-lg px-2 py-1 text-xs"
             aria-label="Select role"
           >
             {ROLE_OPTIONS.map((r) => (

@@ -17,7 +17,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="absolute top-2 right-2 p-1 rounded cursor-pointer transition-opacity opacity-0 group-hover:opacity-100"
+      className="absolute right-2 top-2 cursor-pointer rounded p-1 opacity-0 transition-opacity group-hover:opacity-100"
       style={{
         background: "rgba(255,255,255,0.1)",
         color: copied ? "#34A853" : "rgba(255,255,255,0.6)",
@@ -51,24 +51,25 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
             if (isBlock || codeText.includes("\n")) {
               return (
                 <div
-                  className="relative group my-2 rounded-lg overflow-hidden"
+                  className="group relative my-2 overflow-hidden rounded-lg"
                   style={{ maxHeight: compact ? 200 : 400 }}
                 >
                   {lang && (
                     <div
-                      className="px-3 py-1 text-xs font-mono"
+                      className="px-3 py-1 font-mono text-xs"
                       style={{ background: "#2d2d2d", color: "#999" }}
                     >
                       {lang}
                     </div>
                   )}
                   <pre
-                    className="overflow-auto p-3 m-0 font-mono" style={{
+                    className="m-0 overflow-auto p-3 font-mono"
+                    style={{
                       background: "#1e1e1e",
                       color: "#d4d4d4",
                       fontSize: compact ? 13 : 14,
                       lineHeight: 1.55,
-                      }}
+                    }}
                   >
                     <code {...props}>{codeText}</code>
                   </pre>
@@ -80,11 +81,12 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
             // Inline code
             return (
               <code
-                className="bg-bg-elevated border border-border font-mono" style={{
+                className="bg-bg-elevated border-border border font-mono"
+                style={{
                   borderRadius: 4,
                   padding: "1px 5px",
                   fontSize: "0.9em",
-                  }}
+                }}
                 {...props}
               >
                 {children}
@@ -95,7 +97,7 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
           // ── Tables ──────────────────────────────────────
           table({ children }) {
             return (
-              <div className="overflow-x-auto my-2" style={{ maxWidth: "100%" }}>
+              <div className="my-2 overflow-x-auto" style={{ maxWidth: "100%" }}>
                 <table
                   style={{
                     borderCollapse: "collapse",
@@ -112,7 +114,8 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
           thead({ children }) {
             return (
               <thead
-                className="bg-bg-elevated" style={{
+                className="bg-bg-elevated"
+                style={{
                   borderBottom: "2px solid var(--color-border)",
                 }}
               >
@@ -123,9 +126,10 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
           th({ children }) {
             return (
               <th
-                className="text-left text-text-primary whitespace-nowrap font-semibold" style={{
+                className="text-text-primary whitespace-nowrap text-left font-semibold"
+                style={{
                   padding: compact ? "6px 10px" : "8px 14px",
-                  }}
+                }}
               >
                 {children}
               </th>
@@ -134,10 +138,11 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
           td({ children }) {
             return (
               <td
-                className="text-text-primary" style={{
+                className="text-text-primary"
+                style={{
                   padding: compact ? "6px 10px" : "8px 14px",
                   borderBottom: "1px solid var(--color-border)",
-                  }}
+                }}
               >
                 {children}
               </td>
@@ -154,7 +159,8 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
           blockquote({ children }) {
             return (
               <blockquote
-                className="text-text-secondary" style={{
+                className="text-text-secondary"
+                style={{
                   borderLeft: "3px solid #4285F4",
                   paddingLeft: 12,
                   margin: "8px 0",
@@ -177,11 +183,7 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
 
           // ── Inline elements ─────────────────────────────
           strong({ children }) {
-            return (
-              <strong className="text-text-primary font-semibold">
-                {children}
-              </strong>
-            );
+            return <strong className="text-text-primary font-semibold">{children}</strong>;
           },
           em({ children }) {
             return <em>{children}</em>;
@@ -208,21 +210,30 @@ export function MarkdownMessage({ content, compact = false }: MarkdownMessagePro
           // ── Headings (scale down for chat) ──────────────
           h1({ children }) {
             return (
-              <h3 className="font-bold" style={{ fontSize: compact ? 18 : 20, margin: "12px 0 6px" }}>
+              <h3
+                className="font-bold"
+                style={{ fontSize: compact ? 18 : 20, margin: "12px 0 6px" }}
+              >
                 {children}
               </h3>
             );
           },
           h2({ children }) {
             return (
-              <h4 className="font-semibold" style={{ fontSize: compact ? 16 : 18, margin: "10px 0 4px" }}>
+              <h4
+                className="font-semibold"
+                style={{ fontSize: compact ? 16 : 18, margin: "10px 0 4px" }}
+              >
                 {children}
               </h4>
             );
           },
           h3({ children }) {
             return (
-              <h5 className="font-semibold" style={{ fontSize: compact ? 15 : 16, margin: "8px 0 3px" }}>
+              <h5
+                className="font-semibold"
+                style={{ fontSize: compact ? 15 : 16, margin: "8px 0 3px" }}
+              >
                 {children}
               </h5>
             );

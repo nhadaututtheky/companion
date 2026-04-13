@@ -110,10 +110,10 @@ export function StepConfig(props: StepConfigProps) {
   } = props;
 
   return (
-    <div className="flex flex-col gap-4 px-5 py-4 overflow-y-auto" style={{ maxHeight: 460 }}>
+    <div className="flex flex-col gap-4 overflow-y-auto px-5 py-4" style={{ maxHeight: 460 }}>
       {/* Project name */}
       <div>
-        <label className="block text-xs font-semibold mb-1.5" htmlFor="project-name-input">
+        <label className="mb-1.5 block text-xs font-semibold" htmlFor="project-name-input">
           PROJECT NAME
         </label>
         <input
@@ -122,7 +122,8 @@ export function StepConfig(props: StepConfigProps) {
           value={projectName}
           onChange={(e: ChangeEvent<HTMLInputElement>) => onProjectNameChange(e.target.value)}
           placeholder="my-project"
-          className="w-full px-3 py-2 rounded-lg text-sm input-bordered text-text-primary bg-bg-elevated" style={{
+          className="input-bordered text-text-primary bg-bg-elevated w-full rounded-lg px-3 py-2 text-sm"
+          style={{
             fontFamily: "var(--font-body)",
           }}
           autoFocus
@@ -131,9 +132,9 @@ export function StepConfig(props: StepConfigProps) {
 
       {/* Model — dynamic per platform */}
       <div>
-        <label className="block text-xs font-semibold mb-1.5" htmlFor="model-select">
+        <label className="mb-1.5 block text-xs font-semibold" htmlFor="model-select">
           MODEL
-          <span className="font-normal ml-1 text-text-muted">
+          <span className="text-text-muted ml-1 font-normal">
             (
             {selectedPlatform === "claude"
               ? "Claude"
@@ -149,7 +150,7 @@ export function StepConfig(props: StepConfigProps) {
           id="model-select"
           value={model}
           onChange={(e: ChangeEvent<HTMLSelectElement>) => onModelChange(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer text-text-primary bg-bg-elevated font-mono"
+          className="input-bordered text-text-primary bg-bg-elevated w-full cursor-pointer rounded-lg px-3 py-2 font-mono text-sm"
         >
           {getModelsForPlatform(selectedPlatform).map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -162,7 +163,7 @@ export function StepConfig(props: StepConfigProps) {
       {/* Platform-specific options */}
       {selectedPlatform === "codex" && (
         <div>
-          <p className="text-xs font-semibold mb-2">APPROVAL MODE</p>
+          <p className="mb-2 text-xs font-semibold">APPROVAL MODE</p>
           <div className="flex gap-2">
             {[
               { value: "suggest", label: "Suggest", desc: "Review all changes" },
@@ -172,7 +173,7 @@ export function StepConfig(props: StepConfigProps) {
               <button
                 key={opt.value}
                 onClick={() => onCodexApprovalModeChange(opt.value)}
-                className="flex-1 flex flex-col items-center gap-1 px-3 py-2.5 rounded-lg text-xs cursor-pointer transition-colors"
+                className="flex flex-1 cursor-pointer flex-col items-center gap-1 rounded-lg px-3 py-2.5 text-xs transition-colors"
                 style={{
                   background:
                     codexApprovalMode === opt.value ? "#10B98115" : "var(--color-bg-elevated)",
@@ -185,7 +186,9 @@ export function StepConfig(props: StepConfigProps) {
                 }}
               >
                 <span className="font-semibold">{opt.label}</span>
-                <span className="text-text-muted" style={{ fontSize: 10 }}>{opt.desc}</span>
+                <span className="text-text-muted" style={{ fontSize: 10 }}>
+                  {opt.desc}
+                </span>
               </button>
             ))}
           </div>
@@ -195,16 +198,14 @@ export function StepConfig(props: StepConfigProps) {
       {selectedPlatform === "gemini" && (
         <div className="flex flex-col gap-3">
           <div
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
+            className="flex items-center gap-3 rounded-lg px-3 py-2.5"
             style={{ background: "#4285F410", border: "1px solid #4285F430" }}
           >
             <span className="font-semibold" style={{ color: "#4285F4", fontSize: 11 }}>
               Free tier: 1000 req/day with Google Account
             </span>
           </div>
-          <label
-            className="shadow-soft flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer bg-bg-elevated"
-          >
+          <label className="shadow-soft bg-bg-elevated flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5">
             <input
               type="checkbox"
               checked={geminiSandbox}
@@ -213,17 +214,11 @@ export function StepConfig(props: StepConfigProps) {
               style={{ accentColor: "#4285F4" }}
             />
             <div>
-              <p className="text-sm font-semibold text-text-primary">
-                Sandbox Mode
-              </p>
-              <p className="text-xs text-text-muted">
-                Run in isolated sandbox environment
-              </p>
+              <p className="text-text-primary text-sm font-semibold">Sandbox Mode</p>
+              <p className="text-text-muted text-xs">Run in isolated sandbox environment</p>
             </div>
           </label>
-          <label
-            className="shadow-soft flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer bg-bg-elevated"
-          >
+          <label className="shadow-soft bg-bg-elevated flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5">
             <input
               type="checkbox"
               checked={geminiYolo}
@@ -232,12 +227,8 @@ export function StepConfig(props: StepConfigProps) {
               style={{ accentColor: "#EA4335" }}
             />
             <div>
-              <p className="text-sm font-semibold text-text-primary">
-                YOLO Mode
-              </p>
-              <p className="text-xs text-text-muted">
-                Skip all confirmations (dangerous)
-              </p>
+              <p className="text-text-primary text-sm font-semibold">YOLO Mode</p>
+              <p className="text-text-muted text-xs">Skip all confirmations (dangerous)</p>
             </div>
           </label>
         </div>
@@ -245,7 +236,7 @@ export function StepConfig(props: StepConfigProps) {
 
       {selectedPlatform === "opencode" && (
         <div
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
+          className="flex items-center gap-3 rounded-lg px-3 py-2.5"
           style={{ background: "#8B5CF610", border: "1px solid #8B5CF630" }}
         >
           <span className="font-semibold" style={{ color: "#8B5CF6", fontSize: 11 }}>
@@ -257,7 +248,7 @@ export function StepConfig(props: StepConfigProps) {
       {/* Expert Mode / Persona picker — only for Claude */}
       {selectedPlatform === "claude" && (
         <div>
-          <p className="text-xs font-semibold mb-2">
+          <p className="mb-2 text-xs font-semibold">
             EXPERT MODE <span className="font-normal">(optional)</span>
           </p>
           <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "thin" }}>
@@ -265,7 +256,7 @@ export function StepConfig(props: StepConfigProps) {
             <button
               type="button"
               onClick={() => onSelectedPersonaIdChange(null)}
-              className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer transition-all flex-shrink-0"
+              className="flex flex-shrink-0 cursor-pointer flex-col items-center gap-1 rounded-lg px-2 py-1.5 transition-all"
               style={{
                 width: 64,
                 background: selectedPersonaId === null ? "#4285F410" : "var(--color-bg-elevated)",
@@ -278,19 +269,16 @@ export function StepConfig(props: StepConfigProps) {
               aria-pressed={selectedPersonaId === null}
             >
               <div
-                className="shadow-soft flex items-center justify-center rounded-full text-text-muted bg-bg-card" style={{
+                className="shadow-soft text-text-muted bg-bg-card flex items-center justify-center rounded-full"
+                style={{
                   width: 36,
                   height: 36,
                   fontSize: 14,
-                  }}
+                }}
               >
                 —
               </div>
-              <span
-                className="text-[10px] truncate w-full text-center text-text-muted"
-              >
-                None
-              </span>
+              <span className="text-text-muted w-full truncate text-center text-[10px]">None</span>
             </button>
 
             {allPersonas.map((persona) => {
@@ -300,7 +288,7 @@ export function StepConfig(props: StepConfigProps) {
                   <button
                     type="button"
                     onClick={() => onSelectedPersonaIdChange(isSelected ? null : persona.id)}
-                    className="flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer transition-all flex-shrink-0"
+                    className="flex flex-shrink-0 cursor-pointer flex-col items-center gap-1 rounded-lg px-2 py-1.5 transition-all"
                     style={{
                       width: 64,
                       background: isSelected ? "#4285F410" : "var(--color-bg-elevated)",
@@ -312,7 +300,7 @@ export function StepConfig(props: StepConfigProps) {
                   >
                     <PersonaAvatar persona={persona} size={36} showBadge={false} />
                     <span
-                      className="text-[10px] truncate w-full text-center"
+                      className="w-full truncate text-center text-[10px]"
                       style={{
                         color: isSelected ? "#4285F4" : "var(--color-text-muted)",
                         fontWeight: isSelected ? 600 : 400,
@@ -331,13 +319,13 @@ export function StepConfig(props: StepConfigProps) {
       {/* Permission mode — Claude only */}
       {selectedPlatform === "claude" && (
         <div>
-          <p className="text-xs font-semibold mb-2">PERMISSION MODE</p>
+          <p className="mb-2 text-xs font-semibold">PERMISSION MODE</p>
           <div className="flex flex-col gap-2">
             {(Object.entries(PERMISSION_DESCRIPTIONS) as [PermissionMode, string][]).map(
               ([mode, desc]) => (
                 <label
                   key={mode}
-                  className="flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors"
+                  className="flex cursor-pointer items-start gap-3 rounded-lg p-3 transition-colors"
                   style={{
                     background: permissionMode === mode ? "#4285F408" : "var(--color-bg-elevated)",
                     border:
@@ -357,7 +345,7 @@ export function StepConfig(props: StepConfigProps) {
                   />
                   <div>
                     <p className="text-sm font-semibold capitalize">{mode}</p>
-                    <p className="text-xs mt-0.5">{desc}</p>
+                    <p className="mt-0.5 text-xs">{desc}</p>
                   </div>
                 </label>
               ),
@@ -369,7 +357,7 @@ export function StepConfig(props: StepConfigProps) {
       {/* Template picker */}
       {templates.length > 0 && (
         <div>
-          <p className="text-xs font-semibold mb-2">
+          <p className="mb-2 text-xs font-semibold">
             TEMPLATE <span className="ml-1 font-normal">(optional)</span>
           </p>
           <div className="flex flex-wrap gap-2">
@@ -380,7 +368,7 @@ export function StepConfig(props: StepConfigProps) {
                   key={tpl.id}
                   type="button"
                   onClick={() => onSelectTemplate(tpl)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+                  className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
                   style={{
                     background: isSelected ? "#4285F415" : "var(--color-bg-elevated)",
                     border: isSelected ? "1px solid #4285F440" : "1px solid var(--color-border)",
@@ -392,7 +380,8 @@ export function StepConfig(props: StepConfigProps) {
                   {tpl.name}
                   {tpl.variables && tpl.variables.length > 0 && (
                     <span
-                      className="ml-0.5 font-mono text-text-muted" style={{ fontSize: 10 }}
+                      className="text-text-muted ml-0.5 font-mono"
+                      style={{ fontSize: 10 }}
                       aria-hidden="true"
                     >
                       {"{…}"}
@@ -416,7 +405,7 @@ export function StepConfig(props: StepConfigProps) {
 
       {/* Command Presets */}
       <div>
-        <label className="block text-xs font-semibold mb-1.5">
+        <label className="mb-1.5 block text-xs font-semibold">
           QUICK START <span className="font-normal">(click to set as prompt)</span>
         </label>
         <div className="flex flex-wrap gap-1.5">
@@ -426,7 +415,7 @@ export function StepConfig(props: StepConfigProps) {
                 key={p.command}
                 type="button"
                 onClick={() => onInitialPromptChange(p.command)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
+                className="inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-[11px] transition-colors hover:bg-[var(--color-bg-elevated)]"
                 style={{
                   background:
                     initialPrompt === p.command
@@ -448,7 +437,7 @@ export function StepConfig(props: StepConfigProps) {
 
       {/* Initial prompt */}
       <div>
-        <label className="block text-xs font-semibold mb-1.5" htmlFor="initial-prompt">
+        <label className="mb-1.5 block text-xs font-semibold" htmlFor="initial-prompt">
           INITIAL PROMPT <span className="font-normal">(optional)</span>
         </label>
         <textarea
@@ -457,7 +446,8 @@ export function StepConfig(props: StepConfigProps) {
           onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onInitialPromptChange(e.target.value)}
           placeholder="Start with a specific task..."
           rows={3}
-          className="w-full px-3 py-2 rounded-lg text-sm input-bordered resize-none text-text-primary bg-bg-elevated" style={{
+          className="input-bordered text-text-primary bg-bg-elevated w-full resize-none rounded-lg px-3 py-2 text-sm"
+          style={{
             fontFamily: "var(--font-body)",
           }}
         />
@@ -477,7 +467,7 @@ export function StepConfig(props: StepConfigProps) {
             <button
               key={opt.value}
               onClick={() => onIdleTimeoutChange(opt.value)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+              className="cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
               style={{
                 background:
                   idleTimeout === opt.value
@@ -494,9 +484,7 @@ export function StepConfig(props: StepConfigProps) {
       </div>
 
       {/* Resume toggle */}
-      <label
-        className="shadow-sm flex items-center gap-3 p-3 rounded-lg cursor-pointer bg-bg-elevated"
-      >
+      <label className="bg-bg-elevated flex cursor-pointer items-center gap-3 rounded-lg p-3 shadow-sm">
         <input
           type="checkbox"
           checked={resume}
@@ -506,7 +494,7 @@ export function StepConfig(props: StepConfigProps) {
         />
         <div>
           <p className="text-sm font-semibold">Resume previous session</p>
-          <p className="text-xs mt-0.5">Continue from last conversation in this project</p>
+          <p className="mt-0.5 text-xs">Continue from last conversation in this project</p>
         </div>
       </label>
 
@@ -514,14 +502,14 @@ export function StepConfig(props: StepConfigProps) {
       <div className="flex items-center justify-between pt-1">
         <button
           onClick={onBack}
-          className="shadow-soft px-4 py-2 rounded-lg text-sm font-medium cursor-pointer text-text-secondary bg-bg-elevated"
+          className="shadow-soft text-text-secondary bg-bg-elevated cursor-pointer rounded-lg px-4 py-2 text-sm font-medium"
         >
           Back
         </button>
         <button
           onClick={onNext}
           disabled={!selectedDir || !templateVarsValid}
-          className="px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
           style={{ background: "#4285F4", color: "#fff" }}
         >
           Next: Review

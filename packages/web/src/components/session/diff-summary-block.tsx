@@ -105,22 +105,20 @@ export function DiffSummaryBlock({ tools }: DiffSummaryBlockProps) {
   };
 
   return (
-    <div
-      className="shadow-soft my-2 rounded-lg overflow-hidden bg-bg-elevated"
-    >
+    <div className="shadow-soft bg-bg-elevated my-2 overflow-hidden rounded-lg">
       {/* Header */}
       <div
         className="flex items-center gap-2.5 px-3 py-2"
         style={{ borderBottom: "1px solid var(--color-border)" }}
       >
         <GitDiff size={14} weight="bold" style={{ color: "#4285F4" }} />
-        <span className="text-xs font-semibold text-text-primary">
+        <span className="text-text-primary text-xs font-semibold">
           Modified{" "}
           <span className="font-mono">
             {entries.length} file{entries.length !== 1 ? "s" : ""}
           </span>
         </span>
-        <span className="flex items-center gap-1.5 ml-auto font-mono text-xs">
+        <span className="ml-auto flex items-center gap-1.5 font-mono text-xs">
           {totalAdditions > 0 && <span style={{ color: "#34A853" }}>+{totalAdditions}</span>}
           {totalDeletions > 0 && <span style={{ color: "#ef4444" }}>-{totalDeletions}</span>}
         </span>
@@ -135,7 +133,7 @@ export function DiffSummaryBlock({ tools }: DiffSummaryBlockProps) {
           <div key={entry.toolId}>
             <button
               onClick={() => toggleFile(entry.toolId)}
-              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs cursor-pointer transition-colors text-left"
+              className="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors"
               style={{
                 borderBottom: expanded ? "1px solid var(--color-border)" : "none",
               }}
@@ -154,11 +152,9 @@ export function DiffSummaryBlock({ tools }: DiffSummaryBlockProps) {
               )}
               <span className="flex-1 truncate font-mono" title={entry.filePath}>
                 <span className="text-text-muted">{entry.dirPath}</span>
-                <span className="text-text-primary font-semibold">
-                  {entry.fileName}
-                </span>
+                <span className="text-text-primary font-semibold">{entry.fileName}</span>
               </span>
-              <span className="flex items-center gap-1.5 font-mono shrink-0">
+              <span className="flex shrink-0 items-center gap-1.5 font-mono">
                 {entry.additions > 0 && (
                   <span style={{ color: "#34A853" }}>+{entry.additions}</span>
                 )}
@@ -168,20 +164,14 @@ export function DiffSummaryBlock({ tools }: DiffSummaryBlockProps) {
               </span>
               <DiffBar additions={entry.additions} deletions={entry.deletions} />
               {expanded ? (
-                <CaretDown
-                  size={10}
-                  className="shrink-0 text-text-muted"
-                />
+                <CaretDown size={10} className="text-text-muted shrink-0" />
               ) : (
-                <CaretRight
-                  size={10}
-                  className="shrink-0 text-text-muted"
-                />
+                <CaretRight size={10} className="text-text-muted shrink-0" />
               )}
             </button>
 
             {expanded && (
-              <div className="px-2 py-2 bg-bg-base">
+              <div className="bg-bg-base px-2 py-2">
                 <InlineDiff
                   filePath={entry.filePath}
                   oldContent={entry.oldContent}
@@ -211,7 +201,7 @@ function DiffBar({ additions, deletions }: { additions: number; deletions: numbe
   const neutralBlocks = maxBlocks - addBlocks - delBlocks;
 
   return (
-    <span className="inline-flex gap-px shrink-0">
+    <span className="inline-flex shrink-0 gap-px">
       {Array.from({ length: addBlocks }).map((_, i) => (
         <span
           key={`a${i}`}

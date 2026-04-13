@@ -90,9 +90,9 @@ function ChannelFeed({ messages }: { messages: ChannelMessage[] }) {
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 gap-2">
+      <div className="flex flex-col items-center justify-center gap-2 py-8">
         <ChatTeardropDots size={28} />
-        <p className="text-xs text-center">No messages yet. Post the first one.</p>
+        <p className="text-center text-xs">No messages yet. Post the first one.</p>
       </div>
     );
   }
@@ -106,7 +106,8 @@ function ChannelFeed({ messages }: { messages: ChannelMessage[] }) {
         return (
           <div
             key={msg.id}
-            className="flex flex-col gap-0.5 rounded-lg p-2 bg-bg-card" style={{
+            className="bg-bg-card flex flex-col gap-0.5 rounded-lg p-2"
+            style={{
               border: `1px solid var(--color-border)`,
               borderLeft: `3px solid ${roleColor}`,
             }}
@@ -122,12 +123,10 @@ function ChannelFeed({ messages }: { messages: ChannelMessage[] }) {
               <span className="text-xs font-semibold capitalize" style={{ color: roleColor }}>
                 {msg.role}
               </span>
-              <span className="text-xs font-mono truncate flex-1">{msg.agentId}</span>
-              <span className="text-xs flex-shrink-0">{formatRelativeTime(msg.timestamp)}</span>
+              <span className="flex-1 truncate font-mono text-xs">{msg.agentId}</span>
+              <span className="flex-shrink-0 text-xs">{formatRelativeTime(msg.timestamp)}</span>
             </div>
-            <p
-              className="text-xs leading-relaxed text-text-primary whitespace-pre-wrap"
-            >
+            <p className="text-text-primary whitespace-pre-wrap text-xs leading-relaxed">
               {msg.content}
             </p>
           </div>
@@ -173,7 +172,7 @@ function MessageComposer({ channelId, onPosted }: { channelId: string; onPosted:
 
   return (
     <div
-      className="flex items-end gap-2 px-3 py-2 flex-shrink-0"
+      className="flex flex-shrink-0 items-end gap-2 px-3 py-2"
       style={{ borderTop: "1px solid var(--color-border)" }}
     >
       <textarea
@@ -183,7 +182,8 @@ function MessageComposer({ channelId, onPosted }: { channelId: string; onPosted:
         disabled={posting}
         placeholder="Post to channel… (Enter to send)"
         rows={2}
-        className="flex-1 resize-none rounded-lg px-2 py-1.5 text-xs input-bordered text-text-primary bg-bg-card" style={{
+        className="input-bordered text-text-primary bg-bg-card flex-1 resize-none rounded-lg px-2 py-1.5 text-xs"
+        style={{
           fontFamily: "var(--font-body)",
         }}
         aria-label="Channel message input"
@@ -191,7 +191,7 @@ function MessageComposer({ channelId, onPosted }: { channelId: string; onPosted:
       <button
         onClick={() => void handlePost()}
         disabled={!text.trim() || posting}
-        className="flex-shrink-0 p-2 rounded-lg transition-all cursor-pointer disabled:opacity-40"
+        className="flex-shrink-0 cursor-pointer rounded-lg p-2 transition-all disabled:opacity-40"
         style={{
           background: text.trim() && !posting ? "var(--color-accent)" : "var(--color-bg-elevated)",
           color: text.trim() && !posting ? "#fff" : "var(--color-text-muted)",
@@ -261,7 +261,8 @@ function CreateChannelForm({
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
           placeholder="e.g. Review auth implementation"
-          className="rounded-lg px-2 py-1.5 text-xs input-bordered text-text-primary bg-bg-card" style={{
+          className="input-bordered text-text-primary bg-bg-card rounded-lg px-2 py-1.5 text-xs"
+          style={{
             fontFamily: "var(--font-body)",
           }}
           onKeyDown={(e) => {
@@ -283,7 +284,8 @@ function CreateChannelForm({
             onChange={(e) =>
               setType(e.target.value as "debate" | "review" | "red_team" | "brainstorm")
             }
-            className="w-full appearance-none rounded-lg px-2 py-1.5 text-xs input-bordered cursor-pointer text-text-primary bg-bg-card" style={{
+            className="input-bordered text-text-primary bg-bg-card w-full cursor-pointer appearance-none rounded-lg px-2 py-1.5 text-xs"
+            style={{
               fontFamily: "var(--font-body)",
             }}
           >
@@ -304,14 +306,14 @@ function CreateChannelForm({
         <button
           onClick={() => void handleCreate()}
           disabled={!topic.trim() || creating}
-          className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer disabled:opacity-40"
+          className="flex-1 cursor-pointer rounded-lg py-1.5 text-xs font-semibold transition-all disabled:opacity-40"
           style={{ background: "var(--color-accent)", color: "#fff" }}
         >
           {creating ? "Creating…" : "Create"}
         </button>
         <button
           onClick={onCancel}
-          className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer text-text-secondary bg-bg-elevated"
+          className="text-text-secondary bg-bg-elevated cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-all"
         >
           Cancel
         </button>
@@ -377,12 +379,13 @@ function LinkSessionSelector({ channelId, alreadyLinked, onLinked }: LinkSession
   if (sessions.length === 0) return null;
 
   return (
-    <div className="flex gap-2 px-3 pb-2 flex-shrink-0">
+    <div className="flex flex-shrink-0 gap-2 px-3 pb-2">
       <div className="relative flex-1">
         <select
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
-          className="w-full appearance-none rounded-lg px-2 py-1.5 text-xs input-bordered cursor-pointer text-text-primary bg-bg-card" style={{
+          className="input-bordered text-text-primary bg-bg-card w-full cursor-pointer appearance-none rounded-lg px-2 py-1.5 text-xs"
+          style={{
             fontFamily: "var(--font-body)",
           }}
           aria-label="Select session to link"
@@ -402,7 +405,7 @@ function LinkSessionSelector({ channelId, alreadyLinked, onLinked }: LinkSession
       <button
         onClick={() => void handleLink()}
         disabled={!selectedId || linking}
-        className="px-3 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-40 transition-all"
+        className="cursor-pointer rounded-lg px-3 text-xs font-semibold transition-all disabled:opacity-40"
         style={{ background: "var(--color-success)", color: "#fff" }}
         aria-label="Link selected session"
       >
@@ -508,10 +511,10 @@ export function ChannelPanel({
     return (
       <div className="flex flex-col items-center justify-center gap-3 p-4">
         <ChatTeardropDots size={28} aria-hidden="true" />
-        <p className="text-xs text-center">No shared context channel linked to this session.</p>
+        <p className="text-center text-xs">No shared context channel linked to this session.</p>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all"
+          className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
           style={{ background: "var(--color-accent)", color: "#fff" }}
         >
           <Plus size={13} weight="bold" aria-hidden="true" />
@@ -541,19 +544,24 @@ export function ChannelPanel({
   const statusColor = isActive ? "var(--color-accent)" : "var(--color-text-muted)";
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex h-full min-h-0 flex-col">
       {/* Channel header */}
       <div
-        className="flex flex-col gap-1 px-3 py-2 flex-shrink-0"
+        className="flex flex-shrink-0 flex-col gap-1 px-3 py-2"
         style={{ borderBottom: "1px solid var(--color-border)" }}
       >
         <div className="flex items-center gap-2">
-          <LinkSimple size={13} className="shrink-0" style={{ color: statusColor }} aria-hidden="true" />
-          <span className="text-xs font-semibold flex-1 truncate" title={channel.topic}>
+          <LinkSimple
+            size={13}
+            className="shrink-0"
+            style={{ color: statusColor }}
+            aria-hidden="true"
+          />
+          <span className="flex-1 truncate text-xs font-semibold" title={channel.topic}>
             {channel.topic}
           </span>
           <span
-            className="text-xs px-1.5 py-0.5 rounded-full capitalize flex-shrink-0"
+            className="flex-shrink-0 rounded-full px-1.5 py-0.5 text-xs capitalize"
             style={{
               background: `${statusColor}20`,
               color: statusColor,
@@ -565,7 +573,7 @@ export function ChannelPanel({
           {!compact && (
             <button
               onClick={() => void handleUnlinkSelf()}
-              className="flex-shrink-0 p-1 rounded transition-all cursor-pointer"
+              className="flex-shrink-0 cursor-pointer rounded p-1 transition-all"
               aria-label="Unlink session from channel"
               title="Unlink this session"
             >
@@ -576,13 +584,14 @@ export function ChannelPanel({
 
         <div className="flex items-center gap-2">
           <span
-            className="text-xs px-1.5 py-0.5 rounded-full capitalize text-text-muted bg-bg-elevated" style={{
+            className="text-text-muted bg-bg-elevated rounded-full px-1.5 py-0.5 text-xs capitalize"
+            style={{
               fontSize: 10,
             }}
           >
             {TYPE_LABELS[channel.type] ?? channel.type}
           </span>
-          <span className="text-xs text-text-muted" style={{ fontSize: 10 }}>
+          <span className="text-text-muted text-xs" style={{ fontSize: 10 }}>
             {channel.linkedSessions.length} session
             {channel.linkedSessions.length !== 1 ? "s" : ""}
           </span>
@@ -590,7 +599,7 @@ export function ChannelPanel({
       </div>
 
       {/* Message feed */}
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <ChannelFeed messages={channel.messages} />
       </div>
 

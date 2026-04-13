@@ -26,11 +26,11 @@ export function PersonaAvatar({
 
   return (
     <div
-      className={`persona-avatar ${className ?? ""} shrink-0 relative`}
-       style={{
+      className={`persona-avatar ${className ?? ""} relative shrink-0`}
+      style={{
         width: size,
         height: size,
-        }}
+      }}
     >
       <svg
         width={size}
@@ -78,7 +78,8 @@ export function PersonaAvatar({
       {/* Icon badge */}
       {showBadge && (
         <span
-          className="bg-bg-card rounded-full absolute flex" style={{
+          className="bg-bg-card absolute flex rounded-full"
+          style={{
             bottom: -2,
             right: -2,
             width: badgeSize,

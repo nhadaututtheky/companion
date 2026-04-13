@@ -60,7 +60,7 @@ export function PersonaChip({ personaId, onSwitch, disabled }: PersonaChipProps)
         type="button"
         onClick={() => !disabled && setOpen((v) => !v)}
         disabled={disabled}
-        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)] disabled:opacity-50 disabled:cursor-not-allowed max-w-[140px]"
+        className="inline-flex max-w-[140px] cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium transition-colors hover:bg-[var(--color-bg-elevated)] disabled:cursor-not-allowed disabled:opacity-50"
         style={{
           color: open ? "#4285F4" : "var(--color-text-secondary)",
           border: open ? "1px solid #4285F440" : "1px solid var(--color-border)",
@@ -76,7 +76,8 @@ export function PersonaChip({ personaId, onSwitch, disabled }: PersonaChipProps)
 
       {open && (
         <div
-          className="shadow-soft absolute left-0 mt-1 rounded-lg overflow-hidden bg-bg-card" style={{
+          className="shadow-soft bg-bg-card absolute left-0 mt-1 overflow-hidden rounded-lg"
+          style={{
             top: "100%",
             width: 260,
             boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
@@ -90,20 +91,21 @@ export function PersonaChip({ personaId, onSwitch, disabled }: PersonaChipProps)
           <button
             type="button"
             onClick={() => handleSelect(null)}
-            className="flex items-center gap-2.5 w-full px-3 py-2 text-left cursor-pointer template-picker-item"
+            className="template-picker-item flex w-full cursor-pointer items-center gap-2.5 px-3 py-2 text-left"
             role="menuitem"
             aria-label="Default Claude (no persona)"
           >
             <div
-              className="shadow-soft flex items-center justify-center rounded-full flex-shrink-0 text-text-muted bg-bg-elevated" style={{
+              className="shadow-soft text-text-muted bg-bg-elevated flex flex-shrink-0 items-center justify-center rounded-full"
+              style={{
                 width: 24,
                 height: 24,
                 fontSize: 10,
-                }}
+              }}
             >
               —
             </div>
-            <span className="text-xs font-medium text-text-secondary">
+            <span className="text-text-secondary text-xs font-medium">
               Default Claude (no persona)
             </span>
           </button>
@@ -138,23 +140,21 @@ function PersonaOption({
       <button
         type="button"
         onClick={onSelect}
-        className="flex items-center gap-2.5 w-full px-3 py-2 text-left cursor-pointer template-picker-item"
+        className="template-picker-item flex w-full cursor-pointer items-center gap-2.5 px-3 py-2 text-left"
         role="menuitem"
         style={{
           background: isActive ? "#4285F408" : undefined,
         }}
       >
         <PersonaAvatar persona={persona} size={24} showBadge={false} />
-        <div className="flex flex-col flex-1 min-w-0">
+        <div className="flex min-w-0 flex-1 flex-col">
           <span
-            className="text-xs font-medium truncate"
+            className="truncate text-xs font-medium"
             style={{ color: isActive ? "#4285F4" : "var(--color-text-primary)" }}
           >
             {persona.icon} {persona.name}
           </span>
-          <span
-            className="text-xs truncate text-text-muted" style={{ fontSize: 10 }}
-          >
+          <span className="text-text-muted truncate text-xs" style={{ fontSize: 10 }}>
             {persona.strength}
           </span>
         </div>

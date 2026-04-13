@@ -45,7 +45,8 @@ export function PersonaTooltip({ persona, children, placement = "bottom" }: Pers
 
   return (
     <div
-      className="relative" style={{ display: "inline-flex" }}
+      className="relative"
+      style={{ display: "inline-flex" }}
       onMouseEnter={show}
       onMouseLeave={hide}
       onFocusCapture={show}
@@ -55,9 +56,9 @@ export function PersonaTooltip({ persona, children, placement = "bottom" }: Pers
 
       {visible && (
         <div
-          className="persona-tooltip bg-bg-card border border-border absolute"
+          className="persona-tooltip bg-bg-card border-border absolute border"
           role="tooltip"
-            style={{
+          style={{
             ...placementStyles[placement],
             width: 280,
             padding: 12,
@@ -68,16 +69,14 @@ export function PersonaTooltip({ persona, children, placement = "bottom" }: Pers
           }}
         >
           {/* Header: avatar + name + category */}
-          <div className="flex items-center gap-3 mb-2">
+          <div className="mb-2 flex items-center gap-3">
             <PersonaAvatar persona={persona} size={36} showBadge={false} />
-            <div className="flex flex-col flex-1 min-w-0">
-              <span
-                className="text-sm font-semibold truncate text-text-primary"
-              >
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="text-text-primary truncate text-sm font-semibold">
                 {persona.name}
               </span>
               <span
-                className="text-xs font-medium px-1.5 py-0.5 rounded-full self-start"
+                className="self-start rounded-full px-1.5 py-0.5 text-xs font-medium"
                 style={{
                   background: `${cat.color}15`,
                   color: cat.color,
@@ -90,25 +89,19 @@ export function PersonaTooltip({ persona, children, placement = "bottom" }: Pers
           </div>
 
           {/* Title */}
-          <p
-            className="text-xs font-medium mb-1.5 text-text-primary" style={{ lineHeight: 1.4 }}
-          >
+          <p className="text-text-primary mb-1.5 text-xs font-medium" style={{ lineHeight: 1.4 }}>
             {persona.title}
           </p>
 
           {/* Intro */}
-          <p
-            className="text-xs mb-2 text-text-secondary" style={{ lineHeight: 1.5 }}
-          >
+          <p className="text-text-secondary mb-2 text-xs" style={{ lineHeight: 1.5 }}>
             {persona.intro}
           </p>
 
           {/* Strength */}
-          <div className="flex items-start gap-1.5 mb-2">
+          <div className="mb-2 flex items-start gap-1.5">
             <span style={{ fontSize: 11, lineHeight: 1 }}>💪</span>
-            <span
-              className="text-xs font-medium text-text-primary" style={{ lineHeight: 1.4 }}
-            >
+            <span className="text-text-primary text-xs font-medium" style={{ lineHeight: 1.4 }}>
               {persona.strength}
             </span>
           </div>
@@ -118,7 +111,8 @@ export function PersonaTooltip({ persona, children, placement = "bottom" }: Pers
             {persona.bestFor.map((tag) => (
               <span
                 key={tag}
-                className="text-xs px-1.5 py-0.5 rounded-full text-text-muted bg-bg-elevated" style={{
+                className="text-text-muted bg-bg-elevated rounded-full px-1.5 py-0.5 text-xs"
+                style={{
                   fontSize: 10,
                 }}
               >

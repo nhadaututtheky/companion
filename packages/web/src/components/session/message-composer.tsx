@@ -151,7 +151,7 @@ export function MessageComposer({
   return (
     <div
       ref={composerWrapperRef}
-      className="message-composer-wrapper px-4 py-3 relative"
+      className="message-composer-wrapper relative px-4 py-3"
       style={{ borderTop: "1px solid var(--color-border)" }}
       onDragOver={(e) => {
         if (e.dataTransfer.types.includes("application/x-companion-file")) {
@@ -199,7 +199,8 @@ export function MessageComposer({
       }}
     >
       <div
-        className="flex flex-col rounded-xl px-4 py-2.5 bg-bg-elevated relative" style={{
+        className="bg-bg-elevated relative flex flex-col rounded-xl px-4 py-2.5"
+        style={{
           border: isDragOver
             ? "1.5px solid var(--color-accent)"
             : isFocused
@@ -213,7 +214,8 @@ export function MessageComposer({
       >
         {isDragOver && (
           <div
-            className="absolute flex" style={{
+            className="absolute flex"
+            style={{
               inset: 0,
               background: "rgba(66, 133, 244, 0.08)",
               border: "2px dashed var(--color-accent)",
@@ -280,7 +282,8 @@ export function MessageComposer({
                     : placeholder
             }
             rows={1}
-            className="flex-1 resize-none bg-transparent text-sm leading-relaxed composer-textarea text-text-primary" style={{
+            className="composer-textarea text-text-primary flex-1 resize-none bg-transparent text-sm leading-relaxed"
+            style={{
               maxHeight: 200,
               minHeight: 22,
               fontFamily: "var(--font-body)",
@@ -292,7 +295,7 @@ export function MessageComposer({
           {voiceSupported && !isRunning && (
             <button
               onClick={toggleVoice}
-              className="flex-shrink-0 p-1.5 rounded-lg transition-all cursor-pointer"
+              className="flex-shrink-0 cursor-pointer rounded-lg p-1.5 transition-all"
               style={{
                 background: listening ? "#EA433515" : "transparent",
                 color: listening ? "#EA4335" : "var(--color-text-muted)",
@@ -311,7 +314,7 @@ export function MessageComposer({
           {isRunning && (
             <button
               onClick={onStop}
-              className="flex-shrink-0 p-1.5 rounded-lg transition-colors cursor-pointer"
+              className="flex-shrink-0 cursor-pointer rounded-lg p-1.5 transition-colors"
               style={{ background: "#EA433515", color: "#EA4335" }}
               aria-label="Stop"
               title="Stop agent"
@@ -322,7 +325,7 @@ export function MessageComposer({
           <button
             onClick={handleSend}
             disabled={!hasContent || disabled}
-            className="flex-shrink-0 p-1.5 rounded-lg transition-all cursor-pointer disabled:opacity-40"
+            className="flex-shrink-0 cursor-pointer rounded-lg p-1.5 transition-all disabled:opacity-40"
             style={{
               background: hasContent
                 ? isRunning
@@ -339,7 +342,7 @@ export function MessageComposer({
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 mt-1.5">
+      <div className="mt-1.5 flex items-center gap-1.5">
         <SavedPromptsPicker
           projectSlug={projectSlug}
           onSelect={(content) => {
@@ -363,7 +366,7 @@ export function MessageComposer({
             disabled={disabled}
           />
         )}
-        <p className="flex-1 text-center text-xs text-text-muted">
+        <p className="text-text-muted flex-1 text-center text-xs">
           {listening ? (
             <span style={{ color: "#EA4335" }}>Recording... click mic to stop</span>
           ) : isRunning ? (

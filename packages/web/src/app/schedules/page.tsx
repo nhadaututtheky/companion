@@ -93,26 +93,23 @@ export default function SchedulesPage() {
   const activeCount = schedules.filter((s) => s.enabled).length;
 
   return (
-    <div
-      className="min-h-screen text-text-primary" style={{ background: "var(--color-bg-base)" }}
-    >
+    <div className="text-text-primary min-h-screen" style={{ background: "var(--color-bg-base)" }}>
       {/* Header */}
       <div
-        className="px-6 py-4 flex items-center justify-between bg-bg-card" style={{
+        className="bg-bg-card flex items-center justify-between px-6 py-4"
+        style={{
           borderBottom: "1px solid var(--color-border)",
         }}
       >
         <div className="flex items-center gap-3">
-          <a href="/" className="p-1.5 rounded-lg transition-colors" aria-label="Back to dashboard">
+          <a href="/" className="rounded-lg p-1.5 transition-colors" aria-label="Back to dashboard">
             <ArrowLeft size={16} weight="bold" />
           </a>
           <div className="flex items-center gap-2">
             <Timer size={18} weight="bold" style={{ color: "#4285F4" }} />
             <h1 className="text-base font-semibold">Schedules</h1>
           </div>
-          <span
-            className="text-xs px-2 py-0.5 rounded-full text-text-muted bg-bg-elevated"
-          >
+          <span className="text-text-muted bg-bg-elevated rounded-full px-2 py-0.5 text-xs">
             {activeCount} active
           </span>
         </div>
@@ -121,7 +118,7 @@ export default function SchedulesPage() {
             setEditingSchedule(null);
             setFormOpen(true);
           }}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+          className="flex cursor-pointer items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-medium transition-colors"
           style={{ background: "#4285F4", color: "#fff" }}
         >
           <Plus size={12} weight="bold" />
@@ -130,7 +127,7 @@ export default function SchedulesPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-6xl mx-auto px-6 py-6">
+      <div className="mx-auto max-w-6xl px-6 py-6">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div
@@ -161,10 +158,8 @@ export default function SchedulesPage() {
 
               {/* Upcoming runs */}
               {upcoming.length > 0 && (
-                <div
-                  className="shadow-soft rounded-xl p-3 bg-bg-card"
-                >
-                  <div className="flex items-center gap-1.5 mb-2">
+                <div className="shadow-soft bg-bg-card rounded-xl p-3">
+                  <div className="mb-2 flex items-center gap-1.5">
                     <CalendarBlank size={12} style={{ color: "#4285F4" }} />
                     <span className="text-xs font-semibold">Upcoming</span>
                   </div>
@@ -174,9 +169,10 @@ export default function SchedulesPage() {
                         key={`${run.scheduleId}-${i}`}
                         className="flex items-center justify-between"
                       >
-                        <span className="text-xs truncate max-w-32">{run.name}</span>
+                        <span className="max-w-32 truncate text-xs">{run.name}</span>
                         <span
-                          className="text-xs font-mono text-text-muted" style={{ fontSize: 10 }}
+                          className="text-text-muted font-mono text-xs"
+                          style={{ fontSize: 10 }}
                         >
                           {new Date(run.nextRunAt).toLocaleDateString("en-US", {
                             month: "short",

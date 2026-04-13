@@ -88,7 +88,7 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
 
   return (
     <div
-      className="mx-3 mb-2 rounded-lg overflow-hidden"
+      className="mx-3 mb-2 overflow-hidden rounded-lg"
       style={{
         border: `1px solid ${color}40`,
         background: `${color}08`,
@@ -97,13 +97,14 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2">
         <WarningCircle size={16} weight="fill" style={{ color }} />
-        <span className="text-xs font-semibold flex-1" style={{ color }}>
+        <span className="flex-1 text-xs font-semibold" style={{ color }}>
           {stateLabel} — Score {reading.score}/100
         </span>
         <button
           type="button"
           onClick={() => setShowDetails((v) => !v)}
-          className="text-xs px-1.5 py-0.5 rounded cursor-pointer text-text-muted" style={{ background: "var(--color-bg-elevated)" }}
+          className="text-text-muted cursor-pointer rounded px-1.5 py-0.5 text-xs"
+          style={{ background: "var(--color-bg-elevated)" }}
           aria-label="Toggle signal details"
         >
           {showDetails ? "Hide details" : "Details"}
@@ -111,7 +112,7 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
         <button
           type="button"
           onClick={handleDismiss}
-          className="p-0.5 rounded cursor-pointer text-text-muted"
+          className="text-text-muted cursor-pointer rounded p-0.5"
           aria-label="Dismiss warning"
         >
           <X size={12} />
@@ -119,9 +120,7 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
       </div>
 
       {/* Warning message */}
-      <div className="px-3 pb-2 text-xs text-text-secondary">
-        {warningText}
-      </div>
+      <div className="text-text-secondary px-3 pb-2 text-xs">{warningText}</div>
 
       {/* Signal breakdown (collapsed) */}
       {showDetails && (
@@ -136,7 +135,7 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
           <button
             type="button"
             onClick={openGuidanceEditor}
-            className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors"
+            className="flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors"
             style={{
               background: `${color}20`,
               color,
@@ -151,7 +150,7 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
             <button
               type="button"
               onClick={() => setShowCalmConfirm(true)}
-              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors text-warning bg-bg-elevated border border-border"
+              className="text-warning bg-bg-elevated border-border flex cursor-pointer items-center gap-1 rounded border px-2 py-1 text-xs font-medium transition-colors"
               aria-label="Inject calm guidance to agent"
             >
               <FirstAidKit size={12} />
@@ -161,7 +160,7 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
           <button
             type="button"
             onClick={onStop ?? (() => onSendMessage("STOP"))}
-            className="flex items-center gap-1 px-2 py-1 rounded text-xs cursor-pointer transition-colors text-text-muted bg-bg-elevated border border-border"
+            className="text-text-muted bg-bg-elevated border-border flex cursor-pointer items-center gap-1 rounded border px-2 py-1 text-xs transition-colors"
             aria-label="Stop the session"
           >
             <Pause size={12} />
@@ -170,7 +169,7 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
           <button
             type="button"
             onClick={handleDismiss}
-            className="px-2 py-1 rounded text-xs cursor-pointer text-text-muted"
+            className="text-text-muted cursor-pointer rounded px-2 py-1 text-xs"
             aria-label="Dismiss and let agent continue"
           >
             Let it continue
@@ -181,19 +180,16 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
       {/* Inject Calm confirmation */}
       {showCalmConfirm && (
         <div className="px-3 pb-2">
-          <div
-            className="rounded-md p-2 text-xs mb-1.5 text-text-secondary bg-bg-base border border-border"
-          >
-            <div className="font-medium mb-1 text-text-primary">
-              This will send to the agent:
-            </div>
+          <div className="text-text-secondary bg-bg-base border-border mb-1.5 rounded-md border p-2 text-xs">
+            <div className="text-text-primary mb-1 font-medium">This will send to the agent:</div>
             {getCalmInjection(reading)}
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleInjectCalm}
-              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer text-warning" style={{
+              className="text-warning flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-xs font-medium"
+              style={{
                 background: "color-mix(in srgb, var(--color-warning) 15%, transparent)",
                 border: "1px solid color-mix(in srgb, var(--color-warning) 30%, transparent)",
               }}
@@ -205,7 +201,7 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
             <button
               type="button"
               onClick={() => setShowCalmConfirm(false)}
-              className="px-2 py-1 rounded text-xs cursor-pointer text-text-muted"
+              className="text-text-muted cursor-pointer rounded px-2 py-1 text-xs"
             >
               Cancel
             </button>
@@ -218,7 +214,8 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
         <div className="px-3 pb-2">
           <textarea
             ref={textareaRef}
-            className="w-full rounded-md p-2 text-xs resize-none text-text-primary bg-bg-base border border-border" style={{
+            className="text-text-primary bg-bg-base border-border w-full resize-none rounded-md border p-2 text-xs"
+            style={{
               minHeight: 60,
               maxHeight: 120,
             }}
@@ -235,11 +232,11 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
             placeholder="Edit the suggested guidance before sending..."
             aria-label="Guidance message to send to agent"
           />
-          <div className="flex items-center gap-2 mt-1">
+          <div className="mt-1 flex items-center gap-2">
             <button
               type="button"
               onClick={handleSendGuidance}
-              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium cursor-pointer"
+              className="flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-xs font-medium"
               style={{
                 background: `${color}20`,
                 color,
@@ -253,7 +250,7 @@ export function PulseWarning({ sessionId, onSendMessage, onStop }: PulseWarningP
             <button
               type="button"
               onClick={() => setShowGuidance(false)}
-              className="px-2 py-1 rounded text-xs cursor-pointer text-text-muted"
+              className="text-text-muted cursor-pointer rounded px-2 py-1 text-xs"
             >
               Cancel
             </button>
@@ -284,7 +281,7 @@ function SignalBars({
         return (
           <div key={key} className="flex items-center gap-2">
             <span
-              className="text-xs w-28 flex-shrink-0 truncate"
+              className="w-28 flex-shrink-0 truncate text-xs"
               style={{
                 color: isTop ? "var(--color-text-primary)" : "var(--color-text-muted)",
                 fontWeight: isTop ? 600 : 400,
@@ -293,9 +290,7 @@ function SignalBars({
             >
               {getSignalLabel(key)}
             </span>
-            <div
-              className="flex-1 rounded-full overflow-hidden bg-bg-base" style={{ height: 4 }}
-            >
+            <div className="bg-bg-base flex-1 overflow-hidden rounded-full" style={{ height: 4 }}>
               <div
                 className="h-full rounded-full transition-all"
                 style={{
@@ -306,7 +301,8 @@ function SignalBars({
               />
             </div>
             <span
-              className="text-xs font-mono w-7 text-right flex-shrink-0 text-text-muted" style={{ fontSize: 9 }}
+              className="text-text-muted w-7 flex-shrink-0 text-right font-mono text-xs"
+              style={{ fontSize: 9 }}
             >
               {percent}%
             </span>

@@ -73,17 +73,15 @@ function ThinkingSection({ blocks }: { blocks: ThinkingBlock[] }) {
   const summary = firstLine.length > 100 ? firstLine.slice(0, 100) + "..." : firstLine;
 
   return (
-    <div
-      className="shadow-soft my-2 rounded-lg overflow-hidden bg-bg-elevated"
-    >
+    <div className="shadow-soft bg-bg-elevated my-2 overflow-hidden rounded-lg">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 w-full px-3 py-2 text-xs cursor-pointer"
+        className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-xs"
         aria-expanded={expanded}
       >
         <Brain size={14} weight="bold" style={{ color: "#a855f7" }} />
         <span className="font-medium">Thinking</span>
-        <span className="opacity-40 text-xs">
+        <span className="text-xs opacity-40">
           ({blocks.length} block{blocks.length > 1 ? "s" : ""})
         </span>
         {expanded ? (
@@ -92,14 +90,14 @@ function ThinkingSection({ blocks }: { blocks: ThinkingBlock[] }) {
           <CaretRight size={12} className="ml-auto" />
         )}
         {!expanded && summary && (
-          <span className="truncate opacity-50 ml-1 font-normal" style={{ maxWidth: 350 }}>
+          <span className="ml-1 truncate font-normal opacity-50" style={{ maxWidth: 350 }}>
             {summary}
           </span>
         )}
       </button>
       {expanded && (
         <div
-          className="px-3 pb-3 text-sm leading-relaxed max-h-[500px] overflow-y-auto"
+          className="max-h-[500px] overflow-y-auto px-3 pb-3 text-sm leading-relaxed"
           style={{
             borderTop: "1px solid var(--color-border)",
             paddingTop: 8,
@@ -156,13 +154,14 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
         return (
           <div
             key={tool.id}
-            className="rounded-lg overflow-hidden bg-bg-elevated" style={{
+            className="bg-bg-elevated overflow-hidden rounded-lg"
+            style={{
               border: `1px solid ${result?.isError ? "var(--color-danger, #ef4444)" : "var(--color-border)"}`,
             }}
           >
             <button
               onClick={() => toggle(tool.id)}
-              className="flex items-center gap-2 w-full px-3 py-2 text-xs cursor-pointer"
+              className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-xs"
               aria-expanded={expanded}
             >
               <span style={{ color: meta.color }} aria-hidden="true">
@@ -173,14 +172,15 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
               </code>
               {!expanded && summary && (
                 <span
-                  className="truncate opacity-60 ml-1 font-mono text-text-secondary" style={{ maxWidth: 400 }}
+                  className="text-text-secondary ml-1 truncate font-mono opacity-60"
+                  style={{ maxWidth: 400 }}
                 >
                   {summary}
                 </span>
               )}
               {result?.isError && (
                 <span
-                  className="text-xs px-1.5 py-0.5 rounded"
+                  className="rounded px-1.5 py-0.5 text-xs"
                   style={{ background: "#ef444420", color: "#ef4444" }}
                 >
                   error
@@ -203,7 +203,7 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
                 {/* Result */}
                 {result && (
                   <div className="px-3 py-2" style={{ borderTop: "1px solid var(--color-border)" }}>
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="mb-1 flex items-center justify-between">
                       <div
                         className="text-xs font-semibold"
                         style={{ color: result.isError ? "#ef4444" : "var(--color-text-muted)" }}
@@ -223,7 +223,7 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
                               });
                               setQuickAction("fix");
                             }}
-                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs cursor-pointer transition-colors hover:brightness-125"
+                            className="inline-flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 text-xs transition-colors hover:brightness-125"
                             style={{ background: "#ef444415", color: "#ef4444" }}
                             title="Send error to AI to fix"
                           >
@@ -241,7 +241,7 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
                                 meta: { toolName: tool.name },
                               });
                             }}
-                            className="p-0.5 rounded cursor-pointer transition-colors hover:brightness-125"
+                            className="cursor-pointer rounded p-0.5 transition-colors hover:brightness-125"
                             title="Send to AI"
                             aria-label="Send output to AI"
                           >
@@ -273,9 +273,7 @@ function ToolUseSection({ tools, results }: { tools: ToolBlock[]; results?: Tool
 function CostBadge({ costUsd }: { costUsd: number }) {
   if (costUsd <= 0) return null;
   return (
-    <span
-      className="inline-flex items-center gap-0.5 text-xs font-mono px-1.5 py-0.5 rounded ml-2 text-text-muted bg-bg-elevated"
-    >
+    <span className="text-text-muted bg-bg-elevated ml-2 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 font-mono text-xs">
       <CurrencyDollar size={10} />
       {costUsd.toFixed(4)}
     </span>
@@ -302,7 +300,7 @@ function PinButton({
         e.stopPropagation();
         togglePin(sessionId, messageIndex);
       }}
-      className="p-1 rounded cursor-pointer transition-all"
+      className="cursor-pointer rounded p-1 transition-all"
       style={{
         color: isPinned ? "#FBBC04" : "var(--color-text-muted)",
         background: isPinned ? "#FBBC0420" : "transparent",
@@ -323,7 +321,7 @@ function SourceBadge({ source }: { source: string }) {
   if (source === "telegram") {
     return (
       <span
-        className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ml-1"
+        className="ml-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs"
         style={{ background: "#29B6F615", color: "#29B6F6" }}
       >
         <TelegramLogo size={10} weight="fill" aria-hidden="true" />
@@ -334,7 +332,8 @@ function SourceBadge({ source }: { source: string }) {
   if (source === "api") {
     return (
       <span
-        className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ml-1 text-text-muted" style={{ background: "var(--color-bg-elevated)" }}
+        className="text-text-muted ml-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs"
+        style={{ background: "var(--color-bg-elevated)" }}
       >
         via API
       </span>
@@ -343,7 +342,7 @@ function SourceBadge({ source }: { source: string }) {
   if (source === "mention") {
     return (
       <span
-        className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ml-1"
+        className="ml-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs"
         style={{ background: "#a855f715", color: "#a855f7" }}
       >
         @mention
@@ -353,7 +352,8 @@ function SourceBadge({ source }: { source: string }) {
   // Fallback for unknown sources (debate, agent, etc.)
   return (
     <span
-      className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded ml-1 text-text-muted" style={{ background: "var(--color-bg-elevated)" }}
+      className="text-text-muted ml-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs"
+      style={{ background: "var(--color-bg-elevated)" }}
     >
       via {source}
     </span>
@@ -383,7 +383,8 @@ function MessageBubble({
     return (
       <div className="flex justify-center py-2" ref={msgRef}>
         <span
-          className="text-xs px-3 py-1.5 rounded-lg text-center text-text-muted bg-bg-elevated" style={{
+          className="text-text-muted bg-bg-elevated rounded-lg px-3 py-1.5 text-center text-xs"
+          style={{
             maxWidth: "80%",
             lineHeight: 1.5,
           }}
@@ -396,12 +397,14 @@ function MessageBubble({
 
   if (isTool) {
     return (
-      <div
-        ref={msgRef}
-        className="shadow-sm flex gap-2 mx-4 my-1.5 p-3 rounded-xl bg-bg-elevated"
-      >
-        <Wrench size={14} weight="bold" className="shrink-0" style={{ color: "#4285F4", marginTop: 2 }} />
-        <pre className="text-xs font-mono m-0 whitespace-pre-wrap">{msg.content}</pre>
+      <div ref={msgRef} className="bg-bg-elevated mx-4 my-1.5 flex gap-2 rounded-xl p-3 shadow-sm">
+        <Wrench
+          size={14}
+          weight="bold"
+          className="shrink-0"
+          style={{ color: "#4285F4", marginTop: 2 }}
+        />
+        <pre className="m-0 whitespace-pre-wrap font-mono text-xs">{msg.content}</pre>
       </div>
     );
   }
@@ -416,7 +419,7 @@ function MessageBubble({
     >
       {/* Avatar */}
       <div
-        className="flex-shrink-0 flex items-center justify-center rounded-full"
+        className="flex flex-shrink-0 items-center justify-center rounded-full"
         style={{
           width: 28,
           height: 28,
@@ -441,7 +444,7 @@ function MessageBubble({
         {/* Main content bubble */}
         {msg.content && (
           <div
-            className="px-3 py-2.5 rounded-2xl text-sm leading-relaxed"
+            className="rounded-2xl px-3 py-2.5 text-sm leading-relaxed"
             style={{
               background: isUser ? "#4285F4" : "var(--color-bg-card)",
               color: isUser ? "#fff" : "var(--color-text-primary)",
@@ -454,7 +457,8 @@ function MessageBubble({
             {isUser ? msg.content : <MarkdownMessage content={msg.content} />}
             {msg.isStreaming && (
               <span
-                className="inline-block" style={{
+                className="inline-block"
+                style={{
                   width: 8,
                   height: 14,
                   background: "currentColor",
@@ -545,7 +549,7 @@ export function MessageFeed({ messages, sessionId = "", onScrollToRef }: Message
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center flex-1 gap-3">
+      <div className="flex flex-1 flex-col items-center justify-center gap-3">
         <Robot size={36} />
         <p className="text-sm">Send a message to start the session</p>
       </div>
@@ -555,7 +559,7 @@ export function MessageFeed({ messages, sessionId = "", onScrollToRef }: Message
   // Small list — render directly (no virtualization overhead)
   if (!shouldVirtualize) {
     return (
-      <div ref={parentRef} className="flex flex-col flex-1 overflow-y-auto py-4">
+      <div ref={parentRef} className="flex flex-1 flex-col overflow-y-auto py-4">
         {messages.map((msg, index) => (
           <div key={msg.id} data-msg-index={index}>
             <MessageBubble msg={msg} index={index} sessionId={sessionId} msgRef={() => {}} />
@@ -571,13 +575,15 @@ export function MessageFeed({ messages, sessionId = "", onScrollToRef }: Message
   return (
     <div ref={parentRef} className="flex-1 overflow-y-auto">
       <div
-        className="relative" style={{
+        className="relative"
+        style={{
           height: virtualizer.getTotalSize(),
           width: "100%",
-          }}
+        }}
       >
         <div
-          className="absolute" style={{
+          className="absolute"
+          style={{
             top: 0,
             left: 0,
             width: "100%",

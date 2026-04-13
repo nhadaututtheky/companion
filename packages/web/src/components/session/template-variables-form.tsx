@@ -31,11 +31,11 @@ export function TemplateVariablesForm({ variables, values, onChange }: TemplateV
 
   return (
     <div>
-      <p className="text-xs font-semibold mb-2">TEMPLATE VARIABLES</p>
+      <p className="mb-2 text-xs font-semibold">TEMPLATE VARIABLES</p>
       <div className={useGrid ? "grid grid-cols-2 gap-3" : "flex flex-col gap-3"}>
         {variables.map((variable) => (
           <div key={variable.key}>
-            <label htmlFor={`tvar-${variable.key}`} className="block text-xs font-medium mb-1">
+            <label htmlFor={`tvar-${variable.key}`} className="mb-1 block text-xs font-medium">
               {variable.label}
               {variable.required && (
                 <span className="ml-1 font-bold" style={{ color: "#EA4335" }} aria-hidden="true">
@@ -52,7 +52,8 @@ export function TemplateVariablesForm({ variables, values, onChange }: TemplateV
               }
               placeholder={`{{${variable.key}}}`}
               required={variable.required}
-              className="w-full px-3 py-2 rounded-lg text-sm input-bordered text-text-primary bg-bg-elevated" style={{
+              className="input-bordered text-text-primary bg-bg-elevated w-full rounded-lg px-3 py-2 text-sm"
+              style={{
                 fontFamily: "var(--font-body)",
               }}
               aria-label={variable.label}

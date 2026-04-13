@@ -98,21 +98,20 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
       aria-label="Create Workspace"
     >
       <div
-        className="shadow-float flex flex-col w-full max-w-md max-h-[85vh] rounded-2xl overflow-hidden bg-bg-base" style={{
+        className="shadow-float bg-bg-base flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-2xl"
+        style={{
           boxShadow: "0 25px 50px rgba(0,0,0,0.3)",
         }}
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between px-5 py-3 flex-shrink-0"
+          className="flex flex-shrink-0 items-center justify-between px-5 py-3"
           style={{ borderBottom: "1px solid var(--color-border)" }}
         >
-          <h2 className="text-sm font-bold text-text-primary">
-            Create Workspace
-          </h2>
+          <h2 className="text-text-primary text-sm font-bold">Create Workspace</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg transition-all cursor-pointer text-text-muted"
+            className="text-text-muted cursor-pointer rounded-lg p-1.5 transition-all"
             aria-label="Close dialog"
           >
             <X size={16} weight="bold" />
@@ -120,13 +119,10 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4">
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 py-4">
           {/* Name */}
           <div className="flex flex-col gap-1">
-            <label
-              htmlFor="ws-name"
-              className="text-xs font-semibold text-text-secondary"
-            >
+            <label htmlFor="ws-name" className="text-text-secondary text-xs font-semibold">
               Workspace Name
             </label>
             <input
@@ -135,31 +131,23 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Companion Dev"
-              className="shadow-soft rounded-lg px-3 py-2 text-sm text-text-primary bg-bg-card"
+              className="shadow-soft text-text-primary bg-bg-card rounded-lg px-3 py-2 text-sm"
               autoFocus
             />
           </div>
 
           {/* Project */}
           <div className="flex flex-col gap-1">
-            <label
-              htmlFor="ws-project"
-              className="text-xs font-semibold text-text-secondary"
-            >
+            <label htmlFor="ws-project" className="text-text-secondary text-xs font-semibold">
               Project
             </label>
             {loadingProjects ? (
               <div className="flex items-center gap-2 py-2">
-                <CircleNotch
-                  size={14}
-                  className="animate-spin text-text-muted"
-                />
-                <span className="text-xs text-text-muted">
-                  Loading projects...
-                </span>
+                <CircleNotch size={14} className="text-text-muted animate-spin" />
+                <span className="text-text-muted text-xs">Loading projects...</span>
               </div>
             ) : projects.length === 0 ? (
-              <p className="text-xs py-2 text-text-muted">
+              <p className="text-text-muted py-2 text-xs">
                 No projects configured. Create a session first.
               </p>
             ) : (
@@ -167,7 +155,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
                 id="ws-project"
                 value={projectSlug}
                 onChange={(e) => setProjectSlug(e.target.value)}
-                className="shadow-soft rounded-lg px-3 py-2 text-sm cursor-pointer text-text-primary bg-bg-card"
+                className="shadow-soft text-text-primary bg-bg-card cursor-pointer rounded-lg px-3 py-2 text-sm"
               >
                 {projects.map((p) => (
                   <option key={p.slug} value={p.slug}>
@@ -177,9 +165,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
               </select>
             )}
             {selectedProject && (
-              <span
-                className="flex items-center gap-1 text-[10px] mt-0.5 text-text-muted"
-              >
+              <span className="text-text-muted mt-0.5 flex items-center gap-1 text-[10px]">
                 <FolderSimple size={10} weight="bold" />
                 {selectedProject.dir}
               </span>
@@ -188,11 +174,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
 
           {/* CLI Slots */}
           <div className="flex flex-col gap-1.5">
-            <label
-              className="text-xs font-semibold text-text-secondary"
-            >
-              CLI Agents
-            </label>
+            <label className="text-text-secondary text-xs font-semibold">CLI Agents</label>
             <div className="flex flex-wrap gap-2">
               {CLI_OPTIONS.map((cli) => {
                 const selected = cliSlots.includes(cli.id);
@@ -200,7 +182,7 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
                   <button
                     key={cli.id}
                     onClick={() => toggleCli(cli.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-all"
+                    className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all"
                     style={{
                       background: selected
                         ? "var(--color-primary, #6366f1)"
@@ -225,19 +207,19 @@ export function WorkspaceCreateModal({ open, onClose }: WorkspaceCreateModalProp
 
         {/* Footer */}
         <div
-          className="flex items-center justify-end gap-2 px-5 py-3 flex-shrink-0"
+          className="flex flex-shrink-0 items-center justify-end gap-2 px-5 py-3"
           style={{ borderTop: "1px solid var(--color-border)" }}
         >
           <button
             onClick={onClose}
-            className="shadow-soft px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-all text-text-secondary bg-bg-card"
+            className="shadow-soft text-text-secondary bg-bg-card cursor-pointer rounded-lg px-4 py-2 text-xs font-medium transition-all"
           >
             Cancel
           </button>
           <button
             onClick={handleCreate}
             disabled={!canCreate || creating}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold cursor-pointer transition-all"
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition-all"
             style={{
               background:
                 canCreate && !creating

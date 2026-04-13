@@ -23,7 +23,9 @@ function ColorDot({ color, label }: { color: string; label: string }) {
         }}
         title={`${label}: ${color}`}
       />
-      <span className="text-text-muted" style={{ fontSize: 9 }}>{label}</span>
+      <span className="text-text-muted" style={{ fontSize: 9 }}>
+        {label}
+      </span>
     </div>
   );
 }
@@ -43,7 +45,7 @@ function ThemeCard({
   return (
     <button
       onClick={onSelect}
-      className="relative flex flex-col rounded-xl overflow-hidden cursor-pointer transition-all"
+      className="relative flex cursor-pointer flex-col overflow-hidden rounded-xl transition-all"
       style={{
         border: isActive ? `2px solid ${colors.accent}` : "2px solid var(--color-border)",
         background: colors.bgCard,
@@ -53,7 +55,7 @@ function ThemeCard({
     >
       {isActive && (
         <div
-          className="absolute top-2 right-2 flex items-center justify-center rounded-full"
+          className="absolute right-2 top-2 flex items-center justify-center rounded-full"
           style={{ width: 20, height: 20, background: colors.accent }}
         >
           <Check size={12} weight="bold" style={{ color: "#fff" }} />
@@ -61,7 +63,7 @@ function ThemeCard({
       )}
       {/* Preview */}
       <div style={{ background: colors.bgBase, padding: 12 }}>
-        <div className="flex gap-2 mb-2">
+        <div className="mb-2 flex gap-2">
           <div style={{ width: 40, height: 6, borderRadius: 3, background: colors.accent }} />
           <div style={{ width: 24, height: 6, borderRadius: 3, background: colors.success }} />
           <div style={{ width: 16, height: 6, borderRadius: 3, background: colors.danger }} />
@@ -193,17 +195,17 @@ export default function ThemeSettingsPage() {
   const allThemes = [...BUILTIN_THEMES, ...customThemes];
 
   return (
-    <div className="flex flex-col bg-bg-base" style={{ height: "100vh" }}>
+    <div className="bg-bg-base flex flex-col" style={{ height: "100vh" }}>
       <Header />
       <div
         className="flex-1 overflow-auto"
         style={{ padding: "24px 32px", maxWidth: 960, margin: "0 auto", width: "100%" }}
       >
         {/* Title */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="mb-6 flex items-center gap-3">
           <Link
             href="/settings"
-            className="p-1.5 rounded-lg cursor-pointer"
+            className="cursor-pointer rounded-lg p-1.5"
             aria-label="Back to settings"
           >
             <ArrowLeft size={18} weight="bold" />
@@ -213,7 +215,7 @@ export default function ThemeSettingsPage() {
         </div>
 
         {/* Theme grid */}
-        <div className="flex flex-wrap gap-4 mb-8">
+        <div className="mb-8 flex flex-wrap gap-4">
           {allThemes.map((theme) => (
             <div key={theme.id} className="relative">
               <ThemeCard
@@ -225,12 +227,13 @@ export default function ThemeSettingsPage() {
               {!BUILTIN_THEMES.find((t) => t.id === theme.id) && (
                 <button
                   onClick={() => handleDeleteCustom(theme.id)}
-                  className="absolute -top-2 -right-2 text-xs px-1.5 py-0.5 rounded-full cursor-pointer font-bold" style={{
+                  className="absolute -right-2 -top-2 cursor-pointer rounded-full px-1.5 py-0.5 text-xs font-bold"
+                  style={{
                     background: "var(--color-danger)",
                     color: "#fff",
                     border: "none",
                     fontSize: 10,
-                    }}
+                  }}
                   aria-label={`Delete ${theme.name}`}
                 >
                   x
@@ -241,17 +244,13 @@ export default function ThemeSettingsPage() {
         </div>
 
         {/* Import VS Code theme */}
-        <div
-          className="shadow-soft rounded-xl p-4 bg-bg-card"
-        >
-          <h2 className="text-sm font-semibold mb-2">Import VS Code Theme</h2>
-          <p className="text-xs mb-3">
+        <div className="shadow-soft bg-bg-card rounded-xl p-4">
+          <h2 className="mb-2 text-sm font-semibold">Import VS Code Theme</h2>
+          <p className="mb-3 text-xs">
             Upload a VS Code theme JSON file (.json) to extract colors. The theme&apos;s
             &quot;colors&quot; key will be mapped to Companion&apos;s CSS variables.
           </p>
-          <label
-            className="shadow-soft inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer transition-colors text-text-secondary bg-bg-elevated"
-          >
+          <label className="shadow-soft text-text-secondary bg-bg-elevated inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors">
             <UploadSimple size={16} />
             Choose File
             <input

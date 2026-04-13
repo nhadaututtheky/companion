@@ -40,32 +40,35 @@ export function SessionPane({ sessionId, onClose }: SessionPaneProps) {
 
   return (
     <div
-      className="flex flex-col h-full bg-bg-base border border-border overflow-hidden" style={{
+      className="bg-bg-base border-border flex h-full flex-col overflow-hidden border"
+      style={{
         borderRadius: 8,
-        }}
+      }}
     >
       {/* Pane header */}
       <div
-        className="flex items-center gap-2 px-3 py-1.5 shrink-0 bg-bg-card" style={{
+        className="bg-bg-card flex shrink-0 items-center gap-2 px-3 py-1.5"
+        style={{
           borderBottom: "1px solid var(--color-border)",
         }}
       >
         <span
-          className="rounded-full shrink-0" style={{
+          className="shrink-0 rounded-full"
+          style={{
             width: 6,
             height: 6,
             background: statusColor,
-            }}
+          }}
           aria-hidden="true"
         />
-        <span className="text-xs font-semibold truncate flex-1">
+        <span className="flex-1 truncate text-xs font-semibold">
           {session?.projectName ?? sessionId.slice(0, 8)}
         </span>
-        <span className="text-xs font-mono">#{sessionId.slice(0, 6)}</span>
+        <span className="font-mono text-xs">#{sessionId.slice(0, 6)}</span>
 
         {wsStatus !== "connected" && (
           <span
-            className="text-xs px-1.5 py-0.5 rounded"
+            className="rounded px-1.5 py-0.5 text-xs"
             style={{
               background: wsStatus === "connecting" ? "#FBBC0420" : "#EA433520",
               color: wsStatus === "connecting" ? "#FBBC04" : "#EA4335",
@@ -78,7 +81,7 @@ export function SessionPane({ sessionId, onClose }: SessionPaneProps) {
 
         <Link
           href={`/sessions/${sessionId}`}
-          className="p-1 rounded cursor-pointer transition-colors"
+          className="cursor-pointer rounded p-1 transition-colors"
           aria-label="Open full session page"
           title="Open full page"
         >
@@ -86,7 +89,8 @@ export function SessionPane({ sessionId, onClose }: SessionPaneProps) {
         </Link>
         <button
           onClick={onClose}
-          className="p-1 rounded cursor-pointer transition-colors text-text-muted" style={{ background: "none", border: "none" }}
+          className="text-text-muted cursor-pointer rounded p-1 transition-colors"
+          style={{ background: "none", border: "none" }}
           aria-label="Unpin session from pane"
           title="Unpin"
         >
@@ -95,7 +99,7 @@ export function SessionPane({ sessionId, onClose }: SessionPaneProps) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 min-h-0 overflow-hidden">
+      <div className="min-h-0 flex-1 overflow-hidden">
         <MessageFeed messages={messages} sessionId={sessionId} />
       </div>
 

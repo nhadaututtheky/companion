@@ -114,7 +114,7 @@ function LicenseSection() {
       {/* Current status */}
       {license && (
         <div
-          className="flex items-center justify-between mb-4 px-3 py-3 rounded-xl text-xs"
+          className="mb-4 flex items-center justify-between rounded-xl px-3 py-3 text-xs"
           style={{
             background: isPro ? "#34A85310" : isTrial ? "#f59e0b10" : "var(--color-bg-elevated)",
             border: `1px solid ${isPro ? "#34A85330" : isTrial ? "#f59e0b30" : "var(--color-border)"}`,
@@ -122,7 +122,7 @@ function LicenseSection() {
         >
           <div className="flex items-center gap-2">
             <span
-              className="w-2 h-2 rounded-full"
+              className="h-2 w-2 rounded-full"
               style={{ background: tierColors[license.tier] ?? "var(--color-text-muted)" }}
             />
             <span className="font-bold" style={{ color: tierColors[license.tier] }}>
@@ -149,23 +149,18 @@ function LicenseSection() {
       {/* Upgrade card — only show for free/trial */}
       {!isPro && (
         <div
-          className="mb-4 p-4 rounded-xl shadow-soft border border-glass-border" style={{
+          className="shadow-soft border-glass-border mb-4 rounded-xl border p-4"
+          style={{
             background: "linear-gradient(135deg, #6366f108, #8b5cf610, #ec489808)",
-            }}
+          }}
         >
-          <div className="flex items-center justify-between mb-3">
+          <div className="mb-3 flex items-center justify-between">
             <div>
-              <span className="text-sm font-bold text-text-primary">
-                Companion Pro
-              </span>
-              <span className="ml-2 text-xs text-text-muted">
-                $5/mo · $39/yr (save 35%)
-              </span>
+              <span className="text-text-primary text-sm font-bold">Companion Pro</span>
+              <span className="text-text-muted ml-2 text-xs">$5/mo · $39/yr (save 35%)</span>
             </div>
           </div>
-          <div
-            className="grid grid-cols-2 gap-1.5 mb-3 text-xs text-text-secondary"
-          >
+          <div className="text-text-secondary mb-3 grid grid-cols-2 gap-1.5 text-xs">
             <span>Unlimited sessions</span>
             <span>Multi-bot Telegram</span>
             <span>WebIntel research</span>
@@ -180,7 +175,7 @@ function LicenseSection() {
               href="https://buy.polar.sh/polar_cl_CGWIyshnh7Xkodt1CaLkYPG0Z5jL1wjmLmD7Q4CEACZ"
               target="_blank"
               rel="noopener"
-              className="flex-1 flex items-center justify-center py-2 rounded-lg text-xs font-bold cursor-pointer"
+              className="flex flex-1 cursor-pointer items-center justify-center rounded-lg py-2 text-xs font-bold"
               style={{
                 background: "#8b5cf6",
                 color: "#fff",
@@ -193,7 +188,8 @@ function LicenseSection() {
               href="https://pay.theio.vn/checkout/companion-pro"
               target="_blank"
               rel="noopener"
-              className="flex items-center justify-center px-3 py-2 rounded-lg text-xs font-semibold cursor-pointer text-text-secondary bg-bg-elevated shadow-soft border border-glass-border" style={{
+              className="text-text-secondary bg-bg-elevated shadow-soft border-glass-border flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold"
+              style={{
                 textDecoration: "none",
               }}
             >
@@ -210,13 +206,13 @@ function LicenseSection() {
           value={licenseKey}
           onChange={(e) => setLicenseKey(e.target.value)}
           placeholder="cmp_pro_XXXX_XXXX_XXXX"
-          className="flex-1 px-3 py-2 rounded-lg text-sm input-bordered text-text-primary bg-bg-elevated font-mono"
+          className="input-bordered text-text-primary bg-bg-elevated flex-1 rounded-lg px-3 py-2 font-mono text-sm"
           onKeyDown={(e) => e.key === "Enter" && handleActivate()}
         />
         <button
           onClick={handleActivate}
           disabled={activating || !licenseKey.trim()}
-          className="px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer transition-colors"
+          className="cursor-pointer rounded-lg px-4 py-2 text-sm font-semibold transition-colors"
           style={{
             background: activating ? "var(--color-text-muted)" : "var(--color-accent)",
             color: "#fff",
@@ -228,7 +224,7 @@ function LicenseSection() {
         </button>
       </div>
 
-      <p className="text-xs mt-2 text-text-muted">
+      <p className="text-text-muted mt-2 text-xs">
         Already purchased? Enter your license key above to activate.
       </p>
     </SettingSection>
@@ -268,9 +264,10 @@ function TipsSection() {
         </div>
         <button
           onClick={handleToggle}
-          className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer border border-glass-border" style={{
+          className="border-glass-border relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full border transition-colors"
+          style={{
             background: enabled ? "var(--color-accent)" : "var(--color-bg-elevated)",
-            }}
+          }}
           role="switch"
           aria-checked={enabled}
           aria-label="Toggle tips"
@@ -286,7 +283,8 @@ function TipsSection() {
       </div>
       <button
         onClick={handleReset}
-        className="mt-2 text-xs cursor-pointer text-text-muted" style={{ background: "none", border: "none" }}
+        className="text-text-muted mt-2 cursor-pointer text-xs"
+        style={{ background: "none", border: "none" }}
       >
         Reset dismissed tips
       </button>
@@ -381,7 +379,8 @@ export function GeneralTab() {
           <Link
             size={16}
             weight="bold"
-            className="text-text-muted shrink-0" style={{ marginTop: 8 }}
+            className="text-text-muted shrink-0"
+            style={{ marginTop: 8 }}
           />
           <div className="flex-1">
             <InputField
@@ -397,7 +396,7 @@ export function GeneralTab() {
               }}
               placeholder="https://companion.mylab.dev"
             />
-            <span className="text-xs text-text-muted opacity-70">
+            <span className="text-text-muted text-xs opacity-70">
               Used by Telegram bot to generate clickable review links
             </span>
           </div>
@@ -413,7 +412,8 @@ export function GeneralTab() {
           <Key
             size={16}
             weight="bold"
-            className="text-text-muted shrink-0" style={{ marginTop: 8 }}
+            className="text-text-muted shrink-0"
+            style={{ marginTop: 8 }}
           />
           <div className="flex-1">
             <InputField
@@ -431,7 +431,8 @@ export function GeneralTab() {
       <SettingSection title="Appearance" description="Customize colors and theme.">
         <button
           onClick={() => useUiStore.getState().setSettingsActiveTab("appearance")}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer text-text-secondary shadow-soft border border-glass-border" style={{
+          className="text-text-secondary shadow-soft border-glass-border flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors"
+          style={{
             background: "none",
           }}
         >
@@ -466,9 +467,10 @@ export function GeneralTab() {
                 toast.error("Failed to update setting");
               }
             }}
-            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer border border-glass-border" style={{
+            className="border-glass-border relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full border transition-colors"
+            style={{
               background: promptScanEnabled ? "var(--color-accent)" : "var(--color-bg-elevated)",
-              }}
+            }}
             role="switch"
             aria-checked={promptScanEnabled}
             aria-label="Toggle prompt scanning"
@@ -487,7 +489,8 @@ export function GeneralTab() {
           href="/settings/errors"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer text-text-secondary shadow-soft border border-glass-border" style={{
+          className="text-text-secondary shadow-soft border-glass-border flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors"
+          style={{
             textDecoration: "none",
             marginTop: 12,
           }}
@@ -503,7 +506,7 @@ export function GeneralTab() {
       {/* Save button */}
       <button
         onClick={handleSave}
-        className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer"
+        className="flex cursor-pointer items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-colors"
         style={{
           background: saved ? "var(--color-success)" : "var(--color-accent)",
           color: "#fff",

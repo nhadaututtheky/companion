@@ -104,9 +104,9 @@ export function ChangesPanel({ messages }: ChangesPanelProps) {
 
   if (changes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-4 gap-2">
+      <div className="flex flex-col items-center justify-center gap-2 px-4 py-12">
         <GitDiff size={28} />
-        <p className="text-xs text-center">No file changes yet</p>
+        <p className="text-center text-xs">No file changes yet</p>
       </div>
     );
   }
@@ -117,12 +117,12 @@ export function ChangesPanel({ messages }: ChangesPanelProps) {
   return (
     <div className="flex flex-col gap-0">
       {/* Summary header */}
-      <div className="px-4 py-3 border-b flex items-center gap-3">
+      <div className="flex items-center gap-3 border-b px-4 py-3">
         <GitDiff size={14} weight="bold" style={{ color: "#4285F4" }} />
         <span className="text-xs font-semibold">
           {grouped.size} file{grouped.size !== 1 ? "s" : ""} changed
         </span>
-        <span className="text-xs font-mono">
+        <span className="font-mono text-xs">
           {totalEdits > 0 && (
             <span style={{ color: "#FBBC04" }}>
               {totalEdits} edit{totalEdits !== 1 ? "s" : ""}
@@ -146,7 +146,7 @@ export function ChangesPanel({ messages }: ChangesPanelProps) {
               {/* File header */}
               <button
                 onClick={() => toggleFile(filePath)}
-                className="flex items-center gap-2 w-full px-4 py-2 text-left cursor-pointer transition-colors"
+                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-left transition-colors"
                 style={{ borderBottom: "1px solid var(--color-border)" }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
@@ -162,17 +162,17 @@ export function ChangesPanel({ messages }: ChangesPanelProps) {
                 ) : (
                   <File size={13} weight="bold" style={{ color: "#FBBC04" }} />
                 )}
-                <span className="text-xs font-mono truncate flex-1" title={filePath}>
+                <span className="flex-1 truncate font-mono text-xs" title={filePath}>
                   {fileName}
                 </span>
-                <span className="text-xs font-mono shrink-0">
+                <span className="shrink-0 font-mono text-xs">
                   {editCount > 0 ? `${editCount}×` : "new"}
                 </span>
               </button>
 
               {/* Expanded diffs */}
               {expanded && (
-                <div className="px-2 py-2 flex flex-col gap-2">
+                <div className="flex flex-col gap-2 px-2 py-2">
                   {fileChanges.map((change, i) => (
                     <InlineDiff
                       key={`${change.filePath}-${i}`}

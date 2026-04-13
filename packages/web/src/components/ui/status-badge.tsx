@@ -39,14 +39,14 @@ export function StatusBadge({ status, children, className = "" }: StatusBadgePro
   const color = getStatusColor(status);
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium capitalize ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium capitalize ${className}`}
       style={{
         background: `color-mix(in srgb, ${color} 15%, transparent)`,
         color,
       }}
     >
       <span
-        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+        className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
         style={{ background: color }}
         aria-hidden="true"
       />
@@ -66,7 +66,7 @@ export function StatusDot({ status, size = 6, className = "" }: StatusDotProps) 
   const color = getStatusColor(status);
   return (
     <span
-      className={`inline-block rounded-full flex-shrink-0 ${className}`}
+      className={`inline-block flex-shrink-0 rounded-full ${className}`}
       style={{ width: size, height: size, background: color }}
       aria-label={`Status: ${status}`}
     />

@@ -40,7 +40,7 @@ export function AgentTabBar({
 
   return (
     <div
-      className="flex items-end gap-0 px-2 pt-1 flex-shrink-0 overflow-x-auto"
+      className="flex flex-shrink-0 items-end gap-0 overflow-x-auto px-2 pt-1"
       style={{
         borderBottom: "1px solid var(--glass-border)",
         scrollbarWidth: "none",
@@ -72,13 +72,13 @@ export function AgentTabBar({
         return (
           <div
             key={childId}
-            className={`agent-tab ${isActive ? "agent-tab--active" : "agent-tab--inactive"} flex items-center gap-1 text-xs font-medium group`}
+            className={`agent-tab ${isActive ? "agent-tab--active" : "agent-tab--inactive"} group flex items-center gap-1 text-xs font-medium`}
             style={{ opacity: sStyle.opacity }}
           >
             {/* Tab label — clickable area */}
             <button
               onClick={() => onTabChange(childId)}
-              className="flex items-center gap-1.5 cursor-pointer"
+              className="flex cursor-pointer items-center gap-1.5"
               style={{ color: "inherit" }}
               aria-label={`${child.agentName ?? child.shortId ?? "Agent"} — ${status}`}
               title={`${child.agentName ?? child.shortId ?? "Agent"} — ${status}`}
@@ -95,7 +95,8 @@ export function AgentTabBar({
                 <XCircle size={9} weight="bold" className="text-danger" />
               ) : (
                 <span
-                  className="rounded-full shrink-0 inline-block" style={{
+                  className="inline-block shrink-0 rounded-full"
+                  style={{
                     width: 6,
                     height: 6,
                     background: sStyle.dot,
@@ -113,7 +114,8 @@ export function AgentTabBar({
                   e.stopPropagation();
                   onCloseTab(childId);
                 }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-sm p-0.5 text-text-muted" style={{ marginLeft: 2 }}
+                className="text-text-muted cursor-pointer rounded-sm p-0.5 opacity-0 transition-opacity group-hover:opacity-100"
+                style={{ marginLeft: 2 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.color = "var(--color-danger)";
                   e.currentTarget.style.background =

@@ -60,7 +60,8 @@ export function BottomStatsBar() {
   return (
     <div
       ref={containerRef}
-      className="hidden sm:flex absolute" style={{
+      className="absolute hidden sm:flex"
+      style={{
         top: "50%",
         left: "50%",
         transform: "translate(-50%, -50%)",
@@ -71,7 +72,8 @@ export function BottomStatsBar() {
       {expanded ? (
         /* ── Expanded: simple active session summary ── */
         <div
-          className="flex items-stretch rounded-radius-xl shadow-soft" style={{
+          className="rounded-radius-xl shadow-soft flex items-stretch"
+          style={{
             background: "var(--glass-bg-heavy)",
             backdropFilter: "blur(var(--glass-blur))",
             WebkitBackdropFilter: "blur(var(--glass-blur))",
@@ -91,7 +93,7 @@ export function BottomStatsBar() {
 
           <Link
             href="/analytics"
-            className="flex items-center gap-1 px-3 py-2 text-xs font-medium cursor-pointer text-accent"
+            className="text-accent flex cursor-pointer items-center gap-1 px-3 py-2 text-xs font-medium"
             title="View full analytics"
           >
             Full <ArrowRight size={10} weight="bold" />
@@ -101,7 +103,7 @@ export function BottomStatsBar() {
 
           <button
             onClick={() => setExpanded(false)}
-            className="flex items-center justify-center px-2 py-2 cursor-pointer text-text-muted"
+            className="text-text-muted flex cursor-pointer items-center justify-center px-2 py-2"
             aria-label="Close stats"
           >
             <X size={12} weight="bold" />
@@ -111,14 +113,15 @@ export function BottomStatsBar() {
         /* ── Collapsed watermark pill ── */
         <button
           onClick={() => setExpanded(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 cursor-pointer transition-all text-text-muted rounded-radius-pill shadow-soft border border-glass-border font-semibold font-mono" style={{
+          className="text-text-muted rounded-radius-pill shadow-soft border-glass-border flex cursor-pointer items-center gap-1.5 border px-3 py-1.5 font-mono font-semibold transition-all"
+          style={{
             background: "var(--glass-bg)",
             backdropFilter: "blur(4px)",
             WebkitBackdropFilter: "blur(4px)",
             opacity: 0.4,
             transition: "opacity 200ms ease, transform 200ms ease",
             fontSize: 12,
-            }}
+          }}
           onMouseEnter={(e) => {
             e.currentTarget.style.opacity = "0.85";
             e.currentTarget.style.transform = "scale(1.05)";
@@ -143,13 +146,12 @@ export function BottomStatsBar() {
 function StatBlock({ label, value, accent }: { label: string; value: string; accent?: string }) {
   return (
     <div className="flex flex-col items-center gap-0.5 px-3 py-2">
-      <span
-        className="text-[10px] font-medium uppercase tracking-wider text-text-muted"
-      >
+      <span className="text-text-muted text-[10px] font-medium uppercase tracking-wider">
         {label}
       </span>
       <span
-        className="text-sm font-bold tabular-nums leading-none font-mono" style={{ color: accent ?? "var(--color-text-primary)" }}
+        className="font-mono text-sm font-bold tabular-nums leading-none"
+        style={{ color: accent ?? "var(--color-text-primary)" }}
       >
         {value}
       </span>
@@ -158,5 +160,5 @@ function StatBlock({ label, value, accent }: { label: string; value: string; acc
 }
 
 function Sep() {
-  return <span className="w-px self-stretch my-2" style={{ background: "var(--glass-border)" }} />;
+  return <span className="my-2 w-px self-stretch" style={{ background: "var(--glass-border)" }} />;
 }

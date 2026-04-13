@@ -117,7 +117,7 @@ export function TelegramTab() {
                   <select
                     value={expandedBotId ?? configs[0]?.id ?? ""}
                     onChange={(e) => setExpandedBotId(e.target.value)}
-                    className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer text-text-primary bg-bg-elevated"
+                    className="input-bordered text-text-primary bg-bg-elevated cursor-pointer rounded-lg px-3 py-2 text-sm"
                   >
                     {configs.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -151,7 +151,8 @@ export function TelegramTab() {
               {/* Add bot button */}
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer w-fit shadow-soft border border-glass-border" style={{
+                className="shadow-soft border-glass-border flex w-fit cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors"
+                style={{
                   background: showAddForm ? "var(--color-bg-elevated)" : "var(--color-accent)",
                   color: showAddForm ? "var(--color-text-secondary)" : "#fff",
                 }}
@@ -162,9 +163,7 @@ export function TelegramTab() {
 
               {/* Add bot form */}
               {showAddForm && (
-                <div
-                  className="flex flex-col gap-3 p-4 rounded-xl bg-bg-elevated shadow-soft border border-glass-border"
-                >
+                <div className="bg-bg-elevated shadow-soft border-glass-border flex flex-col gap-3 rounded-xl border p-4">
                   <h3 className="text-xs font-semibold">New Bot</h3>
 
                   <div className="flex flex-col gap-1.5">
@@ -174,7 +173,7 @@ export function TelegramTab() {
                       value={newLabel}
                       onChange={(e) => setNewLabel(e.target.value)}
                       placeholder="My Claude Bot"
-                      className="px-3 py-2 rounded-lg text-sm input-bordered text-text-primary bg-bg-card"
+                      className="input-bordered text-text-primary bg-bg-card rounded-lg px-3 py-2 text-sm"
                     />
                   </div>
 
@@ -187,7 +186,7 @@ export function TelegramTab() {
                           e.target.value as "claude" | "codex" | "gemini" | "opencode" | "general",
                         )
                       }
-                      className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer text-text-primary bg-bg-card"
+                      className="input-bordered text-text-primary bg-bg-card cursor-pointer rounded-lg px-3 py-2 text-sm"
                     >
                       <option value="claude">Claude Code — Anthropic CLI</option>
                       <option value="codex">Codex CLI — OpenAI CLI</option>
@@ -205,12 +204,12 @@ export function TelegramTab() {
                         value={newToken}
                         onChange={(e) => setNewToken(e.target.value)}
                         placeholder="1234567890:ABCdefGHI..."
-                        className="w-full px-3 py-2 pr-10 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-card"
+                        className="input-bordered text-text-primary bg-bg-card w-full rounded-lg px-3 py-2 pr-10 font-mono text-sm"
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewToken(!showNewToken)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-pointer"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer p-1"
                         aria-label={showNewToken ? "Hide token" : "Show token"}
                       >
                         {showNewToken ? <EyeSlash size={14} /> : <Eye size={14} />}
@@ -227,7 +226,7 @@ export function TelegramTab() {
                       value={newChatIds}
                       onChange={(e) => setNewChatIds(e.target.value)}
                       placeholder="-100123456789"
-                      className="px-3 py-2 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-card"
+                      className="input-bordered text-text-primary bg-bg-card rounded-lg px-3 py-2 font-mono text-sm"
                     />
                   </div>
 
@@ -240,7 +239,7 @@ export function TelegramTab() {
                       value={newUserIds}
                       onChange={(e) => setNewUserIds(e.target.value)}
                       placeholder="123456789"
-                      className="px-3 py-2 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-card"
+                      className="input-bordered text-text-primary bg-bg-card rounded-lg px-3 py-2 font-mono text-sm"
                     />
                     <span className="text-xs">
                       Get your ID: send /start to @userinfobot on Telegram
@@ -250,7 +249,7 @@ export function TelegramTab() {
                   <button
                     onClick={handleAddBot}
                     disabled={adding}
-                    className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold cursor-pointer"
+                    className="flex cursor-pointer items-center justify-center gap-2 rounded-lg py-2 text-xs font-semibold"
                     style={{
                       background: "var(--color-accent)",
                       color: "#fff",
@@ -280,7 +279,7 @@ export function TelegramTab() {
                   <span className="text-xs">Loading bots...</span>
                 </div>
               ) : configs.length === 0 ? (
-                <p className="text-xs py-2">No bots configured. Add one above.</p>
+                <p className="py-2 text-xs">No bots configured. Add one above.</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {configs.map((config) => (

@@ -465,7 +465,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
 
   if (error) {
     return (
-      <div className="text-center py-8">
+      <div className="py-8 text-center">
         <WarningCircle size={24} className="mx-auto mb-2" style={{ color: "#EA4335" }} />
         <p className="text-xs">{error}</p>
       </div>
@@ -488,7 +488,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
           <button
             type="button"
             onClick={() => setLabelMode((m) => (m === "symbol" ? "feature" : "symbol"))}
-            className="flex items-center gap-1 px-1.5 py-0.5 rounded cursor-pointer"
+            className="flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5"
             style={{
               background: labelMode === "feature" ? "#10B98120" : "transparent",
               border: `1px solid ${labelMode === "feature" ? "#10B981" : "var(--color-border)"}`,
@@ -517,7 +517,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
           <button
             type="button"
             onClick={() => setFogEnabled(!fogEnabled)}
-            className="flex items-center gap-1 px-1.5 py-0.5 rounded cursor-pointer"
+            className="flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5"
             style={{
               background: fogEnabled ? "#6366F120" : "transparent",
               border: `1px solid ${fogEnabled ? "#6366F1" : "var(--color-border)"}`,
@@ -561,7 +561,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
           )}
           {rawData?.truncated && (
             <span
-              className="text-xs px-1.5 py-0.5 rounded"
+              className="rounded px-1.5 py-0.5 text-xs"
               style={{ background: "#FBBC0415", color: "#FBBC04" }}
             >
               Showing 500/{rawData.totalNodes} nodes
@@ -577,7 +577,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
           .map(([type, color]) => (
             <div key={type} className="flex items-center gap-1">
               <span className="rounded-full" style={{ width: 6, height: 6, background: color }} />
-              <span className="text-xs text-text-muted" style={{ fontSize: 10 }}>
+              <span className="text-text-muted text-xs" style={{ fontSize: 10 }}>
                 {type}
               </span>
             </div>
@@ -592,9 +592,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
                   className="rounded-full"
                   style={{ width: 6, height: 6, background: color, boxShadow: `0 0 4px ${color}` }}
                 />
-                <span
-                  className="text-xs text-text-muted" style={{ fontSize: 10 }}
-                >
+                <span className="text-text-muted text-xs" style={{ fontSize: 10 }}>
                   {action}
                 </span>
               </div>
@@ -604,9 +602,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
       </div>
 
       {/* Graph */}
-      <div
-        className="flex-1 rounded-lg overflow-hidden border border-border"
-      >
+      <div className="border-border flex-1 overflow-hidden rounded-lg border">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -621,12 +617,10 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
           <Background color="var(--color-border)" gap={20} size={1} />
           <Controls
             showInteractive={false}
-            className="bg-bg-elevated" style={{ borderColor: "var(--color-border)" }}
+            className="bg-bg-elevated"
+            style={{ borderColor: "var(--color-border)" }}
           />
-          <MiniMap
-            nodeStrokeWidth={3}
-            className="bg-bg-base border border-border"
-          />
+          <MiniMap nodeStrokeWidth={3} className="bg-bg-base border-border border" />
         </ReactFlow>
       </div>
 
@@ -635,7 +629,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
         <div className="rounded-lg p-2.5 text-xs">
           <div className="flex items-center gap-2">
             <span
-              className="px-1.5 py-0.5 rounded font-mono"
+              className="rounded px-1.5 py-0.5 font-mono"
               style={{
                 background: getNodeColor(selectedData.symbolType) + "20",
                 color: getNodeColor(selectedData.symbolType),
@@ -649,7 +643,7 @@ export function GraphVisualization({ projectSlug }: GraphVisualizationProps) {
             {/* Show touch count if node has been touched */}
             {touchedNodes.has(String(selectedData.id)) && (
               <span
-                className="px-1 py-0.5 rounded text-xs font-mono"
+                className="rounded px-1 py-0.5 font-mono text-xs"
                 style={{ background: "#3B82F620", color: "#3B82F6", fontSize: 10 }}
               >
                 ×{touchedNodes.get(String(selectedData.id))?.count}

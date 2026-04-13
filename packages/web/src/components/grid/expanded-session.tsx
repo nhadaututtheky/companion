@@ -36,7 +36,7 @@ function StatusBadge({ status }: { status: string }) {
   const color = getStatusColor(status);
   return (
     <span
-      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold capitalize"
+      className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold capitalize"
       style={{ background: `color-mix(in srgb, ${color} 15%, transparent)`, color }}
     >
       <Circle
@@ -122,10 +122,10 @@ function ExpandedModelSwitcher({
         : modelName;
 
   return (
-    <div ref={ref} className="relative hidden sm:block flex-shrink-0">
+    <div ref={ref} className="relative hidden flex-shrink-0 sm:block">
       <button
         onClick={() => isActive && setOpen(!open)}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-medium transition-colors cursor-pointer"
+        className="flex cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-xs font-medium transition-colors"
         style={{
           background: open ? "var(--color-accent)" : "var(--color-bg-elevated)",
           color: open ? "#fff" : "var(--color-text-secondary)",
@@ -140,7 +140,8 @@ function ExpandedModelSwitcher({
 
       {open && (
         <div
-          className="rounded-radius-lg shadow-float border border-glass-border absolute" style={{
+          className="rounded-radius-lg shadow-float border-glass-border absolute border"
+          style={{
             top: "calc(100% + 4px)",
             right: 0,
             zIndex: Z.popover,
@@ -162,7 +163,7 @@ function ExpandedModelSwitcher({
                   onSetModel(opt.id);
                   setOpen(false);
                 }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-xs rounded-md transition-colors cursor-pointer"
+                className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-xs transition-colors"
                 style={{
                   background: isCurrent
                     ? "color-mix(in srgb, var(--color-accent) 10%, transparent)"
@@ -179,13 +180,7 @@ function ExpandedModelSwitcher({
                 <span>{opt.emoji}</span>
                 <span className="font-semibold">{opt.label}</span>
                 <span className="text-text-muted">{opt.desc}</span>
-                {isCurrent && (
-                  <Check
-                    size={12}
-                    weight="bold"
-                    className="ml-auto text-accent"
-                  />
-                )}
+                {isCurrent && <Check size={12} weight="bold" className="text-accent ml-auto" />}
               </button>
             );
           })}
@@ -332,7 +327,8 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
         role="dialog"
         aria-modal="true"
         aria-label={`Expanded session: ${session?.projectName ?? sessionId}`}
-        className="glass-enter glass-enter-active flex" style={{
+        className="glass-enter glass-enter-active flex"
+        style={{
           position: "fixed",
           inset: 0,
           zIndex: Z.expanded,
@@ -344,7 +340,8 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
         }}
       >
         <div
-          className="overflow-hidden relative flex dark:bg-glass-dark expanded-session-card" style={{
+          className="dark:bg-glass-dark expanded-session-card relative flex overflow-hidden"
+          style={{
             width: "100%",
             maxWidth: 1200,
             height: "100%",
@@ -359,31 +356,33 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             border: "1px solid rgba(255,255,255,0.12)",
             boxShadow: "0 8px 32px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.08)",
           }}
-          
         >
           {/* ── Header ── */}
           <div
-            className="flex items-center gap-2 px-4 py-3 flex-shrink-0"
+            className="flex flex-shrink-0 items-center gap-2 px-4 py-3"
             style={{ borderBottom: "1px solid var(--color-border)" }}
           >
             {/* Project name + typing status */}
             <h2
-              className="text-base font-semibold truncate flex-1 flex items-center gap-2 text-text-primary" style={{
+              className="text-text-primary flex flex-1 items-center gap-2 truncate text-base font-semibold"
+              style={{
                 fontFamily: "var(--font-display)",
-                }}
+              }}
             >
               {session?.projectName ?? sessionId}
               {session?.state?.source === "telegram" && (
                 <TelegramLogo
                   size={16}
                   weight="fill"
-                  className="shrink-0" style={{ color: "#2AABEE" }}
+                  className="shrink-0"
+                  style={{ color: "#2AABEE" }}
                   aria-label="Telegram session"
                 />
               )}
               {isRunning && (
                 <span
-                  className="text-xs font-normal flex-shrink-0 text-accent" style={{
+                  className="text-accent flex-shrink-0 text-xs font-normal"
+                  style={{
                     fontFamily: "var(--font-body)",
                     animation: "pulse 1.5s ease-in-out infinite",
                   }}
@@ -404,14 +403,14 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             <StatusBadge status={session?.status ?? "idle"} />
 
             {/* Cost — hidden on mobile */}
-            <span className="hidden sm:inline text-xs font-mono font-semibold flex-shrink-0">
+            <span className="hidden flex-shrink-0 font-mono text-xs font-semibold sm:inline">
               ${cost.toFixed(4)}
             </span>
 
             {/* WS status dot */}
             {wsStatus !== "connected" && (
               <span
-                className="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
+                className="flex-shrink-0 rounded-full px-2 py-0.5 text-xs"
                 style={{
                   background: wsStatus === "connecting" ? "#FBBC0420" : "#EA433520",
                   color: wsStatus === "connecting" ? "var(--color-warning)" : "var(--color-danger)",
@@ -425,7 +424,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             {/* Spawn agent button */}
             <button
               onClick={() => setSpawnOpen(true)}
-              className="hidden sm:flex flex-shrink-0 p-2 rounded-lg transition-colors cursor-pointer min-h-[44px] min-w-[44px] items-center justify-center text-text-secondary bg-bg-elevated"
+              className="text-text-secondary bg-bg-elevated hidden min-h-[44px] min-w-[44px] flex-shrink-0 cursor-pointer items-center justify-center rounded-lg p-2 transition-colors sm:flex"
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLButtonElement).style.color = "var(--color-accent)";
               }}
@@ -440,7 +439,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
 
             <button
               onClick={handleExport}
-              className="hidden sm:flex flex-shrink-0 p-2 rounded-lg transition-colors cursor-pointer min-h-[44px] min-w-[44px] items-center justify-center text-text-secondary bg-bg-elevated"
+              className="text-text-secondary bg-bg-elevated hidden min-h-[44px] min-w-[44px] flex-shrink-0 cursor-pointer items-center justify-center rounded-lg p-2 transition-colors sm:flex"
               aria-label="Export session as markdown"
               title="Export session as markdown"
             >
@@ -450,7 +449,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             {/* Collapse button — desktop only (same as close on mobile) */}
             <button
               onClick={onClose}
-              className="hidden sm:flex flex-shrink-0 p-2 rounded-lg transition-colors cursor-pointer min-h-[44px] min-w-[44px] items-center justify-center text-text-secondary bg-bg-elevated"
+              className="text-text-secondary bg-bg-elevated hidden min-h-[44px] min-w-[44px] flex-shrink-0 cursor-pointer items-center justify-center rounded-lg p-2 transition-colors sm:flex"
               aria-label="Collapse session"
             >
               <ArrowsIn size={16} weight="bold" />
@@ -459,7 +458,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
             {/* Close button */}
             <button
               onClick={onClose}
-              className="flex-shrink-0 p-2 rounded-lg transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center text-text-secondary bg-bg-elevated"
+              className="text-text-secondary bg-bg-elevated flex min-h-[44px] min-w-[44px] flex-shrink-0 cursor-pointer items-center justify-center rounded-lg p-2 transition-colors"
               aria-label="Close expanded view"
             >
               <X size={16} weight="bold" />
@@ -494,17 +493,18 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
           )}
 
           {/* ── Body: message area + sidebar ── */}
-          <div className="flex flex-1 min-h-0">
+          <div className="flex min-h-0 flex-1">
             {/* Left: message feed + permissions + composer */}
-            <div className="flex flex-col flex-1 min-w-0">
+            <div className="flex min-w-0 flex-1 flex-col">
               {/* Pulse warning — agent health alert with action buttons */}
               <PulseWarning sessionId={sessionId} onSendMessage={sendMessage} onStop={handleStop} />
 
               {/* Message feed with Telegram watermark */}
-              <div className="flex-1 min-h-0 relative">
+              <div className="relative min-h-0 flex-1">
                 {session?.state?.source === "telegram" && (
                   <div
-                    className="absolute flex" style={{
+                    className="absolute flex"
+                    style={{
                       inset: 0,
                       alignItems: "center",
                       justifyContent: "center",
@@ -515,7 +515,8 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                     <TelegramLogo
                       size={200}
                       weight="thin"
-                      className="text-text-muted" style={{ opacity: 0.04 }}
+                      className="text-text-muted"
+                      style={{ opacity: 0.04 }}
                     />
                   </div>
                 )}
@@ -543,7 +544,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
 
             {/* Right sidebar — hidden on mobile */}
             <aside
-              className="hidden sm:flex flex-shrink-0 flex-col min-h-0"
+              className="hidden min-h-0 flex-shrink-0 flex-col sm:flex"
               style={{
                 width: 280,
                 borderLeft: "1px solid var(--color-border)",
@@ -560,7 +561,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                   role="tab"
                   aria-selected={sidebarTab === "details"}
                   onClick={() => setSidebarTab("details")}
-                  className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium cursor-pointer transition-colors flex-1 justify-center"
+                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors"
                   style={{
                     color:
                       sidebarTab === "details" ? "var(--color-accent)" : "var(--color-text-muted)",
@@ -576,7 +577,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                   role="tab"
                   aria-selected={sidebarTab === "context"}
                   onClick={() => setSidebarTab("context")}
-                  className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium cursor-pointer transition-colors flex-1 justify-center"
+                  className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors"
                   style={{
                     color:
                       sidebarTab === "context" ? "var(--color-accent)" : "var(--color-text-muted)",
@@ -589,7 +590,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                   Context
                   {channelId && (
                     <span
-                      className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      className="inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full"
                       style={{ background: "var(--color-accent)" }}
                       aria-label="Channel active"
                     />
@@ -598,7 +599,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
               </div>
 
               {/* Tab panels */}
-              <div className="flex-1 min-h-0 overflow-y-auto">
+              <div className="min-h-0 flex-1 overflow-y-auto">
                 {sidebarTab === "details" && (
                   <SessionDetails
                     session={

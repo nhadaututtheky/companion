@@ -93,7 +93,8 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
     <div className="relative" ref={panelRef}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all cursor-pointer hover:brightness-110 border border-border" style={{
+        className="border-border flex cursor-pointer items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-all hover:brightness-110"
+        style={{
           background: open ? "var(--color-accent)" : "var(--color-bg-elevated)",
           color: open ? "#fff" : "var(--color-text-secondary)",
         }}
@@ -106,7 +107,8 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
 
       {open && (
         <div
-          className="absolute bottom-full left-0 mb-2 rounded-xl overflow-hidden bg-bg-card shadow-lg border border-glass-border flex" style={{
+          className="bg-bg-card border-glass-border absolute bottom-full left-0 mb-2 flex overflow-hidden rounded-xl border shadow-lg"
+          style={{
             width: 340,
             maxHeight: 420,
             boxShadow: "var(--shadow-lg)",
@@ -119,13 +121,11 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
             className="flex items-center justify-between px-3 py-2"
             style={{ borderBottom: "1px solid var(--color-border)" }}
           >
-            <span className="text-xs font-semibold text-text-primary">
-              Saved Prompts
-            </span>
+            <span className="text-text-primary text-xs font-semibold">Saved Prompts</span>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setShowCreate(!showCreate)}
-                className="p-1 rounded cursor-pointer hover:brightness-110"
+                className="cursor-pointer rounded p-1 hover:brightness-110"
                 style={{
                   background: showCreate ? "var(--color-accent)" : "transparent",
                   color: showCreate ? "#fff" : "var(--color-text-muted)",
@@ -140,26 +140,26 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
           {/* Create form */}
           {showCreate && (
             <div
-              className="px-3 py-2 space-y-2"
+              className="space-y-2 px-3 py-2"
               style={{ borderBottom: "1px solid var(--color-border)" }}
             >
               <input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="Prompt name..."
-                className="w-full px-2 py-1.5 rounded-md text-xs outline-none text-text-primary bg-bg-elevated border border-border"
+                className="text-text-primary bg-bg-elevated border-border w-full rounded-md border px-2 py-1.5 text-xs outline-none"
               />
               <textarea
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
                 placeholder="Prompt content..."
                 rows={3}
-                className="w-full px-2 py-1.5 rounded-md text-xs outline-none resize-none text-text-primary bg-bg-elevated border border-border"
+                className="text-text-primary bg-bg-elevated border-border w-full resize-none rounded-md border px-2 py-1.5 text-xs outline-none"
               />
               <button
                 onClick={handleCreate}
                 disabled={loading || !newName.trim() || !newContent.trim()}
-                className="w-full py-1.5 rounded-md text-xs font-medium cursor-pointer disabled:opacity-40"
+                className="w-full cursor-pointer rounded-md py-1.5 text-xs font-medium disabled:opacity-40"
                 style={{
                   background: "var(--color-accent)",
                   color: "#fff",
@@ -173,15 +173,13 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
           {/* Search */}
           {prompts.length > 3 && (
             <div className="px-3 py-2" style={{ borderBottom: "1px solid var(--color-border)" }}>
-              <div
-                className="shadow-soft flex items-center gap-1.5 px-2 py-1 rounded-md bg-bg-elevated"
-              >
+              <div className="shadow-soft bg-bg-elevated flex items-center gap-1.5 rounded-md px-2 py-1">
                 <MagnifyingGlass size={12} className="text-text-muted" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search prompts..."
-                  className="flex-1 bg-transparent text-xs outline-none text-text-primary"
+                  className="text-text-primary flex-1 bg-transparent text-xs outline-none"
                 />
               </div>
             </div>
@@ -191,7 +189,7 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
           <div className="overflow-y-auto" style={{ maxHeight: 260 }}>
             {filtered.length === 0 ? (
               <div className="px-3 py-6 text-center">
-                <p className="text-xs text-text-muted">
+                <p className="text-text-muted text-xs">
                   {prompts.length === 0 ? "No saved prompts yet" : "No matches"}
                 </p>
               </div>
@@ -199,7 +197,7 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
               filtered.map((p) => (
                 <div
                   key={p.id}
-                  className="group flex items-start gap-2 px-3 py-2 cursor-pointer transition-colors"
+                  className="group flex cursor-pointer items-start gap-2 px-3 py-2 transition-colors"
                   style={{ borderBottom: "1px solid var(--color-border)" }}
                   onClick={() => {
                     onSelect(p.content);
@@ -212,33 +210,25 @@ export function SavedPromptsPicker({ onSelect, projectSlug }: SavedPromptsPicker
                     (e.currentTarget as HTMLElement).style.background = "transparent";
                   }}
                 >
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span
-                        className="text-xs font-medium truncate text-text-primary"
-                      >
+                      <span className="text-text-primary truncate text-xs font-medium">
                         {p.name}
                       </span>
                       {p.projectSlug && (
-                        <span
-                          className="text-[10px] px-1 py-0.5 rounded text-text-muted bg-bg-elevated"
-                        >
+                        <span className="text-text-muted bg-bg-elevated rounded px-1 py-0.5 text-[10px]">
                           {p.projectSlug}
                         </span>
                       )}
                     </div>
-                    <p
-                      className="text-[11px] mt-0.5 line-clamp-2 text-text-muted"
-                    >
-                      {p.content}
-                    </p>
+                    <p className="text-text-muted mt-0.5 line-clamp-2 text-[11px]">{p.content}</p>
                   </div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDelete(p.id);
                     }}
-                    className="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-text-muted"
+                    className="text-text-muted cursor-pointer rounded p-1 opacity-0 transition-opacity group-hover:opacity-100"
                     aria-label={`Delete ${p.name}`}
                   >
                     <Trash size={12} />

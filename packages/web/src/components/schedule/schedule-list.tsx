@@ -48,7 +48,7 @@ export function ScheduleList({
 }: ScheduleListProps) {
   if (schedules.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 gap-2">
+      <div className="flex flex-col items-center justify-center gap-2 py-12">
         <Timer size={32} />
         <p className="text-sm">No schedules yet</p>
         <p className="text-xs">Create a schedule to run sessions automatically</p>
@@ -57,16 +57,15 @@ export function ScheduleList({
   }
 
   return (
-    <div
-      className="shadow-soft rounded-xl overflow-hidden bg-bg-card"
-    >
+    <div className="shadow-soft bg-bg-card overflow-hidden rounded-xl">
       <table className="w-full">
         <thead>
           <tr style={{ borderBottom: "1px solid var(--color-border)" }}>
             {["Name", "Trigger", "Next Run", "Runs", "Status", "Actions"].map((h) => (
               <th
                 key={h}
-                className="text-left px-3 py-2 text-text-muted font-semibold" style={{ fontSize: 10 }}
+                className="text-text-muted px-3 py-2 text-left font-semibold"
+                style={{ fontSize: 10 }}
               >
                 {h}
               </th>
@@ -93,7 +92,7 @@ export function ScheduleList({
                 <td className="px-3 py-2.5">
                   <div className="flex flex-col">
                     <span
-                      className="text-xs font-medium truncate max-w-48"
+                      className="max-w-48 truncate text-xs font-medium"
                       style={{
                         color: s.enabled ? "var(--color-text-primary)" : "var(--color-text-muted)",
                       }}
@@ -101,9 +100,7 @@ export function ScheduleList({
                       {s.name}
                     </span>
                     {s.projectSlug && (
-                      <span
-                        className="text-xs text-text-muted" style={{ fontSize: 10 }}
-                      >
+                      <span className="text-text-muted text-xs" style={{ fontSize: 10 }}>
                         {s.projectSlug}
                       </span>
                     )}
@@ -118,7 +115,7 @@ export function ScheduleList({
                     ) : (
                       <Clock size={12} style={{ color: "#FBBC04" }} />
                     )}
-                    <span className="text-xs font-mono">
+                    <span className="font-mono text-xs">
                       {s.triggerType === "cron" ? (s.cronExpression ?? "—") : "once"}
                     </span>
                   </div>
@@ -133,7 +130,7 @@ export function ScheduleList({
 
                 {/* Run count */}
                 <td className="px-3 py-2.5">
-                  <span className="text-xs font-mono">{s.runCount}</span>
+                  <span className="font-mono text-xs">{s.runCount}</span>
                 </td>
 
                 {/* Status toggle */}
@@ -154,7 +151,8 @@ export function ScheduleList({
                     aria-label={`${s.enabled ? "Disable" : "Enable"} ${s.name}`}
                   >
                     <span
-                      className="rounded-full absolute" style={{
+                      className="absolute rounded-full"
+                      style={{
                         top: 2,
                         left: s.enabled ? 15 : 2,
                         width: 12,
@@ -168,10 +166,10 @@ export function ScheduleList({
 
                 {/* Actions */}
                 <td className="px-3 py-2.5">
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                     <button
                       onClick={() => onRunNow(s.id)}
-                      className="p-1 rounded cursor-pointer"
+                      className="cursor-pointer rounded p-1"
                       style={{ color: "#34A853" }}
                       aria-label="Run now"
                       title="Run now"
@@ -180,7 +178,7 @@ export function ScheduleList({
                     </button>
                     <button
                       onClick={() => onViewRuns(s)}
-                      className="p-1 rounded cursor-pointer"
+                      className="cursor-pointer rounded p-1"
                       style={{ color: "#4285F4" }}
                       aria-label="Run history"
                       title="Run history"
@@ -189,7 +187,7 @@ export function ScheduleList({
                     </button>
                     <button
                       onClick={() => onEdit(s)}
-                      className="p-1 rounded cursor-pointer"
+                      className="cursor-pointer rounded p-1"
                       aria-label="Edit"
                       title="Edit"
                     >
@@ -197,7 +195,7 @@ export function ScheduleList({
                     </button>
                     <button
                       onClick={() => onDelete(s.id)}
-                      className="p-1 rounded cursor-pointer"
+                      className="cursor-pointer rounded p-1"
                       style={{ color: "#EA4335" }}
                       aria-label="Delete"
                       title="Delete"

@@ -57,10 +57,10 @@ export function FileTabBar({ tabs, activeTabId, onSwitch, onClose }: FileTabBarP
 
   return (
     <div
-      className="flex overflow-x-auto shrink-0 bg-bg-elevated"
+      className="bg-bg-elevated flex shrink-0 overflow-x-auto"
       role="tablist"
       aria-label="Open file tabs"
-       style={{
+      style={{
         borderBottom: "1px solid var(--glass-border)",
         scrollbarWidth: "none",
       }}
@@ -80,7 +80,7 @@ export function FileTabBar({ tabs, activeTabId, onSwitch, onClose }: FileTabBarP
                 onClose(tab.id);
               }
             }}
-            className="group relative flex items-center gap-1.5 px-3 shrink-0 cursor-pointer select-none"
+            className="group relative flex shrink-0 cursor-pointer select-none items-center gap-1.5 px-3"
             style={{
               height: 32,
               fontSize: 11,
@@ -113,7 +113,8 @@ export function FileTabBar({ tabs, activeTabId, onSwitch, onClose }: FileTabBarP
                 e.stopPropagation();
                 onClose(tab.id);
               }}
-              className="shrink-0 flex items-center justify-center rounded cursor-pointer text-text-muted" style={{
+              className="text-text-muted flex shrink-0 cursor-pointer items-center justify-center rounded"
+              style={{
                 width: 14,
                 height: 14,
                 opacity: isActive ? 1 : 0,

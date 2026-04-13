@@ -20,7 +20,7 @@ export function QuickActions({ onAction }: QuickActionsProps) {
         <button
           key={key}
           onClick={() => onAction(key)}
-          className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all cursor-pointer hover:brightness-110 text-text-secondary bg-bg-elevated border border-border"
+          className="text-text-secondary bg-bg-elevated border-border inline-flex cursor-pointer items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-all hover:brightness-110"
           title={QUICK_ACTION_PROMPTS[key]}
         >
           <Icon size={12} weight="bold" />

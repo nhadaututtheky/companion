@@ -28,15 +28,16 @@ export function ContextMeter({
 
   return (
     <div className="px-4 py-3">
-      <div className="flex items-center justify-between mb-1.5">
+      <div className="mb-1.5 flex items-center justify-between">
         <span className="text-xs font-medium">Context</span>
-        <span className="text-xs font-mono">
+        <span className="font-mono text-xs">
           {formatK(total)} / {formatK(maxTokens)}
         </span>
       </div>
       {/* Stacked progress bar: input (blue) + output (purple) */}
       <div
-        className="w-full rounded-full overflow-hidden flex bg-bg-elevated" style={{ height: 4 }}
+        className="bg-bg-elevated flex w-full overflow-hidden rounded-full"
+        style={{ height: 4 }}
       >
         <div
           className="h-full transition-all duration-300"
@@ -50,31 +51,33 @@ export function ContextMeter({
         />
       </div>
       {/* Token breakdown legend */}
-      <div className="flex items-center gap-3 mt-1.5">
+      <div className="mt-1.5 flex items-center gap-3">
         <div className="flex items-center gap-1">
           <span
-            className="inline-block" style={{
+            className="inline-block"
+            style={{
               width: 6,
               height: 6,
               borderRadius: 2,
               background: "#4285F4",
-              }}
+            }}
           />
-          <span className="text-xs font-mono">{formatK(inputTokens)} in</span>
+          <span className="font-mono text-xs">{formatK(inputTokens)} in</span>
         </div>
         <div className="flex items-center gap-1">
           <span
-            className="inline-block" style={{
+            className="inline-block"
+            style={{
               width: 6,
               height: 6,
               borderRadius: 2,
               background: "#A855F7",
-              }}
+            }}
           />
-          <span className="text-xs font-mono">{formatK(outputTokens)} out</span>
+          <span className="font-mono text-xs">{formatK(outputTokens)} out</span>
         </div>
         {pct > 0 && (
-          <span className="text-xs font-mono ml-auto" style={{ color }}>
+          <span className="ml-auto font-mono text-xs" style={{ color }}>
             {Math.round(pct)}%
           </span>
         )}

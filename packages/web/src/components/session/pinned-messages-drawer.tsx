@@ -61,7 +61,8 @@ export function PinnedMessagesDrawer({
 
       {/* Drawer panel */}
       <div
-        className="fixed top-0 right-0 bottom-0 z-50 flex flex-col bg-bg-card" style={{
+        className="bg-bg-card fixed bottom-0 right-0 top-0 z-50 flex flex-col"
+        style={{
           width: 320,
           borderLeft: "1px solid var(--color-border)",
           boxShadow: "-8px 0 32px rgba(0,0,0,0.15)",
@@ -72,7 +73,7 @@ export function PinnedMessagesDrawer({
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+          className="flex flex-shrink-0 items-center justify-between px-4 py-3"
           style={{ borderBottom: "1px solid var(--color-border)" }}
         >
           <div className="flex items-center gap-2">
@@ -80,7 +81,7 @@ export function PinnedMessagesDrawer({
             <span className="text-sm font-semibold">Pinned Messages</span>
             {pinnedMessages.length > 0 && (
               <span
-                className="text-xs px-1.5 py-0.5 rounded-full font-mono font-semibold"
+                className="rounded-full px-1.5 py-0.5 font-mono text-xs font-semibold"
                 style={{
                   background: "#FBBC0420",
                   color: "#FBBC04",
@@ -92,7 +93,7 @@ export function PinnedMessagesDrawer({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg cursor-pointer transition-colors"
+            className="cursor-pointer rounded-lg p-1.5 transition-colors"
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
             }}
@@ -108,12 +109,10 @@ export function PinnedMessagesDrawer({
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           {pinnedMessages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full gap-3 px-6">
+            <div className="flex h-full flex-col items-center justify-center gap-3 px-6">
               <PushPin size={32} className="text-text-muted" style={{ opacity: 0.4 }} />
-              <p className="text-sm text-center">No pinned messages</p>
-              <p
-                className="text-xs text-center text-text-muted opacity-70"
-              >
+              <p className="text-center text-sm">No pinned messages</p>
+              <p className="text-text-muted text-center text-xs opacity-70">
                 Hover a message and click the pin icon to save it here
               </p>
             </div>
@@ -124,7 +123,7 @@ export function PinnedMessagesDrawer({
                 return (
                   <div
                     key={idx}
-                    className="shadow-sm rounded-xl p-3 flex flex-col gap-2 bg-bg-elevated"
+                    className="bg-bg-elevated flex flex-col gap-2 rounded-xl p-3 shadow-sm"
                   >
                     {/* Role badge + index */}
                     <div className="flex items-center justify-between">
@@ -153,22 +152,18 @@ export function PinnedMessagesDrawer({
                           {msg.role}
                         </span>
                       </div>
-                      <span
-                        className="text-xs font-mono text-text-muted opacity-50"
-                      >
-                        #{idx}
-                      </span>
+                      <span className="text-text-muted font-mono text-xs opacity-50">#{idx}</span>
                     </div>
 
                     {/* Preview */}
                     <p className="text-xs leading-relaxed">{truncate(msg.content)}</p>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1 justify-end">
+                    <div className="flex items-center justify-end gap-1">
                       {/* Unpin */}
                       <button
                         onClick={() => togglePin(sessionId, idx)}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs cursor-pointer transition-colors"
+                        className="inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs transition-colors"
                         style={{
                           background: "#FBBC0415",
                           color: "#FBBC04",
@@ -191,7 +186,7 @@ export function PinnedMessagesDrawer({
                           onJumpTo(idx);
                           onClose();
                         }}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs cursor-pointer transition-colors"
+                        className="inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs transition-colors"
                         style={{
                           background: "#4285F415",
                           color: "#4285F4",

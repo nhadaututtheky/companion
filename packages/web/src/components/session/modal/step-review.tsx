@@ -47,13 +47,12 @@ export function StepReview(props: StepReviewProps) {
   return (
     <div className="flex flex-col gap-4 px-5 py-4">
       {/* Summary card */}
-      <div
-        className="shadow-sm rounded-xl p-4 flex flex-col gap-3 bg-bg-elevated"
-      >
+      <div className="bg-bg-elevated flex flex-col gap-3 rounded-xl p-4 shadow-sm">
         <h3
-          className="text-sm font-bold text-text-primary" style={{
+          className="text-text-primary text-sm font-bold"
+          style={{
             fontFamily: "var(--font-display)",
-            }}
+          }}
         >
           {projectName || "Unnamed project"}
         </h3>
@@ -61,7 +60,7 @@ export function StepReview(props: StepReviewProps) {
         <div className="flex flex-col gap-2 text-sm">
           <div className="flex items-start gap-2">
             <span className="w-24 flex-shrink-0 text-xs font-semibold uppercase">Directory</span>
-            <span className="text-xs font-mono truncate">{selectedDir}</span>
+            <span className="truncate font-mono text-xs">{selectedDir}</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-24 flex-shrink-0 text-xs font-semibold uppercase">Platform</span>
@@ -89,7 +88,7 @@ export function StepReview(props: StepReviewProps) {
           </div>
           <div className="flex items-center gap-2">
             <span className="w-24 flex-shrink-0 text-xs font-semibold uppercase">Model</span>
-            <span className="text-xs font-mono">
+            <span className="font-mono text-xs">
               {getModelsForPlatform(selectedPlatform).find((m) => m.value === model)?.label ??
                 model}
             </span>
@@ -132,7 +131,7 @@ export function StepReview(props: StepReviewProps) {
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="shadow-soft px-4 py-2 rounded-lg text-sm font-medium cursor-pointer text-text-secondary bg-bg-elevated"
+          className="shadow-soft text-text-secondary bg-bg-elevated cursor-pointer rounded-lg px-4 py-2 text-sm font-medium"
         >
           Back
         </button>
@@ -140,7 +139,7 @@ export function StepReview(props: StepReviewProps) {
         <button
           onClick={onLaunch}
           disabled={launching || atLimit || !templateVarsValid}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+          className="flex cursor-pointer items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
           style={{ background: "#4285F4", color: "#fff" }}
           aria-label="Start session"
         >

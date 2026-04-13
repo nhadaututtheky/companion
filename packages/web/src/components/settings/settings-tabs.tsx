@@ -31,13 +31,14 @@ export function SettingSection({
 }) {
   return (
     <div
-      className="p-5 rounded-xl shadow-soft border border-glass-border" style={{
+      className="shadow-soft border-glass-border rounded-xl border p-5"
+      style={{
         background: "var(--glass-bg-heavy)",
         boxShadow: "var(--shadow-soft)",
       }}
     >
-      <h2 className="text-sm font-semibold mb-1">{title}</h2>
-      {description && <p className="text-xs mb-4">{description}</p>}
+      <h2 className="mb-1 text-sm font-semibold">{title}</h2>
+      {description && <p className="mb-4 text-xs">{description}</p>}
       {children}
     </div>
   );
@@ -64,7 +65,7 @@ export function InputField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="px-3 py-2 rounded-lg text-sm input-bordered transition-colors text-text-primary bg-bg-elevated"
+        className="input-bordered text-text-primary bg-bg-elevated rounded-lg px-3 py-2 text-sm transition-colors"
       />
     </div>
   );
@@ -130,13 +131,11 @@ export function AppearanceTab() {
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-0.5">
             <span className="text-sm font-medium">Color mode</span>
-            <span className="text-xs text-text-muted">
-              Switch between light and dark mode
-            </span>
+            <span className="text-text-muted text-xs">Switch between light and dark mode</span>
           </div>
           <button
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer text-text-primary bg-bg-elevated shadow-soft border border-glass-border"
+            className="text-text-primary bg-bg-elevated shadow-soft border-glass-border flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
           >
             <Robot size={14} weight="bold" aria-hidden="true" />
             {theme === "light" ? "Dark" : "Light"}
@@ -155,7 +154,7 @@ export function AppearanceTab() {
               <button
                 key={option.id}
                 onClick={() => handleMascotSelect(option.id)}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all cursor-pointer relative"
+                className="relative flex cursor-pointer flex-col items-center gap-2 rounded-xl p-4 transition-all"
                 style={{
                   background: isSelected
                     ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
@@ -170,7 +169,7 @@ export function AppearanceTab() {
                 {/* Pro badge */}
                 {option.proOnly && (
                   <div
-                    className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-semibold"
+                    className="absolute right-2 top-2 flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-semibold"
                     style={{
                       background: isLocked ? "#FBBC0420" : "#34A85320",
                       color: isLocked ? "#FBBC04" : "#34A853",
@@ -202,7 +201,8 @@ export function AppearanceTab() {
                 {/* Label */}
                 <span className="text-xs font-semibold">{option.label}</span>
                 <span
-                  className="text-xs text-center leading-tight text-text-muted" style={{ fontSize: 10 }}
+                  className="text-text-muted text-center text-xs leading-tight"
+                  style={{ fontSize: 10 }}
                 >
                   {option.description}
                 </span>
@@ -212,7 +212,8 @@ export function AppearanceTab() {
                   <CheckCircle
                     size={16}
                     weight="fill"
-                    className="text-accent absolute" style={{
+                    className="text-accent absolute"
+                    style={{
                       bottom: 8,
                       right: 8,
                     }}

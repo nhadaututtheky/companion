@@ -207,10 +207,11 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
   }, [handleKill, spawnTerminal]);
 
   return (
-    <div className="flex flex-col h-full" style={{ background: "#0c1419" }}>
+    <div className="flex h-full flex-col" style={{ background: "#0c1419" }}>
       {/* Header */}
       <div
-        className="flex items-center justify-between px-3 py-1.5 shrink-0 bg-bg-card" style={{
+        className="bg-bg-card flex shrink-0 items-center justify-between px-3 py-1.5"
+        style={{
           borderBottom: "1px solid var(--glass-border)",
         }}
       >
@@ -219,16 +220,14 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
           <span className="text-xs font-semibold">Terminal</span>
           <span
             aria-hidden="true"
-            className="rounded-full shrink-0 inline-block" style={{
+            className="inline-block shrink-0 rounded-full"
+            style={{
               width: 6,
               height: 6,
               background: connected ? "#34A853" : connecting ? "#FBBC04" : "#9CA3AF",
-              }}
+            }}
           />
-          <span
-            className="text-xs text-text-muted" style={{ fontSize: 10 }}
-            aria-live="polite"
-          >
+          <span className="text-text-muted text-xs" style={{ fontSize: 10 }} aria-live="polite">
             {connected ? "Connected" : connecting ? "Connecting..." : "Disconnected"}
           </span>
         </div>
@@ -236,7 +235,8 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
         <div className="flex items-center gap-0.5">
           <button
             onClick={handleNewTerminal}
-            className="p-1 rounded cursor-pointer transition-colors text-text-muted" style={{ background: "none", border: "none" }}
+            className="text-text-muted cursor-pointer rounded p-1 transition-colors"
+            style={{ background: "none", border: "none" }}
             aria-label="New terminal"
             title="New Terminal"
           >
@@ -245,7 +245,8 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
           <button
             onClick={handleKill}
             disabled={!terminalId}
-            className="p-1 rounded cursor-pointer transition-colors disabled:opacity-30 text-text-muted" style={{ background: "none", border: "none" }}
+            className="text-text-muted cursor-pointer rounded p-1 transition-colors disabled:opacity-30"
+            style={{ background: "none", border: "none" }}
             aria-label="Kill terminal"
             title="Kill Terminal"
           >
@@ -253,7 +254,8 @@ export function TerminalPanel({ defaultCwd, onClose }: TerminalPanelProps) {
           </button>
           <button
             onClick={onClose}
-            className="p-1 rounded cursor-pointer transition-colors text-text-muted" style={{ background: "none", border: "none" }}
+            className="text-text-muted cursor-pointer rounded p-1 transition-colors"
+            style={{ background: "none", border: "none" }}
             aria-label="Close terminal panel"
           >
             <X size={13} weight="bold" />

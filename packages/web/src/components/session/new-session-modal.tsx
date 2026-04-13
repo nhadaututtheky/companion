@@ -60,7 +60,8 @@ function StepPills({ current }: { current: Step }) {
             />
           )}
           <div
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-radius-pill" style={{
+            className="rounded-radius-pill flex items-center gap-1.5 px-2.5 py-1"
+            style={{
               background:
                 current === n
                   ? "color-mix(in srgb, var(--color-accent) 12%, transparent)"
@@ -74,7 +75,7 @@ function StepPills({ current }: { current: Step }) {
             }}
           >
             <div
-              className="flex items-center justify-center rounded-full text-xs font-bold flex-shrink-0"
+              className="flex flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
               style={{
                 width: 20,
                 height: 20,
@@ -454,7 +455,8 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
       />
 
       <div
-        className="flex" style={{
+        className="flex"
+        style={{
           position: "fixed",
           inset: 0,
           zIndex: Z.modalContent,
@@ -470,7 +472,8 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
           role="dialog"
           aria-modal="true"
           aria-label="New Session"
-          className="overflow-hidden dark:bg-glass-dark" style={{
+          className="dark:bg-glass-dark overflow-hidden"
+          style={{
             width: "100%",
             maxWidth: 600,
             borderRadius: 16,
@@ -481,20 +484,20 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
             border: "1px solid rgba(255,255,255,0.18)",
             boxShadow: "0 8px 40px rgba(0,0,0,0.18), inset 0 0 0 1px rgba(255,255,255,0.1)",
           }}
-          
         >
           {/* Header */}
           <div
-            className="flex items-center justify-between px-5 py-4 flex-shrink-0"
+            className="flex flex-shrink-0 items-center justify-between px-5 py-4"
             style={{ borderBottom: "1px solid var(--color-border)" }}
           >
             <div>
               <h2
-                className="text-base font-bold text-text-primary" style={{ fontFamily: "var(--font-display)" }}
+                className="text-text-primary text-base font-bold"
+                style={{ fontFamily: "var(--font-display)" }}
               >
                 New Session
               </h2>
-              <p className="text-xs mt-0.5">
+              <p className="mt-0.5 text-xs">
                 {atLimit
                   ? "Maximum 6 sessions active — stop one to continue"
                   : "Launch a coding session in a project"}
@@ -504,7 +507,7 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
               <StepPills current={step} />
               <button
                 onClick={onClose}
-                className="shadow-soft flex items-center justify-center p-2 rounded-lg transition-colors cursor-pointer text-text-secondary bg-bg-elevated"
+                className="shadow-soft text-text-secondary bg-bg-elevated flex cursor-pointer items-center justify-center rounded-lg p-2 transition-colors"
                 aria-label="Close modal"
               >
                 <X size={14} weight="bold" aria-hidden="true" />

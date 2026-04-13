@@ -38,10 +38,7 @@ export function ApiKeyIndicator() {
           className="flex items-center justify-center px-4 py-1.5"
           style={{ borderBottom: keyHint ? "1px solid var(--color-border)" : undefined }}
         >
-          <span
-            className="text-[10px] font-mono text-text-muted"
-            title={`Companion v${version}`}
-          >
+          <span className="text-text-muted font-mono text-[10px]" title={`Companion v${version}`}>
             v{version}
           </span>
         </div>
@@ -50,19 +47,20 @@ export function ApiKeyIndicator() {
       {keyHint && (
         <div className="flex items-center gap-2 px-4 py-2.5">
           <span
-            className="rounded-full shrink-0" style={{
+            className="shrink-0 rounded-full"
+            style={{
               width: 6,
               height: 6,
               background: "var(--color-google-green)",
-              }}
+            }}
             aria-hidden="true"
           />
-          <span className="text-xs font-mono flex-1 truncate" title="Connected — API key active">
+          <span className="flex-1 truncate font-mono text-xs" title="Connected — API key active">
             {keyHint}
           </span>
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center p-1 rounded cursor-pointer transition-colors"
+            className="flex cursor-pointer items-center justify-center rounded p-1 transition-colors"
             aria-label="Logout — clear API key"
             title="Logout"
           >

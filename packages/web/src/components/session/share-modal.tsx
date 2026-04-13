@@ -115,7 +115,8 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
       }}
     >
       <div
-        className="shadow-float flex flex-col gap-4 rounded-2xl p-5 w-full max-w-md max-h-[80vh] overflow-y-auto bg-bg-card" style={{
+        className="shadow-float bg-bg-card flex max-h-[80vh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-2xl p-5"
+        style={{
           boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
         }}
       >
@@ -127,7 +128,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
+            className="cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-[var(--color-bg-elevated)]"
             aria-label="Close share modal"
           >
             <X size={14} weight="bold" />
@@ -135,15 +136,13 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
         </div>
 
         {/* Create new share */}
-        <div
-          className="shadow-sm flex flex-col gap-3 rounded-xl p-3 bg-bg-elevated"
-        >
+        <div className="bg-bg-elevated flex flex-col gap-3 rounded-xl p-3 shadow-sm">
           <span className="text-xs font-semibold uppercase tracking-wide">New Share Link</span>
           <div className="flex items-center gap-3">
             <select
               value={permission}
               onChange={(e) => setPermission(e.target.value as "read-only" | "interactive")}
-              className="flex-1 text-xs px-2 py-1.5 rounded-lg cursor-pointer text-text-primary bg-bg-card border border-border"
+              className="text-text-primary bg-bg-card border-border flex-1 cursor-pointer rounded-lg border px-2 py-1.5 text-xs"
               aria-label="Permission level"
             >
               <option value="read-only">Read-only (view stream)</option>
@@ -152,7 +151,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
             <select
               value={expiresInHours}
               onChange={(e) => setExpiresInHours(Number(e.target.value))}
-              className="text-xs px-2 py-1.5 rounded-lg cursor-pointer text-text-primary bg-bg-card border border-border"
+              className="text-text-primary bg-bg-card border-border cursor-pointer rounded-lg border px-2 py-1.5 text-xs"
               aria-label="Expiry time"
             >
               <option value={1}>1 hour</option>
@@ -165,7 +164,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
           <button
             onClick={handleCreate}
             disabled={creating}
-            className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+            className="flex cursor-pointer items-center justify-center gap-2 rounded-lg py-2 text-xs font-semibold transition-colors disabled:opacity-50"
             style={{
               background: "var(--color-accent)",
               color: "#fff",
@@ -193,7 +192,8 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
             />
             <div className="flex items-center gap-2">
               <span
-                className="text-[10px] px-2 py-1 rounded-lg truncate max-w-[200px] text-text-muted bg-bg-elevated" style={{
+                className="text-text-muted bg-bg-elevated max-w-[200px] truncate rounded-lg px-2 py-1 text-[10px]"
+                style={{
                   fontFamily: "var(--font-mono, monospace)",
                 }}
               >
@@ -201,7 +201,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
               </span>
               <button
                 onClick={() => copyLink(selectedToken)}
-                className="p-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
+                className="cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-[var(--color-bg-elevated)]"
                 style={{
                   color:
                     copiedToken === selectedToken
@@ -223,7 +223,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
 
         {/* Active shares list */}
         {loading ? (
-          <div className="flex items-center justify-center py-4 gap-2">
+          <div className="flex items-center justify-center gap-2 py-4">
             <CircleNotch size={14} className="animate-spin" />
             <span className="text-xs">Loading shares...</span>
           </div>
@@ -235,10 +235,11 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
             {shares.map((s) => (
               <div
                 key={s.token}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 border border-border" style={{
+                className="border-border flex items-center gap-2 rounded-lg border px-3 py-2"
+                style={{
                   background:
                     selectedToken === s.token ? "var(--color-bg-elevated)" : "transparent",
-                  }}
+                }}
               >
                 <span style={{ color: s.permission === "interactive" ? "#a78bfa" : "#4285f4" }}>
                   {s.permission === "interactive" ? (
@@ -248,7 +249,8 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
                   )}
                 </span>
                 <span
-                  className="text-[10px] flex-1 truncate text-text-secondary" style={{
+                  className="text-text-secondary flex-1 truncate text-[10px]"
+                  style={{
                     fontFamily: "var(--font-mono, monospace)",
                   }}
                 >
@@ -261,7 +263,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
                 </span>
                 <button
                   onClick={() => generateQR(s.token)}
-                  className="p-1 rounded cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
+                  className="cursor-pointer rounded p-1 transition-colors hover:bg-[var(--color-bg-elevated)]"
                   aria-label="Show QR code"
                   title="Show QR code"
                 >
@@ -269,7 +271,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
                 </button>
                 <button
                   onClick={() => copyLink(s.token)}
-                  className="p-1 rounded cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
+                  className="cursor-pointer rounded p-1 transition-colors hover:bg-[var(--color-bg-elevated)]"
                   style={{
                     color:
                       copiedToken === s.token ? "var(--color-success)" : "var(--color-text-muted)",
@@ -285,7 +287,7 @@ export function ShareModal({ sessionId, onClose }: ShareModalProps) {
                 </button>
                 <button
                   onClick={() => handleRevoke(s.token)}
-                  className="p-1 rounded cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
+                  className="cursor-pointer rounded p-1 transition-colors hover:bg-[var(--color-bg-elevated)]"
                   style={{ color: "var(--color-danger, #EA4335)" }}
                   aria-label="Revoke share"
                   title="Revoke share"

@@ -123,21 +123,20 @@ function KpiCard({
   accent?: string;
 }) {
   return (
-    <div
-      className="shadow-soft flex flex-col gap-1 rounded-xl p-4 flex-1 min-w-0 bg-bg-card"
-    >
+    <div className="shadow-soft bg-bg-card flex min-w-0 flex-1 flex-col gap-1 rounded-xl p-4">
       <div className="flex items-center justify-between gap-1">
         <span className="text-xs">{label}</span>
         <span style={{ color: accent, opacity: 0.7 }}>{icon}</span>
       </div>
       <span
-        className="text-xl font-bold leading-tight text-text-primary" style={{
+        className="text-text-primary text-xl font-bold leading-tight"
+        style={{
           fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
         }}
       >
         {value}
       </span>
-      {sub && <span className="text-xs truncate">{sub}</span>}
+      {sub && <span className="truncate text-xs">{sub}</span>}
     </div>
   );
 }
@@ -159,9 +158,7 @@ function BarChart({
   const max = Math.max(...values, 1);
 
   return (
-    <div
-      className="shadow-soft rounded-xl p-4 bg-bg-card"
-    >
+    <div className="shadow-soft bg-bg-card rounded-xl p-4">
       <div className="flex items-end gap-[2px]" style={{ height: 120 }}>
         {data.map((d) => {
           const val = d[valueKey] as number;
@@ -170,7 +167,7 @@ function BarChart({
           return (
             <div
               key={d.date}
-              className="flex-1 flex flex-col items-center justify-end"
+              className="flex flex-1 flex-col items-center justify-end"
               style={{ height: "100%" }}
               title={`${d.date}: ${formatValue(val)}`}
             >
@@ -187,9 +184,10 @@ function BarChart({
               />
               {data.length <= 15 && (
                 <span
-                  className="text-[9px] mt-1 text-text-muted whitespace-nowrap" style={{
+                  className="text-text-muted mt-1 whitespace-nowrap text-[9px]"
+                  style={{
                     transform: "rotate(-45deg)",
-                    }}
+                  }}
                 >
                   {dateLabel}
                 </span>
@@ -217,7 +215,7 @@ function SourceBadge({ source }: { source: string }) {
   const Icon = config.icon;
   return (
     <span
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
+      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium"
       style={{ background: `${config.color}15`, color: config.color }}
     >
       <Icon size={10} weight="bold" aria-hidden="true" />
@@ -245,22 +243,20 @@ function SessionTable({ sessions }: { sessions: RecentSession[] }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
-    <div
-      className="shadow-soft rounded-xl overflow-hidden bg-bg-card"
-    >
+    <div className="shadow-soft bg-bg-card overflow-hidden rounded-xl">
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
             <tr>
-              <th className="text-left px-3 py-2 font-semibold" style={{ width: 28 }} />
-              <th className="text-left px-3 py-2 font-semibold">Start</th>
-              <th className="text-left px-3 py-2 font-semibold">Source</th>
-              <th className="text-left px-3 py-2 font-semibold">Session</th>
-              <th className="text-left px-3 py-2 font-semibold">Model</th>
-              <th className="text-right px-3 py-2 font-semibold">Turns</th>
-              <th className="text-right px-3 py-2 font-semibold">Tokens</th>
-              <th className="text-right px-3 py-2 font-semibold">Cost</th>
-              <th className="text-right px-3 py-2 font-semibold">Duration</th>
+              <th className="px-3 py-2 text-left font-semibold" style={{ width: 28 }} />
+              <th className="px-3 py-2 text-left font-semibold">Start</th>
+              <th className="px-3 py-2 text-left font-semibold">Source</th>
+              <th className="px-3 py-2 text-left font-semibold">Session</th>
+              <th className="px-3 py-2 text-left font-semibold">Model</th>
+              <th className="px-3 py-2 text-right font-semibold">Turns</th>
+              <th className="px-3 py-2 text-right font-semibold">Tokens</th>
+              <th className="px-3 py-2 text-right font-semibold">Cost</th>
+              <th className="px-3 py-2 text-right font-semibold">Duration</th>
             </tr>
           </thead>
           <tbody>
@@ -270,16 +266,14 @@ function SessionTable({ sessions }: { sessions: RecentSession[] }) {
               return (
                 <React.Fragment key={s.id}>
                   <tr
-                    className="transition-colors cursor-pointer"
+                    className="cursor-pointer transition-colors"
                     style={{
                       borderTop: "1px solid var(--color-border)",
                       background: isExpanded ? "var(--color-bg-elevated)" : undefined,
                     }}
                     onClick={() => setExpandedId(isExpanded ? null : s.id)}
                   >
-                    <td
-                      className="px-2 py-2 text-center text-text-muted"
-                    >
+                    <td className="text-text-muted px-2 py-2 text-center">
                       {isExpanded ? (
                         <CaretDown size={12} weight="bold" />
                       ) : (
@@ -287,7 +281,8 @@ function SessionTable({ sessions }: { sessions: RecentSession[] }) {
                       )}
                     </td>
                     <td
-                      className="px-3 py-2 whitespace-nowrap text-text-secondary" style={{
+                      className="text-text-secondary whitespace-nowrap px-3 py-2"
+                      style={{
                         fontFamily: "var(--font-mono, monospace)",
                       }}
                     >
@@ -299,16 +294,12 @@ function SessionTable({ sessions }: { sessions: RecentSession[] }) {
                     <td className="px-3 py-2">
                       <span className="font-medium">{s.name ?? s.id.slice(0, 8)}</span>
                       {s.projectSlug && (
-                        <span
-                          className="ml-1.5 text-[10px] text-text-muted"
-                        >
-                          {s.projectSlug}
-                        </span>
+                        <span className="text-text-muted ml-1.5 text-[10px]">{s.projectSlug}</span>
                       )}
                     </td>
                     <td className="px-3 py-2">
                       <span
-                        className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                        className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold"
                         style={{
                           background: `${modelColor(s.model)}20`,
                           color: modelColor(s.model),
@@ -318,28 +309,32 @@ function SessionTable({ sessions }: { sessions: RecentSession[] }) {
                       </span>
                     </td>
                     <td
-                      className="px-3 py-2 text-right text-text-secondary" style={{
+                      className="text-text-secondary px-3 py-2 text-right"
+                      style={{
                         fontFamily: "var(--font-mono, monospace)",
                       }}
                     >
                       {s.turns}
                     </td>
                     <td
-                      className="px-3 py-2 text-right text-text-secondary" style={{
+                      className="text-text-secondary px-3 py-2 text-right"
+                      style={{
                         fontFamily: "var(--font-mono, monospace)",
                       }}
                     >
                       {fmtTokens(s.tokens)}
                     </td>
                     <td
-                      className="px-3 py-2 text-right text-text-primary font-semibold" style={{
+                      className="text-text-primary px-3 py-2 text-right font-semibold"
+                      style={{
                         fontFamily: "var(--font-mono, monospace)",
-                        }}
+                      }}
                     >
                       {fmtCost(s.cost)}
                     </td>
                     <td
-                      className="px-3 py-2 text-right text-text-muted" style={{
+                      className="text-text-muted px-3 py-2 text-right"
+                      style={{
                         fontFamily: "var(--font-mono, monospace)",
                       }}
                     >
@@ -352,33 +347,31 @@ function SessionTable({ sessions }: { sessions: RecentSession[] }) {
                     <tr>
                       <td
                         colSpan={9}
-                        className="px-4 py-3 bg-bg-elevated" style={{
+                        className="bg-bg-elevated px-4 py-3"
+                        style={{
                           borderTop: "1px solid var(--color-border)",
                         }}
                       >
                         <div className="flex gap-6">
                           {/* Files section */}
-                          <div className="flex-1 min-w-0">
-                            <p
-                              className="text-[10px] font-semibold uppercase tracking-wide mb-1.5 text-text-muted"
-                            >
+                          <div className="min-w-0 flex-1">
+                            <p className="text-text-muted mb-1.5 text-[10px] font-semibold uppercase tracking-wide">
                               Files ({totalFiles})
                             </p>
                             {totalFiles === 0 ? (
-                              <p className="text-xs text-text-muted">
-                                No file changes
-                              </p>
+                              <p className="text-text-muted text-xs">No file changes</p>
                             ) : (
-                              <div className="flex flex-col gap-0.5 max-h-32 overflow-y-auto">
+                              <div className="flex max-h-32 flex-col gap-0.5 overflow-y-auto">
                                 {s.filesModified.map((f) => (
                                   <div
                                     key={`m-${f}`}
-                                    className="flex items-center gap-1.5 text-xs text-text-secondary"
+                                    className="text-text-secondary flex items-center gap-1.5 text-xs"
                                   >
                                     <File
                                       size={10}
                                       weight="bold"
-                                      className="shrink-0" style={{ color: "#FBBC04" }}
+                                      className="shrink-0"
+                                      style={{ color: "#FBBC04" }}
                                       aria-hidden="true"
                                     />
                                     <span className="truncate" title={f}>
@@ -389,12 +382,13 @@ function SessionTable({ sessions }: { sessions: RecentSession[] }) {
                                 {s.filesCreated.map((f) => (
                                   <div
                                     key={`c-${f}`}
-                                    className="flex items-center gap-1.5 text-xs text-text-secondary"
+                                    className="text-text-secondary flex items-center gap-1.5 text-xs"
                                   >
                                     <FilePlus
                                       size={10}
                                       weight="bold"
-                                      className="shrink-0" style={{ color: "#34A853" }}
+                                      className="shrink-0"
+                                      style={{ color: "#34A853" }}
                                       aria-hidden="true"
                                     />
                                     <span className="truncate" title={f}>
@@ -409,13 +403,11 @@ function SessionTable({ sessions }: { sessions: RecentSession[] }) {
                           {/* RTK section */}
                           {s.rtkTokensSaved > 0 && (
                             <div className="flex-shrink-0">
-                              <p
-                                className="text-[10px] font-semibold uppercase tracking-wide mb-1.5 text-text-muted"
-                              >
+                              <p className="text-text-muted mb-1.5 text-[10px] font-semibold uppercase tracking-wide">
                                 RTK Savings
                               </p>
                               <p
-                                className="text-sm font-bold font-mono"
+                                className="font-mono text-sm font-bold"
                                 style={{ color: "#34A853" }}
                               >
                                 {fmtTokens(s.rtkTokensSaved)} tokens
@@ -424,10 +416,10 @@ function SessionTable({ sessions }: { sessions: RecentSession[] }) {
                           )}
 
                           {/* Quick link */}
-                          <div className="flex-shrink-0 flex items-end">
+                          <div className="flex flex-shrink-0 items-end">
                             <Link
                               href={`/sessions/${s.id}`}
-                              className="text-xs px-2.5 py-1 rounded-lg transition-colors cursor-pointer text-text-muted border border-border"
+                              className="text-text-muted border-border cursor-pointer rounded-lg border px-2.5 py-1 text-xs transition-colors"
                               onClick={(e) => e.stopPropagation()}
                             >
                               Open session →
@@ -504,18 +496,16 @@ const TABS: Array<{ id: AnalyticsTab; label: string }> = [
 function RTKTab({ data }: { data: FeatureData["rtk"] }) {
   if (data.totalTokensSaved === 0 && data.totalCompressions === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <div className="flex flex-col items-center justify-center gap-3 py-20">
         <Lightning size={40} weight="light" className="text-text-muted" />
-        <p className="text-sm text-text-muted">
-          RTK has not processed any sessions yet
-        </p>
+        <p className="text-text-muted text-sm">RTK has not processed any sessions yet</p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard
           label="Tokens Saved"
           value={fmtTokens(data.totalTokensSaved)}
@@ -570,9 +560,7 @@ function RTKTab({ data }: { data: FeatureData["rtk"] }) {
         />
       </div>
 
-      <p className="text-xs text-text-muted">
-        Per-strategy breakdown coming in a future update.
-      </p>
+      <p className="text-text-muted text-xs">Per-strategy breakdown coming in a future update.</p>
     </div>
   );
 }
@@ -582,11 +570,9 @@ function RTKTab({ data }: { data: FeatureData["rtk"] }) {
 function WikiTab({ data }: { data: FeatureData["wiki"] }) {
   if (data.domains.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <div className="flex flex-col items-center justify-center gap-3 py-20">
         <Stack size={40} weight="light" className="text-text-muted" />
-        <p className="text-sm text-text-muted">
-          No Wiki KB domains configured
-        </p>
+        <p className="text-text-muted text-sm">No Wiki KB domains configured</p>
       </div>
     );
   }
@@ -621,19 +607,20 @@ function WikiTab({ data }: { data: FeatureData["wiki"] }) {
         {data.domains.map((d) => (
           <div
             key={d.slug}
-            className="flex items-center gap-4 p-3 rounded-xl bg-bg-card" style={{
+            className="bg-bg-card flex items-center gap-4 rounded-xl p-3"
+            style={{
               border: `1px solid ${d.staleCount > 0 ? "#FBBC0440" : "var(--color-border)"}`,
             }}
           >
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">{d.name}</p>
-              <p className="text-xs text-text-muted">
+              <p className="text-text-muted text-xs">
                 {d.articleCount} articles · {fmtTokens(d.totalTokens)} tokens
               </p>
             </div>
             {d.staleCount > 0 && (
               <span
-                className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
                 style={{ background: "#FBBC0420", color: "#FBBC04" }}
               >
                 {d.staleCount} stale
@@ -641,15 +628,13 @@ function WikiTab({ data }: { data: FeatureData["wiki"] }) {
             )}
             {d.rawPending > 0 && (
               <span
-                className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
                 style={{ background: "#4285f420", color: "#4285f4" }}
               >
                 {d.rawPending} pending
               </span>
             )}
-            <span
-              className="text-[10px] font-mono flex-shrink-0 text-text-muted"
-            >
+            <span className="text-text-muted flex-shrink-0 font-mono text-[10px]">
               {d.lastCompiledAt ? new Date(d.lastCompiledAt).toLocaleDateString() : "never"}
             </span>
           </div>
@@ -664,11 +649,9 @@ function WikiTab({ data }: { data: FeatureData["wiki"] }) {
 function CodeGraphTab({ data }: { data: FeatureData["codegraph"] }) {
   if (data.projects.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <div className="flex flex-col items-center justify-center gap-3 py-20">
         <ChartBar size={40} weight="light" className="text-text-muted" />
-        <p className="text-sm text-text-muted">
-          Run a CodeGraph scan to see intelligence metrics
-        </p>
+        <p className="text-text-muted text-sm">Run a CodeGraph scan to see intelligence metrics</p>
       </div>
     );
   }
@@ -707,17 +690,18 @@ function CodeGraphTab({ data }: { data: FeatureData["codegraph"] }) {
         {data.projects.map((p) => (
           <div
             key={p.slug}
-            className="shadow-soft flex items-center gap-4 p-3 rounded-xl bg-bg-card"
+            className="shadow-soft bg-bg-card flex items-center gap-4 rounded-xl p-3"
           >
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">{p.slug}</p>
-              <p className="text-xs text-text-muted">
+              <p className="text-text-muted text-xs">
                 {p.files} files · {p.nodes} symbols · {p.edges} relationships
               </p>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex flex-shrink-0 items-center gap-2">
               <div
-                className="rounded-full overflow-hidden bg-bg-elevated" style={{ width: 60, height: 5 }}
+                className="bg-bg-elevated overflow-hidden rounded-full"
+                style={{ width: 60, height: 5 }}
               >
                 <div
                   style={{
@@ -735,7 +719,8 @@ function CodeGraphTab({ data }: { data: FeatureData["codegraph"] }) {
                 />
               </div>
               <span
-                className="text-[10px] font-mono font-semibold text-right" style={{
+                className="text-right font-mono text-[10px] font-semibold"
+                style={{
                   color:
                     p.coveragePercent > 70
                       ? "#34A853"
@@ -743,14 +728,12 @@ function CodeGraphTab({ data }: { data: FeatureData["codegraph"] }) {
                         ? "#FBBC04"
                         : "#EA4335",
                   minWidth: 28,
-                  }}
+                }}
               >
                 {p.coveragePercent}%
               </span>
             </div>
-            <span
-              className="text-[10px] font-mono flex-shrink-0 text-text-muted"
-            >
+            <span className="text-text-muted flex-shrink-0 font-mono text-[10px]">
               {p.lastScannedAt ? new Date(p.lastScannedAt).toLocaleDateString() : "—"}
             </span>
           </div>
@@ -783,9 +766,9 @@ const INJECTION_COLORS: Record<string, string> = {
 function ContextTab({ data }: { data: FeatureData["context"] }) {
   if (data.totalInjections === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <div className="flex flex-col items-center justify-center gap-3 py-20">
         <Lightning size={40} weight="light" className="text-text-muted" />
-        <p className="text-sm text-text-muted">
+        <p className="text-text-muted text-sm">
           No context injections recorded yet. Injections are logged when CodeGraph enriches agent
           messages.
         </p>
@@ -833,14 +816,15 @@ function ContextTab({ data }: { data: FeatureData["context"] }) {
             return (
               <div
                 key={t.type}
-                className="shadow-soft flex items-center gap-3 p-3 rounded-xl bg-bg-card"
+                className="shadow-soft bg-bg-card flex items-center gap-3 rounded-xl p-3"
               >
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
-                <div className="flex-1 min-w-0">
+                <div className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: color }} />
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold">{INJECTION_LABELS[t.type] ?? t.type}</p>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="mt-1 flex items-center gap-2">
                     <div
-                      className="rounded-full overflow-hidden flex-1 bg-bg-elevated" style={{ height: 4 }}
+                      className="bg-bg-elevated flex-1 overflow-hidden rounded-full"
+                      style={{ height: 4 }}
                     >
                       <div
                         style={{
@@ -854,11 +838,9 @@ function ContextTab({ data }: { data: FeatureData["context"] }) {
                     </div>
                   </div>
                 </div>
-                <div className="flex flex-col items-end flex-shrink-0">
-                  <span className="text-sm font-mono font-bold">{t.count}</span>
-                  <span
-                    className="text-[10px] font-mono text-text-muted"
-                  >
+                <div className="flex flex-shrink-0 flex-col items-end">
+                  <span className="font-mono text-sm font-bold">{t.count}</span>
+                  <span className="text-text-muted font-mono text-[10px]">
                     {fmtTokens(t.tokens)} tok
                   </span>
                 </div>
@@ -883,19 +865,19 @@ function ContextTab({ data }: { data: FeatureData["context"] }) {
           {data.topSessions.slice(0, 5).map((s) => (
             <div
               key={s.sessionId}
-              className="shadow-soft flex items-center gap-3 p-3 rounded-xl bg-bg-card"
+              className="shadow-soft bg-bg-card flex items-center gap-3 rounded-xl p-3"
             >
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
                 <Link
                   href={`/sessions/${s.sessionId}`}
-                  className="text-sm font-mono hover:underline"
+                  className="font-mono text-sm hover:underline"
                   style={{ color: "#4285f4" }}
                 >
                   {s.sessionId.slice(0, 12)}...
                 </Link>
               </div>
-              <span className="text-sm font-mono font-bold">{s.injections}</span>
-              <span className="text-[10px] font-mono text-text-muted">
+              <span className="font-mono text-sm font-bold">{s.injections}</span>
+              <span className="text-text-muted font-mono text-[10px]">
                 {fmtTokens(s.tokens)} tok
               </span>
             </div>
@@ -952,16 +934,17 @@ export default function AnalyticsPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col text-text-primary" style={{ background: "var(--color-bg-base)" }}
+      className="text-text-primary flex min-h-screen flex-col"
+      style={{ background: "var(--color-bg-base)" }}
     >
       {/* Header */}
       <header
-        className="flex items-center gap-3 px-6 py-4 flex-shrink-0"
+        className="flex flex-shrink-0 items-center gap-3 px-6 py-4"
         style={{ borderBottom: "1px solid var(--color-border)" }}
       >
         <Link
           href="/"
-          className="p-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)]"
+          className="cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-[var(--color-bg-elevated)]"
           aria-label="Back to home"
         >
           <ArrowLeft size={16} weight="bold" />
@@ -972,14 +955,14 @@ export default function AnalyticsPage() {
 
       {/* Tab bar */}
       <nav
-        className="flex gap-0 px-6 flex-shrink-0"
+        className="flex flex-shrink-0 gap-0 px-6"
         style={{ borderBottom: "1px solid var(--color-border)" }}
       >
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className="px-4 py-2.5 text-xs font-semibold cursor-pointer transition-colors relative"
+            className="relative cursor-pointer px-4 py-2.5 text-xs font-semibold transition-colors"
             style={{
               color: activeTab === tab.id ? "var(--color-text-primary)" : "var(--color-text-muted)",
               background: "transparent",
@@ -998,9 +981,9 @@ export default function AnalyticsPage() {
       </nav>
 
       {/* Content */}
-      <main className="flex-1 overflow-y-auto px-6 py-5 max-w-5xl mx-auto w-full">
+      <main className="mx-auto w-full max-w-5xl flex-1 overflow-y-auto px-6 py-5">
         {loading && activeTab === "overview" && (
-          <div className="flex items-center justify-center py-20 gap-2">
+          <div className="flex items-center justify-center gap-2 py-20">
             <CircleNotch size={20} className="animate-spin" aria-hidden="true" />
             <span className="text-sm">Loading analytics...</span>
           </div>
@@ -1017,9 +1000,9 @@ export default function AnalyticsPage() {
         )}
 
         {activeTab === "overview" && data && data.totalSessions === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <div className="flex flex-col items-center justify-center gap-3 py-20">
             <ChartBar size={40} weight="light" className="text-text-muted" />
-            <p className="text-sm text-text-muted">
+            <p className="text-text-muted text-sm">
               No sessions yet — start a session to see cost analytics
             </p>
           </div>
@@ -1028,7 +1011,7 @@ export default function AnalyticsPage() {
         {activeTab === "overview" && data && data.totalSessions > 0 && (
           <div className="flex flex-col gap-6">
             {/* KPI row */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
               <KpiCard
                 label="Today"
                 value={String(data.today.sessions)}
@@ -1076,7 +1059,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Charts row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <div className="flex flex-col gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wide">
                   Daily Sessions (30d)
@@ -1102,15 +1085,13 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Model breakdown + Top projects */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               {data.modelBreakdown.length > 0 && (
                 <div className="flex flex-col gap-2">
                   <span className="text-xs font-semibold uppercase tracking-wide">
                     Model Usage (30d)
                   </span>
-                  <div
-                    className="shadow-soft flex flex-col gap-3 rounded-xl p-4 bg-bg-card"
-                  >
+                  <div className="shadow-soft bg-bg-card flex flex-col gap-3 rounded-xl p-4">
                     {data.modelBreakdown.map((m) => {
                       const total = data.modelBreakdown.reduce((s, x) => s + x.count, 0);
                       const pct = total > 0 ? Math.round((m.count / total) * 100) : 0;
@@ -1128,7 +1109,8 @@ export default function AnalyticsPage() {
                             </span>
                           </div>
                           <div
-                            className="w-full rounded-full overflow-hidden bg-bg-elevated" style={{ height: 6 }}
+                            className="bg-bg-elevated w-full overflow-hidden rounded-full"
+                            style={{ height: 6 }}
                           >
                             <div
                               style={{
@@ -1153,19 +1135,18 @@ export default function AnalyticsPage() {
                   <span className="text-xs font-semibold uppercase tracking-wide">
                     Top Projects (30d)
                   </span>
-                  <div
-                    className="shadow-soft flex flex-col gap-2 rounded-xl p-4 bg-bg-card"
-                  >
+                  <div className="shadow-soft bg-bg-card flex flex-col gap-2 rounded-xl p-4">
                     {data.topProjects.map((p) => {
                       const max = data.topProjects[0]?.sessions ?? 1;
                       const pct = max > 0 ? Math.round((p.sessions / max) * 100) : 0;
                       return (
                         <div key={p.name} className="flex items-center gap-3">
-                          <span className="text-xs truncate flex-1" title={p.name}>
+                          <span className="flex-1 truncate text-xs" title={p.name}>
                             {p.name}
                           </span>
                           <div
-                            className="flex-shrink-0 rounded-full overflow-hidden bg-bg-elevated" style={{ width: 80, height: 5 }}
+                            className="bg-bg-elevated flex-shrink-0 overflow-hidden rounded-full"
+                            style={{ width: 80, height: 5 }}
                           >
                             <div
                               style={{
@@ -1178,10 +1159,11 @@ export default function AnalyticsPage() {
                             />
                           </div>
                           <span
-                            className="text-xs font-semibold flex-shrink-0 text-text-muted text-right" style={{
+                            className="text-text-muted flex-shrink-0 text-right text-xs font-semibold"
+                            style={{
                               fontFamily: "var(--font-mono, monospace)",
                               minWidth: 20,
-                              }}
+                            }}
                           >
                             {p.sessions}
                           </span>
@@ -1207,7 +1189,7 @@ export default function AnalyticsPage() {
 
         {/* Feature tabs */}
         {activeTab !== "overview" && featureLoading && (
-          <div className="flex items-center justify-center py-20 gap-2">
+          <div className="flex items-center justify-center gap-2 py-20">
             <CircleNotch size={20} className="animate-spin" aria-hidden="true" />
             <span className="text-sm">Loading feature data...</span>
           </div>

@@ -182,7 +182,7 @@ export function SpectatePageClient({ params }: { params: Promise<{ token: string
   if (loading) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center"
+        className="flex min-h-screen items-center justify-center"
         style={{ background: "#0c1419", color: "#a0aeb8" }}
       >
         <div className="flex items-center gap-2">
@@ -196,15 +196,15 @@ export function SpectatePageClient({ params }: { params: Promise<{ token: string
   if (error || !info) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center"
+        className="flex min-h-screen items-center justify-center"
         style={{ background: "#0c1419", color: "#a0aeb8" }}
       >
-        <div className="flex flex-col items-center gap-4 text-center px-6">
+        <div className="flex flex-col items-center gap-4 px-6 text-center">
           <WarningCircle size={48} style={{ color: "#EA4335" }} />
           <h1 className="text-lg font-semibold" style={{ color: "#fff" }}>
             Share Link Unavailable
           </h1>
-          <p className="text-sm max-w-sm" style={{ color: "#a0aeb8" }}>
+          <p className="max-w-sm text-sm" style={{ color: "#a0aeb8" }}>
             {error ?? "This share link has expired or been revoked."}
           </p>
         </div>
@@ -215,17 +215,17 @@ export function SpectatePageClient({ params }: { params: Promise<{ token: string
   // ── Main spectator view ─────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#0c1419", color: "#fff" }}>
+    <div className="flex min-h-screen flex-col" style={{ background: "#0c1419", color: "#fff" }}>
       {/* Header */}
       <header
-        className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+        className="flex flex-shrink-0 items-center justify-between px-4 py-3"
         style={{ borderBottom: "1px solid #2a3f52" }}
       >
         <div className="flex items-center gap-2">
           <Eye size={16} weight="bold" style={{ color: "#4285f4" }} aria-hidden="true" />
           <span className="text-sm font-semibold">{info.sessionName ?? "Live Session"}</span>
           <span
-            className="text-[10px] px-1.5 py-0.5 rounded-full"
+            className="rounded-full px-1.5 py-0.5 text-[10px]"
             style={{
               background: connected ? "#34A85320" : "#EA433520",
               color: connected ? "#34A853" : "#EA4335",
@@ -236,7 +236,7 @@ export function SpectatePageClient({ params }: { params: Promise<{ token: string
         </div>
         <div className="flex items-center gap-2">
           <span
-            className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full"
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px]"
             style={{
               background: info.permission === "interactive" ? "#a78bfa20" : "#4285f420",
               color: info.permission === "interactive" ? "#a78bfa" : "#4285f4",
@@ -256,22 +256,23 @@ export function SpectatePageClient({ params }: { params: Promise<{ token: string
       </header>
 
       {/* Messages */}
-      <main className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
+      <main className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-3">
         {messages.length === 0 && (
-          <div className="flex-1 flex items-center justify-center" style={{ color: "#a0aeb8" }}>
+          <div className="flex flex-1 items-center justify-center" style={{ color: "#a0aeb8" }}>
             <span className="text-sm">Waiting for messages...</span>
           </div>
         )}
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className="flex flex-col gap-1 max-w-3xl"
+            className="flex max-w-3xl flex-col gap-1"
             style={{
               alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
             }}
           >
             <div
-              className="rounded-xl px-3 py-2 text-sm whitespace-pre-wrap" style={{
+              className="whitespace-pre-wrap rounded-xl px-3 py-2 text-sm"
+              style={{
                 background:
                   msg.role === "user"
                     ? "#2196f320"
@@ -282,7 +283,7 @@ export function SpectatePageClient({ params }: { params: Promise<{ token: string
                 border: "1px solid #2a3f52",
                 maxWidth: "80vw",
                 wordBreak: "break-word",
-                }}
+              }}
             >
               {msg.content}
             </div>
@@ -308,7 +309,7 @@ export function SpectatePageClient({ params }: { params: Promise<{ token: string
       {/* Interactive input */}
       {info.permission === "interactive" && (
         <div
-          className="flex items-center gap-2 px-4 py-3 flex-shrink-0"
+          className="flex flex-shrink-0 items-center gap-2 px-4 py-3"
           style={{ borderTop: "1px solid #2a3f52" }}
         >
           <input
@@ -322,7 +323,7 @@ export function SpectatePageClient({ params }: { params: Promise<{ token: string
               }
             }}
             placeholder="Type a message..."
-            className="flex-1 text-sm px-3 py-2 rounded-xl input-bordered"
+            className="input-bordered flex-1 rounded-xl px-3 py-2 text-sm"
             style={{
               background: "#1a2332",
               color: "#fff",
@@ -333,7 +334,7 @@ export function SpectatePageClient({ params }: { params: Promise<{ token: string
           <button
             onClick={sendMessage}
             disabled={!inputText.trim() || !connected}
-            className="p-2 rounded-xl cursor-pointer transition-colors disabled:opacity-30"
+            className="cursor-pointer rounded-xl p-2 transition-colors disabled:opacity-30"
             style={{ background: "#2196f3", color: "#fff" }}
             aria-label="Send message"
           >

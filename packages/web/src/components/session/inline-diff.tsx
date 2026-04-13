@@ -28,20 +28,18 @@ export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }
   const fileName = filePath.split(/[\\/]/).pop() ?? filePath;
 
   return (
-    <div
-      className="shadow-soft my-1.5 rounded-lg overflow-hidden bg-bg-elevated"
-    >
+    <div className="shadow-soft bg-bg-elevated my-1.5 overflow-hidden rounded-lg">
       {/* Header */}
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-2 w-full px-3 py-2 text-xs cursor-pointer"
+        className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-xs"
         aria-expanded={expanded}
         aria-label={`Toggle diff for ${fileName}`}
       >
         <GitDiff size={14} weight="bold" style={{ color: "#4285F4" }} />
         <File size={12} className="text-text-muted shrink-0" />
         <code
-          className="font-mono truncate flex-1 text-left"
+          className="flex-1 truncate text-left font-mono"
           style={{ color: "#4285F4" }}
           title={filePath}
         >
@@ -58,7 +56,7 @@ export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }
           </span>
         )}
         {!expanded && totalChanged > 0 && (
-          <span className="opacity-50 text-xs whitespace-nowrap">
+          <span className="whitespace-nowrap text-xs opacity-50">
             {totalChanged} line{totalChanged !== 1 ? "s" : ""} changed
           </span>
         )}
@@ -72,11 +70,11 @@ export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }
       {/* Diff body */}
       {expanded && (
         <div
-          className="overflow-x-auto max-h-[400px] overflow-y-auto"
+          className="max-h-[400px] overflow-x-auto overflow-y-auto"
           style={{ borderTop: "1px solid var(--color-border)" }}
         >
           {displayLines.length === 0 ? (
-            <div className="px-3 py-2 text-xs font-mono">No changes</div>
+            <div className="px-3 py-2 font-mono text-xs">No changes</div>
           ) : (
             displayLines.map((line, idx) => {
               const bg =
@@ -106,7 +104,8 @@ export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }
                   style={{ background: bg, borderLeft, fontSize: 12 }}
                 >
                   <span
-                    className="select-none text-right px-1.5 flex-shrink-0 text-text-muted" style={{
+                    className="text-text-muted flex-shrink-0 select-none px-1.5 text-right"
+                    style={{
                       width: 36,
                       opacity: 0.5,
                     }}
@@ -114,7 +113,8 @@ export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }
                     {line.type !== "add" ? line.oldNum : ""}
                   </span>
                   <span
-                    className="select-none text-right px-1.5 flex-shrink-0 text-text-muted" style={{
+                    className="text-text-muted flex-shrink-0 select-none px-1.5 text-right"
+                    style={{
                       width: 36,
                       opacity: 0.5,
                     }}
@@ -122,7 +122,7 @@ export function InlineDiff({ filePath, oldContent, newContent, defaultExpanded }
                     {line.type !== "remove" ? line.newNum : ""}
                   </span>
                   <span
-                    className="select-none flex-shrink-0 px-1 font-semibold"
+                    className="flex-shrink-0 select-none px-1 font-semibold"
                     style={{ color: prefixColor }}
                   >
                     {prefix}

@@ -93,7 +93,8 @@ function DebateMessageBubble({ msg }: { msg: DebateMessage }) {
 
   return (
     <div
-      className="shadow-soft flex flex-col gap-1 rounded-xl p-3 bg-bg-card" style={{
+      className="shadow-soft bg-bg-card flex flex-col gap-1 rounded-xl p-3"
+      style={{
         borderLeft: `3px solid ${badge!.color}`,
       }}
     >
@@ -104,14 +105,12 @@ function DebateMessageBubble({ msg }: { msg: DebateMessage }) {
           {msg.agentId}
         </span>
         <span
-          className="text-xs px-1.5 py-0.5 rounded-full capitalize"
+          className="rounded-full px-1.5 py-0.5 text-xs capitalize"
           style={{ background: `${roleColor}20`, color: roleColor, fontSize: 10 }}
         >
           {msg.role}
         </span>
-        <span
-          className="text-xs ml-auto text-text-muted" style={{ fontSize: 10 }}
-        >
+        <span className="text-text-muted ml-auto text-xs" style={{ fontSize: 10 }}>
           R{msg.round}
         </span>
       </div>
@@ -119,21 +118,16 @@ function DebateMessageBubble({ msg }: { msg: DebateMessage }) {
       {/* Content blocks */}
       {blocks.map((block, i) =>
         block.type === "text" ? (
-          <p
-            key={i}
-            className="text-xs leading-relaxed text-text-primary whitespace-pre-wrap"
-          >
+          <p key={i} className="text-text-primary whitespace-pre-wrap text-xs leading-relaxed">
             {block.text}
           </p>
         ) : (
           <div
             key={i}
-            className="shadow-soft flex items-center gap-1.5 px-2 py-1 rounded-lg bg-bg-elevated"
+            className="shadow-soft bg-bg-elevated flex items-center gap-1.5 rounded-lg px-2 py-1"
           >
             <Wrench size={11} className="text-text-muted" aria-hidden="true" />
-            <span
-              className="text-xs font-mono text-text-secondary" style={{ fontSize: 10 }}
-            >
+            <span className="text-text-secondary font-mono text-xs" style={{ fontSize: 10 }}>
               {block.toolName}
             </span>
           </div>
@@ -148,15 +142,16 @@ function DebateMessageBubble({ msg }: { msg: DebateMessage }) {
 function RoundDivider({ round, maxRounds }: { round: number; maxRounds: number }) {
   return (
     <div className="flex items-center gap-2 py-1">
-      <div className="flex-1 h-px" style={{ background: "var(--color-border)" }} />
+      <div className="h-px flex-1" style={{ background: "var(--color-border)" }} />
       <span
-        className="text-xs font-bold px-2 py-0.5 rounded-full text-text-secondary bg-bg-elevated" style={{
+        className="text-text-secondary bg-bg-elevated rounded-full px-2 py-0.5 text-xs font-bold"
+        style={{
           fontSize: 10,
         }}
       >
         Round {round} / {maxRounds}
       </span>
-      <div className="flex-1 h-px" style={{ background: "var(--color-border)" }} />
+      <div className="h-px flex-1" style={{ background: "var(--color-border)" }} />
     </div>
   );
 }
@@ -210,21 +205,16 @@ export function DebateFeed({ channelId }: DebateFeedProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <ArrowClockwise
-          size={20}
-          className="animate-spin text-text-muted"
-        />
+        <ArrowClockwise size={20} className="text-text-muted animate-spin" />
       </div>
     );
   }
 
   if (!channel) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 gap-2">
+      <div className="flex flex-col items-center justify-center gap-2 py-12">
         <ChatTeardropDots size={28} className="text-text-muted" />
-        <p className="text-xs text-text-muted">
-          Debate not found.
-        </p>
+        <p className="text-text-muted text-xs">Debate not found.</p>
       </div>
     );
   }
@@ -236,17 +226,15 @@ export function DebateFeed({ channelId }: DebateFeedProps) {
   const rounds = new Set(messages.map((m) => m.round));
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex h-full min-h-0 flex-col">
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 py-2 flex-shrink-0"
+        className="flex flex-shrink-0 items-center justify-between px-4 py-2"
         style={{ borderBottom: "1px solid var(--color-border)" }}
       >
         <div className="flex flex-col">
-          <span className="text-xs font-bold text-text-primary">
-            {channel.topic}
-          </span>
-          <span className="text-xs text-text-muted" style={{ fontSize: 10 }}>
+          <span className="text-text-primary text-xs font-bold">{channel.topic}</span>
+          <span className="text-text-muted text-xs" style={{ fontSize: 10 }}>
             {isActive ? "Live" : channel.status} · {messages.length} messages
           </span>
         </div>
@@ -254,7 +242,8 @@ export function DebateFeed({ channelId }: DebateFeedProps) {
           {isActive && (
             <button
               onClick={() => void handleAbort()}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-all text-danger" style={{ background: "var(--color-danger)20" }}
+              className="text-danger flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold transition-all"
+              style={{ background: "var(--color-danger)20" }}
               aria-label="Abort debate"
             >
               <Stop size={12} weight="fill" />
@@ -265,11 +254,11 @@ export function DebateFeed({ channelId }: DebateFeedProps) {
       </div>
 
       {/* Message feed */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 flex flex-col gap-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 py-3">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 gap-2">
+          <div className="flex flex-col items-center justify-center gap-2 py-8">
             <Robot size={28} className="text-text-muted" />
-            <p className="text-xs text-text-muted">
+            <p className="text-text-muted text-xs">
               {isActive ? "Agents are preparing their arguments..." : "No messages in this debate."}
             </p>
           </div>
@@ -293,14 +282,12 @@ export function DebateFeed({ channelId }: DebateFeedProps) {
 
         {/* Live indicator */}
         {isActive && messages.length > 0 && (
-          <div className="flex items-center gap-2 py-2 justify-center">
+          <div className="flex items-center justify-center gap-2 py-2">
             <div
-              className="w-2 h-2 rounded-full animate-pulse"
+              className="h-2 w-2 animate-pulse rounded-full"
               style={{ background: "var(--color-accent)" }}
             />
-            <span className="text-xs text-text-muted">
-              Agents are debating...
-            </span>
+            <span className="text-text-muted text-xs">Agents are debating...</span>
           </div>
         )}
 

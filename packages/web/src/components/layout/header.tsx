@@ -23,7 +23,7 @@ export function HeaderStats() {
     <div className="header-stats flex items-center gap-4 px-3">
       <div className="flex items-center gap-1.5">
         <span
-          className="inline-block w-1.5 h-1.5 rounded-full"
+          className="inline-block h-1.5 w-1.5 rounded-full"
           style={{
             background: activeCount > 0 ? "var(--color-success)" : "var(--color-text-muted)",
           }}
@@ -31,14 +31,14 @@ export function HeaderStats() {
         <span className="text-sm font-semibold tabular-nums">{activeCount}</span>
         <span className="text-xs text-[var(--color-text-muted)]">active</span>
       </div>
-      <span className="w-px h-3.5 bg-[var(--color-border)]" />
+      <span className="h-3.5 w-px bg-[var(--color-border)]" />
       <div className="flex items-center gap-1.5">
-        <span className="text-sm font-semibold font-mono tabular-nums text-[var(--color-accent)]">
+        <span className="font-mono text-sm font-semibold tabular-nums text-[var(--color-accent)]">
           ${totalCost < 0.01 && totalCost > 0 ? "<0.01" : totalCost.toFixed(2)}
         </span>
         <span className="text-xs text-[var(--color-text-muted)]">cost</span>
       </div>
-      <span className="w-px h-3.5 bg-[var(--color-border)]" />
+      <span className="h-3.5 w-px bg-[var(--color-border)]" />
       <div className="flex items-center gap-1.5">
         <span className="text-sm font-semibold tabular-nums">{totalTurns}</span>
         <span className="text-xs text-[var(--color-text-muted)]">turns</span>
@@ -66,7 +66,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
   return (
     <header
-      className="flex items-center px-5 gap-3 h-12 relative z-10 rounded-radius-xl shadow-soft" style={{
+      className="rounded-radius-xl shadow-soft relative z-10 flex h-12 items-center gap-3 px-5"
+      style={{
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
@@ -76,7 +77,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
     >
       {/* Hamburger — mobile only */}
       <button
-        className="md:hidden p-2 rounded-lg cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center -ml-1"
+        className="-ml-1 flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-lg p-2 md:hidden"
         onClick={onMenuToggle}
         aria-label="Open sidebar menu"
       >
@@ -93,7 +94,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
       {/* Center: Search trigger (⌘K) */}
       <button
         onClick={() => setCommandPaletteOpen(true)}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm transition-colors cursor-pointer min-h-[44px] text-text-muted bg-bg-elevated rounded-radius-md shadow-soft border border-glass-border" style={{
+        className="text-text-muted bg-bg-elevated rounded-radius-md shadow-soft border-glass-border flex min-h-[44px] cursor-pointer items-center gap-2 border px-3 py-1.5 text-sm transition-colors"
+        style={{
           minWidth: 44,
         }}
         aria-label="Open command palette"
@@ -101,9 +103,10 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <MagnifyingGlass size={14} weight="bold" />
         <span className="hidden sm:inline">Search...</span>
         <span
-          className="ml-auto text-xs hidden sm:inline bg-bg-base rounded-radius-sm shadow-soft border border-glass-border" style={{
+          className="bg-bg-base rounded-radius-sm shadow-soft border-glass-border ml-auto hidden border text-xs sm:inline"
+          style={{
             padding: "1px 5px",
-            }}
+          }}
         >
           ⌘K
         </span>
@@ -112,7 +115,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
       <div className="flex-1" />
 
       {/* Right: Nav menu triggers — desktop only */}
-      <div className="hidden md:flex items-center gap-1">
+      <div className="hidden items-center gap-1 md:flex">
         {[
           { id: "panels" as const, label: "Panels", isActive: hasPanelActive },
           { id: "ai" as const, label: "AI", isActive: hasAiActive },
@@ -124,7 +127,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
               key={item.id}
               data-nav-trigger
               onClick={() => toggleNavMenu(item.id)}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all cursor-pointer rounded-radius-md" style={{
+              className="rounded-radius-md flex cursor-pointer items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all"
+              style={{
                 background: isOpen
                   ? "var(--color-text-primary)"
                   : item.isActive
@@ -151,7 +155,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <TemplateQuickPicker />
         <button
           onClick={() => useUiStore.getState().setSchedulesModalOpen(true)}
-          className="px-3 py-1.5 text-xs font-medium transition-all cursor-pointer min-h-[44px] flex items-center gap-1 text-text-secondary rounded-radius-md" style={{
+          className="text-text-secondary rounded-radius-md flex min-h-[44px] cursor-pointer items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all"
+          style={{
             background: "transparent",
             border: "1px solid transparent",
           }}
@@ -164,7 +169,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <button
           data-guide-trigger
           onClick={() => setFeatureGuideOpen(!featureGuideOpen)}
-          className="px-3 py-1.5 text-xs font-medium transition-all cursor-pointer min-h-[44px] flex items-center rounded-radius-md" style={{
+          className="rounded-radius-md flex min-h-[44px] cursor-pointer items-center px-3 py-1.5 text-xs font-medium transition-all"
+          style={{
             background: featureGuideOpen ? "var(--color-accent)" : "transparent",
             color: featureGuideOpen ? "#fff" : "var(--color-text-secondary)",
             border: featureGuideOpen ? "1px solid var(--color-accent)" : "1px solid transparent",
@@ -176,7 +182,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         </button>
         <button
           onClick={() => useUiStore.getState().setSettingsModalOpen(true)}
-          className="p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+          className="flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-lg p-2 transition-colors"
           aria-label="Settings"
           title={
             typeof navigator !== "undefined" && /Mac/.test(navigator.platform)

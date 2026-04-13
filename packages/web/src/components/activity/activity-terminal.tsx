@@ -85,7 +85,7 @@ function LogLine({ log }: { log: ActivityLog }) {
   const label = LOG_TYPE_LABELS[log.type];
   return (
     <div
-      className="flex items-start gap-2 px-3 py-0.5 hover:bg-white/5 transition-colors"
+      className="flex items-start gap-2 px-3 py-0.5 transition-colors hover:bg-white/5"
       style={{
         fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
         fontSize: 12,
@@ -98,23 +98,24 @@ function LogLine({ log }: { log: ActivityLog }) {
       </span>
       {/* Session */}
       <span
-        className="text-text-secondary overflow-hidden whitespace-nowrap shrink-0" style={{
+        className="text-text-secondary shrink-0 overflow-hidden whitespace-nowrap"
+        style={{
           maxWidth: 100,
           textOverflow: "ellipsis",
-          }}
+        }}
         title={log.sessionName}
       >
         [{log.sessionName}]
       </span>
       {/* Type badge + icon */}
-      <span className="flex items-center gap-1 flex-shrink-0" style={{ color, minWidth: 56 }}>
+      <span className="flex flex-shrink-0 items-center gap-1" style={{ color, minWidth: 56 }}>
         <LogTypeIcon type={log.type} />
-        <span className="font-bold" style={{ fontSize: 10 }}>{label}</span>
+        <span className="font-bold" style={{ fontSize: 10 }}>
+          {label}
+        </span>
       </span>
       {/* Content */}
-      <span className="flex-1 min-w-0 break-words text-text-primary">
-        {log.content}
-      </span>
+      <span className="text-text-primary min-w-0 flex-1 break-words">{log.content}</span>
     </div>
   );
 }
@@ -136,7 +137,8 @@ function FilterSelect({
     <select
       value={value ?? ""}
       onChange={(e) => onChange(e.target.value || null)}
-      className="cursor-pointer text-text-secondary bg-bg-elevated" style={{
+      className="text-text-secondary bg-bg-elevated cursor-pointer"
+      style={{
         border: "1px solid var(--color-border-strong)",
         borderRadius: 4,
         padding: "2px 6px",
@@ -229,7 +231,8 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
 
   return (
     <div
-      className="rounded-radius-xl shadow-soft overflow-hidden shrink-0 flex" style={{
+      className="rounded-radius-xl shadow-soft flex shrink-0 overflow-hidden"
+      style={{
         background: "var(--glass-bg-heavy)",
         backdropFilter: "blur(var(--glass-blur))",
         WebkitBackdropFilter: "blur(var(--glass-blur))",
@@ -237,20 +240,22 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
         flexDirection: "column",
         height: open ? 220 : 32,
         transition: "height 200ms ease",
-        }}
+      }}
     >
       {/* Header bar */}
       <div
-        className="flex items-center gap-2 px-3 flex-shrink-0 select-none" style={{
+        className="flex flex-shrink-0 select-none items-center gap-2 px-3"
+        style={{
           height: 32,
           borderBottom: open ? "1px solid var(--glass-border)" : "none",
           background: "var(--glass-bg-heavy)",
-          }}
+        }}
       >
         {/* Toggle button */}
         <button
           onClick={onToggle}
-          className="flex items-center gap-1.5 cursor-pointer transition-opacity hover:opacity-80 text-text-secondary" style={{
+          className="text-text-secondary flex cursor-pointer items-center gap-1.5 transition-opacity hover:opacity-80"
+          style={{
             background: "none",
             border: "none",
             padding: 0,
@@ -260,7 +265,8 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
           {open ? <CaretDown size={11} weight="bold" /> : <CaretRight size={11} weight="bold" />}
           <Terminal size={13} className="text-accent" weight="bold" />
           <span
-            className="text-text-secondary font-semibold" style={{
+            className="text-text-secondary font-semibold"
+            style={{
               fontFamily: "var(--font-mono, monospace)",
               fontSize: 11,
               letterSpacing: "0.05em",
@@ -272,12 +278,13 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
 
         {/* Log count badge */}
         <span
-          className="text-text-muted bg-bg-hover border border-border" style={{
+          className="text-text-muted bg-bg-hover border-border border"
+          style={{
             borderRadius: 4,
             padding: "0 6px",
             fontSize: 10,
             fontFamily: "var(--font-mono, monospace)",
-            }}
+          }}
         >
           {displayLogs.length}
         </span>
@@ -306,7 +313,8 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
             {/* Clear */}
             <button
               onClick={handleClear}
-              className="flex items-center gap-1 cursor-pointer transition-opacity hover:opacity-80 text-text-muted" style={{
+              className="text-text-muted flex cursor-pointer items-center gap-1 transition-opacity hover:opacity-80"
+              style={{
                 background: "none",
                 border: "none",
                 padding: "2px 4px",
@@ -327,14 +335,15 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
                     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
                   }
                 }}
-                className="text-warning cursor-pointer" style={{
+                className="text-warning cursor-pointer"
+                style={{
                   fontSize: 10,
                   fontFamily: "var(--font-mono, monospace)",
                   background: "none",
                   border: "1px solid var(--color-warning)",
                   borderRadius: 4,
                   padding: "1px 6px",
-                  }}
+                }}
                 aria-label="Resume auto-scroll"
               >
                 resume scroll
@@ -357,7 +366,8 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
         >
           {displayLogs.length === 0 ? (
             <div
-              className="flex items-center justify-center h-full text-text-muted" style={{
+              className="text-text-muted flex h-full items-center justify-center"
+              style={{
                 fontFamily: "var(--font-mono, monospace)",
                 fontSize: 12,
               }}

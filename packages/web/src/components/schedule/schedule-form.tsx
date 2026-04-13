@@ -156,7 +156,8 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="shadow-float rounded-xl w-full max-w-lg max-h-[85vh] flex flex-col bg-bg-card" style={{
+        className="shadow-float bg-bg-card flex max-h-[85vh] w-full max-w-lg flex-col rounded-xl"
+        style={{
           boxShadow: "0 16px 48px rgba(0,0,0,0.2)",
         }}
       >
@@ -166,13 +167,13 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
           style={{ borderBottom: "1px solid var(--color-border)" }}
         >
           <h2 className="text-sm font-semibold">{isEdit ? "Edit Schedule" : "New Schedule"}</h2>
-          <button onClick={onClose} className="p-1 rounded-lg cursor-pointer" aria-label="Close">
+          <button onClick={onClose} className="cursor-pointer rounded-lg p-1" aria-label="Close">
             <X size={16} />
           </button>
         </div>
 
         {/* Form body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-3">
+        <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-5 py-4">
           {/* Name */}
           <Field label="Name">
             <input
@@ -180,7 +181,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Daily code review"
-              className="w-full px-3 py-2 rounded-lg text-xs input-bordered"
+              className="input-bordered w-full rounded-lg px-3 py-2 text-xs"
               style={inputStyle}
             />
           </Field>
@@ -190,7 +191,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
             <select
               value={projectSlug}
               onChange={(e) => setProjectSlug(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-xs input-bordered cursor-pointer"
+              className="input-bordered w-full cursor-pointer rounded-lg px-3 py-2 text-xs"
               style={inputStyle}
               disabled={isEdit}
             >
@@ -210,7 +211,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Review all recent changes and create a summary..."
               rows={4}
-              className="w-full px-3 py-2 rounded-lg text-xs input-bordered resize-none"
+              className="input-bordered w-full resize-none rounded-lg px-3 py-2 text-xs"
               style={inputStyle}
             />
           </Field>
@@ -220,7 +221,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-xs input-bordered cursor-pointer"
+              className="input-bordered w-full cursor-pointer rounded-lg px-3 py-2 text-xs"
               style={inputStyle}
             >
               <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
@@ -236,7 +237,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
                 <button
                   key={t}
                   onClick={() => setTriggerType(t)}
-                  className="flex-1 px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors text-center"
+                  className="flex-1 cursor-pointer rounded-lg px-3 py-2 text-center text-xs transition-colors"
                   style={{
                     background: triggerType === t ? "#4285F415" : "var(--color-bg-elevated)",
                     border: `1px solid ${triggerType === t ? "#4285F4" : "var(--color-border)"}`,
@@ -257,7 +258,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
                 type="datetime-local"
                 value={scheduledAt}
                 onChange={(e) => setScheduledAt(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg text-xs input-bordered"
+                className="input-bordered w-full rounded-lg px-3 py-2 text-xs"
                 style={inputStyle}
               />
             </Field>
@@ -268,10 +269,10 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
                 value={cronExpression}
                 onChange={(e) => setCronExpression(e.target.value)}
                 placeholder="0 9 * * 1-5 (weekdays at 9am)"
-                className="w-full px-3 py-2 rounded-lg text-xs font-mono input-bordered"
+                className="input-bordered w-full rounded-lg px-3 py-2 font-mono text-xs"
                 style={inputStyle}
               />
-              <div className="flex flex-wrap gap-1.5 mt-1.5">
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {[
                   { label: "Every hour", value: "0 * * * *" },
                   { label: "Daily 9am", value: "0 9 * * *" },
@@ -281,7 +282,8 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
                   <button
                     key={preset.value}
                     onClick={() => setCronExpression(preset.value)}
-                    className="px-2 py-0.5 rounded text-xs cursor-pointer transition-colors text-text-muted bg-bg-elevated border border-border" style={{
+                    className="text-text-muted bg-bg-elevated border-border cursor-pointer rounded border px-2 py-0.5 text-xs transition-colors"
+                    style={{
                       fontSize: 10,
                     }}
                   >
@@ -298,7 +300,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
               type="text"
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg text-xs input-bordered"
+              className="input-bordered w-full rounded-lg px-3 py-2 text-xs"
               style={inputStyle}
             />
           </Field>
@@ -313,7 +315,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
                 placeholder="1.00"
                 step="0.1"
                 min="0"
-                className="w-full px-3 py-2 rounded-lg text-xs input-bordered"
+                className="input-bordered w-full rounded-lg px-3 py-2 text-xs"
                 style={inputStyle}
               />
             </Field>
@@ -324,7 +326,7 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
                 onChange={(e) => setMaxTurns(e.target.value)}
                 placeholder="50"
                 min="1"
-                className="w-full px-3 py-2 rounded-lg text-xs input-bordered"
+                className="input-bordered w-full rounded-lg px-3 py-2 text-xs"
                 style={inputStyle}
               />
             </Field>
@@ -336,13 +338,13 @@ export function ScheduleForm({ schedule, onClose, onSaved }: ScheduleFormProps) 
           className="flex items-center justify-between px-5 py-3"
           style={{ borderTop: "1px solid var(--color-border)" }}
         >
-          <button onClick={onClose} className="px-4 py-1.5 rounded-lg text-xs cursor-pointer">
+          <button onClick={onClose} className="cursor-pointer rounded-lg px-4 py-1.5 text-xs">
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-medium transition-colors"
             style={{
               background: saving ? "var(--color-bg-elevated)" : "#4285F4",
               color: saving ? "var(--color-text-muted)" : "#fff",

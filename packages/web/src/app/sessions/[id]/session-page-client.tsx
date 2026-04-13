@@ -107,13 +107,15 @@ function ContextStatusBar({
 
   return (
     <div
-      className="flex items-center gap-3 px-4 py-1.5 bg-bg-card" style={{
+      className="bg-bg-card flex items-center gap-3 px-4 py-1.5"
+      style={{
         borderBottom: "1px solid var(--color-border)",
       }}
     >
       {/* Progress bar */}
       <div
-        className="flex-1 rounded-full overflow-hidden bg-bg-elevated" style={{ height: 3, maxWidth: 120 }}
+        className="bg-bg-elevated flex-1 overflow-hidden rounded-full"
+        style={{ height: 3, maxWidth: 120 }}
       >
         <div
           className="h-full rounded-full transition-all duration-500"
@@ -122,10 +124,10 @@ function ContextStatusBar({
       </div>
 
       {/* Text info */}
-      <span className="text-xs font-mono" style={{ color }}>
+      <span className="font-mono text-xs" style={{ color }}>
         {pct.toFixed(0)}%
       </span>
-      <span className="text-xs font-mono">
+      <span className="font-mono text-xs">
         {formatK(totalTokens)} / {formatK(maxTokens)}
       </span>
       <span className="text-xs">· {formatK(remaining)} remaining</span>
@@ -160,7 +162,7 @@ function TelegramStreamBadge({ sessionId }: { sessionId: string }) {
 
   return (
     <span
-      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs"
       style={{ background: "#29B6F615", color: "#29B6F6" }}
       title="Streaming to Telegram"
     >
@@ -257,36 +259,35 @@ export function SessionPageClient({ params }: PageProps) {
     <div className="session-slide-container" data-preview-open={previewPanelOpen || undefined}>
       {/* ── Chat Page (slides left when preview opens) ── */}
       <div className="session-slide-page session-slide-chat">
-        <div
-          className="flex flex-col bg-bg-base" style={{ height: "100vh" }}
-        >
+        <div className="bg-bg-base flex flex-col" style={{ height: "100vh" }}>
           <Header />
 
           <div className="flex flex-1 overflow-hidden">
             {/* Main terminal */}
-            <div className="flex flex-col flex-1 min-w-0">
+            <div className="flex min-w-0 flex-1 flex-col">
               {/* Sub-header */}
               <div
-                className="flex items-center gap-3 px-4 py-2.5 border-b bg-bg-card" style={{
+                className="bg-bg-card flex items-center gap-3 border-b px-4 py-2.5"
+                style={{
                   borderColor: "var(--color-border)",
                 }}
               >
                 <button
                   onClick={() => router.back()}
-                  className="p-1.5 rounded-lg transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-lg p-1.5 transition-colors"
                   aria-label="Back"
                 >
                   <ArrowLeft size={16} weight="bold" />
                 </button>
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className="text-sm font-semibold truncate">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <span className="truncate text-sm font-semibold">
                     {session?.projectName ?? id.slice(0, 8)}
                   </span>
-                  <span className="text-xs font-mono">#{id.slice(0, 8)}</span>
+                  <span className="font-mono text-xs">#{id.slice(0, 8)}</span>
                   <TelegramStreamBadge sessionId={id} />
                   {lockStatus.locked && (
                     <span
-                      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs"
                       style={{ background: "#FBBC0420", color: "#FBBC04" }}
                       title={`Writing: ${lockStatus.owner}${lockStatus.queueSize > 0 ? ` (${lockStatus.queueSize} queued)` : ""}`}
                     >
@@ -296,7 +297,7 @@ export function SessionPageClient({ params }: PageProps) {
                   )}
                   {lastScanResult && (
                     <span
-                      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs"
                       style={{
                         background: lastScanResult.blocked ? "#EF444420" : "#F59E0B20",
                         color: lastScanResult.blocked ? "#EF4444" : "#F59E0B",
@@ -313,7 +314,7 @@ export function SessionPageClient({ params }: PageProps) {
                   )}
                   {spectatorCount > 0 && (
                     <span
-                      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs"
                       style={{ background: "#4285f420", color: "#4285f4" }}
                       title={`${spectatorCount} spectator${spectatorCount > 1 ? "s" : ""} watching`}
                     >
@@ -323,7 +324,7 @@ export function SessionPageClient({ params }: PageProps) {
                   )}
                   <button
                     onClick={() => setShareModalOpen(true)}
-                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg cursor-pointer transition-colors hover:bg-[var(--color-bg-elevated)] text-text-muted border border-border"
+                    className="text-text-muted border-border inline-flex cursor-pointer items-center gap-1 rounded-lg border px-2 py-1 text-xs transition-colors hover:bg-[var(--color-bg-elevated)]"
                     aria-label="Share session"
                     title="Share session"
                   >
@@ -357,7 +358,7 @@ export function SessionPageClient({ params }: PageProps) {
 
                 {wsStatus !== "connected" && (
                   <span
-                    className="text-xs px-2 py-0.5 rounded-full"
+                    className="rounded-full px-2 py-0.5 text-xs"
                     style={{
                       background: wsStatus === "connecting" ? "#FBBC0420" : "#EA433520",
                       color: wsStatus === "connecting" ? "#FBBC04" : "#EA4335",
@@ -370,7 +371,7 @@ export function SessionPageClient({ params }: PageProps) {
                 {/* Design Preview toggle — always visible */}
                 <button
                   onClick={() => openPreviewPanel()}
-                  className="relative inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors"
+                  className="relative inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors"
                   style={{
                     color: previewArtifactCount > 0 ? "#a855f7" : "var(--color-text-muted)",
                     background: previewArtifactCount > 0 ? "#a855f710" : "transparent",
@@ -383,12 +384,13 @@ export function SessionPageClient({ params }: PageProps) {
                   Preview
                   {previewArtifactCount > 0 && (
                     <span
-                      className="font-mono font-bold px-1 rounded-full leading-tight text-center" style={{
+                      className="rounded-full px-1 text-center font-mono font-bold leading-tight"
+                      style={{
                         background: "#a855f7",
                         color: "#fff",
                         fontSize: 9,
                         minWidth: 16,
-                        }}
+                      }}
                     >
                       {previewArtifactCount}
                     </span>
@@ -398,7 +400,7 @@ export function SessionPageClient({ params }: PageProps) {
                 {/* Terminal toggle */}
                 <button
                   onClick={toggleTerminal}
-                  className="p-1.5 rounded-lg transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-lg p-1.5 transition-colors"
                   style={{
                     color: terminalOpen ? "#34A853" : "var(--color-text-muted)",
                     background: terminalOpen ? "#34A85310" : "transparent",
@@ -421,7 +423,7 @@ export function SessionPageClient({ params }: PageProps) {
                 {/* Prompt history toggle */}
                 <button
                   onClick={() => setPromptHistoryOpen(true)}
-                  className="p-1.5 rounded-lg transition-colors cursor-pointer"
+                  className="cursor-pointer rounded-lg p-1.5 transition-colors"
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
                   }}
@@ -437,7 +439,7 @@ export function SessionPageClient({ params }: PageProps) {
                 {/* Pinned messages toggle */}
                 <button
                   onClick={() => setPinnedDrawerOpen(true)}
-                  className="relative p-1.5 rounded-lg transition-colors cursor-pointer"
+                  className="relative cursor-pointer rounded-lg p-1.5 transition-colors"
                   style={{ color: pinCount > 0 ? "#FBBC04" : "var(--color-text-muted)" }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
@@ -451,12 +453,13 @@ export function SessionPageClient({ params }: PageProps) {
                   <PushPin size={16} weight={pinCount > 0 ? "fill" : "bold"} />
                   {pinCount > 0 && (
                     <span
-                      className="absolute -top-0.5 -right-0.5 text-xs font-mono font-bold px-1 rounded-full leading-tight text-center" style={{
+                      className="absolute -right-0.5 -top-0.5 rounded-full px-1 text-center font-mono text-xs font-bold leading-tight"
+                      style={{
                         background: "#FBBC04",
                         color: "#000",
                         fontSize: 9,
                         minWidth: 14,
-                        }}
+                      }}
                     >
                       {pinCount}
                     </span>
@@ -481,11 +484,12 @@ export function SessionPageClient({ params }: PageProps) {
               {/* Terminal panel — collapsible bottom section */}
               {terminalOpen && (
                 <div
-                  className="shrink-0" style={{
+                  className="shrink-0"
+                  style={{
                     height: 240,
                     minHeight: 120,
                     borderTop: "1px solid var(--color-border)",
-                    }}
+                  }}
                 >
                   <PanelErrorBoundary name="Terminal">
                     <TerminalPanel defaultCwd={session?.state?.cwd} onClose={toggleTerminal} />
@@ -508,7 +512,8 @@ export function SessionPageClient({ params }: PageProps) {
 
             {/* Right panel */}
             <aside
-              className="flex flex-col flex-shrink-0 overflow-y-auto border-l bg-bg-sidebar" style={{
+              className="bg-bg-sidebar flex flex-shrink-0 flex-col overflow-y-auto border-l"
+              style={{
                 width: 300,
                 borderColor: "var(--color-border)",
               }}

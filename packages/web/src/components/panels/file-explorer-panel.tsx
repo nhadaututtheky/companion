@@ -64,12 +64,11 @@ function CodeViewer({ content, ext }: { content: string; ext: string }) {
   }
 
   return (
-    <div
-      className="flex overflow-auto font-mono" style={{ fontSize: 12, lineHeight: 1.6 }}
-    >
+    <div className="flex overflow-auto font-mono" style={{ fontSize: 12, lineHeight: 1.6 }}>
       {/* Line numbers gutter */}
       <div
-        className="shrink-0 text-right select-none pr-3 py-2 text-text-muted bg-bg-elevated" style={{
+        className="text-text-muted bg-bg-elevated shrink-0 select-none py-2 pr-3 text-right"
+        style={{
           width: gutterWidth,
           borderRight: "1px solid var(--color-border)",
           opacity: 0.6,
@@ -83,7 +82,7 @@ function CodeViewer({ content, ext }: { content: string; ext: string }) {
       </div>
 
       {/* Code content */}
-      <pre className="flex-1 m-0 py-2 pl-3 whitespace-pre overflow-x-auto">
+      <pre className="m-0 flex-1 overflow-x-auto whitespace-pre py-2 pl-3">
         {lines.map((line, i) => (
           <div key={i}>
             <SyntaxLine line={line} ext={ext} />
@@ -252,7 +251,7 @@ function TreeNode({
         onClick={handleClick}
         aria-expanded={entry.isDir ? expanded : undefined}
         aria-label={entry.isDir ? `${entry.name} folder` : entry.name}
-        className="flex items-center gap-1 w-full text-left py-0.5 px-1 rounded text-xs transition-colors cursor-pointer"
+        className="flex w-full cursor-pointer items-center gap-1 rounded px-1 py-0.5 text-left text-xs transition-colors"
         style={{
           paddingLeft: depth * 14 + 4,
           background: isSelected ? "var(--color-accent)" + "15" : "transparent",
@@ -282,12 +281,21 @@ function TreeNode({
           <span style={{ width: 10 }} />
         )}
         {entry.isDir ? (
-          <FolderOpen size={13} weight="regular" className="shrink-0" style={{ color: "#FBBC04" }} />
+          <FolderOpen
+            size={13}
+            weight="regular"
+            className="shrink-0"
+            style={{ color: "#FBBC04" }}
+          />
         ) : (
           fileIcon(entry.ext ?? "", 13)
         )}
         <span className="truncate">{entry.name}</span>
-        {loading && <span className="text-text-muted" style={{ fontSize: 10 }}>...</span>}
+        {loading && (
+          <span className="text-text-muted" style={{ fontSize: 10 }}>
+            ...
+          </span>
+        )}
       </button>
 
       {expanded && children && (
@@ -301,7 +309,7 @@ function TreeNode({
               onSelect={onSelect}
             />
           ))}
-          {children.length === 0 && <div className="text-xs pl-8 py-0.5">(empty)</div>}
+          {children.length === 0 && <div className="py-0.5 pl-8 text-xs">(empty)</div>}
         </div>
       )}
     </div>
@@ -446,10 +454,11 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
   }, [currentRoot]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* Top bar */}
       <div
-        className="flex items-center gap-2 px-3 py-2 shrink-0 bg-bg-card" style={{
+        className="bg-bg-card flex shrink-0 items-center gap-2 px-3 py-2"
+        style={{
           borderBottom: "1px solid var(--glass-border)",
         }}
       >
@@ -459,7 +468,8 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
           onChange={(e) => {
             setCurrentRoot(e.target.value);
           }}
-          className="text-xs px-2 py-1 rounded cursor-pointer text-text-primary bg-bg-elevated border border-border" style={{
+          className="text-text-primary bg-bg-elevated border-border cursor-pointer rounded border px-2 py-1 text-xs"
+          style={{
             maxWidth: 120,
           }}
           aria-label="Root directory"
@@ -472,7 +482,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
         </select>
 
         {/* Breadcrumbs */}
-        <div className="flex items-center gap-0.5 flex-1 min-w-0 overflow-hidden text-xs">
+        <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-hidden text-xs">
           {breadcrumbs.slice(-3).map((bc, i) => (
             <span key={bc.path} className="flex items-center gap-0.5">
               {i > 0 && <span>/</span>}
@@ -480,7 +490,8 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
                 onClick={() => {
                   setCurrentRoot(bc.path);
                 }}
-                className="truncate cursor-pointer hover:underline text-text-secondary" style={{
+                className="text-text-secondary cursor-pointer truncate hover:underline"
+                style={{
                   background: "none",
                   border: "none",
                   padding: 0,
@@ -496,11 +507,12 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
         <div className="relative">
           <MagnifyingGlass
             size={12}
-            className="text-text-muted absolute" style={{
+            className="text-text-muted absolute"
+            style={{
               left: 6,
               top: "50%",
               transform: "translateY(-50%)",
-              }}
+            }}
             aria-hidden="true"
           />
           <input
@@ -508,16 +520,17 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Filter..."
-            className="text-xs pl-6 pr-2 py-1 rounded input-bordered text-text-primary bg-bg-elevated" style={{
+            className="input-bordered text-text-primary bg-bg-elevated rounded py-1 pl-6 pr-2 text-xs"
+            style={{
               width: 120,
-              }}
+            }}
             aria-label="Filter files"
           />
         </div>
 
         <button
           onClick={onClose}
-          className="p-1 rounded cursor-pointer"
+          className="cursor-pointer rounded p-1"
           aria-label="Close file explorer"
         >
           <X size={14} weight="bold" />
@@ -545,14 +558,14 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
             />
           ))}
           {filteredEntries.length === 0 && (
-            <div className="text-xs text-center py-8">
+            <div className="py-8 text-center text-xs">
               {filter ? "No matches" : "Empty directory"}
             </div>
           )}
         </div>
 
         {/* File viewer column */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           {/* Tab bar */}
           <FileTabBar
             tabs={tabs}
@@ -565,19 +578,20 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
             <>
               {/* File header */}
               <div
-                className="flex items-center justify-between px-3 py-1.5 shrink-0 bg-bg-elevated" style={{
+                className="bg-bg-elevated flex shrink-0 items-center justify-between px-3 py-1.5"
+                style={{
                   borderBottom: "1px solid var(--glass-border)",
                 }}
               >
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex min-w-0 items-center gap-2">
                   {fileIcon(activeTab.ext)}
-                  <span className="text-xs font-mono font-semibold truncate">{activeTab.name}</span>
+                  <span className="truncate font-mono text-xs font-semibold">{activeTab.name}</span>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex shrink-0 items-center gap-1">
                   <button
                     onClick={handleSendToAI}
                     disabled={!activeTab.content}
-                    className="p-1 rounded cursor-pointer disabled:opacity-40"
+                    className="cursor-pointer rounded p-1 disabled:opacity-40"
                     style={{ color: "#34A853" }}
                     aria-label="Send file to AI composer"
                     title="Send to AI"
@@ -587,7 +601,7 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
                   <button
                     onClick={handleCopy}
                     disabled={!activeTab.content}
-                    className="p-1 rounded cursor-pointer disabled:opacity-40"
+                    className="cursor-pointer rounded p-1 disabled:opacity-40"
                     style={{ color: copied ? "#34A853" : "var(--color-text-muted)" }}
                     aria-label="Copy file content"
                   >
@@ -599,13 +613,13 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
               {/* Content */}
               <div className="flex-1 overflow-auto">
                 {fileLoading && (
-                  <div className="flex items-center justify-center h-full">
+                  <div className="flex h-full items-center justify-center">
                     <span className="text-xs">Loading...</span>
                   </div>
                 )}
                 {fileError && (
                   <div
-                    className="text-xs p-3 m-3 rounded-lg"
+                    className="m-3 rounded-lg p-3 text-xs"
                     style={{ background: "#EA433510", color: "#EA4335" }}
                   >
                     {fileError}
@@ -618,19 +632,18 @@ export function FileExplorerPanel({ initialPath, onClose }: FileExplorerPanelPro
 
               {/* Footer: full path */}
               <div
-                className="px-3 py-1 shrink-0 bg-bg-elevated" style={{
+                className="bg-bg-elevated shrink-0 px-3 py-1"
+                style={{
                   borderTop: "1px solid var(--glass-border)",
-                  }}
+                }}
               >
-                <span
-                  className="font-mono text-text-muted" style={{ fontSize: 10 }}
-                >
+                <span className="text-text-muted font-mono" style={{ fontSize: 10 }}>
                   {activeTab.path}
                 </span>
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex h-full items-center justify-center">
               <span className="text-xs">Select a file to view</span>
             </div>
           )}

@@ -100,17 +100,14 @@ export function StepProject(props: StepProjectProps) {
         className="flex items-center gap-2 px-4 py-3"
         style={{ borderBottom: "1px solid var(--color-border)" }}
       >
-        <MagnifyingGlass
-          size={14}
-          className="text-text-muted shrink-0"
-          aria-hidden="true"
-        />
+        <MagnifyingGlass size={14} className="text-text-muted shrink-0" aria-hidden="true" />
         <input
           type="text"
           value={projectSearch}
           onChange={(e: ChangeEvent<HTMLInputElement>) => onProjectSearchChange(e.target.value)}
           placeholder="Search projects..."
-          className="flex-1 bg-transparent outline-none text-sm text-text-primary" style={{
+          className="text-text-primary flex-1 bg-transparent text-sm outline-none"
+          style={{
             fontFamily: "var(--font-body)",
           }}
           aria-label="Search projects"
@@ -127,7 +124,7 @@ export function StepProject(props: StepProjectProps) {
         )}
 
         {!projectsLoading && filteredProjects.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-8 gap-2">
+          <div className="flex flex-col items-center justify-center gap-2 py-8">
             <FolderOpen size={28} aria-hidden="true" />
             <p className="text-sm">
               {projectSearch ? "No matching projects" : "No projects yet — browse a folder"}
@@ -142,7 +139,7 @@ export function StepProject(props: StepProjectProps) {
               <div key={p.slug}>
                 <button
                   onClick={() => onSelectProject(p)}
-                  className="w-full flex flex-col gap-1 px-4 py-3 text-left transition-colors cursor-pointer"
+                  className="flex w-full cursor-pointer flex-col gap-1 px-4 py-3 text-left transition-colors"
                   style={{ background: "transparent" }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLButtonElement).style.background =
@@ -155,22 +152,23 @@ export function StepProject(props: StepProjectProps) {
                   <div className="flex items-center gap-2">
                     <FolderSimple
                       size={15}
-                      className="shrink-0" style={{ color: "#FBBC04" }}
+                      className="shrink-0"
+                      style={{ color: "#FBBC04" }}
                       aria-hidden="true"
                     />
-                    <span className="text-sm font-semibold truncate">{p.name}</span>
-                    <span className="ml-auto text-xs font-mono flex-shrink-0">
+                    <span className="truncate text-sm font-semibold">{p.name}</span>
+                    <span className="ml-auto flex-shrink-0 font-mono text-xs">
                       {p.defaultModel?.split("-")[1] ?? "sonnet"}
                     </span>
                   </div>
-                  <span className="text-xs truncate pl-5">{p.dir}</span>
+                  <span className="truncate pl-5 text-xs">{p.dir}</span>
                 </button>
 
                 {resumable && (
                   <button
                     onClick={() => onResumeSession(resumable)}
                     disabled={atLimit || resumingId === resumable.id}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-left cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                     style={{ background: "#4285F408" }}
                     onMouseEnter={(e) => {
                       if (!atLimit && resumingId !== resumable.id) {
@@ -192,7 +190,7 @@ export function StepProject(props: StepProjectProps) {
                     <span className="text-xs font-semibold" style={{ color: "#4285F4" }}>
                       {resumingId === resumable.id ? "Resuming..." : "Resume last session"}
                     </span>
-                    <span className="text-xs ml-auto" style={{ color: "#4285F480" }}>
+                    <span className="ml-auto text-xs" style={{ color: "#4285F480" }}>
                       {new Date(resumable.endedAt).toLocaleDateString(undefined, {
                         month: "short",
                         day: "numeric",
@@ -207,12 +205,12 @@ export function StepProject(props: StepProjectProps) {
 
       {/* Browse / GitHub actions */}
       <div
-        className="flex items-center gap-2 px-4 py-3 flex-shrink-0"
+        className="flex flex-shrink-0 items-center gap-2 px-4 py-3"
         style={{ borderTop: "1px solid var(--color-border)" }}
       >
         <button
           onClick={() => onShowDirBrowser(true)}
-          className="shadow-soft flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer text-text-primary bg-bg-elevated"
+          className="shadow-soft text-text-primary bg-bg-elevated flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
         >
           <FolderOpen size={14} aria-hidden="true" />
           Browse folder...
@@ -220,22 +218,24 @@ export function StepProject(props: StepProjectProps) {
 
         <button
           onClick={() => onShowGithubInput((v) => !v)}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer text-text-primary border border-border" style={{
+          className="text-text-primary border-border flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+          style={{
             background: showGithubInput ? "var(--color-bg-hover)" : "var(--color-bg-elevated)",
-            }}
+          }}
         >
           <GithubLogo size={14} aria-hidden="true" />
           Add from GitHub
         </button>
 
         {showGithubInput && (
-          <div className="flex-1 flex items-center gap-2">
+          <div className="flex flex-1 items-center gap-2">
             <input
               type="url"
               value={githubUrl}
               onChange={(e: ChangeEvent<HTMLInputElement>) => onGithubUrlChange(e.target.value)}
               placeholder="https://github.com/owner/repo"
-              className="flex-1 px-2.5 py-1.5 rounded-md text-sm input-bordered text-text-primary bg-bg-card" style={{
+              className="input-bordered text-text-primary bg-bg-card flex-1 rounded-md px-2.5 py-1.5 text-sm"
+              style={{
                 fontFamily: "var(--font-body)",
               }}
               onKeyDown={(e) => {
@@ -247,7 +247,7 @@ export function StepProject(props: StepProjectProps) {
             <button
               onClick={onGithubAdd}
               disabled={!githubUrl.trim()}
-              className="px-2.5 py-1.5 rounded-md text-sm font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="cursor-pointer rounded-md px-2.5 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
               style={{ background: "#4285F4", color: "#fff" }}
             >
               Add

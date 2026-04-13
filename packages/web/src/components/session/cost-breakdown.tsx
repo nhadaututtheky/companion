@@ -53,7 +53,7 @@ function TokenBar({ input, output, cacheCreation, cacheRead }: TokenBarProps) {
 
   return (
     <div
-      className="flex rounded-sm overflow-hidden"
+      className="flex overflow-hidden rounded-sm"
       style={{ height: 6, gap: 1 }}
       role="img"
       aria-label={`Token distribution: ${Math.round(inputPct)}% input, ${Math.round(outputPct)}% output, ${Math.round(cacheCreationPct + cacheReadPct)}% cache`}
@@ -101,27 +101,27 @@ function BreakdownRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-2 py-1">
-      <div className="flex items-center gap-1.5 min-w-0">
+      <div className="flex min-w-0 items-center gap-1.5">
         <span
-          className="shrink-0 inline-block" style={{
+          className="inline-block shrink-0"
+          style={{
             width: 8,
             height: 8,
             borderRadius: 2,
             background: color,
-            }}
+          }}
           aria-hidden="true"
         />
-        <span className="text-xs truncate">{label}</span>
+        <span className="truncate text-xs">{label}</span>
       </div>
-      <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-        <span
-          className="text-xs font-medium text-text-secondary font-mono"
-        >
+      <div className="flex flex-shrink-0 flex-col items-end gap-0.5">
+        <span className="text-text-secondary font-mono text-xs font-medium">
           {fmtTokens(tokens)}
         </span>
         {note && (
           <span
-            className="text-xs text-text-muted font-mono" style={{
+            className="text-text-muted font-mono text-xs"
+            style={{
               fontSize: 10,
             }}
           >
@@ -151,15 +151,16 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
     return (
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-1 cursor-pointer rounded transition-colors"
+        className="flex cursor-pointer items-center gap-1 rounded transition-colors"
         aria-label={`Cost: ${fmtCost(totalCost)}. Click to expand breakdown`}
         aria-expanded={expanded}
       >
         <CurrencyDollar size={12} weight="bold" aria-hidden="true" />
         <span
-          className="text-text-muted font-mono" style={{
+          className="text-text-muted font-mono"
+          style={{
             fontSize: 12,
-            }}
+          }}
         >
           {fmtCost(totalCost)}
         </span>
@@ -169,7 +170,7 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
 
   return (
     <div
-      className="rounded-xl overflow-hidden"
+      className="overflow-hidden rounded-xl"
       style={{
         background: "color-mix(in srgb, #34A853 6%, var(--color-bg-card))",
         border: "1px solid color-mix(in srgb, #34A853 15%, transparent)",
@@ -178,23 +179,25 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
       {/* Header row — click to collapse in expanded mode */}
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-2 w-full px-3 py-2.5 cursor-pointer transition-colors"
+        className="flex w-full cursor-pointer items-center gap-2 px-3 py-2.5 transition-colors"
         aria-expanded={expanded}
         aria-label="Toggle cost breakdown"
       >
         <CurrencyDollar
           size={16}
           weight="bold"
-          className="shrink-0" style={{ color: "#34A853" }}
+          className="shrink-0"
+          style={{ color: "#34A853" }}
           aria-hidden="true"
         />
-        <span className="text-xs flex-1 text-left">Total Cost</span>
+        <span className="flex-1 text-left text-xs">Total Cost</span>
         <span
-          className="text-sm font-semibold text-text-primary" style={{ fontFamily: "var(--font-mono)" }}
+          className="text-text-primary text-sm font-semibold"
+          style={{ fontFamily: "var(--font-mono)" }}
         >
           {fmtCost(totalCost)}
         </span>
-        <span className="text-xs ml-1">{expanded ? "▲" : "▼"}</span>
+        <span className="ml-1 text-xs">{expanded ? "▲" : "▼"}</span>
       </button>
 
       {/* Expanded detail */}
@@ -202,7 +205,7 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
         <div className="px-3 pb-3" style={{ borderTop: "1px solid var(--color-border)" }}>
           {/* Token distribution bar */}
           {totalTokens > 0 && (
-            <div className="mt-2 mb-3">
+            <div className="mb-3 mt-2">
               <TokenBar
                 input={inputTokens}
                 output={outputTokens}
@@ -229,13 +232,13 @@ export function CostBreakdown({ session, compact = false }: CostBreakdownProps) 
                 note="~90% cheaper"
               />
             )}
-            {totalTokens === 0 && <p className="text-xs py-1">No token data yet</p>}
+            {totalTokens === 0 && <p className="py-1 text-xs">No token data yet</p>}
           </div>
 
           {/* Legend summary */}
           {hasCacheData && (
             <div
-              className="flex items-center gap-1 mt-2 pt-2"
+              className="mt-2 flex items-center gap-1 pt-2"
               style={{ borderTop: "1px solid var(--color-border)" }}
             >
               <ChartBar size={11} aria-hidden="true" />

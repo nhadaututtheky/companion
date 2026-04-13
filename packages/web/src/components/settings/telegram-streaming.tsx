@@ -133,20 +133,20 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
       {/* Header — click to expand/collapse */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="shadow-soft flex items-center justify-between w-full cursor-pointer px-3 py-2 rounded-lg transition-colors bg-bg-elevated"
+        className="shadow-soft bg-bg-elevated flex w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2 transition-colors"
       >
         <span className="flex items-center gap-2">
           <span className="text-sm font-medium">{botLabel}</span>
           {streamEnabled && (
             <span
-              className="text-xs px-1.5 py-0.5 rounded-full font-medium"
+              className="rounded-full px-1.5 py-0.5 text-xs font-medium"
               style={{ background: "#34A85320", color: "#34A853" }}
             >
               Active
             </span>
           )}
         </span>
-        <span className="text-sm font-medium px-2">{collapsed ? "Configure ▸" : "▾ Close"}</span>
+        <span className="px-2 text-sm font-medium">{collapsed ? "Configure ▸" : "▾ Close"}</span>
       </button>
 
       {collapsed ? null : (
@@ -169,7 +169,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
                   value={targetChatId}
                   onChange={(e) => setTargetChatId(e.target.value)}
                   placeholder="-100123456789"
-                  className="px-3 py-2 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-elevated"
+                  className="input-bordered text-text-primary bg-bg-elevated rounded-lg px-3 py-2 font-mono text-sm"
                 />
               </div>
 
@@ -183,7 +183,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
                   value={targetTopicId}
                   onChange={(e) => setTargetTopicId(e.target.value)}
                   placeholder="12345"
-                  className="px-3 py-2 rounded-lg text-sm input-bordered font-mono text-text-primary bg-bg-elevated"
+                  className="input-bordered text-text-primary bg-bg-elevated rounded-lg px-3 py-2 font-mono text-sm"
                 />
               </div>
 
@@ -195,7 +195,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
                   onChange={(e) =>
                     setMessageFormat(e.target.value as "compact" | "full" | "code_only")
                   }
-                  className="px-3 py-2 rounded-lg text-sm input-bordered cursor-pointer text-text-primary bg-bg-elevated"
+                  className="input-bordered text-text-primary bg-bg-elevated cursor-pointer rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="compact">Compact — brief summaries</option>
                   <option value="full">Full — complete message content</option>
@@ -211,7 +211,8 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
                     <button
                       key={key}
                       onClick={() => toggleEvent(key)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer border border-border" style={{
+                      className="border-border flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors"
+                      style={{
                         background: events.has(key)
                           ? "var(--color-accent)"
                           : "var(--color-bg-elevated)",
@@ -248,7 +249,7 @@ export function TelegramStreaming({ botId, botLabel, bots: _bots }: TelegramStre
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+            className="flex cursor-pointer items-center justify-center gap-2 rounded-lg py-2 text-xs font-semibold transition-colors"
             style={{
               background: saved ? "var(--color-success)" : "var(--color-accent)",
               color: "#fff",
@@ -295,7 +296,7 @@ function ToggleRow({
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className="relative w-9 h-5 rounded-full transition-colors cursor-pointer flex-shrink-0"
+        className="relative h-5 w-9 flex-shrink-0 cursor-pointer rounded-full transition-colors"
         style={{
           background: checked ? "var(--color-accent)" : "var(--color-border)",
           border: "none",
@@ -303,7 +304,7 @@ function ToggleRow({
         }}
       >
         <span
-          className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform"
+          className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform"
           style={{ transform: checked ? "translateX(16px)" : "translateX(0)" }}
         />
       </button>

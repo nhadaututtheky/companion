@@ -29,28 +29,22 @@ function CompactThinking({ blocks }: { blocks: ThinkingBlock[] }) {
   const summary = firstLine.length > 80 ? firstLine.slice(0, 80) + "..." : firstLine;
 
   return (
-    <div
-      className="shadow-soft mx-3 my-1 rounded-lg overflow-hidden bg-bg-elevated"
-    >
+    <div className="shadow-soft bg-bg-elevated mx-3 my-1 overflow-hidden rounded-lg">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1.5 w-full px-2.5 py-1.5 cursor-pointer"
+        className="flex w-full cursor-pointer items-center gap-1.5 px-2.5 py-1.5"
         style={{ fontSize: 12 }}
         aria-expanded={expanded}
       >
         <Brain size={12} weight="bold" style={{ color: "#a855f7" }} />
-        <span className="font-medium text-text-secondary">
-          Thinking
-        </span>
+        <span className="text-text-secondary font-medium">Thinking</span>
         {expanded ? (
           <CaretDown size={10} className="text-text-muted" />
         ) : (
           <>
             <CaretRight size={10} className="text-text-muted" />
             {summary && (
-              <span
-                className="truncate text-text-muted" style={{ maxWidth: 200 }}
-              >
+              <span className="text-text-muted truncate" style={{ maxWidth: 200 }}>
                 {summary}
               </span>
             )}
@@ -59,7 +53,7 @@ function CompactThinking({ blocks }: { blocks: ThinkingBlock[] }) {
       </button>
       {expanded && (
         <div
-          className="px-2.5 pb-2 leading-relaxed max-h-[300px] overflow-y-auto"
+          className="max-h-[300px] overflow-y-auto px-2.5 pb-2 leading-relaxed"
           style={{
             borderTop: "1px solid var(--color-border)",
             paddingTop: 6,
@@ -82,7 +76,8 @@ function CompactBubble({ msg }: { msg: Message }) {
     return (
       <div className="flex justify-center py-2">
         <span
-          className="px-3 py-1 rounded-lg text-center text-text-muted bg-bg-elevated" style={{
+          className="text-text-muted bg-bg-elevated rounded-lg px-3 py-1 text-center"
+          style={{
             fontSize: 12,
             maxWidth: "85%",
             lineHeight: 1.4,
@@ -96,11 +91,9 @@ function CompactBubble({ msg }: { msg: Message }) {
 
   if (isTool) {
     return (
-      <div
-        className="flex items-center gap-1.5 mx-3 my-1 px-2.5 py-1.5 rounded-lg bg-bg-elevated border border-border"
-      >
+      <div className="bg-bg-elevated border-border mx-3 my-1 flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5">
         <Wrench size={12} weight="bold" className="shrink-0" style={{ color: "#4285F4" }} />
-        <span className="truncate text-text-secondary" style={{ fontSize: 13 }}>
+        <span className="text-text-secondary truncate" style={{ fontSize: 13 }}>
           {msg.content.slice(0, 80)}
           {msg.content.length > 80 ? "…" : ""}
         </span>
@@ -116,7 +109,7 @@ function CompactBubble({ msg }: { msg: Message }) {
       )}
       <div className={`flex px-3 py-1 ${isUser ? "justify-end" : "justify-start"} w-full`}>
         <div
-          className="px-3 py-2 rounded-2xl leading-relaxed"
+          className="rounded-2xl px-3 py-2 leading-relaxed"
           style={{
             background: isUser ? "#4285F4" : "var(--color-bg-card)",
             color: isUser ? "#fff" : "var(--color-text-primary)",
@@ -131,7 +124,8 @@ function CompactBubble({ msg }: { msg: Message }) {
           {isUser ? msg.content : <MarkdownMessage content={msg.content} compact />}
           {msg.isStreaming && (
             <span
-              className="inline-block" style={{
+              className="inline-block"
+              style={{
                 width: 6,
                 height: 14,
                 background: "currentColor",
@@ -156,14 +150,16 @@ interface CompactMessageFeedProps {
 export function CompactMessageFeed({ messages, feedRef }: CompactMessageFeedProps) {
   if (messages.length === 0) {
     return (
-      <div className="flex items-center justify-center flex-1">
-        <p className="text-text-muted" style={{ fontSize: 13 }}>Send a message to start</p>
+      <div className="flex flex-1 items-center justify-center">
+        <p className="text-text-muted" style={{ fontSize: 13 }}>
+          Send a message to start
+        </p>
       </div>
     );
   }
 
   return (
-    <div ref={feedRef} className="flex flex-col flex-1 overflow-y-auto py-2 gap-1">
+    <div ref={feedRef} className="flex flex-1 flex-col gap-1 overflow-y-auto py-2">
       {messages.map((msg) => (
         <CompactBubble key={msg.id} msg={msg} />
       ))}

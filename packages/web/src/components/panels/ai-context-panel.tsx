@@ -34,7 +34,7 @@ const GraphVisualization = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex items-center justify-center h-64 text-text-muted text-sm">
+      <div className="text-text-muted flex h-64 items-center justify-center text-sm">
         Loading graph...
       </div>
     ),
@@ -117,11 +117,11 @@ function SourceCard({
         border: `1px solid ${online ? color + "40" : "var(--color-border-strong, var(--color-border))"}`,
       }}
     >
-      <div className="flex items-center gap-2 mb-1">
+      <div className="mb-1 flex items-center gap-2">
         <Icon size={14} weight="bold" style={{ color }} />
         <span className="text-xs font-semibold">{label}</span>
         <div
-          className="rounded-full ml-auto"
+          className="ml-auto rounded-full"
           style={{
             width: 6,
             height: 6,
@@ -132,9 +132,7 @@ function SourceCard({
       </div>
       <div className="text-xs">{statusText}</div>
       {detail && (
-        <div
-          className="text-xs mt-0.5 font-mono text-text-secondary" style={{ fontSize: 10 }}
-        >
+        <div className="text-text-secondary mt-0.5 font-mono text-xs" style={{ fontSize: 10 }}>
           {detail}
         </div>
       )}
@@ -142,10 +140,10 @@ function SourceCard({
         <button
           onClick={action.onClick}
           disabled={action.loading}
-          className="mt-1.5 text-xs px-2 py-1 rounded font-medium cursor-pointer disabled:opacity-50"
+          className="mt-1.5 cursor-pointer rounded px-2 py-1 text-xs font-medium disabled:opacity-50"
           style={{ background: color + "20", color }}
         >
-          {action.loading ? <CircleNotch size={10} className="animate-spin inline" /> : null}{" "}
+          {action.loading ? <CircleNotch size={10} className="inline animate-spin" /> : null}{" "}
           {action.label}
         </button>
       )}
@@ -160,7 +158,7 @@ function ScanProgress({ job }: { job: ScanJob }) {
 
   return (
     <div className="rounded-lg p-3">
-      <div className="flex items-center justify-between mb-2">
+      <div className="mb-2 flex items-center justify-between">
         <span className="text-xs font-medium">
           {job.status === "scanning" && "Scanning files..."}
           {job.status === "describing" && "Generating descriptions..."}
@@ -170,7 +168,7 @@ function ScanProgress({ job }: { job: ScanJob }) {
         <span className="text-xs">{pct}%</span>
       </div>
       <div
-        className="h-1.5 rounded-full overflow-hidden"
+        className="h-1.5 overflow-hidden rounded-full"
         style={{ background: "var(--color-border)" }}
       >
         <div
@@ -178,7 +176,7 @@ function ScanProgress({ job }: { job: ScanJob }) {
           style={{ width: `${pct}%`, background: job.status === "error" ? "#EA4335" : "#A855F7" }}
         />
       </div>
-      <div className="flex justify-between mt-1.5 text-xs">
+      <div className="mt-1.5 flex justify-between text-xs">
         <span>
           {job.scannedFiles}/{job.totalFiles} files
         </span>
@@ -201,7 +199,7 @@ function HotFilesList({ files }: { files: HotFile[] }) {
 
   return (
     <div>
-      <h4 className="text-xs font-medium mb-2 uppercase tracking-wider">Most coupled files</h4>
+      <h4 className="mb-2 text-xs font-medium uppercase tracking-wider">Most coupled files</h4>
       <div className="flex flex-col gap-1">
         {files.map((f) => {
           const total = f.incomingEdges + f.outgoingEdges;
@@ -221,14 +219,15 @@ function HotFilesList({ files }: { files: HotFile[] }) {
               />
               <div className="relative flex items-center justify-between px-2 py-1.5">
                 <div className="min-w-0">
-                  <span className="text-xs font-medium truncate block">{name}</span>
+                  <span className="block truncate text-xs font-medium">{name}</span>
                   <span
-                    className="text-xs truncate block text-text-secondary" style={{ fontSize: 10 }}
+                    className="text-text-secondary block truncate text-xs"
+                    style={{ fontSize: 10 }}
                   >
                     {dir}
                   </span>
                 </div>
-                <div className="flex gap-2 text-xs shrink-0">
+                <div className="flex shrink-0 gap-2 text-xs">
                   <span>{f.incomingEdges} in</span>
                   <span>{f.outgoingEdges} out</span>
                 </div>
@@ -252,29 +251,30 @@ function SymbolResults({ results }: { results: SearchResult[] }) {
       {results.map((r) => (
         <div
           key={r.id}
-          className="rounded-lg overflow-hidden bg-bg-elevated" style={{
+          className="bg-bg-elevated overflow-hidden rounded-lg"
+          style={{
             border: "1px solid var(--color-border-strong, var(--color-border))",
           }}
         >
           <button
-            className="w-full flex items-center gap-2 px-3 py-2 text-left cursor-pointer"
+            className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left"
             onClick={() => setExpanded(expanded === r.id ? null : r.id)}
           >
             {expanded === r.id ? <CaretDown size={12} /> : <CaretRight size={12} />}
             <span
-              className="text-xs px-1.5 py-0.5 rounded font-mono"
+              className="rounded px-1.5 py-0.5 font-mono text-xs"
               style={{ background: "var(--color-border)" }}
             >
               {r.symbolType}
             </span>
-            <span className="text-sm font-medium truncate">{r.symbolName}</span>
+            <span className="truncate text-sm font-medium">{r.symbolName}</span>
             {r.isExported && <span className="text-xs">exported</span>}
           </button>
           {expanded === r.id && (
-            <div className="px-3 pb-2 space-y-1.5">
+            <div className="space-y-1.5 px-3 pb-2">
               <div className="text-xs">{r.filePath}</div>
               {r.description && <div className="text-xs">{r.description}</div>}
-              {r.signature && <div className="text-xs font-mono truncate">{r.signature}</div>}
+              {r.signature && <div className="truncate font-mono text-xs">{r.signature}</div>}
               {r.incoming.length > 0 && (
                 <div className="text-xs">
                   <span>Used by: </span>
@@ -340,7 +340,7 @@ function QuickScrape() {
 
   return (
     <div className="rounded-lg p-3">
-      <span className="text-xs font-semibold block mb-2">Quick Scrape</span>
+      <span className="mb-2 block text-xs font-semibold">Quick Scrape</span>
       <div className="flex gap-1.5">
         <input
           type="url"
@@ -348,13 +348,13 @@ function QuickScrape() {
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleScrape()}
           placeholder="https://docs.example.com"
-          className="flex-1 text-xs px-2.5 py-1.5 rounded-md input-bordered text-text-primary bg-bg-base"
+          className="input-bordered text-text-primary bg-bg-base flex-1 rounded-md px-2.5 py-1.5 text-xs"
           aria-label="URL to scrape"
         />
         <button
           onClick={handleScrape}
           disabled={loading || !url.trim()}
-          className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-md font-semibold cursor-pointer disabled:opacity-40"
+          className="flex cursor-pointer items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
           style={{ background: "#4285F4", color: "#fff" }}
           aria-label="Scrape URL"
         >
@@ -363,7 +363,7 @@ function QuickScrape() {
         </button>
       </div>
       {error && (
-        <div className="flex items-center gap-1.5 mt-2 text-xs" style={{ color: "#EA4335" }}>
+        <div className="mt-2 flex items-center gap-1.5 text-xs" style={{ color: "#EA4335" }}>
           <WarningCircle size={12} /> {error}
         </div>
       )}
@@ -371,12 +371,12 @@ function QuickScrape() {
         <div className="mt-2">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1.5 text-xs font-medium cursor-pointer w-full"
+            className="flex w-full cursor-pointer items-center gap-1.5 text-xs font-medium"
             aria-expanded={expanded}
           >
             {expanded ? <CaretDown size={10} /> : <CaretRight size={10} />}
             <CheckCircle size={12} color="#34A853" />
-            <span className="truncate flex-1 text-left">
+            <span className="flex-1 truncate text-left">
               {typeof result.metadata?.title === "string" ? result.metadata.title : result.url}
             </span>
             <span className="text-text-muted" style={{ fontFamily: "var(--font-mono)" }}>
@@ -385,7 +385,8 @@ function QuickScrape() {
           </button>
           {expanded && content && (
             <pre
-              className="mt-2 text-xs p-2 rounded overflow-auto text-text-primary bg-bg-base whitespace-pre-wrap" style={{
+              className="text-text-primary bg-bg-base mt-2 overflow-auto whitespace-pre-wrap rounded p-2 text-xs"
+              style={{
                 maxHeight: 300,
                 wordBreak: "break-word",
               }}
@@ -430,7 +431,7 @@ function QuickResearch() {
 
   return (
     <div className="rounded-lg p-3">
-      <span className="text-xs font-semibold block mb-2">Web Research</span>
+      <span className="mb-2 block text-xs font-semibold">Web Research</span>
       <div className="flex gap-1.5">
         <input
           type="text"
@@ -438,13 +439,13 @@ function QuickResearch() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleResearch()}
           placeholder="Search query..."
-          className="flex-1 text-xs px-2.5 py-1.5 rounded-md input-bordered text-text-primary bg-bg-base"
+          className="input-bordered text-text-primary bg-bg-base flex-1 rounded-md px-2.5 py-1.5 text-xs"
           aria-label="Research query"
         />
         <button
           onClick={handleResearch}
           disabled={loading || !query.trim()}
-          className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-md font-semibold cursor-pointer disabled:opacity-40"
+          className="flex cursor-pointer items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
           style={{ background: "#FBBC04", color: "#1a1a1a" }}
           aria-label="Research topic"
         >
@@ -457,7 +458,7 @@ function QuickResearch() {
         </button>
       </div>
       {error && (
-        <div className="flex items-center gap-1.5 mt-2 text-xs" style={{ color: "#EA4335" }}>
+        <div className="mt-2 flex items-center gap-1.5 text-xs" style={{ color: "#EA4335" }}>
           <WarningCircle size={12} /> {error}
         </div>
       )}
@@ -465,7 +466,7 @@ function QuickResearch() {
         <div className="mt-2">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1.5 text-xs font-medium cursor-pointer w-full"
+            className="flex w-full cursor-pointer items-center gap-1.5 text-xs font-medium"
             aria-expanded={expanded}
           >
             {expanded ? <CaretDown size={10} /> : <CaretRight size={10} />}
@@ -481,7 +482,7 @@ function QuickResearch() {
                     href={s.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs truncate"
+                    className="flex items-center gap-1.5 truncate text-xs"
                     style={{ color: "#4285F4" }}
                   >
                     <LinkIcon size={10} /> {s.title}
@@ -489,7 +490,8 @@ function QuickResearch() {
                 ))}
               </div>
               <pre
-                className="text-xs p-2 rounded overflow-auto text-text-primary bg-bg-base whitespace-pre-wrap" style={{
+                className="text-text-primary bg-bg-base overflow-auto whitespace-pre-wrap rounded p-2 text-xs"
+                style={{
                   maxHeight: 300,
                   wordBreak: "break-word",
                 }}
@@ -547,7 +549,8 @@ function FeedTab({ filterSessionId }: { filterSessionId?: string }) {
         {events.length > 0 && (
           <button
             onClick={clear}
-            className="text-xs px-2 py-0.5 rounded cursor-pointer text-text-muted" style={{ background: "var(--color-bg-elevated)" }}
+            className="text-text-muted cursor-pointer rounded px-2 py-0.5 text-xs"
+            style={{ background: "var(--color-bg-elevated)" }}
           >
             Clear
           </button>
@@ -556,10 +559,10 @@ function FeedTab({ filterSessionId }: { filterSessionId?: string }) {
 
       {/* Event list */}
       {filtered.length === 0 ? (
-        <div className="text-center py-8">
+        <div className="py-8 text-center">
           <Brain size={32} weight="light" className="mx-auto mb-2" style={{ opacity: 0.3 }} />
           <p className="text-sm">No injections yet</p>
-          <p className="text-xs mt-1">Context events appear here as you chat with Claude</p>
+          <p className="mt-1 text-xs">Context events appear here as you chat with Claude</p>
         </div>
       ) : (
         <div className="flex flex-col gap-1">
@@ -567,25 +570,21 @@ function FeedTab({ filterSessionId }: { filterSessionId?: string }) {
             const meta = INJECTION_META[evt.injectionType];
             const Icon = meta.icon;
             return (
-              <div key={evt.id} className="flex items-start gap-2.5 px-2.5 py-2 rounded-lg">
+              <div key={evt.id} className="flex items-start gap-2.5 rounded-lg px-2.5 py-2">
                 <div className="mt-0.5 rounded p-1" style={{ background: meta.color + "15" }}>
                   <Icon size={12} weight="bold" style={{ color: meta.color }} />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-semibold" style={{ color: meta.color }}>
                       {meta.label}
                     </span>
-                    <span
-                      className="text-xs font-mono text-text-muted" style={{ fontSize: 10 }}
-                    >
+                    <span className="text-text-muted font-mono text-xs" style={{ fontSize: 10 }}>
                       ~{evt.tokenEstimate} tokens
                     </span>
                   </div>
-                  <div className="text-xs mt-0.5 truncate">{evt.summary}</div>
-                  <div
-                    className="text-xs mt-0.5 text-text-muted" style={{ fontSize: 10 }}
-                  >
+                  <div className="mt-0.5 truncate text-xs">{evt.summary}</div>
+                  <div className="text-text-muted mt-0.5 text-xs" style={{ fontSize: 10 }}>
                     {evt.sessionId.slice(0, 8)}... · {formatTimeAgo(evt.timestamp)}
                   </div>
                 </div>
@@ -613,7 +612,7 @@ function ToggleRow({
 }) {
   return (
     <label
-      className="flex items-center justify-between py-1.5 cursor-pointer"
+      className="flex cursor-pointer items-center justify-between py-1.5"
       style={{ opacity: disabled ? 0.4 : 1 }}
     >
       <span className="text-xs">{label}</span>
@@ -622,7 +621,7 @@ function ToggleRow({
         aria-checked={checked}
         onClick={() => !disabled && onChange(!checked)}
         disabled={disabled}
-        className="relative rounded-full transition-colors cursor-pointer"
+        className="relative cursor-pointer rounded-full transition-colors"
         style={{
           width: 32,
           height: 18,
@@ -690,7 +689,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
   );
 
   if (!projectSlug) {
-    return <div className="text-center py-6 text-sm">Select a project to configure</div>;
+    return <div className="py-6 text-center text-sm">Select a project to configure</div>;
   }
 
   if (!config) {
@@ -705,10 +704,10 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
     <div className="flex flex-col gap-3">
       {/* Master toggle */}
       <div className="rounded-lg p-3">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="mb-2 flex items-center gap-2">
           <Gear size={14} weight="bold" style={{ color: "#A855F7" }} />
           <span className="text-xs font-semibold">Context Injection</span>
-          {saving && <CircleNotch size={10} className="animate-spin ml-auto" />}
+          {saving && <CircleNotch size={10} className="ml-auto animate-spin" />}
         </div>
         <ToggleRow
           label="Enable all context injection"
@@ -719,7 +718,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
 
       {/* Per-type toggles */}
       <div className="rounded-lg p-3">
-        <span className="text-xs font-semibold block mb-2">Injection Types</span>
+        <span className="mb-2 block text-xs font-semibold">Injection Types</span>
         <div className="flex flex-col">
           <ToggleRow
             label="Project map (session start)"
@@ -756,7 +755,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
 
       {/* Token budget */}
       <div className="rounded-lg p-3">
-        <span className="text-xs font-semibold block mb-2">Token Budget (per message context)</span>
+        <span className="mb-2 block text-xs font-semibold">Token Budget (per message context)</span>
         <div className="flex items-center gap-3">
           <input
             type="range"
@@ -774,11 +773,9 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
             style={{ accentColor: "#A855F7" }}
             aria-label="Max context tokens"
           />
-          <span className="text-xs font-mono w-14 text-right">{config.maxContextTokens}</span>
+          <span className="w-14 text-right font-mono text-xs">{config.maxContextTokens}</span>
         </div>
-        <div
-          className="flex justify-between text-xs mt-1 text-text-muted" style={{ fontSize: 10 }}
-        >
+        <div className="text-text-muted mt-1 flex justify-between text-xs" style={{ fontSize: 10 }}>
           <span>200</span>
           <span>2000</span>
         </div>
@@ -786,8 +783,8 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
 
       {/* Exclude patterns */}
       <div className="rounded-lg p-3">
-        <span className="text-xs font-semibold block mb-2">Exclude Patterns</span>
-        <div className="flex gap-1.5 mb-2">
+        <span className="mb-2 block text-xs font-semibold">Exclude Patterns</span>
+        <div className="mb-2 flex gap-1.5">
           <input
             type="text"
             value={newPattern}
@@ -800,7 +797,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
               }
             }}
             placeholder="**/test/** or **/*.spec.ts"
-            className="flex-1 text-xs px-2.5 py-1.5 rounded-md input-bordered text-text-primary bg-bg-base"
+            className="input-bordered text-text-primary bg-bg-base flex-1 rounded-md px-2.5 py-1.5 text-xs"
             aria-label="Add exclude pattern"
           />
           <button
@@ -812,7 +809,7 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
               }
             }}
             disabled={!newPattern.trim()}
-            className="p-1.5 rounded-md cursor-pointer disabled:opacity-40"
+            className="cursor-pointer rounded-md p-1.5 disabled:opacity-40"
             style={{ background: "#A855F720", color: "#A855F7" }}
             aria-label="Add pattern"
           >
@@ -824,14 +821,14 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
         ) : (
           <div className="flex flex-col gap-1">
             {config.excludePatterns.map((pattern, idx) => (
-              <div key={idx} className="flex items-center justify-between px-2 py-1 rounded">
-                <span className="text-xs font-mono truncate">{pattern}</span>
+              <div key={idx} className="flex items-center justify-between rounded px-2 py-1">
+                <span className="truncate font-mono text-xs">{pattern}</span>
                 <button
                   onClick={() => {
                     const updated = config.excludePatterns.filter((_, i) => i !== idx);
                     save({ excludePatterns: updated });
                   }}
-                  className="p-0.5 cursor-pointer shrink-0"
+                  className="shrink-0 cursor-pointer p-0.5"
                   style={{ color: "#EA4335" }}
                   aria-label={`Remove pattern ${pattern}`}
                 >
@@ -889,15 +886,15 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
 
   return (
     <div className="rounded-lg p-3">
-      <div className="flex items-center gap-2 mb-2">
+      <div className="mb-2 flex items-center gap-2">
         <Package size={14} weight="bold" style={{ color: "#4285F4" }} />
         <span className="text-xs font-semibold">Docs Engine Setup</span>
       </div>
 
-      <p className="text-xs mb-3 text-text-secondary">
+      <p className="text-text-secondary mb-3 text-xs">
         Docs Engine auto-injects library documentation into your AI sessions. Works out of the box —{" "}
-        <strong className="text-text-primary">no API key needed</strong> for
-        scraping, docs, and crawling.
+        <strong className="text-text-primary">no API key needed</strong> for scraping, docs, and
+        crawling.
       </p>
 
       {dockerStatus === null ? (
@@ -910,7 +907,7 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
           <button
             onClick={handleStart}
             disabled={starting}
-            className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50"
+            className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold disabled:opacity-50"
             style={{ background: "#4285F4", color: "#fff" }}
           >
             {starting ? (
@@ -928,24 +925,21 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
           )}
 
           {/* Advanced: API key (collapsed by default) */}
-          <details className="text-xs text-text-muted">
-            <summary className="cursor-pointer py-1 text-text-muted">
+          <details className="text-text-muted text-xs">
+            <summary className="text-text-muted cursor-pointer py-1">
               Advanced: Web Search API key (optional)
             </summary>
             <div className="mt-1.5 flex flex-col gap-1.5">
               <p className="text-text-muted" style={{ fontSize: 11 }}>
-                Only needed for{" "}
-                <code className="px-1 rounded bg-bg-base">
-                  /research
-                </code>{" "}
-                command. Scraping, docs, and crawling work without it.
+                Only needed for <code className="bg-bg-base rounded px-1">/research</code> command.
+                Scraping, docs, and crawling work without it.
               </p>
               <input
                 type="text"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="Leave empty — not required"
-                className="w-full text-xs px-2.5 py-1.5 rounded-md input-bordered text-text-primary bg-bg-base"
+                className="input-bordered text-text-primary bg-bg-base w-full rounded-md px-2.5 py-1.5 text-xs"
                 aria-label="Webclaw API key for web search"
               />
             </div>
@@ -954,22 +948,20 @@ function WebclawSetup({ onStarted }: { onStarted: () => void }) {
       ) : (
         <div className="flex flex-col gap-2">
           <div
-            className="flex items-center gap-1.5 text-xs px-2 py-1.5 rounded"
+            className="flex items-center gap-1.5 rounded px-2 py-1.5 text-xs"
             style={{ background: "#FBBC0415", color: "#FBBC04" }}
           >
             <WarningCircle size={12} /> Docker not detected
           </div>
           <button
             onClick={() => setShowManual(!showManual)}
-            className="text-xs cursor-pointer text-left"
+            className="cursor-pointer text-left text-xs"
             style={{ color: "#4285F4" }}
           >
             {showManual ? "Hide" : "Show"} manual setup instructions
           </button>
           {showManual && (
-            <pre
-              className="text-xs p-2 rounded overflow-auto text-text-primary bg-bg-base whitespace-pre-wrap"
-            >
+            <pre className="text-text-primary bg-bg-base overflow-auto whitespace-pre-wrap rounded p-2 text-xs">
               {`# Install Docker: https://docs.docker.com/get-docker/
 
 # Then run:
@@ -1141,10 +1133,10 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
   const wiCache = wiStatus?.cache;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 py-3 flex-shrink-0"
+        className="flex flex-shrink-0 items-center justify-between px-4 py-3"
         style={{ borderBottom: "1px solid var(--color-border)" }}
       >
         <div className="flex items-center gap-2">
@@ -1152,7 +1144,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
           <span className="text-sm font-semibold">AI Context</span>
           {injectionCount > 0 && (
             <span
-              className="text-xs font-mono px-1.5 py-0.5 rounded-full"
+              className="rounded-full px-1.5 py-0.5 font-mono text-xs"
               style={{ background: "#A855F720", color: "#A855F7", fontSize: 10 }}
             >
               {injectionCount}
@@ -1167,14 +1159,14 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
               loadHotFiles();
               loadWiStatus();
             }}
-            className="p-1.5 rounded cursor-pointer"
+            className="cursor-pointer rounded p-1.5"
             aria-label="Refresh"
           >
             <ArrowClockwise size={14} weight="bold" />
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 rounded cursor-pointer"
+            className="cursor-pointer rounded p-1.5"
             aria-label="Close panel"
           >
             <X size={14} weight="bold" />
@@ -1184,13 +1176,13 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
 
       {/* Project Selector */}
       <div
-        className="px-4 py-2 flex-shrink-0"
+        className="flex-shrink-0 px-4 py-2"
         style={{ borderBottom: "1px solid var(--color-border)" }}
       >
         <select
           value={selectedSlug}
           onChange={(e) => setSelectedSlug(e.target.value)}
-          className="w-full text-xs py-1.5 px-2 rounded-md input-bordered cursor-pointer text-text-primary bg-bg-elevated"
+          className="input-bordered text-text-primary bg-bg-elevated w-full cursor-pointer rounded-md px-2 py-1.5 text-xs"
           aria-label="Select project"
         >
           <option value="">Select a project...</option>
@@ -1203,7 +1195,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
         {/* Source Status Cards */}
         <div className="grid grid-cols-3 gap-2">
           <SourceCard
@@ -1244,7 +1236,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
             <button
               key={t}
               onClick={() => setTab(t)}
-              className="px-3 py-1.5 text-xs font-medium cursor-pointer"
+              className="cursor-pointer px-3 py-1.5 text-xs font-medium"
               style={{
                 color: tab === t ? "#A855F7" : "var(--color-text-muted)",
                 borderBottom: tab === t ? "2px solid #A855F7" : "2px solid transparent",
@@ -1265,7 +1257,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
           <div className="flex flex-col gap-3">
             {/* No project selected */}
             {!slug && (
-              <div className="text-center py-6 text-sm">
+              <div className="py-6 text-center text-sm">
                 Select a project above to explore code and docs
               </div>
             )}
@@ -1274,7 +1266,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
             {slug && cgReady && (
               <>
                 <div className="flex gap-2">
-                  <div className="flex-1 relative">
+                  <div className="relative flex-1">
                     <MagnifyingGlass
                       size={14}
                       className="absolute left-2.5 top-1/2 -translate-y-1/2"
@@ -1285,14 +1277,14 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                       placeholder="Search symbols..."
-                      className="w-full pl-8 pr-3 py-1.5 rounded-lg text-sm input-bordered text-text-primary bg-bg-elevated"
+                      className="input-bordered text-text-primary bg-bg-elevated w-full rounded-lg py-1.5 pl-8 pr-3 text-sm"
                       aria-label="Search symbols"
                     />
                   </div>
                   <button
                     onClick={handleSearch}
                     disabled={searching || !searchQuery.trim()}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer disabled:opacity-50"
+                    className="cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-50"
                     style={{ background: "#A855F7", color: "#fff" }}
                   >
                     {searching ? <CircleNotch size={14} className="animate-spin" /> : "Search"}
@@ -1323,7 +1315,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                         }}
                       >
                         <Icon size={14} className="mx-auto mb-0.5" style={{ color }} />
-                        <div className="text-sm font-mono font-bold">{value.toLocaleString()}</div>
+                        <div className="font-mono text-sm font-bold">{value.toLocaleString()}</div>
                         <div className="text-xs">{label}</div>
                       </div>
                     ))}
@@ -1334,7 +1326,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                 <button
                   onClick={handleScan}
                   disabled={cgScanning}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer disabled:opacity-50 self-start"
+                  className="flex cursor-pointer items-center gap-1.5 self-start rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-50"
                   style={{
                     background: "#A855F715",
                     border: "1px solid #A855F730",
@@ -1347,7 +1339,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                 {hotFiles.length > 0 && <HotFilesList files={hotFiles} />}
 
                 {cgJob?.completedAt && (
-                  <div className="text-xs text-center">
+                  <div className="text-center text-xs">
                     Last scan: {new Date(cgJob.completedAt).toLocaleString()}
                   </div>
                 )}
@@ -1373,7 +1365,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                     <button
                       onClick={handleClearCache}
                       disabled={wiClearing || wiCache.size === 0}
-                      className="flex items-center gap-1 text-xs px-2 py-0.5 rounded cursor-pointer disabled:opacity-40"
+                      className="flex cursor-pointer items-center gap-1 rounded px-2 py-0.5 text-xs disabled:opacity-40"
                       style={{ color: "#EA4335", background: "#EA433510" }}
                       aria-label="Clear cache"
                     >

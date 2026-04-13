@@ -52,7 +52,7 @@ export function PulseIndicator({ sessionId }: PulseIndicatorProps) {
       <button
         type="button"
         onClick={() => setShowSparkline((v) => !v)}
-        className="flex items-center gap-1 px-1.5 py-0.5 rounded cursor-pointer transition-all"
+        className="flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 transition-all"
         style={{
           background: `${color}15`,
           border: `1px solid ${color}40`,
@@ -67,7 +67,7 @@ export function PulseIndicator({ sessionId }: PulseIndicatorProps) {
           className={reading.score > 40 ? "animate-pulse" : ""}
         />
         <span
-          className="text-xs font-mono font-bold"
+          className="font-mono text-xs font-bold"
           style={{ color, fontSize: 10, lineHeight: 1 }}
         >
           {reading.score}
@@ -78,7 +78,8 @@ export function PulseIndicator({ sessionId }: PulseIndicatorProps) {
       {/* Sparkline popover */}
       {showSparkline && history && history.length > 1 && (
         <div
-          className="absolute top-full right-0 mt-1 p-2.5 rounded-lg z-50 flex flex-col gap-2 bg-bg-elevated shadow-lg border border-glass-border" style={{
+          className="bg-bg-elevated border-glass-border absolute right-0 top-full z-50 mt-1 flex flex-col gap-2 rounded-lg border p-2.5 shadow-lg"
+          style={{
             boxShadow: "var(--shadow-lg)",
             minWidth: 200,
             maxWidth: 260,
@@ -88,9 +89,7 @@ export function PulseIndicator({ sessionId }: PulseIndicatorProps) {
             <span className="text-xs font-semibold" style={{ color }}>
               {label}
             </span>
-            <span className="text-xs font-mono text-text-muted">
-              Turn {reading.turn}
-            </span>
+            <span className="text-text-muted font-mono text-xs">Turn {reading.turn}</span>
           </div>
           {history.length > 1 && <Sparkline readings={history} sessionId={sessionId} />}
           {/* Actionable guidance */}
@@ -99,13 +98,9 @@ export function PulseIndicator({ sessionId }: PulseIndicatorProps) {
             if (!guide) return null;
             return (
               <div className="flex flex-col gap-1">
-                <p
-                  className="text-[11px] leading-snug text-text-secondary"
-                >
-                  {guide.advice}
-                </p>
+                <p className="text-text-secondary text-[11px] leading-snug">{guide.advice}</p>
                 {guide.action && (
-                  <p className="text-[11px] leading-snug font-medium" style={{ color }}>
+                  <p className="text-[11px] font-medium leading-snug" style={{ color }}>
                     → {guide.action}
                   </p>
                 )}
@@ -115,7 +110,7 @@ export function PulseIndicator({ sessionId }: PulseIndicatorProps) {
           {/* Top signal */}
           {reading.topSignal && (
             <div
-              className="text-[10px] px-1.5 py-0.5 rounded"
+              className="rounded px-1.5 py-0.5 text-[10px]"
               style={{
                 background: `${color}10`,
                 color: "var(--color-text-muted)",

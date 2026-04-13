@@ -92,39 +92,40 @@ export function RTKSettings() {
   }
 
   if (loading) {
-    return <div className="text-xs py-8 text-center">Loading...</div>;
+    return <div className="py-8 text-center text-xs">Loading...</div>;
   }
 
   return (
     <div className="flex flex-col gap-5">
       {/* Enable/Disable */}
       <div
-        className="p-5 rounded-xl shadow-soft border border-glass-border" style={{
+        className="shadow-soft border-glass-border rounded-xl border p-5"
+        style={{
           background: "var(--glass-bg-heavy)",
           boxShadow: "var(--shadow-soft)",
         }}
       >
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-semibold flex items-center gap-2">
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
               Runtime Token Keeper (RTK)
               {!isPro && (
                 <span
-                  className="text-[10px] px-1.5 py-0.5 rounded font-bold"
+                  className="rounded px-1.5 py-0.5 text-[10px] font-bold"
                   style={{ background: "#FBBC0420", color: "#FBBC04" }}
                 >
                   Basic
                 </span>
               )}
             </h2>
-            <p className="text-xs mt-1">
+            <p className="mt-1 text-xs">
               Compresses tool outputs to save LLM context tokens.
               {!isPro && " Upgrade to Pro for smart compressors, cache, and budget control."}
             </p>
           </div>
           <button
             onClick={() => setEnabled(!enabled)}
-            className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer"
+            className="relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors"
             style={{
               background: enabled ? "#34A853" : "var(--color-bg-elevated)",
             }}
@@ -144,16 +145,14 @@ export function RTKSettings() {
 
       {/* Compression Level — Pro only */}
       {enabled && isPro && (
-        <div
-          className="shadow-soft p-5 rounded-xl bg-bg-card"
-        >
-          <h2 className="text-sm font-semibold mb-1">Compression Level</h2>
-          <p className="text-xs mb-4">Controls the maximum token budget per tool output.</p>
+        <div className="shadow-soft bg-bg-card rounded-xl p-5">
+          <h2 className="mb-1 text-sm font-semibold">Compression Level</h2>
+          <p className="mb-4 text-xs">Controls the maximum token budget per tool output.</p>
           <div className="flex flex-col gap-2">
             {RTK_LEVELS.map((l) => (
               <label
                 key={l.value}
-                className="flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors"
+                className="flex cursor-pointer items-start gap-3 rounded-lg p-3 transition-colors"
                 style={{
                   background: level === l.value ? "var(--color-bg-elevated)" : "transparent",
                   border:
@@ -170,7 +169,7 @@ export function RTKSettings() {
                 />
                 <div>
                   <span className="text-sm font-medium">{l.label}</span>
-                  <p className="text-xs mt-0.5">{l.desc}</p>
+                  <p className="mt-0.5 text-xs">{l.desc}</p>
                 </div>
               </label>
             ))}
@@ -180,11 +179,9 @@ export function RTKSettings() {
 
       {/* Strategy Toggle */}
       {enabled && (
-        <div
-          className="shadow-soft p-5 rounded-xl bg-bg-card"
-        >
-          <h2 className="text-sm font-semibold mb-1">Compression Strategies</h2>
-          <p className="text-xs mb-4">
+        <div className="shadow-soft bg-bg-card rounded-xl p-5">
+          <h2 className="mb-1 text-sm font-semibold">Compression Strategies</h2>
+          <p className="mb-4 text-xs">
             Enable or disable individual compression strategies. All are enabled by default.
           </p>
           <div className="flex flex-col gap-1">
@@ -195,7 +192,7 @@ export function RTKSettings() {
               return (
                 <label
                   key={s.name}
-                  className="flex items-center gap-3 p-2.5 rounded-lg transition-colors"
+                  className="flex items-center gap-3 rounded-lg p-2.5 transition-colors"
                   style={{
                     opacity: isEnabled ? 1 : 0.4,
                     cursor: isLocked ? "not-allowed" : "pointer",
@@ -217,7 +214,7 @@ export function RTKSettings() {
                     className="rounded"
                   />
                   <div className="flex-1">
-                    <span className="text-sm font-mono flex items-center gap-1.5">
+                    <span className="flex items-center gap-1.5 font-mono text-sm">
                       {s.label}
                       {isLocked && <Lock size={12} weight="bold" style={{ color: "#FBBC04" }} />}
                     </span>
@@ -238,7 +235,7 @@ export function RTKSettings() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors cursor-pointer"
+          className="flex cursor-pointer items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-colors"
           style={{
             background: "var(--color-accent)",
             color: "#fff",

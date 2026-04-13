@@ -27,14 +27,10 @@ interface StepProps {
 function SetupStep({ icon, title, children }: StepProps) {
   return (
     <div className="flex gap-3">
-      <div className="flex-shrink-0 mt-0.5">{icon}</div>
-      <div className="flex-1 min-w-0">
-        <h4 className="text-xs font-semibold mb-1.5 text-text-primary">
-          {title}
-        </h4>
-        <div className="text-xs leading-relaxed text-text-secondary">
-          {children}
-        </div>
+      <div className="mt-0.5 flex-shrink-0">{icon}</div>
+      <div className="min-w-0 flex-1">
+        <h4 className="text-text-primary mb-1.5 text-xs font-semibold">{title}</h4>
+        <div className="text-text-secondary text-xs leading-relaxed">{children}</div>
       </div>
     </div>
   );
@@ -52,7 +48,7 @@ const PLATFORM_COLORS: Record<string, string> = {
 function PlatformBadge({ name, color }: { name: string; color: string }) {
   return (
     <span
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium"
+      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium"
       style={{
         background: `${color}15`,
         color,
@@ -72,13 +68,11 @@ export function TelegramDebateGuide() {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div
-      className="shadow-soft rounded-xl overflow-hidden bg-bg-card"
-    >
+    <div className="shadow-soft bg-bg-card overflow-hidden rounded-xl">
       {/* Header — collapsible */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2.5 w-full px-4 py-3 cursor-pointer transition-colors"
+        className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-3 transition-colors"
         style={{ background: "transparent" }}
         aria-expanded={expanded}
       >
@@ -88,11 +82,12 @@ export function TelegramDebateGuide() {
           <CaretRight size={12} weight="bold" className="text-text-muted" />
         )}
         <UsersThree size={16} weight="duotone" className="text-accent" />
-        <span className="text-xs font-semibold text-text-primary">
+        <span className="text-text-primary text-xs font-semibold">
           Multi-Bot Debate Setup Guide
         </span>
         <span
-          className="ml-auto text-xs px-2 py-0.5 rounded-full text-accent" style={{
+          className="text-accent ml-auto rounded-full px-2 py-0.5 text-xs"
+          style={{
             background: "var(--color-accent)15",
             fontSize: 10,
           }}
@@ -104,19 +99,18 @@ export function TelegramDebateGuide() {
       {/* Content */}
       {expanded && (
         <div
-          className="px-4 pb-4 flex flex-col gap-5"
+          className="flex flex-col gap-5 px-4 pb-4"
           style={{ borderTop: "1px solid var(--color-border)" }}
         >
           {/* Intro */}
-          <div
-            className="shadow-soft flex items-start gap-2 mt-3 px-3 py-2.5 rounded-lg bg-bg-elevated"
-          >
+          <div className="shadow-soft bg-bg-elevated mt-3 flex items-start gap-2 rounded-lg px-3 py-2.5">
             <Info
               size={14}
               weight="fill"
-              className="text-accent shrink-0" style={{ marginTop: 1 }}
+              className="text-accent shrink-0"
+              style={{ marginTop: 1 }}
             />
-            <p className="text-xs leading-relaxed text-text-secondary">
+            <p className="text-text-secondary text-xs leading-relaxed">
               Run multiple AI bots in a Telegram group — each using a different CLI platform or
               provider. They can debate topics, review code from different perspectives, or
               collaborate on tasks.
@@ -134,9 +128,7 @@ export function TelegramDebateGuide() {
           {/* Steps */}
           <div className="flex flex-col gap-4">
             <SetupStep
-              icon={
-                <NumberCircleOne size={20} weight="fill" className="text-accent" />
-              }
+              icon={<NumberCircleOne size={20} weight="fill" className="text-accent" />}
               title="Create bots on Telegram"
             >
               <p className="mb-2">
@@ -144,7 +136,8 @@ export function TelegramDebateGuide() {
                 want in the debate:
               </p>
               <div
-                className="flex flex-col gap-1 p-2.5 rounded-lg font-mono bg-bg-elevated" style={{ fontSize: 11 }}
+                className="bg-bg-elevated flex flex-col gap-1 rounded-lg p-2.5 font-mono"
+                style={{ fontSize: 11 }}
               >
                 <span>
                   CompanionClaude →{" "}
@@ -158,21 +151,19 @@ export function TelegramDebateGuide() {
                   <span style={{ color: PLATFORM_COLORS.gemini }}>Gemini CLI</span>
                 </span>
               </div>
-              <p className="mt-2 text-text-muted">
+              <p className="text-text-muted mt-2">
                 Save each bot token — you&apos;ll need them in the next step.
               </p>
             </SetupStep>
 
             <SetupStep
-              icon={
-                <NumberCircleTwo size={20} weight="fill" className="text-accent" />
-              }
+              icon={<NumberCircleTwo size={20} weight="fill" className="text-accent" />}
               title="Add bots in Companion"
             >
               <p className="mb-2">
                 In <strong>Bot Management</strong> above, click &quot;Add Bot&quot; for each:
               </p>
-              <ul className="list-disc pl-4 flex flex-col gap-1">
+              <ul className="flex list-disc flex-col gap-1 pl-4">
                 <li>
                   Set the <strong>Role</strong> to match the platform (Claude Code, Codex CLI, etc.)
                 </li>
@@ -187,16 +178,10 @@ export function TelegramDebateGuide() {
             </SetupStep>
 
             <SetupStep
-              icon={
-                <NumberCircleThree
-                  size={20}
-                  weight="fill"
-                  className="text-accent"
-                />
-              }
+              icon={<NumberCircleThree size={20} weight="fill" className="text-accent" />}
               title="Create a Telegram group"
             >
-              <ul className="list-disc pl-4 flex flex-col gap-1">
+              <ul className="flex list-disc flex-col gap-1 pl-4">
                 <li>Create a new group (or use an existing one)</li>
                 <li>Add all your bots to the group</li>
                 <li>
@@ -204,30 +189,20 @@ export function TelegramDebateGuide() {
                 </li>
                 <li>
                   Get the group ID: add <strong>@userinfobot</strong> to the group, it will show the
-                  chat ID (starts with{" "}
-                  <code className="px-1 rounded bg-bg-elevated">
-                    -100...
-                  </code>
-                  )
+                  chat ID (starts with <code className="bg-bg-elevated rounded px-1">-100...</code>)
                 </li>
               </ul>
             </SetupStep>
 
             <SetupStep
-              icon={
-                <NumberCircleFour
-                  size={20}
-                  weight="fill"
-                  className="text-accent"
-                />
-              }
+              icon={<NumberCircleFour size={20} weight="fill" className="text-accent" />}
               title="Start a debate"
             >
               <p className="mb-2">In the group chat, you can:</p>
-              <ul className="list-disc pl-4 flex flex-col gap-1">
+              <ul className="flex list-disc flex-col gap-1 pl-4">
                 <li>
                   <strong>Mention a bot</strong> —{" "}
-                  <code className="px-1 rounded bg-bg-elevated">
+                  <code className="bg-bg-elevated rounded px-1">
                     @CompanionClaude review auth.ts
                   </code>
                 </li>
@@ -244,24 +219,16 @@ export function TelegramDebateGuide() {
           </div>
 
           {/* Tips */}
-          <div
-            className="shadow-soft flex flex-col gap-2 px-3 py-2.5 rounded-lg bg-bg-elevated"
-          >
+          <div className="shadow-soft bg-bg-elevated flex flex-col gap-2 rounded-lg px-3 py-2.5">
             <div className="flex items-center gap-1.5">
               <Lightning
                 size={12}
                 weight="fill"
                 style={{ color: "var(--color-warning, #f59e0b)" }}
               />
-              <span
-                className="text-xs font-semibold text-text-primary"
-              >
-                Tips
-              </span>
+              <span className="text-text-primary text-xs font-semibold">Tips</span>
             </div>
-            <ul
-              className="text-xs leading-relaxed flex flex-col gap-1 text-text-muted"
-            >
+            <ul className="text-text-muted flex flex-col gap-1 text-xs leading-relaxed">
               <li>• Each bot needs its own unique token from BotFather</li>
               <li>
                 • Use <strong>Session Streaming</strong> to broadcast live output to the group

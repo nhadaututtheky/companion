@@ -116,7 +116,8 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
       role="dialog"
       aria-modal="true"
       aria-label="Settings"
-      className="flex flex-col overflow-hidden rounded-2xl shadow-soft border border-glass-border" style={{
+      className="shadow-soft border-glass-border flex flex-col overflow-hidden rounded-2xl border"
+      style={{
         width: "min(calc(100vw - 32px), 1100px)",
         height: "min(85vh, calc(100vh - 32px))",
         background: "var(--glass-bg-heavy)",
@@ -127,17 +128,18 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
     >
       {/* Title bar */}
       <div
-        className="flex items-center justify-between px-6 py-4 shrink-0"
+        className="flex shrink-0 items-center justify-between px-6 py-4"
         style={{ borderBottom: "1px solid var(--color-border)" }}
       >
         <h2
-          className="text-base font-semibold text-text-primary" style={{ fontFamily: "var(--font-display)" }}
+          className="text-text-primary text-base font-semibold"
+          style={{ fontFamily: "var(--font-display)" }}
         >
           Settings
         </h2>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-lg transition-colors cursor-pointer text-text-secondary"
+          className="text-text-secondary cursor-pointer rounded-lg p-1.5 transition-colors"
           aria-label="Close settings"
         >
           <X size={18} weight="bold" />
@@ -145,12 +147,12 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Body: sidebar + content */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex min-h-0 flex-1">
         {/* Left sidebar tabs */}
         <nav
           role="tablist"
           aria-label="Settings sections"
-          className="shrink-0 overflow-y-auto py-2 hidden sm:block"
+          className="hidden shrink-0 overflow-y-auto py-2 sm:block"
           style={{
             width: 200,
             borderRight: "1px solid var(--glass-border)",
@@ -160,7 +162,8 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-all cursor-pointer rounded-radius-md" style={{
+              className="rounded-radius-md flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-sm transition-all"
+              style={{
                 color: activeTab === tab.id ? "var(--color-accent)" : "var(--color-text-secondary)",
                 background:
                   activeTab === tab.id
@@ -180,14 +183,14 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
 
         {/* Mobile tab selector (visible below sm breakpoint) */}
         <div
-          className="sm:hidden shrink-0 px-4 py-2 overflow-x-auto flex gap-1"
+          className="flex shrink-0 gap-1 overflow-x-auto px-4 py-2 sm:hidden"
           style={{ borderBottom: "1px solid var(--color-border)" }}
         >
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs whitespace-nowrap rounded-full transition-all cursor-pointer"
+              className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-2 text-xs transition-all"
               style={{
                 color: activeTab === tab.id ? "var(--color-accent)" : "var(--color-text-secondary)",
                 background:
@@ -204,8 +207,8 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Right content area */}
-        <div className="flex-1 overflow-y-auto min-h-0" role="tabpanel">
-          <div className="max-w-4xl py-6 px-4 sm:py-8 sm:px-6">
+        <div className="min-h-0 flex-1 overflow-y-auto" role="tabpanel">
+          <div className="max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
             <TabContent tab={activeTab} />
           </div>
         </div>

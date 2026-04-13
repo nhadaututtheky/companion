@@ -106,9 +106,7 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
   };
 
   return (
-    <div
-      className="shadow-soft rounded-xl bg-bg-card"
-    >
+    <div className="shadow-soft bg-bg-card rounded-xl">
       {/* Header */}
       <div
         className="flex items-center justify-between px-4 py-3"
@@ -116,7 +114,7 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
       >
         <button
           onClick={prevMonth}
-          className="p-1 rounded-lg cursor-pointer transition-colors"
+          className="cursor-pointer rounded-lg p-1 transition-colors"
           aria-label="Previous month"
         >
           <CaretLeft size={14} weight="bold" />
@@ -126,7 +124,7 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
         </span>
         <button
           onClick={nextMonth}
-          className="p-1 rounded-lg cursor-pointer transition-colors"
+          className="cursor-pointer rounded-lg p-1 transition-colors"
           aria-label="Next month"
         >
           <CaretRight size={14} weight="bold" />
@@ -138,7 +136,8 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
         {WEEKDAYS.map((d) => (
           <div
             key={d}
-            className="text-center py-1 text-text-muted font-semibold" style={{ fontSize: 10 }}
+            className="text-text-muted py-1 text-center font-semibold"
+            style={{ fontSize: 10 }}
           >
             {d}
           </div>
@@ -146,7 +145,7 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
       </div>
 
       {/* Day grid */}
-      <div className="grid grid-cols-7 px-2 pb-2 gap-0.5">
+      <div className="grid grid-cols-7 gap-0.5 px-2 pb-2">
         {days.map((day, i) => {
           const key = dateKey(day.date);
           const isToday = key === todayKey;
@@ -157,7 +156,7 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
             <button
               key={i}
               onClick={() => onDayClick?.(day.date)}
-              className="relative flex flex-col items-center py-1.5 rounded-lg cursor-pointer transition-colors"
+              className="relative flex cursor-pointer flex-col items-center rounded-lg py-1.5 transition-colors"
               style={{
                 color: day.currentMonth ? "var(--color-text-primary)" : "var(--color-text-muted)",
                 background: isToday ? "#4285F415" : "transparent",
@@ -171,11 +170,12 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
               </span>
               {/* Run dots */}
               {hasRuns && (
-                <div className="flex gap-0.5 mt-0.5">
+                <div className="mt-0.5 flex gap-0.5">
                   {runs.slice(0, 3).map((_, j) => (
                     <span
                       key={j}
-                      className="rounded-full" style={{
+                      className="rounded-full"
+                      style={{
                         width: 4,
                         height: 4,
                         background: "#4285F4",
@@ -183,7 +183,9 @@ export function ScheduleCalendar({ upcoming, onDayClick }: ScheduleCalendarProps
                     />
                   ))}
                   {runs.length > 3 && (
-                    <span className="text-text-muted" style={{ fontSize: 8 }}>+</span>
+                    <span className="text-text-muted" style={{ fontSize: 8 }}>
+                      +
+                    </span>
                   )}
                 </div>
               )}

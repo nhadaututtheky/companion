@@ -50,7 +50,7 @@ export function ModelSelector({ currentModel, onModelChange, disabled }: ModelSe
       <button
         onClick={() => !disabled && setOpen(!open)}
         disabled={disabled}
-        className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-text-secondary bg-bg-elevated border border-border"
+        className="text-text-secondary bg-bg-elevated border-border flex cursor-pointer items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         aria-label={`Current model: ${display.label}. Click to change.`}
         title="Switch model"
       >
@@ -60,7 +60,8 @@ export function ModelSelector({ currentModel, onModelChange, disabled }: ModelSe
 
       {open && (
         <div
-          className="absolute top-full left-0 mt-1 rounded-lg overflow-hidden shadow-lg z-50 bg-bg-card border border-glass-border" style={{
+          className="bg-bg-card border-glass-border absolute left-0 top-full z-50 mt-1 overflow-hidden rounded-lg border shadow-lg"
+          style={{
             minWidth: 160,
           }}
         >
@@ -73,7 +74,7 @@ export function ModelSelector({ currentModel, onModelChange, disabled }: ModelSe
                   if (!isActive) onModelChange(m.value);
                   setOpen(false);
                 }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium transition-colors cursor-pointer text-left"
+                className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left text-xs font-medium transition-colors"
                 style={{
                   background: isActive ? "var(--color-bg-elevated)" : "transparent",
                   color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
@@ -87,7 +88,8 @@ export function ModelSelector({ currentModel, onModelChange, disabled }: ModelSe
                 }}
               >
                 <span
-                  className="font-mono font-bold inline-flex" style={{
+                  className="inline-flex font-mono font-bold"
+                  style={{
                     width: 18,
                     height: 18,
                     borderRadius: 4,

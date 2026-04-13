@@ -409,11 +409,7 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     const messageId = ctx.callbackQuery.message?.message_id;
     if (chatId && messageId) {
       await ctx.api
-        .editMessageText(
-          chatId,
-          messageId,
-          "⏸ Claude paused. Send a message to continue.",
-        )
+        .editMessageText(chatId, messageId, "⏸ Claude paused. Send a message to continue.")
         .catch(() => {});
     }
   });
