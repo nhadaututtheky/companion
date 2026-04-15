@@ -175,6 +175,7 @@ export function createSessionRecord(opts: {
   role?: string;
   workspaceId?: string;
   cliPlatform?: string;
+  accountId?: string;
 }): string {
   const db = getDb();
   const MAX_RETRIES = 5;
@@ -198,6 +199,7 @@ export function createSessionRecord(opts: {
           role: opts.role,
           workspaceId: opts.workspaceId,
           cliPlatform: opts.cliPlatform ?? "claude",
+          accountId: opts.accountId,
           costBudgetUsd: opts.costBudgetUsd,
           compactMode: opts.compactMode ?? "manual",
           compactThreshold: opts.compactThreshold ?? 75,
@@ -321,6 +323,18 @@ export function updateCliSessionId(id: string, cliSessionId: string): void {
   } catch (err) {
     log.error("Failed to update cliSessionId", { id, error: String(err) });
   }
+}
+
+/** Check if a session has an active Telegram mapping (used by self-heal to avoid killing Telegram sessions). */
+export function hasTelegramMapping(sessionId: string): boolean {
+  const db = getDb();
+  const row = db
+    .select({ id: telegramSessionMappings.id })
+    .from(telegramSessionMappings)
+    .where(eq(telegramSessionMappings.sessionId, sessionId))
+    .limit(1)
+    .get();
+  return !!row;
 }
 
 /** Find a dead (ended) session with a stored cliSessionId for the given project+chatId combo.

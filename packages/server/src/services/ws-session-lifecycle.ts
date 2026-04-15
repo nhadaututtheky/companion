@@ -25,6 +25,8 @@ import { connectCli, disconnectCli, getWorkspaceForSession } from "./workspace-s
 import { getWorkspaceContext } from "./workspace-context.js";
 import { eventBus } from "./event-bus.js";
 import { cleanupPulse } from "./pulse-estimator.js";
+import { getActiveAccount, addAccountCost } from "./credential-manager.js";
+import { isEncryptionEnabled } from "./crypto.js";
 import {
   createActiveSession,
   getActiveSession,
@@ -68,6 +70,47 @@ const DEFAULT_SESSION_SETTINGS = {
   keepAlive: false,
   autoReinjectOnCompact: true,
 };
+
+// ─── Shared Types ───────────────────────────────────────────────────────────
+
+/** Options for starting a new session (shared between WsBridge and SessionLifecycleManager). */
+export interface StartSessionOpts {
+  projectSlug?: string;
+  cwd: string;
+  model: string;
+  permissionMode?: string;
+  prompt?: string;
+  resume?: boolean;
+  cliSessionId?: string;
+  source?: string;
+  parentId?: string;
+  channelId?: string;
+  envVars?: Record<string, string>;
+  name?: string;
+  costBudgetUsd?: number;
+  compactMode?: string;
+  compactThreshold?: number;
+  /** Expert Mode persona ID (e.g. "tim-cook", "staff-sre"). */
+  personaId?: string;
+  /** Optional identity/personality prompt re-injected after context compaction. */
+  identityPrompt?: string;
+  /** When false, disables auto re-injection on compact for this session (default: true). */
+  autoReinjectOnCompact?: boolean;
+  /** Bare mode — minimal output, lower cost. Maps to --bare CLI flag. */
+  bare?: boolean;
+  /** Thinking budget in tokens. 0 = off, N = budget, undefined = adaptive. */
+  thinkingBudget?: number;
+  /** CLI platform to use (claude, codex, gemini, opencode). */
+  cliPlatform?: CLIPlatform;
+  /** Platform-specific options (e.g. fullAuto for Codex, sandbox for Gemini). */
+  platformOptions?: Record<string, unknown>;
+  /** Agent role in multi-brain workspace. */
+  role?: "coordinator" | "specialist" | "researcher" | "reviewer";
+  /** Workspace ID — links session to a multi-CLI workspace. */
+  workspaceId?: string;
+  /** Original session ID when resuming — used to restore message history from DB. */
+  resumeFromSessionId?: string;
+}
 
 // ─── Bridge Interface ────────────────────────────────────────────────────────
 
@@ -158,43 +201,7 @@ export class SessionLifecycleManager {
 
   // ── Public orchestrator: create and start a new session ──────────────────
 
-  async startSession(opts: {
-    projectSlug?: string;
-    cwd: string;
-    model: string;
-    permissionMode?: string;
-    prompt?: string;
-    resume?: boolean;
-    cliSessionId?: string;
-    source?: string;
-    parentId?: string;
-    channelId?: string;
-    envVars?: Record<string, string>;
-    name?: string;
-    costBudgetUsd?: number;
-    compactMode?: string;
-    compactThreshold?: number;
-    /** Expert Mode persona ID (e.g. "tim-cook", "staff-sre"). */
-    personaId?: string;
-    /** Optional identity/personality prompt re-injected after context compaction. */
-    identityPrompt?: string;
-    /** When false, disables auto re-injection on compact for this session (default: true). */
-    autoReinjectOnCompact?: boolean;
-    /** Bare mode — minimal output, lower cost. Maps to --bare CLI flag. */
-    bare?: boolean;
-    /** Thinking budget in tokens. 0 = off, N = budget, undefined = adaptive. */
-    thinkingBudget?: number;
-    /** CLI platform to use (claude, codex, gemini, opencode). */
-    cliPlatform?: CLIPlatform;
-    /** Platform-specific options (e.g. fullAuto for Codex, sandbox for Gemini). */
-    platformOptions?: Record<string, unknown>;
-    /** Agent role in multi-brain workspace. */
-    role?: "coordinator" | "specialist" | "researcher" | "reviewer";
-    /** Workspace ID — links session to a multi-CLI workspace. */
-    workspaceId?: string;
-    /** Original session ID when resuming — used to restore message history from DB. */
-    resumeFromSessionId?: string;
-  }): Promise<string> {
+  async startSession(opts: StartSessionOpts): Promise<string> {
     const sessionId = randomUUID();
 
     const initialState: SessionState = {
@@ -299,6 +306,9 @@ export class SessionLifecycleManager {
     }
 
     // Persist to DB (returns generated shortId)
+    // Capture active account ID at session creation time
+    const activeAccountId = isEncryptionEnabled() ? getActiveAccount()?.id : undefined;
+
     const shortId = createSessionRecord({
       id: sessionId,
       projectSlug: opts.projectSlug,
@@ -316,6 +326,7 @@ export class SessionLifecycleManager {
       role: opts.role,
       workspaceId: opts.workspaceId,
       cliPlatform: opts.cliPlatform,
+      accountId: activeAccountId,
     });
 
     // Attach shortId to session state for clients
@@ -402,6 +413,11 @@ export class SessionLifecycleManager {
       // Capture shortId BEFORE endSessionRecord clears it (for child_ended notification)
       const preEndRecord = getSessionRecord(sessionId);
       const savedShortId = preEndRecord?.shortId ?? undefined;
+
+      // Aggregate session cost to account (same as handleCLIExit path)
+      if (preEndRecord?.accountId && session.state.total_cost_usd > 0) {
+        addAccountCost(preEndRecord.accountId, session.state.total_cost_usd);
+      }
 
       this.bridge.updateStatus(session, "ended");
       persistSession(session);
@@ -888,6 +904,11 @@ export class SessionLifecycleManager {
     // Capture shortId BEFORE endSessionRecord clears it (for child_ended notification)
     const preEndRecord = getSessionRecord(session.id);
     const savedShortId = preEndRecord?.shortId ?? undefined;
+
+    // Aggregate session cost to the account that was used
+    if (preEndRecord?.accountId && session.state.total_cost_usd > 0) {
+      addAccountCost(preEndRecord.accountId, session.state.total_cost_usd);
+    }
 
     endSessionRecord(session.id, finalStatus);
     persistSession(session);

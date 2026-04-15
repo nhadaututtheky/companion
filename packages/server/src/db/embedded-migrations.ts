@@ -137,4 +137,12 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0033_context_injection_log.sql",
     sql: "CREATE TABLE IF NOT EXISTS context_injection_log (\n  id INTEGER PRIMARY KEY AUTOINCREMENT,\n  session_id TEXT NOT NULL,\n  project_slug TEXT NOT NULL DEFAULT '',\n  injection_type TEXT NOT NULL,\n  token_count INTEGER NOT NULL DEFAULT 0,\n  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)\n);\n\nCREATE INDEX IF NOT EXISTS idx_ctx_injection_session ON context_injection_log(session_id);\nCREATE INDEX IF NOT EXISTS idx_ctx_injection_type ON context_injection_log(injection_type);\nCREATE INDEX IF NOT EXISTS idx_ctx_injection_created ON context_injection_log(created_at);\n",
   },
+  {
+    name: "0034_accounts.sql",
+    sql: "CREATE TABLE IF NOT EXISTS `accounts` (\n  `id` text PRIMARY KEY NOT NULL,\n  `label` text NOT NULL,\n  `fingerprint` text NOT NULL,\n  `encrypted_credentials` text NOT NULL,\n  `subscription_type` text,\n  `rate_limit_tier` text,\n  `is_active` integer DEFAULT false NOT NULL,\n  `status` text DEFAULT 'ready' NOT NULL,\n  `status_until` integer,\n  `total_cost_usd` real DEFAULT 0 NOT NULL,\n  `last_used_at` integer,\n  `created_at` integer NOT NULL,\n  `updated_at` integer NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS `accounts_fingerprint_unique` ON `accounts` (`fingerprint`);\n",
+  },
+  {
+    name: "0035_session_account.sql",
+    sql: "-- Track which account was used for each session (multi-account management)\nALTER TABLE sessions ADD COLUMN account_id TEXT;\n",
+  },
 ];

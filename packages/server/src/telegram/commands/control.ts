@@ -5,6 +5,7 @@
 import type { TelegramBridge } from "../telegram-bridge.js";
 import { isPermissionDangerous } from "../formatter.js";
 import type { PermissionRequest } from "@companion/shared";
+import type { PermCallbackEntry } from "../telegram-permission-handler.js";
 
 export function registerControlCommands(bridge: TelegramBridge): void {
   const bot = bridge.bot;
@@ -154,10 +155,16 @@ export function registerControlCommands(bridge: TelegramBridge): void {
 
   // ── Permission callback queries ───────────────────────────────────────
 
-  bot.callbackQuery(/^perm:(allow|deny):(.+):(.+)$/, async (ctx) => {
-    const behavior = ctx.match[1] as "allow" | "deny";
-    const sessionId = ctx.match[2]!;
-    const requestId = ctx.match[3]!;
+  bot.callbackQuery(/^perm:(a|d):(.+)$/, async (ctx) => {
+    const behavior = ctx.match[1] === "a" ? "allow" : "deny";
+    const key = ctx.match[2]!;
+
+    // Lookup full IDs from short callback key
+    const entry: PermCallbackEntry | undefined = bridge.permCallbackMap.get(key);
+    if (!entry) {
+      await ctx.answerCallbackQuery("Permission expired.");
+      return;
+    }
 
     // Cancel auto-approve countdown for this message if active
     const msgId = ctx.callbackQuery.message?.message_id;
@@ -166,13 +173,16 @@ export function registerControlCommands(bridge: TelegramBridge): void {
     }
 
     bridge.wsBridge.handleBrowserMessage(
-      sessionId,
+      entry.sessionId,
       JSON.stringify({
         type: "permission_response",
-        request_id: requestId,
+        request_id: entry.requestId,
         behavior,
       }),
     );
+
+    // Cleanup callback keys for this message (all buttons)
+    bridge.permCallbackMap.delete(key);
 
     const emoji = behavior === "allow" ? "✅" : "❌";
     await ctx.answerCallbackQuery(`${emoji} ${behavior === "allow" ? "Allowed" : "Denied"}`);
@@ -181,8 +191,14 @@ export function registerControlCommands(bridge: TelegramBridge): void {
 
   // ── perm:allowsafe — Approve only non-dangerous pending permissions ────────
 
-  bot.callbackQuery(/^perm:allowsafe:(.+)$/, async (ctx) => {
-    const sessionId = ctx.match[1]!;
+  bot.callbackQuery(/^perm:as:(.+)$/, async (ctx) => {
+    const key = ctx.match[1]!;
+    const entry: PermCallbackEntry | undefined = bridge.permCallbackMap.get(key);
+    if (!entry) {
+      await ctx.answerCallbackQuery("Permission expired.");
+      return;
+    }
+    const sessionId = entry.sessionId;
 
     const msgId = ctx.callbackQuery.message?.message_id;
     if (msgId !== undefined) {
@@ -234,9 +250,14 @@ export function registerControlCommands(bridge: TelegramBridge): void {
 
   // ── perm:reviewdanger — Inform user dangerous items need individual review ─
 
-  bot.callbackQuery(/^perm:reviewdanger:(.+)$/, async (ctx) => {
-    const sessionId = ctx.match[1]!;
-    const session = bridge.wsBridge.getSession(sessionId);
+  bot.callbackQuery(/^perm:rd:(.+)$/, async (ctx) => {
+    const key = ctx.match[1]!;
+    const entry: PermCallbackEntry | undefined = bridge.permCallbackMap.get(key);
+    if (!entry) {
+      await ctx.answerCallbackQuery("Permission expired.");
+      return;
+    }
+    const session = bridge.wsBridge.getSession(entry.sessionId);
 
     const dangerCount = session
       ? ([...session.pendingPermissions.values()] as PermissionRequest[]).filter((p) =>

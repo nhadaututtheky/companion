@@ -26,7 +26,20 @@ import type {
   HooksSettings,
 } from "@companion/shared";
 
+import { eventBus } from "../event-bus.js";
+
 const log = createLogger("claude-adapter");
+
+// ─── Rate Limit Detection ──────────────────────────────────────────────────
+
+const RATE_LIMIT_PATTERNS = [
+  /rate.?limit/i,
+  /\b429\b/,
+  /overloaded/i,
+  /too many requests/i,
+  /request rate limit/i,
+  /token rate limit/i,
+];
 
 // ─── Claude Binary Resolution ───────────────────────────────────────────────
 
@@ -506,35 +519,59 @@ export class ClaudeAdapter implements CLIAdapter {
             if (!trimmed) continue;
 
             if (label === "stdout") {
-              const normalized = parseClaudeMessage(trimmed);
-              if (normalized) {
-                onMessage(normalized);
-              } else {
-                // Pass raw for control_response etc
-                onMessage({
-                  type: "keep_alive",
-                  platform: "claude",
-                  raw: (() => {
-                    try {
-                      return JSON.parse(trimmed);
-                    } catch {
-                      return trimmed;
-                    }
-                  })(),
+              try {
+                const normalized = parseClaudeMessage(trimmed);
+                if (normalized) {
+                  onMessage(normalized);
+                } else {
+                  // Pass raw for control_response etc
+                  onMessage({
+                    type: "keep_alive",
+                    platform: "claude",
+                    raw: (() => {
+                      try {
+                        return JSON.parse(trimmed);
+                      } catch {
+                        return trimmed;
+                      }
+                    })(),
+                  });
+                }
+              } catch (msgErr) {
+                log.error("Error processing CLI message", {
+                  error: String(msgErr),
+                  line: trimmed.slice(0, 200),
                 });
               }
             } else {
               log.debug("CLI stderr", { line: trimmed.slice(0, 200) });
               stderrLines.push(trimmed.slice(0, 300));
               if (stderrLines.length > MAX_STDERR_LINES) stderrLines.shift();
+
+              // Detect rate limit errors in stderr
+              if (RATE_LIMIT_PATTERNS.some((p) => p.test(trimmed))) {
+                log.warn("Rate limit detected in CLI stderr", {
+                  sessionId: opts.sessionId,
+                  line: trimmed.slice(0, 200),
+                });
+                eventBus.emit("account:rate_limited", {
+                  accountId: "", // resolved from active account by auto-switch listener
+                  sessionId: opts.sessionId,
+                  reason: trimmed.slice(0, 200),
+                });
+              }
             }
           }
         }
 
         if (buffer.trim()) {
           if (label === "stdout") {
-            const normalized = parseClaudeMessage(buffer.trim());
-            if (normalized) onMessage(normalized);
+            try {
+              const normalized = parseClaudeMessage(buffer.trim());
+              if (normalized) onMessage(normalized);
+            } catch (msgErr) {
+              log.error("Error processing CLI buffer", { error: String(msgErr) });
+            }
           } else {
             stderrLines.push(buffer.trim().slice(0, 300));
             if (stderrLines.length > MAX_STDERR_LINES) stderrLines.shift();

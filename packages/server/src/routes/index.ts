@@ -28,6 +28,7 @@ import cliPlatformRoutes from "./cli-platforms.js";
 import { createWikiRoutes } from "./wiki.js";
 import { createReviewRoutes } from "./review.js";
 import { workspaceRoutes } from "./workspaces.js";
+import { accountRoutes } from "./accounts.js";
 import { initWorkflowEngine } from "../services/workflow-engine.js";
 import { apiKeyAuth } from "../middleware/auth.js";
 import { createRateLimit } from "../middleware/rate-limit.js";
@@ -147,6 +148,7 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   protectedApi.route("/wiki", createWikiRoutes());
   protectedApi.route("/review", createReviewRoutes());
   protectedApi.route("/workspaces", workspaceRoutes());
+  protectedApi.route("/accounts", accountRoutes);
 
   // Initialize workflow engine with bridge reference
   initWorkflowEngine(bridge);

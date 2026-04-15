@@ -1,7 +1,7 @@
 # Companion — Feature Registry
 
 > Single source of truth for all features, their relationships, and boundaries.
-> Updated: 2026-04-13 | ~120 features across 8 domains
+> Updated: 2026-04-15 | ~140 features across 9 domains
 
 ## How to Use This File
 - **Before building**: Check if feature exists or overlaps with existing ones
@@ -17,14 +17,24 @@ The core domain. Sessions are Claude Code processes managed through WebSocket br
 | Feature | Key File(s) | Connects To |
 |---------|------------|-------------|
 | Session CRUD + state machine | `session-store.ts`, `session-state-machine.ts` | DB, event-bus, short-id |
-| CLI launcher (Claude Code NDJSON pipe) | `cli-launcher.ts` | ws-bridge |
+| CLI launcher (Claude Code NDJSON pipe) | `cli-launcher.ts` | ws-bridge, adapter-registry |
+| CLI adapter registry (multi-platform) | `adapters/adapter-registry.ts` | cli-launcher |
+| Claude adapter (Claude Code CLI) | `adapters/claude-adapter.ts` | adapter-registry |
+| Codex adapter (OpenAI Codex CLI) | `adapters/codex-adapter.ts` | adapter-registry |
+| Gemini adapter (Google Gemini CLI) | `adapters/gemini-adapter.ts` | adapter-registry |
+| OpenCode adapter (OpenCode TUI) | `adapters/opencode-adapter.ts` | adapter-registry |
 | SDK engine (Anthropic Agent SDK direct) | `sdk-engine.ts` | ws-bridge |
 | WebSocket bridge (live message routing) | `ws-bridge.ts` | cli-launcher, sdk-engine, compact-manager |
 | WS broadcast (fan-out to browsers) | `ws-broadcast.ts` | ws-bridge, spectator-bridge |
+| WS message handler (CLI→browser routing) | `ws-message-handler.ts` | ws-bridge, ws-stream-handler |
 | WS context tracker (token counting) | `ws-context-tracker.ts` | ws-bridge, context-budget |
-| WS stream handler (SSE→WS relay) | `ws-stream-handler.ts` | ws-bridge |
+| WS stream handler (event batching + relay) | `ws-stream-handler.ts` | ws-bridge |
 | WS permission handler (approve/deny) | `ws-permission-handler.ts` | ws-bridge |
+| WS session lifecycle (create/end/cleanup) | `ws-session-lifecycle.ts` | ws-bridge, session-store |
+| WS health + idle (keep-alive, stale detect) | `ws-health-idle.ts` | ws-bridge, idle-detector |
+| WS user message (input routing) | `ws-user-message.ts` | ws-bridge |
 | WS multi-brain (parallel agent orchestration) | `ws-multi-brain.ts` | ws-bridge, ai-client |
+| Session scanner (auto-detect running CLIs) | `session-scanner.ts` | session-store, adapter-registry |
 | Short IDs (@fox, @bear) | `short-id.ts` | session-store, mention-router |
 | Auto-naming (AI-generated session titles) | `session-namer.ts` | ai-client |
 | Auto-summarize on end | `session-summarizer.ts` | ai-client |
@@ -125,10 +135,15 @@ Terminal, file explorer, CodeGraph (Tree-sitter WASM AST), WebIntel — develope
 | Terminal manager (PTY via Bun.spawn) | `terminal-manager.ts`, `terminal-lock.ts` | terminal API |
 | Filesystem API (safe read-only) | `routes/filesystem.ts` | OS fs |
 | CodeGraph scanner (Tree-sitter WASM + regex fallback) | `codegraph/scanner.ts`, `tree-sitter-engine.ts`, `ts-extractors.ts` | graph-store |
+| CodeGraph graph store (in-memory symbol DB) | `codegraph/graph-store.ts` | scanner, diff-updater |
 | CodeGraph semantic describer (AI summaries) | `codegraph/semantic-describer.ts` | ai-client |
 | CodeGraph diff updater (incremental O(k×d)) | `codegraph/diff-updater.ts` | scanner, graph-store |
 | CodeGraph AI context provider | `codegraph/agent-context-provider.ts` | ws-bridge |
 | CodeGraph query engine (impact radius, weighted search) | `codegraph/query-engine.ts` | graph-store |
+| CodeGraph trust calculator (symbol reliability) | `codegraph/trust-calculator.ts` | graph-store |
+| CodeGraph event collector (tool event tracking) | `codegraph/event-collector.ts` | ws-bridge, graph-store |
+| CodeGraph analysis (dependency/impact analysis) | `codegraph/analysis.ts` | graph-store, query-engine |
+| CodeGraph WebIntel bridge | `codegraph/webintel-bridge.ts` | web-intel, graph-store |
 | WebIntel (web research via webclaw sidecar) | `web-intel.ts` | webclaw Docker |
 | WebIntel library detector | `web-intel-detector.ts` | web-intel |
 | WebIntel commands (/docs, /research) | `web-intel-handler.ts` | ws-bridge |
@@ -150,7 +165,24 @@ Terminal, file explorer, CodeGraph (Tree-sitter WASM AST), WebIntel — develope
 
 ---
 
-## 5. TELEGRAM
+## 5. WIKI KNOWLEDGE BASE
+
+Agent-facing multi-layer knowledge base — L0-L3 lazy loading, domain-specific context.
+
+| Feature | Key File(s) | Connects To |
+|---------|------------|-------------|
+| Wiki engine (compile + retrieve) | `wiki/index.ts` | session-context, context-budget |
+| Wiki store (article CRUD) | `wiki/store.ts` | DB |
+| Wiki compiler (MD → structured output) | `wiki/compiler.ts` | store |
+| Wiki retriever (query → context chunks) | `wiki/retriever.ts` | store, compiler |
+| Wiki linter (content quality checks) | `wiki/linter.ts` | compiler |
+| Wiki feedback (agent feedback collection) | `wiki/feedback.ts` | session-summarizer |
+| Wiki query archive (usage tracking) | `wiki/query-archive.ts` | DB |
+| Wiki type definitions | `wiki/types.ts` | all wiki modules |
+
+---
+
+## 6. TELEGRAM
 
 Telegram bot integration — multi-bot, forum topics, streaming responses.
 
@@ -158,16 +190,27 @@ Telegram bot integration — multi-bot, forum topics, streaming responses.
 |---------|------------|-------------|
 | Bot factory (Grammy + auto-retry) | `telegram/bot-factory.ts` | telegram-bridge |
 | Bot registry (multi-bot) | `telegram/bot-registry.ts` | bot-factory |
-| Telegram↔session bridge | `telegram/telegram-bridge.ts` | ws-bridge, session-store |
+| Telegram↔session bridge (orchestrator) | `telegram/telegram-bridge.ts` | ws-bridge, session-store |
+| Session event handlers (CLI→TG routing) | `telegram/telegram-session-events.ts` | telegram-bridge |
+| Message handlers (user text/photo/doc) | `telegram/telegram-message-handlers.ts` | telegram-bridge |
+| Permission handler (batch + auto-approve) | `telegram/telegram-permission-handler.ts` | telegram-bridge |
+| Idle manager (timeout + busy watchdog) | `telegram/telegram-idle-manager.ts` | telegram-bridge |
+| Dead session tracker (resume support) | `telegram/telegram-dead-sessions.ts` | telegram-bridge |
+| Forum topic manager (auto-create topics) | `telegram/telegram-forum-topics.ts` | telegram-bridge |
+| Subscription manager (session fan-out) | `telegram/telegram-subscriptions.ts` | telegram-bridge |
+| Persistence (DB mapping CRUD) | `telegram/telegram-persistence.ts` | telegram-bridge, DB |
 | Stream handler (chunked responses) | `telegram/stream-handler.ts` | telegram-bridge |
-| Formatter (HTML, tools, permissions) | `telegram/formatter.ts` | stream-handler |
-| Forum topic auto-creation | `telegram/telegram-bridge.ts` | DB telegramForumTopics |
+| Formatter (MD→Telegram HTML) | `telegram/formatter.ts` | stream-handler |
+| Review link generator | `telegram/review-link.ts` | telegram-session-events |
 | Commands: /start, /new, /end, /list, /use | `telegram/commands/session.ts` | session-store |
 | Commands: /thinking, /clear, /mcp | `telegram/commands/control.ts` | ws-bridge |
 | Commands: /info, /status | `telegram/commands/info.ts` | session-store |
 | Commands: /panel, /compact, /share | `telegram/commands/panel.ts` | share-manager |
+| Commands: /config (idle timeout, auto-approve) | `telegram/commands/config.ts` | idle-manager |
 | Commands: /mood (agent pulse health) | `telegram/commands/mood.ts` | pulse-estimator |
 | Commands: /template | `telegram/commands/template.ts` | templates |
+| Commands: /wiki (knowledge base) | `telegram/commands/wiki.ts` | wiki |
+| Commands: /viewfile, /raw, utilities | `telegram/commands/utility.ts` | filesystem |
 | Auto-alert (pulse state transition → TG) | `telegram/telegram-bridge.ts` | pulse-estimator |
 
 **Web UI:**
@@ -179,20 +222,20 @@ Telegram bot integration — multi-bot, forum topics, streaming responses.
 
 ---
 
-## 6. DESKTOP (Tauri)
+## 7. DESKTOP (Tauri)
 
 Native desktop app — system tray, auto-update, embedded server.
 
 | Feature | Key File(s) | Connects To |
 |---------|------------|-------------|
-| System tray (Open, New Session, Quit) | `src-tauri/src/tray.rs` | main.rs |
-| Auto-updater (minisign signed) | `src-tauri/src/main.rs` | companion.theio.vn/updates |
-| Notification plugin (native OS) | `src-tauri/src/main.rs` | tauri-plugin-notification |
-| Embedded server (Bun sidecar + health poll) | `src-tauri/src/server.rs` | Bun server binary |
+| System tray (Open, New Session, Quit) | `src-tauri/src/tray.rs` (repo root) | main.rs |
+| Auto-updater (minisign signed) | `src-tauri/src/main.rs` (repo root) | companion.theio.vn/updates |
+| Notification plugin (native OS) | `src-tauri/src/main.rs` (repo root) | tauri-plugin-notification |
+| Embedded server (Bun sidecar + health poll) | `src-tauri/src/server.rs` (repo root) | Bun server binary |
 
 ---
 
-## 7. UI/UX FRAMEWORK
+## 8. UI/UX FRAMEWORK
 
 Cross-cutting UI features used by multiple domains.
 
@@ -209,7 +252,7 @@ Cross-cutting UI features used by multiple domains.
 
 ---
 
-## 8. INFRASTRUCTURE
+## 9. INFRASTRUCTURE
 
 Auth, license, config, scheduling, database — the foundation.
 

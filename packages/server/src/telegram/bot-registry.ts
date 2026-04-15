@@ -197,8 +197,8 @@ export class BotRegistry {
    * Called on session lifecycle events (complete, error, idle timeout).
    */
   async sendNotification(event: {
-    type: "session_complete" | "session_error" | "session_idle_timeout";
-    sessionId: string;
+    type: "session_complete" | "session_error" | "session_idle_timeout" | "account_captured" | "account_switched" | "account_rate_limited" | "account_all_limited";
+    sessionId?: string;
     shortId?: string;
     projectSlug?: string;
     model?: string;
@@ -206,6 +206,8 @@ export class BotRegistry {
     turns?: number;
     reason?: string;
     durationMs?: number;
+    accountLabel?: string;
+    isNewAccount?: boolean;
   }): Promise<void> {
     const targets: Array<{ botToken: string; chatId: number; label: string }> = [];
 
@@ -255,8 +257,8 @@ export class BotRegistry {
   }
 
   private formatNotification(event: {
-    type: "session_complete" | "session_error" | "session_idle_timeout";
-    sessionId: string;
+    type: "session_complete" | "session_error" | "session_idle_timeout" | "account_captured" | "account_switched" | "account_rate_limited" | "account_all_limited";
+    sessionId?: string;
     shortId?: string;
     projectSlug?: string;
     model?: string;
@@ -264,8 +266,10 @@ export class BotRegistry {
     turns?: number;
     reason?: string;
     durationMs?: number;
+    accountLabel?: string;
+    isNewAccount?: boolean;
   }): string {
-    const name = escapeHTML(event.shortId ?? event.sessionId.slice(0, 8));
+    const name = escapeHTML(event.shortId ?? event.sessionId?.slice(0, 8) ?? "–");
     const project = event.projectSlug ? ` [${escapeHTML(event.projectSlug)}]` : "";
     const model = escapeHTML(event.model ?? "–");
     const cost = event.costUsd != null ? `$${event.costUsd.toFixed(4)}` : "–";
@@ -295,6 +299,25 @@ export class BotRegistry {
           `<code>${name}</code> stopped after inactivity`,
           `${turns} turns | Cost: ${cost}`,
         ].join("\n");
+
+      case "account_captured": {
+        const label = escapeHTML(event.accountLabel ?? "Unknown");
+        const verb = event.isNewAccount ? "captured" : "updated";
+        return `📥 <b>Account ${verb}:</b> ${label}`;
+      }
+
+      case "account_switched": {
+        const label = escapeHTML(event.accountLabel ?? "Unknown");
+        return `🔄 <b>Switched to:</b> ${label}`;
+      }
+
+      case "account_rate_limited": {
+        const label = escapeHTML(event.accountLabel ?? "Unknown");
+        return `⚠️ <b>Rate limited:</b> ${label}\n${event.reason ? escapeHTML(event.reason.slice(0, 200)) : ""}`.trim();
+      }
+
+      case "account_all_limited":
+        return `🚫 <b>All accounts rate-limited.</b> Wait for cooldown or add a new account.`;
 
       default:
         return `Session event: ${escapeHTML(String(event.type))} — ${name}`;

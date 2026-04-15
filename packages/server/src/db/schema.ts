@@ -80,6 +80,8 @@ export const sessions = sqliteTable(
     workspaceId: text("workspace_id").references(() => workspaces.id),
     /** CLI platform (claude, codex, gemini, opencode) */
     cliPlatform: text("cli_platform").default("claude"),
+    /** Account ID used for this session (multi-account management) */
+    accountId: text("account_id"),
 
     // Session management config
     /** Cost warning threshold in USD (null = no budget) */
@@ -229,6 +231,28 @@ export const dailyCosts = sqliteTable("daily_costs", {
   totalCostUsd: real("total_cost_usd").notNull().default(0),
   totalSessions: integer("total_sessions").notNull().default(0),
   totalTokens: integer("total_tokens").notNull().default(0),
+});
+
+// ─── Accounts (Multi-Account Manager) ──────────────────────────────────────
+
+export const accounts = sqliteTable("accounts", {
+  id: text("id").primaryKey(),
+  label: text("label").notNull(), // "Work Max", "Personal Pro"
+  fingerprint: text("fingerprint").notNull().unique(), // sha256(accessToken)[:16] for dedup
+  encryptedCredentials: text("encrypted_credentials").notNull(), // AES-256-GCM encrypted claudeAiOauth JSON
+  subscriptionType: text("subscription_type"), // "max", "pro", "free"
+  rateLimitTier: text("rate_limit_tier"), // "default_claude_max_20x"
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(false), // only one active at a time
+  status: text("status").notNull().default("ready"), // ready | rate_limited | expired | error
+  statusUntil: integer("status_until", { mode: "timestamp_ms" }), // when rate_limited status expires
+  totalCostUsd: real("total_cost_usd").notNull().default(0), // aggregated from sessions
+  lastUsedAt: integer("last_used_at", { mode: "timestamp_ms" }),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // ─── Settings (key-value) ────────────────────────────────────────────────────

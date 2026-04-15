@@ -43,6 +43,12 @@ export interface EventMap {
     channelId?: string;
   };
   "dispatch:error": { sessionId: string; pattern: string; error: string };
+
+  // ── Account events ────────────────────────────────────────────────────────
+  "account:captured": { accountId: string; label: string; isNew: boolean };
+  "account:switched": { accountId: string; label: string };
+  "account:rate_limited": { accountId: string; sessionId: string; reason: string };
+  "account:all_limited": { reason: string };
 }
 
 type EventName = keyof EventMap;

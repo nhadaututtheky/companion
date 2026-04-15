@@ -22,6 +22,8 @@ import { cleanupAllHooks, cleanupOrphanHooks } from "./services/adapters/claude-
 import * as spectatorBridge from "./services/spectator-bridge.js";
 import { startScheduler, stopScheduler } from "./services/scheduler.js";
 import { initWorkspaceRuntime } from "./services/workspace-store.js";
+import { startCredentialWatcher, stopCredentialWatcher } from "./services/credential-watcher.js";
+import { startAutoSwitch, stopAutoSwitch } from "./services/account-auto-switch.js";
 import { validateShareToken } from "./services/share-manager.js";
 import { registerGlobalErrorHandlers, flushErrors } from "./services/error-tracker.js";
 import { join, resolve, dirname } from "node:path";
@@ -68,6 +70,10 @@ warnIfNoAuth();
 
 // Initialize workspace runtime state from DB
 initWorkspaceRuntime();
+
+// Start credential file watcher (multi-account auto-capture) + auto-switch on rate limit
+startCredentialWatcher();
+startAutoSwitch();
 
 // On startup, mark all non-terminal sessions as ended (server restarted, all in-memory state gone)
 const startupCleaned = bulkEndSessions();
@@ -193,6 +199,34 @@ warnIfNoEncryption();
 // Auto-start bots (non-blocking)
 botRegistry.autoStart().catch((err) => {
   log.error("Failed to auto-start Telegram bots", { error: String(err) });
+});
+
+// Wire account events → Telegram notifications
+import { eventBus } from "./services/event-bus.js";
+eventBus.on("account:captured", (payload) => {
+  void botRegistry.sendNotification({
+    type: "account_captured",
+    accountLabel: payload.label,
+    isNewAccount: payload.isNew,
+  });
+});
+eventBus.on("account:switched", (payload) => {
+  void botRegistry.sendNotification({
+    type: "account_switched",
+    accountLabel: payload.label,
+  });
+});
+eventBus.on("account:rate_limited", (payload) => {
+  void botRegistry.sendNotification({
+    type: "account_rate_limited",
+    reason: payload.reason,
+  });
+});
+eventBus.on("account:all_limited", (payload) => {
+  void botRegistry.sendNotification({
+    type: "account_all_limited",
+    reason: payload.reason,
+  });
 });
 
 // Wire spectator count changes → broadcast to session browsers
@@ -542,6 +576,10 @@ function shutdown() {
 
   // Stop scheduler
   stopScheduler();
+
+  // Stop credential watcher + auto-switch
+  stopCredentialWatcher();
+  stopAutoSwitch();
 
   // Stop health check interval
   bridge.stopHealthCheck();
