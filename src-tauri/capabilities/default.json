@@ -28,6 +28,7 @@
     },
     "shell:allow-kill",
     "notification:default",
-    "updater:default"
+    "updater:default",
+    "process:allow-restart"
   ]
 }
