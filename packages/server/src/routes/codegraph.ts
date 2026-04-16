@@ -29,6 +29,7 @@ import {
   detectCommunities,
   enrichCommunitiesWithAILabels,
 } from "../codegraph/analysis.js";
+import { analyzeImpact } from "../codegraph/impact-analyzer.js";
 import { getSessionActivity } from "../codegraph/event-collector.js";
 import { getDb } from "../db/client.js";
 import { codegraphConfig } from "../db/schema.js";
@@ -416,6 +417,29 @@ codegraphRoutes.get("/communities", async (c) => {
     ? await enrichCommunitiesWithAILabels(project)
     : detectCommunities(project);
   return c.json({ success: true, data: communities } satisfies ApiResponse);
+});
+
+// ─── Impact Analysis ──────────────────────────────────────────────────
+
+/** POST /codegraph/impact-analysis — pre-commit change impact analysis */
+codegraphRoutes.post("/impact-analysis", async (c) => {
+  const body = await c.req.json().catch(() => ({})) as Record<string, unknown>;
+  const project = (body.project ?? body.projectSlug) as string | undefined;
+
+  if (!project) {
+    return c.json(
+      { success: false, error: "project field required" } satisfies ApiResponse,
+      400,
+    );
+  }
+
+  const files = Array.isArray(body.files) ? body.files as string[] : undefined;
+  const projectDir = typeof body.projectDir === "string" ? body.projectDir : undefined;
+  const since = typeof body.since === "string" ? body.since : undefined;
+  const maxDepth = typeof body.maxDepth === "number" ? Math.min(body.maxDepth, 5) : undefined;
+
+  const report = analyzeImpact(project, { files, projectDir, since, maxDepth });
+  return c.json({ success: true, data: report } satisfies ApiResponse);
 });
 
 // ─── Config ────────────────────────────────────────────────────────────

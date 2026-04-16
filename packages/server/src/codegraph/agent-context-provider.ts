@@ -597,32 +597,41 @@ export function getSkippedInjections(contextUsedPercent: number): Set<string> {
 // ─── Injection Point D: Break Check ─────────────────────────────────────
 
 /**
- * Check if modified files have removed exports that other files depend on.
+ * Check if modified files have exports used by other files.
+ * Enhanced: includes signature info so agents can detect parameter changes.
  * Returns null if no breaks detected.
  */
 export function checkBreaks(projectSlug: string, modifiedFiles: string[]): string | null {
   if (!isGraphReady(projectSlug) || modifiedFiles.length === 0) return null;
 
   try {
-    const breakages: Array<{ file: string; symbol: string; dependents: string[] }> = [];
+    const breakages: Array<{
+      file: string;
+      symbol: string;
+      signature: string | null;
+      symbolType: string;
+      dependentCount: number;
+      dependents: string[];
+    }> = [];
 
     for (const filePath of modifiedFiles) {
-      // Get current exported nodes from DB (these are the OLD state before rescan)
       const exports = getExportedNodesByFile(projectSlug, filePath);
       if (exports.length === 0) continue;
 
-      // Check reverse deps once per file (not per export)
       const reverseDeps = getReverseDependencies(projectSlug, filePath).filter(
         (d) => d.cumulativeTrust >= 0.5,
       );
 
       if (reverseDeps.length > 0) {
-        const uniqueFiles = [...new Set(reverseDeps.map((d) => d.filePath))].slice(0, 3);
+        const uniqueFiles = [...new Set(reverseDeps.map((d) => d.filePath))];
         for (const exp of exports) {
           breakages.push({
             file: filePath,
             symbol: exp.symbolName,
-            dependents: uniqueFiles,
+            signature: exp.signature ?? null,
+            symbolType: exp.symbolType,
+            dependentCount: uniqueFiles.length,
+            dependents: uniqueFiles.slice(0, 3),
           });
         }
       }
@@ -630,16 +639,27 @@ export function checkBreaks(projectSlug: string, modifiedFiles: string[]): strin
 
     if (breakages.length === 0) return null;
 
+    // Sort by dependent count (highest risk first)
+    breakages.sort((a, b) => b.dependentCount - a.dependentCount);
+
     const lines: string[] = [
       `<codegraph type="break-check">`,
-      `Modified files have exports used by other files:`,
+      `Modified files have exports used by other files (${breakages.length} exports at risk):`,
     ];
 
-    for (const b of breakages.slice(0, 5)) {
-      lines.push(`  ${b.file}::${b.symbol} — used by: ${b.dependents.join(", ")}`);
+    for (const b of breakages.slice(0, 8)) {
+      const sig = b.signature ? ` ${b.signature}` : "";
+      const risk = b.dependentCount >= 5 ? " HIGH-RISK" : b.dependentCount >= 3 ? " MEDIUM" : "";
+      lines.push(
+        `  [${b.symbolType}] ${b.file}::${b.symbol}${sig} — ${b.dependentCount} dependents: ${b.dependents.join(", ")}${risk}`,
+      );
     }
 
-    lines.push(`Verify these imports still work after your changes.`);
+    if (breakages.length > 8) {
+      lines.push(`  ... and ${breakages.length - 8} more`);
+    }
+
+    lines.push(`If you changed function signatures (params, return type), verify all dependents still compile.`);
     lines.push(`</codegraph>`);
     return "\n\n" + lines.join("\n");
   } catch (err) {

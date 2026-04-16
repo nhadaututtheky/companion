@@ -654,4 +654,27 @@ export function registerTools(server: McpServer): void {
       }
     },
   );
+
+  // ── companion_codegraph_diff_impact ────────────────────────────────────
+  server.tool(
+    "companion_codegraph_diff_impact",
+    "Pre-commit impact analysis: what's the blast radius of your changes? Analyzes git diff (or explicit file list) to find affected files, risk scores, impacted communities, and review suggestions.",
+    {
+      projectSlug: z.string().describe("Project slug"),
+      files: z.array(z.string()).optional().describe("Explicit file paths to analyze (overrides git diff)"),
+      projectDir: z.string().optional().describe("Project directory for git diff (defaults to auto-detect)"),
+      since: z.string().optional().describe("Git diff reference (default: HEAD~1)"),
+    },
+    async ({ projectSlug, files, projectDir, since }) => {
+      try {
+        const res = await apiCall<{ data: unknown }>("/codegraph/impact-analysis", {
+          method: "POST",
+          body: { project: projectSlug, files, projectDir, since },
+        });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Diff impact analysis failed: ${String(err)}` }], isError: true };
+      }
+    },
+  );
 }

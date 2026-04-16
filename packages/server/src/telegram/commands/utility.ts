@@ -917,5 +917,73 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
     );
   });
 
+  // ── /impact — pre-commit impact analysis ──────────────────────────────────
+
+  bot.command("impact", async (ctx) => {
+    const mapping = bridge.getMapping(ctx.chat.id, ctx.message?.message_thread_id);
+    if (!mapping) {
+      await ctx.reply("No session attached. Use /stream first.", { parse_mode: "HTML" });
+      return;
+    }
+
+    const record = getSessionRecord(mapping.sessionId);
+    if (!record?.projectSlug) {
+      await ctx.reply("Session has no project linked.", { parse_mode: "HTML" });
+      return;
+    }
+
+    await ctx.reply("🔍 Analyzing impact...", { parse_mode: "HTML" });
+
+    try {
+      const { analyzeImpact } = await import("../../codegraph/impact-analyzer.js");
+      const report = analyzeImpact(record.projectSlug, {
+        projectDir: record.cwd ?? undefined,
+      });
+
+      if (report.fileImpacts.length === 0) {
+        await ctx.reply("✅ No impactful changes detected.", { parse_mode: "HTML" });
+        return;
+      }
+
+      const riskEmoji = { low: "🟢", medium: "🟡", high: "🟠", critical: "🔴" } as const;
+
+      const lines: string[] = [
+        `${riskEmoji[report.overallRisk]} <b>Impact: ${report.overallRisk.toUpperCase()}</b> (${report.overallRiskScore})`,
+        `📁 ${report.changedFiles.length} changed → ${report.blastRadiusFiles} in blast radius`,
+        "",
+      ];
+
+      // Top file impacts
+      for (const f of report.fileImpacts.slice(0, 5)) {
+        const emoji = riskEmoji[f.riskLevel];
+        const deps = f.directDependents.length > 0
+          ? ` → ${f.directDependents.slice(0, 2).map((d) => escapeHTML(d)).join(", ")}`
+          : "";
+        lines.push(`${emoji} <code>${escapeHTML(f.filePath)}</code>${deps}`);
+      }
+
+      if (report.affectedCommunities.length > 0) {
+        lines.push("", "<b>Affected clusters:</b>");
+        for (const c of report.affectedCommunities.slice(0, 3)) {
+          lines.push(`  • ${escapeHTML(c.label)} (${c.changedFileCount} files)`);
+        }
+      }
+
+      if (report.suggestedReviews.length > 0) {
+        lines.push("", "<b>Review suggestions:</b>");
+        for (const s of report.suggestedReviews.slice(0, 3)) {
+          lines.push(`  💡 ${escapeHTML(s)}`);
+        }
+      }
+
+      await ctx.reply(lines.join("\n"), { parse_mode: "HTML" });
+    } catch (err) {
+      log.warn("Impact analysis failed", { error: String(err) });
+      await ctx.reply(`❌ Impact analysis failed: ${escapeHTML(String(err))}`, {
+        parse_mode: "HTML",
+      });
+    }
+  });
+
   log.info("Utility commands registered");
 }
