@@ -6,4 +6,6 @@ export type SettingsTab =
   | "mcp"
   | "rtk"
   | "appearance"
-  | "skills";
+  | "skills"
+  | "accounts"
+  | "desktop";

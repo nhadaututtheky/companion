@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { ArrowSquareUpRight, X, Rocket, ArrowsClockwise, DownloadSimple } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { Z } from "@/lib/z-index";
+import { isTauriEnv } from "@/lib/tauri";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -44,11 +45,6 @@ function getTauriListen():
     | undefined;
 }
 
-/** Check if running inside Tauri desktop shell */
-function isTauriEnv(): boolean {
-  const w = globalThis as unknown as Record<string, unknown>;
-  return !!(w.__TAURI__ as Record<string, unknown> | undefined);
-}
 
 /**
  * Access Tauri updater check() via global API.

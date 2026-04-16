@@ -11,6 +11,8 @@ import {
   BookOpen,
   Crown,
   CheckCircle,
+  UserCircle,
+  Desktop,
 } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useMascotStore, MASCOT_OPTIONS, type MascotId } from "@/lib/stores/mascot-store";
@@ -72,7 +74,7 @@ export function InputField({
 
 // ── Tab types ────────────────────────────────────────────────────────────────
 
-export const TABS: Array<{ id: SettingsTab; label: string; icon: React.ReactNode }> = [
+export const TABS: Array<{ id: SettingsTab; label: string; icon: React.ReactNode; desktopOnly?: boolean }> = [
   { id: "general", label: "General", icon: <Gear size={15} weight="bold" /> },
   { id: "domain", label: "Domain", icon: <Globe size={15} weight="bold" /> },
   { id: "ai", label: "AI Provider", icon: <Robot size={15} weight="bold" /> },
@@ -81,6 +83,8 @@ export const TABS: Array<{ id: SettingsTab; label: string; icon: React.ReactNode
   { id: "rtk", label: "RTK", icon: <Bug size={15} weight="bold" /> },
   { id: "appearance", label: "Appearance", icon: <PaintBrush size={15} weight="bold" /> },
   { id: "skills", label: "Skills", icon: <BookOpen size={15} weight="bold" /> },
+  { id: "accounts", label: "Accounts", icon: <UserCircle size={15} weight="bold" /> },
+  { id: "desktop", label: "Desktop", icon: <Desktop size={15} weight="bold" />, desktopOnly: true },
 ];
 
 // ── Bot config types ─────────────────────────────────────────────────────────

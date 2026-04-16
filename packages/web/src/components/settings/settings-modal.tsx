@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Z } from "@/lib/z-index";
 import { X } from "@phosphor-icons/react";
@@ -18,6 +18,9 @@ import {
 import { McpSettings } from "./mcp-settings";
 import { RTKSettings } from "./rtk-settings";
 import { SkillsTab } from "./skills-tab";
+import { AccountsTab } from "./accounts-tab";
+import { DesktopTab } from "./settings-tab-desktop";
+import { isTauriEnv } from "@/lib/tauri";
 
 // ─── Tab Content Renderer ──────────────────────────────────────────────
 
@@ -39,6 +42,10 @@ function TabContent({ tab }: { tab: SettingsTab }) {
       return <AppearanceTab />;
     case "skills":
       return <SkillsTab />;
+    case "accounts":
+      return <AccountsTab />;
+    case "desktop":
+      return <DesktopTab />;
     default:
       return null;
   }
@@ -50,6 +57,11 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
   const activeTab = useUiStore((s) => s.settingsActiveTab);
   const setActiveTab = useUiStore((s) => s.setSettingsActiveTab);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const isDesktop = isTauriEnv();
+  const visibleTabs = useMemo(
+    () => TABS.filter((t) => !t.desktopOnly || isDesktop),
+    [isDesktop],
+  );
 
   // Body scroll lock
   useEffect(() => {
@@ -154,7 +166,7 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
             width: 200,
           }}
         >
-          {TABS.map((tab) => (
+          {visibleTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
@@ -179,7 +191,7 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
 
         {/* Mobile tab selector (visible below sm breakpoint) */}
         <div className="flex shrink-0 gap-1 overflow-x-auto px-4 py-2 sm:hidden">
-          {TABS.map((tab) => (
+          {visibleTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}

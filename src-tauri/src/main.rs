@@ -18,6 +18,7 @@ async fn main() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_autostart::Builder::new().build())
         .setup(|app| {
             // ── 1. Set up system tray ────────────────────────────────────────
             tray::setup_tray(&app.handle())?;
@@ -69,13 +70,19 @@ async fn main() {
                 const INTERVAL_MS: u64 = 500;
 
                 if server::wait_for_server(MAX_ATTEMPTS, INTERVAL_MS).await {
-                    if let Some(window) = app_handle.get_webview_window("main") {
-                        window
-                            .show()
-                            .unwrap_or_else(|e| log::warn!("Failed to show window: {}", e));
-                        window
-                            .set_focus()
-                            .unwrap_or_else(|e| log::warn!("Failed to focus window: {}", e));
+                    // Check if user wants the window visible on startup
+                    let should_show = should_show_on_startup().await;
+                    if should_show {
+                        if let Some(window) = app_handle.get_webview_window("main") {
+                            window
+                                .show()
+                                .unwrap_or_else(|e| log::warn!("Failed to show window: {}", e));
+                            window
+                                .set_focus()
+                                .unwrap_or_else(|e| log::warn!("Failed to focus window: {}", e));
+                        }
+                    } else {
+                        log::info!("Starting hidden in system tray (show_on_startup = false)");
                     }
 
                     // ── 6. Check for updates in background ──────────────────
@@ -177,4 +184,29 @@ async fn main() {
                 }
             }
         });
+}
+
+/// Check the server setting to decide if the window should be shown on startup.
+/// Defaults to true (show window) if the setting doesn't exist or the server can't be reached.
+async fn should_show_on_startup() -> bool {
+    let resp = reqwest::Client::new()
+        .get("http://127.0.0.1:3579/api/settings/desktop.showOnStartup")
+        .timeout(std::time::Duration::from_secs(2))
+        .send()
+        .await;
+
+    match resp {
+        Ok(r) if r.status().is_success() => {
+            if let Ok(body) = r.json::<serde_json::Value>().await {
+                // API returns { value: "true" | "false" }
+                body.get("value")
+                    .and_then(|v| v.as_str())
+                    .map(|v| v != "false")
+                    .unwrap_or(true)
+            } else {
+                true
+            }
+        }
+        _ => true, // Default: show window
+    }
 }
