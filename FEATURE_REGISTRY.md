@@ -1,7 +1,7 @@
 # Companion — Feature Registry
 
 > Single source of truth for all features, their relationships, and boundaries.
-> Updated: 2026-04-15 | ~140 features across 9 domains
+> Updated: 2026-04-16 | ~155 features across 10 domains
 
 ## How to Use This File
 - **Before building**: Check if feature exists or overlaps with existing ones
@@ -229,7 +229,10 @@ Native desktop app — system tray, auto-update, embedded server.
 | Feature | Key File(s) | Connects To |
 |---------|------------|-------------|
 | System tray (Open, New Session, Quit) | `src-tauri/src/tray.rs` (repo root) | main.rs |
-| Auto-updater (minisign signed) | `src-tauri/src/main.rs` (repo root) | companion.theio.vn/updates |
+| Auto-updater (in-app download + progress bar) | `src-tauri/src/main.rs` (repo root) | companion.theio.vn/updates |
+| Autostart (Start with Windows) | `src-tauri/src/main.rs`, `tauri-plugin-autostart` | settings API |
+| Show/hide on startup | `src-tauri/src/main.rs` should_show_on_startup() | settings API |
+| Desktop settings tab | `settings-tab-desktop.tsx` | tauri-plugin-autostart JS API |
 | Notification plugin (native OS) | `src-tauri/src/main.rs` (repo root) | tauri-plugin-notification |
 | Embedded server (Bun sidecar + health poll) | `src-tauri/src/server.rs` (repo root) | Bun server binary |
 
@@ -329,6 +332,55 @@ Auth, license, config, scheduling, database — the foundation.
 │webintel│   │layout     │   │ updater  │
 └────────┘   └───────────┘   └──────────┘
 ```
+
+## 10. MCP SERVER (Agent Integration)
+
+Companion exposes tools via MCP (Model Context Protocol) for Claude Code and other AI agents.
+
+| Feature | Key File(s) | Connects To |
+|---------|------------|-------------|
+| MCP server (stdio transport) | `mcp/server.ts`, `mcp/index.ts` | HTTP API proxy |
+| Session tools (list, spawn, send, get, summary) | `mcp/tools.ts` | sessions API |
+| Channel tools (create, send, read, debate, conclude) | `mcp/tools.ts` | channels API |
+| WebIntel tools (scrape, research, crawl, status) | `mcp/tools.ts` | webintel API |
+| Wiki tools (list, read, search, note, core, articles) | `mcp/tools.ts` | wiki API |
+| CodeGraph tools (scan, status, search, stats, impact) | `mcp/tools.ts` | codegraph API |
+
+---
+
+## Feature Connectivity Map
+
+Shows which features are connected vs disconnected. Use this to identify integration opportunities.
+
+### Connected Chains (Working)
+```
+Session End → Summary → Wiki Raw Save ✓
+Session → Activity Tracking → Agent Context Injection ✓
+Session → Insights Extraction → New Session Context ✓
+CodeGraph Scan → Incremental Rescan → Edge Resolution ✓
+CodeGraph → Break Check → Agent Context Warning ✓
+CodeGraph → Project Map → Session Start Context ✓
+CodeGraph → Per-Message Relevance → Agent Context ✓
+Wiki L0 → Session Start Context ✓
+Wiki L1 → Per-Message Context ✓
+```
+
+### Disconnected / Zombie Chains (Need Wiring)
+```
+PostToolUse Hook → Event Collector          ZOMBIE (hook received, broadcast, but processToolEvent() never called)
+Communities → Context Injection             DISCONNECTED (computed but zero downstream consumers)
+Communities → Graph Visualization           DISCONNECTED (computed but not rendered in UI)
+CodeGraph ↔ Wiki                            DISCONNECTED (no cross-referencing between code symbols and wiki articles)
+Session Summary → Wiki Auto-Compile         PARTIAL (raw saved, but compile requires manual trigger)
+Git Diff → Impact Analysis (pre-commit)     EXISTS separately but not wired as pipeline
+File Changes → Auto-Reindex                 MANUAL only (no real-time trigger)
+CodeGraph → Architecture Diagrams           NOT IMPLEMENTED (no Mermaid/diagram generation)
+CodeGraph → Claude Code Skills              NOT IMPLEMENTED (no .claude/skills/ generation)
+```
+
+### Planned Fixes → `.rune/plan-codegraph-intel.md`
+
+---
 
 ## Rules for New Features
 
