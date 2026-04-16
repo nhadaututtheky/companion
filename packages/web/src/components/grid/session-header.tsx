@@ -306,6 +306,7 @@ export function SessionHeader({
               }}
             >
               {[
+                { id: "claude-opus-4-7", label: "Opus 4.7", emoji: "🧠", desc: "Best agentic coding" },
                 { id: "claude-opus-4-6", label: "Opus 4.6", emoji: "🧠", desc: "Deep reasoning" },
                 {
                   id: "claude-sonnet-4-6",

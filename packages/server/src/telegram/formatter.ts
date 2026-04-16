@@ -85,12 +85,16 @@ export function toTelegramHTML(markdown: string): string {
   return result.trim();
 }
 
-// ─── Unicode Box-Drawing Tables ─────────────────────────────────────────────
+// ─── Telegram-Friendly Table Formatting ─────────────────────────────────────
 
 /**
- * Detect Markdown tables and convert to Unicode box-drawing format.
- * Input: | Col1 | Col2 |\n|---|---|\n| val1 | val2 |
- * Output: ┌──────┬──────┐\n│ Col1 │ Col2 │\n├──────┼──────┤\n│ val1 │ val2 │\n└──────┴──────┘
+ * Detect Markdown tables and convert to a Telegram-friendly format.
+ *
+ * Strategy:
+ * - Narrow tables (≤3 cols, total width ≤40 chars): compact aligned columns
+ * - Wide tables: key-value card layout per row (header: value)
+ *
+ * This avoids Unicode box-drawing which overflows on mobile Telegram.
  */
 function formatTables(text: string): string {
   const lines = text.split("\n");
@@ -98,19 +102,16 @@ function formatTables(text: string): string {
   let i = 0;
 
   while (i < lines.length) {
-    // Detect table: line with |, followed by separator |---|
     const line = lines[i]!;
     if (
       line.includes("|") &&
       i + 1 < lines.length &&
       /^\s*\|?\s*[-:]+[-|:\s]+\s*\|?\s*$/.test(lines[i + 1]!)
     ) {
-      // Collect all table rows
       const tableRows: string[][] = [];
       let j = i;
 
       while (j < lines.length && lines[j]!.includes("|")) {
-        // Skip separator row
         if (/^\s*\|?\s*[-:]+[-|:\s]+\s*\|?\s*$/.test(lines[j]!)) {
           j++;
           continue;
@@ -127,7 +128,7 @@ function formatTables(text: string): string {
       }
 
       if (tableRows.length > 0) {
-        result.push(renderBoxTable(tableRows));
+        result.push(renderTable(tableRows));
         i = j;
         continue;
       }
@@ -140,44 +141,65 @@ function formatTables(text: string): string {
   return result.join("\n");
 }
 
-function renderBoxTable(rows: string[][]): string {
+/** Estimate if a table is narrow enough for inline columns */
+function isNarrowTable(rows: string[][]): boolean {
   const numCols = Math.max(...rows.map((r) => r.length));
+  if (numCols > 3) return false;
+  const maxTotalWidth = rows.reduce((max, row) => {
+    const rowWidth = row.reduce((sum, cell) => sum + cell.length, 0) + (numCols - 1) * 3;
+    return Math.max(max, rowWidth);
+  }, 0);
+  return maxTotalWidth <= 40;
+}
 
-  // Calculate column widths
-  const colWidths: number[] = Array.from({ length: numCols }, () => 3);
-  for (const row of rows) {
-    for (let c = 0; c < row.length; c++) {
-      colWidths[c] = Math.max(colWidths[c] ?? 3, (row[c]?.length ?? 0) + 2);
-    }
+function renderTable(rows: string[][]): string {
+  if (rows.length < 2) {
+    // Single row — just bold it
+    return `<b>${escapeHTML(rows[0]!.join(" · "))}</b>`;
   }
 
-  const hLine = (left: string, mid: string, right: string, fill: string) =>
-    left + colWidths.map((w) => fill.repeat(w)).join(mid) + right;
+  const headers = rows[0]!;
+  const dataRows = rows.slice(1);
 
-  const dataLine = (cells: string[]) =>
-    "│" +
-    colWidths
-      .map((w, c) => {
-        const cell = cells[c] ?? "";
-        return " " + cell + " ".repeat(w - cell.length - 1);
+  if (isNarrowTable(rows)) {
+    return renderCompactTable(headers, dataRows);
+  }
+  return renderCardTable(headers, dataRows);
+}
+
+/** Compact aligned columns for narrow tables (≤3 cols) */
+function renderCompactTable(headers: string[], dataRows: string[][]): string {
+  const numCols = headers.length;
+  const colWidths: number[] = Array.from({ length: numCols }, (_, c) =>
+    Math.max(headers[c]?.length ?? 0, ...dataRows.map((r) => r[c]?.length ?? 0)),
+  );
+
+  const pad = (s: string, w: number) => s + " ".repeat(Math.max(0, w - s.length));
+  const sep = "  ";
+
+  const headerLine = headers.map((h, c) => pad(h, colWidths[c]!)).join(sep);
+  const divider = colWidths.map((w) => "─".repeat(w)).join(sep);
+  const bodyLines = dataRows.map((row) =>
+    row.map((cell, c) => pad(cell, colWidths[c]!)).join(sep),
+  );
+
+  return `<pre>${headerLine}\n${divider}\n${bodyLines.join("\n")}</pre>`;
+}
+
+/** Card layout for wide tables — one card per data row */
+function renderCardTable(headers: string[], dataRows: string[][]): string {
+  const cards = dataRows.map((row) => {
+    const fields = headers
+      .map((h, c) => {
+        const val = row[c]?.trim();
+        if (!val) return null;
+        return `<b>${escapeHTML(h)}</b>: ${escapeHTML(val)}`;
       })
-      .join("│") +
-    "│";
+      .filter(Boolean);
+    return fields.join("\n");
+  });
 
-  const lines: string[] = [];
-  lines.push(hLine("┌", "┬", "┐", "─"));
-
-  for (let r = 0; r < rows.length; r++) {
-    lines.push(dataLine(rows[r]!));
-    if (r === 0 && rows.length > 1) {
-      // Header separator
-      lines.push(hLine("├", "┼", "┤", "─"));
-    }
-  }
-
-  lines.push(hLine("└", "┴", "┘", "─"));
-
-  return `<pre>${lines.join("\n")}</pre>`;
+  return cards.join("\n─────\n");
 }
 
 // ─── Long Output Formatting ─────────────────────────────────────────────────
@@ -201,34 +223,58 @@ export function splitMessage(text: string, maxLen = TELEGRAM_MAX_LENGTH - 100): 
   const chunks: string[] = [];
   let remaining = text;
 
-  while (remaining.length > 0) {
-    if (remaining.length <= maxLen) {
-      chunks.push(remaining);
-      break;
+  while (remaining.length > maxLen) {
+    let splitAt = -1;
+
+    // Level 1: Code block boundary (after </pre>)
+    const codeBlockEnd = remaining.lastIndexOf("</pre>", maxLen);
+    if (codeBlockEnd > maxLen * 0.3) {
+      splitAt = codeBlockEnd + 6;
     }
 
-    // Try to split at code block boundary (after </pre>)
-    let splitIdx = remaining.lastIndexOf("</pre>", maxLen);
-    if (splitIdx > 0 && splitIdx > maxLen * 0.5) {
-      splitIdx += 6; // include </pre>
-    } else {
-      // Try newline
-      splitIdx = remaining.lastIndexOf("\n", maxLen);
-      if (splitIdx < maxLen * 0.5) {
-        // Try sentence
-        splitIdx = remaining.lastIndexOf(". ", maxLen);
-        if (splitIdx < maxLen * 0.3) {
-          // Hard split
-          splitIdx = maxLen;
-        } else {
-          splitIdx += 1;
-        }
+    // Level 2: Paragraph boundary (\n\n)
+    if (splitAt === -1) {
+      const para = remaining.lastIndexOf("\n\n", maxLen);
+      if (para > maxLen * 0.3) {
+        splitAt = para + 2;
       }
     }
 
-    chunks.push(remaining.slice(0, splitIdx));
-    remaining = remaining.slice(splitIdx);
+    // Level 3: Line boundary (\n)
+    if (splitAt === -1) {
+      const line = remaining.lastIndexOf("\n", maxLen);
+      if (line > maxLen * 0.3) {
+        splitAt = line + 1;
+      }
+    }
+
+    // Level 4: Sentence boundary (". ")
+    if (splitAt === -1) {
+      const sentence = remaining.lastIndexOf(". ", maxLen);
+      if (sentence > maxLen * 0.3) {
+        splitAt = sentence + 2;
+      }
+    }
+
+    // Level 5: Hard split
+    if (splitAt === -1) {
+      splitAt = maxLen;
+    }
+
+    // Safety: don't split inside an HTML tag
+    const candidate = remaining.slice(0, splitAt);
+    const lastTagOpen = candidate.lastIndexOf("<");
+    const lastTagClose = candidate.lastIndexOf(">");
+    if (lastTagOpen > lastTagClose) {
+      // Inside an unclosed tag — back up to before the tag
+      splitAt = lastTagOpen > maxLen * 0.3 ? lastTagOpen : splitAt;
+    }
+
+    chunks.push(remaining.slice(0, splitAt));
+    remaining = remaining.slice(splitAt);
   }
+
+  if (remaining) chunks.push(remaining);
 
   // Repair HTML tag balance in each chunk
   return chunks.map(repairHtmlTags);
@@ -286,6 +332,7 @@ export function stripHtmlTags(html: string): string {
 // ─── Formatting Helpers ─────────────────────────────────────────────────────
 
 export function shortModelName(model: string): string {
+  if (model.includes("opus") && model.includes("4-7")) return "Opus 4.7";
   if (model.includes("opus") && model.includes("4-6")) return "Opus 4.6";
   if (model.includes("opus") && model.includes("4-5")) return "Opus 4.5";
   if (model.includes("sonnet") && model.includes("4-6")) return "Sonnet 4.6";
@@ -295,13 +342,35 @@ export function shortModelName(model: string): string {
 }
 
 export function modelStrength(model: string): string {
+  if (model.includes("opus") && model.includes("4-7"))
+    return "Latest Opus — best agentic coding, adaptive thinking";
   if (model.includes("opus") && model.includes("4-6"))
-    return "Deepest reasoning, complex architecture";
+    return "Deep reasoning, extended thinking, complex architecture";
   if (model.includes("opus") && model.includes("4-5")) return "Strong reasoning, balanced cost";
   if (model.includes("sonnet") && model.includes("4-6")) return "Best coding, fast, cost-effective";
   if (model.includes("sonnet") && model.includes("4-5")) return "Reliable coding, well-rounded";
   if (model.includes("haiku")) return "Ultra-fast, search, simple tasks";
   return "";
+}
+
+export function statusEmoji(status: string): string {
+  switch (status) {
+    case "starting":
+    case "waiting":
+      return "🟡";
+    case "idle":
+      return "🟢";
+    case "running":
+    case "busy":
+    case "compacting":
+      return "🔵";
+    case "ended":
+      return "⚫";
+    case "error":
+      return "🔴";
+    default:
+      return "⚪";
+  }
 }
 
 export function formatCost(costUsd: number): string {

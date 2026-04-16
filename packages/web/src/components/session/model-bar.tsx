@@ -174,7 +174,9 @@ export function ModelBar({
 
 function formatModelName(model: string): string {
   if (model.includes("sonnet")) return "Sonnet 4.6";
-  if (model.includes("opus")) return "Opus 4.6";
+  if (model.includes("opus") && model.includes("4-7")) return "Opus 4.7";
+  if (model.includes("opus") && model.includes("4-6")) return "Opus 4.6";
+  if (model.includes("opus")) return "Opus";
   if (model.includes("haiku")) return "Haiku 4.5";
   // Strip common prefixes
   return model.replace(/^(claude-|openai\/|anthropic\/)/, "");

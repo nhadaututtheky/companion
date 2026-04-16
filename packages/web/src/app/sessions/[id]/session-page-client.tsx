@@ -343,6 +343,7 @@ export function SessionPageClient({ params }: PageProps) {
                     />
                     <ThinkingModeSelector
                       currentMode={session?.state?.thinking_mode ?? "adaptive"}
+                      currentModel={session?.model ?? "claude-sonnet-4-6"}
                       onModeChange={setThinkingMode}
                       disabled={session?.status === "starting"}
                     />

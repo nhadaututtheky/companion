@@ -4,6 +4,7 @@ import { Brain } from "@phosphor-icons/react";
 
 const MODELS = [
   { value: "claude-sonnet-4-6", label: "Sonnet 4.6", short: "S" },
+  { value: "claude-opus-4-7", label: "Opus 4.7", short: "O" },
   { value: "claude-opus-4-6", label: "Opus 4.6", short: "O" },
   { value: "claude-haiku-4-5", label: "Haiku 4.5", short: "H" },
 ] as const;

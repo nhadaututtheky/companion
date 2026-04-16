@@ -93,6 +93,7 @@ interface UseSessionReturn {
 const MODEL_RATES: Record<string, { input: number; output: number }> = {
   "claude-haiku-4-5": { input: 0.8 / 1_000_000, output: 4.0 / 1_000_000 },
   "claude-sonnet-4-6": { input: 3.0 / 1_000_000, output: 15.0 / 1_000_000 },
+  "claude-opus-4-7": { input: 15.0 / 1_000_000, output: 75.0 / 1_000_000 },
   "claude-opus-4-6": { input: 15.0 / 1_000_000, output: 75.0 / 1_000_000 },
 };
 

@@ -133,6 +133,7 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
   // ── /model [name] — Change model ──────────────────────────────────────
 
   const ALLOWED_MODELS = [
+    "claude-opus-4-7",
     "claude-opus-4-6",
     "claude-sonnet-4-6",
     "claude-haiku-4-5",

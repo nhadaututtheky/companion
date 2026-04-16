@@ -504,6 +504,14 @@ function loadConfiguredProviders(): ProviderEntry[] {
           capabilities: { toolUse: true, streaming: true, vision: true, reasoning: true },
         },
         {
+          id: "claude-opus-4-7",
+          name: "Claude Opus 4.7",
+          provider: "anthropic",
+          contextWindow: 200_000,
+          free: false,
+          capabilities: { toolUse: true, streaming: true, vision: true, reasoning: true },
+        },
+        {
           id: "claude-opus-4-6-20250514",
           name: "Claude Opus 4.6",
           provider: "anthropic",

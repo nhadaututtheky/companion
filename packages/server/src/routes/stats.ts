@@ -302,6 +302,7 @@ statsRoutes.get("/", (c) => {
   const MODEL_INPUT_RATES: Record<string, number> = {
     "claude-haiku-4-5": 0.8 / 1_000_000,
     "claude-sonnet-4-6": 3.0 / 1_000_000,
+    "claude-opus-4-7": 15.0 / 1_000_000,
     "claude-opus-4-6": 15.0 / 1_000_000,
   };
   const totalModelSessions = modelBreakdown.reduce((s, m) => s + m.count, 0);
@@ -393,6 +394,7 @@ statsRoutes.get("/features", (c) => {
   const MODEL_INPUT_RATES: Record<string, number> = {
     "claude-haiku-4-5": 0.8 / 1_000_000,
     "claude-sonnet-4-6": 3.0 / 1_000_000,
+    "claude-opus-4-7": 15.0 / 1_000_000,
     "claude-opus-4-6": 15.0 / 1_000_000,
   };
   const modelCounts = new Map<string, number>();

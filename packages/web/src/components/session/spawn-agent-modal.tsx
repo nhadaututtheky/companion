@@ -13,6 +13,7 @@ const ROLES = [
 ] as const;
 
 const MODELS = [
+  { id: "claude-opus-4-7", label: "Opus 4.7", desc: "Best agentic coding" },
   { id: "claude-opus-4-6", label: "Opus 4.6", desc: "Deep reasoning" },
   { id: "claude-sonnet-4-6", label: "Sonnet 4.6", desc: "Fast & capable" },
   { id: "claude-haiku-4-5", label: "Haiku 4.5", desc: "Quick tasks" },

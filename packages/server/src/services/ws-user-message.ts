@@ -46,6 +46,7 @@ import type {
   BrowserIncomingMessage,
   SessionStatus,
 } from "@companion/shared";
+import { modelSupportsDeepThinking } from "@companion/shared";
 
 const log = createLogger("ws-user-message");
 
@@ -110,9 +111,19 @@ export class UserMessageHandler {
     switch (msg.type) {
       case "user_message":
         if (msg.images && msg.images.length > 0) {
-          // Images attached — caller handles multimodal pipeline directly on WsBridge
-          // (sendMultimodalMessage is not extracted — it stays on WsBridge)
-          break;
+          // Images attached — build content blocks and send multimodal
+          const contentBlocks: Array<
+            | { type: "text"; text: string }
+            | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
+          > = [];
+          if (msg.content) contentBlocks.push({ type: "text", text: msg.content });
+          for (const img of msg.images) {
+            contentBlocks.push({
+              type: "image",
+              source: { type: "base64", media_type: img.mediaType, data: img.data },
+            });
+          }
+          this.sendMultimodalMessage(session, contentBlocks, "web");
         } else {
           this.handleUserMessage(session, msg.content, "web");
         }
@@ -460,9 +471,61 @@ export class UserMessageHandler {
     this.bridge.sendToCLI(session, ndjson);
   }
 
+  // ── sendMultimodalMessage ───────────────────────────────────────────────────
+
+  /**
+   * Send a multimodal message (text + images) directly to CLI.
+   * Bypasses enrichment pipeline — images don't need CodeGraph/WebIntel.
+   */
+  sendMultimodalMessage(
+    session: ActiveSession,
+    contentBlocks: Array<
+      | { type: "text"; text: string }
+      | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
+    >,
+    source?: string,
+  ): void {
+    // Record text parts in history
+    const textParts = contentBlocks
+      .filter((b): b is { type: "text"; text: string } => b.type === "text")
+      .map((b) => b.text);
+    const historyMsg: BrowserIncomingMessage = {
+      type: "user_message",
+      content: textParts.join("\n") || "[image]",
+      timestamp: Date.now(),
+      source: source ?? "web",
+    };
+    pushMessageHistory(session, historyMsg);
+    this.bridge.broadcastToAll(session, historyMsg);
+
+    // Store text representation in DB
+    storeMessage({
+      id: randomUUID(),
+      sessionId: session.id,
+      role: "user",
+      content: textParts.join("\n") || "[image]",
+      source: (source ?? "web") as "telegram" | "web" | "api" | "agent" | "system",
+    });
+
+    // SDK engine: doesn't support content blocks — save image to temp file + send path
+    const existingSdkHandle = this.bridge.getSdkHandle(session.id);
+    if (existingSdkHandle || USE_SDK_ENGINE) {
+      void this.sendMultimodalViaTempFile(session, contentBlocks, textParts);
+      return;
+    }
+
+    // CLI engine: send multimodal content blocks directly (Claude API format)
+    const ndjson = JSON.stringify({
+      type: "user",
+      message: { role: "user", content: contentBlocks },
+    });
+    this.bridge.sendToCLI(session, ndjson);
+    this.bridge.updateStatus(session, "busy");
+  }
+
   // ── sendMultimodalViaTempFile ──────────────────────────────────────────────
 
-  async sendMultimodalViaTempFile(
+  private async sendMultimodalViaTempFile(
     session: ActiveSession,
     contentBlocks: Array<
       | { type: "text"; text: string }
@@ -518,7 +581,7 @@ export class UserMessageHandler {
 
   private static readonly MODEL_MAP: Record<string, string> = {
     sonnet: "claude-sonnet-4-6",
-    opus: "claude-opus-4-6",
+    opus: "claude-opus-4-7",
     haiku: "claude-haiku-4-5",
   };
 
@@ -544,12 +607,31 @@ export class UserMessageHandler {
       this.bridge.sendToCLI(session, ndjson);
     }
 
-    session.state = { ...session.state, model: cliModel };
+    // Auto-downgrade thinking mode if new model doesn't support deep thinking
+    const thinkingMode = session.state.thinking_mode;
+    const needsDowngrade =
+      thinkingMode === "deep" && !modelSupportsDeepThinking(cliModel);
+
+    session.state = {
+      ...session.state,
+      model: cliModel,
+      ...(needsDowngrade ? { thinking_mode: "adaptive" as const } : {}),
+    };
 
     this.bridge.broadcastToAll(session, {
       type: "session_update",
-      session: { model: cliModel },
+      session: {
+        model: cliModel,
+        ...(needsDowngrade ? { thinking_mode: "adaptive" } : {}),
+      },
     });
+
+    if (needsDowngrade) {
+      log.info("Auto-downgraded thinking mode from deep to adaptive", {
+        sessionId: session.id,
+        model: cliModel,
+      });
+    }
   }
 
   // ── handleSpawnCommand ─────────────────────────────────────────────────────

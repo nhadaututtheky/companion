@@ -421,6 +421,31 @@ export function thinkingModeTobudget(mode: ThinkingMode): number | undefined {
   }
 }
 
+/** Models that support extended thinking (deep mode with budget_tokens). Opus 4.7+ uses adaptive-only. */
+const DEEP_THINKING_MODELS = new Set([
+  "claude-opus-4-6",
+  "claude-sonnet-4-6",
+  "claude-sonnet-4-5-20250514",
+  "claude-sonnet-4-5",
+]);
+
+/** Check if a model supports deep (extended) thinking mode */
+export function modelSupportsDeepThinking(model: string): boolean {
+  if (DEEP_THINKING_MODELS.has(model)) return true;
+  // Match partial: any sonnet-4-6 or opus-4-6 variant
+  if (model.includes("sonnet") && model.includes("4-6")) return true;
+  if (model.includes("opus") && model.includes("4-6")) return true;
+  if (model.includes("sonnet") && model.includes("4-5")) return true;
+  return false;
+}
+
+/** Get available thinking modes for a given model */
+export function getAvailableThinkingModes(model: string): ThinkingMode[] {
+  return modelSupportsDeepThinking(model)
+    ? ["adaptive", "off", "deep"]
+    : ["adaptive", "off"];
+}
+
 // ─── Auto-Approve Config ─────────────────────────────────────────────────
 
 export interface AutoApproveConfig {

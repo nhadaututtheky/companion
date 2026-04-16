@@ -25,6 +25,7 @@ import {
   updateSessionTags,
   updateSessionPersona,
   getChildSessions,
+  hasTelegramMapping,
 } from "../services/session-store.js";
 import { getProject, upsertProject } from "../services/project-profiles.js";
 import { getTemplate, resolveTemplateVariables } from "../services/templates.js";
@@ -47,6 +48,7 @@ const log = createLogger("routes:sessions");
 
 // Allowlist of valid Claude model identifiers — prevents CLI argument injection
 const ALLOWED_MODELS = [
+  "claude-opus-4-7",
   "claude-opus-4-6",
   "claude-sonnet-4-6",
   "claude-haiku-4-5",
@@ -124,6 +126,10 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     let selfHealedCount = 0;
     for (const item of items) {
       if (activeStatuses.has(item.status) && !bridge.getSession(item.id)) {
+        // Skip self-heal for sessions with Telegram mapping — they may be active
+        // via Telegram even without a browser WebSocket connection
+        if (hasTelegramMapping(item.id)) continue;
+
         endSessionRecord(item.id);
         item.status = "ended";
         selfHealedCount++;

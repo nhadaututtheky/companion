@@ -1,9 +1,10 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Lightning, LightningSlash, Brain } from "@phosphor-icons/react";
 import type { ThinkingMode } from "@companion/shared";
+import { getAvailableThinkingModes } from "@companion/shared";
 
-const MODES: { value: ThinkingMode; label: string; short: string; icon: typeof Lightning }[] = [
+const ALL_MODES: { value: ThinkingMode; label: string; short: string; icon: typeof Lightning }[] = [
   { value: "adaptive", label: "Adaptive", short: "A", icon: Lightning },
   { value: "off", label: "Off", short: "—", icon: LightningSlash },
   { value: "deep", label: "Deep", short: "D", icon: Brain },
@@ -12,20 +13,37 @@ const MODES: { value: ThinkingMode; label: string; short: string; icon: typeof L
 interface ThinkingModeSelectorProps {
   currentMode: ThinkingMode;
   onModeChange: (mode: ThinkingMode) => void;
+  /** Current model ID — used to filter available thinking modes */
+  currentModel?: string;
   disabled?: boolean;
 }
 
 function getModeDisplay(mode: ThinkingMode) {
-  return MODES.find((m) => m.value === mode) ?? MODES[0]!;
+  return ALL_MODES.find((m) => m.value === mode) ?? ALL_MODES[0]!;
 }
 
 export function ThinkingModeSelector({
   currentMode,
   onModeChange,
+  currentModel,
   disabled,
 }: ThinkingModeSelectorProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  const availableModes = useMemo(() => {
+    const allowed = getAvailableThinkingModes(currentModel ?? "claude-sonnet-4-6");
+    return ALL_MODES.filter((m) => allowed.includes(m.value));
+  }, [currentModel]);
+
+  // Auto-downgrade: if current mode isn't available for this model, switch to adaptive
+  useEffect(() => {
+    const allowed = getAvailableThinkingModes(currentModel ?? "claude-sonnet-4-6");
+    if (!allowed.includes(currentMode)) {
+      onModeChange("adaptive");
+    }
+  }, [currentModel, currentMode, onModeChange]);
+
   const display = getModeDisplay(currentMode);
 
   useEffect(() => {
@@ -70,7 +88,7 @@ export function ThinkingModeSelector({
             minWidth: 160,
           }}
         >
-          {MODES.map((m) => {
+          {availableModes.map((m) => {
             const isActive = m.value === currentMode;
             const MIcon = m.icon;
             return (

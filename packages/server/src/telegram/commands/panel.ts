@@ -20,16 +20,17 @@ import { createLogger } from "../../logger.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
 import { getProject } from "../../services/project-profiles.js";
 import { getSessionRecord } from "../../services/session-store.js";
+import { modelSupportsDeepThinking } from "@companion/shared";
 
 const log = createLogger("telegram:panel");
 
 // ─── Model options ───────────────────────────────────────────────────────────
 
 const MODELS = [
+  { label: "Opus 4.7", key: "o47", value: "claude-opus-4-7" },
   { label: "Opus 4.6", key: "o46", value: "claude-opus-4-6" },
   { label: "Sonnet 4.6", key: "s46", value: "claude-sonnet-4-6" },
   { label: "Haiku 4.5", key: "h45", value: "claude-haiku-4-5" },
-  { label: "Opus 4.5", key: "o45", value: "claude-opus-4-5" },
   { label: "Sonnet 4.5", key: "s45", value: "claude-sonnet-4-5" },
 ];
 
@@ -53,13 +54,16 @@ function buildModelKeyboard(sessionId: string, currentModel: string, currentThin
     );
   });
 
-  const thinkButtons = (
-    [
-      { label: "Adaptive", value: "adaptive" },
-      { label: "Off", value: "off" },
-      { label: "Deep", value: "deep" },
-    ] as const
-  ).map((t) => {
+  const allThinkOpts = [
+    { label: "Adaptive", value: "adaptive" },
+    { label: "Off", value: "off" },
+    { label: "Deep", value: "deep" },
+  ] as const;
+
+  const supportsDeep = modelSupportsDeepThinking(currentModel);
+  const thinkOpts = supportsDeep ? allThinkOpts : allThinkOpts.filter((t) => t.value !== "deep");
+
+  const thinkButtons = thinkOpts.map((t) => {
     const isCurrent = currentThinking === t.value;
     return styledBtn(
       `${t.label}${isCurrent ? " ✓" : ""}`,
@@ -71,7 +75,7 @@ function buildModelKeyboard(sessionId: string, currentModel: string, currentThin
   return {
     inline_keyboard: [
       modelButtons.slice(0, 3),
-      modelButtons.slice(3),
+      modelButtons.slice(3, 5),
       thinkButtons,
       [styledBtn("↩ Back", `panel:status:${sessionId}`)],
     ],
@@ -502,9 +506,7 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     const sessionId = ctx.match[1]!;
     await ctx.answerCallbackQuery();
 
-    const detailed = (
-      bridge as unknown as { contextBreakdowns: Map<string, string> }
-    ).contextBreakdowns.get(sessionId);
+    const detailed = bridge.getContextBreakdown(sessionId);
 
     if (!detailed) {
       await ctx.editMessageText("Context breakdown no longer available.").catch(() => {});
