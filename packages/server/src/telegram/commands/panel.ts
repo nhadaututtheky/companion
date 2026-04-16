@@ -31,6 +31,7 @@ const MODELS = [
   { label: "Opus 4.6", key: "o46", value: "claude-opus-4-6" },
   { label: "Sonnet 4.6", key: "s46", value: "claude-sonnet-4-6" },
   { label: "Haiku 4.5", key: "h45", value: "claude-haiku-4-5" },
+  { label: "Opus 4.5", key: "o45", value: "claude-opus-4-5" },
   { label: "Sonnet 4.5", key: "s45", value: "claude-sonnet-4-5" },
 ];
 
@@ -75,7 +76,7 @@ function buildModelKeyboard(sessionId: string, currentModel: string, currentThin
   return {
     inline_keyboard: [
       modelButtons.slice(0, 3),
-      modelButtons.slice(3, 5),
+      modelButtons.slice(3),
       thinkButtons,
       [styledBtn("↩ Back", `panel:status:${sessionId}`)],
     ],

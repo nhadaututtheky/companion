@@ -170,16 +170,20 @@ function renderTable(rows: string[][]): string {
 /** Compact aligned columns for narrow tables (≤3 cols) */
 function renderCompactTable(headers: string[], dataRows: string[][]): string {
   const numCols = headers.length;
+  // Escape all cells first, then calculate widths on escaped content
+  const escHeaders = headers.map(escapeHTML);
+  const escDataRows = dataRows.map((row) => row.map(escapeHTML));
+
   const colWidths: number[] = Array.from({ length: numCols }, (_, c) =>
-    Math.max(headers[c]?.length ?? 0, ...dataRows.map((r) => r[c]?.length ?? 0)),
+    Math.max(escHeaders[c]?.length ?? 0, ...escDataRows.map((r) => r[c]?.length ?? 0)),
   );
 
   const pad = (s: string, w: number) => s + " ".repeat(Math.max(0, w - s.length));
   const sep = "  ";
 
-  const headerLine = headers.map((h, c) => pad(h, colWidths[c]!)).join(sep);
+  const headerLine = escHeaders.map((h, c) => pad(h, colWidths[c]!)).join(sep);
   const divider = colWidths.map((w) => "─".repeat(w)).join(sep);
-  const bodyLines = dataRows.map((row) =>
+  const bodyLines = escDataRows.map((row) =>
     row.map((cell, c) => pad(cell, colWidths[c]!)).join(sep),
   );
 
