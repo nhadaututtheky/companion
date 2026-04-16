@@ -27,6 +27,7 @@ import {
   computeRiskScores,
   traceExecutionFlows,
   detectCommunities,
+  enrichCommunitiesWithAILabels,
 } from "../codegraph/analysis.js";
 import { getSessionActivity } from "../codegraph/event-collector.js";
 import { getDb } from "../db/client.js";
@@ -164,7 +165,7 @@ codegraphRoutes.get("/status", (c) => {
   } satisfies ApiResponse);
 });
 
-/** GET /codegraph/stats?project=slug — graph statistics */
+/** GET /codegraph/stats?project=slug — graph statistics + community summary */
 codegraphRoutes.get("/stats", (c) => {
   const project = c.req.query("project");
   if (!project) {
@@ -175,7 +176,22 @@ codegraphRoutes.get("/stats", (c) => {
   }
 
   const stats = getProjectStats(project);
-  return c.json({ success: true, data: stats } satisfies ApiResponse);
+
+  // Enrich with community summary (sync — uses cached Leiden results)
+  const communities = detectCommunities(project);
+  const topCommunities = communities
+    .filter((c) => c.nodeCount >= 3)
+    .slice(0, 5)
+    .map((c) => ({ label: c.label, nodeCount: c.nodeCount, cohesion: c.cohesion }));
+
+  return c.json({
+    success: true,
+    data: {
+      ...stats,
+      communityCount: communities.length,
+      topCommunities,
+    },
+  } satisfies ApiResponse);
 });
 
 // ─── Query ──────────────────────────────────────────────────────────────
@@ -385,8 +401,8 @@ codegraphRoutes.get("/flows", (c) => {
   return c.json({ success: true, data: flows } satisfies ApiResponse);
 });
 
-/** GET /codegraph/communities?project=slug — community detection */
-codegraphRoutes.get("/communities", (c) => {
+/** GET /codegraph/communities?project=slug&ai=true — community detection */
+codegraphRoutes.get("/communities", async (c) => {
   const project = c.req.query("project");
   if (!project) {
     return c.json(
@@ -395,7 +411,10 @@ codegraphRoutes.get("/communities", (c) => {
     );
   }
 
-  const communities = detectCommunities(project);
+  const useAI = c.req.query("ai") === "true";
+  const communities = useAI
+    ? await enrichCommunitiesWithAILabels(project)
+    : detectCommunities(project);
   return c.json({ success: true, data: communities } satisfies ApiResponse);
 });
 

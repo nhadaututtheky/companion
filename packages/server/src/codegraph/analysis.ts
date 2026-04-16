@@ -10,6 +10,11 @@ import { eq, and, sql, inArray } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { getSqlite } from "../db/client.js";
 import { codeNodes, codeEdges } from "../db/schema.js";
+import { leiden } from "./leiden.js";
+import { labelCommunities } from "./semantic-describer.js";
+import { createLogger } from "../logger.js";
+
+const log = createLogger("codegraph:analysis");
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -521,101 +526,270 @@ export function traceExecutionFlows(
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// 4. Community Detection (file-path grouping)
+// 4. Community Detection (Leiden algorithm + path-based fallback)
 // ═══════════════════════════════════════════════════════════════════
 
+// Cache: projectSlug → { result, timestamp }
+const communityCache = new Map<string, { result: Community[]; timestamp: number }>();
+const COMMUNITY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+/** Invalidate community cache for a project (call after rescan). */
+export function invalidateCommunityCache(projectSlug: string): void {
+  communityCache.delete(projectSlug);
+}
+
 /**
- * Group nodes into communities by common file path prefix.
- * Lightweight alternative to Leiden — no external dependencies.
- * Also computes cohesion (internal_edges / total_edges).
+ * Detect communities using Leiden algorithm on the code graph.
+ * Falls back to path-based grouping when graph has <10 nodes.
+ * Results are cached for 5 minutes.
  */
 export function detectCommunities(projectSlug: string): Community[] {
+  // Check cache
+  const cached = communityCache.get(projectSlug);
+  if (cached && Date.now() - cached.timestamp < COMMUNITY_CACHE_TTL) {
+    return cached.result;
+  }
+
   const db = getDb();
 
-  // Single query: get all nodes with id + filePath (used for both grouping and edge mapping)
-  const allNodeFiles = db
-    .select({ id: codeNodes.id, filePath: codeNodes.filePath })
+  // Get all nodes
+  const allNodes = db
+    .select({ id: codeNodes.id, filePath: codeNodes.filePath, symbolName: codeNodes.symbolName })
     .from(codeNodes)
     .where(eq(codeNodes.projectSlug, projectSlug))
     .all();
 
-  if (allNodeFiles.length === 0) return [];
+  if (allNodes.length === 0) return [];
 
-  // Build node → file mapping and file → node count
-  const nodeToFile = new Map<number, string>();
+  // Get all edges with trust weights
+  const allEdges = db
+    .select({
+      sourceNodeId: codeEdges.sourceNodeId,
+      targetNodeId: codeEdges.targetNodeId,
+      trustWeight: codeEdges.trustWeight,
+    })
+    .from(codeEdges)
+    .where(eq(codeEdges.projectSlug, projectSlug))
+    .all();
+
+  // Fallback to path-based for sparse graphs
+  if (allNodes.length < 10 || allEdges.length < 5) {
+    const result = detectCommunitiesByPath(allNodes, allEdges);
+    communityCache.set(projectSlug, { result, timestamp: Date.now() });
+    return result;
+  }
+
+  // Run Leiden
+  const nodeIds = allNodes.map((n) => n.id);
+  const leidenEdges = allEdges.map((e) => ({
+    source: e.sourceNodeId,
+    target: e.targetNodeId,
+    weight: e.trustWeight,
+  }));
+
+  const leidenResult = leiden(nodeIds, leidenEdges, { resolution: 1.0, maxIterations: 10 });
+
+  log.info("Leiden completed", {
+    projectSlug,
+    nodes: nodeIds.length,
+    edges: allEdges.length,
+    communities: leidenResult.communities.length,
+    modularity: leidenResult.modularity,
+    iterations: leidenResult.iterations,
+  });
+
+  // Build node lookup
+  const nodeMap = new Map(allNodes.map((n) => [n.id, n]));
+
+  // Convert Leiden results to Community interface
+  const communities: Community[] = leidenResult.communities
+    .filter((c) => c.members.length >= 2) // skip singleton communities
+    .map((c) => {
+      // Collect unique files in this community
+      const files = [...new Set(
+        c.members
+          .map((id) => nodeMap.get(id)?.filePath)
+          .filter((f): f is string => !!f),
+      )];
+
+      // Generate label from most common path prefix
+      const label = inferCommunityLabel(files, c.members, nodeMap);
+
+      return {
+        id: `leiden-${c.id}`,
+        label,
+        files,
+        nodeCount: c.members.length,
+        cohesion: c.cohesion,
+      };
+    });
+
+  const sorted = communities.sort((a, b) => b.nodeCount - a.nodeCount);
+  communityCache.set(projectSlug, { result: sorted, timestamp: Date.now() });
+  return sorted;
+}
+
+// Label cache: communityId → AI label
+const aiLabelCache = new Map<string, string>();
+
+/**
+ * Enrich communities with AI-generated labels (async).
+ * Uses Haiku to generate descriptive names like "Authentication & Sessions".
+ * Results are cached — call after detectCommunities().
+ */
+export async function enrichCommunitiesWithAILabels(
+  projectSlug: string,
+): Promise<Community[]> {
+  const communities = detectCommunities(projectSlug);
+  if (communities.length === 0) return communities;
+
+  // Find communities without AI labels
+  const needLabeling = communities.filter((c) => !aiLabelCache.has(c.id));
+
+  if (needLabeling.length > 0) {
+    const db = getDb();
+
+    // Get top symbols per community for context
+    const inputs = needLabeling.map((c) => {
+      // Get symbol names for members in this community's files
+      const symbols = db
+        .select({ symbolName: codeNodes.symbolName })
+        .from(codeNodes)
+        .where(
+          and(
+            eq(codeNodes.projectSlug, projectSlug),
+            inArray(codeNodes.filePath, c.files.slice(0, 10)),
+            eq(codeNodes.isExported, true),
+          ),
+        )
+        .limit(10)
+        .all()
+        .map((n) => n.symbolName);
+
+      return {
+        communityId: c.id,
+        files: c.files,
+        topSymbols: symbols,
+        nodeCount: c.nodeCount,
+      };
+    });
+
+    try {
+      const labels = await labelCommunities(inputs);
+      for (const [id, label] of labels) {
+        aiLabelCache.set(id, label);
+      }
+    } catch {
+      log.debug("AI community labeling failed, using inferred labels");
+    }
+  }
+
+  // Apply cached AI labels
+  return communities.map((c) => {
+    const aiLabel = aiLabelCache.get(c.id);
+    return aiLabel ? { ...c, label: aiLabel } : c;
+  });
+}
+
+/**
+ * Infer a human-readable label for a community from its files and symbols.
+ * Uses common path prefix + top symbol names.
+ */
+function inferCommunityLabel(
+  files: string[],
+  memberIds: number[],
+  nodeMap: Map<number, { id: number; filePath: string; symbolName: string }>,
+): string {
+  if (files.length === 0) return "Unknown";
+
+  // Find common path prefix
+  const parts = files.map((f) => f.replace(/\\/g, "/").split("/"));
+  let commonDepth = 0;
+
+  if (parts.length > 0) {
+    for (let i = 0; i < (parts[0]?.length ?? 0) - 1; i++) {
+      const segment = parts[0]![i];
+      if (parts.every((p) => p[i] === segment)) {
+        commonDepth = i + 1;
+      } else {
+        break;
+      }
+    }
+  }
+
+  const prefix = commonDepth > 0
+    ? parts[0]!.slice(0, Math.min(commonDepth + 1, 3)).join("/")
+    : files[0]!.replace(/\\/g, "/").split("/").slice(0, 2).join("/");
+
+  // Add top symbol hint if community has a clear focus
+  const symbols = memberIds
+    .map((id) => nodeMap.get(id)?.symbolName)
+    .filter((s): s is string => !!s);
+
+  if (symbols.length <= 3) {
+    return `${prefix} (${symbols.join(", ")})`;
+  }
+
+  return prefix;
+}
+
+/**
+ * Path-based fallback for sparse graphs (<10 nodes).
+ * Groups by top-level directory segments.
+ */
+function detectCommunitiesByPath(
+  allNodes: Array<{ id: number; filePath: string; symbolName: string }>,
+  allEdges: Array<{ sourceNodeId: number; targetNodeId: number; trustWeight: number }>,
+): Community[] {
+  const nodeToFile = new Map(allNodes.map((n) => [n.id, n.filePath]));
   const fileNodeCounts = new Map<string, number>();
-  for (const n of allNodeFiles) {
-    nodeToFile.set(n.id, n.filePath);
+  for (const n of allNodes) {
     fileNodeCounts.set(n.filePath, (fileNodeCounts.get(n.filePath) ?? 0) + 1);
   }
 
-  // Group by top-level directory (2 segments: e.g. "src/components")
   const communityMap = new Map<string, { files: string[]; nodeCount: number }>();
-
   for (const [filePath, count] of fileNodeCounts) {
     const parts = filePath.replace(/\\/g, "/").split("/");
-    // Use first 2 meaningful segments as community key
     const key =
       parts.length >= 3 ? `${parts[0]}/${parts[1]}` : parts.length >= 2 ? parts[0]! : "root";
-
     const entry = communityMap.get(key) ?? { files: [], nodeCount: 0 };
     entry.files.push(filePath);
     entry.nodeCount += count;
     communityMap.set(key, entry);
   }
 
-  // Get all edges for cohesion calculation
-  const edges = db
-    .select({
-      sourceNodeId: codeEdges.sourceNodeId,
-      targetNodeId: codeEdges.targetNodeId,
-    })
-    .from(codeEdges)
-    .where(eq(codeEdges.projectSlug, projectSlug))
-    .all();
-
-  // Build file → community mapping
   const fileToCommunity = new Map<string, string>();
   for (const [key, entry] of communityMap) {
-    for (const f of entry.files) {
-      fileToCommunity.set(f, key);
-    }
+    for (const f of entry.files) fileToCommunity.set(f, key);
   }
 
-  // Count internal vs external edges per community
   const internalEdges = new Map<string, number>();
   const externalEdges = new Map<string, number>();
-
-  for (const edge of edges) {
-    const sourceFile = nodeToFile.get(edge.sourceNodeId);
-    const targetFile = nodeToFile.get(edge.targetNodeId);
-    if (!sourceFile || !targetFile) continue;
-
-    const sourceCommunity = fileToCommunity.get(sourceFile);
-    const targetCommunity = fileToCommunity.get(targetFile);
-    if (!sourceCommunity) continue;
-
-    if (sourceCommunity === targetCommunity) {
-      internalEdges.set(sourceCommunity, (internalEdges.get(sourceCommunity) ?? 0) + 1);
+  for (const edge of allEdges) {
+    const sf = nodeToFile.get(edge.sourceNodeId);
+    const tf = nodeToFile.get(edge.targetNodeId);
+    if (!sf || !tf) continue;
+    const sc = fileToCommunity.get(sf);
+    const tc = fileToCommunity.get(tf);
+    if (!sc) continue;
+    if (sc === tc) {
+      internalEdges.set(sc, (internalEdges.get(sc) ?? 0) + 1);
     } else {
-      externalEdges.set(sourceCommunity, (externalEdges.get(sourceCommunity) ?? 0) + 1);
+      externalEdges.set(sc, (externalEdges.get(sc) ?? 0) + 1);
     }
   }
 
-  // Build result
   const communities: Community[] = [];
   for (const [key, entry] of communityMap) {
     const internal = internalEdges.get(key) ?? 0;
     const external = externalEdges.get(key) ?? 0;
     const total = internal + external;
-    const cohesion = total > 0 ? internal / total : 0;
-
     communities.push({
       id: key.replace(/\//g, "--").replace(/[^a-zA-Z0-9-_]/g, "-"),
       label: key,
       files: entry.files,
       nodeCount: entry.nodeCount,
-      cohesion: Math.round(cohesion * 100) / 100,
+      cohesion: total > 0 ? Math.round((internal / total) * 100) / 100 : 0,
     });
   }
 

@@ -266,3 +266,98 @@ function fallbackParse(
 
   return results;
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// Community Labeling — AI-generated names for Leiden clusters
+// ═══════════════════════════════════════════════════════════════════
+
+interface CommunityLabelInput {
+  communityId: string;
+  files: string[];
+  topSymbols: string[];
+  nodeCount: number;
+}
+
+/**
+ * Generate AI labels for communities. Batches up to 5 communities per API call.
+ * Returns a map of communityId → label. Skips silently if AI not configured.
+ */
+export async function labelCommunities(
+  communities: CommunityLabelInput[],
+): Promise<Map<string, string>> {
+  const labels = new Map<string, string>();
+
+  if (!isAIConfigured() || communities.length === 0) return labels;
+
+  const BATCH_SIZE = 5;
+
+  for (let i = 0; i < communities.length; i += BATCH_SIZE) {
+    const batch = communities.slice(i, i + BATCH_SIZE);
+
+    try {
+      const batchLabels = await labelCommunityBatch(batch);
+      for (const [id, label] of batchLabels) {
+        labels.set(id, label);
+      }
+    } catch (err) {
+      log.warn("Community label batch failed, using fallback", { error: String(err), batchStart: i });
+    }
+  }
+
+  return labels;
+}
+
+async function labelCommunityBatch(
+  communities: CommunityLabelInput[],
+): Promise<Map<string, string>> {
+  const labels = new Map<string, string>();
+
+  const communityList = communities
+    .map((c, idx) => {
+      const fileHints = c.files.slice(0, 5).map((f) => `  ${f}`).join("\n");
+      const symbolHints = c.topSymbols.slice(0, 8).join(", ");
+      return `${idx + 1}. ${c.nodeCount} symbols\n  Files:\n${fileHints}\n  Key symbols: ${symbolHints}`;
+    })
+    .join("\n\n");
+
+  const response = await callAI({
+    systemPrompt: [
+      "You name code communities (clusters of related symbols). For each community, produce a short label (2-5 words) that describes the functional area.",
+      "",
+      "Examples: 'Authentication & Sessions', 'WebSocket Bridge', 'Database Schema', 'Telegram Bot Commands', 'UI Settings Panel'",
+      "",
+      'Return ONLY a JSON array of objects with "index" (1-based) and "label" fields. No markdown, no explanation.',
+    ].join("\n"),
+    messages: [{ role: "user", content: `Name these code communities:\n\n${communityList}` }],
+    tier: "fast",
+    maxTokens: 512,
+  });
+
+  const text = response.text.trim();
+
+  try {
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) return labels;
+
+    const parsed = JSON.parse(jsonMatch[0]) as Array<{ index: number; label: string }>;
+
+    for (const item of parsed) {
+      if (item.index >= 1 && item.index <= communities.length && item.label) {
+        labels.set(communities[item.index - 1]!.communityId, item.label.slice(0, 100));
+      }
+    }
+  } catch {
+    // Fallback: line-by-line
+    const lineRegex = /(\d+)[.:]\s*(.+)/g;
+    let match: RegExpExecArray | null;
+    while ((match = lineRegex.exec(text)) !== null) {
+      const index = parseInt(match[1]!, 10);
+      const label = match[2]!.trim().replace(/^["']|["']$/g, "");
+      if (index >= 1 && index <= communities.length && label.length >= 3) {
+        labels.set(communities[index - 1]!.communityId, label.slice(0, 100));
+      }
+    }
+  }
+
+  return labels;
+}

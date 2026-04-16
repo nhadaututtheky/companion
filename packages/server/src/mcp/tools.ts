@@ -621,7 +621,7 @@ export function registerTools(server: McpServer): void {
   // ── companion_codegraph_stats ───────────────────────────────────────────
   server.tool(
     "companion_codegraph_stats",
-    "Get code graph statistics: total symbols, edges, files scanned, hot files (most coupled), and last scan time",
+    "Get code graph statistics: total symbols, edges, files scanned, community clusters (Leiden algorithm), and last scan time",
     {
       projectSlug: z.string().describe("Project slug"),
     },

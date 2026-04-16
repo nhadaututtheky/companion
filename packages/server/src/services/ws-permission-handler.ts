@@ -290,8 +290,8 @@ export function handleHookEvent(
           event.tool_input as Record<string, unknown>,
         );
       }
-    } catch {
-      // fire-and-forget — never block hook response
+    } catch (err) {
+      log.debug("PostToolUse event-collector failed", { error: String(err) });
     }
   }
 

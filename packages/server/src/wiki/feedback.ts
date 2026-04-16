@@ -16,7 +16,7 @@ import { compileWiki } from "./compiler.js";
 const log = createLogger("wiki-feedback");
 
 const MIN_TURNS = 3;
-const MAX_WAIT_MS = 15_000;
+const MAX_WAIT_MS = 30_000;
 const POLL_INTERVAL_MS = 1_000;
 
 /**
@@ -97,24 +97,28 @@ ${files}
     const dateSlug = now.slice(0, 10); // YYYY-MM-DD
     const filename = `session-${dateSlug}-${sessionId.slice(0, 8)}.md`;
 
-    writeRawFile(config.defaultDomain, filename, content, config.rootPath);
+    // Snapshot domain before async closure to avoid config mutation
+    const domain = config.defaultDomain;
+    const rootPath = config.rootPath;
+
+    writeRawFile(domain, filename, content, rootPath);
 
     log.info("Saved session findings to wiki raw", {
       sessionId,
-      domain: config.defaultDomain,
+      domain,
       filename,
     });
 
     // Auto-compile: process the newly saved raw file into wiki articles
     // Fire-and-forget — compilation failure should not block session cleanup
     compileWiki(
-      { domain: config.defaultDomain, rawFiles: [filename] },
-      config.rootPath,
+      { domain, rawFiles: [filename] },
+      rootPath,
     ).then((result) => {
       if (result.articlesWritten.length > 0) {
         log.info("Auto-compiled session findings into wiki articles", {
           sessionId,
-          domain: config.defaultDomain,
+          domain,
           articles: result.articlesWritten,
         });
       }

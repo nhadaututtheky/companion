@@ -11,8 +11,8 @@ Port best ideas from GitNexus (27K stars) + fix internal connectivity gaps. Goal
 ## Phases
 | # | Name | Status | Plan File | Summary |
 |---|------|--------|-----------|---------|
-| 1 | Wire Zombie Connections | Pending | plan-codegraph-intel-phase1.md | Fix PostToolUse→event-collector, community→context, codegraph→wiki |
-| 2 | Leiden Community Detection | Pending | plan-codegraph-intel-phase2.md | Replace path-based grouping with proper graph clustering |
+| 1 | Wire Zombie Connections | Done | plan-codegraph-intel-phase1.md | Fix PostToolUse→event-collector, community→context, codegraph→wiki |
+| 2 | Leiden Community Detection | Done | plan-codegraph-intel-phase2.md | Leiden algorithm + AI labels + enriched stats |
 | 3 | Git Diff Impact Mapping | Pending | plan-codegraph-intel-phase3.md | Pre-commit change analysis, connect existing diff-updater |
 | 4 | Auto-Reindex + Claude Code Skills | Pending | plan-codegraph-intel-phase4.md | PostToolUse hook triggers rescan, generate .claude/skills/ |
 | 5 | Architecture Diagrams | Pending | plan-codegraph-intel-phase5.md | Mermaid generation from communities + graph, MCP tool |
