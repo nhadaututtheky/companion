@@ -25,6 +25,12 @@ export interface PermBatch {
   sessionId: string;
 }
 
+/** Short callback key → full IDs mapping (Telegram limits callback_data to 64 bytes) */
+export interface PermCallbackEntry {
+  sessionId: string;
+  requestId: string;
+}
+
 /** Minimal interface for the bridge context needed by permission handlers */
 export interface PermissionBridgeContext {
   bot: Bot;
@@ -32,7 +38,34 @@ export interface PermissionBridgeContext {
   permBatches: Map<string, PermBatch>;
   autoApproveTimers: Map<number, ReturnType<typeof setInterval>>;
   sessionAutoApproveMessages: Map<string, Set<number>>;
+  /** Maps short callback key → full session/request IDs (avoids Telegram 64-byte limit) */
+  permCallbackMap: Map<string, PermCallbackEntry>;
   mapKey(chatId: number, topicId?: number): string;
+}
+
+// ─── Callback key generation ────────────────────────────────────────────────
+
+let permKeyCounter = 0;
+
+/** Generate a short callback key and store the full IDs mapping. */
+function makePermKey(
+  ctx: PermissionBridgeContext,
+  sessionId: string,
+  requestId: string,
+): string {
+  const key = `p${++permKeyCounter}`;
+  ctx.permCallbackMap.set(key, { sessionId, requestId });
+  return key;
+}
+
+/** Generate a short session-only key for bulk actions. */
+function makeSessionKey(
+  ctx: PermissionBridgeContext,
+  sessionId: string,
+): string {
+  const key = `s${++permKeyCounter}`;
+  ctx.permCallbackMap.set(key, { sessionId, requestId: "" });
+  return key;
 }
 
 // ─── Handlers ───────────────────────────────────────────────────────────────
@@ -106,49 +139,35 @@ export async function flushPermBatch(
   const countdownSuffix =
     autoApproveSeconds > 0 ? `\n\n⏱️ Auto-approve in <b>${autoApproveSeconds}s</b>` : "";
 
-  // Build keyboard with styled allow/deny buttons
-  type PermBtn = { text: string; callback_data: string; style?: string };
+  // Build keyboard with short callback keys (Telegram limits callback_data to 64 bytes)
+  type PermBtn = { text: string; callback_data: string };
   const permRows: PermBtn[][] = [];
 
   if (perms.length === 1) {
+    const allowKey = makePermKey(ctx, sessionId, perms[0]!.requestId);
+    const denyKey = makePermKey(ctx, sessionId, perms[0]!.requestId);
     permRows.push([
-      {
-        text: "✅ Allow",
-        callback_data: `perm:allow:${sessionId}:${perms[0]!.requestId}`,
-        style: "success",
-      },
-      {
-        text: "❌ Deny",
-        callback_data: `perm:deny:${sessionId}:${perms[0]!.requestId}`,
-        style: "danger",
-      },
+      { text: "✅ Allow", callback_data: `perm:a:${allowKey}` },
+      { text: "❌ Deny", callback_data: `perm:d:${denyKey}` },
     ]);
   } else {
     for (const p of permsWithFlags) {
       const icon = p.dangerous ? "⚠️" : "✅";
+      const allowKey = makePermKey(ctx, sessionId, p.requestId);
+      const denyKey = makePermKey(ctx, sessionId, p.requestId);
       permRows.push([
-        {
-          text: `${icon} ${p.toolName}`,
-          callback_data: `perm:allow:${sessionId}:${p.requestId}`,
-          style: "success",
-        },
-        { text: "❌", callback_data: `perm:deny:${sessionId}:${p.requestId}`, style: "danger" },
+        { text: `${icon} ${p.toolName}`, callback_data: `perm:a:${allowKey}` },
+        { text: "❌", callback_data: `perm:d:${denyKey}` },
       ]);
     }
     // If any dangerous perms exist, add bulk-action row for safe-only approval
     const hasDangerous = permsWithFlags.some((p) => p.dangerous);
     if (hasDangerous) {
+      const safeKey = makeSessionKey(ctx, sessionId);
+      const reviewKey = makeSessionKey(ctx, sessionId);
       permRows.push([
-        {
-          text: "✅ Allow All Safe",
-          callback_data: `perm:allowsafe:${sessionId}`,
-          style: "success",
-        },
-        {
-          text: "⚠️ Review Dangerous",
-          callback_data: `perm:reviewdanger:${sessionId}`,
-          style: "warning",
-        },
+        { text: "✅ Allow All Safe", callback_data: `perm:as:${safeKey}` },
+        { text: "⚠️ Review Dangerous", callback_data: `perm:rd:${reviewKey}` },
       ]);
     }
   }
@@ -193,7 +212,7 @@ export function startAutoApproveCountdown(
     description?: string;
   }>,
   baseText: string,
-  permRows: Array<Array<{ text: string; callback_data: string; style?: string }>>,
+  permRows: Array<Array<{ text: string; callback_data: string }>>,
   totalSeconds: number,
 ): void {
   let remaining = totalSeconds;

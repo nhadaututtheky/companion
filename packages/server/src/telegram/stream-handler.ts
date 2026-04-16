@@ -1,10 +1,15 @@
 /**
- * StreamHandler — Accumulates AI response text, sends ONE message when complete.
+ * StreamHandler — Accumulates AI response text and sends incrementally.
  *
- * No streaming, no editing, no drafts. Just:
+ * Flow:
  * 1. Show "typing..." while Claude responds
- * 2. Accumulate all text chunks silently
- * 3. Send one clean message when result arrives
+ * 2. Accumulate text chunks, flush on natural breaks:
+ *    - Paragraph break (\n\n)
+ *    - Buffer > 800 chars
+ *    - 3-second idle (no new text)
+ * 3. Use editMessageText to update the current message
+ * 4. Start a new message when hitting Telegram's 4096 char limit
+ * 5. completeStream() does final flush + cleanup
  *
  * Typing indicator refreshed every 4s (Telegram expires after 5s).
  */
@@ -17,14 +22,32 @@ const log = createLogger("stream-handler");
 
 /** Telegram typing indicator expires after ~5s, refresh every 4s */
 const TYPING_REFRESH_MS = 4_000;
+/** Max chars to accumulate before forcing a flush */
+const FLUSH_BUFFER_THRESHOLD = 800;
+/** Idle time before auto-flushing partial text */
+const IDLE_FLUSH_MS = 3_000;
+/** Minimum interval between message edits (avoid rate limits) */
+const MIN_EDIT_INTERVAL_MS = 1_500;
+/** Telegram message text limit — start new message before hitting this */
+const TELEGRAM_MSG_LIMIT = 4000;
 
 interface PendingResponse {
   chatId: number;
   topicId?: number;
-  /** Accumulated raw markdown text from all chunks */
+  /** Accumulated raw markdown text (unflushed portion) */
   rawText: string;
+  /** All text sent so far in the current message (for edit mode) */
+  sentText: string;
+  /** Current Telegram message ID being edited (null = need to send new) */
+  messageId: number | null;
+  /** All message IDs sent during this stream */
+  allMessageIds: number[];
   /** Typing indicator refresh timer */
   typingTimer: ReturnType<typeof setInterval>;
+  /** Idle flush timer — fires if no new text arrives for IDLE_FLUSH_MS */
+  idleTimer: ReturnType<typeof setTimeout> | null;
+  /** Last time we edited/sent a message (for rate limiting) */
+  lastEditTime: number;
 }
 
 export class StreamHandler {
@@ -49,7 +72,7 @@ export class StreamHandler {
   }
 
   /**
-   * Append incremental text. Accumulates silently while showing typing indicator.
+   * Append incremental text. Flushes on natural breaks.
    */
   async appendText(chatId: number, text: string, topicId?: number): Promise<void> {
     const k = this.key(chatId, topicId);
@@ -67,6 +90,9 @@ export class StreamHandler {
         chatId,
         topicId,
         rawText: text,
+        sentText: "",
+        messageId: null,
+        allMessageIds: [],
         typingTimer: setInterval(() => {
           this.api
             .sendChatAction(chatId, "typing", {
@@ -74,88 +100,190 @@ export class StreamHandler {
             })
             .catch(() => {});
         }, TYPING_REFRESH_MS),
+        idleTimer: null,
+        lastEditTime: 0,
       };
 
       this.pending.set(k, p);
+      this.resetIdleTimer(k, p);
       return;
     }
 
     // Add separator if a tool break occurred between text blocks
     if (this.needsSeparator.has(k)) {
       this.needsSeparator.delete(k);
-      if (p.rawText.length > 0 && !p.rawText.endsWith("\n\n")) {
+      // Insert separator between previous content and new text.
+      // When rawText is empty, sentText holds previous content — still need the break.
+      const hasPrior = p.rawText.length > 0 || p.sentText.length > 0;
+      if (hasPrior && !p.rawText.endsWith("\n\n") && !p.sentText.endsWith("\n\n")) {
         p.rawText += "\n\n";
       }
     }
 
     // Accumulate
     p.rawText += text;
+
+    // Reset idle timer
+    this.resetIdleTimer(k, p);
+
+    // Check flush triggers
+    const hasNaturalBreak = text.includes("\n\n");
+    const bufferFull = p.rawText.length >= FLUSH_BUFFER_THRESHOLD;
+
+    if (hasNaturalBreak || bufferFull) {
+      await this.flushPartial(k);
+    }
   }
 
   /**
-   * Complete — stop typing, send ONE final message with all accumulated text.
+   * Flush current buffer — edit existing message or send new one.
+   */
+  private async flushPartial(k: string): Promise<void> {
+    const p = this.pending.get(k);
+    if (!p || p.rawText.length === 0) return;
+
+    // Rate limit: don't edit too frequently
+    const now = Date.now();
+    if (now - p.lastEditTime < MIN_EDIT_INTERVAL_MS) return;
+
+    const fullText = p.sentText + p.rawText;
+    const html = toTelegramHTML(fullText);
+    if (!html) return;
+
+    // Check if current message would exceed Telegram limit
+    if (p.messageId && html.length > TELEGRAM_MSG_LIMIT) {
+      // Finalize current message with sentText, start new message with rawText
+      await this.finalizeCurrentMessage(p);
+      // Send rawText as new message
+      await this.sendNewMessage(p, p.rawText);
+      return;
+    }
+
+    if (p.messageId) {
+      // Edit existing message with full accumulated text
+      try {
+        await this.api.editMessageText(p.chatId, p.messageId, html, {
+          parse_mode: "HTML",
+        });
+        p.sentText = fullText;
+        p.rawText = "";
+        p.lastEditTime = Date.now();
+      } catch (err) {
+        const errStr = String(err);
+        // Message was deleted by user or "message is not modified"
+        if (errStr.includes("message to edit not found") || errStr.includes("MESSAGE_ID_INVALID")) {
+          p.messageId = null;
+          p.sentText = "";
+          // Will try sending as new message next flush
+        } else if (errStr.includes("message is not modified")) {
+          // Content hasn't changed enough, skip
+          p.lastEditTime = Date.now();
+        } else {
+          log.warn("Failed to edit message", { error: errStr });
+        }
+      }
+    } else {
+      // Send as new message
+      await this.sendNewMessage(p, fullText);
+    }
+  }
+
+  /** Send text as a new Telegram message, update state */
+  private async sendNewMessage(p: PendingResponse, text: string): Promise<void> {
+    const html = toTelegramHTML(text);
+    if (!html) return;
+
+    try {
+      const sent = await this.api.sendMessage(p.chatId, html, {
+        parse_mode: "HTML",
+        message_thread_id: p.topicId,
+      });
+      p.messageId = sent.message_id;
+      p.allMessageIds.push(sent.message_id);
+      p.sentText = text;
+      p.rawText = "";
+      p.lastEditTime = Date.now();
+    } catch (err) {
+      log.warn("HTML send failed, trying plain text", { error: String(err) });
+      try {
+        const sent = await this.api.sendMessage(p.chatId, stripHtmlTags(html), {
+          message_thread_id: p.topicId,
+        });
+        p.messageId = sent.message_id;
+        p.allMessageIds.push(sent.message_id);
+        p.sentText = text;
+        p.rawText = "";
+        p.lastEditTime = Date.now();
+      } catch (fallbackErr) {
+        log.error("Failed to send message", { error: String(fallbackErr) });
+      }
+    }
+  }
+
+  /** Finalize current message (no more edits) */
+  private async finalizeCurrentMessage(p: PendingResponse): Promise<void> {
+    if (!p.messageId || !p.sentText) return;
+    // Message is already up-to-date with sentText — just detach
+    p.messageId = null;
+    p.sentText = "";
+  }
+
+  /** Reset idle flush timer */
+  private resetIdleTimer(k: string, p: PendingResponse): void {
+    if (p.idleTimer) clearTimeout(p.idleTimer);
+    p.idleTimer = setTimeout(() => {
+      p.idleTimer = null;
+      this.flushPartial(k).catch(() => {});
+    }, IDLE_FLUSH_MS);
+  }
+
+  /**
+   * Complete — stop typing, flush remaining text, return last message ID.
    */
   async completeStream(chatId: number, topicId?: number): Promise<number | null> {
     const k = this.key(chatId, topicId);
     const p = this.pending.get(k);
     if (!p) return null;
 
-    // Stop typing
+    // Stop timers
     clearInterval(p.typingTimer);
+    if (p.idleTimer) clearTimeout(p.idleTimer);
     this.pending.delete(k);
     this.needsSeparator.delete(k);
 
-    const html = toTelegramHTML(p.rawText);
-    if (!html) return null;
+    // Final flush of remaining text
+    if (p.rawText.length > 0) {
+      const fullText = p.sentText + p.rawText;
+      const html = toTelegramHTML(fullText);
 
-    // Send message(s)
-    if (html.length > 4000) {
-      const chunks = splitMessage(html, 3900);
-      let lastMsgId = 0;
-      const total = chunks.length;
-      for (let i = 0; i < total; i++) {
-        try {
-          if (i > 0) await new Promise((r) => setTimeout(r, 500));
-          const partLabel = total > 1 ? `\n\n<i>📄 Part ${i + 1}/${total}</i>` : "";
-          const sent = await this.api.sendMessage(chatId, chunks[i]! + partLabel, {
-            parse_mode: "HTML",
-            message_thread_id: topicId,
-          });
-          lastMsgId = sent.message_id;
-        } catch (err) {
-          log.warn("HTML chunk parse failed, falling back to plain text", { error: String(err) });
+      if (html) {
+        if (p.messageId && html.length <= TELEGRAM_MSG_LIMIT) {
+          // Edit existing message with final content
           try {
-            const sent = await this.api.sendMessage(chatId, stripHtmlTags(chunks[i]!), {
-              message_thread_id: topicId,
+            await this.api.editMessageText(p.chatId, p.messageId, html, {
+              parse_mode: "HTML",
             });
-            lastMsgId = sent.message_id;
-          } catch (fallbackErr) {
-            log.error("Failed to send fallback chunk", { error: String(fallbackErr) });
+            return p.messageId;
+          } catch {
+            // Edit failed — old message still shows sentText.
+            // Only send rawText as new message to avoid duplicating sentText.
+            p.messageId = null;
           }
         }
+
+        // Send remaining text as new message.
+        // If sentText exists (either in current message or a failed-to-edit message),
+        // only send rawText to avoid duplicating what's already visible.
+        if (p.messageId || p.sentText) {
+          await this.sendNewMessage(p, p.rawText);
+        } else {
+          // No prior message at all — send everything
+          await this.sendNewMessage(p, fullText);
+        }
       }
-      return lastMsgId;
     }
 
-    try {
-      const sent = await this.api.sendMessage(chatId, html, {
-        parse_mode: "HTML",
-        message_thread_id: topicId,
-      });
-      return sent.message_id;
-    } catch (err) {
-      log.warn("HTML parse failed, falling back to plain text", { error: String(err) });
-      // Fallback: send raw markdown without parse_mode
-      try {
-        const sent = await this.api.sendMessage(chatId, p.rawText, {
-          message_thread_id: topicId,
-        });
-        return sent.message_id;
-      } catch (fallbackErr) {
-        log.error("Failed to send fallback message", { error: String(fallbackErr) });
-        return null;
-      }
-    }
+    return p.allMessageIds.at(-1) ?? p.messageId ?? null;
   }
 
   /** Cancel without sending */
@@ -164,6 +292,7 @@ export class StreamHandler {
     const p = this.pending.get(k);
     if (p) {
       clearInterval(p.typingTimer);
+      if (p.idleTimer) clearTimeout(p.idleTimer);
       this.pending.delete(k);
       this.needsSeparator.delete(k);
     }

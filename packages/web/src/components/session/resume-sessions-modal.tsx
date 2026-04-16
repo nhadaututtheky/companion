@@ -225,7 +225,7 @@ export function ResumeSessionsModal({ open, onClose }: ResumeSessionsModalProps)
               placeholder="Search sessions..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-md border border-white/10 bg-white/5 py-1.5 pl-9 pr-3 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none transition-colors focus:border-white/20 focus:bg-white/[0.07]"
+              className="w-full rounded-md border border-white/10 bg-[var(--bg-elevated,#334155)] py-1.5 pl-9 pr-3 text-sm text-[var(--text-primary,#f8fafc)] placeholder-[var(--text-secondary,#94a3b8)] outline-none transition-colors focus:border-white/20 focus:brightness-110"
             />
           </div>
 
@@ -233,7 +233,7 @@ export function ResumeSessionsModal({ open, onClose }: ResumeSessionsModalProps)
           <select
             value={agentFilter}
             onChange={(e) => setAgentFilter(e.target.value as CLIPlatform | "")}
-            className="cursor-pointer rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-[var(--text-primary)] outline-none transition-colors hover:bg-white/10"
+            className="cursor-pointer rounded-md border border-white/10 bg-[var(--bg-elevated,#334155)] px-3 py-1.5 text-sm text-[var(--text-primary,#f8fafc)] outline-none transition-colors hover:brightness-110"
           >
             <option value="">All Agents</option>
             <option value="claude">Claude Code</option>
@@ -246,7 +246,7 @@ export function ResumeSessionsModal({ open, onClose }: ResumeSessionsModalProps)
           <select
             value={projectFilter}
             onChange={(e) => setProjectFilter(e.target.value)}
-            className="cursor-pointer rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-[var(--text-primary)] outline-none transition-colors hover:bg-white/10"
+            className="cursor-pointer rounded-md border border-white/10 bg-[var(--bg-elevated,#334155)] px-3 py-1.5 text-sm text-[var(--text-primary,#f8fafc)] outline-none transition-colors hover:brightness-110"
           >
             <option value="">All Projects</option>
             {projects.map((p) => (
@@ -260,7 +260,7 @@ export function ResumeSessionsModal({ open, onClose }: ResumeSessionsModalProps)
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="cursor-pointer rounded-md border border-white/10 bg-white/5 p-1.5 text-[var(--text-secondary)] transition-colors hover:bg-white/10 hover:text-[var(--text-primary)] disabled:opacity-50"
+            className="cursor-pointer rounded-md border border-white/10 bg-[var(--bg-elevated,#334155)] p-1.5 text-[var(--text-secondary)] transition-colors hover:brightness-110 hover:text-[var(--text-primary)] disabled:opacity-50"
             aria-label="Refresh scan"
           >
             <ArrowsClockwise size={16} className={refreshing ? "animate-spin" : ""} />

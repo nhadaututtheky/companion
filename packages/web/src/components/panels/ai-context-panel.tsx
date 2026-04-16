@@ -1236,9 +1236,10 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
               className="cursor-pointer px-3 py-1.5 text-xs font-medium"
               style={{
                 color: tab === t ? "#A855F7" : "var(--color-text-muted)",
-                borderBottom: tab === t ? "2px solid #A855F7" : "2px solid transparent",
                 background: "none",
-                border: "none",
+                borderTopWidth: 0,
+                borderLeftWidth: 0,
+                borderRightWidth: 0,
                 borderBottomWidth: 2,
                 borderBottomStyle: "solid",
                 borderBottomColor: tab === t ? "#A855F7" : "transparent",

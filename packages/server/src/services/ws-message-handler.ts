@@ -33,6 +33,7 @@ import { bufferEarlyResult, clearEarlyResult } from "./ws-stream-handler.js";
 import {
   handleStreamEvent as _handleStreamEvent,
   handleToolProgress as _handleToolProgress,
+  forceFlushStreamBatch,
 } from "./ws-stream-handler.js";
 import { handleControlRequest as _handleControlRequest } from "./ws-permission-handler.js";
 import {
@@ -225,15 +226,22 @@ export class MessageHandler {
         }
         break;
 
-      case "control_request":
-        // Non-Claude platforms requesting user permission — broadcast raw to browsers
-        if (msg.raw) {
-          this.bridge.broadcastToSubscribers(session, {
-            type: "permission_request",
-            data: msg.raw,
-          });
-        }
+      case "control_request": {
+        // Non-Claude platforms requesting user permission — route through full permission handler
+        const requestId = msg.requestId ?? randomUUID();
+        this.bridge.handleControlRequest(session, {
+          type: "control_request",
+          request_id: requestId,
+          request: {
+            subtype: msg.request?.subtype ?? "tool_use",
+            tool_name: msg.request?.tool_name ?? msg.toolName ?? "unknown",
+            input: msg.request?.input ?? {},
+            description: msg.request?.description,
+            tool_use_id: msg.request?.tool_use_id,
+          },
+        });
         break;
+      }
 
       case "keep_alive":
         break;
@@ -432,6 +440,16 @@ export class MessageHandler {
         if (block.type !== "tool_use") continue;
 
         const toolName = block.name;
+
+        // Detect plan mode via tool_use (before filePath guard — these tools have no file path)
+        if (toolName === "EnterPlanMode") {
+          session.state = { ...session.state, is_in_plan_mode: true };
+          this.bridge.getPlanWatcher(session.id)?.onEnterPlan();
+        } else if (toolName === "ExitPlanMode") {
+          session.state = { ...session.state, is_in_plan_mode: false };
+          this.bridge.getPlanWatcher(session.id)?.onExitPlan();
+        }
+
         const input = block.input as Record<string, string>;
         const filePath = input?.file_path ?? input?.path ?? "";
 
@@ -467,15 +485,6 @@ export class MessageHandler {
               };
             }
           }
-        }
-
-        // Detect plan mode via tool_use
-        if (toolName === "EnterPlanMode") {
-          session.state = { ...session.state, is_in_plan_mode: true };
-          this.bridge.getPlanWatcher(session.id)?.onEnterPlan();
-        } else if (toolName === "ExitPlanMode") {
-          session.state = { ...session.state, is_in_plan_mode: false };
-          this.bridge.getPlanWatcher(session.id)?.onExitPlan();
         }
 
         // CodeGraph: emit graph:activity event (fire-and-forget)
@@ -658,6 +667,10 @@ export class MessageHandler {
   // ── handleResult ──────────────────────────────────────────────────────────
 
   handleResult(session: ActiveSession, msg: CLIResultMessage): void {
+    // Flush any pending stream event batch BEFORE broadcasting result.
+    // Without this, late batched stream events would arrive after Telegram's
+    // completeStream() — causing duplicate text or orphaned messages.
+    forceFlushStreamBatch(session);
     session.state = {
       ...session.state,
       total_cost_usd: msg.total_cost_usd,

@@ -3,7 +3,6 @@
  * Handles session lifecycle, permissions, auto-approve, and subscriber system.
  */
 
-import { randomUUID } from "crypto";
 import { createLogger } from "../logger.js";
 import { createDefaultPipeline, getRTKConfig, type RTKPipeline } from "../rtk/index.js";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- used in typeof
@@ -11,34 +10,34 @@ import { createPlanModeWatcher } from "./cli-launcher.js";
 import type { SdkSessionHandle } from "./sdk-engine.js";
 import type { CompactBridge } from "./compact-manager.js";
 import {
-  broadcastToAll as _broadcastToAll,
-  broadcastToSubscribers as _broadcastToSubscribers,
+  broadcastToAll,
+  broadcastToSubscribers,
   type SocketLike,
 } from "./ws-broadcast.js";
 import {
-  handleControlRequest as _handleControlRequest,
+  handleControlRequest,
   handleHookEvent as _handleHookEvent,
   type PermissionBridge,
   type PermissionResolver,
 } from "./ws-permission-handler.js";
 import {
-  handleStreamEvent as _handleStreamEvent,
-  handleToolProgress as _handleToolProgress,
+  handleStreamEvent,
+  handleToolProgress,
   clearEarlyResult,
   replayEarlyResult,
 } from "./ws-stream-handler.js";
 import {
-  notifyParentOfChildEnd as _notifyParentOfChildEnd,
+  notifyParentOfChildEnd,
   type MultiBrainBridge,
 } from "./ws-multi-brain.js";
 import {
-  broadcastContextUpdate as _broadcastContextUpdate,
-  requestContextUsage as _requestContextUsage,
-  handleControlResponse as _handleControlResponse,
-  emitContextInjection as _emitContextInjection,
-  checkCostBudget as _checkCostBudget,
-  checkSmartCompact as _checkSmartCompact,
-  clearCompactTimers as _clearCompactTimers,
+  broadcastContextUpdate,
+  requestContextUsage,
+  handleControlResponse,
+  emitContextInjection,
+  checkCostBudget,
+  checkSmartCompact,
+  clearCompactTimers,
   type ContextBridge,
 } from "./ws-context-tracker.js";
 import { eventBus } from "./event-bus.js";
@@ -47,19 +46,11 @@ import {
   getActiveSession,
   getAllActiveSessions,
   persistSession,
-  storeMessage,
   cleanupZombieSessions,
-  pushMessageHistory,
   getSessionRecord,
   type ActiveSession,
 } from "./session-store.js";
 import type {
-  CLISystemInitMessage,
-  CLIAssistantMessage,
-  CLIResultMessage,
-  CLIStreamEventMessage,
-  CLIControlRequestMessage,
-  CLIToolProgressMessage,
   BrowserOutgoingMessage,
   BrowserIncomingMessage,
   SessionStatus,
@@ -67,9 +58,7 @@ import type {
   PreToolUseResponse,
 } from "@companion/shared";
 import { SESSION_IDLE_TIMEOUT_MS } from "@companion/shared";
-import type { CLIProcess, NormalizedMessage, CLIPlatform } from "@companion/shared";
-// getMaxSessions moved to ws-multi-brain.ts
-type LaunchResult = CLIProcess;
+import type { CLIProcess } from "@companion/shared";
 import { IdleDetector } from "./idle-detector.js";
 import {
   HealthIdleManager,
@@ -78,7 +67,11 @@ import {
 } from "./ws-health-idle.js";
 import { MessageHandler, type MessageHandlerBridge } from "./ws-message-handler.js";
 import { UserMessageHandler, type UserMessageBridge } from "./ws-user-message.js";
-import { SessionLifecycleManager, type SessionLifecycleBridge } from "./ws-session-lifecycle.js";
+import {
+  SessionLifecycleManager,
+  type SessionLifecycleBridge,
+  type StartSessionOpts,
+} from "./ws-session-lifecycle.js";
 
 const log = createLogger("ws-bridge");
 
@@ -99,11 +92,8 @@ const DEFAULT_SESSION_SETTINGS: SessionSettings = {
   autoReinjectOnCompact: true,
 };
 
-/** Whether to use the new SDK engine (set USE_SDK_ENGINE=1 to enable) */
-const USE_SDK_ENGINE = process.env.USE_SDK_ENGINE === "1";
-
 export class WsBridge {
-  private cliProcesses = new Map<string, LaunchResult>();
+  private cliProcesses = new Map<string, CLIProcess>();
   private sdkHandles = new Map<string, SdkSessionHandle>();
   /** Permission resolvers: requestId → resolve function (for SDK canUseTool bridge) */
   private permissionResolvers = new Map<string, PermissionResolver>();
@@ -129,9 +119,9 @@ export class WsBridge {
 
     // Build the bridge interface for HealthIdleManager
     const healthIdleBridge: HealthIdleBridge = {
-      broadcastToAll: this.broadcastToAll.bind(this),
+      broadcastToAll,
       killSession: this.killSession.bind(this),
-      handleCLIExit: this.handleCLIExit.bind(this),
+      handleCLIExit: (session, exitCode) => this.sessionLifecycle.handleCLIExit(session, exitCode),
       getCliProcess: (sessionId) => this.cliProcesses.get(sessionId),
       getRtkPipeline: () => this.rtkPipeline,
     };
@@ -142,7 +132,7 @@ export class WsBridge {
         const session = getActiveSession(sessionId);
         if (!session) return;
         // Broadcast idle event to all connected browsers
-        this.broadcastToAll(session, {
+        broadcastToAll(session, {
           type: "session_idle" as never,
           sessionId,
           idleDurationMs,
@@ -155,75 +145,79 @@ export class WsBridge {
           .catch(() => {}); // non-blocking
       },
     });
-    this.healthIdle.startHealthCheck(() => this.cliProcesses);
-    this.healthIdle.startCleanupSweep();
 
     // Build the bridge interface for MessageHandler
     const messageHandlerBridge: MessageHandlerBridge = {
-      broadcastToAll: this.broadcastToAll.bind(this),
-      broadcastToSubscribers: this.broadcastToSubscribers.bind(this),
+      broadcastToAll,
+      broadcastToSubscribers,
       updateStatus: this.updateStatus.bind(this),
       persistSession: (session) => persistSession(session),
-      emitContextInjection: this.emitContextInjection.bind(this),
-      broadcastContextUpdate: this.broadcastContextUpdate.bind(this),
-      requestContextUsage: this.requestContextUsage.bind(this),
-      checkCostBudget: this.checkCostBudget.bind(this),
-      checkSmartCompact: this.checkSmartCompact.bind(this),
-      startIdleTimer: this.startIdleTimer.bind(this),
+      emitContextInjection,
+      broadcastContextUpdate,
+      requestContextUsage: (session) => requestContextUsage(this.contextBridge, session),
+      checkCostBudget,
+      checkSmartCompact: (session) => checkSmartCompact(this.compactBridge, session),
+      startIdleTimer: (session) => {
+        const settings = this.sessionSettings.get(session.id) ?? DEFAULT_SESSION_SETTINGS;
+        this.healthIdle.startIdleTimer(session, settings);
+      },
       sendToCLI: this.sendToCLI.bind(this),
       reloadRTKConfig: this.reloadRTKConfig.bind(this),
       getRtkPipeline: () => this.rtkPipeline,
       getIdleDetector: () => this.idleDetector,
       getPlanWatcher: (sessionId) => this.planWatchers.get(sessionId),
       getSessionSettings: (sessionId) => this.getSessionSettings(sessionId),
-      handleStreamEvent: (session, msg) => this.handleStreamEvent(session, msg),
-      handleControlRequest: (session, msg) => this.handleControlRequest(session, msg),
-      handleToolProgress: (session, msg) => this.handleToolProgress(session, msg),
-      handleControlResponse: (session, parsed) => this.handleControlResponse(session, parsed),
+      handleStreamEvent,
+      handleControlRequest: (session, msg) => handleControlRequest(this.permBridge, session, msg),
+      handleToolProgress,
+      handleControlResponse,
     };
     this.messageHandler = new MessageHandler(messageHandlerBridge);
 
     // Build the bridge interface for UserMessageHandler
+    // Lazy bridge getters (declared before object literal to avoid TDZ confusion)
+    const lazyPermBridge = () => this.permBridge;
+    const lazyMultiBrainBridge = () => this.multiBrainBridge;
     const userMessageBridge: UserMessageBridge = {
-      broadcastToAll: this.broadcastToAll.bind(this),
-      broadcastToSubscribers: this.broadcastToSubscribers.bind(this),
-      broadcastLockStatus: this.broadcastLockStatus.bind(this),
+      broadcastToAll,
+      broadcastToSubscribers,
+      broadcastLockStatus: (session) => this.healthIdle.broadcastLockStatus(session),
       updateStatus: this.updateStatus.bind(this),
-      emitContextInjection: this.emitContextInjection.bind(this),
-      clearIdleTimer: this.clearIdleTimer.bind(this),
+      emitContextInjection,
+      clearIdleTimer: (sessionId) => this.healthIdle.clearIdleTimer(sessionId),
       getSessionRecord: (sessionId) => getSessionRecord(sessionId),
       getSdkHandle: (sessionId) => this.sdkHandles.get(sessionId),
-      startSessionWithSdk: this.startSessionWithSdk.bind(this),
+      startSessionWithSdk: (sessionId, session, opts) =>
+        this.sessionLifecycle.startSessionWithSdk(sessionId, session, opts),
       getSessionSettings: (sessionId) => this.getSessionSettings(sessionId),
       sendToCLI: this.sendToCLI.bind(this),
       sendUserMessage: this.sendUserMessage.bind(this),
       get permBridge() {
-        return _permBridge();
+        return lazyPermBridge();
       },
       get multiBrainBridge() {
-        return _multiBrainBridge();
+        return lazyMultiBrainBridge();
       },
     };
-    const _permBridge = () => this.permBridge;
-    const _multiBrainBridge = () => this.multiBrainBridge;
     this.userMessageHandler = new UserMessageHandler(userMessageBridge);
 
     // Build the bridge interface for SessionLifecycleManager
     const lifecycleBridge: SessionLifecycleBridge = {
-      broadcastToAll: this.broadcastToAll.bind(this),
-      broadcastToSubscribers: this.broadcastToSubscribers.bind(this),
+      broadcastToAll,
+      broadcastToSubscribers,
       updateStatus: this.updateStatus.bind(this),
-      emitContextInjection: this.emitContextInjection.bind(this),
-      handleSystemInit: (session, msg) => this.handleSystemInit(session, msg),
-      handleAssistant: (session, msg) => this.handleAssistant(session, msg),
-      handleResult: (session, msg) => this.handleResult(session, msg),
-      handleStreamEvent: (session, msg) => this.handleStreamEvent(session, msg),
-      handleToolProgress: (session, msg) => this.handleToolProgress(session, msg),
-      handleSystemStatus: (session, msg) => this.handleSystemStatus(session, msg),
-      handleControlRequest: (session, msg) => this.handleControlRequest(session, msg),
-      handleNormalizedMessage: (session, msg) => this.handleNormalizedMessage(session, msg),
-      scheduleCleanup: (sessionId) => this.scheduleCleanup(sessionId),
-      clearCompactTimers: (sessionId) => this.clearCompactTimers(sessionId),
+      emitContextInjection,
+      handleSystemInit: (session, msg) => this.messageHandler.handleSystemInit(session, msg),
+      handleAssistant: (session, msg) => this.messageHandler.handleAssistant(session, msg),
+      handleResult: (session, msg) => this.messageHandler.handleResult(session, msg),
+      handleStreamEvent,
+      handleToolProgress,
+      handleSystemStatus: (session, msg) => this.messageHandler.handleSystemStatus(session, msg),
+      handleControlRequest: (session, msg) => handleControlRequest(this.permBridge, session, msg),
+      handleNormalizedMessage: (session, msg) =>
+        this.messageHandler.handleNormalizedMessage(session, msg),
+      scheduleCleanup: (sessionId) => this.healthIdle.scheduleCleanup(sessionId),
+      clearCompactTimers,
       sendToCLI: this.sendToCLI.bind(this),
       getCliProcess: (sessionId) => this.cliProcesses.get(sessionId),
       setCliProcess: (sessionId, process) => this.cliProcesses.set(sessionId, process),
@@ -241,16 +235,21 @@ export class WsBridge {
       getHooksBaseUrl: () => this.getHooksBaseUrl(),
       getSessionSettings: (sessionId) => this.getSessionSettings(sessionId),
       killSession: (sessionId) => this.killSession(sessionId),
-      clearIdleTimer: (sessionId) => this.clearIdleTimer(sessionId),
+      clearIdleTimer: (sessionId) => this.healthIdle.clearIdleTimer(sessionId),
       stopIdleTracking: (sessionId) => this.idleDetector.stopTracking(sessionId),
       deleteSessionSettings: (sessionId) => this.sessionSettings.delete(sessionId),
       notifyParentOfChildEnd: (childSessionId, status, preEndShortId) =>
-        this.notifyParentOfChildEnd(childSessionId, status, preEndShortId),
+        notifyParentOfChildEnd(this.multiBrainBridge, childSessionId, status, preEndShortId),
       setSessionSettings: (sessionId, settings) => this.sessionSettings.set(sessionId, settings),
-      cancelCleanupTimer: (sessionId) => this.cancelCleanupTimer(sessionId),
+      cancelCleanupTimer: (sessionId) => this.healthIdle.cancelCleanupTimer(sessionId),
       clearSessionCache: (sessionId) => this.rtkPipeline.clearSessionCache(sessionId),
     };
     this.sessionLifecycle = new SessionLifecycleManager(lifecycleBridge);
+
+    // Start health check + cleanup AFTER all handlers are constructed
+    // (healthIdleBridge closures reference this.sessionLifecycle)
+    this.healthIdle.startHealthCheck(() => this.cliProcesses);
+    this.healthIdle.startCleanupSweep();
   }
 
   /** Initialize RTK pipeline with settings from DB */
@@ -288,16 +287,6 @@ export class WsBridge {
     this.healthIdle.stopAll();
   }
 
-  /** Schedule removal of an ended session from in-memory maps after the cleanup delay. */
-  private scheduleCleanup(sessionId: string): void {
-    this.healthIdle.scheduleCleanup(sessionId);
-  }
-
-  /** Cancel a pending cleanup timer (e.g. when a session is resumed before cleanup fires). */
-  private cancelCleanupTimer(sessionId: string): void {
-    this.healthIdle.cancelCleanupTimer(sessionId);
-  }
-
   /**
    * Scan DB for zombie sessions (active in DB but not in memory) and mark them ended.
    * Returns count of cleaned sessions.
@@ -308,107 +297,8 @@ export class WsBridge {
 
   // ── Session lifecycle ───────────────────────────────────────────────────
 
-  async startSession(opts: {
-    projectSlug?: string;
-    cwd: string;
-    model: string;
-    permissionMode?: string;
-    prompt?: string;
-    resume?: boolean;
-    cliSessionId?: string;
-    source?: string;
-    parentId?: string;
-    channelId?: string;
-    envVars?: Record<string, string>;
-    name?: string;
-    costBudgetUsd?: number;
-    compactMode?: string;
-    // NOTE: full opts type lives in ws-session-lifecycle.ts — keep in sync
-    compactThreshold?: number;
-    /** Expert Mode persona ID (e.g. "tim-cook", "staff-sre"). */
-    personaId?: string;
-    /** Optional identity/personality prompt re-injected after context compaction. */
-    identityPrompt?: string;
-    /** When false, disables auto re-injection on compact for this session (default: true). */
-    autoReinjectOnCompact?: boolean;
-    /** Bare mode — minimal output, lower cost. Maps to --bare CLI flag. */
-    bare?: boolean;
-    /** Thinking budget in tokens. 0 = off, N = budget, undefined = adaptive. */
-    thinkingBudget?: number;
-    /** CLI platform to use (claude, codex, gemini, opencode). */
-    cliPlatform?: CLIPlatform;
-    /** Platform-specific options (e.g. fullAuto for Codex, sandbox for Gemini). */
-    platformOptions?: Record<string, unknown>;
-    /** Agent role in multi-brain workspace. */
-    role?: "coordinator" | "specialist" | "researcher" | "reviewer";
-    /** Workspace ID — links session to a multi-CLI workspace. */
-    workspaceId?: string;
-    /** Original session ID when resuming — used to restore message history from DB. */
-    resumeFromSessionId?: string;
-  }): Promise<string> {
+  async startSession(opts: StartSessionOpts): Promise<string> {
     return this.sessionLifecycle.startSession(opts);
-  }
-
-  // ── SDK Engine session startup ──────────────────────────────────────────
-
-  private startSessionWithSdk(
-    sessionId: string,
-    session: ActiveSession,
-    opts: {
-      projectSlug?: string;
-      cwd: string;
-      model: string;
-      permissionMode?: string;
-      prompt?: string;
-      resume?: boolean;
-      cliSessionId?: string;
-      source?: string;
-      envVars?: Record<string, string>;
-    },
-  ): string {
-    return this.sessionLifecycle.startSessionWithSdk(sessionId, session, opts);
-  }
-
-  // ── Legacy CLI launcher session startup ─────────────────────────────────
-
-  private startSessionWithCli(
-    sessionId: string,
-    session: ActiveSession,
-    opts: {
-      projectSlug?: string;
-      cwd: string;
-      model: string;
-      permissionMode?: string;
-      prompt?: string;
-      resume?: boolean;
-      cliSessionId?: string;
-      source?: string;
-      envVars?: Record<string, string>;
-      bare?: boolean;
-      thinkingBudget?: number;
-      cliPlatform?: CLIPlatform;
-      platformOptions?: Record<string, unknown>;
-    },
-  ): string {
-    return this.sessionLifecycle.startSessionWithCli(sessionId, session, opts);
-  }
-
-  /** Send the initial prompt to a newly launched CLI session */
-  private sendInitialPrompt(
-    session: ActiveSession,
-    sessionId: string,
-    opts: {
-      projectSlug?: string;
-      cwd: string;
-      model: string;
-      permissionMode?: string;
-      prompt?: string;
-      resume?: boolean;
-      source?: string;
-    },
-    cliPlatform: CLIPlatform,
-  ): void {
-    this.sessionLifecycle.sendInitialPrompt(session, sessionId, opts, cliPlatform);
   }
 
   killSession(sessionId: string): void {
@@ -442,17 +332,17 @@ export class WsBridge {
 
     if (next.keepAlive) {
       // Clear idle timer — session is pinned alive
-      this.clearIdleTimer(sessionId);
+      this.healthIdle.clearIdleTimer(sessionId);
       log.info("Keep-alive enabled, idle timer cleared", { sessionId });
     } else if (next.idleTimeoutMs === 0) {
       // Explicit "never" timeout — clear timer
-      this.clearIdleTimer(sessionId);
+      this.healthIdle.clearIdleTimer(sessionId);
     } else {
       // Reset timer with new duration if session is currently idle
       const st = session.state.status;
       if (st === "idle") {
-        this.clearIdleTimer(sessionId);
-        this.startIdleTimer(session);
+        this.healthIdle.clearIdleTimer(sessionId);
+        this.healthIdle.startIdleTimer(session, next);
       }
     }
   }
@@ -577,7 +467,7 @@ export class WsBridge {
 
     try {
       const msg = JSON.parse(raw) as BrowserOutgoingMessage;
-      this.routeBrowserMessage(session, msg);
+      this.userMessageHandler.routeBrowserMessage(session, msg);
     } catch (err) {
       log.error("Invalid browser message", { error: String(err) });
     }
@@ -591,13 +481,10 @@ export class WsBridge {
       return;
     }
 
-    this.handleUserMessage(session, content, source);
+    this.userMessageHandler.handleUserMessage(session, content, source);
   }
 
-  /**
-   * Send a multimodal message (text + images) directly to CLI.
-   * Bypasses enrichment pipeline — images don't need CodeGraph/WebIntel.
-   */
+  /** Send a multimodal message (text + images) directly to CLI. */
   sendMultimodalMessage(
     sessionId: string,
     contentBlocks: Array<
@@ -611,136 +498,13 @@ export class WsBridge {
       log.warn("Cannot send multimodal message — session not found", { sessionId });
       return;
     }
-
-    // Record text parts in history
-    const textParts = contentBlocks
-      .filter((b): b is { type: "text"; text: string } => b.type === "text")
-      .map((b) => b.text);
-    const historyMsg: BrowserIncomingMessage = {
-      type: "user_message",
-      content: textParts.join("\n") || "[image]",
-      timestamp: Date.now(),
-      source: source ?? "web",
-    };
-    pushMessageHistory(session, historyMsg);
-    this.broadcastToAll(session, historyMsg);
-
-    // Store text representation in DB
-    storeMessage({
-      id: randomUUID(),
-      sessionId: session.id,
-      role: "user",
-      content: textParts.join("\n") || "[image]",
-      source: (source ?? "web") as "telegram" | "web" | "api" | "agent" | "system",
-    });
-
-    // SDK engine: doesn't support content blocks — save image to temp file + send path
-    const existingSdkHandle = this.sdkHandles.get(session.id);
-    if (existingSdkHandle || USE_SDK_ENGINE) {
-      void this.sendMultimodalViaTempFile(session, contentBlocks, textParts);
-      return;
-    }
-
-    // CLI engine: send multimodal content blocks directly (Claude API format)
-    const ndjson = JSON.stringify({
-      type: "user",
-      message: { role: "user", content: contentBlocks },
-    });
-    this.sendToCLI(session, ndjson);
-    this.updateStatus(session, "busy");
+    this.userMessageHandler.sendMultimodalMessage(session, contentBlocks, source);
   }
 
-  /**
-   * Fallback for SDK engine: save image to temp file, send file path as text.
-   */
-  private async sendMultimodalViaTempFile(
-    session: ActiveSession,
-    contentBlocks: Array<
-      | { type: "text"; text: string }
-      | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
-    >,
-    textParts: string[],
-  ): Promise<void> {
-    return this.userMessageHandler.sendMultimodalViaTempFile(session, contentBlocks, textParts);
-  }
-
-  // ── CLI message handling ────────────────────────────────────────────────
-
-  /**
-   * Handle a NormalizedMessage from any CLI adapter.
-   * Routes to existing handlers via raw message passthrough (Claude)
-   * or by reconstructing compatible message shapes (other platforms).
-   */
-  private handleNormalizedMessage(session: ActiveSession, msg: NormalizedMessage): void {
-    this.messageHandler.handleNormalizedMessage(session, msg);
-  }
-
-  /** @deprecated — Use handleNormalizedMessage for new code. Kept for Claude raw passthrough. */
-  private handleCLIMessage(session: ActiveSession, line: string): void {
-    this.messageHandler.handleCLIMessage(session, line);
-  }
-
-  private handleSystemInit(session: ActiveSession, msg: CLISystemInitMessage): void {
-    this.messageHandler.handleSystemInit(session, msg);
-  }
-
-  private handleSystemStatus(
-    session: ActiveSession,
-    msg: { subtype: "status"; status: "compacting" | null },
-  ): void {
-    this.messageHandler.handleSystemStatus(session, msg);
-  }
-
-  private handleAssistant(session: ActiveSession, msg: CLIAssistantMessage): void {
-    this.messageHandler.handleAssistant(session, msg);
-  }
-
-  /** Emit a context:injection event to all connected browsers for this session */
-  private emitContextInjection(
-    session: ActiveSession,
-    injectionType:
-      | "project_map"
-      | "message_context"
-      | "plan_review"
-      | "break_check"
-      | "web_docs"
-      | "activity_feed",
-    summary: string,
-    charCount: number,
-  ): void {
-    _emitContextInjection(session, injectionType, summary, charCount);
-  }
-
-  private broadcastContextUpdate(session: ActiveSession): void {
-    _broadcastContextUpdate(session);
-  }
-
-  private requestContextUsage(session: ActiveSession): void {
-    _requestContextUsage(this.contextBridge, session);
-  }
-
-  private handleControlResponse(session: ActiveSession, msg: Record<string, unknown>): void {
-    _handleControlResponse(session, msg);
-  }
-
-  private handleResult(session: ActiveSession, msg: CLIResultMessage): void {
-    this.messageHandler.handleResult(session, msg);
-  }
-
-  private checkCostBudget(session: ActiveSession): void {
-    _checkCostBudget(session);
-  }
-
-  /**
-   * Smart compact: check if context exceeds threshold and trigger handoff at idle.
-   * - manual: do nothing (user must /compact themselves)
-   * - smart: set compactPending flag, trigger handoff when idle
-   * - aggressive: compact immediately when threshold crossed
-   */
   /** Bridge interface for compact-manager.ts */
   private get compactBridge(): CompactBridge {
     return {
-      broadcastToAll: this.broadcastToAll.bind(this),
+      broadcastToAll,
       sendToCLI: this.sendToCLI.bind(this),
     };
   }
@@ -758,7 +522,7 @@ export class WsBridge {
   private get contextBridge(): ContextBridge {
     return {
       sendToCLI: this.sendToCLI.bind(this),
-      broadcastToAll: this.broadcastToAll.bind(this),
+      broadcastToAll,
       sdkHandles: this.sdkHandles,
     };
   }
@@ -770,80 +534,6 @@ export class WsBridge {
       permissionResolvers: this.permissionResolvers,
       sdkHandles: this.sdkHandles,
     };
-  }
-
-  private checkSmartCompact(session: ActiveSession): void {
-    _checkSmartCompact(this.compactBridge, session);
-  }
-
-  // EarlyResults buffer moved to ws-stream-handler.ts
-
-  /** Clear compact handoff timers for a session (delegates to compact-manager) */
-  private clearCompactTimers(sessionId: string): void {
-    _clearCompactTimers(sessionId);
-  }
-
-  private handleStreamEvent(session: ActiveSession, msg: CLIStreamEventMessage): void {
-    _handleStreamEvent(session, msg);
-  }
-
-  private handleControlRequest(session: ActiveSession, msg: CLIControlRequestMessage): void {
-    _handleControlRequest(this.permBridge, session, msg);
-  }
-
-  private handleToolProgress(session: ActiveSession, msg: CLIToolProgressMessage): void {
-    _handleToolProgress(session, msg);
-  }
-
-  private handleCLIExit(session: ActiveSession, exitCode: number): void {
-    this.sessionLifecycle.handleCLIExit(session, exitCode);
-  }
-
-  // ── Browser message routing ─────────────────────────────────────────────
-
-  private routeBrowserMessage(session: ActiveSession, msg: BrowserOutgoingMessage): void {
-    // Images case needs the multimodal pipeline which stays on WsBridge
-    if (msg.type === "user_message" && msg.images && msg.images.length > 0) {
-      const contentBlocks: Array<
-        | { type: "text"; text: string }
-        | { type: "image"; source: { type: "base64"; media_type: string; data: string } }
-      > = [];
-      if (msg.content) contentBlocks.push({ type: "text", text: msg.content });
-      for (const img of msg.images) {
-        contentBlocks.push({
-          type: "image",
-          source: { type: "base64", media_type: img.mediaType, data: img.data },
-        });
-      }
-      this.sendMultimodalMessage(session.id, contentBlocks, "web");
-      return;
-    }
-    this.userMessageHandler.routeBrowserMessage(session, msg);
-  }
-
-  private handleUserMessage(session: ActiveSession, content: string, source?: string): void {
-    this.userMessageHandler.handleUserMessage(session, content, source);
-  }
-
-  // ── Idle timer (auto-kill non-Telegram sessions after inactivity) ───────
-
-  private startIdleTimer(session: ActiveSession): void {
-    const settings = this.sessionSettings.get(session.id) ?? DEFAULT_SESSION_SETTINGS;
-    this.healthIdle.startIdleTimer(session, settings);
-  }
-
-  private clearIdleTimer(sessionId: string): void {
-    this.healthIdle.clearIdleTimer(sessionId);
-  }
-
-  // ── Auto-approve timer ──────────────────────────────────────────────────
-
-  // Auto-approve timer moved to ws-permission-handler.ts
-
-  // ── Lock status broadcast ──────────────────────────────────────────────
-
-  private broadcastLockStatus(session: ActiveSession): void {
-    this.healthIdle.broadcastLockStatus(session);
   }
 
   // ── Transport helpers ───────────────────────────────────────────────────
@@ -863,27 +553,11 @@ export class WsBridge {
     }
   }
 
-  private notifyParentOfChildEnd(
-    childSessionId: string,
-    status: string,
-    preEndShortId?: string,
-  ): void {
-    _notifyParentOfChildEnd(this.multiBrainBridge, childSessionId, status, preEndShortId);
-  }
-
   /** Public: broadcast a custom event to all subscribers of a session */
   broadcastEvent(sessionId: string, event: Record<string, unknown>): void {
     const session = getActiveSession(sessionId);
     if (!session) return;
-    this.broadcastToAll(session, event as unknown as BrowserIncomingMessage);
-  }
-
-  private broadcastToAll(session: ActiveSession, msg: BrowserIncomingMessage): void {
-    _broadcastToAll(session, msg);
-  }
-
-  private broadcastToSubscribers(session: ActiveSession, msg: unknown): void {
-    _broadcastToSubscribers(session, msg);
+    broadcastToAll(session, event as unknown as BrowserIncomingMessage);
   }
 
   private updateStatus(session: ActiveSession, status: SessionStatus): void {
@@ -902,7 +576,7 @@ export class WsBridge {
 
     session.state = { ...session.state, status };
 
-    this.broadcastToAll(session, {
+    broadcastToAll(session, {
       type: "status_change",
       status,
     });

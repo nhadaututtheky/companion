@@ -35,6 +35,9 @@ import {
   getSessionMessages,
   listSessions,
   bulkEndSessions,
+  cleanupZombieSessions,
+  pushMessageHistory,
+  renameSession,
   createActiveSession,
   getActiveSession,
   removeActiveSession,
@@ -315,6 +318,223 @@ describe("listSessions", () => {
     expect(item!.cwd).toBe("/tmp/test");
     expect(item!.status).toBeDefined();
     expect(typeof item!.startedAt).toBe("number");
+  });
+});
+
+// ─── createSessionRecord + getSessionRecord + endSessionRecord ───────────────
+
+describe("createSessionRecord and getSessionRecord", () => {
+  beforeEach(setupTestDb);
+  afterEach(teardownTestDb);
+
+  it("creates a session record and retrieves it by ID", () => {
+    const id = "direct-test-1";
+    createSessionRecord({ id, model: "claude-opus-4-6", cwd: "/project" });
+
+    const record = getSessionRecord(id);
+    expect(record).toBeDefined();
+    expect(record!.id).toBe(id);
+    expect(record!.model).toBe("claude-opus-4-6");
+    expect(record!.cwd).toBe("/project");
+    expect(record!.status).toBe("starting");
+  });
+
+  it("returns undefined for non-existent session", () => {
+    const record = getSessionRecord("does-not-exist");
+    expect(record).toBeUndefined();
+  });
+
+  it("generates a unique shortId on creation", () => {
+    createSessionRecord({ id: "short-1", model: "claude-sonnet-4-6", cwd: "/tmp" });
+    createSessionRecord({ id: "short-2", model: "claude-sonnet-4-6", cwd: "/tmp" });
+
+    const r1 = getSessionRecord("short-1");
+    const r2 = getSessionRecord("short-2");
+    expect(r1!.shortId).toBeDefined();
+    expect(r2!.shortId).toBeDefined();
+    expect(r1!.shortId).not.toBe(r2!.shortId);
+  });
+
+  it("stores optional fields (name, personaId, role, costBudgetUsd)", () => {
+    createSessionRecord({
+      id: "opt-1",
+      model: "claude-sonnet-4-6",
+      cwd: "/tmp",
+      name: "My Session",
+      personaId: "persona-abc",
+      role: "lead",
+      costBudgetUsd: 5.0,
+    });
+
+    const record = getSessionRecord("opt-1");
+    expect(record!.name).toBe("My Session");
+    expect(record!.personaId).toBe("persona-abc");
+    expect(record!.role).toBe("lead");
+    expect(record!.costBudgetUsd).toBe(5.0);
+  });
+});
+
+describe("endSessionRecord", () => {
+  beforeEach(setupTestDb);
+  afterEach(teardownTestDb);
+
+  it("sets status to 'ended' and clears shortId", () => {
+    createSessionRecord({ id: "end-1", model: "claude-sonnet-4-6", cwd: "/tmp" });
+    endSessionRecord("end-1");
+
+    const record = getSessionRecord("end-1");
+    expect(record!.status).toBe("ended");
+    expect(record!.shortId).toBeNull();
+    expect(record!.endedAt).not.toBeNull();
+  });
+
+  it("sets status to 'error' when specified", () => {
+    createSessionRecord({ id: "err-1", model: "claude-sonnet-4-6", cwd: "/tmp" });
+    endSessionRecord("err-1", "error");
+
+    const record = getSessionRecord("err-1");
+    expect(record!.status).toBe("error");
+  });
+});
+
+// ─── cleanupZombieSessions ──────────────────────────────────────────────────
+
+describe("cleanupZombieSessions", () => {
+  beforeEach(setupTestDb);
+  afterEach(teardownTestDb);
+
+  it("returns 0 when all sessions are in terminal states", () => {
+    insertSession({ status: "ended" });
+    insertSession({ status: "error" });
+
+    const count = cleanupZombieSessions(() => false);
+    expect(count).toBe(0);
+  });
+
+  it("ends sessions not found in memory", () => {
+    const s1 = insertSession(); // starting — not in memory
+    const s2 = insertSession(); // starting — "in memory"
+
+    const count = cleanupZombieSessions((id) => id === s2);
+    expect(count).toBe(1);
+
+    expect(getSessionRecord(s1)!.status).toBe("ended");
+    expect(getSessionRecord(s2)!.status).toBe("starting"); // untouched
+  });
+
+  it("returns 0 when all non-terminal sessions are in memory", () => {
+    const s1 = insertSession();
+    const s2 = insertSession();
+
+    const count = cleanupZombieSessions((id) => id === s1 || id === s2);
+    expect(count).toBe(0);
+  });
+});
+
+// ─── pushMessageHistory ─────────────────────────────────────────────────────
+
+describe("pushMessageHistory", () => {
+  it("appends messages to session history", () => {
+    const session = createActiveSession("push-1", {
+      session_id: "push-1",
+      model: "claude-sonnet-4-6",
+      cwd: "/tmp",
+      tools: [],
+      permissionMode: "default",
+      claude_code_version: "1.0.0",
+      mcp_servers: [],
+      total_cost_usd: 0,
+      num_turns: 0,
+      total_lines_added: 0,
+      total_lines_removed: 0,
+      total_input_tokens: 0,
+      total_output_tokens: 0,
+      cache_creation_tokens: 0,
+      cache_read_tokens: 0,
+      files_read: [],
+      files_modified: [],
+      files_created: [],
+      started_at: Date.now(),
+      status: "idle" as const,
+      is_in_plan_mode: false,
+      cost_warned: 0,
+      compact_mode: "manual" as const,
+      compact_threshold: 75,
+      thinking_mode: "adaptive" as const,
+    });
+
+    pushMessageHistory(session, { type: "msg1" });
+    pushMessageHistory(session, { type: "msg2" });
+    expect(session.messageHistory).toHaveLength(2);
+
+    removeActiveSession("push-1");
+  });
+
+  it("evicts oldest entries when cap is exceeded", () => {
+    const session = createActiveSession("push-cap", {
+      session_id: "push-cap",
+      model: "claude-sonnet-4-6",
+      cwd: "/tmp",
+      tools: [],
+      permissionMode: "default",
+      claude_code_version: "1.0.0",
+      mcp_servers: [],
+      total_cost_usd: 0,
+      num_turns: 0,
+      total_lines_added: 0,
+      total_lines_removed: 0,
+      total_input_tokens: 0,
+      total_output_tokens: 0,
+      cache_creation_tokens: 0,
+      cache_read_tokens: 0,
+      files_read: [],
+      files_modified: [],
+      files_created: [],
+      started_at: Date.now(),
+      status: "idle" as const,
+      is_in_plan_mode: false,
+      cost_warned: 0,
+      compact_mode: "manual" as const,
+      compact_threshold: 75,
+      thinking_mode: "adaptive" as const,
+    });
+
+    // Push 505 messages (cap is 500)
+    for (let i = 0; i < 505; i++) {
+      pushMessageHistory(session, { idx: i });
+    }
+
+    expect(session.messageHistory).toHaveLength(500);
+    // Oldest (idx 0-4) should be evicted, first remaining is idx 5
+    expect((session.messageHistory[0] as { idx: number }).idx).toBe(5);
+    expect((session.messageHistory[499] as { idx: number }).idx).toBe(504);
+
+    removeActiveSession("push-cap");
+  });
+});
+
+// ─── renameSession ──────────────────────────────────────────────────────────
+
+describe("renameSession", () => {
+  beforeEach(setupTestDb);
+  afterEach(teardownTestDb);
+
+  it("updates the name in DB", () => {
+    const id = insertSession();
+    const result = renameSession(id, "New Name");
+    expect(result).toBe(true);
+
+    const record = getSessionRecord(id);
+    expect(record!.name).toBe("New Name");
+  });
+
+  it("clears the name when set to null", () => {
+    const id = insertSession();
+    renameSession(id, "Temp Name");
+    renameSession(id, null);
+
+    const record = getSessionRecord(id);
+    expect(record!.name).toBeNull();
   });
 });
 

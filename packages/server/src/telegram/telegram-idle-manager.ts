@@ -29,6 +29,8 @@ export interface SessionConfig {
   busyNotified?: boolean;
   /** Last time idle timer was reset — used to debounce resets from stream events */
   lastIdleReset?: number;
+  /** Generation counter — incremented on each resetIdleTimer call; stale callbacks check this */
+  idleGeneration: number;
 }
 
 /**
@@ -56,7 +58,7 @@ export class TelegramIdleManager {
   getSessionConfig(sessionId: string): SessionConfig {
     let cfg = this.sessionConfigs.get(sessionId);
     if (!cfg) {
-      cfg = { idleTimeoutMs: 3_600_000 }; // default 1h
+      cfg = { idleTimeoutMs: 3_600_000, idleGeneration: 0 }; // default 1h
       this.sessionConfigs.set(sessionId, cfg);
     }
     return cfg;
@@ -92,6 +94,9 @@ export class TelegramIdleManager {
     const cfg = this.getSessionConfig(sessionId);
     cfg.lastIdleReset = Date.now();
 
+    // Bump generation — any in-flight callbacks from previous timers will see a mismatch and bail
+    const generation = ++cfg.idleGeneration;
+
     if (cfg.idleTimer) {
       clearTimeout(cfg.idleTimer);
       cfg.idleTimer = undefined;
@@ -115,6 +120,9 @@ export class TelegramIdleManager {
     if (cfg.idleTimeoutMs > WARN_BEFORE_MS) {
       cfg.idleWarningTimer = setTimeout(async () => {
         cfg.idleWarningTimer = undefined;
+
+        // Stale timer guard: if resetIdleTimer was called since this timer was set, skip
+        if (cfg.idleGeneration !== generation) return;
 
         // Guard: check session still exists AND still belongs to this chat
         const session = this.bridge.wsBridge.getSession(sessionId);
@@ -148,6 +156,16 @@ export class TelegramIdleManager {
     // Kill timer
     cfg.idleTimer = setTimeout(async () => {
       cfg.idleTimer = undefined;
+
+      // Stale timer guard: if resetIdleTimer was called since this timer was set, skip
+      if (cfg.idleGeneration !== generation) {
+        log.info("Stale idle kill timer skipped (generation mismatch)", {
+          sessionId,
+          timerGen: generation,
+          currentGen: cfg.idleGeneration,
+        });
+        return;
+      }
 
       // Guard: check session still exists AND still belongs to this chat
       const session = this.bridge.wsBridge.getSession(sessionId);

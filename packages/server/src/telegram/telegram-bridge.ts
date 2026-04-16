@@ -22,7 +22,7 @@ import { telegramSessionMappings } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import { createBot, registerCommands, type BotConfig } from "./bot-factory.js";
 import { StreamHandler } from "./stream-handler.js";
-import { escapeHTML, shortModelName, modelStrength } from "./formatter.js";
+import { escapeHTML, statusEmoji } from "./formatter.js";
 import { registerSessionCommands } from "./commands/session.js";
 import { registerControlCommands } from "./commands/control.js";
 import { registerInfoCommands } from "./commands/info.js";
@@ -32,7 +32,8 @@ import { registerUtilityCommands } from "./commands/utility.js";
 import { registerTemplateCommands } from "./commands/template.js";
 import { registerWikiCommands } from "./commands/wiki.js";
 import { registerMoodCommands } from "./commands/mood.js";
-import { getLatestReading, type OperationalState } from "../services/pulse-estimator.js";
+import { registerAccountCommands } from "./commands/account.js";
+import type { OperationalState } from "../services/pulse-estimator.js";
 import { createLogger } from "../logger.js";
 import { getProject } from "../services/project-profiles.js";
 import type { WsBridge } from "../services/ws-bridge.js";
@@ -45,20 +46,12 @@ import {
   handleDocumentMessage,
 } from "./telegram-message-handlers.js";
 import {
-  handlePermissionRequest,
   cancelAutoApproveCountdown as cancelAutoApproveCountdownFn,
   cancelAllAutoApproveCountdowns as cancelAllAutoApproveCountdownsFn,
   type PermBatch,
 } from "./telegram-permission-handler.js";
-import {
-  handleAssistantMessage,
-  handleStreamEvent,
-  handleResultMessage,
-  handleContextUpdate,
-  sendSessionSummary,
-  handleChildSpawned,
-  handleChildEnded,
-} from "./telegram-session-events.js";
+import { routeSessionMessage } from "./telegram-session-router.js";
+import { sendSettingsPanel as sendSettingsPanelFn } from "./telegram-settings-panel.js";
 
 // Extracted modules
 import { TelegramIdleManager, type SessionConfig } from "./telegram-idle-manager.js";
@@ -81,27 +74,8 @@ interface ChatMapping {
 // Re-export DeadSessionInfo for consumers
 export type { DeadSessionInfo };
 
-// ─── Status emoji helpers ────────────────────────────────────────────────────
-
-export function statusEmoji(status: string): string {
-  switch (status) {
-    case "starting":
-    case "waiting":
-      return "🟡";
-    case "idle":
-      return "🟢";
-    case "running":
-    case "busy":
-    case "compacting":
-      return "🔵";
-    case "ended":
-      return "⚫";
-    case "error":
-      return "🔴";
-    default:
-      return "⚪";
-  }
-}
+// Re-export statusEmoji for backward compatibility (canonical source: formatter.ts)
+export { statusEmoji } from "./formatter.js";
 
 // ─── TelegramBridge ─────────────────────────────────────────────────────────
 
@@ -145,6 +119,8 @@ export class TelegramBridge {
   /** viewfile callback cache: short key → { sessionId, filePath } */
   viewFileCache = new Map<string, { sessionId: string; filePath: string }>();
   private viewFileCounter = 0;
+  /** Short callback key → full session/request IDs (Telegram 64-byte limit) — @internal */
+  permCallbackMap = new Map<string, { sessionId: string; requestId: string }>();
   /** Active auto-approve countdowns — @internal for permission-handler */
   autoApproveTimers = new Map<number, ReturnType<typeof setInterval>>();
   /** Reverse index: sessionId → Set of messageIds — @internal for permission-handler */
@@ -218,6 +194,7 @@ export class TelegramBridge {
     registerTemplateCommands(this);
     registerMoodCommands(this);
     registerWikiCommands(this);
+    registerAccountCommands(this);
     // Handle text messages (not commands) — delegated to telegram-message-handlers
     this.bot.on("message:text", async (ctx) => {
       if (ctx.message.text.startsWith("/")) return;
@@ -281,6 +258,7 @@ export class TelegramBridge {
     }
     this.autoApproveTimers.clear();
     this.sessionAutoApproveMessages.clear();
+    this.permCallbackMap.clear();
 
     await this.bot.stop();
     log.info("Bot stopped", { botId: this.config.botId });
@@ -305,7 +283,8 @@ export class TelegramBridge {
     this.idleManager.resetIdleTimer(sessionId, chatId, topicId);
   }
 
-  private resetBusyWatchdog(sessionId: string, chatId: number, topicId?: number): void {
+  /** @internal — used by extracted session-router module */
+  resetBusyWatchdog(sessionId: string, chatId: number, topicId?: number): void {
     this.idleManager.resetBusyWatchdog(sessionId, chatId, topicId);
   }
 
@@ -503,175 +482,7 @@ export class TelegramBridge {
     model: string,
     editMessageId?: number,
   ): Promise<{ message_id: number } | undefined> {
-    const session = this.wsBridge.getSession(sessionId);
-    const cfg = this.getSessionConfig(sessionId);
-
-    const status = session?.state.status ?? "starting";
-    const cost = session?.state.total_cost_usd ?? 0;
-    const turns = session?.state.num_turns ?? 0;
-    const updatedAt = new Date().toLocaleTimeString("en-US", {
-      hour12: false,
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-    const aa = session?.autoApproveConfig;
-    const aaLabel = !aa?.enabled
-      ? "Off"
-      : `${aa.timeoutSeconds}s · ${aa.allowBash ? "⚠️ Full" : "🛡 Safe"}`;
-    const idleMs = cfg.idleTimeoutMs;
-    const idleLabel =
-      idleMs <= 0
-        ? "Never"
-        : idleMs === 1_800_000
-          ? "30m"
-          : idleMs === 3_600_000
-            ? "1h"
-            : idleMs === 14_400_000
-              ? "4h"
-              : idleMs === 43_200_000
-                ? "12h"
-                : `${Math.round(idleMs / 60_000)}m`;
-    const _permMode = session?.state.permissionMode ?? "default";
-
-    // Context meter — uses cumulative tokens as rough estimate (actual window may be smaller after compaction)
-    const state = session?.state;
-    let contextStr = "";
-    if (state) {
-      const totalTokens =
-        state.total_input_tokens + state.total_output_tokens + state.cache_read_tokens;
-      if (totalTokens > 0) {
-        const maxTokens = state.model.includes("haiku") ? 200_000 : 1_000_000;
-        const pct = Math.min(100, Math.round((totalTokens / maxTokens) * 100));
-        contextStr = ` · Tokens: ~${pct}%`;
-      }
-    }
-
-    // Short ID for @mention / #mention
-    const shortId = session?.state.short_id;
-    const shortIdStr = shortId ? ` · <code>#${escapeHTML(shortId)}</code>` : "";
-
-    const thinkingMode = session?.state.thinking_mode ?? "adaptive";
-    const thinkingLabel =
-      thinkingMode === "adaptive" ? "⚡Adaptive" : thinkingMode === "off" ? "💤Off" : "🧠Deep";
-
-    const modelShort = shortModelName(model);
-    const strength = modelStrength(model);
-    const strengthStr = strength ? ` · <i>${escapeHTML(strength)}</i>` : "";
-
-    const text = [
-      `<b>${escapeHTML(projectName)}</b> · <b>${escapeHTML(modelShort)}</b> · ${statusEmoji(status)} ${status}${shortIdStr}`,
-      `$${cost.toFixed(4)} · ${turns} turns · Updated ${updatedAt}${contextStr}`,
-      `${strengthStr ? `${strengthStr}\n` : ""}Auto-Approve: <b>${aaLabel}</b> · Auto-stop: <b>${idleLabel}</b> · Think: <b>${thinkingLabel}</b>`,
-    ].join("\n");
-
-    // Build keyboard with styled buttons (Telegram Bot API style field)
-    type BtnStyle = "danger" | "success" | "primary" | undefined;
-    const btn = (text: string, data: string, style?: BtnStyle) => ({
-      text,
-      callback_data: data,
-      ...(style ? { style } : {}),
-    });
-
-    const aaOff = !aa?.enabled;
-    const aa15 = aa?.enabled && aa.timeoutSeconds === 15;
-    const aa30 = aa?.enabled && aa.timeoutSeconds === 30;
-    const aa60 = aa?.enabled && aa.timeoutSeconds === 60;
-    const aaEnabled = aa?.enabled ?? false;
-    const aaBash = aaEnabled && (aa?.allowBash ?? false);
-
-    const iNever = idleMs <= 0;
-    const i30m = idleMs === 1_800_000;
-    const i1h = idleMs === 3_600_000;
-    const i4h = idleMs === 14_400_000;
-    const i12h = idleMs === 43_200_000;
-
-    const keyboard = {
-      inline_keyboard: [
-        // Row 1: Model + Status
-        [
-          btn(`Model: ${modelShort}`, `panel:model:${sessionId}`, "primary"),
-          btn("Status", `panel:status:${sessionId}`),
-        ],
-        // Row 2: Auto-approve timeout
-        [
-          btn(
-            `Off${aaOff ? " ✓" : ""}`,
-            `panel:aa:off:${sessionId}`,
-            aaOff ? "success" : undefined,
-          ),
-          btn(`15s${aa15 ? " ✓" : ""}`, `panel:aa:15:${sessionId}`, aa15 ? "success" : undefined),
-          btn(`30s${aa30 ? " ✓" : ""}`, `panel:aa:30:${sessionId}`, aa30 ? "success" : undefined),
-          btn(`60s${aa60 ? " ✓" : ""}`, `panel:aa:60:${sessionId}`, aa60 ? "success" : undefined),
-        ],
-        // Row 3: Auto-approve mode (only meaningful when AA is enabled)
-        [
-          btn(
-            `🛡 Safe${aaEnabled && !aaBash ? " ✓" : ""}`,
-            aaEnabled ? `panel:aamode:safe:${sessionId}` : `panel:aamode:disabled:${sessionId}`,
-            aaEnabled && !aaBash ? "success" : undefined,
-          ),
-          btn(
-            `⚠️ Full${aaBash ? " ✓" : ""}`,
-            aaEnabled ? `panel:aamode:full:${sessionId}` : `panel:aamode:disabled:${sessionId}`,
-            aaBash ? "danger" : undefined,
-          ),
-        ],
-        // Row 3: Idle timeout presets
-        [
-          btn(
-            `Never${iNever ? " ✓" : ""}`,
-            `panel:idle:0:${sessionId}`,
-            iNever ? "success" : undefined,
-          ),
-          btn(
-            `30m${i30m ? " ✓" : ""}`,
-            `panel:idle:1800:${sessionId}`,
-            i30m ? "success" : undefined,
-          ),
-          btn(`1h${i1h ? " ✓" : ""}`, `panel:idle:3600:${sessionId}`, i1h ? "success" : undefined),
-          btn(`4h${i4h ? " ✓" : ""}`, `panel:idle:14400:${sessionId}`, i4h ? "success" : undefined),
-          btn(
-            `12h${i12h ? " ✓" : ""}`,
-            `panel:idle:43200:${sessionId}`,
-            i12h ? "success" : undefined,
-          ),
-        ],
-        // Row 4: Actions
-        [
-          btn("📊 Context", `ctx:detail:${sessionId}`),
-          btn("⏸ Pause", `panel:cancel:${sessionId}`),
-          btn("Stop", `panel:stop:${sessionId}`, "danger"),
-        ],
-      ],
-    };
-
-    // Cast raw keyboard for grammY (style field not in grammY types yet)
-    const replyMarkup = keyboard as unknown as import("grammy").InlineKeyboard;
-
-    try {
-      if (editMessageId) {
-        await this.bot.api.editMessageText(chatId, editMessageId, text, {
-          parse_mode: "HTML",
-          reply_markup: replyMarkup,
-        });
-        return { message_id: editMessageId };
-      } else {
-        const sent = await this.bot.api.sendMessage(chatId, text, {
-          parse_mode: "HTML",
-          reply_markup: replyMarkup,
-          message_thread_id: topicId,
-        });
-        return { message_id: sent.message_id };
-      }
-    } catch (err) {
-      const errStr = String(err);
-      // Silently ignore "message is not modified" — panel content unchanged
-      if (!errStr.includes("message is not modified")) {
-        log.error("Failed to send settings panel", { sessionId, error: errStr });
-      }
-      return undefined;
-    }
+    return sendSettingsPanelFn(this, chatId, topicId, sessionId, projectName, model, editMessageId);
   }
 
   killSession(sessionId: string): void {
@@ -712,6 +523,13 @@ export class TelegramBridge {
         }
       }
       this.sessionAutoApproveMessages.delete(sessionId);
+    }
+
+    // Clean up permission callback keys for this session
+    for (const [key, entry] of this.permCallbackMap.entries()) {
+      if (entry.sessionId === sessionId) {
+        this.permCallbackMap.delete(key);
+      }
     }
 
     // Clean up stream subscriptions (reverse lookup: chatKey → sessionId)
@@ -788,6 +606,58 @@ export class TelegramBridge {
   /** @internal — iterate mappings (for child-ended topic lookup) */
   getMappingsEntries(): IterableIterator<[string, ChatMapping]> {
     return this.mappings.entries();
+  }
+
+  /** @internal — get stored context breakdown HTML for a session (for 📊 button) */
+  getContextBreakdown(sessionId: string): string | undefined {
+    return this.contextBreakdowns.get(sessionId);
+  }
+
+  /** @internal — store context breakdown HTML for a session */
+  setContextBreakdown(sessionId: string, html: string): void {
+    this.contextBreakdowns.set(sessionId, html);
+  }
+
+  /** @internal — get pulse alert cooldown timestamp for a session */
+  getPulseAlertCooldown(sessionId: string): number | undefined {
+    return this.pulseAlertCooldowns.get(sessionId);
+  }
+
+  /** @internal — set pulse alert cooldown timestamp for a session */
+  setPulseAlertCooldown(sessionId: string, ts: number): void {
+    this.pulseAlertCooldowns.set(sessionId, ts);
+  }
+
+  /** @internal — get previous pulse state for a session */
+  getPulsePrevState(sessionId: string): OperationalState | undefined {
+    return this.pulsePrevState.get(sessionId);
+  }
+
+  /** @internal — set previous pulse state for a session */
+  setPulsePrevState(sessionId: string, state: OperationalState): void {
+    this.pulsePrevState.set(sessionId, state);
+  }
+
+  /** @internal — clear pulse tracking state for a session (on status_change: ended) */
+  clearPulseState(sessionId: string): void {
+    this.pulseAlertCooldowns.delete(sessionId);
+    this.pulsePrevState.delete(sessionId);
+  }
+
+  /** @internal — update CLI session ID in persistence (called on session_init) */
+  updateMappingCliSessionId(sessionId: string, cliSessionId: string): void {
+    this.persistence.updateMappingCliSessionId(sessionId, cliSessionId);
+  }
+
+  /** @internal — clean up session config timers on cli_disconnected */
+  cleanupSessionConfig(sessionId: string): void {
+    const cfg = this.sessionConfigs.get(sessionId);
+    if (cfg) {
+      if (cfg.idleTimer) clearTimeout(cfg.idleTimer);
+      if (cfg.idleWarningTimer) clearTimeout(cfg.idleWarningTimer);
+      if (cfg.busyWatchdog) clearTimeout(cfg.busyWatchdog);
+      this.sessionConfigs.delete(sessionId);
+    }
   }
 
   /**
@@ -954,7 +824,7 @@ export class TelegramBridge {
     return this.forumTopics.getStreamSubscriberForSession(sessionId);
   }
 
-  // ── Session message router (delegates to extracted handlers) ──────────
+  // ── Session message router (delegates to telegram-session-router) ────────
 
   private async handleSessionMessage(
     chatId: number,
@@ -962,274 +832,7 @@ export class TelegramBridge {
     sessionId: string,
     msg: BrowserIncomingMessage,
   ): Promise<void> {
-    try {
-      // Reset busy watchdog + idle timer on any sign of CLI activity
-      if (
-        msg.type === "assistant" ||
-        msg.type === "tool_progress" ||
-        msg.type === "stream_event" ||
-        msg.type === "stream_event_batch"
-      ) {
-        this.resetBusyWatchdog(sessionId, chatId, topicId);
-
-        // Debounce idle timer reset — stream events fire rapidly, only reset every 30s
-        const cfg = this.getSessionConfig(sessionId);
-        const now = Date.now();
-        if (!cfg.lastIdleReset || now - cfg.lastIdleReset > 30_000) {
-          cfg.lastIdleReset = now;
-          this.resetIdleTimer(sessionId, chatId, topicId ?? undefined);
-        }
-      }
-
-      switch (msg.type) {
-        case "assistant":
-          await handleAssistantMessage(this, chatId, topicId, msg);
-          break;
-
-        case "stream_event":
-          await handleStreamEvent(this, chatId, topicId, msg);
-          break;
-
-        case "stream_event_batch": {
-          // Unpack batched stream events and process each one
-          const batch = msg as unknown as {
-            events: Array<{ event: unknown; parent_tool_use_id?: string }>;
-          };
-          for (const entry of batch.events) {
-            await handleStreamEvent(this, chatId, topicId, {
-              type: "stream_event",
-              event: entry.event,
-              parent_tool_use_id: entry.parent_tool_use_id ?? null,
-            } as BrowserIncomingMessage & { type: "stream_event" });
-          }
-          break;
-        }
-
-        case "result":
-          await handleResultMessage(this, chatId, topicId, sessionId, msg.data);
-          break;
-
-        case "permission_request":
-          await handlePermissionRequest(this, chatId, topicId, sessionId, msg.request);
-          break;
-
-        case "session_init": {
-          // Store the cliSessionId in telegram_session_mappings when CLI initializes
-          const cliSessionId = (msg.session as { session_id?: string })?.session_id;
-          if (cliSessionId) {
-            this.persistence.updateMappingCliSessionId(sessionId, cliSessionId);
-          }
-          break;
-        }
-
-        case "context_breakdown": {
-          // Only store breakdown silently — don't send a message.
-          // Users access it via the 📊 button shown in session_init or /context command.
-          if ("breakdown" in msg) {
-            const { formatBreakdownDetailed } = await import("../services/context-estimator.js");
-            const bd = msg.breakdown as import("../services/context-estimator.js").ContextBreakdown;
-            this.contextBreakdowns.set(sessionId, formatBreakdownDetailed(bd));
-          }
-          break;
-        }
-
-        case "context_update":
-          await handleContextUpdate(this, chatId, topicId, sessionId, msg.contextUsedPercent);
-          break;
-
-        case "cost_warning": {
-          const icon = msg.level === "critical" ? "🔴" : "⚠️";
-          await this.bot.api
-            .sendMessage(
-              chatId,
-              `${icon} <b>Cost Budget ${msg.level === "critical" ? "Reached" : "Warning"}</b>\n${escapeHTML(msg.message)}\n\nUse <code>/stop</code> to end session or continue working.`,
-              { parse_mode: "HTML", message_thread_id: topicId },
-            )
-            .catch(() => {});
-          break;
-        }
-
-        case "cli_disconnected": {
-          // CLI process died — flush any pending stream text so it's not lost
-          await this.streamHandler.completeStream(chatId, topicId);
-          this.cleanupToolFeed(chatId, topicId);
-
-          // Build user-friendly disconnect message
-          const exitCode = (msg as unknown as { exitCode?: number }).exitCode;
-          const reason = (msg as unknown as { reason?: string }).reason;
-
-          let icon = "⚠️";
-          let title = "Session ended";
-          let detail = "";
-
-          if (exitCode === 143 || exitCode === 137) {
-            // SIGTERM / SIGKILL — normal stop
-            icon = "🔴";
-            title = "Session stopped";
-            detail = "The session was terminated normally.";
-          } else if (exitCode === 0 || exitCode === null || exitCode === undefined) {
-            icon = "✅";
-            title = "Session completed";
-            detail = "Task finished successfully.";
-          } else if (reason?.includes("crashed on startup")) {
-            icon = "❌";
-            title = "Session failed to start";
-            detail = "Check that Claude Code CLI is installed and authenticated.";
-          } else {
-            icon = "⚠️";
-            title = "Session disconnected";
-            detail = reason
-              ? escapeHTML(reason.slice(0, 300))
-              : `Unexpected exit (code ${exitCode ?? "unknown"})`;
-          }
-
-          const hint = "\n\nUse /start to begin a new session.";
-          await this.bot.api
-            .sendMessage(chatId, `${icon} <b>${title}</b>\n${detail}${hint}`, {
-              parse_mode: "HTML",
-              message_thread_id: topicId,
-            })
-            .catch(() => {});
-
-          // Clean up stale mapping so /resume doesn't see "already active"
-          this.removeMapping(chatId, topicId);
-          // Clean up session config timers
-          const dcCfg = this.sessionConfigs.get(sessionId);
-          if (dcCfg) {
-            if (dcCfg.idleTimer) clearTimeout(dcCfg.idleTimer);
-            if (dcCfg.idleWarningTimer) clearTimeout(dcCfg.idleWarningTimer);
-            if (dcCfg.busyWatchdog) clearTimeout(dcCfg.busyWatchdog);
-            this.sessionConfigs.delete(sessionId);
-          }
-          break;
-        }
-
-        case "status_change":
-          if (msg.status === "ended") {
-            // Flush any pending stream text before cleanup
-            await this.streamHandler.completeStream(chatId, topicId);
-            this.cleanupToolFeed(chatId, topicId);
-            this.removeMapping(chatId, topicId);
-            this.pulseAlertCooldowns.delete(sessionId);
-            this.pulsePrevState.delete(sessionId);
-            // Send summary after a delay (wait for summarizer to finish)
-            void sendSessionSummary(this, chatId, topicId, sessionId);
-          }
-          break;
-
-        case "tool_progress":
-          // Refresh typing indicator while tools run
-          this.bot.api
-            .sendChatAction(chatId, "typing", {
-              message_thread_id: topicId,
-            })
-            .catch(() => {});
-          break;
-
-        case "user_message": {
-          // Show messages sent from Web/API in the Telegram chat
-          const userSource = (msg as unknown as { source?: string }).source;
-          if (userSource && userSource !== "telegram") {
-            const userText = (msg as unknown as { content?: string }).content ?? "";
-            if (userText.trim()) {
-              const label = userSource === "web" ? "🌐 Web" : "📡 API";
-              await this.bot.api
-                .sendMessage(chatId, `<i>${label}:</i>\n${escapeHTML(userText.slice(0, 2000))}`, {
-                  parse_mode: "HTML",
-                  message_thread_id: topicId,
-                })
-                .catch(() => {});
-            }
-          }
-          break;
-        }
-
-        case "child_spawned":
-          await handleChildSpawned(this, chatId, topicId, sessionId, msg);
-          break;
-
-        case "child_ended":
-          await handleChildEnded(this, chatId, topicId, msg);
-          break;
-
-        case "pulse:update": {
-          const ALERT_STATES = new Set<OperationalState>(["struggling", "spiraling", "blocked"]);
-          const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes between alerts per session
-
-          const prevState = this.pulsePrevState.get(sessionId);
-          const newState = msg.state as OperationalState;
-          this.pulsePrevState.set(sessionId, newState);
-
-          // Alert on: (1) transition INTO an alert state, or (2) escalation within alert states
-          // Skip if: not an alert state, or same state as before (no change)
-          if (!ALERT_STATES.has(newState) || newState === prevState) {
-            break;
-          }
-
-          // Cooldown check
-          const lastAlert = this.pulseAlertCooldowns.get(sessionId) ?? 0;
-          if (Date.now() - lastAlert < COOLDOWN_MS) break;
-
-          this.pulseAlertCooldowns.set(sessionId, Date.now());
-
-          const session = this.wsBridge.getSession(sessionId);
-          const shortId = session?.state.short_id ?? sessionId.slice(0, 8);
-          const projectName = session?.state.name ?? "Unknown";
-
-          const stateEmoji: Record<string, string> = {
-            struggling: "🟡",
-            spiraling: "🔴",
-            blocked: "⏸",
-          };
-          const emoji = stateEmoji[newState] ?? "⚠️";
-          const stateLabel = newState.charAt(0).toUpperCase() + newState.slice(1);
-
-          const SIGNAL_LABELS: Record<string, string> = {
-            failureRate: "Failure Rate",
-            editChurn: "Edit Churn",
-            costAccel: "Cost Accel",
-            contextPressure: "Context Pressure",
-            thinkingDepth: "Thinking Depth",
-            toolDiversity: "Tool Diversity",
-            completionTone: "Tone",
-          };
-
-          const reading = getLatestReading(sessionId);
-          const topSignalKey = reading?.topSignal ?? "unknown";
-          const topSignalLabel = SIGNAL_LABELS[topSignalKey] ?? topSignalKey;
-          const sigs: Record<string, number> = reading ? { ...reading.signals } : {};
-          const topSignalValue = reading ? Math.round((sigs[topSignalKey] ?? 0) * 100) : 0;
-
-          const alertText = [
-            `${emoji} <b>Pulse Alert: ${escapeHTML(projectName)}</b> (@${escapeHTML(shortId)})`,
-            `State: <b>${stateLabel}</b> — Score ${msg.score}/100`,
-            `Top signal: ${topSignalLabel} (${topSignalValue}%)`,
-            `Turn ${msg.turn}`,
-            "",
-            `💡 Reply to send guidance, or:`,
-            `  <code>/mood ${shortId}</code> — Full breakdown`,
-            `  <code>/stop ${shortId}</code> — Stop session`,
-          ].join("\n");
-
-          await this.bot.api
-            .sendMessage(chatId, alertText, {
-              parse_mode: "HTML",
-              message_thread_id: topicId,
-            })
-            .catch(() => {});
-          break;
-        }
-
-        case "error":
-          await this.bot.api.sendMessage(chatId, `⚠️ ${escapeHTML(msg.message)}`, {
-            parse_mode: "HTML",
-            message_thread_id: topicId,
-          });
-          break;
-      }
-    } catch (err) {
-      log.error("Error handling session message", { chatId, error: String(err) });
-    }
+    return routeSessionMessage(this, chatId, topicId, sessionId, msg);
   }
 
   // Tool feed (upsertToolFeed, cleanupToolFeed) in accessor section above

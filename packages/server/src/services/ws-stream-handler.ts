@@ -76,6 +76,7 @@ const streamBatches = new Map<string, StreamBatch>();
 function flushStreamBatch(session: ActiveSession): void {
   const batch = streamBatches.get(session.id);
   if (!batch || batch.events.length === 0) return;
+  clearTimeout(batch.timer);
   streamBatches.delete(session.id);
 
   // Send batched events as a single message
@@ -83,6 +84,21 @@ function flushStreamBatch(session: ActiveSession): void {
     type: "stream_event_batch",
     events: batch.events,
   } as unknown as BrowserIncomingMessage);
+}
+
+/**
+ * Force-flush any pending stream batch for a session.
+ * Must be called BEFORE broadcasting a result message to prevent
+ * late stream events from arriving after completeStream().
+ *
+ * Ordering guarantee: this is synchronous and calls broadcastToAll()
+ * which invokes subscriber callbacks (including Telegram) inline.
+ * Since handleResult() also broadcasts via the same synchronous path,
+ * subscribers are guaranteed to receive flushed stream events BEFORE
+ * the result message — preserving correct message ordering.
+ */
+export function forceFlushStreamBatch(session: ActiveSession): void {
+  flushStreamBatch(session);
 }
 
 /** Clean up batch timer for a session. */
