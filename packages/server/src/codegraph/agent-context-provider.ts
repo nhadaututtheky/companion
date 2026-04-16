@@ -15,6 +15,7 @@ import {
   getExportedNodesByFile,
   type CodeNodeWithEdges as _CodeNodeWithEdges,
 } from "./query-engine.js";
+import { detectCommunities } from "./analysis.js";
 import { getPackageUsageCounts } from "./webintel-bridge.js";
 import { getDb } from "../db/client.js";
 import { codegraphConfig } from "../db/schema.js";
@@ -277,6 +278,22 @@ export function buildProjectMap(projectSlug: string): string | null {
       for (const [layer, files] of layers) {
         lines.push(`  ${layer}/: ${files.join(", ")}`);
       }
+    }
+
+    // Functional communities (clusters of related code)
+    try {
+      const communities = detectCommunities(projectSlug);
+      const topCommunities = communities.filter((c) => c.nodeCount >= 3).slice(0, 8);
+      if (topCommunities.length > 0) {
+        lines.push("", "Functional clusters:");
+        for (const c of topCommunities) {
+          lines.push(
+            `  ${c.label} (${c.nodeCount} symbols, cohesion: ${(c.cohesion * 100).toFixed(0)}%)`,
+          );
+        }
+      }
+    } catch {
+      /* skip */
     }
 
     // External dependencies (top 10 by usage)

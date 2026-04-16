@@ -15,6 +15,8 @@ import type {
   PreToolUseResponse,
 } from "@companion/shared";
 import type { SdkSessionHandle } from "./sdk-engine.js";
+import { processToolEvent } from "../codegraph/event-collector.js";
+import { getSessionRecord } from "./session-store.js";
 
 const log = createLogger("ws-permission");
 
@@ -272,6 +274,26 @@ export function handleHookEvent(
     type: event.type,
     tool: event.tool_name,
   });
+
+  // PostToolUse: feed to event-collector for real-time activity tracking
+  if (event.type === "PostToolUse" && event.tool_name && event.tool_input) {
+    try {
+      const record = getSessionRecord(session.id);
+      const projectSlug = record?.projectSlug;
+      const projectDir = session.state.cwd;
+      if (projectSlug && projectDir) {
+        processToolEvent(
+          session.id,
+          projectSlug,
+          projectDir,
+          event.tool_name,
+          event.tool_input as Record<string, unknown>,
+        );
+      }
+    } catch {
+      // fire-and-forget — never block hook response
+    }
+  }
 
   // PreToolUse: default allow
   if (event.type === "PreToolUse") {

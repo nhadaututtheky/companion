@@ -11,6 +11,7 @@ import { isFeatureEnabled } from "../services/context-budget.js";
 import { getSessionRecord } from "../services/session-store.js";
 import { getSessionSummary } from "../services/session-summarizer.js";
 import { getWikiConfig, writeRawFile, listDomains } from "./store.js";
+import { compileWiki } from "./compiler.js";
 
 const log = createLogger("wiki-feedback");
 
@@ -102,6 +103,25 @@ ${files}
       sessionId,
       domain: config.defaultDomain,
       filename,
+    });
+
+    // Auto-compile: process the newly saved raw file into wiki articles
+    // Fire-and-forget — compilation failure should not block session cleanup
+    compileWiki(
+      { domain: config.defaultDomain, rawFiles: [filename] },
+      config.rootPath,
+    ).then((result) => {
+      if (result.articlesWritten.length > 0) {
+        log.info("Auto-compiled session findings into wiki articles", {
+          sessionId,
+          domain: config.defaultDomain,
+          articles: result.articlesWritten,
+        });
+      }
+    }).catch((err) => {
+      log.debug("Auto-compile skipped (AI not configured or compile failed)", {
+        error: String(err),
+      });
     });
   } catch (err) {
     log.error("Failed to save session findings", { sessionId, error: String(err) });

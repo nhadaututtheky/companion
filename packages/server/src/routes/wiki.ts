@@ -39,6 +39,7 @@ import {
   deleteRawFile,
   compileWiki,
   searchArticles,
+  searchWithCodeGraph,
   retrieve,
   lintDomain,
   type ArticleMeta,
@@ -340,6 +341,7 @@ export function createWikiRoutes(): Hono {
         tokenBudget: z.number().int().positive().optional(),
         includeCore: z.boolean().optional(),
         mode: z.enum(["search", "retrieve"]).optional(),
+        projectSlug: z.string().optional(),
       }),
     ),
     (c) => {
@@ -347,7 +349,9 @@ export function createWikiRoutes(): Hono {
       const body = c.req.valid("json");
 
       if (body.mode === "search") {
-        const results = searchArticles(domain, body.query);
+        const results = body.projectSlug
+          ? searchWithCodeGraph(domain, body.query, body.projectSlug)
+          : searchArticles(domain, body.query);
         return c.json<ApiResponse>({ success: true, data: results });
       }
 

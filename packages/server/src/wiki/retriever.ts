@@ -7,6 +7,8 @@
 
 import { createLogger } from "../logger.js";
 import { readIndex, readCore, readArticle, listArticles } from "./store.js";
+import { isGraphReady } from "../codegraph/index.js";
+import { fusedSearch } from "../codegraph/analysis.js";
 import {
   type WikiIndex,
   type WikiArticle,
@@ -183,6 +185,51 @@ function extractSnippet(content: string, terms: string[]): string {
 
   // No match in content — return first 160 chars
   return content.slice(0, 160).replace(/\n/g, " ").trim() + "...";
+}
+
+// ─── Cross-Reference: Wiki + CodeGraph ──────────────────────────────────────
+
+export interface EnrichedSearchResult extends SearchResult {
+  relatedSymbols?: Array<{
+    name: string;
+    type: string;
+    file: string;
+  }>;
+}
+
+/**
+ * Search wiki articles AND optionally enrich with related CodeGraph symbols.
+ * When a project has a scanned code graph, code-related queries get cross-referenced.
+ */
+export function searchWithCodeGraph(
+  domain: string,
+  query: string,
+  projectSlug?: string,
+  cwd?: string,
+): EnrichedSearchResult[] {
+  const wikiResults = searchArticles(domain, query, cwd);
+
+  // If no project or graph not ready, return wiki-only results
+  if (!projectSlug || !isGraphReady(projectSlug)) {
+    return wikiResults;
+  }
+
+  // Search codegraph for related symbols
+  try {
+    const codeResults = fusedSearch(projectSlug, query, 5);
+    if (codeResults.length === 0) return wikiResults;
+
+    const symbols = codeResults.map((r) => ({
+      name: r.symbolName,
+      type: r.symbolType,
+      file: r.filePath,
+    }));
+
+    // Attach related symbols to each wiki result
+    return wikiResults.map((r) => ({ ...r, relatedSymbols: symbols }));
+  } catch {
+    return wikiResults;
+  }
 }
 
 // ─── Budget-Aware Retrieval ─────────────────────────────────────────────────

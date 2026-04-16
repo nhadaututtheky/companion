@@ -50,6 +50,7 @@ export {
   getCore,
   getSessionContext,
   searchArticles,
+  searchWithCodeGraph,
   retrieve,
   formatIndexForContext,
 } from "./retriever.js";
