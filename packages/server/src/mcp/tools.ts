@@ -431,4 +431,227 @@ export function registerTools(server: McpServer): void {
       }
     },
   );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Wiki Knowledge Base Tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── companion_wiki_list ─────────────────────────────────────────────────
+  server.tool(
+    "companion_wiki_list",
+    "List all wiki domains and their article counts",
+    {},
+    async () => {
+      try {
+        const res = await apiCall<{ data: unknown }>("/wiki");
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Wiki list failed: ${String(err)}` }], isError: true };
+      }
+    },
+  );
+
+  // ── companion_wiki_read_core ────────────────────────────────────────────
+  server.tool(
+    "companion_wiki_read_core",
+    "Read the core rules (L0 context) for a wiki domain. These are the high-priority rules always injected into sessions.",
+    {
+      domain: z.string().describe("Wiki domain slug (e.g., 'companion', 'trading')"),
+    },
+    async ({ domain }) => {
+      try {
+        const res = await apiCall<{ data: { content: string } }>(`/wiki/${encodeURIComponent(domain)}/core`);
+        return { content: [{ type: "text", text: res.data.content || "(empty core rules)" }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Wiki core read failed: ${String(err)}` }], isError: true };
+      }
+    },
+  );
+
+  // ── companion_wiki_read ─────────────────────────────────────────────────
+  server.tool(
+    "companion_wiki_read",
+    "Read a specific wiki article by domain and slug",
+    {
+      domain: z.string().describe("Wiki domain slug"),
+      slug: z.string().describe("Article slug (e.g., 'auth-flow', 'deploy-checklist')"),
+    },
+    async ({ domain, slug }) => {
+      try {
+        const res = await apiCall<{ data: unknown }>(
+          `/wiki/${encodeURIComponent(domain)}/articles/${encodeURIComponent(slug)}`,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Wiki read failed: ${String(err)}` }], isError: true };
+      }
+    },
+  );
+
+  // ── companion_wiki_search ───────────────────────────────────────────────
+  server.tool(
+    "companion_wiki_search",
+    "Search wiki articles by keyword query. Returns matching articles with relevance scores.",
+    {
+      domain: z.string().describe("Wiki domain slug to search in"),
+      query: z.string().describe("Search query (e.g., 'authentication', 'deploy process')"),
+    },
+    async ({ domain, query }) => {
+      try {
+        const res = await apiCall<{ data: unknown }>(`/wiki/${encodeURIComponent(domain)}/query`, {
+          method: "POST",
+          body: { query, mode: "search" },
+        });
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Wiki search failed: ${String(err)}` }], isError: true };
+      }
+    },
+  );
+
+  // ── companion_wiki_note ─────────────────────────────────────────────────
+  server.tool(
+    "companion_wiki_note",
+    "Write a quick note to the wiki knowledge base. Use this to persist discoveries, patterns, decisions, or instructions that should be available to future sessions.",
+    {
+      domain: z.string().describe("Wiki domain slug to write to"),
+      content: z.string().min(1).max(20000).describe("Note content (markdown supported, max 20k chars)"),
+      title: z.string().max(100).optional().describe("Note title (auto-generated from content if omitted)"),
+      tags: z.array(z.string()).optional().describe("Tags for categorization (e.g., ['auth', 'security'])"),
+      confidence: z
+        .enum(["extracted", "inferred", "ambiguous"])
+        .optional()
+        .describe("Confidence level: extracted (from source), inferred (deduced), ambiguous (uncertain)"),
+    },
+    async ({ domain, content, title, tags, confidence }) => {
+      try {
+        const res = await apiCall<{ data: { slug: string } }>(`/wiki/${encodeURIComponent(domain)}/note`, {
+          method: "POST",
+          body: { content, title, tags, confidence },
+        });
+        return {
+          content: [{ type: "text", text: `Note saved to wiki/${domain}/${res.data.slug}` }],
+        };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Wiki note failed: ${String(err)}` }], isError: true };
+      }
+    },
+  );
+
+  // ── companion_wiki_list_articles ────────────────────────────────────────
+  server.tool(
+    "companion_wiki_list_articles",
+    "List all articles in a wiki domain with titles, tags, and last-modified dates",
+    {
+      domain: z.string().describe("Wiki domain slug"),
+    },
+    async ({ domain }) => {
+      try {
+        const res = await apiCall<{ data: unknown }>(`/wiki/${encodeURIComponent(domain)}/articles`);
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Wiki articles list failed: ${String(err)}` }], isError: true };
+      }
+    },
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CodeGraph (AI Context) Tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── companion_codegraph_scan ────────────────────────────────────────────
+  server.tool(
+    "companion_codegraph_scan",
+    "Trigger a codebase scan for a project. Scans files, extracts symbols (functions, classes, types, endpoints), and builds a dependency graph. Use this when starting work on an unfamiliar project.",
+    {
+      projectSlug: z.string().describe("Project slug to scan"),
+    },
+    async ({ projectSlug }) => {
+      try {
+        const res = await apiCall<{ data: unknown }>("/codegraph/scan", {
+          method: "POST",
+          body: { project: projectSlug },
+        });
+        return {
+          content: [{ type: "text", text: `Scan started for ${projectSlug}. Use companion_codegraph_status to check progress.\n${JSON.stringify(res.data, null, 2)}` }],
+        };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Scan failed: ${String(err)}` }], isError: true };
+      }
+    },
+  );
+
+  // ── companion_codegraph_status ──────────────────────────────────────────
+  server.tool(
+    "companion_codegraph_status",
+    "Check the status of a codebase scan (scanning, describing, ready, or idle)",
+    {
+      projectSlug: z.string().describe("Project slug"),
+    },
+    async ({ projectSlug }) => {
+      try {
+        const res = await apiCall<{ data: unknown }>(`/codegraph/status?project=${encodeURIComponent(projectSlug)}`);
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Status check failed: ${String(err)}` }], isError: true };
+      }
+    },
+  );
+
+  // ── companion_codegraph_search ──────────────────────────────────────────
+  server.tool(
+    "companion_codegraph_search",
+    "Search the code graph for symbols (functions, classes, types, hooks, endpoints) by keyword. Returns matching nodes with file paths, descriptions, and relationships.",
+    {
+      projectSlug: z.string().describe("Project slug"),
+      query: z.string().describe("Search query (e.g., 'auth middleware', 'useSession', 'POST /api')"),
+    },
+    async ({ projectSlug, query }) => {
+      try {
+        const res = await apiCall<{ data: unknown }>(
+          `/codegraph/search?project=${encodeURIComponent(projectSlug)}&q=${encodeURIComponent(query)}`,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Search failed: ${String(err)}` }], isError: true };
+      }
+    },
+  );
+
+  // ── companion_codegraph_stats ───────────────────────────────────────────
+  server.tool(
+    "companion_codegraph_stats",
+    "Get code graph statistics: total symbols, edges, files scanned, hot files (most coupled), and last scan time",
+    {
+      projectSlug: z.string().describe("Project slug"),
+    },
+    async ({ projectSlug }) => {
+      try {
+        const res = await apiCall<{ data: unknown }>(`/codegraph/stats?project=${encodeURIComponent(projectSlug)}`);
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Stats failed: ${String(err)}` }], isError: true };
+      }
+    },
+  );
+
+  // ── companion_codegraph_impact ──────────────────────────────────────────
+  server.tool(
+    "companion_codegraph_impact",
+    "Analyze blast radius of changing a file. Returns all files that depend on (or are depended by) the target file, with risk scores.",
+    {
+      projectSlug: z.string().describe("Project slug"),
+      file: z.string().describe("File path relative to project root (e.g., 'src/services/auth.ts')"),
+    },
+    async ({ projectSlug, file }) => {
+      try {
+        const res = await apiCall<{ data: unknown }>(
+          `/codegraph/impact?project=${encodeURIComponent(projectSlug)}&file=${encodeURIComponent(file)}`,
+        );
+        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Impact analysis failed: ${String(err)}` }], isError: true };
+      }
+    },
+  );
 }
