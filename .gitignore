@@ -7,6 +7,7 @@ data/*.db-wal
 data/*.db-shm
 data/.license-cache.json
 data/.trial
+data/.encryption-key
 .env
 .env.*
 !.env.example

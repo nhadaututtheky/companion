@@ -2,10 +2,13 @@
  * Encryption utilities for sensitive data at rest.
  * Uses AES-256-GCM with a key derived from COMPANION_ENCRYPTION_KEY env var.
  *
- * If no encryption key is set, falls back to plaintext (backward compat) + logs a warning.
+ * If no env var set, auto-generates and persists a key to data/.encryption-key
+ * (0o600 perms) so self-hosted users don't need any manual setup.
  */
 
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, chmodSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { createLogger } from "../logger.js";
 
 const log = createLogger("crypto");
@@ -15,18 +18,48 @@ const IV_LENGTH = 12; // GCM recommended IV length
 const TAG_LENGTH = 16;
 const SALT = "companion-v1"; // Static salt — acceptable since key should be high-entropy
 
+const KEY_FILE = resolve(process.cwd(), "data", ".encryption-key");
+
 let derivedKey: Buffer | null = null;
+
+/** Load or auto-generate persistent encryption passphrase */
+function loadOrCreatePassphrase(): string {
+  // 1. env var takes precedence (Docker / manual override)
+  const envKey = process.env.COMPANION_ENCRYPTION_KEY;
+  if (envKey) return envKey;
+
+  // 2. persisted key file
+  if (existsSync(KEY_FILE)) {
+    try {
+      const content = readFileSync(KEY_FILE, "utf-8").trim();
+      if (content) return content;
+    } catch (err) {
+      log.warn("Failed to read encryption key file", { err: String(err) });
+    }
+  }
+
+  // 3. auto-generate + persist (self-hosted first-run)
+  const generated = randomBytes(32).toString("base64");
+  try {
+    mkdirSync(dirname(KEY_FILE), { recursive: true });
+    writeFileSync(KEY_FILE, generated, "utf-8");
+    try { chmodSync(KEY_FILE, 0o600); } catch { /* Windows ignores */ }
+    log.info("Generated new encryption key", { path: KEY_FILE });
+  } catch (err) {
+    log.error("Failed to persist encryption key — encryption disabled", { err: String(err) });
+    return "";
+  }
+  return generated;
+}
 
 function getKey(): Buffer | null {
   if (derivedKey) return derivedKey;
 
-  const envKey = process.env.COMPANION_ENCRYPTION_KEY;
-  if (!envKey) {
-    return null;
-  }
+  const passphrase = loadOrCreatePassphrase();
+  if (!passphrase) return null;
 
   // Derive a 256-bit key from the passphrase
-  derivedKey = scryptSync(envKey, SALT, 32) as Buffer;
+  derivedKey = scryptSync(passphrase, SALT, 32) as Buffer;
   return derivedKey;
 }
 
@@ -82,12 +115,12 @@ export function decrypt(value: string): string {
   return decrypted.toString("utf-8");
 }
 
-/** Log a warning once at startup if encryption is not configured */
+/** Log encryption status at startup */
 export function warnIfNoEncryption(): void {
   if (!isEncryptionEnabled()) {
-    log.warn(
-      "COMPANION_ENCRYPTION_KEY not set — bot tokens stored in plaintext. " +
-        "Set this env var to encrypt sensitive data at rest.",
+    log.error(
+      "Encryption disabled — failed to generate/load key. " +
+        "Accounts feature will not work. Check data/ directory permissions.",
     );
   }
 }
