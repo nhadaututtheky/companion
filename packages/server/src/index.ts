@@ -192,6 +192,10 @@ const bridge = new WsBridge({
 
 botRegistry = new BotRegistry(bridge);
 
+// Publish singleton so command handlers can reach peer bots (multi-bot dispatch)
+import { setBotRegistry } from "./telegram/registry-holder.js";
+setBotRegistry(botRegistry);
+
 // Warn if bot tokens will be stored unencrypted
 import { warnIfNoEncryption } from "./services/crypto.js";
 warnIfNoEncryption();

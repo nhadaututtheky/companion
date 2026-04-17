@@ -1,9 +1,18 @@
 # Phase 6: Telegram Multi-Bot Debate ✅ DONE
 
-> Shipped: `/debate` + `/verdict` (config.ts), cli-debate-engine (services/), setup guide (TelegramDebateGuide.tsx).
-> Closed 2026-04-17 with B2B loop-prevention guards added to all message handlers (is_bot skip).
-> Server coordinates turn-taking — BotFather B2B toggle is not required; if enabled, bots silently ignore each other's messages.
-> Multi-bot per-role dispatch (each agent posts via its own bot) deferred — current MVP posts all turns via primary bot.
+> Shipped 2026-04-17. Closed after sub-agent review identified and all gaps were addressed.
+>
+> **Delivered:**
+> - `/debate` + `/verdict` commands (`telegram/commands/config.ts`) with round-robin per-agent bot dispatch
+> - `cli-debate-engine` (services/) for debate orchestration with convergence detection
+> - Global B2B loop prevention via `bot.use()` middleware in `bot-factory.ts` — covers commands, text, photos, documents, voice uniformly
+> - Singleton `registry-holder.ts` — lets command handlers reach peer bot APIs without circular imports
+> - Multi-bot per-role dispatch: `resolvePeerApis()` maps each debate agent to a distinct running bot in stable order; falls back to primary bot when only one is configured
+> - Setup guide (`TelegramDebateGuide.tsx`) in Settings → Telegram
+>
+> **Design notes:**
+> - Server coordinates turn-taking — BotFather B2B toggle is not required; if enabled, bots silently ignore each other's updates via middleware
+> - Cooldown intentionally skipped — global `is_bot` middleware rejects peer-bot updates at ingest, and the debate engine is already sequential
 
 ## Goal
 Enable real multi-bot debates in Telegram groups using native **Bot-to-Bot Communication Mode** (BotFather setting). Each AI platform = separate bot, bots see each other's messages, Companion coordinates turns.

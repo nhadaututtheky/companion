@@ -37,6 +37,17 @@ export function createBot(config: BotConfig): Bot {
     }),
   );
 
+  // ── B2B loop prevention: ignore ALL updates originating from other bots ──
+  // This runs before auth so bot-from-bot commands, text, photos, documents,
+  // and voice messages are all blocked uniformly — critical for multi-bot
+  // debate groups where Telegram's "Bot to Bot Communication Mode" could
+  // otherwise create runaway feedback loops. The server coordinates
+  // turn-taking on its own; peer-bot messages are never treated as input.
+  bot.use(async (ctx, next) => {
+    if (ctx.from?.is_bot) return;
+    await next();
+  });
+
   // ── Auth middleware: restrict to allowed chats + users ────────────────
 
   // Self-hosted: when no whitelist is configured, allow all (open access)

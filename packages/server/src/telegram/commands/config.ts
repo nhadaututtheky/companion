@@ -14,6 +14,8 @@ import {
 } from "../../services/debate-engine.js";
 import { resolveShortId } from "../../services/short-id.js";
 import { getActiveSession } from "../../services/session-store.js";
+import { getBotRegistry } from "../registry-holder.js";
+import type { Api } from "grammy";
 
 export function registerConfigCommands(bridge: TelegramBridge): void {
   const bot = bridge.bot;
@@ -176,30 +178,43 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
       { parse_mode: "HTML", message_thread_id: debateTopicId },
     );
 
+    // Pick a distinct bot API per agent (round-robin across registered bots)
+    // so the group chat shows genuine multi-bot back-and-forth instead of one
+    // bot replaying all sides. Falls back to primary bridge if only 1 bot.
+    const peerApis = resolvePeerApis(bridge.bot.api);
+    const agentApi = (agentId: string, agentIndex: number): Api =>
+      peerApis[agentIndex % peerApis.length] ?? bridge.bot.api;
+
     try {
+      const agentOrder = new Map<string, number>();
       const state = await startDebate(
         { topic, format },
         // onMessage callback — route to Telegram (in debate forum topic)
         async (_channelId: string, agent: DebateAgent, content: string, round: number) => {
+          if (!agentOrder.has(agent.id)) {
+            agentOrder.set(agent.id, agentOrder.size);
+          }
+          const api = agentApi(agent.id, agentOrder.get(agent.id)!);
+
           const label = `${agent.emoji} <b>${escapeHTML(agent.label)}</b> <i>(Round ${round})</i>`;
           const text = `${label}\n\n${toTelegramHTML(content)}`;
 
           // Split if too long (Telegram 4096 limit)
           if (text.length <= 4000) {
-            await bridge.bot.api
+            await api
               .sendMessage(chatId, text, {
                 parse_mode: "HTML",
                 message_thread_id: debateTopicId,
               })
               .catch(() => {});
           } else {
-            await bridge.bot.api
+            await api
               .sendMessage(chatId, label, {
                 parse_mode: "HTML",
                 message_thread_id: debateTopicId,
               })
               .catch(() => {});
-            await bridge.bot.api
+            await api
               .sendMessage(chatId, toTelegramHTML(content), {
                 parse_mode: "HTML",
                 message_thread_id: debateTopicId,
@@ -259,9 +274,16 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
 
     await ctx.reply("⚖️ Forcing verdict...", { message_thread_id: topicId });
 
+    const peerApis = resolvePeerApis(bridge.bot.api);
+    const agentOrder = new Map<string, number>();
     await concludeDebate(channelId, async (_cId, agent, content, _round) => {
+      if (!agentOrder.has(agent.id)) {
+        agentOrder.set(agent.id, agentOrder.size);
+      }
+      const api = peerApis[agentOrder.get(agent.id)! % peerApis.length] ?? bridge.bot.api;
+
       const label = `${agent.emoji} <b>${escapeHTML(agent.label)}</b>`;
-      await bridge.bot.api
+      await api
         .sendMessage(chatId, `${label}\n\n${toTelegramHTML(content)}`, {
           parse_mode: "HTML",
           message_thread_id: topicId,
@@ -378,3 +400,25 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
     await ctx.editMessageText(`Auto-approve: <b>Enabled (${seconds}s)</b>`, { parse_mode: "HTML" });
   });
 }
+
+/**
+ * Resolve the set of bot APIs available for multi-bot debate dispatch.
+ * Returns all running peer bots (including the caller) in a stable order, so
+ * each debate agent can be mapped to a distinct bot via round-robin.
+ * Falls back to `[primaryApi]` if the registry has zero or one bot.
+ */
+function resolvePeerApis(primaryApi: Api): Api[] {
+  const registry = getBotRegistry();
+  if (!registry) return [primaryApi];
+
+  const running = registry.getAll().filter((b) => b.running);
+  if (running.length <= 1) return [primaryApi];
+
+  const apis: Api[] = [];
+  for (const entry of running) {
+    const bridge = registry.getBridge(entry.botId);
+    if (bridge) apis.push(bridge.bot.api);
+  }
+  return apis.length > 0 ? apis : [primaryApi];
+}
+
