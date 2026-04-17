@@ -1,6 +1,6 @@
 {
   "name": "@companion/web",
-  "version": "0.21.6",
+  "version": "0.21.7",
   "private": true,
   "scripts": {
     "dev": "next dev --port 3580",

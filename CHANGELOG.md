@@ -2,6 +2,15 @@
 
 All notable changes to Companion are documented here.
 
+## [0.21.7] - 2026-04-17
+
+### Fixed
+- **License / RTK Pro gate silently stuck on Free** — `GET /api/license` had TWO Hono handlers: a legacy flat-shape version in `routes/health.ts` and the canonical wrapped `{success, data}` version in `routes/index.ts`. Hono resolved the first-registered (flat) handler, so every web consumer that read `res.data.tier` / `res.data.features` got `undefined` and silently fell back to the Free-tier defaults. Symptom: users on Pro/Trial/Dev-mode saw the correct tier badge in the settings panel (which read the flat shape directly) but `useLicenseStore` stayed at `tier: "free"` and `rtk-settings` hid every Pro strategy.
+- **Settings → License activation form** now reads the wrapped `GET` response at `res.data.tier` (the flat `res.tier` path was the only thing holding the flat handler in place — fixed both sides of the mismatch).
+
+### Internal
+- Dropped the shadow handler in `packages/server/src/routes/health.ts` with a breadcrumb comment explaining the removal. `GET /api/license` is now exclusively served by `routes/index.ts` with `satisfies ApiResponse`.
+
 ## [0.21.6] - 2026-04-17
 
 ### Fixed
