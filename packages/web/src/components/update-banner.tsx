@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ArrowSquareUpRight, X, Rocket, ArrowsClockwise, DownloadSimple } from "@phosphor-icons/react";
+import { ArrowSquareUpRight, X, Rocket, ArrowsClockwise, DownloadSimple, CaretDown } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { Z } from "@/lib/z-index";
 import { isTauriEnv } from "@/lib/tauri";
@@ -174,6 +174,7 @@ export function UpdateBanner() {
   const [phase, setPhase] = useState<UpdatePhase>("idle");
   const [downloadPercent, setDownloadPercent] = useState(0);
   const [errorMsg, setErrorMsg] = useState("");
+  const [notesOpen, setNotesOpen] = useState(false);
   const downloadedRef = useRef(0);
   const contentLengthRef = useRef(0);
   const isDesktop = isTauriEnv();
@@ -343,6 +344,35 @@ export function UpdateBanner() {
           >
             Try again
           </button>
+        </div>
+      )}
+
+      {/* What's new (collapsible release notes) */}
+      {phase === "idle" && update.releaseNotes?.trim() && (
+        <div className="mt-2">
+          <button
+            onClick={() => setNotesOpen((v) => !v)}
+            className="text-text-muted hover:text-text-secondary flex cursor-pointer items-center gap-1 text-xs font-medium transition-colors"
+            aria-expanded={notesOpen}
+            aria-controls="update-release-notes"
+          >
+            <CaretDown
+              size={10}
+              weight="bold"
+              className="transition-transform"
+              style={{ transform: notesOpen ? "rotate(0deg)" : "rotate(-90deg)" }}
+            />
+            What&apos;s new
+          </button>
+          {notesOpen && (
+            <pre
+              id="update-release-notes"
+              className="text-text-secondary mt-1.5 max-h-40 overflow-y-auto whitespace-pre-wrap rounded-lg p-2 font-sans text-xs leading-relaxed"
+              style={{ background: "var(--color-bg-elevated)" }}
+            >
+              {update.releaseNotes.trim()}
+            </pre>
+          )}
         </div>
       )}
 
