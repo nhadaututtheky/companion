@@ -2,6 +2,14 @@
 
 All notable changes to Companion are documented here.
 
+## [0.21.8] - 2026-04-17
+
+### Changed
+- **Free trial extended from 7 to 14 days** — unified across server-signed flow (`pay.theio.vn/trial`) and local offline fallback in `license.ts`. Rationale: 7 days was too short for devs to fully evaluate Pro features (WebIntel, CodeGraph, RTK Pro strategies, unlimited sessions). Matches competitor norms (Cursor, Raycast). Landing page + install-script banners updated accordingly.
+
+### Fixed
+- **CodeGraph diagram endpoint ignores whitespace-padded query params** — `GET /api/codegraph/diagram?project=%20foo%20` previously passed the literal `" foo "` through to the graph lookup and returned 404. Query params are now `.trim()`-ed before use.
+
 ## [0.21.7] - 2026-04-17
 
 ### Fixed
