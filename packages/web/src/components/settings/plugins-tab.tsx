@@ -52,16 +52,18 @@ interface PluginInfo {
 export function PluginsTab() {
   const [plugins, setPlugins] = useState<PluginInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const fetchPlugins = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await api.get<{ data: PluginInfo[] }>("/api/plugins");
       setPlugins(res.data ?? []);
     } catch {
-      // failed to load
+      setError("Failed to load plugins. Check server connection.");
     } finally {
       setLoading(false);
     }
@@ -73,13 +75,12 @@ export function PluginsTab() {
 
   const handleToggle = async (key: string, enabled: boolean) => {
     setToggling(key);
+    const prev = plugins;
+    setPlugins((p) => p.map((x) => (x.key === key ? { ...x, enabled } : x)));
     try {
       await api.post("/api/plugins/toggle", { key, enabled });
-      setPlugins((prev) =>
-        prev.map((p) => (p.key === key ? { ...p, enabled } : p)),
-      );
     } catch {
-      // revert on error
+      setPlugins(prev);
     } finally {
       setToggling(null);
     }
@@ -94,6 +95,22 @@ export function PluginsTab() {
     return (
       <div className="flex items-center justify-center py-12">
         <CircleNotch size={24} className="animate-spin" style={{ color: "var(--color-accent)" }} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-12">
+        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>{error}</p>
+        <button
+          onClick={fetchPlugins}
+          className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+          style={{ background: "var(--glass-bg-heavy)", color: "var(--color-text-primary)" }}
+        >
+          <ArrowClockwise size={12} weight="bold" />
+          Retry
+        </button>
       </div>
     );
   }

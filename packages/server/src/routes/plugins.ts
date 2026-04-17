@@ -7,9 +7,9 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
-import { readdirSync, readFileSync, writeFileSync, existsSync, statSync } from "fs";
+import { readdirSync, readFileSync, writeFileSync, existsSync } from "fs";
 import { homedir } from "os";
-import { join, sep } from "path";
+import { join, resolve } from "path";
 import type { ApiResponse } from "@companion/shared";
 import { createLogger } from "../logger.js";
 
@@ -77,9 +77,18 @@ function getEnabledPlugins(): Record<string, boolean> {
   return (settings.enabledPlugins as Record<string, boolean>) ?? {};
 }
 
+/** Validate plugin key format — only safe chars allowed */
+const SAFE_KEY_RE = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+$/;
+
 /** Find the cached plugin directory (latest version) */
 function findPluginCacheDir(registry: string, name: string): string | null {
   const registryDir = join(CACHE_DIR, registry, name);
+
+  // Path confinement — prevent traversal outside CACHE_DIR
+  const resolved = resolve(registryDir);
+  const cacheRoot = resolve(CACHE_DIR);
+  if (!resolved.startsWith(cacheRoot + "\\") && !resolved.startsWith(cacheRoot + "/")) return null;
+
   if (!existsSync(registryDir)) return null;
 
   try {
@@ -95,12 +104,26 @@ function findPluginCacheDir(registry: string, name: string): string | null {
   }
 }
 
+/** Only allow http(s) URLs — block javascript:, data:, etc. */
+function sanitizeUrl(url: unknown): string | undefined {
+  if (typeof url !== "string") return undefined;
+  try {
+    const u = new URL(url);
+    if (u.protocol === "https:" || u.protocol === "http:") return url;
+  } catch { /* invalid URL */ }
+  return undefined;
+}
+
 /** Read plugin.json metadata */
 function readPluginMeta(cacheDir: string): PluginMeta | null {
   const metaPath = join(cacheDir, ".claude-plugin", "plugin.json");
   try {
     if (existsSync(metaPath)) {
-      return JSON.parse(readFileSync(metaPath, "utf-8")) as PluginMeta;
+      const raw = JSON.parse(readFileSync(metaPath, "utf-8")) as PluginMeta;
+      // Sanitize URLs to prevent XSS via javascript: href
+      raw.homepage = sanitizeUrl(raw.homepage) as string | undefined;
+      raw.repository = sanitizeUrl(raw.repository) as string | undefined;
+      return raw;
     }
   } catch {
     // invalid json
@@ -122,11 +145,6 @@ function listDirNames(dir: string): string[] {
 
 /** Scan what a plugin provides */
 function scanPluginProvides(cacheDir: string): PluginInfo["provides"] {
-  const agents = listDirNames(join(cacheDir, "agents"))
-    .filter((n) => n.endsWith(".md") || existsSync(join(cacheDir, "agents", n + ".md")))
-    .slice(0, 50);
-
-  // Re-scan agents properly — they're .md files
   let agentFiles: string[] = [];
   try {
     const agentsDir = join(cacheDir, "agents");
@@ -143,9 +161,9 @@ function scanPluginProvides(cacheDir: string): PluginInfo["provides"] {
   try {
     const commandsDir = join(cacheDir, "commands");
     if (existsSync(commandsDir)) {
-      commandFiles = readdirSync(commandsDir)
-        .filter((f) => f.endsWith(".md") || statSync(join(commandsDir, f)).isDirectory())
-        .map((f) => f.replace(/\.md$/, ""));
+      commandFiles = readdirSync(commandsDir, { withFileTypes: true })
+        .filter((e) => e.name.endsWith(".md") || e.isDirectory())
+        .map((e) => e.name.replace(/\.md$/, ""));
     }
   } catch {
     // no commands
@@ -233,7 +251,7 @@ pluginsRoutes.post(
   zValidator(
     "json",
     z.object({
-      key: z.string().min(1).max(200),
+      key: z.string().min(1).max(200).regex(SAFE_KEY_RE, "Invalid plugin key format"),
       enabled: z.boolean(),
     }),
   ),
