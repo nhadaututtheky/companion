@@ -7,9 +7,11 @@
 
 import { createLogger } from "../logger.js";
 import { getDb } from "../db/client.js";
-import { codeNodes } from "../db/schema.js";
+import { codeNodes, codegraphConfig } from "../db/schema.js";
 import { eq, and, like } from "drizzle-orm";
 import { queueNodeDescription } from "./semantic-describer.js";
+import { incrementalRescan } from "./diff-updater.js";
+import { isScanRunning } from "./index.js";
 
 const log = createLogger("codegraph:events");
 
@@ -119,6 +121,122 @@ export function getTracker(sessionId: string): SessionActivityTracker | undefine
 
 export function removeTracker(sessionId: string): void {
   trackers.delete(sessionId);
+}
+
+// ─── Auto-Reindex (Debounced) ──────────────────────────────────────────
+
+interface ReindexQueue {
+  files: Set<string>;
+  timer: ReturnType<typeof setTimeout> | null;
+}
+
+const reindexQueues = new Map<string, ReindexQueue>();
+
+const REINDEX_DEBOUNCE_MS = 5_000;
+
+/**
+ * Check if auto-reindex is enabled for a project (reads codegraph_config).
+ * Cached for 30s to avoid DB reads on every tool event.
+ */
+const autoReindexCache = new Map<string, { value: boolean; ts: number }>();
+const CACHE_TTL = 30_000;
+
+function isAutoReindexEnabled(projectSlug: string): boolean {
+  const cached = autoReindexCache.get(projectSlug);
+  if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.value;
+
+  try {
+    const db = getDb();
+    const row = db
+      .select({ autoReindexEnabled: codegraphConfig.autoReindexEnabled })
+      .from(codegraphConfig)
+      .where(eq(codegraphConfig.projectSlug, projectSlug))
+      .get();
+    const value = row?.autoReindexEnabled ?? true;
+    autoReindexCache.set(projectSlug, { value, ts: Date.now() });
+    return value;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Queue a file for auto-reindex. Debounces 5s to batch rapid edits.
+ * Only triggers for modify/create actions (Edit, Write).
+ */
+function queueAutoReindex(projectSlug: string, filePaths: string[]): void {
+  if (!isAutoReindexEnabled(projectSlug)) return;
+
+  let queue = reindexQueues.get(projectSlug);
+  if (!queue) {
+    queue = { files: new Set(), timer: null };
+    reindexQueues.set(projectSlug, queue);
+  }
+
+  for (const f of filePaths) queue.files.add(f);
+
+  // Reset debounce timer
+  if (queue.timer) clearTimeout(queue.timer);
+
+  queue.timer = setTimeout(() => {
+    const filesToRescan = [...queue!.files];
+    queue!.files.clear();
+    queue!.timer = null;
+    reindexQueues.delete(projectSlug); // cleanup to avoid memory leak
+
+    if (filesToRescan.length === 0) return;
+
+    // Skip if a full scan is in progress (avoid racing with scan pipeline)
+    if (isScanRunning(projectSlug)) {
+      log.debug("Auto-reindex skipped — full scan in progress", { projectSlug });
+      return;
+    }
+
+    log.info("Auto-reindex triggered", { projectSlug, files: filesToRescan.length });
+
+    void incrementalRescan(projectSlug, filesToRescan)
+      .then((result) => {
+        if (result.updated + result.added + result.deleted > 0) {
+          log.info("Auto-reindex complete", { projectSlug, ...result });
+          recordReindexEvent(projectSlug, filesToRescan, result);
+        }
+      })
+      .catch((err) => {
+        log.warn("Auto-reindex failed", { projectSlug, error: String(err) });
+      });
+  }, REINDEX_DEBOUNCE_MS);
+}
+
+// ─── Reindex Activity Events ───────────────────────────────────────────
+
+export interface ReindexEvent {
+  projectSlug: string;
+  files: string[];
+  result: { updated: number; added: number; deleted: number };
+  timestamp: number;
+}
+
+const recentReindexEvents: ReindexEvent[] = [];
+const MAX_REINDEX_EVENTS = 50;
+
+function recordReindexEvent(
+  projectSlug: string,
+  files: string[],
+  result: { updated: number; added: number; deleted: number },
+): void {
+  recentReindexEvents.push({ projectSlug, files, result, timestamp: Date.now() });
+  if (recentReindexEvents.length > MAX_REINDEX_EVENTS) {
+    recentReindexEvents.splice(0, recentReindexEvents.length - MAX_REINDEX_EVENTS);
+  }
+}
+
+/**
+ * Get recent auto-reindex events for a project.
+ */
+export function getRecentReindexEvents(projectSlug: string, limit = 10): ReindexEvent[] {
+  return recentReindexEvents
+    .filter((e) => e.projectSlug === projectSlug)
+    .slice(-limit);
 }
 
 // ─── File Path Extraction ───────────────────────────────────────────────
@@ -276,7 +394,12 @@ export function processToolEvent(
     allNodeIds.push(...nodeIds);
   }
 
-  // Queue newly discovered nodes for semantic description (Phase 4)
+  // Auto-reindex: queue modified/created files for debounced rescan
+  if (action === "modify" || action === "create") {
+    queueAutoReindex(projectSlug, relativePaths);
+  }
+
+  // Queue newly discovered nodes for semantic description
   if (allNodeIds.length > 0) {
     queueNodeDescription(
       projectSlug,

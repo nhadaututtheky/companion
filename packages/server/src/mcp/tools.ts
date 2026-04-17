@@ -677,4 +677,56 @@ export function registerTools(server: McpServer): void {
       }
     },
   );
+
+  // ── companion_generate_skills ─────────────────────────────────────────
+  server.tool(
+    "companion_generate_skills",
+    "Generate project-specific Claude Code skills from the code graph. Creates .claude/skills/ files with exploring guides, debugging tips, impact check workflows, and wiki integration. Auto-updates on each call.",
+    {
+      projectSlug: z.string().describe("Project slug to generate skills for"),
+    },
+    async ({ projectSlug }) => {
+      try {
+        const res = await apiCall<{ data: { generated: string[]; skipped: string[]; dir: string } }>("/codegraph/generate-skills", {
+          method: "POST",
+          body: { projectSlug },
+        });
+        const d = res.data;
+        const summary = d.generated.length > 0
+          ? `Generated ${d.generated.length} skills:\n${d.generated.map((f) => `  - ${f}`).join("\n")}\n\nWritten to: ${d.dir}`
+          : `No skills generated. ${d.skipped.join(", ")}`;
+        return { content: [{ type: "text", text: summary }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Skills generation failed: ${String(err)}` }], isError: true };
+      }
+    },
+  );
+
+  // ── companion_codegraph_diagram ───────────────────────────────────────
+  server.tool(
+    "companion_codegraph_diagram",
+    "Generate Mermaid architecture diagrams from the code graph. Types: 'architecture' (community overview), 'module' (file dependency tree), 'flow' (call chain from a symbol).",
+    {
+      projectSlug: z.string().describe("Project slug"),
+      type: z.enum(["architecture", "module", "flow"]).describe("Diagram type"),
+      file: z.string().optional().describe("File path (required for 'module' type)"),
+      symbol: z.string().optional().describe("Symbol name (required for 'flow' type)"),
+    },
+    async ({ projectSlug, type, file, symbol }) => {
+      try {
+        const params = new URLSearchParams({ project: projectSlug, type });
+        if (file) params.set("file", file);
+        if (symbol) params.set("symbol", symbol);
+
+        const res = await apiCall<{ data: { mermaid: string; description: string; nodeCount: number; edgeCount: number } }>(
+          `/codegraph/diagram?${params.toString()}`,
+        );
+        const d = res.data;
+        const output = `${d.description}\n\n\`\`\`mermaid\n${d.mermaid}\n\`\`\`\n\nNodes: ${d.nodeCount} | Edges: ${d.edgeCount}`;
+        return { content: [{ type: "text", text: output }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Diagram generation failed: ${String(err)}` }], isError: true };
+      }
+    },
+  );
 }

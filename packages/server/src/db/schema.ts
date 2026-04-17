@@ -653,6 +653,7 @@ export const codegraphConfig = sqliteTable("codegraph_config", {
   planReviewEnabled: integer("plan_review_enabled", { mode: "boolean" }).notNull().default(true),
   breakCheckEnabled: integer("break_check_enabled", { mode: "boolean" }).notNull().default(true),
   webDocsEnabled: integer("web_docs_enabled", { mode: "boolean" }).notNull().default(true),
+  autoReindexEnabled: integer("auto_reindex_enabled", { mode: "boolean" }).notNull().default(true),
   excludePatterns: text("exclude_patterns", { mode: "json" })
     .$type<string[]>()
     .notNull()

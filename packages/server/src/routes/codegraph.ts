@@ -30,7 +30,13 @@ import {
   enrichCommunitiesWithAILabels,
 } from "../codegraph/analysis.js";
 import { analyzeImpact } from "../codegraph/impact-analyzer.js";
-import { getSessionActivity } from "../codegraph/event-collector.js";
+import { getSessionActivity, getRecentReindexEvents } from "../codegraph/event-collector.js";
+import { generateSkills } from "../codegraph/skills-generator.js";
+import {
+  generateArchitectureDiagram,
+  generateModuleDiagram,
+  generateFlowDiagram,
+} from "../codegraph/diagram-generator.js";
 import { getDb } from "../db/client.js";
 import { codegraphConfig } from "../db/schema.js";
 import type { ApiResponse } from "@companion/shared";
@@ -55,6 +61,7 @@ const configSchema = z.object({
   planReviewEnabled: z.boolean().optional(),
   breakCheckEnabled: z.boolean().optional(),
   webDocsEnabled: z.boolean().optional(),
+  autoReindexEnabled: z.boolean().optional(),
   excludePatterns: z.array(z.string()).optional(),
   maxContextTokens: z.number().int().positive().optional(),
 });
@@ -470,6 +477,7 @@ codegraphRoutes.get("/config", (c) => {
     planReviewEnabled: true,
     breakCheckEnabled: true,
     webDocsEnabled: true,
+    autoReindexEnabled: true,
     excludePatterns: [],
     maxContextTokens: 800,
     updatedAt: new Date().toISOString(),
@@ -512,6 +520,7 @@ codegraphRoutes.put("/config", async (c) => {
         ...(body.planReviewEnabled !== undefined && { planReviewEnabled: body.planReviewEnabled }),
         ...(body.breakCheckEnabled !== undefined && { breakCheckEnabled: body.breakCheckEnabled }),
         ...(body.webDocsEnabled !== undefined && { webDocsEnabled: body.webDocsEnabled }),
+        ...(body.autoReindexEnabled !== undefined && { autoReindexEnabled: body.autoReindexEnabled }),
         ...(body.excludePatterns !== undefined && { excludePatterns: body.excludePatterns }),
         ...(body.maxContextTokens !== undefined && { maxContextTokens: body.maxContextTokens }),
         updatedAt: now,
@@ -528,6 +537,7 @@ codegraphRoutes.put("/config", async (c) => {
         planReviewEnabled: body.planReviewEnabled ?? true,
         breakCheckEnabled: body.breakCheckEnabled ?? true,
         webDocsEnabled: body.webDocsEnabled ?? true,
+        autoReindexEnabled: body.autoReindexEnabled ?? true,
         excludePatterns: body.excludePatterns ?? [],
         maxContextTokens: body.maxContextTokens ?? 800,
         updatedAt: now,
@@ -551,4 +561,100 @@ codegraphRoutes.get("/activity/:sessionId", (c) => {
   const sessionId = c.req.param("sessionId");
   const activity = getSessionActivity(sessionId);
   return c.json({ success: true, data: activity } satisfies ApiResponse);
+});
+
+// ─── Auto-Reindex Activity ─────────────────────────────────────────────
+
+/** GET /codegraph/reindex-events — recent auto-reindex events */
+codegraphRoutes.get("/reindex-events", (c) => {
+  const project = c.req.query("project");
+  if (!project) {
+    return c.json(
+      { success: false, error: "project query param required" } satisfies ApiResponse,
+      400,
+    );
+  }
+  const rawLimit = Number(c.req.query("limit") ?? 10);
+  const limit = isNaN(rawLimit) ? 10 : Math.min(Math.max(rawLimit, 1), 50);
+  const events = getRecentReindexEvents(project, limit);
+  return c.json({ success: true, data: events } satisfies ApiResponse);
+});
+
+// ─── Skills Generation ─────────────────────────────────────────────────
+
+/** POST /codegraph/generate-skills — generate .claude/skills/ from graph data */
+codegraphRoutes.post("/generate-skills", async (c) => {
+  const parsed = projectSlugSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) {
+    return c.json(
+      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body — requires projectSlug" } satisfies ApiResponse,
+      400,
+    );
+  }
+
+  try {
+    const result = generateSkills(parsed.data.projectSlug);
+    return c.json({ success: true, data: result } satisfies ApiResponse);
+  } catch (err) {
+    return c.json(
+      { success: false, error: String(err) } satisfies ApiResponse,
+      500,
+    );
+  }
+});
+
+// ─── Architecture Diagrams ─────────────────────────────────────────────
+
+/** GET /codegraph/diagram — generate Mermaid diagrams from code graph */
+codegraphRoutes.get("/diagram", (c) => {
+  const project = c.req.query("project");
+  const type = c.req.query("type") ?? "architecture";
+
+  if (!project) {
+    return c.json(
+      { success: false, error: "project query param required" } satisfies ApiResponse,
+      400,
+    );
+  }
+
+  try {
+    switch (type) {
+      case "architecture": {
+        const result = generateArchitectureDiagram(project);
+        return c.json({ success: true, data: result } satisfies ApiResponse);
+      }
+      case "module": {
+        const file = c.req.query("file");
+        if (!file) {
+          return c.json(
+            { success: false, error: "file query param required for module diagram" } satisfies ApiResponse,
+            400,
+          );
+        }
+        const result = generateModuleDiagram(project, file);
+        return c.json({ success: true, data: result } satisfies ApiResponse);
+      }
+      case "flow": {
+        const symbol = c.req.query("symbol");
+        if (!symbol) {
+          return c.json(
+            { success: false, error: "symbol query param required for flow diagram" } satisfies ApiResponse,
+            400,
+          );
+        }
+        const result = generateFlowDiagram(project, symbol);
+        return c.json({ success: true, data: result } satisfies ApiResponse);
+      }
+      default:
+        return c.json(
+          { success: false, error: `Unknown diagram type: ${type}. Use: architecture, module, flow` } satisfies ApiResponse,
+          400,
+        );
+    }
+  } catch (err) {
+    return c.json(
+      { success: false, error: String(err) } satisfies ApiResponse,
+      500,
+    );
+  }
 });

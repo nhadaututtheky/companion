@@ -145,4 +145,8 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0035_session_account.sql",
     sql: "-- Track which account was used for each session (multi-account management)\nALTER TABLE sessions ADD COLUMN account_id TEXT;\n",
   },
+  {
+    name: "0036_codegraph_auto_reindex.sql",
+    sql: "-- Auto-reindex toggle for codegraph (Phase 4: auto-reindex on file changes)\nALTER TABLE codegraph_config ADD COLUMN auto_reindex_enabled INTEGER NOT NULL DEFAULT 1;\n",
+  },
 ];

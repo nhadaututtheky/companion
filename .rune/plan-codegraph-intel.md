@@ -14,8 +14,8 @@ Port best ideas from GitNexus (27K stars) + fix internal connectivity gaps. Goal
 | 1 | Wire Zombie Connections | Done | plan-codegraph-intel-phase1.md | Fix PostToolUse→event-collector, community→context, codegraph→wiki |
 | 2 | Leiden Community Detection | Done | plan-codegraph-intel-phase2.md | Leiden algorithm + AI labels + enriched stats |
 | 3 | Git Diff Impact Mapping | Done | plan-codegraph-intel-phase3.md | Pre-commit blast radius, MCP tool, Telegram /impact |
-| 4 | Auto-Reindex + Claude Code Skills | Pending | plan-codegraph-intel-phase4.md | PostToolUse hook triggers rescan, generate .claude/skills/ |
-| 5 | Architecture Diagrams | Pending | plan-codegraph-intel-phase5.md | Mermaid generation from communities + graph, MCP tool |
+| 4 | Auto-Reindex + Claude Code Skills | ✅ Done | plan-codegraph-intel-phase4.md | PostToolUse hook triggers rescan, generate .claude/skills/ |
+| 5 | Architecture Diagrams | ✅ Done | plan-codegraph-intel-phase5.md | Mermaid generation from communities + graph, MCP tool |
 
 ## Key Decisions
 - Keep SQLite (proven, zero-dep) — don't port LadybugDB
@@ -29,8 +29,8 @@ Port best ideas from GitNexus (27K stars) + fix internal connectivity gaps. Goal
 |------|-----|--------|-----------|
 | PostToolUse hook | event-collector.processToolEvent() | DISCONNECTED | Phase 1 |
 | Communities | Context injection | DISCONNECTED | Phase 1 |
-| Communities | Graph visualization / export | DISCONNECTED | Phase 5 |
+| Communities | Graph visualization / export | ✅ CONNECTED | Phase 5 |
 | CodeGraph | Wiki (cross-reference) | DISCONNECTED | Phase 1 |
 | Session summary | Wiki auto-compile | PARTIAL (raw only) | Phase 1 |
 | Git diff | Impact analysis (pre-commit) | EXISTS but not wired | Phase 3 |
-| Rescan | File change events (real-time) | MANUAL only | Phase 4 |
+| Rescan | File change events (real-time) | ✅ CONNECTED | Phase 4 |

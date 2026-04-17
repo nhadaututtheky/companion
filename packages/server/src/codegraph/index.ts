@@ -40,6 +40,14 @@ const log = createLogger("codegraph");
 
 const activeScans = new Map<string, { jobId: number; abort: boolean }>();
 
+/**
+ * Check if a full scan is currently running for a project.
+ * Used by auto-reindex to avoid racing with full scans.
+ */
+export function isScanRunning(projectSlug: string): boolean {
+  return activeScans.has(projectSlug);
+}
+
 // ─── Public API ──────────────────────────────────────────────────────────
 
 /**
@@ -363,7 +371,18 @@ async function runScan(
       log.warn("FTS5 index population failed (non-fatal)", { error: String(err) });
     }
 
-    // 7. Done
+    // 7. Auto-generate skills if .claude/ exists
+    try {
+      const { shouldAutoGenerateSkills, generateSkills } = await import("./skills-generator.js");
+      if (shouldAutoGenerateSkills(projectSlug)) {
+        const result = generateSkills(projectSlug);
+        log.info("Auto-generated skills", { projectSlug, generated: result.generated });
+      }
+    } catch (err) {
+      log.warn("Skills auto-generation failed (non-fatal)", { error: String(err) });
+    }
+
+    // 8. Done
     const elapsed = Date.now() - startTime;
     updateScanJob(jobId, {
       status: "done",
