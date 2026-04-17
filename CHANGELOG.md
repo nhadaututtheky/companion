@@ -2,6 +2,15 @@
 
 All notable changes to Companion are documented here.
 
+## [0.21.6] - 2026-04-17
+
+### Fixed
+- **CI Quality Gates green** — removed the lone `no-useless-escape` error in `diagram-generator.ts` (`\[` inside a character class is redundant) that was failing the lint job on `main` even though v0.21.5 tag builds were green.
+- **Settings / tip-banner React 19 compliance** — refactored three `set-state-in-effect` violations (`DesktopTab`, `TipsSection`, `TipBanner`) to derive state at render via lazy `useState` initializers or `useMemo`, eliminating cascading re-renders flagged by the React 19 ESLint plugin.
+
+### Internal
+- `TipBanner` no longer uses a 300ms fade transition on dismiss — the early `return null` made the opacity animation dead code anyway. Selection logic now runs in `useMemo` keyed on a `dismissCounter` that bumps on dismiss to force `availableTips` to re-filter against `localStorage`.
+
 ## [0.21.5] - 2026-04-17
 
 ### Fixed
