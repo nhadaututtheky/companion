@@ -39,7 +39,7 @@ User message
 | 2 | Dispatch Router | ✅ Done | plan-smart-orchestration-phase2.md | Wire classifier → existing engines |
 | 3 | Context Curator | ✅ Done | plan-smart-orchestration-phase3.md | RAG-style selective injection per task |
 | 4 | Session Memory | ✅ Done | plan-smart-orchestration-phase4.md | Learn patterns, preferences, mistakes |
-| 5 | UI + Feedback Loop | ⬚ Pending | plan-smart-orchestration-phase5.md | User can see/override dispatch decisions |
+| 5 | UI + Feedback Loop | ✅ Done | plan-smart-orchestration-phase5.md | User can see/override dispatch decisions |
 
 ## Key Decisions
 - Classifier uses Haiku (fast, cheap) — NOT Opus. Classify in <2s

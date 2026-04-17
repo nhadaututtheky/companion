@@ -6,6 +6,7 @@ import { useActivityStore } from "@/lib/stores/activity-store";
 import { useContextFeedStore } from "@/lib/stores/context-feed-store";
 import { useGraphActivityStore } from "@/lib/stores/graph-activity-store";
 import { usePulseStore } from "@/lib/stores/pulse-store";
+import { useDispatchStore } from "@/lib/stores/dispatch-store";
 import { notify } from "./use-notifications";
 import { api } from "@/lib/api-client";
 import type {
@@ -956,6 +957,22 @@ export function useSession(sessionId: string): UseSessionReturn {
           turn: rawMsg.turn as number,
           timestamp: rawMsg.timestamp as number,
         });
+      }
+
+      // Handle dispatch:classified events for orchestration suggestions
+      if (rawMsg.type === "dispatch:classified" && rawMsg.classification) {
+        useDispatchStore.getState().setSuggestion(
+          rawMsg.sessionId as string,
+          rawMsg.classification as import("@companion/shared/types").TaskClassification,
+        );
+      }
+
+      // Clear suggestion on dispatch completion/error — only if it matches this session
+      if (rawMsg.type === "dispatch:completed" || rawMsg.type === "dispatch:error") {
+        const store = useDispatchStore.getState();
+        if (store.suggestion?.sessionId === sessionId) {
+          store.clearSuggestion();
+        }
       }
     },
     [sessionId, setSession, addLog, getSessionName, flushStreamBuffer],

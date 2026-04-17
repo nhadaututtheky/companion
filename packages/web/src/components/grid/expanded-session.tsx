@@ -537,6 +537,7 @@ function ExpandedSessionInner({ sessionId, onClose }: ExpandedSessionProps) {
                   onStop={handleStop}
                   isRunning={isRunning}
                   projectSlug={session?.projectSlug ?? undefined}
+                  sessionId={sessionId}
                   placeholder="Message Claude… (Enter to send, Shift+Enter for newline, Ctrl+Enter also sends)"
                 />
               </div>

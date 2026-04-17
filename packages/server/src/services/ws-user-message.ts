@@ -22,6 +22,7 @@ import { scanPrompt, isScanEnabled } from "./prompt-scanner.js";
 import { generateSessionName } from "./session-namer.js";
 import { handleMentions } from "./mention-router.js";
 import { classifyByRules } from "./task-classifier.js";
+import { tryAutoDispatch, type DispatchContext } from "./dispatch-router.js";
 import { terminalLock } from "./terminal-lock.js";
 import {
   handleDocsCommand as handleDocsCmd,
@@ -292,6 +293,21 @@ export class UserMessageHandler {
       handleMentions(content, session.id, session.state.short_id, (targetId, msg) =>
         this.bridge.sendUserMessage(targetId, msg, "mention"),
       );
+    }
+
+    // ── Smart Orchestration: classify and emit dispatch suggestion (async, non-blocking) ──
+    if (source !== "mention" && source !== "debate" && source !== "dispatch") {
+      const sessionRecord = this.bridge.getSessionRecord(session.id);
+      const dispatchCtx: DispatchContext = {
+        originSessionId: session.id,
+        originShortId: session.state.short_id ?? "",
+        projectSlug: sessionRecord?.projectSlug ?? undefined,
+        cwd: session.state.cwd,
+        sendToSession: (sid, msg) => this.bridge.sendUserMessage(sid, msg, "dispatch"),
+      };
+      void tryAutoDispatch(content, dispatchCtx).catch((err) => {
+        log.debug("Auto-dispatch classify failed (non-fatal)", { error: String(err) });
+      });
     }
 
     // ── CodeGraph: prepend pending hint from plan-review or break-check ──

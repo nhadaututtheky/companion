@@ -42,6 +42,8 @@ import {
 } from "../services/session-scanner.js";
 import type { ApiResponse, CLIPlatform } from "@companion/shared";
 import { thinkingModeTobudget } from "@companion/shared";
+import { previewDispatch, previewDispatchSync, dispatch, type DispatchContext } from "../services/dispatch-router.js";
+import { extractInsights, type SessionSummaryInput } from "../services/session-memory.js";
 import { resolvePersona } from "../services/custom-personas.js";
 
 const log = createLogger("routes:sessions");
@@ -1365,6 +1367,81 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
 
     return c.json({ success: true, data: { children: enriched } } satisfies ApiResponse);
   });
+
+  // ── Dispatch preview + feedback ──────────────────────────────────────────
+
+  /** Preview dispatch classification for a message (sync regex-only) */
+  app.get("/sessions/dispatch-preview", (c) => {
+    const message = c.req.query("message") ?? "";
+    if (!message) return c.json({ success: false, error: "message required" }, 400);
+    if (message.length > 2000) return c.json({ success: false, error: "message too long" }, 400);
+    const classification = previewDispatchSync(message);
+    return c.json({ success: true, data: classification });
+  });
+
+  /** Full AI-powered dispatch preview */
+  app.post(
+    "/sessions/dispatch-preview",
+    zValidator(
+      "json",
+      z.object({
+        message: z.string().min(1).max(10000),
+        projectSlug: z.string().optional(),
+      }),
+    ),
+    async (c) => {
+      const { message, projectSlug } = c.req.valid("json");
+      const classification = await previewDispatch(message, { projectSlug });
+      return c.json({ success: true, data: classification });
+    },
+  );
+
+  /** Confirm a dispatch suggestion (user clicked accept/override) */
+  app.post(
+    "/sessions/dispatch-confirm",
+    zValidator(
+      "json",
+      z.object({
+        sessionId: z.string().min(1),
+        message: z.string().min(1).max(10000),
+        classification: z.object({
+          intent: z.string(),
+          pattern: z.enum(["single", "workflow", "debate", "mention"]),
+          complexity: z.enum(["simple", "medium", "complex"]),
+          suggestedTemplate: z.string().optional(),
+          suggestedDebateFormat: z.enum(["pro_con", "red_team", "review", "brainstorm"]).optional(),
+          relevantFiles: z.array(z.string()),
+          confidence: z.number(),
+          suggestedModel: z.string().optional(),
+        }),
+        action: z.enum(["accept", "override"]),
+        projectSlug: z.string().optional(),
+      }),
+    ),
+    async (c) => {
+      const { sessionId, message, classification, action, projectSlug } = c.req.valid("json");
+
+      const ctx: DispatchContext = {
+        originSessionId: sessionId,
+        originShortId: "",
+        projectSlug,
+        sendToSession: (sid, content) => bridge.sendUserMessage(sid, content, "dispatch"),
+      };
+
+      // Fill shortId from active session if available
+      const session = bridge.getSession(sessionId);
+      if (session) {
+        ctx.originShortId = session.state.short_id ?? "";
+        ctx.cwd = session.state.cwd;
+      }
+
+      const result = await dispatch(classification, message, ctx);
+
+      log.info("Dispatch confirmed", { sessionId, action, pattern: classification.pattern, dispatched: result.dispatched });
+
+      return c.json({ success: true, data: result });
+    },
+  );
 
   return app;
 }

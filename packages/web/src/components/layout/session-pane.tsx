@@ -100,6 +100,7 @@ export function SessionPane({ sessionId, onClose }: SessionPaneProps) {
         onStop={handleStop}
         isRunning={session?.status === "running"}
         projectSlug={session?.projectSlug ?? undefined}
+        sessionId={sessionId}
         compact
       />
     </div>

@@ -243,6 +243,33 @@ spectatorBridge.onSpectatorCountChange((sessionId, count) => {
   }
 });
 
+// Wire dispatch events → broadcast to session browsers
+eventBus.on("dispatch:classified", ({ sessionId, classification }) => {
+  bridge.broadcastEvent(sessionId, {
+    type: "dispatch:classified",
+    sessionId,
+    classification,
+  });
+});
+eventBus.on("dispatch:started", (payload) => {
+  bridge.broadcastEvent(payload.sessionId, {
+    type: "dispatch:started",
+    ...payload,
+  });
+});
+eventBus.on("dispatch:completed", (payload) => {
+  bridge.broadcastEvent(payload.sessionId, {
+    type: "dispatch:completed",
+    ...payload,
+  });
+});
+eventBus.on("dispatch:error", (payload) => {
+  bridge.broadcastEvent(payload.sessionId, {
+    type: "dispatch:error",
+    ...payload,
+  });
+});
+
 // ─── Hono App ────────────────────────────────────────────────────────────────
 
 const app = new Hono();

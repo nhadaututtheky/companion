@@ -504,6 +504,7 @@ export function SessionPageClient({ params }: PageProps) {
                 onStop={handleStop}
                 isRunning={session?.status === "running"}
                 projectSlug={session?.projectSlug ?? undefined}
+                sessionId={id}
                 sessionModel={session?.model}
                 debateParticipants={debateParticipants}
                 onAddDebateParticipant={(model) => addDebateParticipant(id, model)}

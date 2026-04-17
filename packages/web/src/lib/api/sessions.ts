@@ -5,6 +5,7 @@ import type {
   ScanSessionsResponse,
   CLIPlatform,
 } from "@companion/shared";
+import type { TaskClassification, DispatchResult } from "@companion/shared/types";
 
 export const sessions = {
   list: () => request<{ data: { sessions: unknown[] } }>("/api/sessions"),
@@ -205,6 +206,38 @@ export const sessions = {
       request<{ success: boolean; data: { channelId: string } }>(
         `/api/sessions/${id}/debate/round`,
         { method: "POST", body: JSON.stringify({ topic, format }) },
+      ),
+  },
+
+  dispatch: {
+    /** Sync preview (regex-only, instant) */
+    previewSync: (message: string) =>
+      request<{ success: boolean; data: TaskClassification }>(
+        `/api/sessions/dispatch-preview?message=${encodeURIComponent(message)}`,
+      ),
+    /** Full AI preview */
+    preview: (message: string, projectSlug?: string) =>
+      request<{ success: boolean; data: TaskClassification }>(
+        "/api/sessions/dispatch-preview",
+        {
+          method: "POST",
+          body: JSON.stringify({ message, projectSlug }),
+        },
+      ),
+    /** Confirm a dispatch suggestion */
+    confirm: (opts: {
+      sessionId: string;
+      message: string;
+      classification: TaskClassification;
+      action: "accept" | "override";
+      projectSlug?: string;
+    }) =>
+      request<{ success: boolean; data: DispatchResult }>(
+        "/api/sessions/dispatch-confirm",
+        {
+          method: "POST",
+          body: JSON.stringify(opts),
+        },
       ),
   },
 };

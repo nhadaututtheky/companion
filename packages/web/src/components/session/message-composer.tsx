@@ -20,6 +20,9 @@ import { QuickActions } from "./quick-actions";
 import { SavedPromptsPicker } from "./saved-prompts-picker";
 import { SlashCommandMenu } from "./slash-commands";
 import { ModelBar, type ModelInfo } from "./model-bar";
+import { DispatchSuggestion } from "./dispatch-suggestion";
+import { useDispatchStore } from "@/lib/stores/dispatch-store";
+import type { OrchestrationPattern } from "@companion/shared/types";
 import { api } from "@/lib/api-client";
 
 interface MessageComposerProps {
@@ -30,6 +33,8 @@ interface MessageComposerProps {
   placeholder?: string;
   /** Current project slug for scoping saved prompts */
   projectSlug?: string;
+  /** Session ID for dispatch suggestions */
+  sessionId?: string;
   /** Compact mode for split-pane layouts */
   compact?: boolean;
   /** Current session model for model bar */
@@ -49,6 +54,7 @@ export function MessageComposer({
   disabled = false,
   placeholder = "Message Claude...",
   projectSlug,
+  sessionId,
   sessionModel,
   debateParticipants = [],
   onAddDebateParticipant,
@@ -68,6 +74,34 @@ export function MessageComposer({
   const addAttachment = useComposerStore((s) => s.addAttachment);
   const removeAttachment = useComposerStore((s) => s.removeAttachment);
   const clearAttachments = useComposerStore((s) => s.clearAttachments);
+
+  // Dispatch suggestion store — only show if suggestion matches this session
+  const dispatchSuggestion = useDispatchStore((s) =>
+    s.suggestion?.sessionId === sessionId ? s.suggestion : null,
+  );
+  const clearSuggestion = useDispatchStore((s) => s.clearSuggestion);
+
+  const handleDispatchConfirm = useCallback(
+    async (pattern: OrchestrationPattern) => {
+      if (!dispatchSuggestion || !sessionId) return;
+      try {
+        await api.sessions.dispatch.confirm({
+          sessionId,
+          message: text.trim(),
+          classification: { ...dispatchSuggestion.classification, pattern },
+          action: pattern !== dispatchSuggestion.classification.pattern ? "override" : "accept",
+          projectSlug,
+        });
+        // Success — clear suggestion and composer text
+        clearSuggestion();
+        setText("");
+        clearAttachments();
+      } catch {
+        // Dispatch failed — message stays in composer for manual send
+      }
+    },
+    [dispatchSuggestion, sessionId, text, clearSuggestion, clearAttachments, projectSlug],
+  );
 
   // Voice input: append transcribed speech to the textarea
   const handleTranscript = useCallback((transcript: string) => {
@@ -318,6 +352,16 @@ export function MessageComposer({
             </span>
           </div>
         )}
+        {/* Dispatch suggestion */}
+        {dispatchSuggestion && !dispatchSuggestion.dismissed && (
+          <div className="mb-2">
+            <DispatchSuggestion
+              onConfirm={handleDispatchConfirm}
+              onDismiss={clearSuggestion}
+            />
+          </div>
+        )}
+
         {/* Attachment chips + quick actions */}
         {attachments.length > 0 && (
           <div className="mb-2 space-y-2">
