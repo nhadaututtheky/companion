@@ -1,6 +1,18 @@
 /**
  * Codex CLI Adapter — OpenAI's Codex CLI coding agent.
- * Uses `codex exec` for non-interactive mode with --json JSONL output.
+ * Uses `codex exec --json` for non-interactive JSONL output.
+ *
+ * Event schema (codex-cli 0.118.0):
+ *   thread.started   { type, thread_id }                       → system_init
+ *   turn.started     { type }                                  → progress
+ *   item.started     { type, item: { id, type, ... } }         → tool_use (for command_execution)
+ *   item.completed   { type, item: { id, type, text?, ... } }  → assistant | tool_result
+ *   turn.completed   { type, usage: { input_tokens, ... } }    → complete
+ *
+ * Item types:
+ *   agent_message     { id, type, text }                       → assistant text
+ *   command_execution { id, type, command, aggregated_output, exit_code, status }
+ *
  * Requires OPENAI_API_KEY env var.
  */
 
@@ -16,173 +28,130 @@ import type {
 
 const log = createLogger("codex-adapter");
 
+interface CodexItem {
+  id?: string;
+  type?: string;
+  text?: string;
+  command?: string;
+  aggregated_output?: string;
+  exit_code?: number | null;
+  status?: string;
+}
+
 /**
- * Parse Codex CLI JSONL output into NormalizedMessage.
- * Codex `exec --json` emits JSONL events similar to Claude's stream format.
+ * Parse Codex CLI JSONL output.
+ * Returns null for non-JSON lines (stderr-style log leakage) so they route to the
+ * diagnostic stderr buffer instead of the user-visible content stream.
  */
-function parseCodexMessage(line: string): NormalizedMessage | null {
+export function parseCodexMessage(line: string): NormalizedMessage | null {
   let parsed: Record<string, unknown>;
   try {
     parsed = JSON.parse(line);
   } catch {
-    if (line.trim()) {
-      return {
-        type: "assistant",
-        platform: "codex",
-        content: line,
-        contentBlocks: [{ type: "text", text: line }],
-      };
-    }
     return null;
   }
 
   const type = parsed.type as string | undefined;
-  const event = parsed.event as string | undefined;
+  if (!type) return null;
 
-  // Message event with assistant role
-  if (type === "message" || event === "message") {
-    const role = parsed.role as string | undefined;
-    const content = parsed.content as unknown;
+  switch (type) {
+    case "thread.started":
+      return {
+        type: "system_init",
+        platform: "codex",
+        sessionId: parsed.thread_id as string | undefined,
+        raw: parsed,
+      };
 
-    if (role === "assistant" || !role) {
-      // Content can be string or array of content blocks
-      if (typeof content === "string") {
+    case "turn.started":
+      return { type: "progress", platform: "codex", raw: parsed };
+
+    case "item.started": {
+      const item = parsed.item as CodexItem | undefined;
+      if (!item) return { type: "progress", platform: "codex", raw: parsed };
+
+      if (item.type === "command_execution") {
         return {
           type: "assistant",
           platform: "codex",
-          content,
-          contentBlocks: [{ type: "text", text: content }],
-          model: parsed.model as string | undefined,
+          contentBlocks: [
+            {
+              type: "tool_use",
+              id: item.id ?? crypto.randomUUID(),
+              name: "command_execution",
+              input: { command: item.command ?? "" },
+            },
+          ],
+          toolUseId: item.id,
+          toolName: "command_execution",
+          toolInput: { command: item.command ?? "" },
+          raw: parsed,
+        };
+      }
+      return { type: "progress", platform: "codex", raw: parsed };
+    }
+
+    case "item.completed": {
+      const item = parsed.item as CodexItem | undefined;
+      if (!item) return { type: "progress", platform: "codex", raw: parsed };
+
+      if (item.type === "agent_message") {
+        const text = item.text ?? "";
+        return {
+          type: "assistant",
+          platform: "codex",
+          content: text,
+          contentBlocks: [{ type: "text", text }],
           raw: parsed,
         };
       }
 
-      if (Array.isArray(content)) {
-        const blocks = content.map((block: Record<string, unknown>) => {
-          if (block.type === "tool_use" || block.type === "function_call") {
-            let blockInput: Record<string, unknown> = {};
-            const blockArgs = block.arguments ?? block.input;
-            if (typeof blockArgs === "string") {
-              try {
-                blockInput = JSON.parse(blockArgs);
-              } catch {
-                blockInput = { raw: blockArgs };
-              }
-            } else if (blockArgs && typeof blockArgs === "object") {
-              blockInput = blockArgs as Record<string, unknown>;
+      if (item.type === "command_execution") {
+        const isError = item.status === "failed" || (typeof item.exit_code === "number" && item.exit_code !== 0);
+        return {
+          type: "tool_result",
+          platform: "codex",
+          toolUseId: item.id,
+          toolResult: item.aggregated_output ?? "",
+          toolIsError: isError,
+          raw: parsed,
+        };
+      }
+
+      return { type: "progress", platform: "codex", raw: parsed };
+    }
+
+    case "turn.completed": {
+      const usage = parsed.usage as
+        | { input_tokens?: number; cached_input_tokens?: number; output_tokens?: number }
+        | undefined;
+      return {
+        type: "complete",
+        platform: "codex",
+        isError: false,
+        tokenUsage: usage
+          ? {
+              input: usage.input_tokens ?? 0,
+              output: usage.output_tokens ?? 0,
+              cacheRead: usage.cached_input_tokens,
             }
-            return {
-              type: "tool_use" as const,
-              id: (block.id as string) ?? crypto.randomUUID(),
-              name: (block.name as string) ?? "unknown",
-              input: blockInput,
-            };
-          }
-          return {
-            type: "text" as const,
-            text: (block.text as string) ?? JSON.stringify(block),
-          };
-        });
-
-        const textContent = blocks
-          .filter((b) => b.type === "text")
-          .map((b) => ("text" in b ? b.text : ""))
-          .join("");
-
-        return {
-          type: "assistant",
-          platform: "codex",
-          content: textContent || undefined,
-          contentBlocks: blocks,
-          model: parsed.model as string | undefined,
-          raw: parsed,
-        };
-      }
-    }
-  }
-
-  // Function/tool call events
-  if (type === "function_call" || type === "tool_call" || event === "tool_use") {
-    // OpenAI format sends `arguments` as a JSON string — parse it
-    let input: Record<string, unknown> = {};
-    const rawArgs = parsed.arguments ?? parsed.input;
-    if (typeof rawArgs === "string") {
-      try {
-        input = JSON.parse(rawArgs);
-      } catch {
-        input = { raw: rawArgs };
-      }
-    } else if (rawArgs && typeof rawArgs === "object") {
-      input = rawArgs as Record<string, unknown>;
+          : undefined,
+        raw: parsed,
+      };
     }
 
-    return {
-      type: "assistant",
-      platform: "codex",
-      contentBlocks: [
-        {
-          type: "tool_use",
-          id: (parsed.call_id as string) ?? (parsed.id as string) ?? crypto.randomUUID(),
-          name: (parsed.name as string) ?? (parsed.function as string) ?? "unknown",
-          input,
-        },
-      ],
-      raw: parsed,
-    };
-  }
+    case "error":
+      return {
+        type: "error",
+        platform: "codex",
+        errorMessage:
+          (parsed.message as string) ?? (parsed.error as string) ?? "Unknown Codex error",
+        raw: parsed,
+      };
 
-  // Function/tool result
-  if (type === "function_call_output" || type === "tool_result" || event === "tool_result") {
-    return {
-      type: "tool_result",
-      platform: "codex",
-      content: (parsed.output as string) ?? (parsed.result as string) ?? "",
-      contentBlocks: [
-        {
-          type: "text",
-          text: (parsed.output as string) ?? (parsed.result as string) ?? "",
-        },
-      ],
-      raw: parsed,
-    };
+    default:
+      return { type: "progress", platform: "codex", raw: parsed };
   }
-
-  // Completion/done event
-  if (type === "response.completed" || type === "done" || event === "done") {
-    return {
-      type: "complete",
-      platform: "codex",
-      isError: false,
-      costUsd: parsed.cost_usd as number | undefined,
-      raw: parsed,
-    };
-  }
-
-  // Error event
-  if (type === "error" || event === "error") {
-    return {
-      type: "error",
-      platform: "codex",
-      errorMessage: (parsed.message as string) ?? (parsed.error as string) ?? "Unknown error",
-      raw: parsed,
-    };
-  }
-
-  // Status/progress
-  if (type === "status" || event === "status") {
-    return {
-      type: "progress",
-      platform: "codex",
-      raw: parsed,
-    };
-  }
-
-  // Unknown event — pass through as progress
-  return {
-    type: "progress",
-    platform: "codex",
-    raw: parsed,
-  };
 }
 
 export class CodexAdapter implements CLIAdapter {
@@ -226,11 +195,6 @@ export class CodexAdapter implements CLIAdapter {
   ): Promise<CLIProcess> {
     const args: string[] = ["exec"];
 
-    // Prompt as positional argument
-    if (opts.prompt) {
-      args.push(opts.prompt);
-    }
-
     // JSONL output
     args.push("--json");
 
@@ -256,6 +220,11 @@ export class CodexAdapter implements CLIAdapter {
       args.push("-a", approvalMode);
     }
 
+    // Prompt must come LAST as positional arg — codex exec otherwise waits on stdin
+    if (opts.prompt) {
+      args.push(opts.prompt);
+    }
+
     log.info("Launching Codex CLI", {
       cwd: opts.cwd,
       model: opts.model,
@@ -272,7 +241,7 @@ export class CodexAdapter implements CLIAdapter {
     const proc = Bun.spawn(["codex", ...args], {
       cwd: opts.cwd,
       env,
-      stdin: "pipe",
+      stdin: "ignore", // exec mode is one-shot; piping stdin causes codex to block on "Reading additional input from stdin..."
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -302,16 +271,32 @@ export class CodexAdapter implements CLIAdapter {
             if (!trimmed) continue;
             if (label === "stdout") {
               const msg = parseCodexMessage(trimmed);
-              if (msg) onMessage(msg);
+              if (msg) {
+                onMessage(msg);
+              } else {
+                // Non-JSON stdout line (tracing logs, ANSI error output) → diagnostic buffer
+                stderrLines.push(trimmed.slice(0, 500));
+                if (stderrLines.length > MAX_STDERR) stderrLines.shift();
+              }
             } else {
-              stderrLines.push(trimmed.slice(0, 300));
+              stderrLines.push(trimmed.slice(0, 500));
               if (stderrLines.length > MAX_STDERR) stderrLines.shift();
             }
           }
         }
-        if (buffer.trim() && label === "stdout") {
-          const msg = parseCodexMessage(buffer.trim());
-          if (msg) onMessage(msg);
+        if (buffer.trim()) {
+          const trimmed = buffer.trim();
+          if (label === "stdout") {
+            const msg = parseCodexMessage(trimmed);
+            if (msg) onMessage(msg);
+            else {
+              stderrLines.push(trimmed.slice(0, 500));
+              if (stderrLines.length > MAX_STDERR) stderrLines.shift();
+            }
+          } else {
+            stderrLines.push(trimmed.slice(0, 500));
+            if (stderrLines.length > MAX_STDERR) stderrLines.shift();
+          }
         }
       } catch (err) {
         log.error(`Error reading Codex ${label}`, { error: String(err) });

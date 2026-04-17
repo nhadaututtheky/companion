@@ -68,20 +68,13 @@ interface OpenCodeEvent {
  * Real event types (v1.3.17): step_start, text, step_finish
  * Real part types: step-start, text, step-finish, reasoning, tool, patch
  */
-function parseOpenCodeMessage(line: string): NormalizedMessage | null {
+export function parseOpenCodeMessage(line: string): NormalizedMessage | null {
   let event: OpenCodeEvent;
   try {
     event = JSON.parse(line) as OpenCodeEvent;
   } catch {
-    // Non-JSON line (e.g. startup banner) — emit as assistant text
-    if (line.trim()) {
-      return {
-        type: "assistant",
-        platform: "opencode",
-        content: line,
-        contentBlocks: [{ type: "text", text: line }],
-      };
-    }
+    // Non-JSON line (startup banner, diagnostic log) — route to stderr buffer,
+    // never surface as assistant content.
     return null;
   }
 
@@ -91,10 +84,13 @@ function parseOpenCodeMessage(line: string): NormalizedMessage | null {
     return { type: "progress", platform: "opencode", raw: event };
   }
 
-  const partType = part.type ?? event.type;
+  // part.type uses dashes ("step-start"); event.type uses underscores ("step_start").
+  // Normalize so we can match on a single canonical form.
+  const normalize = (s: string | undefined) => (s ?? "").replace(/_/g, "-");
+  const partType = normalize(part.type) || normalize(event.type);
 
   // ── step-start → system_init ──────────────────────────────────────────
-  if (partType === "step-start" || event.type === "step_start") {
+  if (partType === "step-start") {
     return {
       type: "system_init",
       platform: "opencode",
@@ -104,7 +100,7 @@ function parseOpenCodeMessage(line: string): NormalizedMessage | null {
   }
 
   // ── text → assistant ──────────────────────────────────────────────────
-  if (partType === "text" || event.type === "text") {
+  if (partType === "text") {
     const text = part.text ?? "";
     return {
       type: "assistant",
@@ -178,7 +174,7 @@ function parseOpenCodeMessage(line: string): NormalizedMessage | null {
   }
 
   // ── step-finish → complete (tokens + cost) ────────────────────────────
-  if (partType === "step-finish" || event.type === "step_finish") {
+  if (partType === "step-finish") {
     const tokens = part.tokens;
     return {
       type: "complete",
@@ -363,7 +359,7 @@ export class OpenCodeAdapter implements CLIAdapter {
     const proc = Bun.spawn(["opencode", ...args], {
       cwd: opts.cwd,
       env,
-      stdin: "pipe",
+      stdin: "ignore", // run mode is one-shot; piping stdin can block opencode
       stdout: "pipe",
       stderr: "pipe",
     });
@@ -393,16 +389,32 @@ export class OpenCodeAdapter implements CLIAdapter {
             if (!trimmed) continue;
             if (label === "stdout") {
               const msg = parseOpenCodeMessage(trimmed);
-              if (msg) onMessage(msg);
+              if (msg) {
+                onMessage(msg);
+              } else {
+                // Non-JSON stdout line — diagnostic noise, funnel to stderr buffer
+                stderrLines.push(trimmed.slice(0, 300));
+                if (stderrLines.length > MAX_STDERR) stderrLines.shift();
+              }
             } else {
               stderrLines.push(trimmed.slice(0, 300));
               if (stderrLines.length > MAX_STDERR) stderrLines.shift();
             }
           }
         }
-        if (buffer.trim() && label === "stdout") {
-          const msg = parseOpenCodeMessage(buffer.trim());
-          if (msg) onMessage(msg);
+        if (buffer.trim()) {
+          const trimmed = buffer.trim();
+          if (label === "stdout") {
+            const msg = parseOpenCodeMessage(trimmed);
+            if (msg) onMessage(msg);
+            else {
+              stderrLines.push(trimmed.slice(0, 300));
+              if (stderrLines.length > MAX_STDERR) stderrLines.shift();
+            }
+          } else {
+            stderrLines.push(trimmed.slice(0, 300));
+            if (stderrLines.length > MAX_STDERR) stderrLines.shift();
+          }
         }
       } catch (err) {
         log.error(`Error reading OpenCode ${label}`, { error: String(err) });
