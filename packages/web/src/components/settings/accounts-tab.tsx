@@ -7,6 +7,7 @@ import {
   ArrowsLeftRight,
   ChartBar,
   CheckCircle,
+  CircleNotch,
   PencilSimple,
   SkipForward,
   Trash,
@@ -227,11 +228,11 @@ export function AccountsTab() {
               title="Switch to the next ready account now"
               aria-label="Switch to next available account"
             >
-              <ArrowsLeftRight
-                size={12}
-                weight="bold"
-                className={switchingNext ? "animate-spin" : ""}
-              />
+              {switchingNext ? (
+                <CircleNotch size={12} weight="bold" className="animate-spin" />
+              ) : (
+                <ArrowsLeftRight size={12} weight="bold" />
+              )}
               {switchingNext ? "Switching..." : "Switch to next"}
             </button>
           </div>

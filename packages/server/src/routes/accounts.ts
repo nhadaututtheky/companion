@@ -82,6 +82,12 @@ function setAccountSetting(key: string, value: string): void {
   }
 }
 
+/**
+ * Single-flight guard for manual switch-next. Prevents two concurrent callers
+ * from racing on the same "active" snapshot and double-switching.
+ */
+let switchNextInFlight: Promise<{ id: string; label: string } | null> | null = null;
+
 export const accountRoutes = new Hono();
 
 // List all accounts (tokens redacted)
@@ -96,11 +102,69 @@ accountRoutes.get("/active", (c) => {
   return c.json({ success: true, data: active ?? null } satisfies ApiResponse);
 });
 
+// Get account manager settings (auto-switch toggle).
+// Registered before any dynamic `/:id/...` routes to avoid router ambiguity.
+accountRoutes.get("/settings", (c) => {
+  return c.json({
+    success: true,
+    data: {
+      autoSwitchEnabled: getSettingBool(AUTO_SWITCH_KEY, true),
+    },
+  } satisfies ApiResponse);
+});
+
+// Update account manager settings
+accountRoutes.put("/settings", zValidator("json", accountSettingsSchema), (c) => {
+  const { autoSwitchEnabled } = c.req.valid("json");
+  setAccountSetting(AUTO_SWITCH_KEY, autoSwitchEnabled ? "true" : "false");
+  return c.json({
+    success: true,
+    data: { autoSwitchEnabled },
+  } satisfies ApiResponse);
+});
+
 // Save/upsert account
 accountRoutes.post("/", zValidator("json", saveAccountSchema), (c) => {
   const { label, credentials } = c.req.valid("json");
   const id = saveAccount(label, credentials);
   return c.json({ success: true, data: { id } } satisfies ApiResponse, 201);
+});
+
+// Manual credential capture (re-read ~/.claude/.credentials.json).
+// Static route — keep above dynamic /:id handlers.
+accountRoutes.post("/capture", async (c) => {
+  await manualCapture();
+  return c.json({
+    success: true,
+    data: { captured: true },
+  } satisfies ApiResponse);
+});
+
+// Manual "switch to next available" — picks LRU ready account that is not skipped.
+// Falls back to skipped accounts only if no non-skipped ready account exists.
+// Single-flight guard prevents concurrent callers from double-switching.
+accountRoutes.post("/switch-next", async (c) => {
+  if (!switchNextInFlight) {
+    switchNextInFlight = (async () => {
+      const active = getActiveAccount();
+      let target = findNextReady(active?.id);
+      if (!target) target = findNextReady(active?.id, true);
+      if (!target) return null;
+      const ok = await switchAccount(target.id);
+      if (!ok) return null;
+      return { id: target.id, label: target.label };
+    })().finally(() => {
+      switchNextInFlight = null;
+    });
+  }
+  const result = await switchNextInFlight;
+  if (!result) {
+    return c.json(
+      { success: false, error: "No ready account available" } satisfies ApiResponse,
+      409,
+    );
+  }
+  return c.json({ success: true, data: result } satisfies ApiResponse);
 });
 
 // Activate account (switches credentials file too)
@@ -193,64 +257,6 @@ accountRoutes.put("/:id/skip-rotation", zValidator("json", skipRotationSchema), 
     return c.json({ success: false, error: "Account not found" } satisfies ApiResponse, 404);
   }
   return c.json({ success: true, data: { id, skipInRotation: skip } } satisfies ApiResponse);
-});
-
-// Manual "switch to next available" — picks lowest-LRU ready account that is not skipped.
-// Ignores the skip flag only if no eligible candidate is found (allows recovery).
-accountRoutes.post("/switch-next", async (c) => {
-  const active = getActiveAccount();
-  // Pass active.id as excludeId so we don't switch to ourselves.
-  let target = findNextReady(active?.id);
-  if (!target) {
-    // Fallback: all non-skipped are limited — try including skipped ones.
-    target = findNextReady(active?.id, true);
-  }
-  if (!target) {
-    return c.json(
-      { success: false, error: "No ready account available" } satisfies ApiResponse,
-      409,
-    );
-  }
-  const ok = await switchAccount(target.id);
-  if (!ok) {
-    return c.json(
-      { success: false, error: "Switch failed" } satisfies ApiResponse,
-      500,
-    );
-  }
-  return c.json({
-    success: true,
-    data: { id: target.id, label: target.label },
-  } satisfies ApiResponse);
-});
-
-// Get account manager settings (auto-switch toggle)
-accountRoutes.get("/settings", (c) => {
-  return c.json({
-    success: true,
-    data: {
-      autoSwitchEnabled: getSettingBool(AUTO_SWITCH_KEY, true),
-    },
-  } satisfies ApiResponse);
-});
-
-// Update account manager settings
-accountRoutes.put("/settings", zValidator("json", accountSettingsSchema), (c) => {
-  const { autoSwitchEnabled } = c.req.valid("json");
-  setAccountSetting(AUTO_SWITCH_KEY, autoSwitchEnabled ? "true" : "false");
-  return c.json({
-    success: true,
-    data: { autoSwitchEnabled },
-  } satisfies ApiResponse);
-});
-
-// Manual credential capture (re-read ~/.claude/.credentials.json)
-accountRoutes.post("/capture", async (c) => {
-  await manualCapture();
-  return c.json({
-    success: true,
-    data: { captured: true },
-  } satisfies ApiResponse);
 });
 
 // Delete account

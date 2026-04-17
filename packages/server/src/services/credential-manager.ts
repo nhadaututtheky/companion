@@ -408,7 +408,8 @@ export function findNextReady(
   if (eligible.length === 0) return undefined;
 
   // Least recently used first (null = never used → oldest). Ties broken by lowest cost.
-  const sorted = eligible.sort((a, b) => {
+  // Copy before sort to preserve caller-facing immutability.
+  const sorted = [...eligible].sort((a, b) => {
     const aTime = a.lastUsedAt ? a.lastUsedAt.getTime() : 0;
     const bTime = b.lastUsedAt ? b.lastUsedAt.getTime() : 0;
     if (aTime !== bTime) return aTime - bTime;
