@@ -702,7 +702,7 @@ export class SessionLifecycleManager {
         bare: opts.bare,
         thinkingBudget: opts.thinkingBudget,
         cliPlatform,
-        platformOptions: opts.platformOptions,
+        platformOptions: { ...opts.platformOptions, projectSlug: opts.projectSlug },
       },
       (msg: NormalizedMessage) => this.bridge.handleNormalizedMessage(session, msg),
       (exitCode) => {
