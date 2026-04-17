@@ -339,12 +339,15 @@ Companion exposes tools via MCP (Model Context Protocol) for Claude Code and oth
 
 | Feature | Key File(s) | Connects To |
 |---------|------------|-------------|
-| MCP server (stdio transport) | `mcp/server.ts`, `mcp/index.ts` | HTTP API proxy |
+| MCP server — full (stdio transport) | `mcp/server.ts`, `mcp/index.ts` | HTTP API proxy |
+| MCP server — agent-slim (auto-injected) | `mcp/server-agent.ts`, `mcp/index-agent.ts` | HTTP API proxy |
+| Agent tools: wiki + codegraph (5 tools) | `mcp/tools-agent.ts` | wiki API, codegraph API |
 | Session tools (list, spawn, send, get, summary) | `mcp/tools.ts` | sessions API |
 | Channel tools (create, send, read, debate, conclude) | `mcp/tools.ts` | channels API |
 | WebIntel tools (scrape, research, crawl, status) | `mcp/tools.ts` | webintel API |
 | Wiki tools (list, read, search, note, core, articles) | `mcp/tools.ts` | wiki API |
 | CodeGraph tools (scan, status, search, stats, impact) | `mcp/tools.ts` | codegraph API |
+| .mcp.json auto-injection (CLI launch) | `adapters/claude-adapter.ts` | MCP agent server |
 
 ---
 
@@ -367,18 +370,20 @@ Wiki L1 → Per-Message Context ✓
 
 ### Disconnected / Zombie Chains (Need Wiring)
 ```
-PostToolUse Hook → Event Collector          ZOMBIE (hook received, broadcast, but processToolEvent() never called)
 Communities → Context Injection             DISCONNECTED (computed but zero downstream consumers)
 Communities → Graph Visualization           DISCONNECTED (computed but not rendered in UI)
-CodeGraph ↔ Wiki                            DISCONNECTED (no cross-referencing between code symbols and wiki articles)
 Session Summary → Wiki Auto-Compile         PARTIAL (raw saved, but compile requires manual trigger)
-Git Diff → Impact Analysis (pre-commit)     EXISTS separately but not wired as pipeline
-File Changes → Auto-Reindex                 MANUAL only (no real-time trigger)
-CodeGraph → Architecture Diagrams           NOT IMPLEMENTED (no Mermaid/diagram generation)
-CodeGraph → Claude Code Skills              NOT IMPLEMENTED (no .claude/skills/ generation)
 ```
 
-### Planned Fixes → `.rune/plan-codegraph-intel.md`
+### Recently Fixed (v0.21.0)
+```
+PostToolUse Hook → Event Collector          ✅ FIXED (ws-permission-handler.ts calls processToolEvent)
+CodeGraph ↔ Wiki                            ✅ FIXED (MCP tools cross-reference: impact→wiki, search→symbols, explain tool)
+Git Diff → Impact Analysis (pre-commit)     ✅ FIXED (impact-analyzer.ts — blast radius scoring)
+File Changes → Auto-Reindex                 ✅ FIXED (PostToolUse triggers debounced reindex)
+CodeGraph → Architecture Diagrams           ✅ FIXED (diagram-generator.ts — Mermaid output)
+CodeGraph → Claude Code Skills              ✅ FIXED (skills-generator.ts — .claude/skills/ files)
+```
 
 ---
 

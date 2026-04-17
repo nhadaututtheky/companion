@@ -7,6 +7,12 @@
  * Included:
  *  - Wiki KB (search, read, note) — no other way for agents to access
  *  - CodeGraph impact — blast radius analysis, not replicable by grep
+ *  - Explain — unified wiki + codegraph context for a file (single call)
+ *
+ * Cross-references:
+ *  - wiki_search returns related code symbols when codegraph is available
+ *  - codegraph_impact returns related wiki articles when wiki has content
+ *  - explain combines both into one response
  */
 
 import { z } from "zod";
@@ -37,10 +43,10 @@ async function apiCall<T = unknown>(
 }
 
 export function registerAgentTools(server: McpServer): void {
-  // ── Wiki: Search ──────────────────────────────────────────────────────
+  // ── Wiki: Search (enriched with code symbols) ────────────────────────
   server.tool(
     "companion_wiki_search",
-    "Search the project wiki knowledge base. Returns matching articles with relevance scores. Use this to find documented patterns, decisions, and known issues before starting work.",
+    "Search the project wiki knowledge base. Returns matching articles with relevance scores and related code symbols. Use this to find documented patterns, decisions, and known issues before starting work.",
     {
       query: z.string().describe("Search query (e.g., 'auth flow', 'deploy process', 'known bugs')"),
       domain: z.string().optional().describe("Wiki domain slug (defaults to project slug)"),
@@ -48,9 +54,11 @@ export function registerAgentTools(server: McpServer): void {
     async ({ query, domain }) => {
       try {
         const d = domain ?? process.env.PROJECT_SLUG ?? "default";
+        const projectSlug = process.env.PROJECT_SLUG ?? "";
+        // Use searchWithCodeGraph mode — enriches results with related code symbols
         const res = await apiCall<{ data: unknown }>(`/wiki/${encodeURIComponent(d)}/query`, {
           method: "POST",
-          body: { query, mode: "search" },
+          body: { query, mode: "search", projectSlug: projectSlug || undefined },
         });
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       } catch (err) {
@@ -104,10 +112,10 @@ export function registerAgentTools(server: McpServer): void {
     },
   );
 
-  // ── CodeGraph: Impact Analysis ────────────────────────────────────────
+  // ── CodeGraph: Impact Analysis (enriched with wiki articles) ─────────
   server.tool(
     "companion_codegraph_impact",
-    "Check what files depend on a file BEFORE editing it. Returns reverse dependencies with risk scores. Use this when you're about to modify a file with exports used elsewhere.",
+    "Check what files depend on a file BEFORE editing it. Returns reverse dependencies with risk scores and related wiki articles describing the file's domain. Use this when you're about to modify a file with exports used elsewhere.",
     {
       file: z.string().describe("File path relative to project root (e.g., 'src/services/auth.ts')"),
       project: z.string().optional().describe("Project slug (auto-detected if omitted)"),
@@ -115,12 +123,91 @@ export function registerAgentTools(server: McpServer): void {
     async ({ file, project }) => {
       try {
         const p = project ?? process.env.PROJECT_SLUG ?? "";
-        const res = await apiCall<{ data: unknown }>(
+
+        // Fetch impact analysis
+        const impactRes = await apiCall<{ data: unknown }>(
           `/codegraph/impact?project=${encodeURIComponent(p)}&file=${encodeURIComponent(file)}`,
         );
-        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+
+        // Fetch related wiki articles for cross-reference
+        let wikiArticles: unknown = null;
+        try {
+          const domain = process.env.PROJECT_SLUG ?? "default";
+          // Extract filename stem as search query (e.g., "auth" from "src/services/auth.ts")
+          const stem = file.split("/").pop()?.replace(/\.\w+$/, "") ?? file;
+          const wikiRes = await apiCall<{ data: unknown }>(`/wiki/${encodeURIComponent(domain)}/query`, {
+            method: "POST",
+            body: { query: stem, mode: "search" },
+          });
+          wikiArticles = wikiRes.data;
+        } catch {
+          // Wiki not available — fine, return impact-only
+        }
+
+        const result = {
+          impact: impactRes.data,
+          ...(wikiArticles ? { relatedWikiArticles: wikiArticles } : {}),
+        };
+
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return { content: [{ type: "text", text: `Impact analysis failed: ${String(err)}` }], isError: true };
+      }
+    },
+  );
+
+  // ── Explain: Unified wiki + codegraph context ────────────────────────
+  server.tool(
+    "companion_explain",
+    "Get full context about a file in one call: what it does (wiki articles), what depends on it (reverse deps + risk scores), and what it depends on (impact radius). Use BEFORE making significant changes to understand a file's role in the codebase.",
+    {
+      file: z.string().describe("File path relative to project root (e.g., 'src/services/auth.ts')"),
+      project: z.string().optional().describe("Project slug (auto-detected if omitted)"),
+    },
+    async ({ file, project }) => {
+      try {
+        const p = project ?? process.env.PROJECT_SLUG ?? "";
+        const domain = process.env.PROJECT_SLUG ?? "default";
+        const stem = file.split("/").pop()?.replace(/\.\w+$/, "") ?? file;
+
+        // Fire wiki search + codegraph impact + reverse deps in parallel
+        const [wikiRes, impactRes, reverseDepsRes] = await Promise.all([
+          apiCall<{ data: unknown }>(`/wiki/${encodeURIComponent(domain)}/query`, {
+            method: "POST",
+            body: { query: stem, mode: "search", projectSlug: p || undefined },
+          }).catch(() => null),
+          apiCall<{ data: unknown }>(
+            `/codegraph/impact?project=${encodeURIComponent(p)}&file=${encodeURIComponent(file)}`,
+          ).catch(() => null),
+          apiCall<{ data: unknown }>(
+            `/codegraph/reverse-deps?project=${encodeURIComponent(p)}&file=${encodeURIComponent(file)}`,
+          ).catch(() => null),
+        ]);
+
+        const result: Record<string, unknown> = { file };
+
+        if (wikiRes?.data) {
+          result.documentation = wikiRes.data;
+        }
+        if (reverseDepsRes?.data) {
+          result.dependedOnBy = reverseDepsRes.data;
+        }
+        if (impactRes?.data) {
+          result.impactRadius = impactRes.data;
+        }
+
+        if (!wikiRes && !impactRes && !reverseDepsRes) {
+          return {
+            content: [{
+              type: "text",
+              text: `No data available for "${file}". Wiki may not have articles and CodeGraph may not be indexed for this project.`,
+            }],
+          };
+        }
+
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Explain failed: ${String(err)}` }], isError: true };
       }
     },
   );
