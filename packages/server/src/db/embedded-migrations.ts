@@ -153,4 +153,8 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0037_account_usage_index.sql",
     sql: "-- Composite index for per-account usage queries (rolling windows, heatmap, model breakdown)\nCREATE INDEX IF NOT EXISTS idx_sessions_account_started ON sessions(account_id, started_at);\n",
   },
+  {
+    name: "0038_account_budgets.sql",
+    sql: "-- Per-account custom budget limits (null = no limit)\nALTER TABLE accounts ADD COLUMN session_5h_budget REAL;\n--> statement-breakpoint\nALTER TABLE accounts ADD COLUMN weekly_budget REAL;\n--> statement-breakpoint\nALTER TABLE accounts ADD COLUMN monthly_budget REAL;\n",
+  },
 ];

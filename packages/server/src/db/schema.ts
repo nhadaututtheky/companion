@@ -246,6 +246,10 @@ export const accounts = sqliteTable("accounts", {
   status: text("status").notNull().default("ready"), // ready | rate_limited | expired | error
   statusUntil: integer("status_until", { mode: "timestamp_ms" }), // when rate_limited status expires
   totalCostUsd: real("total_cost_usd").notNull().default(0), // aggregated from sessions
+  // Custom budget limits (null = no limit). Used to drive ProgressBar + toast alerts.
+  session5hBudget: real("session_5h_budget"),
+  weeklyBudget: real("weekly_budget"),
+  monthlyBudget: real("monthly_budget"),
   lastUsedAt: integer("last_used_at", { mode: "timestamp_ms" }),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()

@@ -34,9 +34,18 @@ export interface AccountInfo {
   status: string;
   statusUntil: Date | null;
   totalCostUsd: number;
+  session5hBudget: number | null;
+  weeklyBudget: number | null;
+  monthlyBudget: number | null;
   lastUsedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface AccountBudgets {
+  session5hBudget: number | null;
+  weeklyBudget: number | null;
+  monthlyBudget: number | null;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -138,6 +147,9 @@ export function listAccounts(): AccountInfo[] {
     status: row.status,
     statusUntil: row.statusUntil,
     totalCostUsd: row.totalCostUsd,
+    session5hBudget: row.session5hBudget ?? null,
+    weeklyBudget: row.weeklyBudget ?? null,
+    monthlyBudget: row.monthlyBudget ?? null,
     lastUsedAt: row.lastUsedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -165,6 +177,9 @@ export function getActiveAccount(): AccountInfo | undefined {
     status: row.status,
     statusUntil: row.statusUntil,
     totalCostUsd: row.totalCostUsd,
+    session5hBudget: row.session5hBudget ?? null,
+    weeklyBudget: row.weeklyBudget ?? null,
+    monthlyBudget: row.monthlyBudget ?? null,
     lastUsedAt: row.lastUsedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -395,6 +410,9 @@ export function findNextReady(excludeId?: string): AccountInfo | undefined {
     status: row.status,
     statusUntil: row.statusUntil,
     totalCostUsd: row.totalCostUsd,
+    session5hBudget: row.session5hBudget ?? null,
+    weeklyBudget: row.weeklyBudget ?? null,
+    monthlyBudget: row.monthlyBudget ?? null,
     lastUsedAt: row.lastUsedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -443,4 +461,29 @@ export function addAccountCost(id: string, costUsd: number): void {
     })
     .where(eq(accounts.id, id))
     .run();
+}
+
+/**
+ * Set custom per-account budget limits. Pass null to clear a limit.
+ * Returns true if the account was found and updated.
+ */
+export function updateAccountBudgets(id: string, budgets: AccountBudgets): boolean {
+  const db = getDb();
+  const existing = db
+    .select({ id: accounts.id })
+    .from(accounts)
+    .where(eq(accounts.id, id))
+    .get();
+  if (!existing) return false;
+
+  db.update(accounts)
+    .set({
+      session5hBudget: budgets.session5hBudget,
+      weeklyBudget: budgets.weeklyBudget,
+      monthlyBudget: budgets.monthlyBudget,
+      updatedAt: new Date(),
+    })
+    .where(eq(accounts.id, id))
+    .run();
+  return true;
 }

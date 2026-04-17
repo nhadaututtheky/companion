@@ -1,8 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { CircleNotch } from "@phosphor-icons/react";
-import { accounts as accountsApi, type AccountUsage, type HeatmapBucket } from "@/lib/api/accounts";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { CircleNotch, PencilSimple, Check, X } from "@phosphor-icons/react";
+import { toast } from "sonner";
+import {
+  accounts as accountsApi,
+  type AccountUsage,
+  type AccountBudgets,
+  type HeatmapBucket,
+} from "@/lib/api/accounts";
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
@@ -332,34 +338,176 @@ function ProgressBar({
   );
 }
 
-// ── Main Panel ──────────────────────────────────────────────────────
+// ── Budget alert logic ─────────────────────────────────────────────
 
-interface UsageLimits {
-  session5hBudget: number;
-  weeklyBudget: number;
-  monthlyBudget: number;
+function fireBudgetAlerts(usage: AccountUsage, accountId: string, fired: Set<string>) {
+  const limits = effectiveLimits(usage.budgets);
+  const checks: Array<{ key: string; label: string; value: number; max: number }> = [
+    { key: "5h", label: "5h session", value: usage.windows.session5h.cost, max: limits.session5hBudget },
+    { key: "weekly", label: "weekly", value: usage.windows.weekly.cost, max: limits.weeklyBudget },
+    { key: "monthly", label: "monthly", value: usage.windows.monthly.cost, max: limits.monthlyBudget },
+  ];
+  for (const c of checks) {
+    if (c.max <= 0) continue;
+    const pct = (c.value / c.max) * 100;
+    const tierKey = pct >= 100 ? "over" : pct >= 90 ? "warn" : null;
+    if (!tierKey) continue;
+    const dedupeKey = `${accountId}:${c.key}:${tierKey}`;
+    if (fired.has(dedupeKey)) continue;
+    fired.add(dedupeKey);
+    const fmt = (n: number) =>
+      new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+    if (tierKey === "over") {
+      toast.error(
+        `${c.label.charAt(0).toUpperCase() + c.label.slice(1)} budget exceeded: ${fmt(c.value)} / ${fmt(c.max)}`,
+      );
+    } else {
+      toast.warning(
+        `${c.label.charAt(0).toUpperCase() + c.label.slice(1)} budget ${Math.round(pct)}%: ${fmt(c.value)} / ${fmt(c.max)}`,
+      );
+    }
+  }
 }
 
-const DEFAULT_LIMITS: UsageLimits = {
+// ── Budgets Editor ─────────────────────────────────────────────────
+
+function BudgetsEditor({
+  budgets,
+  onSave,
+}: {
+  budgets: AccountBudgets;
+  onSave: (b: AccountBudgets) => void | Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(budgets);
+
+  useEffect(() => {
+    setDraft(budgets);
+  }, [budgets]);
+
+  const parse = (s: string): number | null => {
+    const t = s.trim();
+    if (!t) return null;
+    const n = Number(t);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        className="flex cursor-pointer items-center gap-1 text-xs transition-colors hover:opacity-80"
+        style={{ color: "var(--color-accent)" }}
+        aria-label="Edit budget limits"
+      >
+        <PencilSimple size={11} weight="bold" />
+        Edit limits
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className="flex flex-col gap-2 rounded-lg px-3 py-3"
+      style={{ background: "var(--glass-bg)", border: "1px solid var(--glass-border)" }}
+    >
+      <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
+        USD limit per window. Leave blank to use default (${DEFAULT_LIMITS.session5hBudget}/$
+        {DEFAULT_LIMITS.weeklyBudget}/${DEFAULT_LIMITS.monthlyBudget}).
+      </span>
+      {(
+        [
+          { key: "session5hBudget", label: "5h session" },
+          { key: "weeklyBudget", label: "Weekly" },
+          { key: "monthlyBudget", label: "Monthly" },
+        ] as const
+      ).map(({ key, label }) => (
+        <label key={key} className="flex items-center gap-2 text-xs">
+          <span className="w-20 shrink-0">{label}</span>
+          <span style={{ color: "var(--color-text-muted)" }}>$</span>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder={String(DEFAULT_LIMITS[key])}
+            value={draft[key] ?? ""}
+            onChange={(e) => setDraft({ ...draft, [key]: parse(e.target.value) })}
+            className="rounded px-2 py-1 text-xs"
+            style={{
+              background: "var(--color-bg-base)",
+              border: "1px solid var(--glass-border)",
+              width: 100,
+            }}
+          />
+        </label>
+      ))}
+      <div className="flex justify-end gap-2 pt-1">
+        <button
+          type="button"
+          onClick={() => {
+            setDraft(budgets);
+            setEditing(false);
+          }}
+          className="text-text-secondary flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs"
+        >
+          <X size={11} weight="bold" />
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={async () => {
+            await onSave(draft);
+            setEditing(false);
+          }}
+          className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs font-medium"
+          style={{ background: "var(--color-accent)", color: "#fff" }}
+        >
+          <Check size={11} weight="bold" />
+          Save
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Panel ──────────────────────────────────────────────────────
+
+const DEFAULT_LIMITS: Required<{ [K in keyof AccountBudgets]: number }> = {
   session5hBudget: 20, // $20 per 5h window
   weeklyBudget: 100,
   monthlyBudget: 200,
 };
 
+function effectiveLimits(budgets: AccountBudgets): {
+  session5hBudget: number;
+  weeklyBudget: number;
+  monthlyBudget: number;
+} {
+  return {
+    session5hBudget: budgets.session5hBudget ?? DEFAULT_LIMITS.session5hBudget,
+    weeklyBudget: budgets.weeklyBudget ?? DEFAULT_LIMITS.weeklyBudget,
+    monthlyBudget: budgets.monthlyBudget ?? DEFAULT_LIMITS.monthlyBudget,
+  };
+}
+
 export function AccountUsagePanel({ accountId }: { accountId: string }) {
   const [usage, setUsage] = useState<AccountUsage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const alertFiredRef = useRef<Set<string>>(new Set()); // dedupe within panel lifetime
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    const tzOffsetMinutes = -new Date().getTimezoneOffset(); // JS: +7 → -420; server: east = +
+    const tzOffsetMinutes = -new Date().getTimezoneOffset();
     accountsApi
       .usage(accountId, 365, tzOffsetMinutes)
       .then((res) => {
-        if (!cancelled) setUsage(res.data);
+        if (cancelled) return;
+        setUsage(res.data);
+        fireBudgetAlerts(res.data, accountId, alertFiredRef.current);
       })
       .catch((err) => {
         if (!cancelled) setError(String(err));
@@ -371,6 +519,16 @@ export function AccountUsagePanel({ accountId }: { accountId: string }) {
       cancelled = true;
     };
   }, [accountId]);
+
+  const handleSaveBudgets = async (budgets: AccountBudgets) => {
+    try {
+      await accountsApi.setBudgets(accountId, budgets);
+      setUsage((u) => (u ? { ...u, budgets } : u));
+      toast.success("Budgets updated");
+    } catch (err) {
+      toast.error(`Failed to save budgets: ${err}`);
+    }
+  };
 
   if (loading) {
     return (
@@ -388,8 +546,8 @@ export function AccountUsagePanel({ accountId }: { accountId: string }) {
     );
   }
 
-  const { heatmap, windows, totals, byModel, streaks } = usage;
-  const limits = DEFAULT_LIMITS;
+  const { heatmap, windows, totals, byModel, streaks, budgets } = usage;
+  const limits = effectiveLimits(budgets);
   const hasActivity = totals.sessions > 0;
 
   return (
@@ -408,9 +566,15 @@ export function AccountUsagePanel({ accountId }: { accountId: string }) {
       )}
       {/* Plan usage (Anthropic-style) */}
       <div className="flex flex-col gap-4">
-        <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
-          Plan Usage Limits
-        </h4>
+        <div className="flex items-center justify-between">
+          <h4
+            className="text-xs font-semibold uppercase tracking-wider"
+            style={{ color: "var(--color-text-muted)" }}
+          >
+            Plan Usage Limits
+          </h4>
+          <BudgetsEditor budgets={budgets} onSave={handleSaveBudgets} />
+        </div>
         <ProgressBar
           label="Current session"
           sublabel={resetLabel(windows.session5h.resetAt)}

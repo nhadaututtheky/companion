@@ -1,5 +1,11 @@
 import { request } from "./base";
 
+export interface AccountBudgets {
+  session5hBudget: number | null;
+  weeklyBudget: number | null;
+  monthlyBudget: number | null;
+}
+
 export interface AccountInfo {
   id: string;
   label: string;
@@ -10,6 +16,9 @@ export interface AccountInfo {
   status: string;
   statusUntil: string | null;
   totalCostUsd: number;
+  session5hBudget: number | null;
+  weeklyBudget: number | null;
+  monthlyBudget: number | null;
   lastUsedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -47,6 +56,7 @@ export interface AccountUsage {
   totals: { cost: number; sessions: number; tokens: number };
   byModel: ModelBreakdown[];
   streaks: { current: number; longest: number };
+  budgets: AccountBudgets;
 }
 
 export const accounts = {
@@ -68,6 +78,12 @@ export const accounts = {
     request<{ data: { id: string; label: string } }>(`/api/accounts/${id}/rename`, {
       method: "PUT",
       body: JSON.stringify({ label }),
+    }),
+
+  setBudgets: (id: string, budgets: AccountBudgets) =>
+    request<{ data: AccountBudgets & { id: string } }>(`/api/accounts/${id}/budgets`, {
+      method: "PUT",
+      body: JSON.stringify(budgets),
     }),
 
   remove: (id: string) =>

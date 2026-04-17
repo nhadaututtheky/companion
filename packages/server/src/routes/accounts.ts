@@ -21,7 +21,11 @@ import {
   updateAccountStatus,
   renameAccount,
   accountExists,
+  updateAccountBudgets,
 } from "../services/credential-manager.js";
+import { getDb } from "../db/client.js";
+import { accounts } from "../db/schema.js";
+import { eq } from "drizzle-orm";
 import { manualCapture } from "../services/credential-watcher.js";
 import { getAccountUsage } from "../services/account-usage.js";
 import type { ApiResponse } from "@companion/shared";
@@ -47,6 +51,12 @@ const renameSchema = z.object({
 const statusSchema = z.object({
   status: z.enum(["ready", "rate_limited", "expired", "error"]),
   statusUntil: z.number().optional(),
+});
+
+const budgetsSchema = z.object({
+  session5hBudget: z.number().positive().max(100000).nullable(),
+  weeklyBudget: z.number().positive().max(100000).nullable(),
+  monthlyBudget: z.number().positive().max(100000).nullable(),
 });
 
 export const accountRoutes = new Hono();
@@ -103,7 +113,7 @@ accountRoutes.put("/:id/status", zValidator("json", statusSchema), (c) => {
   return c.json({ success: true, data: { id, status } } satisfies ApiResponse);
 });
 
-// Per-account usage (heatmap + windows + model breakdown)
+// Per-account usage (heatmap + windows + model breakdown + custom budgets)
 accountRoutes.get("/:id/usage", (c) => {
   const id = c.req.param("id");
   if (!accountExists(id)) {
@@ -116,7 +126,39 @@ accountRoutes.get("/:id/usage", (c) => {
     ? Math.min(Math.max(parseInt(tzParam, 10) || 0, -720), 840)
     : 0;
   const usage = getAccountUsage(id, days, { tzOffsetMinutes });
-  return c.json({ success: true, data: usage } satisfies ApiResponse);
+
+  const row = getDb()
+    .select({
+      session5hBudget: accounts.session5hBudget,
+      weeklyBudget: accounts.weeklyBudget,
+      monthlyBudget: accounts.monthlyBudget,
+    })
+    .from(accounts)
+    .where(eq(accounts.id, id))
+    .get();
+
+  return c.json({
+    success: true,
+    data: {
+      ...usage,
+      budgets: {
+        session5hBudget: row?.session5hBudget ?? null,
+        weeklyBudget: row?.weeklyBudget ?? null,
+        monthlyBudget: row?.monthlyBudget ?? null,
+      },
+    },
+  } satisfies ApiResponse);
+});
+
+// Set custom budget limits for an account
+accountRoutes.put("/:id/budgets", zValidator("json", budgetsSchema), (c) => {
+  const id = c.req.param("id");
+  const budgets = c.req.valid("json");
+  const ok = updateAccountBudgets(id, budgets);
+  if (!ok) {
+    return c.json({ success: false, error: "Account not found" } satisfies ApiResponse, 404);
+  }
+  return c.json({ success: true, data: { id, ...budgets } } satisfies ApiResponse);
 });
 
 // Manual credential capture (re-read ~/.claude/.credentials.json)
