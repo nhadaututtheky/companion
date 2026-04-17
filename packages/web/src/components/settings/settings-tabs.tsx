@@ -13,6 +13,7 @@ import {
   CheckCircle,
   UserCircle,
   Desktop,
+  PuzzlePiece,
 } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useMascotStore, MASCOT_OPTIONS, type MascotId } from "@/lib/stores/mascot-store";
@@ -83,6 +84,7 @@ export const TABS: Array<{ id: SettingsTab; label: string; icon: React.ReactNode
   { id: "rtk", label: "RTK", icon: <Bug size={15} weight="bold" /> },
   { id: "appearance", label: "Appearance", icon: <PaintBrush size={15} weight="bold" /> },
   { id: "skills", label: "Skills", icon: <BookOpen size={15} weight="bold" /> },
+  { id: "plugins", label: "Plugins", icon: <PuzzlePiece size={15} weight="bold" /> },
   { id: "accounts", label: "Accounts", icon: <UserCircle size={15} weight="bold" /> },
   { id: "desktop", label: "Desktop", icon: <Desktop size={15} weight="bold" />, desktopOnly: true },
 ];

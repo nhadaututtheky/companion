@@ -8,4 +8,5 @@ export type SettingsTab =
   | "appearance"
   | "skills"
   | "accounts"
+  | "plugins"
   | "desktop";

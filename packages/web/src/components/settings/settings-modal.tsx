@@ -18,6 +18,7 @@ import {
 import { McpSettings } from "./mcp-settings";
 import { RTKSettings } from "./rtk-settings";
 import { SkillsTab } from "./skills-tab";
+import { PluginsTab } from "./plugins-tab";
 import { AccountsTab } from "./accounts-tab";
 import { DesktopTab } from "./settings-tab-desktop";
 import { isTauriEnv } from "@/lib/tauri";
@@ -42,6 +43,8 @@ function TabContent({ tab }: { tab: SettingsTab }) {
       return <AppearanceTab />;
     case "skills":
       return <SkillsTab />;
+    case "plugins":
+      return <PluginsTab />;
     case "accounts":
       return <AccountsTab />;
     case "desktop":

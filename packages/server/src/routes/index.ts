@@ -24,6 +24,7 @@ import { savedPromptRoutes } from "./saved-prompts.js";
 import { modelRoutes } from "./models.js";
 import { customPersonaRoutes } from "./custom-personas.js";
 import { skillsRoutes } from "./skills.js";
+import { pluginsRoutes } from "./plugins.js";
 import cliPlatformRoutes from "./cli-platforms.js";
 import { createWikiRoutes } from "./wiki.js";
 import { createReviewRoutes } from "./review.js";
@@ -144,6 +145,7 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
   personasGated.route("/", customPersonaRoutes());
   protectedApi.route("/custom-personas", personasGated);
   protectedApi.route("/skills", skillsRoutes);
+  protectedApi.route("/plugins", pluginsRoutes);
   protectedApi.route("/cli-platforms", cliPlatformRoutes);
   protectedApi.route("/wiki", createWikiRoutes());
   protectedApi.route("/review", createReviewRoutes());
