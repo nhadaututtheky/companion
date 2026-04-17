@@ -1,8 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ArrowsClockwise, CheckCircle, PencilSimple, Trash, Warning } from "@phosphor-icons/react";
+import {
+  ArrowsClockwise,
+  ChartBar,
+  CheckCircle,
+  PencilSimple,
+  Trash,
+  Warning,
+} from "@phosphor-icons/react";
 import { SettingSection } from "./settings-tabs";
+import { AccountUsagePanel } from "./account-usage-panel";
 import { accounts as accountsApi, type AccountInfo } from "@/lib/api/accounts";
 
 const STATUS_COLORS: Record<string, { bg: string; dot: string; label: string }> = {
@@ -36,6 +44,7 @@ export function AccountsTab() {
   const [editLabel, setEditLabel] = useState("");
   const [switching, setSwitching] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -146,11 +155,12 @@ export function AccountsTab() {
               const statusInfo = STATUS_COLORS[account.status] ?? STATUS_COLORS.ready;
               const cooldown = formatCooldown(account.statusUntil);
               const isEditing = editingId === account.id;
+              const isExpanded = expandedId === account.id;
 
               return (
                 <div
                   key={account.id}
-                  className="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors"
+                  className="flex flex-col rounded-lg transition-colors"
                   style={{
                     background: account.isActive
                       ? "color-mix(in srgb, var(--color-accent) 8%, transparent)"
@@ -160,6 +170,7 @@ export function AccountsTab() {
                       : "1px solid var(--glass-border)",
                   }}
                 >
+                <div className="flex items-center gap-3 px-3 py-3">
                   {/* Status dot */}
                   <div
                     className="shrink-0 rounded-full"
@@ -233,6 +244,18 @@ export function AccountsTab() {
 
                   {/* Actions */}
                   <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      onClick={() => setExpandedId(isExpanded ? null : account.id)}
+                      className="text-text-secondary cursor-pointer rounded-md p-1.5 transition-colors"
+                      style={{
+                        color: isExpanded ? "var(--color-accent)" : undefined,
+                      }}
+                      title={isExpanded ? "Hide usage" : "Show usage"}
+                      aria-label={`${isExpanded ? "Hide" : "Show"} usage for ${account.label}`}
+                      aria-expanded={isExpanded}
+                    >
+                      <ChartBar size={14} weight="bold" />
+                    </button>
                     {!account.isActive && (
                       <button
                         onClick={() => void handleActivate(account.id)}
@@ -271,6 +294,15 @@ export function AccountsTab() {
                       </button>
                     )}
                   </div>
+                </div>
+                {isExpanded && (
+                  <div
+                    className="border-t px-3 py-3"
+                    style={{ borderColor: "var(--glass-border)" }}
+                  >
+                    <AccountUsagePanel accountId={account.id} />
+                  </div>
+                )}
                 </div>
               );
             })}

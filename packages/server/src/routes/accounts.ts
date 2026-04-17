@@ -22,6 +22,7 @@ import {
   renameAccount,
 } from "../services/credential-manager.js";
 import { manualCapture } from "../services/credential-watcher.js";
+import { getAccountUsage } from "../services/account-usage.js";
 import type { ApiResponse } from "@companion/shared";
 
 const credentialsSchema = z.object({
@@ -99,6 +100,15 @@ accountRoutes.put("/:id/status", zValidator("json", statusSchema), (c) => {
     return c.json({ success: false, error: "Account not found" } satisfies ApiResponse, 404);
   }
   return c.json({ success: true, data: { id, status } } satisfies ApiResponse);
+});
+
+// Per-account usage (heatmap + windows + model breakdown)
+accountRoutes.get("/:id/usage", (c) => {
+  const id = c.req.param("id");
+  const daysParam = c.req.query("days");
+  const days = daysParam ? Math.min(Math.max(parseInt(daysParam, 10) || 365, 1), 730) : 365;
+  const usage = getAccountUsage(id, days);
+  return c.json({ success: true, data: usage } satisfies ApiResponse);
 });
 
 // Manual credential capture (re-read ~/.claude/.credentials.json)

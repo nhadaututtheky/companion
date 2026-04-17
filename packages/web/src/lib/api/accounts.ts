@@ -15,10 +15,47 @@ export interface AccountInfo {
   updatedAt: string;
 }
 
+export interface HeatmapBucket {
+  date: string;
+  cost: number;
+  sessions: number;
+  tokens: number;
+}
+
+export interface WindowUsage {
+  cost: number;
+  sessions: number;
+  tokens: number;
+  resetAt: string | null;
+}
+
+export interface ModelBreakdown {
+  model: string;
+  cost: number;
+  sessions: number;
+  tokens: number;
+  pct: number;
+}
+
+export interface AccountUsage {
+  heatmap: HeatmapBucket[];
+  windows: {
+    session5h: WindowUsage;
+    weekly: WindowUsage;
+    monthly: WindowUsage;
+  };
+  totals: { cost: number; sessions: number; tokens: number };
+  byModel: ModelBreakdown[];
+  streaks: { current: number; longest: number };
+}
+
 export const accounts = {
   list: () => request<{ data: AccountInfo[] }>("/api/accounts"),
 
   active: () => request<{ data: AccountInfo | null }>("/api/accounts/active"),
+
+  usage: (id: string, days = 365) =>
+    request<{ data: AccountUsage }>(`/api/accounts/${id}/usage?days=${days}`),
 
   activate: (id: string) =>
     request<{ data: { id: string } }>(`/api/accounts/${id}/activate`, {
