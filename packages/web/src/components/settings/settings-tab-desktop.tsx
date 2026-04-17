@@ -12,17 +12,14 @@ async function getAutostart() {
 }
 
 export function DesktopTab() {
+  const isDesktop = isTauriEnv();
   const [autostart, setAutostart] = useState(false);
   const [showOnStartup, setShowOnStartup] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const isDesktop = isTauriEnv();
+  const [loading, setLoading] = useState(isDesktop);
 
   // Load current state
   useEffect(() => {
-    if (!isDesktop) {
-      setLoading(false);
-      return;
-    }
+    if (!isDesktop) return;
 
     (async () => {
       try {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { X, Lightbulb, ArrowRight } from "@phosphor-icons/react";
 import { TIPS, type Tip } from "./tips-data";
 import { isDismissed, dismissTip, areTipsEnabled } from "./tip-storage";
@@ -11,8 +11,9 @@ interface TipBannerProps {
 }
 
 export function TipBanner({ context = "dashboard", conditions }: TipBannerProps) {
-  const [currentTip, setCurrentTip] = useState<Tip | null>(null);
-  const [visible, setVisible] = useState(false);
+  // Bumped after dismiss to re-filter and re-pick (localStorage-backed dismissals
+  // aren't reactive, so we force availableTips to recompute).
+  const [dismissCounter, setDismissCounter] = useState(0);
 
   const availableTips = useMemo(() => {
     if (!areTipsEnabled()) return [];
@@ -26,34 +27,20 @@ export function TipBanner({ context = "dashboard", conditions }: TipBannerProps)
       }
       return true;
     });
-  }, [context, conditions]);
 
-  useEffect(() => {
-    if (availableTips.length === 0) {
-      setCurrentTip(null);
-      setVisible(false);
-      return;
-    }
+  }, [context, conditions, dismissCounter]);
 
+  const currentTip: Tip | null = useMemo(() => {
+    if (availableTips.length === 0) return null;
     const idx = Math.floor(Math.random() * availableTips.length);
-    setCurrentTip(availableTips[idx] ?? null);
-    setVisible(true);
+    return availableTips[idx] ?? null;
   }, [availableTips]);
 
   const handleDismiss = useCallback(() => {
     if (!currentTip) return;
     dismissTip(currentTip.id);
-    setVisible(false);
-
-    const remaining = availableTips.filter((t) => t.id !== currentTip.id);
-    if (remaining.length > 0) {
-      setTimeout(() => {
-        const idx = Math.floor(Math.random() * remaining.length);
-        setCurrentTip(remaining[idx] ?? null);
-        setVisible(true);
-      }, 300);
-    }
-  }, [currentTip, availableTips]);
+    setDismissCounter((c) => c + 1);
+  }, [currentTip]);
 
   const handleAction = useCallback(() => {
     if (!currentTip?.action) return;
@@ -73,7 +60,7 @@ export function TipBanner({ context = "dashboard", conditions }: TipBannerProps)
     }
   }, [currentTip]);
 
-  if (!visible || !currentTip) return null;
+  if (!currentTip) return null;
 
   const CATEGORY_COLORS = {
     setup: { bg: "rgba(99,102,241,0.1)", accent: "var(--color-accent, #6366f1)" },
@@ -85,11 +72,10 @@ export function TipBanner({ context = "dashboard", conditions }: TipBannerProps)
 
   return (
     <div
-      className="flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-xs transition-opacity duration-300"
+      className="flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-xs"
       style={{
         background: colors.bg,
         border: `1px solid ${colors.accent}20`,
-        opacity: visible ? 1 : 0,
       }}
     >
       <Lightbulb

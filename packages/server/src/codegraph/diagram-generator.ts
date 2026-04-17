@@ -26,7 +26,7 @@ export interface DiagramResult {
 
 /** Sanitize a string for safe use in Mermaid syntax */
 function sanitize(s: string): string {
-  return s.replace(/["`\[\](){}|<>]/g, "").replace(/\s+/g, " ").trim();
+  return s.replace(/["`[\](){}|<>]/g, "").replace(/\s+/g, " ").trim();
 }
 
 /** Simple string hash for ID disambiguation */

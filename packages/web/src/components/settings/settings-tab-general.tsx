@@ -234,11 +234,9 @@ function LicenseSection() {
 // ── Tips Section ────────────────────────────────────────────────────────────
 
 function TipsSection() {
-  const [enabled, setEnabled] = useState(true);
-
-  useEffect(() => {
-    setEnabled(areTipsEnabled());
-  }, []);
+  const [enabled, setEnabled] = useState(() =>
+    typeof window === "undefined" ? true : areTipsEnabled(),
+  );
 
   const handleToggle = useCallback(() => {
     const next = !enabled;
