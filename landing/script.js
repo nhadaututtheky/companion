@@ -103,7 +103,20 @@
   var BANK_NAME = "NGUYEN VIET NAM";
 
   var PRODUCTS = {
-    "CMP-PRO": { name: "Companion Pro — 1 year", price: 975000, priceUSD: 39, polarUrl: "https://buy.polar.sh/polar_cl_CGWIyshnh7Xkodt1CaLkYPG0Z5jL1wjmLmD7Q4CEACZ" },
+    "CMP-PRO": {
+      name: "Companion Pro — 1 year",
+      price: 975000,
+      priceUSD: 39,
+      polarUrl: "https://buy.polar.sh/polar_cl_CGWIyshnh7Xkodt1CaLkYPG0Z5jL1wjmLmD7Q4CEACZ",
+      sepay: true,
+    },
+    "CMP-PRO-MONTHLY": {
+      name: "Companion Pro — Monthly",
+      price: 125000,
+      priceUSD: 5,
+      polarUrl: "https://buy.polar.sh/polar_cl_bH3oM1b9ub5rugiUyeV4NvdHQf3IhkhtZBRkb0h2bmr",
+      sepay: true,
+    },
   };
 
   var payState = {
@@ -127,9 +140,14 @@
     var vndEl = document.getElementById("pay-price-vnd");
     var usdEl = document.getElementById("pay-price-usd");
     var polarLink = document.getElementById("pay-polar-link");
+    var vnOption = document.getElementById("pay-option-vn");
+    var vnOnlyYearlyNote = document.getElementById("pay-vn-yearly-only");
     if (vndEl) vndEl.textContent = info.price.toLocaleString("vi-VN") + " VND";
     if (usdEl) usdEl.textContent = "$" + info.priceUSD + " USD";
     if (polarLink) polarLink.href = info.polarUrl;
+
+    if (vnOption) vnOption.style.display = info.sepay ? "" : "none";
+    if (vnOnlyYearlyNote) vnOnlyYearlyNote.hidden = info.sepay;
 
     showPayStep(1);
     document.getElementById("pay-modal").hidden = false;

@@ -23,6 +23,7 @@ import * as spectatorBridge from "./services/spectator-bridge.js";
 import { startScheduler, stopScheduler } from "./services/scheduler.js";
 import { initWorkspaceRuntime } from "./services/workspace-store.js";
 import { startCredentialWatcher, stopCredentialWatcher } from "./services/credential-watcher.js";
+import { dedupeAccountsByIdentity } from "./services/credential-manager.js";
 import { startAutoSwitch, stopAutoSwitch } from "./services/account-auto-switch.js";
 import { validateShareToken } from "./services/share-manager.js";
 import { registerGlobalErrorHandlers, flushErrors } from "./services/error-tracker.js";
@@ -70,6 +71,17 @@ warnIfNoAuth();
 
 // Initialize workspace runtime state from DB
 initWorkspaceRuntime();
+
+// Collapse ghost accounts created by the old fingerprint-based dedup before
+// the watcher can recapture current credentials (migration 0040).
+try {
+  const dedup = dedupeAccountsByIdentity();
+  if (dedup.backfilled > 0 || dedup.merged > 0) {
+    log.info("Account dedupe completed", dedup);
+  }
+} catch (err) {
+  log.warn("Account dedupe failed (non-fatal)", { error: String(err) });
+}
 
 // Start credential file watcher (multi-account auto-capture) + auto-switch on rate limit
 startCredentialWatcher();
@@ -128,12 +140,14 @@ if (licenseKey) {
         log.info(`Free trial: ${trial.daysLeft} days left — all Pro features unlocked`);
       } else {
         log.info(
-          "Trial expired — free mode (2 sessions). Get a license at https://companion.theio.vn",
+          "Trial wrapped up — you're on Free (2 sessions). Loved the Pro run? Keep it going at https://companion.theio.vn",
         );
       }
     })
     .catch(() => {
-      log.info("No license, no trial — free mode (2 sessions)");
+      log.info(
+        "Free mode active (2 sessions). Start a trial or grab Pro anytime at https://companion.theio.vn",
+      );
     });
 }
 

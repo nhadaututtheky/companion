@@ -4,10 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Companion — Your AI Coding Command Center</title>
-  <meta name="description" content="Run multiple Claude Code sessions from one dashboard. Web research, code intelligence, Telegram bot, desktop app. Free tier forever, paid plans from $39/yr.">
+  <meta name="description" content="Third-party dashboard to run multiple Claude Code sessions. Web research, code intelligence, Telegram bot, desktop app. By XLabs — bring your own Claude subscription. Free tier forever, paid plans from $39/yr.">
   <meta property="og:title" content="Companion — Your AI Coding Command Center">
-  <meta property="og:description" content="Multi-session Claude Code manager with built-in intelligence. Web UI, Telegram, Desktop. Free tier forever, paid plans from $39/yr.">
+  <meta property="og:description" content="Independent multi-session Claude Code manager by XLabs. Web UI, Telegram, Desktop. Bring your own Claude subscription. Free tier forever, paid plans from $39/yr.">
   <meta property="og:type" content="website">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
@@ -112,7 +114,7 @@
     <div class="container">
       <div class="section-header">
         <span class="section-badge">Why Companion</span>
-        <h2>Claude Code is powerful.<br><span class="gradient-text">Companion makes it intelligent.</span></h2>
+        <h2>Claude Code is powerful.<br><span class="gradient-text">Companion adds orchestration on top.</span></h2>
         <p class="section-desc">Stop juggling terminals. Stop losing context. One command center for all your AI coding.</p>
       </div>
 
@@ -527,7 +529,8 @@
             <li class="check-icon">Custom personas + RTK Pro</li>
             <li class="check-icon">30-day money-back guarantee</li>
           </ul>
-          <button class="btn btn-primary btn-full" onclick="openPayment('CMP-PRO')">Get Pro — $39/year</button>
+          <button class="btn btn-primary btn-full" onclick="openPayment('CMP-PRO')">Get Pro — $39/year <span style="opacity:0.85;font-weight:500">(save 35%)</span></button>
+          <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="openPayment('CMP-PRO-MONTHLY')">Start monthly — $5/month</button>
         </div>
       </div>
 
@@ -770,6 +773,13 @@ docker compose up -d
     </div>
     <div class="footer-bottom">
       <p>&copy; 2026 XLabs. All rights reserved.</p>
+      <p class="footer-disclaimer">
+        Claude and Claude Code are trademarks of Anthropic PBC.
+        Companion is an independent third-party tool by XLabs and is not
+        affiliated with, endorsed by, or sponsored by Anthropic.
+        Users must bring their own Claude subscription — we do not provide
+        or resell access to Claude, the Anthropic API, or related services.
+      </p>
     </div>
   </footer>
 
@@ -784,7 +794,7 @@ docker compose up -d
         <h3 id="pay-title">Get Companion Pro</h3>
         <p class="pay-step-desc">Choose your payment method</p>
         <div class="pay-methods">
-          <button class="pay-option" onclick="showPayStep(2)">
+          <button class="pay-option" id="pay-option-vn" onclick="showPayStep(2)">
             <span class="pay-option-flag"><svg width="36" height="36" viewBox="0 0 36 36"><rect width="36" height="36" rx="6" fill="#da251d"/><polygon points="18,8 20.5,14.5 27,14.5 21.8,18.5 23.8,25 18,21 12.2,25 14.2,18.5 9,14.5 15.5,14.5" fill="#ffff00"/></svg></span>
             <div class="pay-option-info">
               <strong>Vietnam</strong>
@@ -793,6 +803,7 @@ docker compose up -d
             </div>
             <span class="pay-option-arrow">&rarr;</span>
           </button>
+          <p id="pay-vn-yearly-only" class="pay-note" hidden>VietQR bank transfer is yearly-only. Monthly plans checkout via Polar.</p>
           <a class="pay-option" id="pay-polar-link" href="#" target="_blank" rel="noopener">
             <span class="pay-option-flag"><svg width="36" height="36" viewBox="0 0 36 36"><rect width="36" height="36" rx="6" fill="#e8e4dc"/><circle cx="18" cy="18" r="10" fill="none" stroke="#7a9e6e" stroke-width="1.5"/><ellipse cx="18" cy="18" rx="5" ry="10" fill="none" stroke="#7a9e6e" stroke-width="1.5"/><line x1="8" y1="18" x2="28" y2="18" stroke="#7a9e6e" stroke-width="1.5"/><line x1="10" y1="13" x2="26" y2="13" stroke="#7a9e6e" stroke-width="1" opacity="0.6"/><line x1="10" y1="23" x2="26" y2="23" stroke="#7a9e6e" stroke-width="1" opacity="0.6"/></svg></span>
             <div class="pay-option-info">

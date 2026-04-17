@@ -69,7 +69,7 @@ function ProjectCard({
     project.defaultModel;
 
   return (
-    <div className="shadow-soft bg-bg-card flex items-start justify-between rounded-2xl p-5 transition-all">
+    <div className="shadow-soft bg-bg-card flex items-start justify-between gap-4 rounded-2xl p-4 transition-all">
       <div className="flex min-w-0 gap-4">
         <div
           className="flex flex-shrink-0 items-center justify-center rounded-xl"
@@ -78,29 +78,29 @@ function ProjectCard({
           <FolderOpen size={22} style={{ color: "#4285F4" }} weight="fill" />
         </div>
         <div className="min-w-0">
-          <h3 className="mb-0.5 truncate text-sm font-semibold">{project.name}</h3>
+          <h3 className="mb-1 truncate text-sm font-semibold">{project.name}</h3>
           <div className="group mb-2 flex items-center gap-1">
             <p className="truncate font-mono text-xs">{project.dir}</p>
             <button
               onClick={copyDir}
-              className="cursor-pointer p-0.5 opacity-0 transition-opacity group-hover:opacity-100"
+              className="cursor-pointer p-1 opacity-50 transition-opacity hover:opacity-100 group-hover:opacity-100"
               aria-label="Copy directory path"
             >
               {copied ? <Check size={12} /> : <Copy size={12} />}
             </button>
           </div>
           <div className="flex gap-2">
-            <span className="text-text-secondary bg-bg-elevated rounded-full px-2 py-0.5 text-xs">
+            <span className="text-text-secondary bg-bg-elevated rounded-full px-2 py-1 text-xs">
               {modelLabel}
             </span>
-            <span className="text-text-secondary bg-bg-elevated rounded-full px-2 py-0.5 text-xs">
+            <span className="text-text-secondary bg-bg-elevated rounded-full px-2 py-1 text-xs">
               {project.permissionMode}
             </span>
           </div>
         </div>
       </div>
 
-      <div className="ml-2 flex gap-1">
+      <div className="flex gap-1">
         <button
           onClick={() => onEdit(project)}
           className="cursor-pointer rounded-lg p-2 transition-colors hover:bg-[var(--color-bg-elevated)]"
@@ -419,7 +419,7 @@ export default function ProjectsPage() {
         </div>
 
         {/* Telegram sync info banner */}
-        <div className="bg-bg-elevated mb-5 flex items-start gap-3 rounded-xl p-4 shadow-sm">
+        <div className="bg-bg-elevated mb-4 flex items-start gap-3 rounded-xl p-4 shadow-sm">
           <TelegramLogo
             size={20}
             weight="fill"

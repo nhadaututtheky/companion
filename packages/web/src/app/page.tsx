@@ -21,7 +21,7 @@ import { PanelErrorBoundary } from "@/components/ui/panel-error-boundary";
 import { FloatingStatsBar } from "@/components/panels/floating-stats-bar";
 import { TipBanner } from "@/components/tips/tip-banner";
 import { useSessionStore } from "@/lib/stores/session-store";
-import { useUiStore } from "@/lib/stores/ui-store";
+import { useUiStore, selectTopOpenModal } from "@/lib/stores/ui-store";
 import { useNotificationPermission } from "@/hooks/use-notifications";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -233,14 +233,13 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
 const ACTIVE_STATUSES = ["starting", "running", "waiting", "idle", "busy", "error"];
 
 export default function DashboardPage() {
-  const newSessionOpen = useUiStore((s) => s.newSessionModalOpen);
   const setNewSessionOpen = useUiStore((s) => s.setNewSessionModalOpen);
   const activityTerminalOpen = useUiStore((s) => s.activityTerminalOpen);
   const setActivityTerminalOpen = useUiStore((s) => s.setActivityTerminalOpen);
   const featureGuideOpen = useUiStore((s) => s.featureGuideOpen);
   const setFeatureGuideOpen = useUiStore((s) => s.setFeatureGuideOpen);
-  const resumeSessionsModalOpen = useUiStore((s) => s.resumeSessionsModalOpen);
   const setResumeSessionsModalOpen = useUiStore((s) => s.setResumeSessionsModalOpen);
+  const topModal = useUiStore(selectTopOpenModal);
   const rightPanelMode = useUiStore((s) => s.rightPanelMode);
   const rightPanelPath = useUiStore((s) => s.rightPanelPath);
   const browserPreviewUrl = useUiStore((s) => s.browserPreviewUrl);
@@ -457,12 +456,22 @@ export default function DashboardPage() {
         e.preventDefault();
         setActivityTerminalOpen(!activityTerminalOpen);
       }
-      // Ctrl+S or Escape — close nav sidebar / expanded session / right panel
+      // Ctrl+S or Escape — close top modal first, then fall back to side panels
       if ((e.ctrlKey && e.key === "s") || e.key === "Escape") {
-        const navMenu = useUiStore.getState().activeNavMenu;
-        if (navMenu) {
+        const state = useUiStore.getState();
+        const top = selectTopOpenModal(state);
+        if (top) {
           e.preventDefault();
-          useUiStore.getState().setActiveNavMenu(null);
+          // FeatureGuideModal owns its own Esc handler (collapses sub-category first),
+          // so skip closeTopModal — but still preventDefault so browser defaults don't fire.
+          if (top !== "feature-guide") {
+            state.closeTopModal();
+          }
+          return;
+        }
+        if (state.activeNavMenu) {
+          e.preventDefault();
+          state.setActiveNavMenu(null);
         } else if (expandedSessionId) {
           e.preventDefault();
           setExpandedSession(null);
@@ -534,12 +543,11 @@ export default function DashboardPage() {
       {/* Expanded session overlay (Phase 3) */}
       <ExpandedSession sessionId={expandedSessionId} onClose={handleCloseExpanded} />
 
-      {/* New Session modal (Phase 4) */}
-      <NewSessionModal open={newSessionOpen} onClose={handleCloseNewSession} />
+      {/* Modal stack: only the top-priority open modal renders. See ui-store.ts selectTopOpenModal. */}
+      <NewSessionModal open={topModal === "new-session"} onClose={handleCloseNewSession} />
 
-      {/* Resume AI Sessions modal (autoscan) */}
       <ResumeSessionsModal
-        open={resumeSessionsModalOpen}
+        open={topModal === "resume-sessions"}
         onClose={() => setResumeSessionsModalOpen(false)}
       />
 
@@ -746,8 +754,8 @@ export default function DashboardPage() {
       {/* First-run onboarding wizard */}
       <OnboardingWizard onOpenNewSession={handleNewSession} />
 
-      {/* Feature Guide modal */}
-      {featureGuideOpen && <FeatureGuideModal />}
+      {/* Feature Guide modal — render only when top of the stack */}
+      {topModal === "feature-guide" && <FeatureGuideModal />}
 
       {/* Nav menu overlay — floats on top of sessions */}
       <NavSidebar />

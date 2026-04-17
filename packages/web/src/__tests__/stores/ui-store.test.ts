@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "bun:test";
-import { useUiStore } from "../../lib/stores/ui-store.js";
+import { useUiStore, selectTopOpenModal } from "../../lib/stores/ui-store.js";
 
 function reset() {
   useUiStore.setState({
@@ -23,6 +23,8 @@ function reset() {
     statsBarOpen: false,
     schedulesModalOpen: false,
     workspaceCreateModalOpen: false,
+    resumeSessionsModalOpen: false,
+    onboardingOpen: false,
   });
 }
 
@@ -227,5 +229,62 @@ describe("UiStore — misc boolean setters", () => {
   it("setActivityTerminalOpen toggles activityTerminalOpen", () => {
     useUiStore.getState().setActivityTerminalOpen(true);
     expect(useUiStore.getState().activityTerminalOpen).toBe(true);
+  });
+});
+
+// ── Modal stack (selectTopOpenModal + closeTopModal) ──────────────────────────
+
+describe("UiStore — modal stack", () => {
+  beforeEach(reset);
+
+  it("returns null when no modal is open", () => {
+    expect(selectTopOpenModal(useUiStore.getState())).toBeNull();
+  });
+
+  it("picks the only open modal", () => {
+    useUiStore.getState().setNewSessionModalOpen(true);
+    expect(selectTopOpenModal(useUiStore.getState())).toBe("new-session");
+  });
+
+  it("prefers higher-priority modal when multiple are open", () => {
+    useUiStore.getState().setNewSessionModalOpen(true);
+    useUiStore.getState().setFeatureGuideOpen(true);
+    // new-session (5) > feature-guide (3)
+    expect(selectTopOpenModal(useUiStore.getState())).toBe("new-session");
+
+    useUiStore.getState().setOnboardingOpen(true);
+    // onboarding (10) wins
+    expect(selectTopOpenModal(useUiStore.getState())).toBe("onboarding");
+
+    useUiStore.getState().setResumeSessionsModalOpen(true);
+    // onboarding (10) still wins over resume-sessions (8)
+    expect(selectTopOpenModal(useUiStore.getState())).toBe("onboarding");
+  });
+
+  it("closeTopModal pops the top-priority modal and reveals the next", () => {
+    useUiStore.getState().setOnboardingOpen(true);
+    useUiStore.getState().setNewSessionModalOpen(true);
+
+    useUiStore.getState().closeTopModal();
+    // onboarding closed → new-session is now top
+    expect(useUiStore.getState().onboardingOpen).toBe(false);
+    expect(useUiStore.getState().newSessionModalOpen).toBe(true);
+    expect(selectTopOpenModal(useUiStore.getState())).toBe("new-session");
+
+    useUiStore.getState().closeTopModal();
+    expect(useUiStore.getState().newSessionModalOpen).toBe(false);
+    expect(selectTopOpenModal(useUiStore.getState())).toBeNull();
+  });
+
+  it("closeTopModal is a no-op when no modal is open", () => {
+    useUiStore.getState().closeTopModal();
+    expect(selectTopOpenModal(useUiStore.getState())).toBeNull();
+  });
+
+  it("setOnboardingOpen toggles onboardingOpen", () => {
+    useUiStore.getState().setOnboardingOpen(true);
+    expect(useUiStore.getState().onboardingOpen).toBe(true);
+    useUiStore.getState().setOnboardingOpen(false);
+    expect(useUiStore.getState().onboardingOpen).toBe(false);
   });
 });

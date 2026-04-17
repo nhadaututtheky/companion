@@ -194,18 +194,18 @@ export function ResumeSessionsModal({ open, onClose }: ResumeSessionsModalProps)
 
       {/* Modal */}
       <div
-        className="relative flex max-h-[85vh] w-full max-w-2xl flex-col rounded-xl border border-white/10 bg-[var(--bg-card,#1e293b)] shadow-2xl"
+        className="relative flex max-h-[85vh] w-full max-w-2xl flex-col rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xl"
         role="dialog"
         aria-label="Resume AI Sessions"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-          <h2 className="text-lg font-semibold text-[var(--text-primary,#f8fafc)]">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
             Resume AI Sessions
           </h2>
           <button
             onClick={onClose}
-            className="cursor-pointer rounded-md p-1 text-[var(--text-secondary)] transition-colors hover:bg-white/10 hover:text-[var(--text-primary)]"
+            className="cursor-pointer rounded-md p-1 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
             aria-label="Close"
           >
             <X size={18} weight="bold" />
@@ -213,19 +213,19 @@ export function ResumeSessionsModal({ open, onClose }: ResumeSessionsModalProps)
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-white/5 px-5 py-3">
+        <div className="flex flex-wrap items-center gap-2 border-b border-[var(--color-border)] px-5 py-3">
           {/* Search */}
           <div className="relative flex-1">
             <MagnifyingGlass
               size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]"
             />
             <input
               type="text"
               placeholder="Search sessions..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-md border border-white/10 bg-[var(--bg-elevated,#334155)] py-1.5 pl-9 pr-3 text-sm text-[var(--text-primary,#f8fafc)] placeholder-[var(--text-secondary,#94a3b8)] outline-none transition-colors focus:border-white/20 focus:brightness-110"
+              className="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg-elevated)] py-1.5 pl-9 pr-3 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-secondary)] outline-none transition-colors focus:border-[var(--color-border-strong)] focus:brightness-110"
             />
           </div>
 
@@ -233,7 +233,7 @@ export function ResumeSessionsModal({ open, onClose }: ResumeSessionsModalProps)
           <select
             value={agentFilter}
             onChange={(e) => setAgentFilter(e.target.value as CLIPlatform | "")}
-            className="cursor-pointer rounded-md border border-white/10 bg-[var(--bg-elevated,#334155)] px-3 py-1.5 text-sm text-[var(--text-primary,#f8fafc)] outline-none transition-colors hover:brightness-110"
+            className="cursor-pointer rounded-md border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] outline-none transition-colors hover:brightness-110"
           >
             <option value="">All Agents</option>
             <option value="claude">Claude Code</option>
@@ -246,7 +246,7 @@ export function ResumeSessionsModal({ open, onClose }: ResumeSessionsModalProps)
           <select
             value={projectFilter}
             onChange={(e) => setProjectFilter(e.target.value)}
-            className="cursor-pointer rounded-md border border-white/10 bg-[var(--bg-elevated,#334155)] px-3 py-1.5 text-sm text-[var(--text-primary,#f8fafc)] outline-none transition-colors hover:brightness-110"
+            className="cursor-pointer rounded-md border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] outline-none transition-colors hover:brightness-110"
           >
             <option value="">All Projects</option>
             {projects.map((p) => (
@@ -260,7 +260,7 @@ export function ResumeSessionsModal({ open, onClose }: ResumeSessionsModalProps)
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="cursor-pointer rounded-md border border-white/10 bg-[var(--bg-elevated,#334155)] p-1.5 text-[var(--text-secondary)] transition-colors hover:brightness-110 hover:text-[var(--text-primary)] disabled:opacity-50"
+            className="cursor-pointer rounded-md border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1.5 text-[var(--color-text-secondary)] transition-colors hover:brightness-110 hover:text-[var(--color-text-primary)] disabled:opacity-50"
             aria-label="Refresh scan"
           >
             <ArrowsClockwise size={16} className={refreshing ? "animate-spin" : ""} />
@@ -270,15 +270,15 @@ export function ResumeSessionsModal({ open, onClose }: ResumeSessionsModalProps)
         {/* Session list */}
         <div className="flex-1 overflow-y-auto">
           {loading && sessions.length === 0 ? (
-            <div className="flex items-center justify-center py-12 text-sm text-[var(--text-secondary)]">
+            <div className="flex items-center justify-center py-12 text-sm text-[var(--color-text-secondary)]">
               Scanning sessions...
             </div>
           ) : sessions.length === 0 ? (
-            <div className="flex items-center justify-center py-12 text-sm text-[var(--text-secondary)]">
+            <div className="flex items-center justify-center py-12 text-sm text-[var(--color-text-secondary)]">
               No sessions found
             </div>
           ) : (
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-[var(--color-border)]">
               {sessions.map((session) => (
                 <SessionRow
                   key={`${session.agentType}-${session.id}`}
@@ -294,8 +294,8 @@ export function ResumeSessionsModal({ open, onClose }: ResumeSessionsModalProps)
         </div>
 
         {/* Footer — pagination */}
-        <div className="flex items-center justify-between border-t border-white/10 px-5 py-3">
-          <span className="text-xs text-[var(--text-secondary)]">
+        <div className="flex items-center justify-between border-t border-[var(--color-border)] px-5 py-3">
+          <span className="text-xs text-[var(--color-text-secondary)]">
             {total} session{total !== 1 ? "s" : ""}
           </span>
           {totalPages > 1 && (
@@ -303,18 +303,18 @@ export function ResumeSessionsModal({ open, onClose }: ResumeSessionsModalProps)
               <button
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={page === 0}
-                className="cursor-pointer rounded p-1 text-[var(--text-secondary)] transition-colors hover:bg-white/10 disabled:cursor-default disabled:opacity-30"
+                className="cursor-pointer rounded p-1 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)] disabled:cursor-default disabled:opacity-30"
                 aria-label="Previous page"
               >
                 <CaretLeft size={14} />
               </button>
-              <span className="text-xs text-[var(--text-secondary)]">
+              <span className="text-xs text-[var(--color-text-secondary)]">
                 Page {page + 1} of {totalPages}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
-                className="cursor-pointer rounded p-1 text-[var(--text-secondary)] transition-colors hover:bg-white/10 disabled:cursor-default disabled:opacity-30"
+                className="cursor-pointer rounded p-1 text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)] disabled:cursor-default disabled:opacity-30"
                 aria-label="Next page"
               >
                 <CaretRight size={14} />
@@ -352,7 +352,7 @@ function SessionRow({
   const isResuming = resumingId === session.id;
 
   return (
-    <div className="group flex items-start gap-3 px-5 py-3 transition-colors hover:bg-white/[0.03]">
+    <div className="group flex items-start gap-3 px-5 py-3 transition-colors hover:bg-[var(--color-bg-hover)]">
       {/* Content */}
       <div className="min-w-0 flex-1">
         {/* Agent badge + project path */}
@@ -363,20 +363,20 @@ function SessionRow({
           >
             {agent.label}
           </span>
-          <span className="truncate text-xs text-[var(--text-secondary)]">
+          <span className="truncate text-xs text-[var(--color-text-secondary)]">
             {truncatePath(session.projectPath || session.cwd)}
           </span>
         </div>
 
         {/* First prompt / preview */}
-        <p className="line-clamp-2 text-sm text-[var(--text-primary,#f8fafc)] opacity-80">
+        <p className="line-clamp-2 text-sm text-[var(--color-text-primary)] opacity-80">
           {session.firstPrompt || (
-            <span className="italic text-[var(--text-secondary)]">(no preview available)</span>
+            <span className="italic text-[var(--color-text-secondary)]">(no preview available)</span>
           )}
         </p>
 
         {/* Meta: turns + timestamp */}
-        <div className="mt-1 flex items-center gap-3 text-xs text-[var(--text-secondary)]">
+        <div className="mt-1 flex items-center gap-3 text-xs text-[var(--color-text-secondary)]">
           <span>
             {session.turnCount} turn{session.turnCount !== 1 ? "s" : ""}
           </span>
@@ -385,20 +385,20 @@ function SessionRow({
 
       {/* Right: timestamp + actions */}
       <div className="flex shrink-0 flex-col items-end gap-2">
-        <span className="text-xs text-[var(--text-secondary)]">
+        <span className="text-xs text-[var(--color-text-secondary)]">
           {timeAgo(session.lastActivityAt)}
         </span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => onView(session)}
-            className="cursor-pointer rounded px-2 py-1 text-xs text-[var(--text-secondary)] opacity-0 transition-all hover:bg-white/10 hover:text-[var(--text-primary)] group-hover:opacity-100"
+            className="cursor-pointer rounded px-2 py-1 text-xs text-[var(--color-text-secondary)] opacity-0 transition-all hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] group-hover:opacity-100"
             aria-label="View session"
           >
             View
           </button>
           <button
             onClick={() => onCopyId(session.id)}
-            className="cursor-pointer rounded px-2 py-1 text-xs text-[var(--text-secondary)] opacity-0 transition-all hover:bg-white/10 hover:text-[var(--text-primary)] group-hover:opacity-100"
+            className="cursor-pointer rounded px-2 py-1 text-xs text-[var(--color-text-secondary)] opacity-0 transition-all hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] group-hover:opacity-100"
             aria-label="Copy session ID"
           >
             Copy ID
@@ -406,7 +406,7 @@ function SessionRow({
           <button
             onClick={() => onResume(session)}
             disabled={isResuming}
-            className="cursor-pointer rounded bg-[var(--accent,#2196f3)] px-3 py-1 text-xs font-medium text-white transition-colors hover:brightness-110 disabled:opacity-50"
+            className="cursor-pointer rounded bg-[var(--color-accent)] px-3 py-1 text-xs font-medium text-white transition-colors hover:brightness-110 disabled:opacity-50"
             aria-label="Resume session"
           >
             {isResuming ? "..." : "Resume"}
@@ -456,9 +456,9 @@ function SessionViewer({ session, onClose }: { session: ScannedSession; onClose:
         }}
         aria-hidden
       />
-      <div className="relative flex max-h-[80vh] w-full max-w-xl flex-col rounded-xl border border-white/10 bg-[var(--bg-card,#1e293b)] shadow-2xl">
+      <div className="relative flex max-h-[80vh] w-full max-w-xl flex-col rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-3">
           <div className="flex items-center gap-2">
             <span
               className="rounded-md px-2 py-0.5 text-xs font-semibold"
@@ -466,13 +466,13 @@ function SessionViewer({ session, onClose }: { session: ScannedSession; onClose:
             >
               {agent.label}
             </span>
-            <span className="text-sm text-[var(--text-secondary)]">
+            <span className="text-sm text-[var(--color-text-secondary)]">
               {truncatePath(session.projectPath || session.cwd)}
             </span>
           </div>
           <button
             onClick={onClose}
-            className="cursor-pointer rounded-md p-1 text-[var(--text-secondary)] hover:bg-white/10"
+            className="cursor-pointer rounded-md p-1 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]"
             aria-label="Close viewer"
           >
             <X size={16} />
@@ -481,9 +481,9 @@ function SessionViewer({ session, onClose }: { session: ScannedSession; onClose:
 
         {/* Resume command */}
         {resumeCmd && (
-          <div className="border-b border-white/5 px-5 py-2">
+          <div className="border-b border-[var(--color-border)] px-5 py-2">
             <div className="flex items-center gap-2">
-              <code className="flex-1 rounded bg-white/5 px-3 py-1.5 text-xs text-[var(--text-primary)]">
+              <code className="flex-1 rounded bg-[var(--color-bg-elevated)] px-3 py-1.5 text-xs text-[var(--color-text-primary)]">
                 {resumeCmd}
               </code>
               <button
@@ -491,7 +491,7 @@ function SessionViewer({ session, onClose }: { session: ScannedSession; onClose:
                   navigator.clipboard.writeText(resumeCmd);
                   toast.success("Command copied");
                 }}
-                className="cursor-pointer rounded p-1 text-[var(--text-secondary)] hover:bg-white/10"
+                className="cursor-pointer rounded p-1 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]"
                 aria-label="Copy resume command"
               >
                 <Copy size={14} />
@@ -503,11 +503,11 @@ function SessionViewer({ session, onClose }: { session: ScannedSession; onClose:
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-5 py-3">
           {loading ? (
-            <div className="flex items-center justify-center py-8 text-sm text-[var(--text-secondary)]">
+            <div className="flex items-center justify-center py-8 text-sm text-[var(--color-text-secondary)]">
               Loading messages...
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex items-center justify-center py-8 text-sm text-[var(--text-secondary)]">
+            <div className="flex items-center justify-center py-8 text-sm text-[var(--color-text-secondary)]">
               No messages found
             </div>
           ) : (
@@ -517,20 +517,20 @@ function SessionViewer({ session, onClose }: { session: ScannedSession; onClose:
                   <span
                     className={`mb-0.5 block text-xs font-medium ${
                       msg.role === "user"
-                        ? "text-[var(--accent,#2196f3)]"
-                        : "text-[var(--profit,#00d084)]"
+                        ? "text-[var(--color-accent)]"
+                        : "text-[var(--color-success)]"
                     }`}
                   >
                     {msg.role === "user" ? "User" : "AI"}
                   </span>
-                  <p className="whitespace-pre-wrap text-[var(--text-primary)] opacity-80">
+                  <p className="whitespace-pre-wrap text-[var(--color-text-primary)] opacity-80">
                     {msg.content.slice(0, 500)}
                     {msg.content.length > 500 && "..."}
                   </p>
                 </div>
               ))}
               {messages.length > 50 && (
-                <p className="text-center text-xs text-[var(--text-secondary)]">
+                <p className="text-center text-xs text-[var(--color-text-secondary)]">
                   ... and {messages.length - 50} more messages
                 </p>
               )}

@@ -161,4 +161,8 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0039_account_skip_rotation.sql",
     sql: "-- Per-account \"skip in rotation\" flag: when true, the auto-switch system\n-- will not pick this account as the next target. Still usable manually.\n-- Non-idempotent: embedded migration runner tracks by file name.\nALTER TABLE accounts ADD COLUMN skip_in_rotation INTEGER NOT NULL DEFAULT 0;\n",
   },
+  {
+    name: "0040_account_identity.sql",
+    sql: "-- Multi Account dedup bug fix: stable identity column.\n-- fingerprint = sha256(accessToken)[:16] rotates every ~1h on OAuth refresh,\n-- inserting a new row each cycle. identity = sha256(refreshToken)[:16] stays\n-- stable across access-token refreshes. Backfill + dedupe runs in app code\n-- on startup (credential-manager.dedupeAccountsByIdentity).\n-- Non-idempotent: embedded migration runner tracks by file name.\nALTER TABLE accounts ADD COLUMN identity TEXT;\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS idx_accounts_identity ON accounts(identity);\n",
+  },
 ];

@@ -10,6 +10,7 @@ export interface AccountInfo {
   id: string;
   label: string;
   fingerprint: string;
+  identity: string | null;
   subscriptionType: string | null;
   rateLimitTier: string | null;
   isActive: boolean;

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Z } from "@/lib/z-index";
+import { useUiStore, selectTopOpenModal } from "@/lib/stores/ui-store";
 import {
   CheckCircle,
   Warning,
@@ -369,9 +370,11 @@ function StepFirstSession({
 const TOTAL_STEPS = 4;
 
 export function OnboardingWizard({ onOpenNewSession }: OnboardingWizardProps) {
-  const [visible, setVisible] = useState(false);
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState<SetupStatus | null>(null);
+  const onboardingOpen = useUiStore((s) => s.onboardingOpen);
+  const setOnboardingOpen = useUiStore((s) => s.setOnboardingOpen);
+  const topModal = useUiStore(selectTopOpenModal);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -384,17 +387,17 @@ export function OnboardingWizard({ onOpenNewSession }: OnboardingWizardProps) {
         setStatus(data);
         const isComplete = data.hasApiKey && data.hasProjects;
         if (!isComplete) {
-          setVisible(true);
+          setOnboardingOpen(true);
         }
       })
       .catch(() => {
         // Server not available — skip wizard
       });
-  }, []);
+  }, [setOnboardingOpen]);
 
   const dismiss = () => {
     localStorage.setItem(STORAGE_KEY, "1");
-    setVisible(false);
+    setOnboardingOpen(false);
   };
 
   const handleOpenNewSession = () => {
@@ -402,7 +405,9 @@ export function OnboardingWizard({ onOpenNewSession }: OnboardingWizardProps) {
     onOpenNewSession();
   };
 
-  if (!visible || !status) return null;
+  // Stay mounted so the setup-status effect runs; only render when we're the
+  // top modal in the stack (higher-priority modals cover us temporarily).
+  if (!onboardingOpen || topModal !== "onboarding" || !status) return null;
 
   const canGoNext = step < TOTAL_STEPS - 1;
   const canGoBack = step > 0;

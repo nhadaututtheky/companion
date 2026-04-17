@@ -60,7 +60,7 @@ function requireFeature(feature: string) {
       return c.json(
         {
           success: false,
-          error: `This feature requires Companion Pro. Upgrade to unlock.`,
+          error: `This one's a Pro feature — unlock it (and the rest) at companion.theio.vn`,
         } satisfies ApiResponse,
         403,
       );

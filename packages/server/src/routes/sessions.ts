@@ -321,7 +321,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       return c.json(
         {
           success: false,
-          error: `Session limit reached (${getMaxSessions()} active). Stop an existing session before creating a new one.`,
+          error: `You're at the ${getMaxSessions()}-session limit. Stop one to make room, or go Pro for unlimited parallel sessions → companion.theio.vn`,
         } satisfies ApiResponse,
         429,
       );
@@ -578,7 +578,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       return c.json(
         {
           success: false,
-          error: `Session limit reached (${getMaxSessions()} active). Stop an existing session before resuming.`,
+          error: `You're at the ${getMaxSessions()}-session limit. Stop one to resume this, or go Pro for unlimited sessions → companion.theio.vn`,
         } satisfies ApiResponse,
         429,
       );
@@ -1239,7 +1239,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       return c.json(
         {
           success: false,
-          error: `Session limit reached (${getMaxSessions()} active)`,
+          error: `You're at the ${getMaxSessions()}-session limit — child sessions count too. Go Pro for unlimited → companion.theio.vn`,
         } satisfies ApiResponse,
         429,
       );

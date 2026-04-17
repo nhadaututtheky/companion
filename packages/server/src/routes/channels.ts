@@ -272,7 +272,8 @@ export function channelRoutes(bridge: WsBridge): Hono {
       return c.json(
         {
           success: false,
-          error: "Multi-platform debate requires Companion Pro.",
+          error:
+            "Multi-platform debate is Pro-only — let Claude, Codex & friends argue it out for you at companion.theio.vn",
         } satisfies ApiResponse,
         403,
       );

@@ -73,7 +73,8 @@ export function telegramRoutes(registry: BotRegistry) {
       return c.json(
         {
           success: false,
-          error: "Multiple bots require Companion Pro. Upgrade to add more bots.",
+          error:
+            "Free tier runs 1 Telegram bot. Go Pro to command a whole fleet → companion.theio.vn",
         } satisfies ApiResponse,
         403,
       );

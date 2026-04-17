@@ -2,6 +2,20 @@ import { create } from "zustand";
 import type { SettingsTab } from "@/types/settings";
 import { reapplyCurrentTheme } from "@/lib/theme-provider";
 
+/**
+ * Modal priority — higher wins when multiple modals are "open" at once.
+ * Only the top-priority open modal renders; the others stay queued (their
+ * flags remain set) until the top one closes.
+ */
+export type ModalType = "onboarding" | "resume-sessions" | "new-session" | "feature-guide";
+
+const MODAL_PRIORITY: Record<ModalType, number> = {
+  onboarding: 10,
+  "resume-sessions": 8,
+  "new-session": 5,
+  "feature-guide": 3,
+};
+
 interface UiStore {
   theme: "light" | "dark";
   monochrome: boolean;
@@ -31,6 +45,9 @@ interface UiStore {
   schedulesModalOpen: boolean;
   workspaceCreateModalOpen: boolean;
   resumeSessionsModalOpen: boolean;
+  onboardingOpen: boolean;
+  setOnboardingOpen: (open: boolean) => void;
+  closeTopModal: () => void;
   setStatsBarOpen: (open: boolean) => void;
   setSchedulesModalOpen: (open: boolean) => void;
   setWorkspaceCreateModalOpen: (open: boolean) => void;
@@ -105,6 +122,25 @@ export const useUiStore = create<UiStore>((set) => ({
   schedulesModalOpen: false,
   workspaceCreateModalOpen: false,
   resumeSessionsModalOpen: false,
+  onboardingOpen: false,
+
+  setOnboardingOpen: (open) => set({ onboardingOpen: open }),
+
+  closeTopModal: () =>
+    set((s) => {
+      const top = selectTopOpenModal(s);
+      if (!top) return {};
+      switch (top) {
+        case "onboarding":
+          return { onboardingOpen: false };
+        case "resume-sessions":
+          return { resumeSessionsModalOpen: false };
+        case "new-session":
+          return { newSessionModalOpen: false, newSessionDefaultPersonaId: null };
+        case "feature-guide":
+          return { featureGuideOpen: false };
+      }
+    }),
 
   setStatsBarOpen: (open) => set({ statsBarOpen: open }),
 
@@ -188,3 +224,21 @@ export const useUiStore = create<UiStore>((set) => ({
 
   toggleNavMenu: (menu) => set((s) => ({ activeNavMenu: s.activeNavMenu === menu ? null : menu })),
 }));
+
+/**
+ * Returns the currently top-priority open modal, or null when none are open.
+ * Use as a Zustand selector: `useUiStore(selectTopOpenModal)`.
+ *
+ * Reads each per-modal boolean off the store (individual flags remain the
+ * single source of truth for "intent to show"); this selector only decides
+ * which one wins the render slot when multiple are set.
+ */
+export const selectTopOpenModal = (s: UiStore): ModalType | null => {
+  const open: ModalType[] = [];
+  if (s.onboardingOpen) open.push("onboarding");
+  if (s.resumeSessionsModalOpen) open.push("resume-sessions");
+  if (s.newSessionModalOpen) open.push("new-session");
+  if (s.featureGuideOpen) open.push("feature-guide");
+  if (open.length === 0) return null;
+  return open.reduce((top, m) => (MODAL_PRIORITY[m] > MODAL_PRIORITY[top] ? m : top));
+};

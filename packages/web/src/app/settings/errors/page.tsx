@@ -122,10 +122,10 @@ export default function ErrorsPage() {
           <span className="text-sm">{total} errors tracked</span>
         </div>
 
-        {/* Toolbar */}
+        {/* Toolbar — filter (left) + quiet icon actions (right) + danger clear */}
         <div className="mb-4 flex items-center gap-3">
-          <div className="flex items-center gap-2" style={{ flex: 1 }}>
-            <Funnel size={14} />
+          <div className="flex items-center gap-2">
+            <Funnel size={14} className="text-text-muted" />
             <select
               value={sourceFilter}
               onChange={(e) => {
@@ -143,13 +143,16 @@ export default function ErrorsPage() {
             </select>
           </div>
 
+          <div className="flex-1" />
+
           <button
             onClick={handleExport}
-            className="shadow-soft text-text-secondary bg-bg-card flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors"
+            disabled={total === 0}
+            className="border-border text-text-secondary hover:bg-bg-card flex cursor-pointer items-center justify-center rounded-lg border p-1.5 transition-colors disabled:cursor-default disabled:opacity-40"
             aria-label="Export errors as JSON"
+            title="Export as JSON"
           >
             <DownloadSimple size={14} />
-            Export
           </button>
 
           <button

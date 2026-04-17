@@ -2,6 +2,34 @@
 
 All notable changes to Companion are documented here.
 
+## [0.22.0] - 2026-04-17
+
+### Fixed
+- **Credential dedup live-session guard** — `dedupeAccountsByIdentity` now queries `sessions.status NOT IN ["ended","error"]` before picking a survivor. Rows that own a live session win the merge unconditionally; if more than one row in a group owns a live session the merge is skipped entirely with a warning. Prevents `cli-launcher` subprocess breakage when a migration/cleanup collides with a running session. Added 2 unit tests (10/10 dedup tests pass).
+- **Resume AI Sessions modal theme leak** — Modal used CSS vars that don't exist in the project stylesheet (`--bg-card`, `--text-primary`, `--accent`, `--profit` instead of `--color-*`). All occurrences replaced with correctly prefixed tokens; hardcoded `border-white/10`, `bg-white/5`, `divide-white/5`, `hover:bg-white/[0.03]` replaced with `--color-border`, `--color-bg-elevated`, `--color-bg-hover`. Modal now fully reactive to Light/Dark/Mono theme switch.
+- **Esc handler double-fire on Feature Guide** — Top-modal branch returned without `preventDefault()`, letting browser defaults fire alongside the modal's own Esc handler.
+- **Landing hero stats wrap** — "100+ Library Auto-Detect" was wrapping to a new row on mid-width viewports because `.stat` padding was `0 32px`. Dropped to `0 24px` (base) and `0 16px` at 769–1024px.
+
+### Changed
+- **Modal stack (centralized Esc/backdrop)** — Modal registration flows through `useUiStore.modalStack` so Esc/backdrop click always closes the top-most modal, resolving overlap bugs between `SettingsModal`, `ResumeSessionsModal`, `FeatureGuideModal`, etc.
+- **Nav sidebar file split** — `nav-sidebar.tsx` went from 594 → 48 lines (shell only). Each feature surface (Panels / AI / Layout) now lives in its own file under `components/layout/sidebar/`. Dead code removed (`applyPreset`, `uiTheme`, `BUILT_IN_PRESETS`, unused `useEffect`). Zero user-facing change — full UX tab-bar reorg intentionally deferred.
+- **Error log toolbar** — Export became an icon-only ghost button; Clear kept as the single labeled danger action. Filter sits on the left with a flex spacer, pagination already at footer.
+- **Projects page spacing** — Card padding `p-5 → p-4`, title margin `mb-0.5 → mb-1`, badge `py-0.5 → py-1`, banner `mb-5 → mb-4`, copy-dir button `p-0.5 → p-1`. All on 4/8px rhythm.
+- **Projects page copy-dir affordance** — Button now renders at `opacity-50` baseline, `opacity-100` on hover/group-hover (was invisible until hover).
+- **Theme page delete button** — Custom-theme delete (bare `x` text) replaced with a Phosphor `X` icon that reveals on card hover only. Reduces resting interactive-element count on the page.
+- **Theme page "Add Theme" CTA** — Inline "Import VS Code Theme" card replaced with a `+ Add Theme` button in the page header that opens a new `AddThemeModal` component. Import flow unchanged, layout tightened.
+
+### Added
+- **`AddThemeModal` component** — `packages/web/src/components/settings/add-theme-modal.tsx`. Wraps the VS Code theme file-upload flow in a focused modal (parse → map to `ThemeColors` → persist to `companion_custom_themes` localStorage).
+
+### Deferred
+- **Phase 5 — Magic Ring refactor** — Pure internal SVG/props cleanup with no user-visible benefit. Skipped per its own plan's defer option; `magic-ring.tsx` still works and looks correct.
+- **Theme in-modal color editor** — Users can delete + re-import custom themes today; full palette editor will ship if demand emerges.
+
+### Tests
+- **10/10 credential-dedup tests pass** (2 new: live-session guard promotes owner, skips merge on multi-live-owner).
+- **169/169 web unit tests pass** (no regressions from ModalStack / nav split / AddThemeModal).
+
 ## [0.21.9] - 2026-04-17
 
 ### Tests

@@ -57,7 +57,10 @@ export async function handleAssistantMessage(
   );
   if (toolFeed) {
     await bridge.upsertToolFeed(chatId, topicId, toolFeed);
-    bridge.streamHandler.markBreak(chatId, topicId);
+    // Commit buffered stream text into the current message (above the tool feed)
+    // and detach messageId so the post-tool reply starts a NEW message BELOW
+    // the tool feed — keeps the final reply visible at the bottom of the chat.
+    await bridge.streamHandler.markBreak(chatId, topicId);
   }
 
   // NOTE: Do NOT call streamHandler.appendText here.

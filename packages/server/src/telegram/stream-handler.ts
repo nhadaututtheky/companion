@@ -52,7 +52,6 @@ interface PendingResponse {
 
 export class StreamHandler {
   private pending = new Map<string, PendingResponse>();
-  private needsSeparator = new Set<string>();
   private api: Api;
 
   constructor(api: Api) {
@@ -63,12 +62,43 @@ export class StreamHandler {
     return `${chatId}:${topicId ?? 0}`;
   }
 
-  /** Mark that a tool break occurred — next text append will get a line break separator */
-  markBreak(chatId: number, topicId?: number): void {
+  /**
+   * Signal that a tool feed was inserted into the Telegram timeline.
+   * Commits any buffered text to the current message (so pre-tool content stays
+   * intact), then detaches messageId so the next appendText starts a NEW message
+   * positioned BELOW the tool feed — this keeps the final reply visible at the
+   * bottom instead of being buried above the tool calls.
+   */
+  async markBreak(chatId: number, topicId?: number): Promise<void> {
     const k = this.key(chatId, topicId);
-    if (this.pending.has(k)) {
-      this.needsSeparator.add(k);
+    const p = this.pending.get(k);
+    if (!p) return;
+
+    if (p.rawText.length > 0) {
+      if (p.messageId) {
+        // Commit buffered text into the current message via edit.
+        const fullText = p.sentText + p.rawText;
+        const html = toTelegramHTML(fullText);
+        if (html && html.length <= TELEGRAM_MSG_LIMIT) {
+          try {
+            await this.api.editMessageText(p.chatId, p.messageId, html, { parse_mode: "HTML" });
+            p.sentText = fullText;
+            p.rawText = "";
+          } catch {
+            // Edit failed — fall through to send as new message so content isn't lost
+          }
+        }
+      }
+      // No message yet (rate-limited flush) OR edit failed above: send buffered
+      // text as its own message so it doesn't bleed into the post-tool reply.
+      if (p.rawText.length > 0) {
+        await this.sendNewMessage(p, p.rawText);
+      }
     }
+
+    p.messageId = null;
+    p.sentText = "";
+    p.lastEditTime = 0;
   }
 
   /**
@@ -109,27 +139,11 @@ export class StreamHandler {
       return;
     }
 
-    // Add separator if a tool break occurred between text blocks
-    if (this.needsSeparator.has(k)) {
-      this.needsSeparator.delete(k);
-      // Insert separator between previous content and new text.
-      // When rawText is empty, sentText holds previous content — still need the break.
-      const hasPrior = p.rawText.length > 0 || p.sentText.length > 0;
-      if (hasPrior && !p.rawText.endsWith("\n\n") && !p.sentText.endsWith("\n\n")) {
-        p.rawText += "\n\n";
-      }
-    }
-
-    // Accumulate
     p.rawText += text;
-
-    // Reset idle timer
     this.resetIdleTimer(k, p);
 
-    // Check flush triggers
     const hasNaturalBreak = text.includes("\n\n");
     const bufferFull = p.rawText.length >= FLUSH_BUFFER_THRESHOLD;
-
     if (hasNaturalBreak || bufferFull) {
       await this.flushPartial(k);
     }
@@ -188,34 +202,57 @@ export class StreamHandler {
     }
   }
 
-  /** Send text as a new Telegram message, update state */
+  /**
+   * Send text as one or more Telegram messages, splitting at Telegram's length
+   * limit so long final replies are never truncated.
+   * - Single chunk: attaches messageId so subsequent text can edit this message.
+   * - Multi-chunk: detaches messageId (editing across split messages is unsafe).
+   */
   private async sendNewMessage(p: PendingResponse, text: string): Promise<void> {
     const html = toTelegramHTML(text);
     if (!html) return;
 
+    const chunks = splitMessage(html, TELEGRAM_MSG_LIMIT);
+    let lastSentId: number | null = null;
+
+    for (const chunk of chunks) {
+      const id = await this.sendOrFallback(p, chunk);
+      if (id !== null) {
+        p.allMessageIds.push(id);
+        lastSentId = id;
+      }
+    }
+
+    if (chunks.length === 1 && lastSentId !== null) {
+      p.messageId = lastSentId;
+      p.sentText = text;
+    } else {
+      // Split happened (or nothing sent): detach — next text will start fresh.
+      p.messageId = null;
+      p.sentText = "";
+    }
+    p.rawText = "";
+    p.lastEditTime = Date.now();
+  }
+
+  /** Send a single chunk; fall back to plain text if HTML is rejected. */
+  private async sendOrFallback(p: PendingResponse, chunk: string): Promise<number | null> {
     try {
-      const sent = await this.api.sendMessage(p.chatId, html, {
+      const sent = await this.api.sendMessage(p.chatId, chunk, {
         parse_mode: "HTML",
         message_thread_id: p.topicId,
       });
-      p.messageId = sent.message_id;
-      p.allMessageIds.push(sent.message_id);
-      p.sentText = text;
-      p.rawText = "";
-      p.lastEditTime = Date.now();
+      return sent.message_id;
     } catch (err) {
       log.warn("HTML send failed, trying plain text", { error: String(err) });
       try {
-        const sent = await this.api.sendMessage(p.chatId, stripHtmlTags(html), {
+        const sent = await this.api.sendMessage(p.chatId, stripHtmlTags(chunk), {
           message_thread_id: p.topicId,
         });
-        p.messageId = sent.message_id;
-        p.allMessageIds.push(sent.message_id);
-        p.sentText = text;
-        p.rawText = "";
-        p.lastEditTime = Date.now();
+        return sent.message_id;
       } catch (fallbackErr) {
         log.error("Failed to send message", { error: String(fallbackErr) });
+        return null;
       }
     }
   }
@@ -249,7 +286,6 @@ export class StreamHandler {
     clearInterval(p.typingTimer);
     if (p.idleTimer) clearTimeout(p.idleTimer);
     this.pending.delete(k);
-    this.needsSeparator.delete(k);
 
     // Final flush of remaining text
     if (p.rawText.length > 0) {
@@ -294,7 +330,6 @@ export class StreamHandler {
       clearInterval(p.typingTimer);
       if (p.idleTimer) clearTimeout(p.idleTimer);
       this.pending.delete(k);
-      this.needsSeparator.delete(k);
     }
   }
 

@@ -585,7 +585,16 @@ code {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 32px;
+  padding: 0 24px;
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .stat {
+    padding: 0 16px;
+  }
+  .stat-label {
+    font-size: 0.75rem;
+  }
 }
 
 .stat-value {
@@ -1211,6 +1220,14 @@ code {
   font-size: 1.125rem;
   color: var(--text-muted);
   flex-shrink: 0;
+}
+
+.pay-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin: -4px 0 4px;
+  line-height: 1.5;
 }
 
 /* Form */
@@ -1848,6 +1865,13 @@ code {
 .footer-bottom p {
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+.footer-disclaimer {
+  max-width: 720px;
+  margin: 8px auto 0;
+  line-height: 1.6;
+  opacity: 0.75;
 }
 
 /* ── Responsive ─────────────────────────────────────────────────────────── */

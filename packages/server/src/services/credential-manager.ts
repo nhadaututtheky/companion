@@ -4,7 +4,7 @@
  */
 
 import { createHash, randomUUID } from "node:crypto";
-import { eq, and, ne, sql, inArray } from "drizzle-orm";
+import { eq, and, ne, sql, inArray, notInArray } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { accounts, sessions } from "../db/schema.js";
 import { encrypt, decrypt, isEncryptionEnabled } from "./crypto.js";
@@ -28,6 +28,7 @@ export interface AccountInfo {
   id: string;
   label: string;
   fingerprint: string;
+  identity: string | null;
   subscriptionType: string | null;
   rateLimitTier: string | null;
   isActive: boolean;
@@ -51,15 +52,29 @@ export interface AccountBudgets {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-/** Generate a fingerprint from an access token: sha256(token)[:16] */
+/**
+ * Volatile fingerprint from the access token: sha256(token)[:16].
+ * Kept for backward compatibility — accessToken rotates ~hourly on OAuth refresh,
+ * so this is NOT reliable for dedup. Use {@link computeIdentity} instead.
+ */
 function fingerprint(accessToken: string): string {
   return createHash("sha256").update(accessToken).digest("hex").slice(0, 16);
+}
+
+/**
+ * Stable identity from the refresh token: sha256(token)[:16].
+ * Refresh tokens only rotate on re-authorization, so this uniquely identifies
+ * one logged-in Claude account across access-token refreshes.
+ */
+function computeIdentity(refreshToken: string): string {
+  return createHash("sha256").update(refreshToken).digest("hex").slice(0, 16);
 }
 
 // ─── CRUD Operations ────────────────────────────────────────────────────────
 
 /**
- * Save or update an account. Upserts by fingerprint (dedup on accessToken).
+ * Save or update an account. Upserts by identity (stable sha256(refreshToken)),
+ * falling back to fingerprint for legacy rows that pre-date the identity column.
  * Returns the account ID.
  */
 export function saveAccount(label: string, credentials: OAuthCredentials): string {
@@ -73,20 +88,31 @@ export function saveAccount(label: string, credentials: OAuthCredentials): strin
   const db = getDb();
   const sqlite = getSqlite();
   const fp = fingerprint(credentials.accessToken);
+  const identity = computeIdentity(credentials.refreshToken);
   const encryptedJson = encrypt(JSON.stringify(credentials));
 
-  // Atomic upsert via SQLite transaction (prevents TOCTOU race on fingerprint)
+  // Atomic upsert via SQLite transaction (prevents TOCTOU race on identity/fingerprint)
   const txn = sqlite!.transaction(() => {
-    const existing = db
-      .select({ id: accounts.id })
-      .from(accounts)
-      .where(eq(accounts.fingerprint, fp))
-      .get();
+    // Prefer stable identity; fall back to legacy fingerprint match so existing
+    // rows get merged in-place instead of duplicated on first write after upgrade.
+    const existing =
+      db
+        .select({ id: accounts.id })
+        .from(accounts)
+        .where(eq(accounts.identity, identity))
+        .get() ??
+      db
+        .select({ id: accounts.id })
+        .from(accounts)
+        .where(eq(accounts.fingerprint, fp))
+        .get();
 
     if (existing) {
       db.update(accounts)
         .set({
           label,
+          fingerprint: fp,
+          identity,
           encryptedCredentials: encryptedJson,
           subscriptionType: credentials.subscriptionType ?? null,
           rateLimitTier: credentials.rateLimitTier ?? null,
@@ -97,7 +123,7 @@ export function saveAccount(label: string, credentials: OAuthCredentials): strin
         .where(eq(accounts.id, existing.id))
         .run();
 
-      log.info("Account updated", { id: existing.id, label, fingerprint: fp });
+      log.info("Account updated", { id: existing.id, label, identity });
       return existing.id;
     }
 
@@ -107,6 +133,7 @@ export function saveAccount(label: string, credentials: OAuthCredentials): strin
         id,
         label,
         fingerprint: fp,
+        identity,
         encryptedCredentials: encryptedJson,
         subscriptionType: credentials.subscriptionType ?? null,
         rateLimitTier: credentials.rateLimitTier ?? null,
@@ -115,8 +142,146 @@ export function saveAccount(label: string, credentials: OAuthCredentials): strin
       })
       .run();
 
-    log.info("Account saved", { id, label, fingerprint: fp });
+    log.info("Account saved", { id, label, identity });
     return id;
+  });
+
+  return txn();
+}
+
+/**
+ * Backfill missing `identity` values + collapse ghost duplicates created by the
+ * old fingerprint-based dedup (see 0040_account_identity.sql).
+ *
+ * For each group of rows sharing one identity, picks a survivor (active > most
+ * recently used > oldest createdAt), reassigns that group's sessions to the
+ * survivor, sums costs, and deletes the rest. Idempotent — safe to run on every
+ * server startup.
+ *
+ * Returns counts for logging/observability.
+ */
+export function dedupeAccountsByIdentity(): {
+  scanned: number;
+  backfilled: number;
+  merged: number;
+} {
+  if (!isEncryptionEnabled()) return { scanned: 0, backfilled: 0, merged: 0 };
+
+  const db = getDb();
+  const sqlite = getSqlite();
+  let backfilled = 0;
+  let merged = 0;
+
+  const txn = sqlite!.transaction(() => {
+    const rows = db.select().from(accounts).all();
+
+    // Step 1: backfill identity for rows that don't have one.
+    for (const row of rows) {
+      if (row.identity) continue;
+      try {
+        const creds = JSON.parse(decrypt(row.encryptedCredentials)) as OAuthCredentials;
+        if (!creds.refreshToken) continue;
+        const identity = computeIdentity(creds.refreshToken);
+        db.update(accounts)
+          .set({ identity, updatedAt: new Date() })
+          .where(eq(accounts.id, row.id))
+          .run();
+        row.identity = identity;
+        backfilled++;
+      } catch (err) {
+        log.warn("Failed to backfill identity for account", { id: row.id, error: String(err) });
+      }
+    }
+
+    // Step 2: group by identity and merge duplicates.
+    const groups = new Map<string, typeof rows>();
+    for (const row of rows) {
+      if (!row.identity) continue;
+      const existing = groups.get(row.identity) ?? [];
+      existing.push(row);
+      groups.set(row.identity, existing);
+    }
+
+    // A session is "live" if its status is anything other than these terminal states.
+    const terminalStatuses = ["ended", "error"];
+
+    for (const [identity, group] of groups) {
+      if (group.length < 2) continue;
+
+      // Live-session guard: if any row in the group owns a non-terminal session,
+      // it becomes the unconditional survivor — deleting it would orphan a
+      // running cli-launcher subprocess on its next DB lookup.
+      const groupIds = group.map((r) => r.id);
+      const liveRows = db
+        .select({ accountId: sessions.accountId })
+        .from(sessions)
+        .where(
+          and(inArray(sessions.accountId, groupIds), notInArray(sessions.status, terminalStatuses)),
+        )
+        .all();
+      const liveAccountIds = new Set(liveRows.map((r) => r.accountId).filter(Boolean) as string[]);
+
+      if (liveAccountIds.size > 1) {
+        // More than one row in the group has live sessions — can't safely merge.
+        // Leave the group alone until those sessions end.
+        log.warn("Skipping dedup for group with multiple live sessions", {
+          identity,
+          liveAccountIds: [...liveAccountIds],
+        });
+        continue;
+      }
+
+      // Survivor priority: live session → isActive → latest lastUsedAt → oldest createdAt.
+      const sorted = [...group].sort((a, b) => {
+        const aLive = liveAccountIds.has(a.id);
+        const bLive = liveAccountIds.has(b.id);
+        if (aLive !== bLive) return aLive ? -1 : 1;
+        if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+        const aUsed = a.lastUsedAt ? a.lastUsedAt.getTime() : 0;
+        const bUsed = b.lastUsedAt ? b.lastUsedAt.getTime() : 0;
+        if (aUsed !== bUsed) return bUsed - aUsed;
+        const aCreated = a.createdAt ? a.createdAt.getTime() : 0;
+        const bCreated = b.createdAt ? b.createdAt.getTime() : 0;
+        return aCreated - bCreated;
+      });
+      const survivor = sorted[0]!;
+      const duplicates = sorted.slice(1);
+      const duplicateIds = duplicates.map((d) => d.id);
+
+      // Sum costs + keep the freshest lastUsedAt across the whole group.
+      const totalCost = group.reduce((sum, r) => sum + (r.totalCostUsd ?? 0), 0);
+      const latestUsed = group.reduce<Date | null>((acc, r) => {
+        if (!r.lastUsedAt) return acc;
+        if (!acc || r.lastUsedAt.getTime() > acc.getTime()) return r.lastUsedAt;
+        return acc;
+      }, null);
+
+      // Reassign sessions from duplicates → survivor (history stays attached).
+      db.update(sessions)
+        .set({ accountId: survivor.id })
+        .where(inArray(sessions.accountId, duplicateIds))
+        .run();
+
+      db.update(accounts)
+        .set({
+          totalCostUsd: totalCost,
+          lastUsedAt: latestUsed,
+          updatedAt: new Date(),
+        })
+        .where(eq(accounts.id, survivor.id))
+        .run();
+
+      db.delete(accounts).where(inArray(accounts.id, duplicateIds)).run();
+      merged += duplicates.length;
+
+      log.info("Merged duplicate accounts", {
+        identity,
+        survivor: survivor.id,
+        removed: duplicateIds,
+      });
+    }
+
+    return { scanned: rows.length, backfilled, merged };
   });
 
   return txn();
@@ -142,6 +307,7 @@ export function listAccounts(): AccountInfo[] {
     id: row.id,
     label: row.label,
     fingerprint: row.fingerprint,
+    identity: row.identity ?? null,
     subscriptionType: row.subscriptionType,
     rateLimitTier: row.rateLimitTier,
     isActive: row.isActive,
@@ -173,6 +339,7 @@ export function getActiveAccount(): AccountInfo | undefined {
     id: row.id,
     label: row.label,
     fingerprint: row.fingerprint,
+    identity: row.identity ?? null,
     subscriptionType: row.subscriptionType,
     rateLimitTier: row.rateLimitTier,
     isActive: row.isActive,
@@ -449,6 +616,7 @@ export function findNextReady(
     id: row.id,
     label: row.label,
     fingerprint: row.fingerprint,
+    identity: row.identity ?? null,
     subscriptionType: row.subscriptionType,
     rateLimitTier: row.rateLimitTier,
     isActive: row.isActive,

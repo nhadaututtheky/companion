@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { ArrowLeft, PaintBrush, Check, UploadSimple } from "@phosphor-icons/react";
+import { useState } from "react";
+import { ArrowLeft, PaintBrush, Check, Plus, X } from "@phosphor-icons/react";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { BUILTIN_THEMES } from "@companion/shared";
-import type { ThemeDefinition, ThemeColors } from "@companion/shared";
+import type { ThemeDefinition } from "@companion/shared";
 import { useUiStore } from "@/lib/stores/ui-store";
-import { applyTheme, getStoredThemeId, clearThemeOverrides } from "@/lib/theme-provider";
+import { applyTheme, getStoredThemeId } from "@/lib/theme-provider";
 import { toast } from "sonner";
+import { AddThemeModal } from "@/components/settings/add-theme-modal";
 
 function ColorDot({ color, label }: { color: string; label: string }) {
   return (
@@ -130,29 +131,6 @@ function ThemeCard({
   );
 }
 
-/** Try to parse a VS Code theme JSON and map to ThemeColors */
-function parseVscodeTheme(json: Record<string, unknown>): ThemeColors | null {
-  const colors = json.colors as Record<string, string> | undefined;
-  if (!colors) return null;
-
-  return {
-    bgBase: colors["editor.background"] ?? "#1e1e1e",
-    bgCard: colors["sideBar.background"] ?? colors["editor.background"] ?? "#252526",
-    bgElevated: colors["editorWidget.background"] ?? "#2d2d2d",
-    bgSidebar: colors["sideBar.background"] ?? "#252526",
-    bgHover: colors["list.hoverBackground"] ?? "#2a2d2e",
-    textPrimary: colors["editor.foreground"] ?? "#d4d4d4",
-    textSecondary: colors["descriptionForeground"] ?? "#cccccc",
-    textMuted: colors["editorLineNumber.foreground"] ?? "#858585",
-    border: colors["panel.border"] ?? colors["editorGroup.border"] ?? "#404040",
-    borderStrong: colors["contrastBorder"] ?? "#505050",
-    accent: colors["focusBorder"] ?? colors["button.background"] ?? "#007acc",
-    success: colors["terminal.ansiGreen"] ?? "#4ec9b0",
-    danger: colors["errorForeground"] ?? colors["terminal.ansiRed"] ?? "#f44747",
-    warning: colors["editorWarning.foreground"] ?? colors["terminal.ansiYellow"] ?? "#cca700",
-  };
-}
-
 export default function ThemeSettingsPage() {
   const isDark = useUiStore((s) => s.theme === "dark");
   const [activeId, setActiveId] = useState(getStoredThemeId);
@@ -164,44 +142,18 @@ export default function ThemeSettingsPage() {
       return [];
     }
   });
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const handleSelect = (id: string) => {
     setActiveId(id);
-    // Apply theme (default included — its colors match the CSS vars)
     applyTheme(id, isDark);
     toast.success(`Theme "${id}" applied`);
   };
 
-  const handleImportVscode = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const text = await file.text();
-      const json = JSON.parse(text);
-      const darkColors = parseVscodeTheme(json);
-      if (!darkColors) {
-        toast.error("Could not parse VS Code theme — missing 'colors' key");
-        return;
-      }
-      const name = (json.name as string) ?? file.name.replace(/\.json$/, "");
-      const id = `custom-${name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
-      const newTheme: ThemeDefinition = {
-        id,
-        name,
-        author: "VS Code Import",
-        light: darkColors, // Use same colors for light (user can edit later)
-        dark: darkColors,
-      };
-      const updated = [...customThemes, newTheme];
-      setCustomThemes(updated);
-      localStorage.setItem("companion_custom_themes", JSON.stringify(updated));
-      toast.success(`Imported "${name}"`);
-    } catch {
-      toast.error("Failed to parse theme file");
-    }
-    // Reset file input
-    if (fileRef.current) fileRef.current.value = "";
+  const handleImport = (theme: ThemeDefinition) => {
+    const updated = [...customThemes, theme];
+    setCustomThemes(updated);
+    localStorage.setItem("companion_custom_themes", JSON.stringify(updated));
   };
 
   const handleDeleteCustom = (id: string) => {
@@ -222,7 +174,7 @@ export default function ThemeSettingsPage() {
         className="flex-1 overflow-auto"
         style={{ padding: "24px 32px", maxWidth: 960, margin: "0 auto", width: "100%" }}
       >
-        {/* Title */}
+        {/* Title + Add CTA */}
         <div className="mb-6 flex items-center gap-3">
           <Link
             href="/settings"
@@ -232,58 +184,54 @@ export default function ThemeSettingsPage() {
             <ArrowLeft size={18} weight="bold" />
           </Link>
           <PaintBrush size={22} weight="bold" />
-          <h1 className="text-lg font-bold">Themes</h1>
+          <h1 className="flex-1 text-lg font-bold">Themes</h1>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex cursor-pointer items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold"
+            style={{ background: "var(--color-accent)", color: "#fff" }}
+          >
+            <Plus size={14} weight="bold" /> Add Theme
+          </button>
         </div>
 
-        {/* Theme grid */}
-        <div className="mb-8 flex flex-wrap gap-4">
-          {allThemes.map((theme) => (
-            <div key={theme.id} className="relative">
-              <ThemeCard
-                theme={theme}
-                isDark={isDark}
-                isActive={activeId === theme.id}
-                onSelect={() => handleSelect(theme.id)}
-              />
-              {!BUILTIN_THEMES.find((t) => t.id === theme.id) && (
-                <button
-                  onClick={() => handleDeleteCustom(theme.id)}
-                  className="absolute -right-2 -top-2 cursor-pointer rounded-full px-1.5 py-0.5 text-xs font-bold"
-                  style={{
-                    background: "var(--color-danger)",
-                    color: "#fff",
-                    border: "none",
-                    fontSize: 10,
-                  }}
-                  aria-label={`Delete ${theme.name}`}
-                >
-                  x
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Import VS Code theme */}
-        <div className="shadow-soft bg-bg-card rounded-xl p-4">
-          <h2 className="mb-2 text-sm font-semibold">Import VS Code Theme</h2>
-          <p className="mb-3 text-xs">
-            Upload a VS Code theme JSON file (.json) to extract colors. The theme&apos;s
-            &quot;colors&quot; key will be mapped to Companion&apos;s CSS variables.
-          </p>
-          <label className="shadow-soft text-text-secondary bg-bg-elevated inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors">
-            <UploadSimple size={16} />
-            Choose File
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".json"
-              onChange={handleImportVscode}
-              style={{ display: "none" }}
-            />
-          </label>
+        {/* Theme grid — hover-reveal delete on custom themes */}
+        <div className="flex flex-wrap gap-4">
+          {allThemes.map((theme) => {
+            const isBuiltin = BUILTIN_THEMES.find((t) => t.id === theme.id);
+            return (
+              <div key={theme.id} className="group relative">
+                <ThemeCard
+                  theme={theme}
+                  isDark={isDark}
+                  isActive={activeId === theme.id}
+                  onSelect={() => handleSelect(theme.id)}
+                />
+                {!isBuiltin && (
+                  <button
+                    onClick={() => handleDeleteCustom(theme.id)}
+                    className="absolute -right-2 -top-2 flex cursor-pointer items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                    style={{
+                      width: 22,
+                      height: 22,
+                      background: "var(--color-danger)",
+                      color: "#fff",
+                      border: "none",
+                    }}
+                    aria-label={`Delete ${theme.name}`}
+                    title={`Delete ${theme.name}`}
+                  >
+                    <X size={12} weight="bold" />
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
+
+      {showAddModal && (
+        <AddThemeModal onClose={() => setShowAddModal(false)} onImport={handleImport} />
+      )}
     </div>
   );
 }

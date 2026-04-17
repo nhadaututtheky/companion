@@ -238,7 +238,8 @@ export const dailyCosts = sqliteTable("daily_costs", {
 export const accounts = sqliteTable("accounts", {
   id: text("id").primaryKey(),
   label: text("label").notNull(), // "Work Max", "Personal Pro"
-  fingerprint: text("fingerprint").notNull().unique(), // sha256(accessToken)[:16] for dedup
+  fingerprint: text("fingerprint").notNull().unique(), // sha256(accessToken)[:16] — legacy, volatile (rotates on OAuth refresh)
+  identity: text("identity"), // sha256(refreshToken)[:16] — stable across access-token refreshes, primary dedup key
   encryptedCredentials: text("encrypted_credentials").notNull(), // AES-256-GCM encrypted claudeAiOauth JSON
   subscriptionType: text("subscription_type"), // "max", "pro", "free"
   rateLimitTier: text("rate_limit_tier"), // "default_claude_max_20x"

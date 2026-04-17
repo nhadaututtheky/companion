@@ -55,7 +55,7 @@ export async function handleSpawnCommand(
   if (activeCount >= maxSessions) {
     broadcastToAll(session, {
       type: "system_message",
-      message: `Cannot spawn agent — session limit reached (${maxSessions} active).`,
+      message: `Can't spawn agent — you're at the ${maxSessions}-session limit. Go Pro for unlimited parallel brains → companion.theio.vn`,
     } as unknown as BrowserIncomingMessage);
     return;
   }
