@@ -1,6 +1,6 @@
 /**
  * License verification — checks key against pay.theio.vn
- * Supports: license key verification, 7-day free trial, offline caching.
+ * Supports: license key verification, 14-day free trial, offline caching.
  */
 
 import { createLogger } from "../logger.js";
@@ -230,7 +230,7 @@ export async function verifyLicense(
 // ── Trial activation ────────────────────────────────────────────────────────
 
 /**
- * Check or activate 7-day free trial.
+ * Check or activate 14-day free trial.
  * Called when no license key is set.
  */
 export async function checkOrActivateTrial(): Promise<LicenseInfo> {
@@ -296,7 +296,7 @@ export async function checkOrActivateTrial(): Promise<LicenseInfo> {
       }
     }
 
-    // No cache, no server — first-time offline users get 7-day local trial
+    // No cache, no server — first-time offline users get 14-day local trial
     const localTrialPath = join(DATA_DIR, ".trial");
     let trialStart: Date;
 
@@ -312,7 +312,7 @@ export async function checkOrActivateTrial(): Promise<LicenseInfo> {
       trialStart = new Date();
     }
 
-    const trialEnd = new Date(trialStart.getTime() + 7 * 86400000);
+    const trialEnd = new Date(trialStart.getTime() + 14 * 86400000);
     const isValid = trialEnd > new Date();
     const daysLeft = isValid ? Math.ceil((trialEnd.getTime() - Date.now()) / 86400000) : 0;
 

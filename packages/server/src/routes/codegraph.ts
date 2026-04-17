@@ -607,8 +607,8 @@ codegraphRoutes.post("/generate-skills", async (c) => {
 
 /** GET /codegraph/diagram — generate Mermaid diagrams from code graph */
 codegraphRoutes.get("/diagram", (c) => {
-  const project = c.req.query("project");
-  const type = c.req.query("type") ?? "architecture";
+  const project = c.req.query("project")?.trim();
+  const type = c.req.query("type")?.trim() ?? "architecture";
 
   if (!project) {
     return c.json(

@@ -121,7 +121,7 @@ if (licenseKey) {
       checkOrActivateTrial();
     });
 } else {
-  // No license key — check or activate 7-day free trial
+  // No license key — check or activate 14-day free trial
   checkOrActivateTrial()
     .then((trial) => {
       if (trial.tier === "trial") {

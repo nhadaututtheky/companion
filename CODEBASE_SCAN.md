@@ -292,7 +292,7 @@ packages/web/src/
 
 ### license.ts (TRUST-CRITICAL)
 - License key verification (Cloudflare KV backend)
-- Free trial activation (7 days)
+- Free trial activation (14 days)
 - Tier enforcement (free=1 session, pro=∞, enterprise)
 - License expiration + renewal
 
