@@ -250,6 +250,8 @@ export const accounts = sqliteTable("accounts", {
   session5hBudget: real("session_5h_budget"),
   weeklyBudget: real("weekly_budget"),
   monthlyBudget: real("monthly_budget"),
+  // When true, auto-switch rotation will skip this account (manual switch still works).
+  skipInRotation: integer("skip_in_rotation", { mode: "boolean" }).notNull().default(false),
   lastUsedAt: integer("last_used_at", { mode: "timestamp_ms" }),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()

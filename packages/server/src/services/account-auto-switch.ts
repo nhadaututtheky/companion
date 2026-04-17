@@ -12,7 +12,11 @@ import {
   resetExpiredCooldowns,
 } from "./credential-manager.js";
 import { isEncryptionEnabled } from "./crypto.js";
+import { getSettingBool } from "./settings-helpers.js";
 import { createLogger } from "../logger.js";
+
+/** Settings key: "true" to let the auto-switch system pick a new account on rate-limit. */
+export const AUTO_SWITCH_KEY = "accounts.autoSwitchEnabled";
 
 const log = createLogger("account-auto-switch");
 
@@ -49,8 +53,21 @@ async function handleRateLimited(payload: {
     return;
   }
 
-  // Mark the active account as rate-limited
+  // Always mark rate-limited (so UI shows correct state + cooldown timer runs)
+  // Then gate the actual switch behind the user toggle.
   const cooldownMs = markRateLimited(activeAccount.id);
+
+  if (!getSettingBool(AUTO_SWITCH_KEY, true)) {
+    log.info("Auto-switch disabled by setting, skipping account rotation", {
+      accountId: activeAccount.id,
+      label: activeAccount.label,
+    });
+    eventBus.emit("account:all_limited", {
+      reason: `Account "${activeAccount.label}" hit rate limit. Auto-switch is disabled.`,
+    });
+    return;
+  }
+
   log.info("Account rate-limited", {
     accountId: activeAccount.id,
     label: activeAccount.label,

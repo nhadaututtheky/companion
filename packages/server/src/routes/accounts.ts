@@ -22,12 +22,16 @@ import {
   renameAccount,
   accountExists,
   updateAccountBudgets,
+  updateAccountSkipRotation,
+  findNextReady,
 } from "../services/credential-manager.js";
 import { getDb } from "../db/client.js";
-import { accounts } from "../db/schema.js";
+import { accounts, settings } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import { manualCapture } from "../services/credential-watcher.js";
 import { getAccountUsage } from "../services/account-usage.js";
+import { getSettingBool } from "../services/settings-helpers.js";
+import { AUTO_SWITCH_KEY } from "../services/account-auto-switch.js";
 import type { ApiResponse } from "@companion/shared";
 
 const credentialsSchema = z.object({
@@ -58,6 +62,25 @@ const budgetsSchema = z.object({
   weeklyBudget: z.number().positive().max(100000).nullable(),
   monthlyBudget: z.number().positive().max(100000).nullable(),
 });
+
+const skipRotationSchema = z.object({
+  skip: z.boolean(),
+});
+
+const accountSettingsSchema = z.object({
+  autoSwitchEnabled: z.boolean(),
+});
+
+/** Upsert a setting row. Keeps the existing convention used by routes/domain.ts. */
+function setAccountSetting(key: string, value: string): void {
+  const db = getDb();
+  const existing = db.select().from(settings).where(eq(settings.key, key)).get();
+  if (existing) {
+    db.update(settings).set({ value, updatedAt: new Date() }).where(eq(settings.key, key)).run();
+  } else {
+    db.insert(settings).values({ key, value, updatedAt: new Date() }).run();
+  }
+}
 
 export const accountRoutes = new Hono();
 
@@ -159,6 +182,66 @@ accountRoutes.put("/:id/budgets", zValidator("json", budgetsSchema), (c) => {
     return c.json({ success: false, error: "Account not found" } satisfies ApiResponse, 404);
   }
   return c.json({ success: true, data: { id, ...budgets } } satisfies ApiResponse);
+});
+
+// Toggle skip-in-rotation flag for an account
+accountRoutes.put("/:id/skip-rotation", zValidator("json", skipRotationSchema), (c) => {
+  const id = c.req.param("id");
+  const { skip } = c.req.valid("json");
+  const ok = updateAccountSkipRotation(id, skip);
+  if (!ok) {
+    return c.json({ success: false, error: "Account not found" } satisfies ApiResponse, 404);
+  }
+  return c.json({ success: true, data: { id, skipInRotation: skip } } satisfies ApiResponse);
+});
+
+// Manual "switch to next available" — picks lowest-LRU ready account that is not skipped.
+// Ignores the skip flag only if no eligible candidate is found (allows recovery).
+accountRoutes.post("/switch-next", async (c) => {
+  const active = getActiveAccount();
+  // Pass active.id as excludeId so we don't switch to ourselves.
+  let target = findNextReady(active?.id);
+  if (!target) {
+    // Fallback: all non-skipped are limited — try including skipped ones.
+    target = findNextReady(active?.id, true);
+  }
+  if (!target) {
+    return c.json(
+      { success: false, error: "No ready account available" } satisfies ApiResponse,
+      409,
+    );
+  }
+  const ok = await switchAccount(target.id);
+  if (!ok) {
+    return c.json(
+      { success: false, error: "Switch failed" } satisfies ApiResponse,
+      500,
+    );
+  }
+  return c.json({
+    success: true,
+    data: { id: target.id, label: target.label },
+  } satisfies ApiResponse);
+});
+
+// Get account manager settings (auto-switch toggle)
+accountRoutes.get("/settings", (c) => {
+  return c.json({
+    success: true,
+    data: {
+      autoSwitchEnabled: getSettingBool(AUTO_SWITCH_KEY, true),
+    },
+  } satisfies ApiResponse);
+});
+
+// Update account manager settings
+accountRoutes.put("/settings", zValidator("json", accountSettingsSchema), (c) => {
+  const { autoSwitchEnabled } = c.req.valid("json");
+  setAccountSetting(AUTO_SWITCH_KEY, autoSwitchEnabled ? "true" : "false");
+  return c.json({
+    success: true,
+    data: { autoSwitchEnabled },
+  } satisfies ApiResponse);
 });
 
 // Manual credential capture (re-read ~/.claude/.credentials.json)

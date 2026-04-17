@@ -37,6 +37,7 @@ export interface AccountInfo {
   session5hBudget: number | null;
   weeklyBudget: number | null;
   monthlyBudget: number | null;
+  skipInRotation: boolean;
   lastUsedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -150,6 +151,7 @@ export function listAccounts(): AccountInfo[] {
     session5hBudget: row.session5hBudget ?? null,
     weeklyBudget: row.weeklyBudget ?? null,
     monthlyBudget: row.monthlyBudget ?? null,
+    skipInRotation: row.skipInRotation ?? false,
     lastUsedAt: row.lastUsedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -180,6 +182,7 @@ export function getActiveAccount(): AccountInfo | undefined {
     session5hBudget: row.session5hBudget ?? null,
     weeklyBudget: row.weeklyBudget ?? null,
     monthlyBudget: row.monthlyBudget ?? null,
+    skipInRotation: row.skipInRotation ?? false,
     lastUsedAt: row.lastUsedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -382,9 +385,16 @@ export function markRateLimited(id: string): number {
 
 /**
  * Find the next account with status = "ready" (excluding a given ID).
- * Returns undefined if no ready accounts available.
+ * Round-robin: oldest lastUsedAt first (least recently used). Ties broken by lowest totalCostUsd.
+ * Accounts flagged skipInRotation are excluded. Returns undefined if none available.
+ *
+ * `includeSkipped` bypasses the skip flag — used by manual "switch to next" when the
+ * caller has already vetted the candidate pool (e.g. exposed by a UI button).
  */
-export function findNextReady(excludeId?: string): AccountInfo | undefined {
+export function findNextReady(
+  excludeId?: string,
+  includeSkipped = false,
+): AccountInfo | undefined {
   const db = getDb();
   const rows = excludeId
     ? db
@@ -394,10 +404,16 @@ export function findNextReady(excludeId?: string): AccountInfo | undefined {
         .all()
     : db.select().from(accounts).where(eq(accounts.status, "ready")).all();
 
-  if (rows.length === 0) return undefined;
+  const eligible = includeSkipped ? rows : rows.filter((r) => !r.skipInRotation);
+  if (eligible.length === 0) return undefined;
 
-  // Pick the one with the lowest total cost (spread usage)
-  const sorted = rows.sort((a, b) => a.totalCostUsd - b.totalCostUsd);
+  // Least recently used first (null = never used → oldest). Ties broken by lowest cost.
+  const sorted = eligible.sort((a, b) => {
+    const aTime = a.lastUsedAt ? a.lastUsedAt.getTime() : 0;
+    const bTime = b.lastUsedAt ? b.lastUsedAt.getTime() : 0;
+    if (aTime !== bTime) return aTime - bTime;
+    return a.totalCostUsd - b.totalCostUsd;
+  });
   const row = sorted[0]!;
 
   return {
@@ -413,6 +429,7 @@ export function findNextReady(excludeId?: string): AccountInfo | undefined {
     session5hBudget: row.session5hBudget ?? null,
     weeklyBudget: row.weeklyBudget ?? null,
     monthlyBudget: row.monthlyBudget ?? null,
+    skipInRotation: row.skipInRotation ?? false,
     lastUsedAt: row.lastUsedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -483,6 +500,26 @@ export function updateAccountBudgets(id: string, budgets: AccountBudgets): boole
       monthlyBudget: budgets.monthlyBudget,
       updatedAt: new Date(),
     })
+    .where(eq(accounts.id, id))
+    .run();
+  return true;
+}
+
+/**
+ * Toggle the skipInRotation flag for an account.
+ * Returns true if updated, false if account not found.
+ */
+export function updateAccountSkipRotation(id: string, skip: boolean): boolean {
+  const db = getDb();
+  const existing = db
+    .select({ id: accounts.id })
+    .from(accounts)
+    .where(eq(accounts.id, id))
+    .get();
+  if (!existing) return false;
+
+  db.update(accounts)
+    .set({ skipInRotation: skip, updatedAt: new Date() })
     .where(eq(accounts.id, id))
     .run();
   return true;

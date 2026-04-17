@@ -19,9 +19,14 @@ export interface AccountInfo {
   session5hBudget: number | null;
   weeklyBudget: number | null;
   monthlyBudget: number | null;
+  skipInRotation: boolean;
   lastUsedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AccountSettings {
+  autoSwitchEnabled: boolean;
 }
 
 export interface HeatmapBucket {
@@ -84,6 +89,28 @@ export const accounts = {
     request<{ data: AccountBudgets & { id: string } }>(`/api/accounts/${id}/budgets`, {
       method: "PUT",
       body: JSON.stringify(budgets),
+    }),
+
+  setSkipRotation: (id: string, skip: boolean) =>
+    request<{ data: { id: string; skipInRotation: boolean } }>(
+      `/api/accounts/${id}/skip-rotation`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ skip }),
+      },
+    ),
+
+  switchNext: () =>
+    request<{ data: { id: string; label: string } }>(`/api/accounts/switch-next`, {
+      method: "POST",
+    }),
+
+  getSettings: () => request<{ data: AccountSettings }>(`/api/accounts/settings`),
+
+  setSettings: (s: AccountSettings) =>
+    request<{ data: AccountSettings }>(`/api/accounts/settings`, {
+      method: "PUT",
+      body: JSON.stringify(s),
     }),
 
   remove: (id: string) =>

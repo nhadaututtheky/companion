@@ -1,17 +1,24 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   ArrowsClockwise,
+  ArrowsLeftRight,
   ChartBar,
   CheckCircle,
   PencilSimple,
+  SkipForward,
   Trash,
   Warning,
 } from "@phosphor-icons/react";
 import { SettingSection } from "./settings-tabs";
 import { AccountUsagePanel } from "./account-usage-panel";
-import { accounts as accountsApi, type AccountInfo } from "@/lib/api/accounts";
+import {
+  accounts as accountsApi,
+  type AccountInfo,
+  type AccountSettings,
+} from "@/lib/api/accounts";
 
 const STATUS_COLORS: Record<string, { bg: string; dot: string; label: string }> = {
   ready: { bg: "#10b98115", dot: "#10b981", label: "Ready" },
@@ -45,6 +52,10 @@ export function AccountsTab() {
   const [switching, setSwitching] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [settings, setSettings] = useState<AccountSettings>({ autoSwitchEnabled: true });
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [togglingSkipId, setTogglingSkipId] = useState<string | null>(null);
+  const [switchingNext, setSwitchingNext] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -61,7 +72,56 @@ export function AccountsTab() {
 
   useEffect(() => {
     void refresh();
+    accountsApi
+      .getSettings()
+      .then((res) => {
+        setSettings(res.data);
+        setSettingsLoaded(true);
+      })
+      .catch(() => setSettingsLoaded(true));
   }, [refresh]);
+
+  const handleToggleAutoSwitch = async () => {
+    const next = { autoSwitchEnabled: !settings.autoSwitchEnabled };
+    setSettings(next); // optimistic
+    try {
+      await accountsApi.setSettings(next);
+      toast.success(
+        next.autoSwitchEnabled ? "Auto round-robin enabled" : "Auto round-robin disabled",
+      );
+    } catch (err) {
+      setSettings({ autoSwitchEnabled: !next.autoSwitchEnabled }); // rollback
+      toast.error(`Failed to update setting: ${String(err)}`);
+    }
+  };
+
+  const handleToggleSkip = async (id: string, current: boolean) => {
+    setTogglingSkipId(id);
+    // optimistic update
+    setList((prev) => prev.map((a) => (a.id === id ? { ...a, skipInRotation: !current } : a)));
+    try {
+      await accountsApi.setSkipRotation(id, !current);
+    } catch (err) {
+      setList((prev) => prev.map((a) => (a.id === id ? { ...a, skipInRotation: current } : a)));
+      toast.error(`Failed to update rotation flag: ${String(err)}`);
+    } finally {
+      setTogglingSkipId(null);
+    }
+  };
+
+  const handleSwitchNext = async () => {
+    if (switchingNext) return;
+    setSwitchingNext(true);
+    try {
+      const res = await accountsApi.switchNext();
+      toast.success(`Switched to ${res.data.label}`);
+      await refresh();
+    } catch (err) {
+      toast.error(`Switch failed: ${String(err)}`);
+    } finally {
+      setSwitchingNext(false);
+    }
+  };
 
   const handleActivate = async (id: string) => {
     setSwitching(id);
@@ -130,6 +190,50 @@ export function AccountsTab() {
           >
             <Warning size={14} weight="bold" />
             {error}
+          </div>
+        )}
+
+        {/* Rotation controls: only meaningful once at least 2 accounts exist */}
+        {list.length >= 2 && (
+          <div
+            className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg px-3 py-2"
+            style={{
+              background: "var(--color-bg-elevated)",
+              border: "1px solid var(--glass-border)",
+            }}
+          >
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={settings.autoSwitchEnabled}
+                disabled={!settingsLoaded}
+                onChange={() => void handleToggleAutoSwitch()}
+                className="h-4 w-4 cursor-pointer"
+                aria-label="Auto round-robin on rate limit"
+              />
+              <span className="text-text-primary font-medium">Auto round-robin</span>
+              <span className="text-text-muted text-xs">
+                Switch accounts automatically when one hits its rate limit
+              </span>
+            </label>
+            <button
+              onClick={() => void handleSwitchNext()}
+              disabled={switchingNext}
+              className="flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50"
+              style={{
+                color: "var(--color-accent)",
+                background: "color-mix(in srgb, var(--color-accent) 10%, transparent)",
+              }}
+              title="Switch to the next ready account now"
+              aria-label="Switch to next available account"
+            >
+              <ArrowsLeftRight
+                size={12}
+                weight="bold"
+                className={switchingNext ? "animate-spin" : ""}
+              />
+              {switchingNext ? "Switching..." : "Switch to next"}
+            </button>
           </div>
         )}
 
@@ -228,6 +332,18 @@ export function AccountsTab() {
                             {account.subscriptionType}
                           </span>
                         )}
+                        {account.skipInRotation && (
+                          <span
+                            className="rounded-full px-1.5 py-0.5 text-xs font-medium"
+                            style={{
+                              background: "#f59e0b15",
+                              color: "#f59e0b",
+                            }}
+                            title="Excluded from auto round-robin"
+                          >
+                            Skipped
+                          </span>
+                        )}
                       </div>
                     )}
                     <div className="text-text-muted mt-0.5 flex items-center gap-2 text-xs">
@@ -255,6 +371,23 @@ export function AccountsTab() {
                       aria-expanded={isExpanded}
                     >
                       <ChartBar size={14} weight="bold" />
+                    </button>
+                    <button
+                      onClick={() => void handleToggleSkip(account.id, account.skipInRotation)}
+                      disabled={togglingSkipId === account.id}
+                      className="cursor-pointer rounded-md p-1.5 transition-colors disabled:opacity-50"
+                      style={{
+                        color: account.skipInRotation ? "#f59e0b" : "var(--color-text-secondary)",
+                      }}
+                      title={
+                        account.skipInRotation
+                          ? "Include in auto rotation"
+                          : "Skip in auto rotation"
+                      }
+                      aria-label={`${account.skipInRotation ? "Include" : "Skip"} ${account.label} in rotation`}
+                      aria-pressed={account.skipInRotation}
+                    >
+                      <SkipForward size={14} weight={account.skipInRotation ? "fill" : "bold"} />
                     </button>
                     {!account.isActive && (
                       <button
