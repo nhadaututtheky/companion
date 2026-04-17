@@ -47,7 +47,12 @@ export interface EventMap {
   // ── Account events ────────────────────────────────────────────────────────
   "account:captured": { accountId: string; label: string; isNew: boolean };
   "account:switched": { accountId: string; label: string };
-  "account:rate_limited": { accountId: string; sessionId: string; reason: string };
+  "account:rate_limited": {
+    accountId: string;
+    accountLabel?: string;
+    sessionId: string;
+    reason: string;
+  };
   "account:all_limited": { reason: string };
 }
 

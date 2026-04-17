@@ -219,6 +219,7 @@ eventBus.on("account:switched", (payload) => {
 eventBus.on("account:rate_limited", (payload) => {
   void botRegistry.sendNotification({
     type: "account_rate_limited",
+    accountLabel: payload.accountLabel,
     reason: payload.reason,
   });
 });

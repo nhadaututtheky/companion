@@ -1,6 +1,7 @@
 "use client";
 import { MagnifyingGlass, Gear, List, Timer } from "@phosphor-icons/react";
 import { TemplateQuickPicker } from "./template-quick-picker";
+import { AccountIndicator } from "./account-indicator";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useShallow } from "zustand/react/shallow";
@@ -158,6 +159,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
 
       {/* Right: Standalone actions */}
       <div className="flex items-center gap-1">
+        <AccountIndicator />
         <TemplateQuickPicker />
         <button
           onClick={() => useUiStore.getState().setSchedulesModalOpen(true)}

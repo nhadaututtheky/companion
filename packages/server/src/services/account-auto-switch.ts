@@ -75,8 +75,10 @@ async function handleRateLimited(payload: {
     reason: reason.slice(0, 100),
   });
 
-  // Find next ready account
-  const nextAccount = findNextReady(activeAccount.id);
+  // Find next ready account (skip-in-rotation filtered out first; fall back to
+  // skipped accounts rather than deadlocking if the user has flagged everything).
+  let nextAccount = findNextReady(activeAccount.id);
+  if (!nextAccount) nextAccount = findNextReady(activeAccount.id, true);
   if (!nextAccount) {
     log.warn("All accounts rate-limited — no auto-switch possible");
     eventBus.emit("account:all_limited", {

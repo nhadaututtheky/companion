@@ -6,7 +6,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { eq, and, ne, sql } from "drizzle-orm";
 import { getDb } from "../db/client.js";
-import { accounts } from "../db/schema.js";
+import { accounts, sessions } from "../db/schema.js";
 import { encrypt, decrypt, isEncryptionEnabled } from "./crypto.js";
 import { getSqlite } from "../db/client.js";
 import { createLogger } from "../logger.js";
@@ -243,7 +243,17 @@ export function deleteAccount(id: string): boolean {
     throw new Error("Cannot delete the active account — switch to another account first");
   }
 
-  db.delete(accounts).where(eq(accounts.id, id)).run();
+  const sqlite = getSqlite();
+  const txn = sqlite!.transaction(() => {
+    // Detach historical sessions so per-session cost data isn't orphaned
+    // (sessions.accountId has no FK, so nothing stops a dangling reference otherwise).
+    db.update(sessions)
+      .set({ accountId: null })
+      .where(eq(sessions.accountId, id))
+      .run();
+    db.delete(accounts).where(eq(accounts.id, id)).run();
+  });
+  txn();
   log.info("Account deleted", { id });
   return true;
 }
@@ -407,13 +417,29 @@ export function findNextReady(
   const eligible = includeSkipped ? rows : rows.filter((r) => !r.skipInRotation);
   if (eligible.length === 0) return undefined;
 
+  // Tiebreaker cost comes from the live sessions table, not the denormalized
+  // accounts.totalCostUsd column which can drift (missed cost events, resets).
+  // Queried once for all eligible accounts.
+  const liveCost = new Map<string, number>();
+  const costRows = db
+    .select({
+      accountId: sessions.accountId,
+      total: sql<number>`COALESCE(SUM(${sessions.totalCostUsd}), 0)`,
+    })
+    .from(sessions)
+    .groupBy(sessions.accountId)
+    .all();
+  for (const r of costRows) {
+    if (r.accountId) liveCost.set(r.accountId, Number(r.total) || 0);
+  }
+
   // Least recently used first (null = never used → oldest). Ties broken by lowest cost.
   // Copy before sort to preserve caller-facing immutability.
   const sorted = [...eligible].sort((a, b) => {
     const aTime = a.lastUsedAt ? a.lastUsedAt.getTime() : 0;
     const bTime = b.lastUsedAt ? b.lastUsedAt.getTime() : 0;
     if (aTime !== bTime) return aTime - bTime;
-    return a.totalCostUsd - b.totalCostUsd;
+    return (liveCost.get(a.id) ?? 0) - (liveCost.get(b.id) ?? 0);
   });
   const row = sorted[0]!;
 

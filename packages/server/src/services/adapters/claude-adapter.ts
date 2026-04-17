@@ -27,6 +27,7 @@ import type {
 } from "@companion/shared";
 
 import { eventBus } from "../event-bus.js";
+import { getActiveAccount } from "../credential-manager.js";
 
 const log = createLogger("claude-adapter");
 
@@ -660,8 +661,10 @@ export class ClaudeAdapter implements CLIAdapter {
                   sessionId: opts.sessionId,
                   line: trimmed.slice(0, 200),
                 });
+                const active = getActiveAccount();
                 eventBus.emit("account:rate_limited", {
-                  accountId: "", // resolved from active account by auto-switch listener
+                  accountId: active?.id ?? "",
+                  accountLabel: active?.label,
                   sessionId: opts.sessionId,
                   reason: trimmed.slice(0, 200),
                 });
