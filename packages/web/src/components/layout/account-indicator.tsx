@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ArrowsLeftRight, CaretDown, CircleNotch, UserCircle } from "@phosphor-icons/react";
 import { accounts as accountsApi, type AccountInfo } from "@/lib/api/accounts";
@@ -24,11 +24,14 @@ const STATUS_LABELS: Record<string, string> = {
 const REFRESH_MS = 15_000;
 
 export function AccountIndicator() {
+  const menuId = useId();
   const [active, setActive] = useState<AccountInfo | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const itemsRef = useRef<Array<HTMLButtonElement | null>>([]);
   const setSettingsModalOpen = useUiStore((s) => s.setSettingsModalOpen);
 
   const refresh = useCallback(async () => {
@@ -52,12 +55,15 @@ export function AccountIndicator() {
   useEffect(() => {
     if (!menuOpen) return;
     const onClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
       }
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenuOpen(false);
+      if (e.key === "Escape") {
+        setMenuOpen(false);
+        triggerRef.current?.focus();
+      }
     };
     document.addEventListener("mousedown", onClick);
     document.addEventListener("keydown", onKey);
@@ -65,6 +71,13 @@ export function AccountIndicator() {
       document.removeEventListener("mousedown", onClick);
       document.removeEventListener("keydown", onKey);
     };
+  }, [menuOpen]);
+
+  // Focus first menu item on open so ArrowDown/Up navigate items (WAI-ARIA menu pattern)
+  useEffect(() => {
+    if (!menuOpen) return;
+    const first = itemsRef.current.find((el) => el !== null);
+    first?.focus();
   }, [menuOpen]);
 
   const handleSwitchNext = async () => {
@@ -87,6 +100,38 @@ export function AccountIndicator() {
     setSettingsModalOpen(true);
   };
 
+  const handleTriggerKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setMenuOpen(true);
+    }
+  };
+
+  const handleItemKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
+    const items = itemsRef.current.filter((el): el is HTMLButtonElement => el !== null);
+    if (items.length === 0) return;
+    const currentIdx = items.indexOf(e.currentTarget);
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = items[(currentIdx + 1) % items.length];
+      next?.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prev = items[(currentIdx - 1 + items.length) % items.length];
+      prev?.focus();
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      items[0]?.focus();
+    } else if (e.key === "End") {
+      e.preventDefault();
+      items[items.length - 1]?.focus();
+    } else if (e.key === "Tab") {
+      setMenuOpen(false);
+    }
+    // idx parameter kept for future per-item handlers
+    void idx;
+  };
+
   // Nothing to show if no accounts configured
   if (!loaded || !active) return null;
 
@@ -94,15 +139,19 @@ export function AccountIndicator() {
   const statusLabel = STATUS_LABELS[active.status] ?? active.status;
 
   return (
-    <div ref={menuRef} className="relative">
+    <div ref={rootRef} className="relative">
       <button
+        ref={triggerRef}
         onClick={() => setMenuOpen((v) => !v)}
+        onKeyDown={handleTriggerKeyDown}
         className="text-text-secondary flex min-h-[44px] max-w-[180px] cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all"
         style={{
           background: menuOpen ? "var(--color-bg-elevated)" : "transparent",
           border: "1px solid transparent",
         }}
         aria-label={`Active account: ${active.label} (${statusLabel})`}
+        aria-haspopup="menu"
+        aria-controls={menuId}
         aria-expanded={menuOpen}
         title={`${active.label} — ${statusLabel}`}
       >
@@ -123,6 +172,7 @@ export function AccountIndicator() {
 
       {menuOpen && (
         <div
+          id={menuId}
           className="absolute right-0 z-20 mt-1 flex min-w-[220px] flex-col overflow-hidden rounded-lg"
           style={{
             background: "var(--glass-bg-heavy)",
@@ -132,6 +182,7 @@ export function AccountIndicator() {
             boxShadow: "var(--shadow-float)",
           }}
           role="menu"
+          aria-label="Account actions"
         >
           <div className="flex flex-col gap-0.5 px-3 py-2">
             <span className="text-text-primary text-sm font-semibold">{active.label}</span>
@@ -150,7 +201,11 @@ export function AccountIndicator() {
           </div>
           <div className="h-px" style={{ background: "var(--glass-border)" }} />
           <button
+            ref={(el) => {
+              itemsRef.current[0] = el;
+            }}
             onClick={() => void handleSwitchNext()}
+            onKeyDown={(e) => handleItemKeyDown(e, 0)}
             disabled={switching}
             className="text-text-primary hover:bg-bg-elevated flex cursor-pointer items-center gap-2 px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50"
             role="menuitem"
@@ -159,7 +214,11 @@ export function AccountIndicator() {
             Switch to next ready
           </button>
           <button
+            ref={(el) => {
+              itemsRef.current[1] = el;
+            }}
             onClick={handleOpenSettings}
+            onKeyDown={(e) => handleItemKeyDown(e, 1)}
             className="text-text-primary hover:bg-bg-elevated flex cursor-pointer items-center gap-2 px-3 py-2 text-xs font-medium transition-colors"
             role="menuitem"
           >

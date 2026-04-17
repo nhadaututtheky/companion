@@ -4,7 +4,7 @@
  */
 
 import { createHash, randomUUID } from "node:crypto";
-import { eq, and, ne, sql } from "drizzle-orm";
+import { eq, and, ne, sql, inArray } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { accounts, sessions } from "../db/schema.js";
 import { encrypt, decrypt, isEncryptionEnabled } from "./crypto.js";
@@ -244,7 +244,7 @@ export function deleteAccount(id: string): boolean {
   }
 
   const sqlite = getSqlite();
-  const txn = sqlite!.transaction(() => {
+  const txn = sqlite.transaction(() => {
     // Detach historical sessions so per-session cost data isn't orphaned
     // (sessions.accountId has no FK, so nothing stops a dangling reference otherwise).
     db.update(sessions)
@@ -419,7 +419,8 @@ export function findNextReady(
 
   // Tiebreaker cost comes from the live sessions table, not the denormalized
   // accounts.totalCostUsd column which can drift (missed cost events, resets).
-  // Queried once for all eligible accounts.
+  // Scoped to just the eligible IDs to avoid scanning unrelated sessions.
+  const eligibleIds = eligible.map((r) => r.id);
   const liveCost = new Map<string, number>();
   const costRows = db
     .select({
@@ -427,6 +428,7 @@ export function findNextReady(
       total: sql<number>`COALESCE(SUM(${sessions.totalCostUsd}), 0)`,
     })
     .from(sessions)
+    .where(inArray(sessions.accountId, eligibleIds))
     .groupBy(sessions.accountId)
     .all();
   for (const r of costRows) {
