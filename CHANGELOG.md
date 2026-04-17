@@ -2,6 +2,34 @@
 
 All notable changes to Companion are documented here.
 
+## [0.21.0] - 2026-04-17
+
+### Added
+- **Smart Orchestration UI** — Dispatch suggestion badge in message composer. When the task classifier detects a workflow/debate pattern (confidence >= 0.5), a compact banner appears with pattern icon, confidence %, override dropdown, and confirm/dismiss buttons. Fully wired: EventBus → WebSocket → Zustand store → UI.
+- **Architecture Diagrams** — New "Architecture" tab in AI Context panel. Generates Mermaid diagrams from CodeGraph data: architecture overview (community clusters), module dependency trees, and call flow diagrams. Client-side Mermaid rendering with dark theme.
+- **CodeGraph Intelligence (5 phases)** — Community detection (Leiden algorithm) with AI cluster labels, pre-commit impact analysis with blast radius scoring, auto-reindex on file changes (debounced 5s), skills generator (4 Claude skill files per project), and diagram generator.
+- **MCP Tools for Wiki KB + CodeGraph** — `companion_wiki_search`, `companion_wiki_save`, `companion_codegraph_search`, `companion_codegraph_impact`, `companion_codegraph_diagram`, `companion_generate_skills` — autonomous agent access to knowledge base and code intelligence.
+- **Dispatch Preview API** — `GET/POST /api/sessions/dispatch-preview` (regex-only sync + AI-powered async) and `POST /api/sessions/dispatch-confirm` for programmatic orchestration control.
+
+### Changed
+- Smart Orchestration pipeline now auto-classifies every user message (non-blocking, async) and emits `dispatch:classified` events to all connected browsers.
+- `MessageComposer` accepts `sessionId` prop for session-scoped dispatch suggestions.
+- Cleaned up 9 completed plan files (audit-fixes, perf phases).
+
+### Fixed
+- Cross-session dispatch suggestion contamination — store filters by sessionId.
+- Dispatch confirm race condition — suggestion cleared only after successful API response.
+- Input length validation on dispatch preview endpoints (GET: 2000 chars, POST: 10000 chars).
+- Single-pattern suggestions filtered out (no UI intervention needed for single-session tasks).
+
+## [0.20.0] - 2026-04-16
+
+### Added
+- **Desktop Autostart** — Start with Windows toggle via tauri-plugin-autostart.
+- **Show/Hide on Startup** — Desktop setting to control window visibility on launch.
+- **Desktop Settings Tab** — Tauri-only settings section (autostart, show on startup).
+- **Opus 4.7 Support** — Model-aware thinking modes and updated model registry.
+
 ## [0.10.2] - 2026-04-06
 
 ### Added
