@@ -24,6 +24,12 @@ import { DispatchSuggestion } from "./dispatch-suggestion";
 import { useDispatchStore } from "@/lib/stores/dispatch-store";
 import type { OrchestrationPattern } from "@companion/shared/types";
 import { api } from "@/lib/api-client";
+import { SuggestionStrip } from "@/components/chat/suggestion-strip";
+import { suggestionEngine } from "@/lib/suggest/engine";
+import { skillsProvider } from "@/lib/suggest/providers/skills.provider";
+import { useRegistryStore, selectFetchSkills } from "@/lib/suggest/registry-store";
+import { areInlineSuggestionsEnabled } from "@/lib/suggest/settings";
+import type { Suggestion } from "@/lib/suggest/types";
 
 interface MessageComposerProps {
   onSend: (text: string, images?: Array<{ data: string; mediaType: string; name: string }>) => void;
@@ -65,6 +71,9 @@ export function MessageComposer({
   const [isFocused, setIsFocused] = useState(false);
   const [slashMenuOpen, setSlashMenuOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
+  const [inlineSuggestions, setInlineSuggestions] = useState<Suggestion[]>([]);
+  const [suggestionsDismissed, setSuggestionsDismissed] = useState(false);
+  const suggestDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const composerWrapperRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -80,6 +89,45 @@ export function MessageComposer({
     s.suggestion?.sessionId === sessionId ? s.suggestion : null,
   );
   const clearSuggestion = useDispatchStore((s) => s.clearSuggestion);
+
+  // Inline suggestions — register skills provider once, pre-fetch registry
+  const fetchSkills = useRegistryStore(selectFetchSkills);
+  useEffect(() => {
+    suggestionEngine.registerProvider(skillsProvider);
+    fetchSkills();
+    return () => {
+      suggestionEngine.unregisterProvider("skills");
+    };
+  }, [fetchSkills]);
+
+  // Debounced suggestion compute on prompt change
+  useEffect(() => {
+    if (suggestDebounceRef.current) clearTimeout(suggestDebounceRef.current);
+
+    if (!areInlineSuggestionsEnabled() || suggestionsDismissed || !text.trim()) {
+      setInlineSuggestions([]);
+      return;
+    }
+
+    suggestDebounceRef.current = setTimeout(async () => {
+      const cursorPosition = textareaRef.current?.selectionStart ?? text.length;
+      const results = await suggestionEngine.suggest({ prompt: text, cursorPosition });
+      setInlineSuggestions(results);
+    }, 200);
+
+    return () => {
+      if (suggestDebounceRef.current) clearTimeout(suggestDebounceRef.current);
+    };
+  }, [text, suggestionsDismissed]);
+
+  // Reset dismissed state when user starts typing a new prompt
+  const prevTextRef = useRef(text);
+  useEffect(() => {
+    if (suggestionsDismissed && text !== prevTextRef.current) {
+      setSuggestionsDismissed(false);
+    }
+    prevTextRef.current = text;
+  }, [text, suggestionsDismissed]);
 
   const handleDispatchConfirm = useCallback(
     async (pattern: OrchestrationPattern) => {
@@ -148,6 +196,38 @@ export function MessageComposer({
       textareaRef.current.style.height = "auto";
     }
   };
+
+  const handleAcceptSuggestion = useCallback((suggestion: Suggestion) => {
+    if (suggestion.action.type !== "insert-text") return;
+    const payload = suggestion.action.payload as string;
+    const ta = textareaRef.current;
+    if (ta) {
+      // Use live DOM value (ta.value) instead of stale `text` state to avoid
+      // clobbering characters typed after the suggestion was generated.
+      const current = ta.value;
+      const start = ta.selectionStart ?? current.length;
+      const end = ta.selectionEnd ?? current.length;
+      const newText = current.slice(0, start) + payload + current.slice(end);
+      setText(newText);
+      // Restore cursor after insertion
+      requestAnimationFrame(() => {
+        if (textareaRef.current) {
+          const newPos = start + payload.length;
+          textareaRef.current.setSelectionRange(newPos, newPos);
+          textareaRef.current.focus();
+        }
+      });
+    } else {
+      setText((prev) => prev + payload);
+    }
+    setInlineSuggestions([]);
+    setSuggestionsDismissed(true);
+  }, []); // no `text` dep — reads live ta.value instead
+
+  const handleDismissSuggestions = useCallback(() => {
+    setInlineSuggestions([]);
+    setSuggestionsDismissed(true);
+  }, []);
 
   const handleQuickAction = (action: QuickAction) => {
     if (disabled) return;
@@ -352,6 +432,13 @@ export function MessageComposer({
             </span>
           </div>
         )}
+        {/* Inline skill suggestions */}
+        <SuggestionStrip
+          suggestions={inlineSuggestions}
+          onAccept={handleAcceptSuggestion}
+          onDismiss={handleDismissSuggestions}
+        />
+
         {/* Dispatch suggestion */}
         {dispatchSuggestion && !dispatchSuggestion.dismissed && (
           <div className="mb-2">

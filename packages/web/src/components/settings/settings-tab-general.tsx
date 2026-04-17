@@ -10,8 +10,13 @@ import {
   Bug,
   Lightbulb,
   Link,
+  Sparkle,
 } from "@phosphor-icons/react";
 import { areTipsEnabled, setTipsEnabled, resetDismissedTips } from "@/components/tips/tip-storage";
+import {
+  areInlineSuggestionsEnabled,
+  setInlineSuggestionsEnabled,
+} from "@/lib/suggest/settings.js";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -234,6 +239,53 @@ function LicenseSection() {
       <p className="text-text-muted mt-2 text-xs">
         Already purchased? Enter your license key above to activate.
       </p>
+    </SettingSection>
+  );
+}
+
+// ── Inline Suggestions Section ───────────────────────────────────────────────
+
+function InlineSuggestionsSection() {
+  const [enabled, setEnabled] = useState(() =>
+    typeof window === "undefined" ? true : areInlineSuggestionsEnabled(),
+  );
+
+  const handleToggle = useCallback(() => {
+    const next = !enabled;
+    setEnabled(next);
+    setInlineSuggestionsEnabled(next);
+    toast.success(`Inline suggestions ${next ? "enabled" : "disabled"}`);
+  }, [enabled]);
+
+  return (
+    <SettingSection
+      title="Inline Suggestions"
+      description="Surface relevant skills as pill suggestions above the prompt input while you type."
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkle size={16} weight="fill" className="text-accent" />
+          <span className="text-sm font-medium">Show Inline Suggestions</span>
+        </div>
+        <button
+          onClick={handleToggle}
+          className="relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors"
+          style={{
+            background: enabled ? "var(--color-accent)" : "var(--color-bg-elevated)",
+          }}
+          role="switch"
+          aria-checked={enabled}
+          aria-label="Toggle inline suggestions"
+        >
+          <span
+            className="inline-block h-4 w-4 rounded-full transition-transform"
+            style={{
+              background: "#fff",
+              transform: enabled ? "translateX(22px)" : "translateX(4px)",
+            }}
+          />
+        </button>
+      </div>
     </SettingSection>
   );
 }
@@ -504,6 +556,9 @@ export function GeneralTab() {
           View Error Log ↗
         </a>
       </SettingSection>
+
+      {/* Inline Suggestions */}
+      <InlineSuggestionsSection />
 
       {/* Tips & Hints */}
       <TipsSection />
