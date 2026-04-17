@@ -5,6 +5,7 @@
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { codeNodes, codeEdges } from "../db/schema.js";
+import { instrumentQuery } from "./telemetry.js";
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -44,6 +45,16 @@ export interface CodeNodeWithEdges {
  * Returns nodes sorted by cumulativeTrust DESC.
  */
 export function getImpactRadius(
+  projectSlug: string,
+  filePath: string,
+  opts?: { maxDepth?: number; minTrust?: number },
+): ImpactNode[] {
+  return instrumentQuery("impact_radius", filePath, "internal", projectSlug, () =>
+    _getImpactRadius(projectSlug, filePath, opts),
+  );
+}
+
+function _getImpactRadius(
   projectSlug: string,
   filePath: string,
   opts?: { maxDepth?: number; minTrust?: number },
@@ -151,6 +162,12 @@ export function getImpactRadius(
  * Follow INCOMING edges to find "who depends on this file".
  */
 export function getReverseDependencies(projectSlug: string, filePath: string): ImpactNode[] {
+  return instrumentQuery("reverse_dependencies", filePath, "internal", projectSlug, () =>
+    _getReverseDependencies(projectSlug, filePath),
+  );
+}
+
+function _getReverseDependencies(projectSlug: string, filePath: string): ImpactNode[] {
   const db = getDb();
 
   // Get all nodes in the target file
@@ -227,6 +244,12 @@ export function getRelatedNodes(
   keywords: string[],
   limit = 5,
 ): CodeNodeWithEdges[] {
+  return instrumentQuery("find_symbol", keywords.join(" "), "internal", projectSlug, () =>
+    _getRelatedNodes(projectSlug, keywords, limit),
+  );
+}
+
+function _getRelatedNodes(projectSlug: string, keywords: string[], limit = 5): CodeNodeWithEdges[] {
   if (keywords.length === 0) return [];
 
   const db = getDb();
@@ -392,6 +415,12 @@ export function getRelatedNodes(
  * Files with the most edges = highest coupling = most impactful to change.
  */
 export function getHotFiles(projectSlug: string, limit = 8): HotFile[] {
+  return instrumentQuery("hot_files", null, "internal", projectSlug, () =>
+    _getHotFiles(projectSlug, limit),
+  );
+}
+
+function _getHotFiles(projectSlug: string, limit = 8): HotFile[] {
   const db = getDb();
 
   // Count incoming and outgoing edges per file using raw SQL for efficiency
@@ -440,6 +469,12 @@ export function getHotFiles(projectSlug: string, limit = 8): HotFile[] {
  * Get all exported nodes for a file.
  */
 export function getExportedNodesByFile(projectSlug: string, filePath: string) {
+  return instrumentQuery("exported_nodes", filePath, "internal", projectSlug, () =>
+    _getExportedNodesByFile(projectSlug, filePath),
+  );
+}
+
+function _getExportedNodesByFile(projectSlug: string, filePath: string) {
   const db = getDb();
   return db
     .select({

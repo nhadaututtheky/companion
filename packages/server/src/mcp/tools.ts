@@ -777,6 +777,38 @@ export function registerTools(server: McpServer): void {
     },
   );
 
+  // ── codegraph_telemetry_summary ──────────────────────────────────────
+  server.tool(
+    "codegraph_telemetry_summary",
+    "Analyze CodeGraph query effectiveness — hit rate, miss patterns, slow queries, usage breakdown by type. Call this to determine if CodeGraph is actually helping agents and which query types underperform.",
+    {
+      projectSlug: z.string().describe("Project slug to analyze"),
+      rangeDays: z
+        .number()
+        .int()
+        .min(1)
+        .max(90)
+        .optional()
+        .describe("Number of days to look back (default: 7)"),
+    },
+    async ({ projectSlug, rangeDays }) => {
+      try {
+        const range = rangeDays ?? 7;
+        const res = await apiCall<{ data: unknown }>(
+          `/codegraph/telemetry/${encodeURIComponent(projectSlug)}?range=${range}`,
+        );
+        return {
+          content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: "text", text: `Telemetry query failed: ${String(err)}` }],
+          isError: true,
+        };
+      }
+    },
+  );
+
   // ── companion_codegraph_diagram ───────────────────────────────────────
   server.tool(
     "companion_codegraph_diagram",

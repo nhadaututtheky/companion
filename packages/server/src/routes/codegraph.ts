@@ -39,6 +39,7 @@ import {
 } from "../codegraph/diagram-generator.js";
 import { getDb } from "../db/client.js";
 import { codegraphConfig } from "../db/schema.js";
+import { summarize } from "../codegraph/telemetry.js";
 import type { ApiResponse } from "@companion/shared";
 
 export const codegraphRoutes = new Hono();
@@ -600,6 +601,18 @@ codegraphRoutes.post("/generate-skills", async (c) => {
   } catch (err) {
     return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
   }
+});
+
+// ─── Telemetry ─────────────────────────────────────────────────────────
+
+/** GET /codegraph/telemetry/:projectSlug?range=7 — query telemetry summary */
+codegraphRoutes.get("/telemetry/:projectSlug", (c) => {
+  const projectSlug = c.req.param("projectSlug");
+  const rawRange = parseInt(c.req.query("range") ?? "7", 10);
+  const rangeDays = isNaN(rawRange) || rawRange < 1 ? 7 : Math.min(rawRange, 90);
+
+  const summary = summarize(projectSlug, rangeDays);
+  return c.json({ success: true, data: summary } satisfies ApiResponse);
 });
 
 // ─── Architecture Diagrams ─────────────────────────────────────────────

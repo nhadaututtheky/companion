@@ -715,6 +715,29 @@ export const savedPrompts = sqliteTable(
   (table) => [index("idx_saved_prompts_project").on(table.projectSlug)],
 );
 
+// ─── CodeGraph: Query Telemetry Log ─────────────────────────────────────────
+
+export const codeQueryLog = sqliteTable(
+  "code_query_log",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    projectSlug: text("project_slug").notNull(),
+    queryType: text("query_type").notNull(), // e.g. "find_symbol", "impact", "temporal", "hot_files"
+    queryText: text("query_text"),
+    resultCount: integer("result_count").notNull().default(0),
+    tokensReturned: integer("tokens_returned").notNull().default(0),
+    latencyMs: integer("latency_ms").notNull().default(0),
+    agentSource: text("agent_source"), // e.g. "mcp", "http", "internal"
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (t) => [
+    index("idx_cql_slug_created").on(t.projectSlug, t.createdAt),
+    index("idx_cql_query_type").on(t.projectSlug, t.queryType),
+  ],
+);
+
 // ─── Context Injection Log ──────────────────────────────────────────────────
 
 export const contextInjectionLog = sqliteTable(

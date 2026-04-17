@@ -165,4 +165,8 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0040_account_identity.sql",
     sql: "-- Multi Account dedup bug fix: stable identity column.\n-- fingerprint = sha256(accessToken)[:16] rotates every ~1h on OAuth refresh,\n-- inserting a new row each cycle. identity = sha256(refreshToken)[:16] stays\n-- stable across access-token refreshes. Backfill + dedupe runs in app code\n-- on startup (credential-manager.dedupeAccountsByIdentity).\n-- Non-idempotent: embedded migration runner tracks by file name.\nALTER TABLE accounts ADD COLUMN identity TEXT;\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS idx_accounts_identity ON accounts(identity);\n",
   },
+  {
+    name: "0041_codegraph_telemetry.sql",
+    sql: "-- CodeGraph query telemetry log for Phase 0 baseline measurement.\n-- Logs every agent query (type, input, result count, tokens saved, latency)\n-- to give data-driven evidence for Phase 1/2/3 decisions.\n--\n-- Rotation: keep max 10K rows per project per day (enforced in app code).\n-- Non-idempotent: embedded migration runner tracks by file name.\nCREATE TABLE IF NOT EXISTS `code_query_log` (\n  `id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n  `project_slug` text NOT NULL,\n  `query_type` text NOT NULL,\n  `query_text` text,\n  `result_count` integer NOT NULL DEFAULT 0,\n  `tokens_returned` integer NOT NULL DEFAULT 0,\n  `latency_ms` integer NOT NULL DEFAULT 0,\n  `agent_source` text,\n  `created_at` integer NOT NULL\n);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_cql_slug_created` ON `code_query_log` (`project_slug`, `created_at`);\n--> statement-breakpoint\nCREATE INDEX IF NOT EXISTS `idx_cql_query_type` ON `code_query_log` (`project_slug`, `query_type`);\n",
+  },
 ];
