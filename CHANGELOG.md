@@ -2,6 +2,17 @@
 
 All notable changes to Companion are documented here.
 
+## [0.21.1] - 2026-04-17
+
+### Added
+- **Multi-Account Manager Phase 4 — Topbar Indicator** — `AccountIndicator` component shows the active account's status dot + label directly in the header, with a dropdown offering instant "Switch to next ready" and "Manage accounts" shortcuts. Full WAI-ARIA menu pattern (arrow-key navigation, Home/End, Escape returns focus, aria-haspopup/controls).
+
+### Fixed
+- **Telegram rate-limit label** — `account_rate_limited` notifications now carry the real account label instead of showing "Unknown" (resolved at emission time in `claude-adapter`).
+- **Auto-switch deadlock** — Auto-switch now falls back to `skip-in-rotation` accounts when every non-skipped candidate is rate-limited, instead of silently leaving the session stuck.
+- **Round-robin tiebreaker drift** — `findNextReady` computes its cost tiebreaker from a scoped `SUM(sessions.total_cost_usd) WHERE accountId IN (...)` query rather than the denormalized `accounts.totalCostUsd` column that can drift.
+- **Orphaned session history** — `deleteAccount` wraps the delete in a transaction that first nulls `sessions.accountId`, preserving per-session cost history while removing the account.
+
 ## [0.21.0] - 2026-04-17
 
 ### Added
