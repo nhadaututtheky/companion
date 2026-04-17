@@ -1,7 +1,20 @@
 /**
  * Gemini CLI Adapter — Google's Gemini CLI coding agent.
- * Supports stream-json output format (same as Claude Code).
- * Free tier: 60 req/min, 1000 req/day with Google Account auth.
+ *
+ * Uses `--output-format stream-json` in one-shot headless mode.
+ * Event schema (from gemini-cli JsonStreamEventType):
+ *   init          { type, timestamp, session_id, model }
+ *   message       { type, timestamp, role, content, delta? }
+ *   tool_use      { type, timestamp, tool_name, tool_id, parameters }
+ *   tool_result   { type, timestamp, tool_id, status, output?, error? }
+ *   error         { type, timestamp, severity, message }
+ *   result        { type, timestamp, status, error?, stats? }
+ *
+ * Free tier: 60 req/min, 1000 req/day with Google Account OAuth.
+ *
+ * Limitation: Gemini CLI does not support continuous JSON stdin in stream-json
+ * mode — each launch is one-shot. supportsInteractive is false; ws-session-lifecycle
+ * should relaunch per user turn. (Multi-turn would require --acp mode, not wired yet.)
  */
 
 import { createLogger } from "../../logger.js";
@@ -17,115 +30,123 @@ import type {
 const log = createLogger("gemini-adapter");
 
 /**
- * Parse Gemini CLI stream-json output into NormalizedMessage.
- * Gemini supports --output-format stream-json which is similar to Claude's NDJSON.
- * For now, we parse known event shapes; unknown events pass through as raw.
+ * Parse a Gemini stream-json line into a NormalizedMessage.
+ * Returns null for lines that should be treated as noise (non-JSON, MCP startup logs, etc).
  */
-function parseGeminiMessage(line: string): NormalizedMessage | null {
+export function parseGeminiMessage(line: string): NormalizedMessage | null {
   let parsed: Record<string, unknown>;
   try {
     parsed = JSON.parse(line);
   } catch {
-    // Plain text output — wrap as assistant message
-    if (line.trim()) {
-      return {
-        type: "assistant",
-        platform: "gemini",
-        content: line,
-        contentBlocks: [{ type: "text", text: line }],
-      };
-    }
+    // Non-JSON output (MCP init logs, stack traces, pre-bundled banners) — skip.
+    // These get captured by the stderr buffer for diagnostics, not surfaced as messages.
     return null;
   }
 
-  // Gemini stream-json events — map to NormalizedMessage
   const type = parsed.type as string | undefined;
+  if (!type || typeof type !== "string") return null;
 
-  if (type === "system" && parsed.subtype === "init") {
-    return {
-      type: "system_init",
-      platform: "gemini",
-      sessionId: parsed.session_id as string | undefined,
-      cwd: parsed.cwd as string | undefined,
-      tools: (parsed.tools as string[]) ?? [],
-      model: parsed.model as string | undefined,
-      cliVersion: parsed.version as string | undefined,
-      raw: parsed,
-    };
+  switch (type) {
+    case "init": {
+      return {
+        type: "system_init",
+        platform: "gemini",
+        sessionId: parsed.session_id as string | undefined,
+        model: parsed.model as string | undefined,
+        raw: parsed,
+      };
+    }
+
+    case "message": {
+      const role = parsed.role as string | undefined;
+      const content = (parsed.content as string) ?? "";
+      // Skip echoed user messages — they're noise for our pipeline
+      if (role === "user") {
+        return { type: "progress", platform: "gemini", raw: parsed };
+      }
+      return {
+        type: "assistant",
+        platform: "gemini",
+        content,
+        contentBlocks: [{ type: "text", text: content }],
+        raw: parsed,
+      };
+    }
+
+    case "tool_use": {
+      return {
+        type: "assistant",
+        platform: "gemini",
+        contentBlocks: [
+          {
+            type: "tool_use",
+            id: (parsed.tool_id as string) ?? crypto.randomUUID(),
+            name: (parsed.tool_name as string) ?? "unknown",
+            input: (parsed.parameters as Record<string, unknown>) ?? {},
+          },
+        ],
+        toolUseId: parsed.tool_id as string | undefined,
+        toolName: parsed.tool_name as string | undefined,
+        toolInput: parsed.parameters as Record<string, unknown> | undefined,
+        raw: parsed,
+      };
+    }
+
+    case "tool_result": {
+      const status = parsed.status as string | undefined;
+      const errorObj = parsed.error as { message?: string } | undefined;
+      return {
+        type: "tool_result",
+        platform: "gemini",
+        toolUseId: parsed.tool_id as string | undefined,
+        toolResult: (parsed.output as string) ?? errorObj?.message ?? "",
+        toolIsError: status === "error",
+        raw: parsed,
+      };
+    }
+
+    case "error": {
+      return {
+        type: "error",
+        platform: "gemini",
+        errorMessage: (parsed.message as string) ?? "Unknown error",
+        raw: parsed,
+      };
+    }
+
+    case "result": {
+      const status = parsed.status as string | undefined;
+      const errorObj = parsed.error as { type?: string; message?: string } | undefined;
+      const stats = parsed.stats as { turn_count?: number; total_duration_ms?: number } | undefined;
+      return {
+        type: "complete",
+        platform: "gemini",
+        isError: status === "error",
+        errorMessage: errorObj?.message,
+        resultText: errorObj?.message,
+        durationMs: stats?.total_duration_ms,
+        numTurns: stats?.turn_count,
+        raw: parsed,
+      };
+    }
+
+    default:
+      return { type: "progress", platform: "gemini", raw: parsed };
   }
-
-  if (type === "assistant" || type === "response") {
-    const content =
-      (parsed.content as string) ??
-      (parsed.text as string) ??
-      (parsed.message as { content?: string })?.content ??
-      "";
-    return {
-      type: "assistant",
-      platform: "gemini",
-      content,
-      contentBlocks: [{ type: "text", text: content }],
-      model: parsed.model as string | undefined,
-      raw: parsed,
-    };
-  }
-
-  if (type === "result" || type === "done") {
-    return {
-      type: "complete",
-      platform: "gemini",
-      isError: false,
-      resultText: parsed.result as string | undefined,
-      costUsd: parsed.total_cost_usd as number | undefined,
-      raw: parsed,
-    };
-  }
-
-  if (type === "error") {
-    return {
-      type: "error",
-      platform: "gemini",
-      errorMessage: (parsed.error as string) ?? (parsed.message as string) ?? "Unknown error",
-      raw: parsed,
-    };
-  }
-
-  if (type === "tool_use" || type === "tool_call") {
-    return {
-      type: "assistant",
-      platform: "gemini",
-      contentBlocks: [
-        {
-          type: "tool_use",
-          id: (parsed.id as string) ?? crypto.randomUUID(),
-          name: (parsed.name as string) ?? (parsed.tool_name as string) ?? "unknown",
-          input: (parsed.input as Record<string, unknown>) ?? {},
-        },
-      ],
-      raw: parsed,
-    };
-  }
-
-  // Unknown event — pass through as progress
-  return {
-    type: "progress",
-    platform: "gemini",
-    raw: parsed,
-  };
 }
 
 export class GeminiAdapter implements CLIAdapter {
   readonly platform = "gemini" as const;
   readonly capabilities: CLICapabilities = {
-    supportsResume: true,
+    supportsResume: false, // gemini --resume takes index/"latest", not a session ID — disable for now
     supportsStreaming: true,
     supportsTools: true,
     supportsMCP: true,
-    outputFormat: "ndjson", // stream-json is NDJSON
+    outputFormat: "ndjson",
     inputFormat: "text",
     supportsModelFlag: true,
     supportsThinking: false,
-    supportsInteractive: true,
+    supportsInteractive: false, // stream-json mode is one-shot; relaunch per turn
   };
 
   async detect(): Promise<CLIDetectResult> {
@@ -155,34 +176,25 @@ export class GeminiAdapter implements CLIAdapter {
   ): Promise<CLIProcess> {
     const args: string[] = [];
 
-    // Use --prompt for non-interactive headless mode
+    // Headless one-shot. If no prompt, default to a no-op to keep the flow consistent.
     if (opts.prompt) {
       args.push("--prompt", opts.prompt);
     }
 
-    // Output format
     args.push("--output-format", "stream-json");
 
-    // Model
     if (opts.model) {
       args.push("--model", opts.model);
     }
 
-    // YOLO mode for full auto-approve
     const yolo = opts.platformOptions?.yolo as boolean | undefined;
     if (yolo) {
       args.push("--yolo");
     }
 
-    // Sandbox
     const sandbox = opts.platformOptions?.sandbox as boolean | undefined;
     if (sandbox) {
       args.push("--sandbox");
-    }
-
-    // Resume — requires a specific session ID, not "latest"
-    if (opts.resume && opts.sessionId) {
-      args.push("--resume", opts.sessionId);
     }
 
     log.info("Launching Gemini CLI", {
@@ -210,10 +222,13 @@ export class GeminiAdapter implements CLIAdapter {
     log.info("Gemini CLI started", { pid, sessionId: opts.sessionId });
 
     const stderrLines: string[] = [];
-    const MAX_STDERR = 20;
+    const MAX_STDERR = 30;
+    const pushStderr = (line: string) => {
+      stderrLines.push(line.slice(0, 500));
+      if (stderrLines.length > MAX_STDERR) stderrLines.shift();
+    };
 
-    // Read stdout
-    const readStream = async (stream: ReadableStream<Uint8Array> | null, label: string) => {
+    const readStream = async (stream: ReadableStream<Uint8Array> | null, label: "stdout" | "stderr") => {
       if (!stream) return;
       const reader = stream.getReader();
       const decoder = new TextDecoder();
@@ -232,16 +247,26 @@ export class GeminiAdapter implements CLIAdapter {
             if (!trimmed) continue;
             if (label === "stdout") {
               const msg = parseGeminiMessage(trimmed);
-              if (msg) onMessage(msg);
+              if (msg) {
+                onMessage(msg);
+              } else {
+                // Non-JSON stdout line — treat as diagnostic noise, not user-visible content
+                pushStderr(trimmed);
+              }
             } else {
-              stderrLines.push(trimmed.slice(0, 300));
-              if (stderrLines.length > MAX_STDERR) stderrLines.shift();
+              pushStderr(trimmed);
             }
           }
         }
-        if (buffer.trim() && label === "stdout") {
-          const msg = parseGeminiMessage(buffer.trim());
-          if (msg) onMessage(msg);
+        if (buffer.trim()) {
+          const trimmed = buffer.trim();
+          if (label === "stdout") {
+            const msg = parseGeminiMessage(trimmed);
+            if (msg) onMessage(msg);
+            else pushStderr(trimmed);
+          } else {
+            pushStderr(trimmed);
+          }
         }
       } catch (err) {
         log.error(`Error reading Gemini ${label}`, { error: String(err) });
@@ -287,7 +312,6 @@ export class GeminiAdapter implements CLIAdapter {
   }
 
   formatUserMessage(content: string): string {
-    // Gemini stdin in interactive mode accepts plain text
     return content;
   }
 }
