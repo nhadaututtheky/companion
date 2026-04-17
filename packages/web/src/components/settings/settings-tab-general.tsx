@@ -31,13 +31,20 @@ function LicenseSection() {
     features?: string[];
   } | null>(null);
 
-  interface LicenseResponse {
+  // GET /api/license returns a wrapped ApiResponse; POST /activate returns flat.
+  interface LicenseInfo {
     tier: string;
     valid: boolean;
     maxSessions: number;
     expiresAt: string;
     daysLeft?: number;
     features?: string[];
+  }
+  interface LicenseGetResponse {
+    success: boolean;
+    data: LicenseInfo;
+  }
+  interface LicenseActivateResponse extends LicenseInfo {
     success?: boolean;
     error?: string;
     message?: string;
@@ -46,9 +53,9 @@ function LicenseSection() {
   // Fetch current license status
   useEffect(() => {
     api
-      .get<LicenseResponse>("/api/license")
+      .get<LicenseGetResponse>("/api/license")
       .then((res) => {
-        if (res.tier) setLicense(res);
+        if (res.data?.tier) setLicense(res.data);
       })
       .catch(() => {});
   }, []);
@@ -57,7 +64,7 @@ function LicenseSection() {
     if (!licenseKey.trim()) return;
     setActivating(true);
     try {
-      const res = await api.post<LicenseResponse>("/api/license/activate", {
+      const res = await api.post<LicenseActivateResponse>("/api/license/activate", {
         key: licenseKey.trim(),
       });
       if (res.success) {

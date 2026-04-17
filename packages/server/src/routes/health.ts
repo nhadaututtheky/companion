@@ -73,18 +73,9 @@ healthRoutes.get("/setup-status", (c) => {
   });
 });
 
-// License status endpoint — for web UI to show trial banner etc.
-healthRoutes.get("/license", (c) => {
-  const license = getLicense();
-  return c.json({
-    tier: license.tier,
-    valid: license.valid,
-    maxSessions: license.maxSessions,
-    features: license.features,
-    expiresAt: license.expiresAt,
-    daysLeft: license.daysLeft,
-  });
-});
+// NOTE: GET /api/license is served by routes/index.ts (wrapped ApiResponse).
+// A previous flat-shape handler here shadowed it and silently broke license-store
+// + rtk-settings (they read res.data.* and got undefined → defaulted to free tier).
 
 // ── License activation (mounted under protected /api/license) ──────────────
 export const licenseActivateRoute = new Hono();
