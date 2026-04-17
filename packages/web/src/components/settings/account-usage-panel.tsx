@@ -428,7 +428,7 @@ function BudgetsEditor({
           <span style={{ color: "var(--color-text-muted)" }}>$</span>
           <input
             type="number"
-            min="0"
+            min="0.01"
             step="0.01"
             placeholder={String(DEFAULT_LIMITS[key])}
             value={draft[key] ?? ""}
@@ -523,7 +523,14 @@ export function AccountUsagePanel({ accountId }: { accountId: string }) {
   const handleSaveBudgets = async (budgets: AccountBudgets) => {
     try {
       await accountsApi.setBudgets(accountId, budgets);
-      setUsage((u) => (u ? { ...u, budgets } : u));
+      // Reset dedupe set so tighter limits can re-fire alerts against current usage.
+      alertFiredRef.current.clear();
+      setUsage((u) => {
+        if (!u) return u;
+        const next = { ...u, budgets };
+        fireBudgetAlerts(next, accountId, alertFiredRef.current);
+        return next;
+      });
       toast.success("Budgets updated");
     } catch (err) {
       toast.error(`Failed to save budgets: ${err}`);

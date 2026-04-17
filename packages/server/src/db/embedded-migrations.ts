@@ -155,6 +155,6 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
   },
   {
     name: "0038_account_budgets.sql",
-    sql: "-- Per-account custom budget limits (null = no limit)\nALTER TABLE accounts ADD COLUMN session_5h_budget REAL;\n--> statement-breakpoint\nALTER TABLE accounts ADD COLUMN weekly_budget REAL;\n--> statement-breakpoint\nALTER TABLE accounts ADD COLUMN monthly_budget REAL;\n",
+    sql: "-- Per-account custom budget limits (null = fall back to client defaults).\n-- Non-idempotent: SQLite ALTER TABLE ADD COLUMN has no IF NOT EXISTS guard.\n-- Safe because the embedded migration runner tracks applied migrations by file name.\nALTER TABLE accounts ADD COLUMN session_5h_budget REAL;\n--> statement-breakpoint\nALTER TABLE accounts ADD COLUMN weekly_budget REAL;\n--> statement-breakpoint\nALTER TABLE accounts ADD COLUMN monthly_budget REAL;\n",
   },
 ];
