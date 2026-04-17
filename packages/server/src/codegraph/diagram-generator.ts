@@ -7,7 +7,7 @@ import { createLogger } from "../logger.js";
 import { getDb } from "../db/client.js";
 import { codeNodes, codeEdges } from "../db/schema.js";
 import { eq, and } from "drizzle-orm";
-import { detectCommunities, traceExecutionFlows, type Community } from "./analysis.js";
+import { detectCommunities } from "./analysis.js";
 import { getProjectNodes, getProjectEdges, findNodesByName } from "./graph-store.js";
 
 const log = createLogger("codegraph:diagram");
@@ -26,16 +26,26 @@ export interface DiagramResult {
 
 /** Sanitize a string for safe use in Mermaid syntax */
 function sanitize(s: string): string {
-  return s.replace(/["\[\](){}|<>]/g, "").replace(/\s+/g, " ").trim();
+  return s.replace(/["`\[\](){}|<>]/g, "").replace(/\s+/g, " ").trim();
 }
 
-/** Create a short, readable ID for Mermaid nodes */
+/** Simple string hash for ID disambiguation */
+function simpleHash(s: string): string {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h).toString(36).slice(0, 6);
+}
+
+/** Create a short, readable ID for Mermaid nodes (hash-suffixed to avoid collisions) */
 function mermaidId(s: string): string {
-  return s
+  const base = s
     .replace(/[^a-zA-Z0-9_]/g, "_")
     .replace(/_+/g, "_")
     .replace(/^_|_$/g, "")
-    .slice(0, 40);
+    .slice(0, 32);
+  return `${base}_${simpleHash(s)}`;
 }
 
 /** Shorten file path for display */
@@ -103,9 +113,9 @@ export function generateArchitectureDiagram(projectSlug: string): DiagramResult 
     const topFiles = c.files.slice(0, 4).map((f) => shortPath(f)).join(", ");
 
     lines.push(`  subgraph ${id}["${label}"]`);
-    lines.push(`    ${id}_info["${c.nodeCount} symbols | ${c.files.length} files"]`);
+    lines.push(`    ${id}_info["${c.nodeCount} symbols | ${c.files.length} files"]:::clusterInfo`);
     if (topFiles) {
-      lines.push(`    ${id}_files["${sanitize(topFiles)}"]`);
+      lines.push(`    ${id}_files["${sanitize(topFiles)}"]:::clusterFiles`);
     }
     lines.push("  end");
   }
@@ -187,9 +197,13 @@ export function generateModuleDiagram(projectSlug: string, filePath: string): Di
     }
   }
 
-  // Level 2: dependencies of dependencies (limit to 5 per level-1 node)
+  // Cap outgoing/incoming BEFORE level-2 computation to avoid wasted work
+  const outgoingArr = [...outgoing.entries()].slice(0, 8);
+  const incomingArr = [...incoming.entries()].slice(0, 8);
+
+  // Level 2: dependencies of dependencies (only for displayed outgoing, limit 5 per node)
   const level2Outgoing = new Map<number, Set<number>>();
-  for (const [targetId] of outgoing) {
+  for (const [targetId] of outgoingArr) {
     const l2 = new Set<number>();
     for (const edge of allEdges) {
       if (edge.sourceNodeId === targetId && !fileNodeIds.has(edge.targetNodeId) && !outgoing.has(edge.targetNodeId)) {
@@ -209,7 +223,6 @@ export function generateModuleDiagram(projectSlug: string, filePath: string): Di
   lines.push(`  ${centerId}[["${centerLabel}"]]`);
 
   // Incoming (dependents)
-  const incomingArr = [...incoming.entries()].slice(0, 8);
   if (incomingArr.length > 0) {
     for (const [nodeId, edge] of incomingArr) {
       const node = nodeMap.get(nodeId);
@@ -222,7 +235,6 @@ export function generateModuleDiagram(projectSlug: string, filePath: string): Di
   }
 
   // Outgoing (dependencies)
-  const outgoingArr = [...outgoing.entries()].slice(0, 8);
   for (const [nodeId, edge] of outgoingArr) {
     const node = nodeMap.get(nodeId);
     if (!node) continue;
@@ -295,10 +307,11 @@ export function generateFlowDiagram(projectSlug: string, symbolName: string): Di
     }
   }
 
-  // BFS
+  // BFS (deduplicated edges)
   const maxDepth = 4;
   const visited = new Set<number>();
   const flowEdges: Array<{ from: number; to: number; type: string }> = [];
+  const seenEdges = new Set<string>();
   const queue: Array<{ nodeId: number; depth: number }> = [{ nodeId: entryNode.id, depth: 0 }];
   visited.add(entryNode.id);
 
@@ -308,7 +321,11 @@ export function generateFlowDiagram(projectSlug: string, symbolName: string): Di
 
     const neighbors = callAdj.get(nodeId) ?? [];
     for (const { targetId, edgeType } of neighbors) {
-      flowEdges.push({ from: nodeId, to: targetId, type: edgeType });
+      const edgeKey = `${nodeId}-${targetId}`;
+      if (!seenEdges.has(edgeKey)) {
+        seenEdges.add(edgeKey);
+        flowEdges.push({ from: nodeId, to: targetId, type: edgeType });
+      }
       if (!visited.has(targetId)) {
         visited.add(targetId);
         queue.push({ nodeId: targetId, depth: depth + 1 });

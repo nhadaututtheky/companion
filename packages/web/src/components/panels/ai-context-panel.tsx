@@ -42,6 +42,18 @@ const GraphVisualization = dynamic(
 );
 import type { ContextInjectionEvent } from "@/lib/stores/context-feed-store";
 
+const ArchitectureTab = dynamic(
+  () => import("./architecture-tab").then((m) => ({ default: m.ArchitectureTab })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="text-text-muted flex h-64 items-center justify-center text-sm">
+        Loading diagrams...
+      </div>
+    ),
+  },
+);
+
 // ── Types ──────────────────────────────────────────────────────────────────
 
 interface ScanJob {
@@ -983,7 +995,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedSlug, setSelectedSlug] = useState(initialSlug ?? "");
   const injectionCount = useContextFeedStore((s) => s.totalCount);
-  const [tab, setTab] = useState<"explore" | "feed" | "settings">("explore");
+  const [tab, setTab] = useState<"explore" | "architecture" | "feed" | "settings">("explore");
 
   // ── CodeGraph state
   const [cgReady, setCgReady] = useState(false);
@@ -1229,7 +1241,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
 
         {/* Tabs */}
         <div className="flex gap-1" style={{ boxShadow: "0 1px 0 var(--color-border)" }}>
-          {(["explore", "feed", "settings"] as const).map((t) => (
+          {(["explore", "architecture", "feed", "settings"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -1245,7 +1257,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                 borderBottomColor: tab === t ? "#A855F7" : "transparent",
               }}
             >
-              {t === "explore" ? "Explore" : t === "feed" ? "Feed" : "Settings"}
+              {t === "explore" ? "Explore" : t === "architecture" ? "Architecture" : t === "feed" ? "Feed" : "Settings"}
             </button>
           ))}
         </div>
@@ -1384,6 +1396,9 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
             {!wiAvailable && <WebclawSetup onStarted={loadWiStatus} />}
           </div>
         )}
+
+        {/* Architecture Tab */}
+        {tab === "architecture" && <ArchitectureTab projectSlug={slug} />}
 
         {/* Feed Tab */}
         {tab === "feed" && <FeedTab />}

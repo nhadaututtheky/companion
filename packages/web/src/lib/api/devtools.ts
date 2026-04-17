@@ -171,12 +171,42 @@ export const codegraph = {
     planReviewEnabled?: boolean;
     breakCheckEnabled?: boolean;
     webDocsEnabled?: boolean;
+    autoReindexEnabled?: boolean;
     excludePatterns?: string[];
     maxContextTokens?: number;
   }) =>
     request<{ success: boolean; data: unknown }>("/api/codegraph/config", {
       method: "PUT",
       body: JSON.stringify(config),
+    }),
+
+  diagram: (
+    project: string,
+    type: "architecture" | "module" | "flow",
+    opts?: { file?: string; symbol?: string },
+  ) => {
+    const params = new URLSearchParams({ project, type });
+    if (opts?.file) params.set("file", opts.file);
+    if (opts?.symbol) params.set("symbol", opts.symbol);
+    return request<{
+      success: boolean;
+      data: {
+        mermaid: string;
+        type: "architecture" | "module" | "flow";
+        description: string;
+        nodeCount: number;
+        edgeCount: number;
+      };
+    }>(`/api/codegraph/diagram?${params.toString()}`);
+  },
+
+  generateSkills: (projectSlug: string) =>
+    request<{
+      success: boolean;
+      data: { generated: string[]; skipped: string[]; dir: string };
+    }>("/api/codegraph/generate-skills", {
+      method: "POST",
+      body: JSON.stringify({ projectSlug }),
     }),
 };
 
