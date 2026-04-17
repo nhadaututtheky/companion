@@ -1,7 +1,7 @@
 # Companion — Feature Registry
 
 > Single source of truth for all features, their relationships, and boundaries.
-> Updated: 2026-04-16 | ~155 features across 10 domains
+> Updated: 2026-04-17 | ~165 features across 11 domains
 
 ## How to Use This File
 - **Before building**: Check if feature exists or overlaps with existing ones
@@ -255,7 +255,32 @@ Cross-cutting UI features used by multiple domains.
 
 ---
 
-## 9. INFRASTRUCTURE
+## 9. ACCOUNTS (Multi-Account Manager)
+
+Multiple Claude OAuth credentials with round-robin rotation, per-account usage tracking, and rate-limit-aware auto-switch.
+
+| Feature | Key File(s) | Connects To |
+|---------|------------|-------------|
+| Encrypted credentials store (AES-256-GCM) | `services/crypto.ts`, `services/credential-manager.ts` | DB `accounts` table |
+| Auto-capture from `~/.claude/.credentials.json` | `services/credential-watcher.ts` | credential-manager |
+| Round-robin findNextReady (LRU + live-cost tiebreak) | `services/credential-manager.ts` findNextReady | sessions table |
+| Rate-limit auto-switch (event-driven) | `services/account-auto-switch.ts` | event-bus, credential-manager |
+| Per-account usage (heatmap + rolling windows) | `services/account-usage.ts` | sessions table |
+| Custom budget limits (5h / weekly / monthly) | `services/credential-manager.ts` updateAccountBudgets | web alerts |
+| Skip-in-rotation flag + manual switch-next | `services/credential-manager.ts`, `routes/accounts.ts` | event-bus |
+| Accounts REST API | `routes/accounts.ts` | credential-manager |
+
+**Web UI:**
+| Component | File | Connects To |
+|-----------|------|-------------|
+| Accounts settings tab (list, rename, delete, budgets) | `settings/accounts-tab.tsx` | accounts API |
+| Per-account usage view (heatmap + breakdown) | `settings/accounts-usage-view.tsx` | accounts usage API |
+| Topbar account indicator (status + switch-next) | `layout/account-indicator.tsx` | accounts API |
+| Account auto-switch settings (global toggle) | `settings/accounts-tab.tsx` | accounts/settings API |
+
+---
+
+## 10. INFRASTRUCTURE
 
 Auth, license, config, scheduling, database — the foundation.
 
@@ -333,7 +358,7 @@ Auth, license, config, scheduling, database — the foundation.
 └────────┘   └───────────┘   └──────────┘
 ```
 
-## 10. MCP SERVER (Agent Integration)
+## 11. MCP SERVER (Agent Integration)
 
 Companion exposes tools via MCP (Model Context Protocol) for Claude Code and other AI agents.
 
