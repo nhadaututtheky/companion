@@ -110,7 +110,9 @@ function sanitizeUrl(url: unknown): string | undefined {
   try {
     const u = new URL(url);
     if (u.protocol === "https:" || u.protocol === "http:") return url;
-  } catch { /* invalid URL */ }
+  } catch {
+    /* invalid URL */
+  }
   return undefined;
 }
 
@@ -229,7 +231,9 @@ pluginsRoutes.get("/", (c) => {
       registry,
       enabled,
       meta: cacheDir ? readPluginMeta(cacheDir) : null,
-      provides: cacheDir ? scanPluginProvides(cacheDir) : { agents: [], commands: [], skills: [], mcpServers: [], hooks: false },
+      provides: cacheDir
+        ? scanPluginProvides(cacheDir)
+        : { agents: [], commands: [], skills: [], mcpServers: [], hooks: false },
       cachePath: cacheDir,
     };
 

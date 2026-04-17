@@ -250,7 +250,11 @@ export function AccountsTab() {
               disabled={capturing}
               className="text-accent flex cursor-pointer items-center gap-1.5 text-xs font-medium disabled:opacity-50"
             >
-              <ArrowsClockwise size={12} weight="bold" className={capturing ? "animate-spin" : ""} />
+              <ArrowsClockwise
+                size={12}
+                weight="bold"
+                className={capturing ? "animate-spin" : ""}
+              />
               {capturing ? "Scanning..." : "Manual capture"}
             </button>
           </div>
@@ -275,168 +279,170 @@ export function AccountsTab() {
                       : "1px solid var(--glass-border)",
                   }}
                 >
-                <div className="flex items-center gap-3 px-3 py-3">
-                  {/* Status dot */}
-                  <div
-                    className="shrink-0 rounded-full"
-                    role="img"
-                    aria-label={statusInfo.label}
-                    style={{
-                      width: 8,
-                      height: 8,
-                      background: statusInfo.dot,
-                      boxShadow: `0 0 6px ${statusInfo.dot}40`,
-                    }}
-                    title={statusInfo.label}
-                  />
+                  <div className="flex items-center gap-3 px-3 py-3">
+                    {/* Status dot */}
+                    <div
+                      className="shrink-0 rounded-full"
+                      role="img"
+                      aria-label={statusInfo.label}
+                      style={{
+                        width: 8,
+                        height: 8,
+                        background: statusInfo.dot,
+                        boxShadow: `0 0 6px ${statusInfo.dot}40`,
+                      }}
+                      title={statusInfo.label}
+                    />
 
-                  {/* Label + info */}
-                  <div className="min-w-0 flex-1">
-                    {isEditing ? (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={editLabel}
-                          onChange={(e) => setEditLabel(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") void handleRename(account.id);
-                            if (e.key === "Escape") setEditingId(null);
-                          }}
-                          className="bg-bg-base rounded px-2 py-1 text-sm"
-                          autoFocus
-                        />
+                    {/* Label + info */}
+                    <div className="min-w-0 flex-1">
+                      {isEditing ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={editLabel}
+                            onChange={(e) => setEditLabel(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") void handleRename(account.id);
+                              if (e.key === "Escape") setEditingId(null);
+                            }}
+                            className="bg-bg-base rounded px-2 py-1 text-sm"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => void handleRename(account.id)}
+                            className="text-accent cursor-pointer text-xs font-medium"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="text-text-primary text-sm font-medium">
+                            {account.label}
+                          </span>
+                          {account.isActive && (
+                            <span
+                              className="rounded-full px-1.5 py-0.5 text-xs font-semibold"
+                              style={{
+                                background:
+                                  "color-mix(in srgb, var(--color-accent) 15%, transparent)",
+                                color: "var(--color-accent)",
+                              }}
+                            >
+                              Active
+                            </span>
+                          )}
+                          {account.subscriptionType && (
+                            <span className="text-text-muted text-xs capitalize">
+                              {account.subscriptionType}
+                            </span>
+                          )}
+                          {account.skipInRotation && (
+                            <span
+                              className="rounded-full px-1.5 py-0.5 text-xs font-medium"
+                              style={{
+                                background: "#f59e0b15",
+                                color: "#f59e0b",
+                              }}
+                              title="Excluded from auto round-robin"
+                            >
+                              Skipped
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <div className="text-text-muted mt-0.5 flex items-center gap-2 text-xs">
+                        <span style={{ fontFamily: "var(--font-mono)" }}>
+                          {formatCost(account.totalCostUsd)}
+                        </span>
+                        {cooldown && (
+                          <span style={{ color: statusInfo.dot }}>
+                            {statusInfo.label} ({cooldown})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        onClick={() => setExpandedId(isExpanded ? null : account.id)}
+                        className="text-text-secondary cursor-pointer rounded-md p-1.5 transition-colors"
+                        style={{
+                          color: isExpanded ? "var(--color-accent)" : undefined,
+                        }}
+                        title={isExpanded ? "Hide usage" : "Show usage"}
+                        aria-label={`${isExpanded ? "Hide" : "Show"} usage for ${account.label}`}
+                        aria-expanded={isExpanded}
+                      >
+                        <ChartBar size={14} weight="bold" />
+                      </button>
+                      <button
+                        onClick={() => void handleToggleSkip(account.id, account.skipInRotation)}
+                        disabled={togglingSkipId === account.id}
+                        className="cursor-pointer rounded-md p-1.5 transition-colors disabled:opacity-50"
+                        style={{
+                          color: account.skipInRotation ? "#f59e0b" : "var(--color-text-secondary)",
+                        }}
+                        title={
+                          account.skipInRotation
+                            ? "Include in auto rotation"
+                            : "Skip in auto rotation"
+                        }
+                        aria-label={`${account.skipInRotation ? "Include" : "Skip"} ${account.label} in rotation`}
+                        aria-pressed={account.skipInRotation}
+                      >
+                        <SkipForward size={14} weight={account.skipInRotation ? "fill" : "bold"} />
+                      </button>
+                      {!account.isActive && (
                         <button
-                          onClick={() => void handleRename(account.id)}
-                          className="text-accent cursor-pointer text-xs font-medium"
+                          onClick={() => void handleActivate(account.id)}
+                          disabled={switching === account.id}
+                          className="cursor-pointer rounded-md p-1.5 transition-colors"
+                          style={{
+                            color: "var(--color-accent)",
+                            background:
+                              switching === account.id ? "var(--color-bg-elevated)" : "transparent",
+                          }}
+                          title="Switch to this account"
+                          aria-label={`Switch to ${account.label}`}
                         >
-                          Save
+                          <CheckCircle size={16} weight="bold" />
                         </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="text-text-primary text-sm font-medium">
-                          {account.label}
-                        </span>
-                        {account.isActive && (
-                          <span
-                            className="rounded-full px-1.5 py-0.5 text-xs font-semibold"
-                            style={{
-                              background: "color-mix(in srgb, var(--color-accent) 15%, transparent)",
-                              color: "var(--color-accent)",
-                            }}
-                          >
-                            Active
-                          </span>
-                        )}
-                        {account.subscriptionType && (
-                          <span className="text-text-muted text-xs capitalize">
-                            {account.subscriptionType}
-                          </span>
-                        )}
-                        {account.skipInRotation && (
-                          <span
-                            className="rounded-full px-1.5 py-0.5 text-xs font-medium"
-                            style={{
-                              background: "#f59e0b15",
-                              color: "#f59e0b",
-                            }}
-                            title="Excluded from auto round-robin"
-                          >
-                            Skipped
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    <div className="text-text-muted mt-0.5 flex items-center gap-2 text-xs">
-                      <span style={{ fontFamily: "var(--font-mono)" }}>
-                        {formatCost(account.totalCostUsd)}
-                      </span>
-                      {cooldown && (
-                        <span style={{ color: statusInfo.dot }}>
-                          {statusInfo.label} ({cooldown})
-                        </span>
+                      )}
+                      <button
+                        onClick={() => {
+                          setEditingId(account.id);
+                          setEditLabel(account.label);
+                        }}
+                        className="text-text-secondary cursor-pointer rounded-md p-1.5 transition-colors"
+                        title="Rename"
+                        aria-label={`Rename ${account.label}`}
+                      >
+                        <PencilSimple size={14} weight="bold" />
+                      </button>
+                      {!account.isActive && (
+                        <button
+                          onClick={() => void handleDelete(account.id, account.label)}
+                          className="cursor-pointer rounded-md p-1.5 transition-colors"
+                          style={{ color: "#ef4444" }}
+                          title="Delete"
+                          aria-label={`Delete ${account.label}`}
+                        >
+                          <Trash size={14} weight="bold" />
+                        </button>
                       )}
                     </div>
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex shrink-0 items-center gap-1">
-                    <button
-                      onClick={() => setExpandedId(isExpanded ? null : account.id)}
-                      className="text-text-secondary cursor-pointer rounded-md p-1.5 transition-colors"
-                      style={{
-                        color: isExpanded ? "var(--color-accent)" : undefined,
-                      }}
-                      title={isExpanded ? "Hide usage" : "Show usage"}
-                      aria-label={`${isExpanded ? "Hide" : "Show"} usage for ${account.label}`}
-                      aria-expanded={isExpanded}
+                  {isExpanded && (
+                    <div
+                      className="border-t px-3 py-3"
+                      style={{ borderColor: "var(--glass-border)" }}
                     >
-                      <ChartBar size={14} weight="bold" />
-                    </button>
-                    <button
-                      onClick={() => void handleToggleSkip(account.id, account.skipInRotation)}
-                      disabled={togglingSkipId === account.id}
-                      className="cursor-pointer rounded-md p-1.5 transition-colors disabled:opacity-50"
-                      style={{
-                        color: account.skipInRotation ? "#f59e0b" : "var(--color-text-secondary)",
-                      }}
-                      title={
-                        account.skipInRotation
-                          ? "Include in auto rotation"
-                          : "Skip in auto rotation"
-                      }
-                      aria-label={`${account.skipInRotation ? "Include" : "Skip"} ${account.label} in rotation`}
-                      aria-pressed={account.skipInRotation}
-                    >
-                      <SkipForward size={14} weight={account.skipInRotation ? "fill" : "bold"} />
-                    </button>
-                    {!account.isActive && (
-                      <button
-                        onClick={() => void handleActivate(account.id)}
-                        disabled={switching === account.id}
-                        className="cursor-pointer rounded-md p-1.5 transition-colors"
-                        style={{
-                          color: "var(--color-accent)",
-                          background: switching === account.id ? "var(--color-bg-elevated)" : "transparent",
-                        }}
-                        title="Switch to this account"
-                        aria-label={`Switch to ${account.label}`}
-                      >
-                        <CheckCircle size={16} weight="bold" />
-                      </button>
-                    )}
-                    <button
-                      onClick={() => {
-                        setEditingId(account.id);
-                        setEditLabel(account.label);
-                      }}
-                      className="text-text-secondary cursor-pointer rounded-md p-1.5 transition-colors"
-                      title="Rename"
-                      aria-label={`Rename ${account.label}`}
-                    >
-                      <PencilSimple size={14} weight="bold" />
-                    </button>
-                    {!account.isActive && (
-                      <button
-                        onClick={() => void handleDelete(account.id, account.label)}
-                        className="cursor-pointer rounded-md p-1.5 transition-colors"
-                        style={{ color: "#ef4444" }}
-                        title="Delete"
-                        aria-label={`Delete ${account.label}`}
-                      >
-                        <Trash size={14} weight="bold" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                {isExpanded && (
-                  <div
-                    className="border-t px-3 py-3"
-                    style={{ borderColor: "var(--glass-border)" }}
-                  >
-                    <AccountUsagePanel accountId={account.id} />
-                  </div>
-                )}
+                      <AccountUsagePanel accountId={account.id} />
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -451,7 +457,11 @@ export function AccountsTab() {
               disabled={capturing}
               className="text-text-secondary flex cursor-pointer items-center gap-1.5 text-xs transition-colors disabled:opacity-50"
             >
-              <ArrowsClockwise size={12} weight="bold" className={capturing ? "animate-spin" : ""} />
+              <ArrowsClockwise
+                size={12}
+                weight="bold"
+                className={capturing ? "animate-spin" : ""}
+              />
               {capturing ? "Scanning..." : "Re-scan credentials"}
             </button>
             <span className="text-text-muted text-xs">

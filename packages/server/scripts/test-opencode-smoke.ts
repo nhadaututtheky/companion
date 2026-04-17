@@ -45,9 +45,15 @@ async function main(): Promise<void> {
   const adapter = new OpenCodeAdapter();
   const det = await adapter.detect();
   check("detect() returned an object", typeof det === "object");
-  check("opencode CLI available", det.available === true, det.available ? `v${det.version}` : "not installed");
+  check(
+    "opencode CLI available",
+    det.available === true,
+    det.available ? `v${det.version}` : "not installed",
+  );
   if (!det.available) {
-    console.log(`\n${FAIL}  OpenCode CLI missing. Install: curl -fsSL https://opencode.ai/install | bash`);
+    console.log(
+      `\n${FAIL}  OpenCode CLI missing. Install: curl -fsSL https://opencode.ai/install | bash`,
+    );
     process.exit(1);
   }
 
@@ -56,14 +62,23 @@ async function main(): Promise<void> {
   const fromRegistry = getAdapter("opencode");
   check("getAdapter('opencode') returns OpenCodeAdapter", fromRegistry.platform === "opencode");
   check("capabilities.outputFormat = ndjson", fromRegistry.capabilities.outputFormat === "ndjson");
-  check("capabilities.supportsInteractive = false (run mode)", fromRegistry.capabilities.supportsInteractive === false);
+  check(
+    "capabilities.supportsInteractive = false (run mode)",
+    fromRegistry.capabilities.supportsInteractive === false,
+  );
   check("capabilities.supportsResume = true", fromRegistry.capabilities.supportsResume === true);
   check("capabilities.supportsStreaming", fromRegistry.capabilities.supportsStreaming === true);
-  check("capabilities.supportsThinking = true", fromRegistry.capabilities.supportsThinking === true);
+  check(
+    "capabilities.supportsThinking = true",
+    fromRegistry.capabilities.supportsThinking === true,
+  );
 
   const all = await detectAllPlatforms();
   const opencodeEntry = all.find((a) => a.platform === "opencode");
-  check("opencode present in detectAllPlatforms()", !!opencodeEntry && opencodeEntry.detection.available === true);
+  check(
+    "opencode present in detectAllPlatforms()",
+    !!opencodeEntry && opencodeEntry.detection.available === true,
+  );
 
   // ── 3. Unit tests for parseOpenCodeMessage ─────────────────────────────
   console.log("\n─── 3. parseOpenCodeMessage unit tests ───");
@@ -244,7 +259,13 @@ async function main(): Promise<void> {
       type: "error",
       timestamp: 1712345686,
       sessionID: "ses_abc",
-      part: { id: "p9", messageID: "m1", sessionID: "ses_abc", type: "error", text: "Provider auth failed" },
+      part: {
+        id: "p9",
+        messageID: "m1",
+        sessionID: "ses_abc",
+        type: "error",
+        text: "Provider auth failed",
+      },
     }),
   );
   check("error → error", errEvt?.type === "error");
@@ -269,13 +290,17 @@ async function main(): Promise<void> {
   check("unknown part type → progress passthrough", unknownPart?.type === "progress");
 
   // event with no part → progress
-  const noPart = parseOpenCodeMessage(JSON.stringify({ type: "whatever", timestamp: 1, sessionID: "s" }));
+  const noPart = parseOpenCodeMessage(
+    JSON.stringify({ type: "whatever", timestamp: 1, sessionID: "s" }),
+  );
   check("event without part → progress", noPart?.type === "progress");
 
   // ── 4. End-to-end launch (real process) ────────────────────────────────
   console.log("\n─── 4. End-to-end launch ───");
   const model = process.env.OPENCODE_MODEL;
-  console.log(`${INFO}  auth mode: ${model ? `OPENCODE_MODEL=${model}` : "no model override — relies on default provider"}`);
+  console.log(
+    `${INFO}  auth mode: ${model ? `OPENCODE_MODEL=${model}` : "no model override — relies on default provider"}`,
+  );
 
   const messages: NormalizedMessage[] = [];
   let exitCode: number | null = null;
@@ -323,11 +348,17 @@ async function main(): Promise<void> {
 
   const succeeded = exitCode === 0 && assistantMsgs.length > 0;
   if (succeeded) {
-    check("received step_start (system_init)", messages.some((m) => m.type === "system_init"));
+    check(
+      "received step_start (system_init)",
+      messages.some((m) => m.type === "system_init"),
+    );
     check("received at least one assistant message", assistantMsgs.length > 0);
     const hasHello = messages.some((m) => (m.content ?? "").toLowerCase().includes("hello"));
     check("response contains 'hello'", hasHello);
-    check("received step_finish (complete)", messages.some((m) => m.type === "complete"));
+    check(
+      "received step_finish (complete)",
+      messages.some((m) => m.type === "complete"),
+    );
   } else {
     const authError = proc
       .getStderrLines()

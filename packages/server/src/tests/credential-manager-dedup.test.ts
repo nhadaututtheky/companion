@@ -29,9 +29,8 @@ mock.module("../db/client.js", dbClientMockFactory);
 if (process.platform !== "win32")
   mock.module(import.meta.resolve("../db/client.js"), dbClientMockFactory);
 
-const { saveAccount, listAccounts, dedupeAccountsByIdentity } = await import(
-  "../services/credential-manager.js"
-);
+const { saveAccount, listAccounts, dedupeAccountsByIdentity } =
+  await import("../services/credential-manager.js");
 const { encrypt } = await import("../services/crypto.js");
 
 const identityFor = (refreshToken: string) =>

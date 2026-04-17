@@ -209,9 +209,7 @@ accountRoutes.get("/:id/usage", (c) => {
   const daysParam = c.req.query("days");
   const days = daysParam ? Math.min(Math.max(parseInt(daysParam, 10) || 365, 1), 730) : 365;
   const tzParam = c.req.query("tz");
-  const tzOffsetMinutes = tzParam
-    ? Math.min(Math.max(parseInt(tzParam, 10) || 0, -720), 840)
-    : 0;
+  const tzOffsetMinutes = tzParam ? Math.min(Math.max(parseInt(tzParam, 10) || 0, -720), 840) : 0;
   const usage = getAccountUsage(id, days, { tzOffsetMinutes });
 
   const row = getDb()

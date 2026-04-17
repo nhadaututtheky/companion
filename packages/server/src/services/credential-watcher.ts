@@ -84,9 +84,7 @@ async function captureCredentials(): Promise<void> {
     // Check if this is a new account or update
     const existingAccounts = listAccounts();
     const subType = oauth.subscriptionType ?? "unknown";
-    const countOfType = existingAccounts.filter(
-      (a) => a.subscriptionType === subType,
-    ).length;
+    const countOfType = existingAccounts.filter((a) => a.subscriptionType === subType).length;
     const label = `${capitalize(subType)} #${countOfType + 1}`;
 
     // saveAccount handles upsert by fingerprint — if same token, updates; if new, creates
@@ -107,7 +105,7 @@ async function captureCredentials(): Promise<void> {
 
     eventBus.emit("account:captured", {
       accountId,
-      label: isNew ? label : updatedAccounts.find((a) => a.id === accountId)?.label ?? label,
+      label: isNew ? label : (updatedAccounts.find((a) => a.id === accountId)?.label ?? label),
       isNew,
     });
   } catch (err) {
@@ -151,7 +149,10 @@ export async function writeCredentialsFile(credentials: OAuthCredentials): Promi
   const { writeFile, mkdir } = await import("node:fs/promises");
   const { dirname } = await import("node:path");
   await mkdir(dirname(CREDENTIALS_PATH), { recursive: true });
-  await writeFile(CREDENTIALS_PATH, JSON.stringify(file, null, 2), { encoding: "utf-8", mode: 0o600 });
+  await writeFile(CREDENTIALS_PATH, JSON.stringify(file, null, 2), {
+    encoding: "utf-8",
+    mode: 0o600,
+  });
 
   log.info("Credentials file written for account switch");
 }

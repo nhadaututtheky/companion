@@ -425,9 +425,7 @@ export type EffortLevel = "low" | "medium" | "high" | "xhigh" | "max";
  * Map ThinkingMode → Claude Code `--effort` value.
  * `undefined` means omit the flag (use model's configured default).
  */
-export function thinkingModeToEffort(
-  mode: ThinkingMode | undefined,
-): EffortLevel | undefined {
+export function thinkingModeToEffort(mode: ThinkingMode | undefined): EffortLevel | undefined {
   switch (mode) {
     case "off":
       return "low";
@@ -467,9 +465,7 @@ export function modelSupportsDeepThinking(model: string): boolean {
 
 /** Available thinking modes for the model's `/effort` support. */
 export function getAvailableThinkingModes(model: string): ThinkingMode[] {
-  return modelSupportsDeepThinking(model)
-    ? ["adaptive", "off", "deep"]
-    : ["adaptive", "off"];
+  return modelSupportsDeepThinking(model) ? ["adaptive", "off", "deep"] : ["adaptive", "off"];
 }
 
 // ─── Context Mode (200K vs 1M) ──────────────────────────────────────────────

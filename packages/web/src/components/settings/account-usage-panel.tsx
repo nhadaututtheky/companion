@@ -68,8 +68,11 @@ function buildHeatmapGrid(buckets: HeatmapBucket[], weeks = 53): HeatmapCell[][]
   today.setHours(0, 0, 0, 0);
 
   // Percentile thresholds with uniform-cost collapse guard.
-  const costs = buckets.map((b) => b.cost).filter((c) => c > 0).sort((a, b) => a - b);
-  const pct = (p: number) => (costs.length === 0 ? 0 : costs[Math.floor(costs.length * p)] ?? 0);
+  const costs = buckets
+    .map((b) => b.cost)
+    .filter((c) => c > 0)
+    .sort((a, b) => a - b);
+  const pct = (p: number) => (costs.length === 0 ? 0 : (costs[Math.floor(costs.length * p)] ?? 0));
   const p25 = pct(0.25);
   const p50 = pct(0.5);
   const p75 = pct(0.75);
@@ -93,7 +96,8 @@ function buildHeatmapGrid(buckets: HeatmapBucket[], weeks = 53): HeatmapCell[][]
       const cost = bucket?.cost ?? 0;
       let level: 0 | 1 | 2 | 3 | 4 = 0;
       if (cost > 0) {
-        if (uniform) level = 2; // medium shade when all days equal
+        if (uniform)
+          level = 2; // medium shade when all days equal
         else if (cost >= p90) level = 4;
         else if (cost >= p75) level = 3;
         else if (cost >= p50) level = 2;
@@ -343,9 +347,19 @@ function ProgressBar({
 function fireBudgetAlerts(usage: AccountUsage, accountId: string, fired: Set<string>) {
   const limits = effectiveLimits(usage.budgets);
   const checks: Array<{ key: string; label: string; value: number; max: number }> = [
-    { key: "5h", label: "5h session", value: usage.windows.session5h.cost, max: limits.session5hBudget },
+    {
+      key: "5h",
+      label: "5h session",
+      value: usage.windows.session5h.cost,
+      max: limits.session5hBudget,
+    },
     { key: "weekly", label: "weekly", value: usage.windows.weekly.cost, max: limits.weeklyBudget },
-    { key: "monthly", label: "monthly", value: usage.windows.monthly.cost, max: limits.monthlyBudget },
+    {
+      key: "monthly",
+      label: "monthly",
+      value: usage.windows.monthly.cost,
+      max: limits.monthlyBudget,
+    },
   ];
   for (const c of checks) {
     if (c.max <= 0) continue;
@@ -615,16 +629,19 @@ export function AccountUsagePanel({ accountId }: { accountId: string }) {
             Activity (last 365 days)
           </h4>
           <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-            {totals.sessions} sessions · {formatTokens(totals.tokens)} tokens · {formatCost(totals.cost)}
+            {totals.sessions} sessions · {formatTokens(totals.tokens)} tokens ·{" "}
+            {formatCost(totals.cost)}
           </span>
         </div>
         <Heatmap buckets={heatmap} />
         <div className="flex gap-4 text-xs" style={{ color: "var(--color-text-muted)" }}>
           <span>
-            Current streak: <strong style={{ color: "var(--color-text-primary)" }}>{streaks.current}d</strong>
+            Current streak:{" "}
+            <strong style={{ color: "var(--color-text-primary)" }}>{streaks.current}d</strong>
           </span>
           <span>
-            Longest: <strong style={{ color: "var(--color-text-primary)" }}>{streaks.longest}d</strong>
+            Longest:{" "}
+            <strong style={{ color: "var(--color-text-primary)" }}>{streaks.longest}d</strong>
           </span>
         </div>
       </div>

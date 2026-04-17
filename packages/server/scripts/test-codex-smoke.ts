@@ -41,7 +41,11 @@ async function main(): Promise<void> {
   const adapter = new CodexAdapter();
   const det = await adapter.detect();
   check("detect() returned an object", typeof det === "object");
-  check("codex CLI available", det.available === true, det.available ? `v${det.version}` : "not installed");
+  check(
+    "codex CLI available",
+    det.available === true,
+    det.available ? `v${det.version}` : "not installed",
+  );
   if (!det.available) {
     console.log(`\n${FAIL}  Codex CLI missing. Install: npm i -g @openai/codex-cli`);
     process.exit(1);
@@ -61,7 +65,10 @@ async function main(): Promise<void> {
 
   const all = await detectAllPlatforms();
   const codexEntry = all.find((a) => a.platform === "codex");
-  check("codex present in detectAllPlatforms()", !!codexEntry && codexEntry.detection.available === true);
+  check(
+    "codex present in detectAllPlatforms()",
+    !!codexEntry && codexEntry.detection.available === true,
+  );
 
   // ── 3. Unit tests for parseCodexMessage ─────────────────────────────────
   console.log("\n─── 3. parseCodexMessage unit tests ───");
@@ -129,7 +136,10 @@ async function main(): Promise<void> {
     }),
   );
   check("item.completed(command_execution, ok) → tool_result", cmdDone?.type === "tool_result");
-  check("item.completed(command_execution, ok).toolIsError = false", cmdDone?.toolIsError === false);
+  check(
+    "item.completed(command_execution, ok).toolIsError = false",
+    cmdDone?.toolIsError === false,
+  );
   check(
     "item.completed(command_execution, ok).toolResult = aggregated_output",
     cmdDone?.toolResult === "file1\nfile2",
@@ -149,16 +159,27 @@ async function main(): Promise<void> {
       },
     }),
   );
-  check("item.completed(command_execution, failed).toolIsError = true", cmdFail?.toolIsError === true);
+  check(
+    "item.completed(command_execution, failed).toolIsError = true",
+    cmdFail?.toolIsError === true,
+  );
 
   // item.completed with non-zero exit code (status not failed) still errors
   const cmdExitCode = parseCodexMessage(
     JSON.stringify({
       type: "item.completed",
-      item: { id: "cmd_3", type: "command_execution", exit_code: 127, aggregated_output: "not found" },
+      item: {
+        id: "cmd_3",
+        type: "command_execution",
+        exit_code: 127,
+        aggregated_output: "not found",
+      },
     }),
   );
-  check("item.completed(command_execution, exit_code!=0).toolIsError = true", cmdExitCode?.toolIsError === true);
+  check(
+    "item.completed(command_execution, exit_code!=0).toolIsError = true",
+    cmdExitCode?.toolIsError === true,
+  );
 
   // turn.completed with usage → complete
   const turnDone = parseCodexMessage(
@@ -176,10 +197,15 @@ async function main(): Promise<void> {
   // turn.completed without usage
   const turnDoneNoUsage = parseCodexMessage(JSON.stringify({ type: "turn.completed" }));
   check("turn.completed (no usage) → complete", turnDoneNoUsage?.type === "complete");
-  check("turn.completed (no usage).tokenUsage = undefined", turnDoneNoUsage?.tokenUsage === undefined);
+  check(
+    "turn.completed (no usage).tokenUsage = undefined",
+    turnDoneNoUsage?.tokenUsage === undefined,
+  );
 
   // error event
-  const errMsg = parseCodexMessage(JSON.stringify({ type: "error", message: "API quota exceeded" }));
+  const errMsg = parseCodexMessage(
+    JSON.stringify({ type: "error", message: "API quota exceeded" }),
+  );
   check("error → error", errMsg?.type === "error");
   check("error.errorMessage extracted", errMsg?.errorMessage === "API quota exceeded");
 
@@ -207,7 +233,9 @@ async function main(): Promise<void> {
   // ── 4. End-to-end launch (real process) ────────────────────────────────
   console.log("\n─── 4. End-to-end launch ───");
   const hasApiKey = !!process.env.OPENAI_API_KEY;
-  console.log(`${INFO}  auth mode: ${hasApiKey ? "OPENAI_API_KEY set" : "NO API KEY → testing error path"}`);
+  console.log(
+    `${INFO}  auth mode: ${hasApiKey ? "OPENAI_API_KEY set" : "NO API KEY → testing error path"}`,
+  );
 
   const messages: NormalizedMessage[] = [];
   let exitCode: number | null = null;
@@ -256,17 +284,26 @@ async function main(): Promise<void> {
   // Detect real success by: exit 0 + got at least one assistant message.
   const succeeded = exitCode === 0 && assistantMsgs.length > 0;
   if (succeeded) {
-    check("received thread.started (system_init)", messages.some((m) => m.type === "system_init"));
+    check(
+      "received thread.started (system_init)",
+      messages.some((m) => m.type === "system_init"),
+    );
     check("received at least one assistant message", assistantMsgs.length > 0);
     const hasHello = messages.some((m) => (m.content ?? "").toLowerCase().includes("hello"));
     check("response contains 'hello'", hasHello);
-    check("received turn.completed (complete)", messages.some((m) => m.type === "complete"));
+    check(
+      "received turn.completed (complete)",
+      messages.some((m) => m.type === "complete"),
+    );
   } else {
     const authError = proc
       .getStderrLines()
       .some((l) => /auth|api[_ ]?key|OPENAI_API_KEY|login/i.test(l));
     check("auth/error captured in stderr buffer (for UI surface)", authError);
-    skip("assistant content round-trip", "run `codex login` or set OPENAI_API_KEY to test full roundtrip");
+    skip(
+      "assistant content round-trip",
+      "run `codex login` or set OPENAI_API_KEY to test full roundtrip",
+    );
   }
 
   // ── Summary ─────────────────────────────────────────────────────────────

@@ -160,10 +160,7 @@ export function leiden(
 
       // Temporarily remove node from its community
       commTotalDegree.set(currentComm, commTotalDegree.get(currentComm)! - nodeDeg);
-      commInternalWeight.set(
-        currentComm,
-        commInternalWeight.get(currentComm)! - weightToOwn,
-      );
+      commInternalWeight.set(currentComm, commInternalWeight.get(currentComm)! - weightToOwn);
 
       // Find best community to move to
       let bestComm = currentComm;
@@ -173,7 +170,8 @@ export function leiden(
         const candidateTotalDeg = commTotalDegree.get(candidateComm) ?? 0;
 
         // Modularity gain = [w_to_c / m] - γ [d_node * Σ_tot / (2m²)]
-        const gain = weightToCandidate / totalWeight -
+        const gain =
+          weightToCandidate / totalWeight -
           (resolution * nodeDeg * candidateTotalDeg) / (m2 * totalWeight);
 
         if (gain > bestGain) {
@@ -183,7 +181,8 @@ export function leiden(
       }
 
       // Also consider staying in current (now empty of this node)
-      const stayGain = weightToOwn / totalWeight -
+      const stayGain =
+        weightToOwn / totalWeight -
         (resolution * nodeDeg * (commTotalDegree.get(currentComm) ?? 0)) / (m2 * totalWeight);
 
       if (stayGain >= bestGain) {
@@ -195,10 +194,7 @@ export function leiden(
       community.set(node, bestComm);
       commTotalDegree.set(bestComm, (commTotalDegree.get(bestComm) ?? 0) + nodeDeg);
       const weightToBest = neighborComms.get(bestComm) ?? 0;
-      commInternalWeight.set(
-        bestComm,
-        (commInternalWeight.get(bestComm) ?? 0) + weightToBest,
-      );
+      commInternalWeight.set(bestComm, (commInternalWeight.get(bestComm) ?? 0) + weightToBest);
 
       if (bestComm !== currentComm && bestGain > minModularityGain) {
         improved = true;

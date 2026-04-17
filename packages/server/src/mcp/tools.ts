@@ -446,7 +446,10 @@ export function registerTools(server: McpServer): void {
         const res = await apiCall<{ data: unknown }>("/wiki");
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Wiki list failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Wiki list failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -460,10 +463,15 @@ export function registerTools(server: McpServer): void {
     },
     async ({ domain }) => {
       try {
-        const res = await apiCall<{ data: { content: string } }>(`/wiki/${encodeURIComponent(domain)}/core`);
+        const res = await apiCall<{ data: { content: string } }>(
+          `/wiki/${encodeURIComponent(domain)}/core`,
+        );
         return { content: [{ type: "text", text: res.data.content || "(empty core rules)" }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Wiki core read failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Wiki core read failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -483,7 +491,10 @@ export function registerTools(server: McpServer): void {
         );
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Wiki read failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Wiki read failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -504,7 +515,10 @@ export function registerTools(server: McpServer): void {
         });
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Wiki search failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Wiki search failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -515,25 +529,44 @@ export function registerTools(server: McpServer): void {
     "Write a quick note to the wiki knowledge base. Use this to persist discoveries, patterns, decisions, or instructions that should be available to future sessions.",
     {
       domain: z.string().describe("Wiki domain slug to write to"),
-      content: z.string().min(1).max(20000).describe("Note content (markdown supported, max 20k chars)"),
-      title: z.string().max(100).optional().describe("Note title (auto-generated from content if omitted)"),
-      tags: z.array(z.string()).optional().describe("Tags for categorization (e.g., ['auth', 'security'])"),
+      content: z
+        .string()
+        .min(1)
+        .max(20000)
+        .describe("Note content (markdown supported, max 20k chars)"),
+      title: z
+        .string()
+        .max(100)
+        .optional()
+        .describe("Note title (auto-generated from content if omitted)"),
+      tags: z
+        .array(z.string())
+        .optional()
+        .describe("Tags for categorization (e.g., ['auth', 'security'])"),
       confidence: z
         .enum(["extracted", "inferred", "ambiguous"])
         .optional()
-        .describe("Confidence level: extracted (from source), inferred (deduced), ambiguous (uncertain)"),
+        .describe(
+          "Confidence level: extracted (from source), inferred (deduced), ambiguous (uncertain)",
+        ),
     },
     async ({ domain, content, title, tags, confidence }) => {
       try {
-        const res = await apiCall<{ data: { slug: string } }>(`/wiki/${encodeURIComponent(domain)}/note`, {
-          method: "POST",
-          body: { content, title, tags, confidence },
-        });
+        const res = await apiCall<{ data: { slug: string } }>(
+          `/wiki/${encodeURIComponent(domain)}/note`,
+          {
+            method: "POST",
+            body: { content, title, tags, confidence },
+          },
+        );
         return {
           content: [{ type: "text", text: `Note saved to wiki/${domain}/${res.data.slug}` }],
         };
       } catch (err) {
-        return { content: [{ type: "text", text: `Wiki note failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Wiki note failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -547,10 +580,15 @@ export function registerTools(server: McpServer): void {
     },
     async ({ domain }) => {
       try {
-        const res = await apiCall<{ data: unknown }>(`/wiki/${encodeURIComponent(domain)}/articles`);
+        const res = await apiCall<{ data: unknown }>(
+          `/wiki/${encodeURIComponent(domain)}/articles`,
+        );
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Wiki articles list failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Wiki articles list failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -573,7 +611,12 @@ export function registerTools(server: McpServer): void {
           body: { project: projectSlug },
         });
         return {
-          content: [{ type: "text", text: `Scan started for ${projectSlug}. Use companion_codegraph_status to check progress.\n${JSON.stringify(res.data, null, 2)}` }],
+          content: [
+            {
+              type: "text",
+              text: `Scan started for ${projectSlug}. Use companion_codegraph_status to check progress.\n${JSON.stringify(res.data, null, 2)}`,
+            },
+          ],
         };
       } catch (err) {
         return { content: [{ type: "text", text: `Scan failed: ${String(err)}` }], isError: true };
@@ -590,10 +633,15 @@ export function registerTools(server: McpServer): void {
     },
     async ({ projectSlug }) => {
       try {
-        const res = await apiCall<{ data: unknown }>(`/codegraph/status?project=${encodeURIComponent(projectSlug)}`);
+        const res = await apiCall<{ data: unknown }>(
+          `/codegraph/status?project=${encodeURIComponent(projectSlug)}`,
+        );
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Status check failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Status check failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -604,7 +652,9 @@ export function registerTools(server: McpServer): void {
     "Search the code graph for symbols (functions, classes, types, hooks, endpoints) by keyword. Returns matching nodes with file paths, descriptions, and relationships.",
     {
       projectSlug: z.string().describe("Project slug"),
-      query: z.string().describe("Search query (e.g., 'auth middleware', 'useSession', 'POST /api')"),
+      query: z
+        .string()
+        .describe("Search query (e.g., 'auth middleware', 'useSession', 'POST /api')"),
     },
     async ({ projectSlug, query }) => {
       try {
@@ -613,7 +663,10 @@ export function registerTools(server: McpServer): void {
         );
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Search failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Search failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -627,7 +680,9 @@ export function registerTools(server: McpServer): void {
     },
     async ({ projectSlug }) => {
       try {
-        const res = await apiCall<{ data: unknown }>(`/codegraph/stats?project=${encodeURIComponent(projectSlug)}`);
+        const res = await apiCall<{ data: unknown }>(
+          `/codegraph/stats?project=${encodeURIComponent(projectSlug)}`,
+        );
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       } catch (err) {
         return { content: [{ type: "text", text: `Stats failed: ${String(err)}` }], isError: true };
@@ -641,7 +696,9 @@ export function registerTools(server: McpServer): void {
     "Analyze blast radius of changing a file. Returns all files that depend on (or are depended by) the target file, with risk scores.",
     {
       projectSlug: z.string().describe("Project slug"),
-      file: z.string().describe("File path relative to project root (e.g., 'src/services/auth.ts')"),
+      file: z
+        .string()
+        .describe("File path relative to project root (e.g., 'src/services/auth.ts')"),
     },
     async ({ projectSlug, file }) => {
       try {
@@ -650,7 +707,10 @@ export function registerTools(server: McpServer): void {
         );
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Impact analysis failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Impact analysis failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -661,8 +721,14 @@ export function registerTools(server: McpServer): void {
     "Pre-commit impact analysis: what's the blast radius of your changes? Analyzes git diff (or explicit file list) to find affected files, risk scores, impacted communities, and review suggestions.",
     {
       projectSlug: z.string().describe("Project slug"),
-      files: z.array(z.string()).optional().describe("Explicit file paths to analyze (overrides git diff)"),
-      projectDir: z.string().optional().describe("Project directory for git diff (defaults to auto-detect)"),
+      files: z
+        .array(z.string())
+        .optional()
+        .describe("Explicit file paths to analyze (overrides git diff)"),
+      projectDir: z
+        .string()
+        .optional()
+        .describe("Project directory for git diff (defaults to auto-detect)"),
       since: z.string().optional().describe("Git diff reference (default: HEAD~1)"),
     },
     async ({ projectSlug, files, projectDir, since }) => {
@@ -673,7 +739,10 @@ export function registerTools(server: McpServer): void {
         });
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Diff impact analysis failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Diff impact analysis failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -687,17 +756,23 @@ export function registerTools(server: McpServer): void {
     },
     async ({ projectSlug }) => {
       try {
-        const res = await apiCall<{ data: { generated: string[]; skipped: string[]; dir: string } }>("/codegraph/generate-skills", {
+        const res = await apiCall<{
+          data: { generated: string[]; skipped: string[]; dir: string };
+        }>("/codegraph/generate-skills", {
           method: "POST",
           body: { projectSlug },
         });
         const d = res.data;
-        const summary = d.generated.length > 0
-          ? `Generated ${d.generated.length} skills:\n${d.generated.map((f) => `  - ${f}`).join("\n")}\n\nWritten to: ${d.dir}`
-          : `No skills generated. ${d.skipped.join(", ")}`;
+        const summary =
+          d.generated.length > 0
+            ? `Generated ${d.generated.length} skills:\n${d.generated.map((f) => `  - ${f}`).join("\n")}\n\nWritten to: ${d.dir}`
+            : `No skills generated. ${d.skipped.join(", ")}`;
         return { content: [{ type: "text", text: summary }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Skills generation failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Skills generation failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -718,14 +793,17 @@ export function registerTools(server: McpServer): void {
         if (file) params.set("file", file);
         if (symbol) params.set("symbol", symbol);
 
-        const res = await apiCall<{ data: { mermaid: string; description: string; nodeCount: number; edgeCount: number } }>(
-          `/codegraph/diagram?${params.toString()}`,
-        );
+        const res = await apiCall<{
+          data: { mermaid: string; description: string; nodeCount: number; edgeCount: number };
+        }>(`/codegraph/diagram?${params.toString()}`);
         const d = res.data;
         const output = `${d.description}\n\n\`\`\`mermaid\n${d.mermaid}\n\`\`\`\n\nNodes: ${d.nodeCount} | Edges: ${d.edgeCount}`;
         return { content: [{ type: "text", text: output }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Diagram generation failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Diagram generation failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );

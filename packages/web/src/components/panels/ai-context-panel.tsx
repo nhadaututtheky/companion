@@ -1257,7 +1257,13 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                 borderBottomColor: tab === t ? "#A855F7" : "transparent",
               }}
             >
-              {t === "explore" ? "Explore" : t === "architecture" ? "Architecture" : t === "feed" ? "Feed" : "Settings"}
+              {t === "explore"
+                ? "Explore"
+                : t === "architecture"
+                  ? "Architecture"
+                  : t === "feed"
+                    ? "Feed"
+                    : "Settings"}
             </button>
           ))}
         </div>

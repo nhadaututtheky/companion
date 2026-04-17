@@ -100,8 +100,7 @@ export async function routeSessionMessage(
         // Users access it via the 📊 button shown in session_init or /context command.
         if ("breakdown" in msg) {
           const { formatBreakdownDetailed } = await import("../services/context-estimator.js");
-          const bd =
-            msg.breakdown as import("../services/context-estimator.js").ContextBreakdown;
+          const bd = msg.breakdown as import("../services/context-estimator.js").ContextBreakdown;
           bridge.setContextBreakdown(sessionId, formatBreakdownDetailed(bd));
         }
         break;

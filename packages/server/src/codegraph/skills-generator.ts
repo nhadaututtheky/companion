@@ -44,7 +44,10 @@ function generateExploringSkill(
   const communityList = communities
     .slice(0, 10)
     .map((c) => {
-      const topFiles = c.files.slice(0, 3).map((f) => `\`${f}\``).join(", ");
+      const topFiles = c.files
+        .slice(0, 3)
+        .map((f) => `\`${f}\``)
+        .join(", ");
       return `- **${c.label}** (${c.nodeCount} symbols): ${topFiles}`;
     })
     .join("\n");
@@ -77,7 +80,10 @@ function generateDebuggingSkill(
   const highCoupling = hotFiles
     .filter((f) => f.incomingEdges + f.outgoingEdges > 5)
     .slice(0, 8)
-    .map((f) => `- \`${f.filePath}\` — ${f.incomingEdges + f.outgoingEdges} connections (high coupling)`)
+    .map(
+      (f) =>
+        `- \`${f.filePath}\` — ${f.incomingEdges + f.outgoingEdges} connections (high coupling)`,
+    )
     .join("\n");
 
   const content = `# Debugging Guide
@@ -193,7 +199,13 @@ export function generateSkills(projectSlug: string): SkillsResult {
   // Gather data from codegraph
   const stats = getProjectStats(projectSlug);
   const hotFiles = getHotFiles(projectSlug, 15);
-  let communities: Array<{ id: string; label: string; files: string[]; nodeCount: number; cohesion: number }> = [];
+  let communities: Array<{
+    id: string;
+    label: string;
+    files: string[];
+    nodeCount: number;
+    cohesion: number;
+  }> = [];
   try {
     communities = detectCommunities(projectSlug);
   } catch (err) {
@@ -222,7 +234,11 @@ export function generateSkills(projectSlug: string): SkillsResult {
     }
   }
 
-  log.info("Skills generated", { projectSlug, generated: generated.length, skipped: skipped.length });
+  log.info("Skills generated", {
+    projectSlug,
+    generated: generated.length,
+    skipped: skipped.length,
+  });
   return { generated, skipped, dir: skillsDir };
 }
 

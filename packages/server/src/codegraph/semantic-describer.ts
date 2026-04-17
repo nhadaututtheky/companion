@@ -300,7 +300,10 @@ export async function labelCommunities(
         labels.set(id, label);
       }
     } catch (err) {
-      log.warn("Community label batch failed, using fallback", { error: String(err), batchStart: i });
+      log.warn("Community label batch failed, using fallback", {
+        error: String(err),
+        batchStart: i,
+      });
     }
   }
 
@@ -314,7 +317,10 @@ async function labelCommunityBatch(
 
   const communityList = communities
     .map((c, idx) => {
-      const fileHints = c.files.slice(0, 5).map((f) => `  ${f}`).join("\n");
+      const fileHints = c.files
+        .slice(0, 5)
+        .map((f) => `  ${f}`)
+        .join("\n");
       const symbolHints = c.topSymbols.slice(0, 8).join(", ");
       return `${idx + 1}. ${c.nodeCount} symbols\n  Files:\n${fileHints}\n  Key symbols: ${symbolHints}`;
     })

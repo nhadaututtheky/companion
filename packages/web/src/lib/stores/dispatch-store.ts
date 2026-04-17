@@ -1,8 +1,5 @@
 import { create } from "zustand";
-import type {
-  TaskClassification,
-  OrchestrationPattern,
-} from "@companion/shared/types";
+import type { TaskClassification, OrchestrationPattern } from "@companion/shared/types";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

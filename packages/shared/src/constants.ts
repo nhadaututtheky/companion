@@ -81,10 +81,7 @@ export const TIER_CONFIG = {
  * When `contextMode === "1m"` is passed, we return 1M ONLY for models
  * that support it. Other combinations fall back to 200K.
  */
-export function getMaxContextTokens(
-  model: string,
-  contextMode: "200k" | "1m" = "200k",
-): number {
+export function getMaxContextTokens(model: string, contextMode: "200k" | "1m" = "200k"): number {
   if (contextMode === "1m" && modelSupports1M(model)) return 1_000_000;
   return 200_000;
 }
@@ -106,10 +103,7 @@ export function modelSupports1M(model: string): boolean {
  * Append the Claude Code `[1m]` context suffix when appropriate.
  * Safe for any model string — returns unchanged if model doesn't support 1M.
  */
-export function applyContextSuffix(
-  model: string,
-  contextMode: "200k" | "1m" | undefined,
-): string {
+export function applyContextSuffix(model: string, contextMode: "200k" | "1m" | undefined): string {
   if (!model) return model;
   if (contextMode !== "1m") return model;
   if (!modelSupports1M(model)) return model;

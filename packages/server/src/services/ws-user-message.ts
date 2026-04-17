@@ -669,8 +669,7 @@ export class UserMessageHandler {
 
     // Auto-downgrade thinking mode if new model doesn't support deep thinking
     const thinkingMode = session.state.thinking_mode;
-    const needsDowngrade =
-      thinkingMode === "deep" && !modelSupportsDeepThinking(cliModel);
+    const needsDowngrade = thinkingMode === "deep" && !modelSupportsDeepThinking(cliModel);
 
     session.state = {
       ...session.state,

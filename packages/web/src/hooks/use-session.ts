@@ -963,10 +963,12 @@ export function useSession(sessionId: string): UseSessionReturn {
 
       // Handle dispatch:classified events for orchestration suggestions
       if (rawMsg.type === "dispatch:classified" && rawMsg.classification) {
-        useDispatchStore.getState().setSuggestion(
-          rawMsg.sessionId as string,
-          rawMsg.classification as import("@companion/shared/types").TaskClassification,
-        );
+        useDispatchStore
+          .getState()
+          .setSuggestion(
+            rawMsg.sessionId as string,
+            rawMsg.classification as import("@companion/shared/types").TaskClassification,
+          );
       }
 
       // Clear suggestion on dispatch completion/error — only if it matches this session

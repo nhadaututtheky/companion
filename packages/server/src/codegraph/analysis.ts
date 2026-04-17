@@ -606,11 +606,11 @@ export function detectCommunities(projectSlug: string): Community[] {
     .filter((c) => c.members.length >= 2) // skip singleton communities
     .map((c) => {
       // Collect unique files in this community
-      const files = [...new Set(
-        c.members
-          .map((id) => nodeMap.get(id)?.filePath)
-          .filter((f): f is string => !!f),
-      )];
+      const files = [
+        ...new Set(
+          c.members.map((id) => nodeMap.get(id)?.filePath).filter((f): f is string => !!f),
+        ),
+      ];
 
       // Generate label from most common path prefix
       const label = inferCommunityLabel(files, c.members, nodeMap);
@@ -637,9 +637,7 @@ const aiLabelCache = new Map<string, string>();
  * Uses Haiku to generate descriptive names like "Authentication & Sessions".
  * Results are cached — call after detectCommunities().
  */
-export async function enrichCommunitiesWithAILabels(
-  projectSlug: string,
-): Promise<Community[]> {
+export async function enrichCommunitiesWithAILabels(projectSlug: string): Promise<Community[]> {
   const communities = detectCommunities(projectSlug);
   if (communities.length === 0) return communities;
 
@@ -717,9 +715,10 @@ function inferCommunityLabel(
     }
   }
 
-  const prefix = commonDepth > 0
-    ? parts[0]!.slice(0, Math.min(commonDepth + 1, 3)).join("/")
-    : files[0]!.replace(/\\/g, "/").split("/").slice(0, 2).join("/");
+  const prefix =
+    commonDepth > 0
+      ? parts[0]!.slice(0, Math.min(commonDepth + 1, 3)).join("/")
+      : files[0]!.replace(/\\/g, "/").split("/").slice(0, 2).join("/");
 
   // Add top symbol hint if community has a clear focus
   const symbols = memberIds

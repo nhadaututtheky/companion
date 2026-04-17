@@ -16,7 +16,9 @@ const sessionStoreMockFactory = () => ({
   persistSession: mock(() => {}),
   cleanupZombieSessions: mock((_isInMemory: (id: string) => boolean) => 0),
   getSessionRecord: mock(() => null),
-  removeActiveSession: mock((id: string) => { mockActiveSessionsMap.delete(id); }),
+  removeActiveSession: mock((id: string) => {
+    mockActiveSessionsMap.delete(id);
+  }),
   createActiveSession: mock(() => {}),
   pushMessageHistory: mock(() => {}),
   updateCliSessionId: mock(() => {}),
@@ -65,10 +67,7 @@ const wsPermissionHandlerMockFactory = () => ({
 });
 mock.module("./ws-permission-handler.js", wsPermissionHandlerMockFactory);
 if (process.platform !== "win32")
-  mock.module(
-    import.meta.resolve("./ws-permission-handler.js"),
-    wsPermissionHandlerMockFactory,
-  );
+  mock.module(import.meta.resolve("./ws-permission-handler.js"), wsPermissionHandlerMockFactory);
 
 // ── ws-context-tracker ────────────────────────────────────────────────────────
 const wsContextTrackerMockFactory = () => ({
@@ -160,10 +159,7 @@ const wsSessionLifecycleMockFactory = () => ({
 });
 mock.module("./ws-session-lifecycle.js", wsSessionLifecycleMockFactory);
 if (process.platform !== "win32")
-  mock.module(
-    import.meta.resolve("./ws-session-lifecycle.js"),
-    wsSessionLifecycleMockFactory,
-  );
+  mock.module(import.meta.resolve("./ws-session-lifecycle.js"), wsSessionLifecycleMockFactory);
 
 // ── event-bus ────────────────────────────────────────────────────────────────
 const eventBusMockFactory = () => ({
@@ -213,7 +209,16 @@ const mockRtkPipeline = {
   setBudgetLevel: mock(() => {}),
   setDisabledStrategies: mock(() => {}),
   clearSessionCache: mock(() => {}),
-  transform: mock(() => ({ compressed: "output", savings: { totalTokensSaved: 0, strategiesApplied: [], ratio: 1, cached: false, budgetTruncated: false } })),
+  transform: mock(() => ({
+    compressed: "output",
+    savings: {
+      totalTokensSaved: 0,
+      strategiesApplied: [],
+      ratio: 1,
+      cached: false,
+      budgetTruncated: false,
+    },
+  })),
 };
 const rtkMockFactory = () => ({
   createDefaultPipeline: mock(() => mockRtkPipeline),
@@ -347,11 +352,11 @@ describe("WsBridge", () => {
     (clearEarlyResult as ReturnType<typeof mock>).mockClear?.();
 
     // Re-wire getActiveSession to use local map
-    (getActiveSession as ReturnType<typeof mock>).mockImplementation(
-      (id: string) => mockActiveSessionsMap.get(id),
+    (getActiveSession as ReturnType<typeof mock>).mockImplementation((id: string) =>
+      mockActiveSessionsMap.get(id),
     );
-    (getAllActiveSessions as ReturnType<typeof mock>).mockImplementation(
-      () => Array.from(mockActiveSessionsMap.values()),
+    (getAllActiveSessions as ReturnType<typeof mock>).mockImplementation(() =>
+      Array.from(mockActiveSessionsMap.values()),
     );
     (cleanupZombieSessions as ReturnType<typeof mock>).mockImplementation(() => 0);
 
@@ -508,7 +513,11 @@ describe("WsBridge", () => {
     });
 
     it("returns noop unsubscribe for non-existent session", () => {
-      const unsubscribe = bridge.subscribe("no-such", "sub-1", mock(() => {}));
+      const unsubscribe = bridge.subscribe(
+        "no-such",
+        "sub-1",
+        mock(() => {}),
+      );
       // Should not throw
       expect(() => unsubscribe()).not.toThrow();
     });
@@ -550,11 +559,13 @@ describe("WsBridge", () => {
 
       (replayEarlyResult as ReturnType<typeof mock>).mockImplementation(() => false);
 
-      bridge.subscribe("s1", "sub-1", mock(() => {}));
+      bridge.subscribe(
+        "s1",
+        "sub-1",
+        mock(() => {}),
+      );
 
-      expect(
-        (clearEarlyResult as ReturnType<typeof mock>).mock.calls.length,
-      ).toBeGreaterThan(0);
+      expect((clearEarlyResult as ReturnType<typeof mock>).mock.calls.length).toBeGreaterThan(0);
     });
   });
 
@@ -709,9 +720,8 @@ describe("WsBridge", () => {
         (mockUserMessageHandlerInstance.handleUserMessage as ReturnType<typeof mock>).mock.calls
           .length,
       ).toBeGreaterThan(0);
-      const call = (
-        mockUserMessageHandlerInstance.handleUserMessage as ReturnType<typeof mock>
-      ).mock.calls[0]!;
+      const call = (mockUserMessageHandlerInstance.handleUserMessage as ReturnType<typeof mock>)
+        .mock.calls[0]!;
       expect(call[0]).toBe(session);
       expect(call[1]).toBe("Hello world");
       expect(call[2]).toBe("test-source");
@@ -742,15 +752,16 @@ describe("WsBridge", () => {
         (mockUserMessageHandlerInstance.routeBrowserMessage as ReturnType<typeof mock>).mock.calls
           .length,
       ).toBeGreaterThan(0);
-      const call = (
-        mockUserMessageHandlerInstance.routeBrowserMessage as ReturnType<typeof mock>
-      ).mock.calls[0]!;
+      const call = (mockUserMessageHandlerInstance.routeBrowserMessage as ReturnType<typeof mock>)
+        .mock.calls[0]!;
       expect(call[0]).toBe(session);
       expect(call[1]).toEqual({ type: "user_message", content: "hi" });
     });
 
     it("silently handles non-existent session (no delegation)", () => {
-      expect(() => bridge.handleBrowserMessage("no-such", JSON.stringify({ type: "ping" }))).not.toThrow();
+      expect(() =>
+        bridge.handleBrowserMessage("no-such", JSON.stringify({ type: "ping" })),
+      ).not.toThrow();
       expect(
         (mockUserMessageHandlerInstance.routeBrowserMessage as ReturnType<typeof mock>).mock.calls
           .length,
@@ -857,9 +868,9 @@ describe("WsBridge", () => {
       const count = bridge.cleanupZombieSessions();
 
       expect(count).toBe(2);
-      expect(
-        (cleanupZombieSessions as ReturnType<typeof mock>).mock.calls.length,
-      ).toBeGreaterThan(0);
+      expect((cleanupZombieSessions as ReturnType<typeof mock>).mock.calls.length).toBeGreaterThan(
+        0,
+      );
     });
 
     it("returns 0 when no zombies found", () => {
@@ -876,12 +887,10 @@ describe("WsBridge", () => {
     it("stops idle detector and health idle manager", () => {
       bridge.stopHealthCheck();
 
-      expect(
-        (mockIdleDetectorInstance.stopAll as ReturnType<typeof mock>).mock.calls.length,
-      ).toBe(1);
-      expect(
-        (mockHealthIdleInstance.stopAll as ReturnType<typeof mock>).mock.calls.length,
-      ).toBe(1);
+      expect((mockIdleDetectorInstance.stopAll as ReturnType<typeof mock>).mock.calls.length).toBe(
+        1,
+      );
+      expect((mockHealthIdleInstance.stopAll as ReturnType<typeof mock>).mock.calls.length).toBe(1);
     });
   });
 

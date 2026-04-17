@@ -1,6 +1,13 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ArrowSquareUpRight, X, Rocket, ArrowsClockwise, DownloadSimple, CaretDown } from "@phosphor-icons/react";
+import {
+  ArrowSquareUpRight,
+  X,
+  Rocket,
+  ArrowsClockwise,
+  DownloadSimple,
+  CaretDown,
+} from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { Z } from "@/lib/z-index";
 import { isTauriEnv } from "@/lib/tauri";
@@ -45,14 +52,16 @@ function getTauriListen():
     | undefined;
 }
 
-
 /**
  * Access Tauri updater check() via global API.
  * Returns the update object if available, null otherwise.
  */
 async function tauriUpdaterCheck(): Promise<{
   downloadAndInstall: (
-    onProgress?: (event: { event: string; data: { chunkLength?: number; contentLength?: number } }) => void,
+    onProgress?: (event: {
+      event: string;
+      data: { chunkLength?: number; contentLength?: number };
+    }) => void,
   ) => Promise<void>;
   version: string;
 } | null> {
@@ -67,7 +76,10 @@ async function tauriUpdaterCheck(): Promise<{
 
   return result as {
     downloadAndInstall: (
-      onProgress?: (event: { event: string; data: { chunkLength?: number; contentLength?: number } }) => void,
+      onProgress?: (event: {
+        event: string;
+        data: { chunkLength?: number; contentLength?: number };
+      }) => void,
     ) => Promise<void>;
     version: string;
   };
@@ -274,7 +286,8 @@ export function UpdateBanner() {
           </div>
 
           <p className="text-text-muted text-xs">
-            You&apos;re on v{update.currentVersion}.{relativeTime ? ` Released ${relativeTime}.` : ""}
+            You&apos;re on v{update.currentVersion}.
+            {relativeTime ? ` Released ${relativeTime}.` : ""}
           </p>
         </div>
 
@@ -316,7 +329,9 @@ export function UpdateBanner() {
       {phase === "installing" && (
         <div className="mt-3 flex items-center gap-2">
           <ArrowsClockwise size={14} weight="bold" className="text-accent animate-spin" />
-          <span className="text-text-secondary text-xs font-medium">Installing & restarting...</span>
+          <span className="text-text-secondary text-xs font-medium">
+            Installing & restarting...
+          </span>
         </div>
       )}
 

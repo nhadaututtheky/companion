@@ -129,8 +129,7 @@ export function handleControlResponse(session: ActiveSession, msg: Record<string
 
     const totalTokens = (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0);
     const maxTokens =
-      usage.context_window ??
-      getMaxContextTokens(session.state.model, session.state.context_mode);
+      usage.context_window ?? getMaxContextTokens(session.state.model, session.state.context_mode);
     const contextUsedPercent = maxTokens > 0 ? Math.min(100, (totalTokens / maxTokens) * 100) : 0;
 
     broadcastToAll(session, {

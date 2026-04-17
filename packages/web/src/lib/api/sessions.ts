@@ -218,13 +218,10 @@ export const sessions = {
       ),
     /** Full AI preview */
     preview: (message: string, projectSlug?: string) =>
-      request<{ success: boolean; data: TaskClassification }>(
-        "/api/sessions/dispatch-preview",
-        {
-          method: "POST",
-          body: JSON.stringify({ message, projectSlug }),
-        },
-      ),
+      request<{ success: boolean; data: TaskClassification }>("/api/sessions/dispatch-preview", {
+        method: "POST",
+        body: JSON.stringify({ message, projectSlug }),
+      }),
     /** Confirm a dispatch suggestion */
     confirm: (opts: {
       sessionId: string;
@@ -233,12 +230,9 @@ export const sessions = {
       action: "accept" | "override";
       projectSlug?: string;
     }) =>
-      request<{ success: boolean; data: DispatchResult }>(
-        "/api/sessions/dispatch-confirm",
-        {
-          method: "POST",
-          body: JSON.stringify(opts),
-        },
-      ),
+      request<{ success: boolean; data: DispatchResult }>("/api/sessions/dispatch-confirm", {
+        method: "POST",
+        body: JSON.stringify(opts),
+      }),
   },
 };

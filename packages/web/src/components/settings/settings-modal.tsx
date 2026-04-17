@@ -61,10 +61,7 @@ function SettingsModalInner({ onClose }: { onClose: () => void }) {
   const setActiveTab = useUiStore((s) => s.setSettingsActiveTab);
   const dialogRef = useRef<HTMLDivElement>(null);
   const isDesktop = isTauriEnv();
-  const visibleTabs = useMemo(
-    () => TABS.filter((t) => !t.desktopOnly || isDesktop),
-    [isDesktop],
-  );
+  const visibleTabs = useMemo(() => TABS.filter((t) => !t.desktopOnly || isDesktop), [isDesktop]);
 
   // Body scroll lock
   useEffect(() => {

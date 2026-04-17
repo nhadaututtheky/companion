@@ -234,9 +234,7 @@ function recordReindexEvent(
  * Get recent auto-reindex events for a project.
  */
 export function getRecentReindexEvents(projectSlug: string, limit = 10): ReindexEvent[] {
-  return recentReindexEvents
-    .filter((e) => e.projectSlug === projectSlug)
-    .slice(-limit);
+  return recentReindexEvents.filter((e) => e.projectSlug === projectSlug).slice(-limit);
 }
 
 // ─── File Path Extraction ───────────────────────────────────────────────

@@ -119,10 +119,7 @@ const wsPermissionHandlerMockFactory = () => ({
 });
 mock.module("./ws-permission-handler.js", wsPermissionHandlerMockFactory);
 if (process.platform !== "win32")
-  mock.module(
-    import.meta.resolve("./ws-permission-handler.js"),
-    wsPermissionHandlerMockFactory,
-  );
+  mock.module(import.meta.resolve("./ws-permission-handler.js"), wsPermissionHandlerMockFactory);
 
 // ─── Imports (after mocks) ────────────────────────────────────────────────────
 
@@ -953,9 +950,9 @@ describe("MessageHandler", () => {
       expect((bridge.startIdleTimer as ReturnType<typeof mock>).mock.calls.length).toBeGreaterThan(
         0,
       );
-      expect(
-        (bridge.checkCostBudget as ReturnType<typeof mock>).mock.calls.length,
-      ).toBeGreaterThan(0);
+      expect((bridge.checkCostBudget as ReturnType<typeof mock>).mock.calls.length).toBeGreaterThan(
+        0,
+      );
       expect(
         (bridge.checkSmartCompact as ReturnType<typeof mock>).mock.calls.length,
       ).toBeGreaterThan(0);

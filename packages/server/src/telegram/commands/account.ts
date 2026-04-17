@@ -4,11 +4,7 @@
 
 import type { TelegramBridge } from "../telegram-bridge.js";
 import { escapeHTML } from "../formatter.js";
-import {
-  listAccounts,
-  switchAccount,
-  renameAccount,
-} from "../../services/credential-manager.js";
+import { listAccounts, switchAccount, renameAccount } from "../../services/credential-manager.js";
 import { isEncryptionEnabled } from "../../services/crypto.js";
 
 const STATUS_EMOJI: Record<string, string> = {
@@ -35,9 +31,7 @@ export function registerAccountCommands(bridge: TelegramBridge): void {
 
   bot.command("account", async (ctx) => {
     if (!isEncryptionEnabled()) {
-      await ctx.reply(
-        "Multi-account disabled \u2014 COMPANION_ENCRYPTION_KEY not set.",
-      );
+      await ctx.reply("Multi-account disabled \u2014 COMPANION_ENCRYPTION_KEY not set.");
       return;
     }
 

@@ -277,9 +277,7 @@ function injectMcpConfig(
     // start fresh
   }
 
-  const originalServers = existing.mcpServers
-    ? { ...existing.mcpServers }
-    : undefined;
+  const originalServers = existing.mcpServers ? { ...existing.mcpServers } : undefined;
 
   const mcpConfig = {
     ...existing,
@@ -529,10 +527,7 @@ export class ClaudeAdapter implements CLIAdapter {
     const binary = resolveClaudeBinary();
 
     // Apply [1m] suffix when user opted into 1M context (Opus 4.7/4.6, Sonnet 4.6 only)
-    const resolvedModel = applyContextSuffix(
-      opts.model ?? "claude-sonnet-4-6",
-      opts.contextMode,
-    );
+    const resolvedModel = applyContextSuffix(opts.model ?? "claude-sonnet-4-6", opts.contextMode);
 
     const args: string[] = [
       "--print",
@@ -569,12 +564,7 @@ export class ClaudeAdapter implements CLIAdapter {
     const apiUrl = process.env.COMPANION_API_URL ?? `http://localhost:${process.env.PORT ?? 3579}`;
     const apiKey = process.env.API_KEY ?? "";
     const projectSlug = opts.platformOptions?.projectSlug as string | undefined;
-    const mcpCleanup = injectMcpConfig(
-      opts.cwd,
-      apiUrl,
-      apiKey,
-      projectSlug ?? "",
-    );
+    const mcpCleanup = injectMcpConfig(opts.cwd, apiUrl, apiKey, projectSlug ?? "");
 
     log.info("Launching Claude CLI", {
       binary,

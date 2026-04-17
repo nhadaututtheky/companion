@@ -111,22 +111,21 @@ ${files}
 
     // Auto-compile: process the newly saved raw file into wiki articles
     // Fire-and-forget — compilation failure should not block session cleanup
-    compileWiki(
-      { domain, rawFiles: [filename] },
-      rootPath,
-    ).then((result) => {
-      if (result.articlesWritten.length > 0) {
-        log.info("Auto-compiled session findings into wiki articles", {
-          sessionId,
-          domain,
-          articles: result.articlesWritten,
+    compileWiki({ domain, rawFiles: [filename] }, rootPath)
+      .then((result) => {
+        if (result.articlesWritten.length > 0) {
+          log.info("Auto-compiled session findings into wiki articles", {
+            sessionId,
+            domain,
+            articles: result.articlesWritten,
+          });
+        }
+      })
+      .catch((err) => {
+        log.debug("Auto-compile skipped (AI not configured or compile failed)", {
+          error: String(err),
         });
-      }
-    }).catch((err) => {
-      log.debug("Auto-compile skipped (AI not configured or compile failed)", {
-        error: String(err),
       });
-    });
   } catch (err) {
     log.error("Failed to save session findings", { sessionId, error: String(err) });
   }

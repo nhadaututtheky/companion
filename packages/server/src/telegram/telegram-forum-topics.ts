@@ -30,7 +30,6 @@ export class TelegramForumTopics {
     projectSlug: string,
     projectName: string,
   ): Promise<number | undefined> {
-
     const db = getDb();
 
     // Check if we already have a topic for this project in this group
@@ -94,12 +93,7 @@ export class TelegramForumTopics {
     const row = db
       .select({ projectSlug: telegramForumTopics.projectSlug })
       .from(telegramForumTopics)
-      .where(
-        and(
-          eq(telegramForumTopics.chatId, chatId),
-          eq(telegramForumTopics.topicId, topicId),
-        ),
-      )
+      .where(and(eq(telegramForumTopics.chatId, chatId), eq(telegramForumTopics.topicId, topicId)))
       .get();
     return row?.projectSlug;
   }

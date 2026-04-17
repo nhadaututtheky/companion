@@ -96,16 +96,8 @@ export function saveAccount(label: string, credentials: OAuthCredentials): strin
     // Prefer stable identity; fall back to legacy fingerprint match so existing
     // rows get merged in-place instead of duplicated on first write after upgrade.
     const existing =
-      db
-        .select({ id: accounts.id })
-        .from(accounts)
-        .where(eq(accounts.identity, identity))
-        .get() ??
-      db
-        .select({ id: accounts.id })
-        .from(accounts)
-        .where(eq(accounts.fingerprint, fp))
-        .get();
+      db.select({ id: accounts.id }).from(accounts).where(eq(accounts.identity, identity)).get() ??
+      db.select({ id: accounts.id }).from(accounts).where(eq(accounts.fingerprint, fp)).get();
 
     if (existing) {
       db.update(accounts)
@@ -290,11 +282,7 @@ export function dedupeAccountsByIdentity(): {
 /** Check whether an account exists by id. */
 export function accountExists(id: string): boolean {
   const db = getDb();
-  const row = db
-    .select({ id: accounts.id })
-    .from(accounts)
-    .where(eq(accounts.id, id))
-    .get();
+  const row = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.id, id)).get();
   return !!row;
 }
 
@@ -327,11 +315,7 @@ export function listAccounts(): AccountInfo[] {
 /** Get the currently active account (the one used for new sessions). */
 export function getActiveAccount(): AccountInfo | undefined {
   const db = getDb();
-  const row = db
-    .select()
-    .from(accounts)
-    .where(eq(accounts.isActive, true))
-    .get();
+  const row = db.select().from(accounts).where(eq(accounts.isActive, true)).get();
 
   if (!row) return undefined;
 
@@ -366,18 +350,12 @@ export function setActiveAccount(id: string): boolean {
 
   // Atomic: deactivate all → activate target (prevents crash leaving no active account)
   const txn = sqlite!.transaction(() => {
-    const target = db
-      .select({ id: accounts.id })
-      .from(accounts)
-      .where(eq(accounts.id, id))
-      .get();
+    const target = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.id, id)).get();
 
     if (!target) return false;
 
     // Intentionally no WHERE — deactivate ALL accounts to enforce single-active invariant
-    db.update(accounts)
-      .set({ isActive: false, updatedAt: new Date() })
-      .run();
+    db.update(accounts).set({ isActive: false, updatedAt: new Date() }).run();
 
     db.update(accounts)
       .set({ isActive: true, updatedAt: new Date() })
@@ -414,10 +392,7 @@ export function deleteAccount(id: string): boolean {
   const txn = sqlite.transaction(() => {
     // Detach historical sessions so per-session cost data isn't orphaned
     // (sessions.accountId has no FK, so nothing stops a dangling reference otherwise).
-    db.update(sessions)
-      .set({ accountId: null })
-      .where(eq(sessions.accountId, id))
-      .run();
+    db.update(sessions).set({ accountId: null }).where(eq(sessions.accountId, id)).run();
     db.delete(accounts).where(eq(accounts.id, id)).run();
   });
   txn();
@@ -457,11 +432,7 @@ export function updateAccountStatus(
 ): boolean {
   const db = getDb();
 
-  const existing = db
-    .select({ id: accounts.id })
-    .from(accounts)
-    .where(eq(accounts.id, id))
-    .get();
+  const existing = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.id, id)).get();
 
   if (!existing) return false;
 
@@ -513,18 +484,11 @@ export async function switchAccount(id: string): Promise<boolean> {
 export function renameAccount(id: string, label: string): boolean {
   const db = getDb();
 
-  const existing = db
-    .select({ id: accounts.id })
-    .from(accounts)
-    .where(eq(accounts.id, id))
-    .get();
+  const existing = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.id, id)).get();
 
   if (!existing) return false;
 
-  db.update(accounts)
-    .set({ label, updatedAt: new Date() })
-    .where(eq(accounts.id, id))
-    .run();
+  db.update(accounts).set({ label, updatedAt: new Date() }).where(eq(accounts.id, id)).run();
 
   return true;
 }
@@ -568,10 +532,7 @@ export function markRateLimited(id: string): number {
  * `includeSkipped` bypasses the skip flag — used by manual "switch to next" when the
  * caller has already vetted the candidate pool (e.g. exposed by a UI button).
  */
-export function findNextReady(
-  excludeId?: string,
-  includeSkipped = false,
-): AccountInfo | undefined {
+export function findNextReady(excludeId?: string, includeSkipped = false): AccountInfo | undefined {
   const db = getDb();
   const rows = excludeId
     ? db
@@ -683,11 +644,7 @@ export function addAccountCost(id: string, costUsd: number): void {
  */
 export function updateAccountBudgets(id: string, budgets: AccountBudgets): boolean {
   const db = getDb();
-  const existing = db
-    .select({ id: accounts.id })
-    .from(accounts)
-    .where(eq(accounts.id, id))
-    .get();
+  const existing = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.id, id)).get();
   if (!existing) return false;
 
   db.update(accounts)
@@ -708,11 +665,7 @@ export function updateAccountBudgets(id: string, budgets: AccountBudgets): boole
  */
 export function updateAccountSkipRotation(id: string, skip: boolean): boolean {
   const db = getDb();
-  const existing = db
-    .select({ id: accounts.id })
-    .from(accounts)
-    .where(eq(accounts.id, id))
-    .get();
+  const existing = db.select({ id: accounts.id }).from(accounts).where(eq(accounts.id, id)).get();
   if (!existing) return false;
 
   db.update(accounts)

@@ -75,7 +75,12 @@ export function InputField({
 
 // ── Tab types ────────────────────────────────────────────────────────────────
 
-export const TABS: Array<{ id: SettingsTab; label: string; icon: React.ReactNode; desktopOnly?: boolean }> = [
+export const TABS: Array<{
+  id: SettingsTab;
+  label: string;
+  icon: React.ReactNode;
+  desktopOnly?: boolean;
+}> = [
   { id: "general", label: "General", icon: <Gear size={15} weight="bold" /> },
   { id: "domain", label: "Domain", icon: <Globe size={15} weight="bold" /> },
   { id: "ai", label: "AI Provider", icon: <Robot size={15} weight="bold" /> },

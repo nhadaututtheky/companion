@@ -102,7 +102,9 @@ export function PluginsTab() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-12">
-        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>{error}</p>
+        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+          {error}
+        </p>
         <button
           onClick={fetchPlugins}
           className="flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
@@ -182,14 +184,15 @@ export function PluginsTab() {
                       {version && (
                         <span
                           className="rounded px-1.5 py-0.5 text-xs"
-                          style={{ background: "var(--glass-bg)", color: "var(--color-text-muted)" }}
+                          style={{
+                            background: "var(--glass-bg)",
+                            color: "var(--color-text-muted)",
+                          }}
                         >
                           v{version}
                         </span>
                       )}
-                      {author && (
-                        <span className="text-text-muted text-xs">by {author}</span>
-                      )}
+                      {author && <span className="text-text-muted text-xs">by {author}</span>}
                     </div>
                     <p
                       className="mt-0.5 text-xs leading-snug"
@@ -224,7 +227,9 @@ export function PluginsTab() {
                       disabled={isToggling}
                       className="relative h-6 w-11 cursor-pointer rounded-full transition-colors"
                       style={{
-                        background: plugin.enabled ? "var(--color-accent)" : "var(--glass-bg-heavy)",
+                        background: plugin.enabled
+                          ? "var(--color-accent)"
+                          : "var(--glass-bg-heavy)",
                         opacity: isToggling ? 0.6 : 1,
                       }}
                       role="switch"
@@ -250,12 +255,24 @@ export function PluginsTab() {
                   >
                     <div className="flex flex-wrap gap-3">
                       <ProvidesList icon={Robot} label="Agents" items={plugin.provides.agents} />
-                      <ProvidesList icon={Terminal} label="Commands" items={plugin.provides.commands} />
+                      <ProvidesList
+                        icon={Terminal}
+                        label="Commands"
+                        items={plugin.provides.commands}
+                      />
                       <ProvidesList icon={BookOpen} label="Skills" items={plugin.provides.skills} />
-                      <ProvidesList icon={Plugs} label="MCP Servers" items={plugin.provides.mcpServers} />
+                      <ProvidesList
+                        icon={Plugs}
+                        label="MCP Servers"
+                        items={plugin.provides.mcpServers}
+                      />
                       {plugin.provides.hooks && (
                         <div className="flex items-center gap-1.5">
-                          <Lightning size={12} weight="bold" style={{ color: "var(--color-text-muted)" }} />
+                          <Lightning
+                            size={12}
+                            weight="bold"
+                            style={{ color: "var(--color-text-muted)" }}
+                          />
                           <span className="text-text-muted text-xs">Hooks</span>
                         </div>
                       )}
@@ -285,9 +302,7 @@ export function PluginsTab() {
                           Repository
                         </a>
                       )}
-                      <span className="text-text-muted text-xs">
-                        {plugin.registry}
-                      </span>
+                      <span className="text-text-muted text-xs">{plugin.registry}</span>
                     </div>
                   </div>
                 )}
@@ -297,7 +312,11 @@ export function PluginsTab() {
 
           {plugins.length === 0 && (
             <div className="py-8 text-center">
-              <PuzzlePiece size={32} weight="thin" style={{ color: "var(--color-text-muted)", margin: "0 auto" }} />
+              <PuzzlePiece
+                size={32}
+                weight="thin"
+                style={{ color: "var(--color-text-muted)", margin: "0 auto" }}
+              />
               <p className="text-text-muted mt-2 text-sm">No plugins installed</p>
               <p className="text-text-muted mt-1 text-xs">
                 Install plugins via Claude Code CLI or settings
@@ -317,7 +336,11 @@ function ProvidesList({
   label,
   items,
 }: {
-  icon: React.ComponentType<{ size?: number; weight?: "bold" | "duotone" | "fill" | "light" | "regular" | "thin"; style?: React.CSSProperties }>;
+  icon: React.ComponentType<{
+    size?: number;
+    weight?: "bold" | "duotone" | "fill" | "light" | "regular" | "thin";
+    style?: React.CSSProperties;
+  }>;
   label: string;
   items: string[];
 }) {

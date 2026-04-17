@@ -83,10 +83,7 @@ export interface AnalyzeOptions {
  * Uses git diff to detect changes, then computes blast radius,
  * risk scores, and affected communities.
  */
-export function analyzeImpact(
-  projectSlug: string,
-  options: AnalyzeOptions = {},
-): ImpactReport {
+export function analyzeImpact(projectSlug: string, options: AnalyzeOptions = {}): ImpactReport {
   const { maxDepth = 2, since = "HEAD~1" } = options;
 
   if (!isGraphReady(projectSlug)) {
@@ -146,9 +143,10 @@ export function analyzeImpact(
 
     // File-level risk = max symbol risk, or base risk for new/deleted files
     const maxSymbolRisk = fileRisks.length > 0 ? fileRisks[0]!.score : 0;
-    const fileRiskScore = type === "deleted"
-      ? Math.max(maxSymbolRisk, 0.6) // deletions are inherently risky
-      : maxSymbolRisk;
+    const fileRiskScore =
+      type === "deleted"
+        ? Math.max(maxSymbolRisk, 0.6) // deletions are inherently risky
+        : maxSymbolRisk;
 
     fileImpacts.push({
       filePath,
@@ -182,9 +180,10 @@ export function analyzeImpact(
   const suggestedReviews = generateReviewSuggestions(fileImpacts, affectedCommunities);
 
   // Step 6: Overall risk = weighted avg of file risks
-  const overallRiskScore = fileImpacts.length > 0
-    ? fileImpacts.reduce((sum, f) => sum + f.riskScore, 0) / fileImpacts.length
-    : 0;
+  const overallRiskScore =
+    fileImpacts.length > 0
+      ? fileImpacts.reduce((sum, f) => sum + f.riskScore, 0) / fileImpacts.length
+      : 0;
 
   const report: ImpactReport = {
     changedFiles: filePaths,
@@ -232,7 +231,10 @@ function generateReviewSuggestions(
   const highRisk = impacts.filter((f) => f.riskScore >= 0.5);
   if (highRisk.length > 0) {
     suggestions.push(
-      `Review ${highRisk.length} high-risk file(s): ${highRisk.map((f) => f.filePath).slice(0, 3).join(", ")}`,
+      `Review ${highRisk.length} high-risk file(s): ${highRisk
+        .map((f) => f.filePath)
+        .slice(0, 3)
+        .join(", ")}`,
     );
   }
 
@@ -247,9 +249,7 @@ function generateReviewSuggestions(
   // Deleted files
   const deleted = impacts.filter((f) => f.changeType === "deleted");
   if (deleted.length > 0) {
-    suggestions.push(
-      `${deleted.length} deleted file(s) — check for broken imports in dependents`,
-    );
+    suggestions.push(`${deleted.length} deleted file(s) — check for broken imports in dependents`);
   }
 
   // Cross-community changes

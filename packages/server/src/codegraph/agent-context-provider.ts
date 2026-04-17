@@ -659,7 +659,9 @@ export function checkBreaks(projectSlug: string, modifiedFiles: string[]): strin
       lines.push(`  ... and ${breakages.length - 8} more`);
     }
 
-    lines.push(`If you changed function signatures (params, return type), verify all dependents still compile.`);
+    lines.push(
+      `If you changed function signatures (params, return type), verify all dependents still compile.`,
+    );
     lines.push(`</codegraph>`);
     return "\n\n" + lines.join("\n");
   } catch (err) {

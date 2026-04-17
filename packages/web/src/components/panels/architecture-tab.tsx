@@ -123,7 +123,9 @@ export function ArchitectureTab({ projectSlug }: ArchitectureTabProps) {
     };
 
     void renderMermaid();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [data?.mermaid]);
 
   const handleCopy = () => {
@@ -178,7 +180,11 @@ export function ArchitectureTab({ projectSlug }: ArchitectureTabProps) {
             onClick={loadDiagram}
             disabled={loading || !fileInput}
             className="cursor-pointer rounded-md px-3 py-1.5 text-xs font-medium"
-            style={{ background: "#6366f1", color: "#fff", opacity: loading || !fileInput ? 0.5 : 1 }}
+            style={{
+              background: "#6366f1",
+              color: "#fff",
+              opacity: loading || !fileInput ? 0.5 : 1,
+            }}
           >
             Generate
           </button>
@@ -204,7 +210,11 @@ export function ArchitectureTab({ projectSlug }: ArchitectureTabProps) {
             onClick={loadDiagram}
             disabled={loading || !symbolInput}
             className="cursor-pointer rounded-md px-3 py-1.5 text-xs font-medium"
-            style={{ background: "#6366f1", color: "#fff", opacity: loading || !symbolInput ? 0.5 : 1 }}
+            style={{
+              background: "#6366f1",
+              color: "#fff",
+              opacity: loading || !symbolInput ? 0.5 : 1,
+            }}
           >
             Generate
           </button>
@@ -250,7 +260,7 @@ export function ArchitectureTab({ projectSlug }: ArchitectureTabProps) {
             <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
               {data.description}
             </span>
-            <span className="text-xs font-mono" style={{ color: "var(--color-text-muted)" }}>
+            <span className="font-mono text-xs" style={{ color: "var(--color-text-muted)" }}>
               {data.nodeCount}N / {data.edgeCount}E
             </span>
           </div>

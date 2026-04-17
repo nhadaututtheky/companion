@@ -197,7 +197,14 @@ export class BotRegistry {
    * Called on session lifecycle events (complete, error, idle timeout).
    */
   async sendNotification(event: {
-    type: "session_complete" | "session_error" | "session_idle_timeout" | "account_captured" | "account_switched" | "account_rate_limited" | "account_all_limited";
+    type:
+      | "session_complete"
+      | "session_error"
+      | "session_idle_timeout"
+      | "account_captured"
+      | "account_switched"
+      | "account_rate_limited"
+      | "account_all_limited";
     sessionId?: string;
     shortId?: string;
     projectSlug?: string;
@@ -257,7 +264,14 @@ export class BotRegistry {
   }
 
   private formatNotification(event: {
-    type: "session_complete" | "session_error" | "session_idle_timeout" | "account_captured" | "account_switched" | "account_rate_limited" | "account_all_limited";
+    type:
+      | "session_complete"
+      | "session_error"
+      | "session_idle_timeout"
+      | "account_captured"
+      | "account_switched"
+      | "account_rate_limited"
+      | "account_all_limited";
     sessionId?: string;
     shortId?: string;
     projectSlug?: string;

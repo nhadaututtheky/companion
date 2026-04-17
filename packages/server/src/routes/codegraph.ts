@@ -430,17 +430,14 @@ codegraphRoutes.get("/communities", async (c) => {
 
 /** POST /codegraph/impact-analysis — pre-commit change impact analysis */
 codegraphRoutes.post("/impact-analysis", async (c) => {
-  const body = await c.req.json().catch(() => ({})) as Record<string, unknown>;
+  const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
   const project = (body.project ?? body.projectSlug) as string | undefined;
 
   if (!project) {
-    return c.json(
-      { success: false, error: "project field required" } satisfies ApiResponse,
-      400,
-    );
+    return c.json({ success: false, error: "project field required" } satisfies ApiResponse, 400);
   }
 
-  const files = Array.isArray(body.files) ? body.files as string[] : undefined;
+  const files = Array.isArray(body.files) ? (body.files as string[]) : undefined;
   const projectDir = typeof body.projectDir === "string" ? body.projectDir : undefined;
   const since = typeof body.since === "string" ? body.since : undefined;
   const maxDepth = typeof body.maxDepth === "number" ? Math.min(body.maxDepth, 5) : undefined;
@@ -520,7 +517,9 @@ codegraphRoutes.put("/config", async (c) => {
         ...(body.planReviewEnabled !== undefined && { planReviewEnabled: body.planReviewEnabled }),
         ...(body.breakCheckEnabled !== undefined && { breakCheckEnabled: body.breakCheckEnabled }),
         ...(body.webDocsEnabled !== undefined && { webDocsEnabled: body.webDocsEnabled }),
-        ...(body.autoReindexEnabled !== undefined && { autoReindexEnabled: body.autoReindexEnabled }),
+        ...(body.autoReindexEnabled !== undefined && {
+          autoReindexEnabled: body.autoReindexEnabled,
+        }),
         ...(body.excludePatterns !== undefined && { excludePatterns: body.excludePatterns }),
         ...(body.maxContextTokens !== undefined && { maxContextTokens: body.maxContextTokens }),
         updatedAt: now,
@@ -587,7 +586,10 @@ codegraphRoutes.post("/generate-skills", async (c) => {
   const parsed = projectSlugSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     return c.json(
-      { success: false, error: parsed.error.issues[0]?.message ?? "Invalid body — requires projectSlug" } satisfies ApiResponse,
+      {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? "Invalid body — requires projectSlug",
+      } satisfies ApiResponse,
       400,
     );
   }
@@ -596,10 +598,7 @@ codegraphRoutes.post("/generate-skills", async (c) => {
     const result = generateSkills(parsed.data.projectSlug);
     return c.json({ success: true, data: result } satisfies ApiResponse);
   } catch (err) {
-    return c.json(
-      { success: false, error: String(err) } satisfies ApiResponse,
-      500,
-    );
+    return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
   }
 });
 
@@ -627,7 +626,10 @@ codegraphRoutes.get("/diagram", (c) => {
         const file = c.req.query("file");
         if (!file) {
           return c.json(
-            { success: false, error: "file query param required for module diagram" } satisfies ApiResponse,
+            {
+              success: false,
+              error: "file query param required for module diagram",
+            } satisfies ApiResponse,
             400,
           );
         }
@@ -638,7 +640,10 @@ codegraphRoutes.get("/diagram", (c) => {
         const symbol = c.req.query("symbol");
         if (!symbol) {
           return c.json(
-            { success: false, error: "symbol query param required for flow diagram" } satisfies ApiResponse,
+            {
+              success: false,
+              error: "symbol query param required for flow diagram",
+            } satisfies ApiResponse,
             400,
           );
         }
@@ -647,14 +652,14 @@ codegraphRoutes.get("/diagram", (c) => {
       }
       default:
         return c.json(
-          { success: false, error: `Unknown diagram type: ${type}. Use: architecture, module, flow` } satisfies ApiResponse,
+          {
+            success: false,
+            error: `Unknown diagram type: ${type}. Use: architecture, module, flow`,
+          } satisfies ApiResponse,
           400,
         );
     }
   } catch (err) {
-    return c.json(
-      { success: false, error: String(err) } satisfies ApiResponse,
-      500,
-    );
+    return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
   }
 });

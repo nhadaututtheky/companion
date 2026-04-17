@@ -41,7 +41,11 @@ async function main(): Promise<void> {
   const adapter = new GeminiAdapter();
   const det = await adapter.detect();
   check("detect() returned an object", typeof det === "object");
-  check("gemini CLI available", det.available === true, det.available ? `v${det.version}` : "not installed");
+  check(
+    "gemini CLI available",
+    det.available === true,
+    det.available ? `v${det.version}` : "not installed",
+  );
   if (!det.available) {
     console.log(`\n${FAIL}  Gemini CLI missing. Install: npm i -g @google/gemini-cli`);
     process.exit(1);
@@ -56,12 +60,18 @@ async function main(): Promise<void> {
     "capabilities.supportsInteractive = false (one-shot mode)",
     fromRegistry.capabilities.supportsInteractive === false,
   );
-  check("capabilities.supportsResume = false (index-based, not ID)", fromRegistry.capabilities.supportsResume === false);
+  check(
+    "capabilities.supportsResume = false (index-based, not ID)",
+    fromRegistry.capabilities.supportsResume === false,
+  );
   check("capabilities.supportsStreaming", fromRegistry.capabilities.supportsStreaming === true);
 
   const all = await detectAllPlatforms();
   const geminiEntry = all.find((a) => a.platform === "gemini");
-  check("gemini present in detectAllPlatforms()", !!geminiEntry && geminiEntry.detection.available === true);
+  check(
+    "gemini present in detectAllPlatforms()",
+    !!geminiEntry && geminiEntry.detection.available === true,
+  );
 
   // ── 3. Unit tests for parseGeminiMessage ───────────────────────────────
   console.log("\n─── 3. parseGeminiMessage unit tests ───");
@@ -85,10 +95,15 @@ async function main(): Promise<void> {
   );
   check("message(assistant) → assistant", assistantMsg?.type === "assistant");
   check("message(assistant).content extracted", assistantMsg?.content === "Hello world");
-  check("message(assistant).contentBlocks populated", assistantMsg?.contentBlocks?.[0]?.type === "text");
+  check(
+    "message(assistant).contentBlocks populated",
+    assistantMsg?.contentBlocks?.[0]?.type === "text",
+  );
 
   // user echo → progress (filtered from content stream)
-  const userEcho = parseGeminiMessage(JSON.stringify({ type: "message", role: "user", content: "test" }));
+  const userEcho = parseGeminiMessage(
+    JSON.stringify({ type: "message", role: "user", content: "test" }),
+  );
   check("message(user) → progress (not surfaced as content)", userEcho?.type === "progress");
 
   // tool_use
@@ -111,7 +126,12 @@ async function main(): Promise<void> {
 
   // tool_result success
   const toolResOk = parseGeminiMessage(
-    JSON.stringify({ type: "tool_result", tool_id: "t1", status: "success", output: "file contents" }),
+    JSON.stringify({
+      type: "tool_result",
+      tool_id: "t1",
+      status: "success",
+      output: "file contents",
+    }),
   );
   check("tool_result(success) → tool_result", toolResOk?.type === "tool_result");
   check("tool_result.toolIsError = false", toolResOk?.toolIsError === false);
@@ -130,15 +150,24 @@ async function main(): Promise<void> {
   check("tool_result(error).toolResult = error message", toolResErr?.toolResult === "missing");
 
   // error
-  const errMsg = parseGeminiMessage(JSON.stringify({ type: "error", severity: "warning", message: "loop detected" }));
+  const errMsg = parseGeminiMessage(
+    JSON.stringify({ type: "error", severity: "warning", message: "loop detected" }),
+  );
   check("error → error", errMsg?.type === "error");
   check("error.errorMessage extracted", errMsg?.errorMessage === "loop detected");
 
   // result success
   const resultOk = parseGeminiMessage(
-    JSON.stringify({ type: "result", status: "success", stats: { turn_count: 3, total_duration_ms: 1500 } }),
+    JSON.stringify({
+      type: "result",
+      status: "success",
+      stats: { turn_count: 3, total_duration_ms: 1500 },
+    }),
   );
-  check("result(success) → complete, no error", resultOk?.type === "complete" && resultOk.isError === false);
+  check(
+    "result(success) → complete, no error",
+    resultOk?.type === "complete" && resultOk.isError === false,
+  );
   check("result.durationMs extracted", resultOk?.durationMs === 1500);
   check("result.numTurns extracted", resultOk?.numTurns === 3);
 
@@ -154,7 +183,10 @@ async function main(): Promise<void> {
   check("result(error).errorMessage extracted", resultErr?.errorMessage === "Max turns exceeded");
 
   // non-JSON → null (filtered out)
-  check("non-JSON line → null (skip)", parseGeminiMessage("MCP context refresh complete.") === null);
+  check(
+    "non-JSON line → null (skip)",
+    parseGeminiMessage("MCP context refresh complete.") === null,
+  );
   check("blank-ish JSON without type → null", parseGeminiMessage(JSON.stringify({})) === null);
 
   // unknown event → progress
@@ -164,7 +196,9 @@ async function main(): Promise<void> {
   // ── 4. End-to-end launch (real process) ────────────────────────────────
   console.log("\n─── 4. End-to-end launch ───");
   const hasApiKey = !!process.env.GEMINI_API_KEY;
-  console.log(`${INFO}  auth mode: ${hasApiKey ? "GEMINI_API_KEY set" : "NO API KEY → testing error path"}`);
+  console.log(
+    `${INFO}  auth mode: ${hasApiKey ? "GEMINI_API_KEY set" : "NO API KEY → testing error path"}`,
+  );
 
   const messages: NormalizedMessage[] = [];
   let exitCode: number | null = null;
@@ -204,20 +238,30 @@ async function main(): Promise<void> {
 
   // Critical invariant: stdout noise (MCP init logs, stack traces) must NOT become assistant messages
   const assistantMsgs = messages.filter((m) => m.type === "assistant");
-  const mcpNoiseInAssistant = assistantMsgs.some((m) => (m.content ?? "").toLowerCase().includes("mcp context refresh"));
+  const mcpNoiseInAssistant = assistantMsgs.some((m) =>
+    (m.content ?? "").toLowerCase().includes("mcp context refresh"),
+  );
   check("MCP startup noise filtered out of assistant stream", !mcpNoiseInAssistant);
 
-  const stackTraceInAssistant = assistantMsgs.some((m) =>
-    (m.content ?? "").includes("at BaseLlmClient") || (m.content ?? "").includes("node:internal/"),
+  const stackTraceInAssistant = assistantMsgs.some(
+    (m) =>
+      (m.content ?? "").includes("at BaseLlmClient") ||
+      (m.content ?? "").includes("node:internal/"),
   );
   check("stack traces filtered out of assistant stream", !stackTraceInAssistant);
 
   if (hasApiKey) {
-    check("received init message", messages.some((m) => m.type === "system_init"));
+    check(
+      "received init message",
+      messages.some((m) => m.type === "system_init"),
+    );
     check("received at least one assistant message", assistantMsgs.length > 0);
     const hasHello = messages.some((m) => (m.content ?? "").toLowerCase().includes("hello"));
     check("response contains 'hello'", hasHello);
-    check("received result/complete", messages.some((m) => m.type === "complete"));
+    check(
+      "received result/complete",
+      messages.some((m) => m.type === "complete"),
+    );
   } else {
     // Without auth, we verify error surface path.
     const authError = proc.getStderrLines().some((l) => /auth|api[_ ]?key|GEMINI_API_KEY/i.test(l));

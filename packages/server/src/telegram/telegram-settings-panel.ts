@@ -135,11 +135,7 @@ export async function sendSettingsPanel(
         : []),
       // Row 2: Auto-approve timeout
       [
-        btn(
-          `Off${aaOff ? " ✓" : ""}`,
-          `panel:aa:off:${sessionId}`,
-          aaOff ? "success" : undefined,
-        ),
+        btn(`Off${aaOff ? " ✓" : ""}`, `panel:aa:off:${sessionId}`, aaOff ? "success" : undefined),
         btn(`15s${aa15 ? " ✓" : ""}`, `panel:aa:15:${sessionId}`, aa15 ? "success" : undefined),
         btn(`30s${aa30 ? " ✓" : ""}`, `panel:aa:30:${sessionId}`, aa30 ? "success" : undefined),
         btn(`60s${aa60 ? " ✓" : ""}`, `panel:aa:60:${sessionId}`, aa60 ? "success" : undefined),
@@ -164,11 +160,7 @@ export async function sendSettingsPanel(
           `panel:idle:0:${sessionId}`,
           iNever ? "success" : undefined,
         ),
-        btn(
-          `30m${i30m ? " ✓" : ""}`,
-          `panel:idle:1800:${sessionId}`,
-          i30m ? "success" : undefined,
-        ),
+        btn(`30m${i30m ? " ✓" : ""}`, `panel:idle:1800:${sessionId}`, i30m ? "success" : undefined),
         btn(`1h${i1h ? " ✓" : ""}`, `panel:idle:3600:${sessionId}`, i1h ? "success" : undefined),
         btn(`4h${i4h ? " ✓" : ""}`, `panel:idle:14400:${sessionId}`, i4h ? "success" : undefined),
         btn(

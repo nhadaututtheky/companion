@@ -27,7 +27,6 @@ export function TipBanner({ context = "dashboard", conditions }: TipBannerProps)
       }
       return true;
     });
-
   }, [context, conditions, dismissCounter]);
 
   const currentTip: Tip | null = useMemo(() => {

@@ -151,10 +151,7 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
     // Try to create a forum topic for the debate (groups + private chats with Threaded Mode)
     let debateTopicId = topicId;
     try {
-      const forumTopic = await bridge.bot.api.createForumTopic(
-        chatId,
-        `⚖️ ${topic.slice(0, 100)}`,
-      );
+      const forumTopic = await bridge.bot.api.createForumTopic(chatId, `⚖️ ${topic.slice(0, 100)}`);
       debateTopicId = forumTopic.message_thread_id;
     } catch {
       // Forum topics not enabled — use current thread or main chat
@@ -421,4 +418,3 @@ function resolvePeerApis(primaryApi: Api): Api[] {
   }
   return apis.length > 0 ? apis : [primaryApi];
 }
-

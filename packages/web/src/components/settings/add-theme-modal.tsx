@@ -76,12 +76,7 @@ export function AddThemeModal({ onClose, onImport }: AddThemeModalProps) {
           <h2 className="text-lg font-bold" style={{ fontFamily: "Outfit, sans-serif" }}>
             Add Custom Theme
           </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="cursor-pointer"
-            aria-label="Close"
-          >
+          <button type="button" onClick={onClose} className="cursor-pointer" aria-label="Close">
             <X size={18} />
           </button>
         </div>
@@ -91,7 +86,7 @@ export function AddThemeModal({ onClose, onImport }: AddThemeModalProps) {
           Companion&apos;s CSS variables for both light and dark modes.
         </p>
 
-        <label className="text-text-primary bg-bg-elevated hover:bg-[var(--color-bg-hover)] flex cursor-pointer items-center justify-center gap-2 rounded-xl p-4 text-sm font-semibold transition-colors">
+        <label className="text-text-primary bg-bg-elevated flex cursor-pointer items-center justify-center gap-2 rounded-xl p-4 text-sm font-semibold transition-colors hover:bg-[var(--color-bg-hover)]">
           <UploadSimple size={18} weight="bold" />
           Choose VS Code Theme (.json)
           <input

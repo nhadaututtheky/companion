@@ -355,10 +355,7 @@ export function MessageComposer({
         {/* Dispatch suggestion */}
         {dispatchSuggestion && !dispatchSuggestion.dismissed && (
           <div className="mb-2">
-            <DispatchSuggestion
-              onConfirm={handleDispatchConfirm}
-              onDismiss={clearSuggestion}
-            />
+            <DispatchSuggestion onConfirm={handleDispatchConfirm} onDismiss={clearSuggestion} />
           </div>
         )}
 

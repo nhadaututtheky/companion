@@ -48,7 +48,9 @@ export function registerAgentTools(server: McpServer): void {
     "companion_wiki_search",
     "Search the project wiki knowledge base. Returns matching articles with relevance scores and related code symbols. Use this to find documented patterns, decisions, and known issues before starting work.",
     {
-      query: z.string().describe("Search query (e.g., 'auth flow', 'deploy process', 'known bugs')"),
+      query: z
+        .string()
+        .describe("Search query (e.g., 'auth flow', 'deploy process', 'known bugs')"),
       domain: z.string().optional().describe("Wiki domain slug (defaults to project slug)"),
     },
     async ({ query, domain }) => {
@@ -62,7 +64,10 @@ export function registerAgentTools(server: McpServer): void {
         });
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Wiki search failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Wiki search failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -83,7 +88,10 @@ export function registerAgentTools(server: McpServer): void {
         );
         return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Wiki read failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Wiki read failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -101,13 +109,19 @@ export function registerAgentTools(server: McpServer): void {
     async ({ content, title, tags, domain }) => {
       try {
         const d = domain ?? process.env.PROJECT_SLUG ?? "default";
-        const res = await apiCall<{ data: { slug: string } }>(`/wiki/${encodeURIComponent(d)}/note`, {
-          method: "POST",
-          body: { content, title, tags },
-        });
+        const res = await apiCall<{ data: { slug: string } }>(
+          `/wiki/${encodeURIComponent(d)}/note`,
+          {
+            method: "POST",
+            body: { content, title, tags },
+          },
+        );
         return { content: [{ type: "text", text: `Saved: wiki/${d}/${res.data.slug}` }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Wiki note failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Wiki note failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -117,7 +131,9 @@ export function registerAgentTools(server: McpServer): void {
     "companion_codegraph_impact",
     "Check what files depend on a file BEFORE editing it. Returns reverse dependencies with risk scores and related wiki articles describing the file's domain. Use this when you're about to modify a file with exports used elsewhere.",
     {
-      file: z.string().describe("File path relative to project root (e.g., 'src/services/auth.ts')"),
+      file: z
+        .string()
+        .describe("File path relative to project root (e.g., 'src/services/auth.ts')"),
       project: z.string().optional().describe("Project slug (auto-detected if omitted)"),
     },
     async ({ file, project }) => {
@@ -134,11 +150,18 @@ export function registerAgentTools(server: McpServer): void {
         try {
           const domain = process.env.PROJECT_SLUG ?? "default";
           // Extract filename stem as search query (e.g., "auth" from "src/services/auth.ts")
-          const stem = file.split("/").pop()?.replace(/\.\w+$/, "") ?? file;
-          const wikiRes = await apiCall<{ data: unknown }>(`/wiki/${encodeURIComponent(domain)}/query`, {
-            method: "POST",
-            body: { query: stem, mode: "search" },
-          });
+          const stem =
+            file
+              .split("/")
+              .pop()
+              ?.replace(/\.\w+$/, "") ?? file;
+          const wikiRes = await apiCall<{ data: unknown }>(
+            `/wiki/${encodeURIComponent(domain)}/query`,
+            {
+              method: "POST",
+              body: { query: stem, mode: "search" },
+            },
+          );
           wikiArticles = wikiRes.data;
         } catch {
           // Wiki not available — fine, return impact-only
@@ -151,7 +174,10 @@ export function registerAgentTools(server: McpServer): void {
 
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Impact analysis failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Impact analysis failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );
@@ -161,14 +187,20 @@ export function registerAgentTools(server: McpServer): void {
     "companion_explain",
     "Get full context about a file in one call: what it does (wiki articles), what depends on it (reverse deps + risk scores), and what it depends on (impact radius). Use BEFORE making significant changes to understand a file's role in the codebase.",
     {
-      file: z.string().describe("File path relative to project root (e.g., 'src/services/auth.ts')"),
+      file: z
+        .string()
+        .describe("File path relative to project root (e.g., 'src/services/auth.ts')"),
       project: z.string().optional().describe("Project slug (auto-detected if omitted)"),
     },
     async ({ file, project }) => {
       try {
         const p = project ?? process.env.PROJECT_SLUG ?? "";
         const domain = process.env.PROJECT_SLUG ?? "default";
-        const stem = file.split("/").pop()?.replace(/\.\w+$/, "") ?? file;
+        const stem =
+          file
+            .split("/")
+            .pop()
+            ?.replace(/\.\w+$/, "") ?? file;
 
         // Fire wiki search + codegraph impact + reverse deps in parallel
         const [wikiRes, impactRes, reverseDepsRes] = await Promise.all([
@@ -198,16 +230,21 @@ export function registerAgentTools(server: McpServer): void {
 
         if (!wikiRes && !impactRes && !reverseDepsRes) {
           return {
-            content: [{
-              type: "text",
-              text: `No data available for "${file}". Wiki may not have articles and CodeGraph may not be indexed for this project.`,
-            }],
+            content: [
+              {
+                type: "text",
+                text: `No data available for "${file}". Wiki may not have articles and CodeGraph may not be indexed for this project.`,
+              },
+            ],
           };
         }
 
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: "text", text: `Explain failed: ${String(err)}` }], isError: true };
+        return {
+          content: [{ type: "text", text: `Explain failed: ${String(err)}` }],
+          isError: true,
+        };
       }
     },
   );

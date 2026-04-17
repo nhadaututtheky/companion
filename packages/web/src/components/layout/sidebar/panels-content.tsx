@@ -1,13 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  MagnifyingGlass,
-  FolderOpen,
-  Globe,
-  TerminalWindow,
-  Check,
-} from "@phosphor-icons/react";
+import { MagnifyingGlass, FolderOpen, Globe, TerminalWindow, Check } from "@phosphor-icons/react";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { NavPill, DetailCard, type NavItem } from "./nav-primitives";
 

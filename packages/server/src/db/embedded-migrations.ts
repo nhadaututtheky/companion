@@ -159,7 +159,7 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
   },
   {
     name: "0039_account_skip_rotation.sql",
-    sql: "-- Per-account \"skip in rotation\" flag: when true, the auto-switch system\n-- will not pick this account as the next target. Still usable manually.\n-- Non-idempotent: embedded migration runner tracks by file name.\nALTER TABLE accounts ADD COLUMN skip_in_rotation INTEGER NOT NULL DEFAULT 0;\n",
+    sql: '-- Per-account "skip in rotation" flag: when true, the auto-switch system\n-- will not pick this account as the next target. Still usable manually.\n-- Non-idempotent: embedded migration runner tracks by file name.\nALTER TABLE accounts ADD COLUMN skip_in_rotation INTEGER NOT NULL DEFAULT 0;\n',
   },
   {
     name: "0040_account_identity.sql",

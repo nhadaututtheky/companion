@@ -228,7 +228,10 @@ export class GeminiAdapter implements CLIAdapter {
       if (stderrLines.length > MAX_STDERR) stderrLines.shift();
     };
 
-    const readStream = async (stream: ReadableStream<Uint8Array> | null, label: "stdout" | "stderr") => {
+    const readStream = async (
+      stream: ReadableStream<Uint8Array> | null,
+      label: "stdout" | "stderr",
+    ) => {
       if (!stream) return;
       const reader = stream.getReader();
       const decoder = new TextDecoder();

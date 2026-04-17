@@ -209,7 +209,7 @@ export default function ThemeSettingsPage() {
                 {!isBuiltin && (
                   <button
                     onClick={() => handleDeleteCustom(theme.id)}
-                    className="absolute -right-2 -top-2 flex cursor-pointer items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                    className="absolute -right-2 -top-2 flex cursor-pointer items-center justify-center rounded-full opacity-0 transition-opacity focus:opacity-100 group-hover:opacity-100"
                     style={{
                       width: 22,
                       height: 22,

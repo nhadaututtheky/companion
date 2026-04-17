@@ -48,21 +48,14 @@ export interface PermissionBridgeContext {
 let permKeyCounter = 0;
 
 /** Generate a short callback key and store the full IDs mapping. */
-function makePermKey(
-  ctx: PermissionBridgeContext,
-  sessionId: string,
-  requestId: string,
-): string {
+function makePermKey(ctx: PermissionBridgeContext, sessionId: string, requestId: string): string {
   const key = `p${++permKeyCounter}`;
   ctx.permCallbackMap.set(key, { sessionId, requestId });
   return key;
 }
 
 /** Generate a short session-only key for bulk actions. */
-function makeSessionKey(
-  ctx: PermissionBridgeContext,
-  sessionId: string,
-): string {
+function makeSessionKey(ctx: PermissionBridgeContext, sessionId: string): string {
   const key = `s${++permKeyCounter}`;
   ctx.permCallbackMap.set(key, { sessionId, requestId: "" });
   return key;

@@ -26,7 +26,10 @@ export interface DiagramResult {
 
 /** Sanitize a string for safe use in Mermaid syntax */
 function sanitize(s: string): string {
-  return s.replace(/["`[\](){}|<>]/g, "").replace(/\s+/g, " ").trim();
+  return s
+    .replace(/["`[\](){}|<>]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /** Simple string hash for ID disambiguation */
@@ -68,7 +71,7 @@ export function generateArchitectureDiagram(projectSlug: string): DiagramResult 
 
   if (communities.length === 0) {
     return {
-      mermaid: "flowchart TD\n  empty[\"No communities detected — run a full scan first\"]",
+      mermaid: 'flowchart TD\n  empty["No communities detected — run a full scan first"]',
       type: "architecture",
       description: "No graph data available",
       nodeCount: 0,
@@ -110,7 +113,10 @@ export function generateArchitectureDiagram(projectSlug: string): DiagramResult 
   for (const c of communities.slice(0, 12)) {
     const id = mermaidId(`cluster_${c.id}`);
     const label = sanitize(c.label || `Cluster ${c.id}`);
-    const topFiles = c.files.slice(0, 4).map((f) => shortPath(f)).join(", ");
+    const topFiles = c.files
+      .slice(0, 4)
+      .map((f) => shortPath(f))
+      .join(", ");
 
     lines.push(`  subgraph ${id}["${label}"]`);
     lines.push(`    ${id}_info["${c.nodeCount} symbols | ${c.files.length} files"]:::clusterInfo`);
@@ -121,9 +127,7 @@ export function generateArchitectureDiagram(projectSlug: string): DiagramResult 
   }
 
   // Cross-community edges (top 15 by weight)
-  const sortedCrossEdges = [...crossEdges.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 15);
+  const sortedCrossEdges = [...crossEdges.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15);
 
   for (const [key, count] of sortedCrossEdges) {
     const [from, to] = key.split("->");
@@ -159,7 +163,11 @@ export function generateModuleDiagram(projectSlug: string, filePath: string): Di
 
   // Find all nodes in this file
   const fileNodes = db
-    .select({ id: codeNodes.id, symbolName: codeNodes.symbolName, symbolType: codeNodes.symbolType })
+    .select({
+      id: codeNodes.id,
+      symbolName: codeNodes.symbolName,
+      symbolType: codeNodes.symbolType,
+    })
     .from(codeNodes)
     .where(and(eq(codeNodes.projectSlug, projectSlug), eq(codeNodes.filePath, filePath)))
     .all();
@@ -206,7 +214,11 @@ export function generateModuleDiagram(projectSlug: string, filePath: string): Di
   for (const [targetId] of outgoingArr) {
     const l2 = new Set<number>();
     for (const edge of allEdges) {
-      if (edge.sourceNodeId === targetId && !fileNodeIds.has(edge.targetNodeId) && !outgoing.has(edge.targetNodeId)) {
+      if (
+        edge.sourceNodeId === targetId &&
+        !fileNodeIds.has(edge.targetNodeId) &&
+        !outgoing.has(edge.targetNodeId)
+      ) {
         l2.add(edge.targetNodeId);
         if (l2.size >= 5) break;
       }

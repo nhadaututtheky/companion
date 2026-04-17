@@ -260,7 +260,7 @@ export function ResumeSessionsModal({ open, onClose }: ResumeSessionsModalProps)
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="cursor-pointer rounded-md border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1.5 text-[var(--color-text-secondary)] transition-colors hover:brightness-110 hover:text-[var(--color-text-primary)] disabled:opacity-50"
+            className="cursor-pointer rounded-md border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1.5 text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)] hover:brightness-110 disabled:opacity-50"
             aria-label="Refresh scan"
           >
             <ArrowsClockwise size={16} className={refreshing ? "animate-spin" : ""} />
@@ -371,7 +371,9 @@ function SessionRow({
         {/* First prompt / preview */}
         <p className="line-clamp-2 text-sm text-[var(--color-text-primary)] opacity-80">
           {session.firstPrompt || (
-            <span className="italic text-[var(--color-text-secondary)]">(no preview available)</span>
+            <span className="italic text-[var(--color-text-secondary)]">
+              (no preview available)
+            </span>
           )}
         </p>
 

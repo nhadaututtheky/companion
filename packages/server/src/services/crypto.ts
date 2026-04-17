@@ -43,7 +43,11 @@ function loadOrCreatePassphrase(): string {
   try {
     mkdirSync(dirname(KEY_FILE), { recursive: true });
     writeFileSync(KEY_FILE, generated, "utf-8");
-    try { chmodSync(KEY_FILE, 0o600); } catch { /* Windows ignores */ }
+    try {
+      chmodSync(KEY_FILE, 0o600);
+    } catch {
+      /* Windows ignores */
+    }
     log.info("Generated new encryption key", { path: KEY_FILE });
   } catch (err) {
     log.error("Failed to persist encryption key — encryption disabled", { err: String(err) });

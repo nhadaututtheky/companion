@@ -344,8 +344,7 @@ export async function checkOrActivateTrial(): Promise<LicenseInfo> {
 
 // ── Dev Mode ───────────────────────────────────────────────────────────────
 
-const IS_DEV =
-  process.env.NODE_ENV === "development" || process.env.COMPANION_DEV === "1";
+const IS_DEV = process.env.NODE_ENV === "development" || process.env.COMPANION_DEV === "1";
 
 const DEV_LICENSE: LicenseInfo = {
   valid: true,

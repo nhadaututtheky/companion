@@ -183,7 +183,9 @@ export function getAccountUsage(
       s5hCost: sql<number>`COALESCE(SUM(CASE WHEN ${sessions.startedAt} >= ${session5hStart} THEN ${sessions.totalCostUsd} ELSE 0 END), 0)`,
       s5hSessions: sql<number>`COALESCE(SUM(CASE WHEN ${sessions.startedAt} >= ${session5hStart} THEN 1 ELSE 0 END), 0)`,
       s5hTokens: sql<number>`COALESCE(SUM(CASE WHEN ${sessions.startedAt} >= ${session5hStart} THEN ${sessions.totalInputTokens} + ${sessions.totalOutputTokens} ELSE 0 END), 0)`,
-      s5hEarliest: sql<number | null>`MIN(CASE WHEN ${sessions.startedAt} >= ${session5hStart} THEN ${sessions.startedAt} ELSE NULL END)`,
+      s5hEarliest: sql<
+        number | null
+      >`MIN(CASE WHEN ${sessions.startedAt} >= ${session5hStart} THEN ${sessions.startedAt} ELSE NULL END)`,
       // 7d window
       wCost: sql<number>`COALESCE(SUM(CASE WHEN ${sessions.startedAt} >= ${weekStart} THEN ${sessions.totalCostUsd} ELSE 0 END), 0)`,
       wSessions: sql<number>`COALESCE(SUM(CASE WHEN ${sessions.startedAt} >= ${weekStart} THEN 1 ELSE 0 END), 0)`,

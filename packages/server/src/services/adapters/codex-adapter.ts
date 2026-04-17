@@ -107,7 +107,8 @@ export function parseCodexMessage(line: string): NormalizedMessage | null {
       }
 
       if (item.type === "command_execution") {
-        const isError = item.status === "failed" || (typeof item.exit_code === "number" && item.exit_code !== 0);
+        const isError =
+          item.status === "failed" || (typeof item.exit_code === "number" && item.exit_code !== 0);
         return {
           type: "tool_result",
           platform: "codex",

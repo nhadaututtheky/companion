@@ -41,7 +41,12 @@ import {
   clearScanCache,
 } from "../services/session-scanner.js";
 import type { ApiResponse, CLIPlatform } from "@companion/shared";
-import { previewDispatch, previewDispatchSync, dispatch, type DispatchContext } from "../services/dispatch-router.js";
+import {
+  previewDispatch,
+  previewDispatchSync,
+  dispatch,
+  type DispatchContext,
+} from "../services/dispatch-router.js";
 import { extractInsights, type SessionSummaryInput } from "../services/session-memory.js";
 import { resolvePersona } from "../services/custom-personas.js";
 
@@ -1438,7 +1443,12 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
 
       const result = await dispatch(classification, message, ctx);
 
-      log.info("Dispatch confirmed", { sessionId, action, pattern: classification.pattern, dispatched: result.dispatched });
+      log.info("Dispatch confirmed", {
+        sessionId,
+        action,
+        pattern: classification.pattern,
+        dispatched: result.dispatched,
+      });
 
       return c.json({ success: true, data: result });
     },

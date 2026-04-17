@@ -956,9 +956,13 @@ export function registerUtilityCommands(bridge: TelegramBridge): void {
       // Top file impacts
       for (const f of report.fileImpacts.slice(0, 5)) {
         const emoji = riskEmoji[f.riskLevel];
-        const deps = f.directDependents.length > 0
-          ? ` → ${f.directDependents.slice(0, 2).map((d) => escapeHTML(d)).join(", ")}`
-          : "";
+        const deps =
+          f.directDependents.length > 0
+            ? ` → ${f.directDependents
+                .slice(0, 2)
+                .map((d) => escapeHTML(d))
+                .join(", ")}`
+            : "";
         lines.push(`${emoji} <code>${escapeHTML(f.filePath)}</code>${deps}`);
       }
 
