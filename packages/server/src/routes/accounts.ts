@@ -20,6 +20,7 @@ import {
   deleteAccount,
   updateAccountStatus,
   renameAccount,
+  accountExists,
 } from "../services/credential-manager.js";
 import { manualCapture } from "../services/credential-watcher.js";
 import { getAccountUsage } from "../services/account-usage.js";
@@ -105,9 +106,16 @@ accountRoutes.put("/:id/status", zValidator("json", statusSchema), (c) => {
 // Per-account usage (heatmap + windows + model breakdown)
 accountRoutes.get("/:id/usage", (c) => {
   const id = c.req.param("id");
+  if (!accountExists(id)) {
+    return c.json({ success: false, error: "Account not found" } satisfies ApiResponse, 404);
+  }
   const daysParam = c.req.query("days");
   const days = daysParam ? Math.min(Math.max(parseInt(daysParam, 10) || 365, 1), 730) : 365;
-  const usage = getAccountUsage(id, days);
+  const tzParam = c.req.query("tz");
+  const tzOffsetMinutes = tzParam
+    ? Math.min(Math.max(parseInt(tzParam, 10) || 0, -720), 840)
+    : 0;
+  const usage = getAccountUsage(id, days, { tzOffsetMinutes });
   return c.json({ success: true, data: usage } satisfies ApiResponse);
 });
 

@@ -54,8 +54,10 @@ export const accounts = {
 
   active: () => request<{ data: AccountInfo | null }>("/api/accounts/active"),
 
-  usage: (id: string, days = 365) =>
-    request<{ data: AccountUsage }>(`/api/accounts/${id}/usage?days=${days}`),
+  usage: (id: string, days = 365, tzOffsetMinutes = 0) =>
+    request<{ data: AccountUsage }>(
+      `/api/accounts/${id}/usage?days=${days}&tz=${tzOffsetMinutes}`,
+    ),
 
   activate: (id: string) =>
     request<{ data: { id: string } }>(`/api/accounts/${id}/activate`, {

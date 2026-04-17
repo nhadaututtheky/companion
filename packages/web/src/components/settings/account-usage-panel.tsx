@@ -49,25 +49,31 @@ interface HeatmapCell {
   level: 0 | 1 | 2 | 3 | 4;
 }
 
+function localDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 function buildHeatmapGrid(buckets: HeatmapBucket[], weeks = 53): HeatmapCell[][] {
   const byDate = new Map(buckets.map((b) => [b.date, b]));
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Build cost thresholds using non-zero days (percentiles)
+  // Percentile thresholds with uniform-cost collapse guard.
   const costs = buckets.map((b) => b.cost).filter((c) => c > 0).sort((a, b) => a - b);
   const pct = (p: number) => (costs.length === 0 ? 0 : costs[Math.floor(costs.length * p)] ?? 0);
   const p25 = pct(0.25);
   const p50 = pct(0.5);
   const p75 = pct(0.75);
   const p90 = pct(0.9);
+  const uniform = costs.length > 0 && p25 === p90; // all active days have identical cost
 
-  // Find Sunday of the oldest week in range
   const totalDays = weeks * 7;
   const startDate = new Date(today);
   startDate.setDate(today.getDate() - (totalDays - 1));
-  // Shift back to Sunday
-  startDate.setDate(startDate.getDate() - startDate.getDay());
+  startDate.setDate(startDate.getDate() - startDate.getDay()); // shift back to Sunday
 
   const grid: HeatmapCell[][] = [];
   for (let w = 0; w < weeks; w += 1) {
@@ -76,12 +82,13 @@ function buildHeatmapGrid(buckets: HeatmapBucket[], weeks = 53): HeatmapCell[][]
       const cellDate = new Date(startDate);
       cellDate.setDate(startDate.getDate() + w * 7 + d);
       if (cellDate > today) break;
-      const key = cellDate.toISOString().slice(0, 10);
+      const key = localDateKey(cellDate);
       const bucket = byDate.get(key);
       const cost = bucket?.cost ?? 0;
       let level: 0 | 1 | 2 | 3 | 4 = 0;
       if (cost > 0) {
-        if (cost >= p90) level = 4;
+        if (uniform) level = 2; // medium shade when all days equal
+        else if (cost >= p90) level = 4;
         else if (cost >= p75) level = 3;
         else if (cost >= p50) level = 2;
         else if (cost >= p25) level = 1;
@@ -200,29 +207,47 @@ function Heatmap({ buckets }: { buckets: HeatmapBucket[] }) {
             </div>
 
             {/* Cells */}
-            <div className="flex" style={{ gap: GAP }}>
+            <div
+              className="flex"
+              style={{ gap: GAP }}
+              role="grid"
+              aria-label="Daily activity heatmap"
+            >
               {grid.map((col, w) => (
-                <div key={w} className="flex flex-col" style={{ gap: GAP }}>
-                  {col.map((cell) => (
-                    <div
-                      key={cell.date}
-                      onMouseEnter={() => setHover(cell)}
-                      onMouseLeave={() => setHover(null)}
-                      style={{
-                        width: CELL,
-                        height: CELL,
-                        borderRadius: 2,
-                        background:
-                          cell.level === 0
-                            ? "var(--glass-bg)"
-                            : `color-mix(in srgb, var(--color-accent) ${LEVEL_ALPHA[cell.level]! * 100}%, transparent)`,
-                        border:
-                          cell.level === 0
-                            ? "1px solid color-mix(in srgb, var(--color-text-muted) 15%, transparent)"
-                            : "none",
-                      }}
-                    />
-                  ))}
+                <div key={w} className="flex flex-col" role="row" style={{ gap: GAP }}>
+                  {col.map((cell) => {
+                    const label =
+                      cell.cost > 0
+                        ? `${cell.date}: ${formatCost(cell.cost)}, ${cell.sessions} sessions, ${formatTokens(cell.tokens)} tokens`
+                        : `${cell.date}: no activity`;
+                    return (
+                      <button
+                        type="button"
+                        key={cell.date}
+                        role="gridcell"
+                        aria-label={label}
+                        title={label}
+                        onMouseEnter={() => setHover(cell)}
+                        onMouseLeave={() => setHover(null)}
+                        onFocus={() => setHover(cell)}
+                        onBlur={() => setHover(null)}
+                        className="cursor-default p-0"
+                        style={{
+                          width: CELL,
+                          height: CELL,
+                          borderRadius: 2,
+                          background:
+                            cell.level === 0
+                              ? "var(--glass-bg)"
+                              : `color-mix(in srgb, var(--color-accent) ${LEVEL_ALPHA[cell.level]! * 100}%, transparent)`,
+                          border:
+                            cell.level === 0
+                              ? "1px solid color-mix(in srgb, var(--color-text-muted) 15%, transparent)"
+                              : "none",
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               ))}
             </div>
@@ -330,8 +355,9 @@ export function AccountUsagePanel({ accountId }: { accountId: string }) {
     let cancelled = false;
     setLoading(true);
     setError(null);
+    const tzOffsetMinutes = -new Date().getTimezoneOffset(); // JS: +7 → -420; server: east = +
     accountsApi
-      .usage(accountId, 365)
+      .usage(accountId, 365, tzOffsetMinutes)
       .then((res) => {
         if (!cancelled) setUsage(res.data);
       })
@@ -364,9 +390,22 @@ export function AccountUsagePanel({ accountId }: { accountId: string }) {
 
   const { heatmap, windows, totals, byModel, streaks } = usage;
   const limits = DEFAULT_LIMITS;
+  const hasActivity = totals.sessions > 0;
 
   return (
     <div className="flex flex-col gap-5 pt-4">
+      {!hasActivity && (
+        <div
+          className="rounded-lg px-3 py-3 text-xs"
+          style={{
+            background: "var(--glass-bg)",
+            border: "1px solid var(--glass-border)",
+            color: "var(--color-text-muted)",
+          }}
+        >
+          No sessions recorded yet for this account. Usage will appear here once you run a session.
+        </div>
+      )}
       {/* Plan usage (Anthropic-style) */}
       <div className="flex flex-col gap-4">
         <h4 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>

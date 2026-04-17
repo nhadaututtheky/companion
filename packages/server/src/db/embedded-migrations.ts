@@ -149,4 +149,8 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0036_codegraph_auto_reindex.sql",
     sql: "-- Auto-reindex toggle for codegraph (Phase 4: auto-reindex on file changes)\nALTER TABLE codegraph_config ADD COLUMN auto_reindex_enabled INTEGER NOT NULL DEFAULT 1;\n",
   },
+  {
+    name: "0037_account_usage_index.sql",
+    sql: "-- Composite index for per-account usage queries (rolling windows, heatmap, model breakdown)\nCREATE INDEX IF NOT EXISTS idx_sessions_account_started ON sessions(account_id, started_at);\n",
+  },
 ];

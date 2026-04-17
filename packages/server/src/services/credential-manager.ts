@@ -112,6 +112,17 @@ export function saveAccount(label: string, credentials: OAuthCredentials): strin
   return txn();
 }
 
+/** Check whether an account exists by id. */
+export function accountExists(id: string): boolean {
+  const db = getDb();
+  const row = db
+    .select({ id: accounts.id })
+    .from(accounts)
+    .where(eq(accounts.id, id))
+    .get();
+  return !!row;
+}
+
 /** List all accounts (without decrypted tokens). */
 export function listAccounts(): AccountInfo[] {
   const db = getDb();
