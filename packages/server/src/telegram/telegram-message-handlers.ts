@@ -25,6 +25,12 @@ function isVietnamese(text: string): boolean {
 // ─── Handlers ───────────────────────────────────────────────────────────────
 
 export async function handleTextMessage(bridge: TelegramBridge, ctx: Context): Promise<void> {
+  // B2B safety: ignore messages from other bots (prevents infinite loops in
+  // multi-bot debate groups where Bot-to-Bot Communication Mode is enabled).
+  // Debates are coordinated server-side via /debate — bots should not treat
+  // each other's posts as user input.
+  if (ctx.message?.from?.is_bot) return;
+
   const chatId = ctx.chat!.id;
   const topicId = ctx.message?.message_thread_id;
   const text = ctx.message?.text ?? "";
@@ -138,6 +144,9 @@ export async function handleTextMessage(bridge: TelegramBridge, ctx: Context): P
 }
 
 export async function handlePhotoMessage(bridge: TelegramBridge, ctx: Context): Promise<void> {
+  // B2B safety: ignore photos forwarded by other bots
+  if (ctx.message?.from?.is_bot) return;
+
   const chatId = ctx.chat!.id;
   const topicId = ctx.message?.message_thread_id;
 
@@ -201,6 +210,9 @@ export async function handlePhotoMessage(bridge: TelegramBridge, ctx: Context): 
 }
 
 export async function handleDocumentMessage(bridge: TelegramBridge, ctx: Context): Promise<void> {
+  // B2B safety: ignore documents forwarded by other bots
+  if (ctx.message?.from?.is_bot) return;
+
   const chatId = ctx.chat!.id;
   const topicId = ctx.message?.message_thread_id;
 

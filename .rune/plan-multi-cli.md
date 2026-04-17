@@ -41,7 +41,7 @@ Support multiple AI coding CLI platforms (Claude Code, Codex, Gemini CLI, OpenCo
 | 3 | Multi-CLI Sessions UI + Rich Composer | ✅ Done | plan-multi-cli-phase3.md | Platform picker, dynamic models, type-while-running |
 | 4 | CLI-Powered Debate | ✅ Done | plan-multi-cli-phase4.md | Cross-CLI debate engine, turn protocol, API route |
 | 5 | Unified Debate UX | ✅ Done | plan-multi-cli-phase5.md | Debate create modal, feed, agent cards, Ring integration |
-| 6 | Telegram Multi-Bot Debate | ⬚ Pending | plan-multi-cli-phase6.md | Per-platform bots in group, multi-bot debate |
+| 6 | Telegram Multi-Bot Debate | ✅ Done | plan-multi-cli-phase6.md | `/debate` + `/verdict` + guide shipped; B2B loop guards added |
 
 ## Key Decisions
 - CLI adapters normalize output to a common message format (superset of current CLIMessage)
