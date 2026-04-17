@@ -24,6 +24,7 @@ export const sessions = {
     personaId?: string;
     cliPlatform?: "claude" | "codex" | "gemini" | "opencode";
     platformOptions?: Record<string, unknown>;
+    contextMode?: "200k" | "1m";
   }) =>
     request<{ data: { sessionId: string; projectCreated?: boolean } }>("/api/sessions", {
       method: "POST",

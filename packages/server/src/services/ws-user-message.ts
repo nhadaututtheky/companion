@@ -47,7 +47,7 @@ import type {
   BrowserIncomingMessage,
   SessionStatus,
 } from "@companion/shared";
-import { modelSupportsDeepThinking } from "@companion/shared";
+import { modelSupportsDeepThinking, modelSupports1M, applyContextSuffix } from "@companion/shared";
 
 const log = createLogger("ws-user-message");
 
@@ -153,7 +153,51 @@ export class UserMessageHandler {
           session: { thinking_mode: msg.mode },
         });
         break;
+      case "set_context_mode":
+        this.handleSetContextMode(session, msg.mode);
+        break;
     }
+  }
+
+  // ── handleSetContextMode ───────────────────────────────────────────────────
+
+  handleSetContextMode(session: ActiveSession, mode: "200k" | "1m"): void {
+    if (mode === "1m" && !modelSupports1M(session.state.model)) {
+      log.warn("1M context not supported for model", {
+        sessionId: session.id,
+        model: session.state.model,
+      });
+      return;
+    }
+
+    session.state = { ...session.state, context_mode: mode };
+    log.info("Context mode updated", { sessionId: session.state.session_id, mode });
+
+    // Re-apply model via control_request so CLI picks up [1m] suffix
+    const cliModel = applyContextSuffix(session.state.model, mode);
+    const sdkHandle = this.bridge.getSdkHandle(session.id);
+    if (sdkHandle) {
+      const extendedHandle = sdkHandle as unknown as {
+        query?: { setModel?: (m: string) => Promise<void> };
+      };
+      extendedHandle.query?.setModel?.(cliModel).catch((err: unknown) => {
+        log.warn("SDK setModel failed (context mode change)", {
+          sessionId: session.id,
+          error: String(err),
+        });
+      });
+    } else {
+      const ndjson = JSON.stringify({
+        type: "control_request",
+        request: { subtype: "set_model", model: cliModel },
+      });
+      this.bridge.sendToCLI(session, ndjson);
+    }
+
+    this.bridge.broadcastToAll(session, {
+      type: "session_update",
+      session: { context_mode: mode },
+    });
   }
 
   // ── handleUserMessage ──────────────────────────────────────────────────────

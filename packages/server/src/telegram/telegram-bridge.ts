@@ -341,7 +341,8 @@ export class TelegramBridge {
       initialPrompt?: string;
       model?: string;
       permissionMode?: string;
-      thinkingBudget?: number;
+      thinkingMode?: import("@companion/shared").ThinkingMode;
+      contextMode?: import("@companion/shared").ContextMode;
     },
   ): Promise<void> {
     const chatId = ctx.chat!.id;
@@ -391,7 +392,8 @@ export class TelegramBridge {
         source: "telegram",
         resume: opts?.resume,
         cliSessionId: opts?.cliSessionId,
-        thinkingBudget: opts?.thinkingBudget,
+        thinkingMode: opts?.thinkingMode,
+        contextMode: opts?.contextMode,
       });
 
       const mapping: ChatMapping = {

@@ -73,9 +73,46 @@ export const TIER_CONFIG = {
   pro: { maxSessions: -1, features: PRO_FEATURES },
 } as const;
 
-/** Max context window tokens by model family */
-export function getMaxContextTokens(model: string): number {
-  if (model.includes("haiku")) return 200_000;
-  // opus + sonnet both have 1M context
-  return 1_000_000;
+/**
+ * Native max context window tokens by model family.
+ *
+ * IMPORTANT: Claude Code CLI default is 200K for ALL models unless user
+ * opts into 1M via the `[1m]` model suffix (e.g. `claude-opus-4-7[1m]`).
+ * When `contextMode === "1m"` is passed, we return 1M ONLY for models
+ * that support it. Other combinations fall back to 200K.
+ */
+export function getMaxContextTokens(
+  model: string,
+  contextMode: "200k" | "1m" = "200k",
+): number {
+  if (contextMode === "1m" && modelSupports1M(model)) return 1_000_000;
+  return 200_000;
+}
+
+/** Models that support the 1M context window (Opus 4.7, Opus 4.6, Sonnet 4.6). */
+export function modelSupports1M(model: string): boolean {
+  if (!model) return false;
+  // Strip an existing [1m] suffix for detection
+  const bare = model.replace(/\[1m\]$/i, "");
+  if (bare.includes("haiku")) return false;
+  if (bare.includes("opus") && (bare.includes("4-7") || bare.includes("4-6"))) return true;
+  if (bare.includes("sonnet") && bare.includes("4-6")) return true;
+  // Aliases "opus" / "sonnet" on Anthropic API default to 4.7 / 4.6 → both support 1M
+  if (bare === "opus" || bare === "sonnet") return true;
+  return false;
+}
+
+/**
+ * Append the Claude Code `[1m]` context suffix when appropriate.
+ * Safe for any model string — returns unchanged if model doesn't support 1M.
+ */
+export function applyContextSuffix(
+  model: string,
+  contextMode: "200k" | "1m" | undefined,
+): string {
+  if (!model) return model;
+  if (contextMode !== "1m") return model;
+  if (!modelSupports1M(model)) return model;
+  if (/\[1m\]$/i.test(model)) return model;
+  return `${model}[1m]`;
 }

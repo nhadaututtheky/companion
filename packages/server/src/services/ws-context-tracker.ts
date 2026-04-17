@@ -67,7 +67,7 @@ export function broadcastContextUpdate(session: ActiveSession): void {
 
   // Context ≈ last turn input + last output (output joins next turn's context)
   const totalTokens = lastTurnInput + lastTurnOutput;
-  const maxTokens = getMaxContextTokens(state.model);
+  const maxTokens = getMaxContextTokens(state.model, state.context_mode);
   const contextUsedPercent = Math.min(100, (totalTokens / maxTokens) * 100);
 
   // Pulse: record context pressure
@@ -128,7 +128,9 @@ export function handleControlResponse(session: ActiveSession, msg: Record<string
     if (!usage) return;
 
     const totalTokens = (usage.input_tokens ?? 0) + (usage.output_tokens ?? 0);
-    const maxTokens = usage.context_window ?? getMaxContextTokens(session.state.model);
+    const maxTokens =
+      usage.context_window ??
+      getMaxContextTokens(session.state.model, session.state.context_mode);
     const contextUsedPercent = maxTokens > 0 ? Math.min(100, (totalTokens / maxTokens) * 100) : 0;
 
     broadcastToAll(session, {

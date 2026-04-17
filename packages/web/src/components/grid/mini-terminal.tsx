@@ -19,6 +19,7 @@ import { CompactMessageFeed } from "./compact-message";
 import { AgentTabBar } from "./agent-tab-bar";
 import { SpawnAgentModal } from "@/components/session/spawn-agent-modal";
 import { SlashCommandMenu } from "@/components/session/slash-commands";
+import { getMaxContextTokens } from "@companion/shared";
 
 interface ChannelInfo {
   id: string;
@@ -219,11 +220,6 @@ function getSessionColor(id: string): string {
   return SESSION_COLORS[Math.abs(hash) % SESSION_COLORS.length]!;
 }
 
-function getMaxContextTokens(model: string): number {
-  if (model.includes("haiku")) return 200_000;
-  return 1_000_000;
-}
-
 export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
   const [activeTab, setActiveTab] = useState(sessionId);
   const [spawnOpen, setSpawnOpen] = useState(false);
@@ -267,7 +263,7 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
     if (!state) return undefined;
     const totalTokens = (state.total_input_tokens ?? 0) + (state.total_output_tokens ?? 0);
     if (totalTokens === 0) return undefined;
-    const maxTokens = getMaxContextTokens(state.model ?? "");
+    const maxTokens = getMaxContextTokens(state.model ?? "", state.context_mode);
     const contextPercent = Math.min(100, (totalTokens / maxTokens) * 100);
     return { contextPercent, totalTokens, maxTokens };
   })();

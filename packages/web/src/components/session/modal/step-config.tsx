@@ -5,7 +5,7 @@ import { getModelsForPlatform } from "@/hooks/use-cli-platforms";
 import { TemplateVariablesForm, type TemplateVariable } from "../template-variables-form";
 import { PersonaAvatar } from "@/components/persona/persona-avatar";
 import { PersonaTooltip } from "@/components/persona/persona-tooltip";
-import { COMMAND_PRESETS, type Persona } from "@companion/shared";
+import { COMMAND_PRESETS, type Persona, modelSupports1M } from "@companion/shared";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -64,6 +64,8 @@ export interface StepConfigProps {
   onIdleTimeoutChange: (v: number) => void;
   resume: boolean;
   onResumeChange: (v: boolean) => void;
+  contextMode: "200k" | "1m";
+  onContextModeChange: (v: "200k" | "1m") => void;
   selectedDir: string;
   // Navigation
   onBack: () => void;
@@ -104,10 +106,14 @@ export function StepConfig(props: StepConfigProps) {
     onIdleTimeoutChange,
     resume,
     onResumeChange,
+    contextMode,
+    onContextModeChange,
     selectedDir,
     onBack,
     onNext,
   } = props;
+
+  const supports1M = selectedPlatform === "claude" && modelSupports1M(model);
 
   return (
     <div className="flex flex-col gap-4 overflow-y-auto px-5 py-4" style={{ maxHeight: 460 }}>
@@ -158,6 +164,41 @@ export function StepConfig(props: StepConfigProps) {
             </option>
           ))}
         </select>
+
+        {supports1M && (
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-text-muted text-[11px] font-semibold tracking-wider">
+              CONTEXT
+            </span>
+            <div className="flex gap-1">
+              {(["200k", "1m"] as const).map((mode) => {
+                const active = contextMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => onContextModeChange(mode)}
+                    className="cursor-pointer rounded-md px-2.5 py-1 text-xs font-semibold transition-colors"
+                    style={{
+                      background: active ? "#4285F4" : "var(--color-bg-elevated)",
+                      color: active ? "#fff" : "var(--color-text-secondary)",
+                      border: `1px solid ${active ? "#4285F4" : "var(--color-border)"}`,
+                    }}
+                    aria-pressed={active}
+                    title={mode === "1m" ? "1M token context (beta)" : "Default 200K context"}
+                  >
+                    {mode === "1m" ? "1M" : "200K"}
+                  </button>
+                );
+              })}
+            </div>
+            {contextMode === "1m" && (
+              <span className="text-text-muted text-[10px]" aria-hidden="true">
+                Beta — extra cost
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Platform-specific options */}

@@ -2,6 +2,24 @@
 
 All notable changes to Companion are documented here.
 
+## [0.21.5] - 2026-04-17
+
+### Fixed
+- **Claude CLI 2.1+ compatibility** — Replaced removed `--thinking-budget` flag with `--effort low|medium|high|xhigh|max` (mapped from `thinking_mode`). Previously any session with `thinking_mode = "deep"` silently failed to apply extended thinking.
+- **Context window defaulted correctly** — `getMaxContextTokens(model, mode)` now returns 200K by default. Previously Opus/Sonnet sessions reported 1M even when the CLI was actually using 200K, breaking compact thresholds and `/info` progress bars.
+- **Opus 4.5 / Sonnet 4.5 context** — Correctly reports 200K (they never supported 1M). Previously treated as 1M-capable.
+- **Haiku 4.5 thinking mode** — `modelSupportsDeepThinking` / bare alias detection now covers Haiku 4.5 and the `opus`/`sonnet` shorthands Claude Code CLI accepts.
+- **Context-estimator + Telegram /info + settings panel** — All now read `state.context_mode` instead of hardcoding `model.includes("haiku") ? 200k : 1M`.
+
+### Added
+- **1M context beta toggle (web + Telegram)** — New-session modal shows a 200K / 1M switch next to MODEL (only when the selected model supports 1M). Active-session header exposes `ContextModeSelector` for live switching; Telegram settings panel gains matching `panel:ctx:200k|1m` buttons. Toggling re-applies the model with the `[1m]` suffix via `set_model` control_request so the CLI opts in without a restart.
+- **`set_context_mode` WS message type** — handled in `ws-user-message.ts` and broadcast as `session_update` so every client stays in sync.
+
+### Internal
+- `SessionState.context_mode?: "200k" | "1m"` — persisted and surfaced to browsers.
+- `applyContextSuffix(model, mode)` / `modelSupports1M(model)` — single source of truth for `[1m]` suffix logic across adapter, UI, Telegram.
+- Deprecated `thinkingModeTobudget` (CLI no longer honors it); use `thinkingModeToEffort`.
+
 ## [0.21.1] - 2026-04-17
 
 ### Added

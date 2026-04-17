@@ -12,6 +12,7 @@ import { api } from "@/lib/api-client";
 import type {
   BrowserIncomingMessage,
   ContentBlock,
+  ContextMode,
   SessionState,
   ThinkingMode,
 } from "@companion/shared";
@@ -89,6 +90,7 @@ interface UseSessionReturn {
   respondPermission: (requestId: string, behavior: "allow" | "deny") => void;
   setModel: (model: string) => void;
   setThinkingMode: (mode: ThinkingMode) => void;
+  setContextMode: (mode: ContextMode) => void;
 }
 
 const MODEL_RATES: Record<string, { input: number; output: number }> = {
@@ -1026,6 +1028,13 @@ export function useSession(sessionId: string): UseSessionReturn {
     [send],
   );
 
+  const setContextMode = useCallback(
+    (mode: ContextMode) => {
+      send({ type: "set_context_mode", mode });
+    },
+    [send],
+  );
+
   return {
     messages,
     pendingPermissions,
@@ -1037,5 +1046,6 @@ export function useSession(sessionId: string): UseSessionReturn {
     respondPermission,
     setModel,
     setThinkingMode,
+    setContextMode,
   };
 }

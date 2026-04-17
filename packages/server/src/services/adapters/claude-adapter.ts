@@ -15,6 +15,7 @@ import type {
   NormalizedMessage,
   ContentBlockNorm,
 } from "@companion/shared";
+import { applyContextSuffix } from "@companion/shared";
 import type {
   CLIMessage,
   CLISystemInitMessage,
@@ -527,6 +528,12 @@ export class ClaudeAdapter implements CLIAdapter {
   ): Promise<CLIProcess> {
     const binary = resolveClaudeBinary();
 
+    // Apply [1m] suffix when user opted into 1M context (Opus 4.7/4.6, Sonnet 4.6 only)
+    const resolvedModel = applyContextSuffix(
+      opts.model ?? "claude-sonnet-4-6",
+      opts.contextMode,
+    );
+
     const args: string[] = [
       "--print",
       "--output-format",
@@ -536,12 +543,12 @@ export class ClaudeAdapter implements CLIAdapter {
       "--include-partial-messages",
       "--verbose",
       "--model",
-      opts.model ?? "claude-sonnet-4-6",
+      resolvedModel,
     ];
 
     if (opts.bare) args.push("--bare");
-    if (opts.thinkingBudget !== undefined)
-      args.push("--thinking-budget", String(opts.thinkingBudget));
+    // Claude Code CLI 2.1+ replaced `--thinking-budget` with `--effort`
+    if (opts.effort) args.push("--effort", opts.effort);
     if (opts.permissionMode) args.push("--permission-mode", opts.permissionMode);
     if (opts.resume && opts.cliSessionId) {
       args.push("--resume", opts.cliSessionId, "--replay-user-messages");

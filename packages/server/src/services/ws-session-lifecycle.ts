@@ -57,7 +57,7 @@ import type {
   CLIProcess,
   CLIPlatform,
 } from "@companion/shared";
-import { SESSION_IDLE_TIMEOUT_MS } from "@companion/shared";
+import { SESSION_IDLE_TIMEOUT_MS, thinkingModeToEffort } from "@companion/shared";
 
 const log = createLogger("ws-session-lifecycle");
 
@@ -98,8 +98,10 @@ export interface StartSessionOpts {
   autoReinjectOnCompact?: boolean;
   /** Bare mode — minimal output, lower cost. Maps to --bare CLI flag. */
   bare?: boolean;
-  /** Thinking budget in tokens. 0 = off, N = budget, undefined = adaptive. */
-  thinkingBudget?: number;
+  /** Thinking mode — maps to Claude `--effort`. Off=low, Adaptive=omit, Deep=max. */
+  thinkingMode?: import("@companion/shared").ThinkingMode;
+  /** Context window: "200k" (default) or "1m" (Opus 4.7/4.6, Sonnet 4.6). */
+  contextMode?: import("@companion/shared").ContextMode;
   /** CLI platform to use (claude, codex, gemini, opencode). */
   cliPlatform?: CLIPlatform;
   /** Platform-specific options (e.g. fullAuto for Codex, sandbox for Gemini). */
@@ -234,8 +236,8 @@ export class SessionLifecycleManager {
       cost_warned: 0,
       compact_mode: (opts.compactMode as SessionState["compact_mode"]) ?? "manual",
       compact_threshold: opts.compactThreshold ?? 75,
-      thinking_mode:
-        opts.thinkingBudget === undefined ? "adaptive" : opts.thinkingBudget === 0 ? "off" : "deep",
+      thinking_mode: opts.thinkingMode ?? "adaptive",
+      context_mode: opts.contextMode ?? "200k",
     };
 
     // Create in-memory session
@@ -356,7 +358,10 @@ export class SessionLifecycleManager {
     }
 
     // ── Legacy CLI launcher path ────────────────────────────────────────
-    return this.startSessionWithCli(sessionId, session, opts);
+    return this.startSessionWithCli(sessionId, session, {
+      ...opts,
+      effort: thinkingModeToEffort(opts.thinkingMode),
+    });
   }
 
   // ── Public orchestrator: kill and clean up a session ─────────────────────
@@ -658,7 +663,8 @@ export class SessionLifecycleManager {
       source?: string;
       envVars?: Record<string, string>;
       bare?: boolean;
-      thinkingBudget?: number;
+      effort?: "low" | "medium" | "high" | "xhigh" | "max";
+      contextMode?: "200k" | "1m";
       cliPlatform?: CLIPlatform;
       platformOptions?: Record<string, unknown>;
     },
@@ -700,7 +706,8 @@ export class SessionLifecycleManager {
         hooksUrl,
         hookSecret: session.hookSecret,
         bare: opts.bare,
-        thinkingBudget: opts.thinkingBudget,
+        effort: opts.effort,
+        contextMode: opts.contextMode,
         cliPlatform,
         platformOptions: { ...opts.platformOptions, projectSlug: opts.projectSlug },
       },

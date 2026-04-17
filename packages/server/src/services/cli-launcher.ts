@@ -35,7 +35,10 @@ export interface LaunchOptions {
   hooksUrl?: string;
   hookSecret?: string;
   bare?: boolean;
-  thinkingBudget?: number;
+  /** Claude Code `--effort` value (replaces the removed `--thinking-budget`). */
+  effort?: "low" | "medium" | "high" | "xhigh" | "max";
+  /** Context window: "1m" appends `[1m]` suffix when supported. */
+  contextMode?: "200k" | "1m";
   /** CLI platform to use (default: "claude") */
   cliPlatform?: CLIPlatform;
   /** Platform-specific options */
@@ -69,7 +72,8 @@ export async function launchCLI(
     resume: opts.resume,
     cliSessionId: opts.cliSessionId,
     permissionMode: opts.permissionMode,
-    thinkingBudget: opts.thinkingBudget,
+    effort: opts.effort,
+    contextMode: opts.contextMode,
     envVars: opts.envVars,
     platformOptions: opts.platformOptions,
     // Claude-specific passthrough

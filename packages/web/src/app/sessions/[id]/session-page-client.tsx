@@ -25,6 +25,7 @@ import { PromptHistoryPanel } from "@/components/panels/prompt-history-panel";
 import { Z } from "@/lib/z-index";
 import { ModelSelector } from "@/components/session/model-selector";
 import { ThinkingModeSelector } from "@/components/session/thinking-mode-selector";
+import { ContextModeSelector } from "@/components/session/context-mode-selector";
 import { PersonaChip } from "@/components/persona/persona-chip";
 import { PanelErrorBoundary } from "@/components/ui/panel-error-boundary";
 import { TipBanner } from "@/components/tips/tip-banner";
@@ -186,6 +187,7 @@ export function SessionPageClient({ params }: PageProps) {
     respondPermission,
     setModel,
     setThinkingMode,
+    setContextMode,
   } = useSession(id);
   const session = useSessionStore((s) => s.sessions[id]);
   const debateParticipants = useDebateStore((s) => s.participants[id] ?? EMPTY_PARTICIPANTS);
@@ -345,6 +347,12 @@ export function SessionPageClient({ params }: PageProps) {
                       currentMode={session?.state?.thinking_mode ?? "adaptive"}
                       currentModel={session?.model ?? "claude-sonnet-4-6"}
                       onModeChange={setThinkingMode}
+                      disabled={session?.status === "starting"}
+                    />
+                    <ContextModeSelector
+                      currentMode={session?.state?.context_mode ?? "200k"}
+                      currentModel={session?.model ?? "claude-sonnet-4-6"}
+                      onModeChange={setContextMode}
                       disabled={session?.status === "starting"}
                     />
                     {session?.personaId && (

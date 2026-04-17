@@ -41,7 +41,6 @@ import {
   clearScanCache,
 } from "../services/session-scanner.js";
 import type { ApiResponse, CLIPlatform } from "@companion/shared";
-import { thinkingModeTobudget } from "@companion/shared";
 import { previewDispatch, previewDispatchSync, dispatch, type DispatchContext } from "../services/dispatch-router.js";
 import { extractInsights, type SessionSummaryInput } from "../services/session-memory.js";
 import { resolvePersona } from "../services/custom-personas.js";
@@ -73,6 +72,7 @@ const createSessionSchema = z.object({
   keepAlive: z.boolean().optional(),
   bare: z.boolean().optional(),
   thinkingMode: z.enum(["adaptive", "off", "deep"]).optional(),
+  contextMode: z.enum(["200k", "1m"]).optional(),
   personaId: z.string().max(100).optional(),
   cliPlatform: z.enum(["claude", "codex", "gemini", "opencode"]).optional(),
   platformOptions: z.record(z.unknown()).optional(),
@@ -359,7 +359,8 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         source: body.source,
         envVars: project?.envVars,
         bare: body.bare,
-        thinkingBudget: body.thinkingMode ? thinkingModeTobudget(body.thinkingMode) : undefined,
+        thinkingMode: body.thinkingMode,
+        contextMode: body.contextMode,
         personaId: persona?.id,
         identityPrompt: persona?.systemPrompt,
         cliPlatform,

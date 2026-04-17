@@ -5,6 +5,7 @@
 
 import { escapeHTML, shortModelName, modelStrength, statusEmoji } from "./formatter.js";
 import { createLogger } from "../logger.js";
+import { getMaxContextTokens, modelSupports1M } from "@companion/shared";
 import type { TelegramBridge } from "./telegram-bridge.js";
 
 const log = createLogger("telegram-settings-panel");
@@ -52,14 +53,17 @@ export async function sendSettingsPanel(
 
   // Context meter — uses cumulative tokens as rough estimate (actual window may be smaller after compaction)
   const state = session?.state;
+  const contextMode = state?.context_mode ?? "200k";
+  const supports1M = state ? modelSupports1M(state.model) : false;
   let contextStr = "";
   if (state) {
     const totalTokens =
       state.total_input_tokens + state.total_output_tokens + state.cache_read_tokens;
     if (totalTokens > 0) {
-      const maxTokens = state.model.includes("haiku") ? 200_000 : 1_000_000;
+      const maxTokens = getMaxContextTokens(state.model, contextMode);
       const pct = Math.min(100, Math.round((totalTokens / maxTokens) * 100));
-      contextStr = ` · Tokens: ~${pct}%`;
+      const modeBadge = contextMode === "1m" ? " · 1M" : "";
+      contextStr = ` · Tokens: ~${pct}%${modeBadge}`;
     }
   }
 
@@ -102,6 +106,9 @@ export async function sendSettingsPanel(
   const i4h = idleMs === 14_400_000;
   const i12h = idleMs === 43_200_000;
 
+  const ctx200k = contextMode === "200k";
+  const ctx1m = contextMode === "1m";
+
   const keyboard = {
     inline_keyboard: [
       // Row 1: Model + Status
@@ -109,6 +116,23 @@ export async function sendSettingsPanel(
         btn(`Model: ${modelShort}`, `panel:model:${sessionId}`, "primary"),
         btn("Status", `panel:status:${sessionId}`),
       ],
+      // Row 1b: Context window toggle (only if model supports 1M)
+      ...(supports1M
+        ? [
+            [
+              btn(
+                `200K${ctx200k ? " ✓" : ""}`,
+                `panel:ctx:200k:${sessionId}`,
+                ctx200k ? "success" : undefined,
+              ),
+              btn(
+                `1M${ctx1m ? " ✓" : ""}`,
+                `panel:ctx:1m:${sessionId}`,
+                ctx1m ? "success" : undefined,
+              ),
+            ],
+          ]
+        : []),
       // Row 2: Auto-approve timeout
       [
         btn(

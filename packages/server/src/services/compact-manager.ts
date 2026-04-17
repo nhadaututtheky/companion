@@ -57,7 +57,7 @@ export function checkSmartCompact(
   const lastTurnInput = session.state.total_input_tokens - prevTokens.input;
   const lastTurnOutput = session.state.total_output_tokens - prevTokens.output;
   const contextTokens = lastTurnInput + lastTurnOutput;
-  const maxTokens = getMaxContextTokens(session.state.model);
+  const maxTokens = getMaxContextTokens(session.state.model, session.state.context_mode);
   const contextPct = (contextTokens / maxTokens) * 100;
 
   if (contextPct < compact_threshold) {

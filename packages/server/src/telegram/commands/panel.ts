@@ -322,6 +322,43 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
     }
   });
 
+  // ── Context window toggle (200K / 1M) ───────────────────────────────────
+
+  bot.callbackQuery(/^panel:ctx:(200k|1m):(.+)$/, async (ctx) => {
+    const mode = ctx.match[1]! as "200k" | "1m";
+    const sessionId = ctx.match[2]!;
+
+    const session = bridge.wsBridge.getSession(sessionId);
+    if (!session) {
+      await ctx.answerCallbackQuery("Session not found");
+      return;
+    }
+
+    bridge.wsBridge.handleBrowserMessage(
+      sessionId,
+      JSON.stringify({ type: "set_context_mode", mode }),
+    );
+
+    await ctx.answerCallbackQuery(mode === "1m" ? "1M context ✓" : "200K context ✓");
+
+    const chatId = ctx.chat?.id ?? ctx.callbackQuery.message?.chat.id;
+    const messageId = ctx.callbackQuery.message?.message_id;
+    if (chatId && messageId) {
+      const topicId = (ctx.callbackQuery.message as { message_thread_id?: number })
+        ?.message_thread_id;
+      const mapping = bridge.getMapping(chatId, topicId);
+      const project = mapping ? getProject(mapping.projectSlug) : undefined;
+      await bridge.sendSettingsPanel(
+        chatId,
+        topicId,
+        sessionId,
+        project?.name ?? mapping?.projectSlug ?? "",
+        session.state.model,
+        messageId,
+      );
+    }
+  });
+
   // ── Idle warning actions (extend / let go) ──────────────────────────────
 
   bot.callbackQuery(/^panel:idle:extend:(.+)$/, async (ctx) => {

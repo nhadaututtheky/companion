@@ -141,6 +141,7 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
   const [initialPrompt, setInitialPrompt] = useState("");
   const [resume, setResume] = useState(false);
   const [idleTimeout, setIdleTimeout] = useState<number>(3_600_000);
+  const [contextMode, setContextMode] = useState<"200k" | "1m">("200k");
   const [_autoApprove, _setAutoApprove] = useState(false);
 
   // Template selection
@@ -383,6 +384,7 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
         personaId: selectedPlatform === "claude" ? (selectedPersonaId ?? undefined) : undefined,
         cliPlatform: selectedPlatform,
         platformOptions: Object.keys(platformOptions).length > 0 ? platformOptions : undefined,
+        contextMode: selectedPlatform === "claude" ? contextMode : undefined,
       });
 
       const sessionId = res.data.sessionId;
@@ -428,6 +430,7 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
     codexApprovalMode,
     geminiSandbox,
     geminiYolo,
+    contextMode,
     onClose,
   ]);
 
@@ -585,6 +588,8 @@ function NewSessionModalInner({ onClose }: { onClose: () => void }) {
               onIdleTimeoutChange={setIdleTimeout}
               resume={resume}
               onResumeChange={setResume}
+              contextMode={contextMode}
+              onContextModeChange={setContextMode}
               selectedDir={selectedDir}
               onBack={() => {
                 setStep(1);

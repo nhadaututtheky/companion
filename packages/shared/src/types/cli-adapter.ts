@@ -126,7 +126,12 @@ export interface AdapterLaunchOptions {
   resume?: boolean;
   cliSessionId?: string;
   permissionMode?: string;
+  /** @deprecated — CLI removed `--thinking-budget`. Use `effort` instead. */
   thinkingBudget?: number;
+  /** Claude Code `--effort` value: "low" | "medium" | "high" | "xhigh" | "max". */
+  effort?: "low" | "medium" | "high" | "xhigh" | "max";
+  /** Context window mode for Claude — "1m" appends `[1m]` suffix when supported. */
+  contextMode?: "200k" | "1m";
   envVars?: Record<string, string>;
   /** Platform-specific options */
   platformOptions?: Record<string, unknown>;

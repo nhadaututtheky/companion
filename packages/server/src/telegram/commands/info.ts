@@ -378,8 +378,7 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
     const s = session.state;
     const model = s.model ?? mapping.model ?? "";
 
-    // Determine context window size by model family
-    const maxTokens = getMaxContextTokens(model);
+    const maxTokens = getMaxContextTokens(model, s.context_mode);
 
     const inputTokens = s.total_input_tokens ?? 0;
     const outputTokens = s.total_output_tokens ?? 0;

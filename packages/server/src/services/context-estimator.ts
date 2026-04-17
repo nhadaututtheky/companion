@@ -11,6 +11,7 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { homedir } from "node:os";
+import { getMaxContextTokens, type ContextMode } from "@companion/shared";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -263,6 +264,7 @@ export function estimateContextBreakdown(
   cwd: string,
   mcpServers: Array<{ name: string; status: string }>,
   model: string,
+  contextMode: ContextMode = "200k",
 ): ContextBreakdown {
   const sources: ContextSource[] = [
     { label: "System Prompt", tokens: SYSTEM_PROMPT_TOKENS, count: 1 },
@@ -279,8 +281,7 @@ export function estimateContextBreakdown(
   const activeSources = sources.filter((s) => s.tokens > 0);
   const totalTokens = activeSources.reduce((sum, s) => sum + s.tokens, 0);
 
-  // Haiku 4.5: 200K context, Opus/Sonnet 4.6: 1M context
-  const maxTokens = model.includes("haiku") ? 200_000 : 1_000_000;
+  const maxTokens = getMaxContextTokens(model, contextMode);
   const percent = Math.min(100, (totalTokens / maxTokens) * 100);
 
   return {

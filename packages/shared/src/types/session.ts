@@ -153,7 +153,8 @@ export type BrowserOutgoingMessage =
   | { type: "interrupt" }
   | { type: "set_model"; model: string }
   | { type: "set_auto_approve"; config: AutoApproveConfig }
-  | { type: "set_thinking_mode"; mode: ThinkingMode };
+  | { type: "set_thinking_mode"; mode: ThinkingMode }
+  | { type: "set_context_mode"; mode: ContextMode };
 
 /** Messages the bridge sends TO the browser/client */
 export type BrowserIncomingMessage =
@@ -360,6 +361,8 @@ export interface SessionState {
   compact_threshold: number;
   /** Thinking mode: adaptive (default), off, or deep */
   thinking_mode: ThinkingMode;
+  /** Context window mode: "200k" (default) or "1m" (Opus 4.7/4.6, Sonnet 4.6). */
+  context_mode?: ContextMode;
 
   // RTK (Runtime Token Keeper) metrics
   /** Estimated tokens saved by RTK compression this session */
@@ -405,10 +408,41 @@ export interface PermissionRequest {
 
 // ─── Thinking Mode ──────────────────────────────────────────────────────────
 
-/** Claude Code thinking modes: adaptive (default), off (no thinking), or a specific token budget */
+/**
+ * Companion thinking-mode UI labels. Mapped to Claude Code CLI `--effort` flag:
+ *   off → low (minimum reasoning, latency-sensitive)
+ *   adaptive → omit (model picks per turn)
+ *   deep → max (deepest reasoning, Opus 4.7 default = xhigh)
+ *
+ * The previous `--thinking-budget <n>` flag was removed from Claude Code CLI.
+ */
 export type ThinkingMode = "adaptive" | "off" | "deep";
 
-/** Map ThinkingMode to --thinking-budget CLI value (undefined = omit flag = adaptive) */
+/** Claude Code `--effort` level — returned by `thinkingModeToEffort`. */
+export type EffortLevel = "low" | "medium" | "high" | "xhigh" | "max";
+
+/**
+ * Map ThinkingMode → Claude Code `--effort` value.
+ * `undefined` means omit the flag (use model's configured default).
+ */
+export function thinkingModeToEffort(
+  mode: ThinkingMode | undefined,
+): EffortLevel | undefined {
+  switch (mode) {
+    case "off":
+      return "low";
+    case "deep":
+      return "max";
+    case "adaptive":
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * @deprecated kept for backward compatibility — old callers should migrate
+ * to `thinkingModeToEffort`. The CLI no longer accepts `--thinking-budget`.
+ */
 export function thinkingModeTobudget(mode: ThinkingMode): number | undefined {
   switch (mode) {
     case "off":
@@ -417,36 +451,35 @@ export function thinkingModeTobudget(mode: ThinkingMode): number | undefined {
       return 50000;
     case "adaptive":
     default:
-      return undefined; // omit flag = adaptive
+      return undefined;
   }
 }
 
-/** Models that support extended thinking (deep mode with budget_tokens). Opus 4.7+ uses adaptive-only. */
-const DEEP_THINKING_MODELS = new Set([
-  "claude-opus-4-6",
-  "claude-opus-4-5",
-  "claude-sonnet-4-6",
-  "claude-sonnet-4-5-20250514",
-  "claude-sonnet-4-5",
-]);
-
-/** Check if a model supports deep (extended) thinking mode */
+/** Models that support extended thinking via --effort. Anthropic docs 2026. */
 export function modelSupportsDeepThinking(model: string): boolean {
-  if (DEEP_THINKING_MODELS.has(model)) return true;
-  // Match partial: any opus-4-6/4-5 or sonnet-4-6/4-5 variant (but NOT opus-4-7+)
-  if (model.includes("opus") && model.includes("4-6")) return true;
-  if (model.includes("opus") && model.includes("4-5")) return true;
-  if (model.includes("sonnet") && model.includes("4-6")) return true;
-  if (model.includes("sonnet") && model.includes("4-5")) return true;
+  if (!model) return false;
+  const bare = model.replace(/\[1m\]$/i, "");
+  if (bare === "opus" || bare === "sonnet") return true;
+  if (bare.includes("opus") && (bare.includes("4-7") || bare.includes("4-6"))) return true;
+  if (bare.includes("sonnet") && bare.includes("4-6")) return true;
   return false;
 }
 
-/** Get available thinking modes for a given model */
+/** Available thinking modes for the model's `/effort` support. */
 export function getAvailableThinkingModes(model: string): ThinkingMode[] {
   return modelSupportsDeepThinking(model)
     ? ["adaptive", "off", "deep"]
     : ["adaptive", "off"];
 }
+
+// ─── Context Mode (200K vs 1M) ──────────────────────────────────────────────
+
+/**
+ * Companion context-mode selector. Claude Code CLI default is 200K; user opts
+ * into 1M by appending `[1m]` to the model ID (e.g. `claude-opus-4-7[1m]`).
+ * Only Opus 4.7 / 4.6 / Sonnet 4.6 support 1M — others silently stay at 200K.
+ */
+export type ContextMode = "200k" | "1m";
 
 // ─── Auto-Approve Config ─────────────────────────────────────────────────
 
@@ -477,8 +510,10 @@ export interface CreateSessionRequest {
   resume?: boolean;
   /** Bare mode — minimal output, lower cost. Maps to --bare CLI flag. */
   bare?: boolean;
-  /** Thinking mode: adaptive (default), off, or deep (50k tokens) */
+  /** Thinking mode: adaptive (default), off, or deep (→ --effort max) */
   thinkingMode?: ThinkingMode;
+  /** Context window: "200k" (default) or "1m" (adds [1m] model suffix). */
+  contextMode?: ContextMode;
   /** CLI platform to use (default: "claude") */
   cliPlatform?: import("./cli-adapter").CLIPlatform;
   /** Platform-specific options (approval mode, sandbox, etc.) */
