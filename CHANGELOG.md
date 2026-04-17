@@ -2,6 +2,15 @@
 
 All notable changes to Companion are documented here.
 
+## [0.21.9] - 2026-04-17
+
+### Tests
+- **Added 80 new unit tests** — `cli-launcher` (11), `ws-bridge` (42), `ws-message-handler` (27) covering adapter delegation, plan-mode watchdog, session lifecycle, subscriber fan-out, early-result replay, NDJSON routing, idle timing, cost/token tracking.
+- **`test:services` script splits mock-heavy tests into isolated `bun test` invocations** — `mock.module` persists globally within a Bun process, so `ws-bridge.test.ts` mocking `./ws-message-handler.js` (and vice-versa) poisoned each other when run in the same invocation. Fixed by running `cli-launcher`, `ws-message-handler`, and `ws-bridge` each in their own process after the non-polluting tests.
+
+### Internal
+- Typed `getIdleDetector: mock(() => mockIdleDetector as any)` in `ws-message-handler.test.ts` to match the existing `mockRtkPipeline as any` pattern (stub only covers 3 of 7 `IdleDetector` surface methods — the other 4 aren't exercised by the handler code paths under test).
+
 ## [0.21.8] - 2026-04-17
 
 ### Changed
