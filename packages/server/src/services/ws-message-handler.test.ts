@@ -44,7 +44,11 @@ mock.module("./pulse-estimator.js", pulseEstimatorMockFactory);
 if (process.platform !== "win32")
   mock.module(import.meta.resolve("./pulse-estimator.js"), pulseEstimatorMockFactory);
 
-const sessionStoreMockFactory = () => ({
+// Shared singleton so both the relative-path and absolute-path mocks
+// resolve to the same instance on Linux (factories called twice would
+// produce two disconnected mock objects — SUT would call one, tests
+// would assert on the other).
+const sessionStoreMock = {
   persistSession: mock(() => {}),
   storeMessage: mock(() => {}),
   updateCliSessionId: mock(() => {}),
@@ -53,10 +57,10 @@ const sessionStoreMockFactory = () => ({
   getActiveSessions: mock(() => new Map()),
   createSession: mock(() => {}),
   deleteSession: mock(() => {}),
-});
-mock.module("./session-store.js", sessionStoreMockFactory);
+};
+mock.module("./session-store.js", () => sessionStoreMock);
 if (process.platform !== "win32")
-  mock.module(import.meta.resolve("./session-store.js"), sessionStoreMockFactory);
+  mock.module(import.meta.resolve("./session-store.js"), () => sessionStoreMock);
 
 const contextBudgetMockFactory = () => ({
   getFullBreakdown: mock(() => ({ total: 0, breakdown: [] })),
