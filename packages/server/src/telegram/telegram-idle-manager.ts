@@ -58,10 +58,36 @@ export class TelegramIdleManager {
   getSessionConfig(sessionId: string): SessionConfig {
     let cfg = this.sessionConfigs.get(sessionId);
     if (!cfg) {
-      cfg = { idleTimeoutMs: 3_600_000, idleGeneration: 0 }; // default 1h
+      cfg = { idleTimeoutMs: this.loadPersistedTimeout(sessionId), idleGeneration: 0 };
       this.sessionConfigs.set(sessionId, cfg);
     }
     return cfg;
+  }
+
+  /**
+   * Load idle timeout from DB mapping (per-session persistence).
+   * Returns 0 when user disabled timeout, default 1h otherwise.
+   * Called on first getSessionConfig — subsequent calls hit the in-memory cache.
+   */
+  private loadPersistedTimeout(sessionId: string): number {
+    try {
+      const db = getDb();
+      const row = db
+        .select({
+          idleTimeoutMs: telegramSessionMappings.idleTimeoutMs,
+          idleTimeoutEnabled: telegramSessionMappings.idleTimeoutEnabled,
+        })
+        .from(telegramSessionMappings)
+        .where(eq(telegramSessionMappings.sessionId, sessionId))
+        .get();
+      if (row) return row.idleTimeoutEnabled ? row.idleTimeoutMs : 0;
+    } catch (err) {
+      log.warn("Failed to load persisted idle timeout, falling back to default", {
+        sessionId,
+        error: String(err),
+      });
+    }
+    return 3_600_000;
   }
 
   setSessionPanelMessageId(sessionId: string, messageId: number): void {

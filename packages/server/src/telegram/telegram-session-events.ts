@@ -51,21 +51,25 @@ export async function handleAssistantMessage(
   const content = msg.message?.content ?? [];
   if (!Array.isArray(content) || content.length === 0) return;
 
-  // ── Tool progress: show tool_use blocks in the feed message ──
+  // ── Render the assistant's text blocks (if any) as a completed message ──
+  // Text is rendered ONCE from the full assistant message, never streamed.
+  // Stream_event deltas only drive the typing indicator.
+  const textBlocks: string[] = [];
+  for (const block of content) {
+    if (block.type === "text" && block.text) textBlocks.push(block.text);
+  }
+  const fullText = textBlocks.join("\n").trim();
+  if (fullText) {
+    await bridge.streamHandler.renderFinal(chatId, fullText, topicId);
+  }
+
+  // ── Tool progress: show tool_use blocks in the feed message (below text) ──
   const toolFeed = formatToolFeed(
     content as Array<{ type: string; name?: string; input?: unknown }>,
   );
   if (toolFeed) {
     await bridge.upsertToolFeed(chatId, topicId, toolFeed);
-    // Commit buffered stream text into the current message (above the tool feed)
-    // and detach messageId so the post-tool reply starts a NEW message BELOW
-    // the tool feed — keeps the final reply visible at the bottom of the chat.
-    await bridge.streamHandler.markBreak(chatId, topicId);
   }
-
-  // NOTE: Do NOT call streamHandler.appendText here.
-  // stream_event deltas feed the stream incrementally.
-  // assistant message contains the SAME full text — handled by stream handler.
 
   // ── Plan file detection: send review link when agent writes .md plans ──
   for (const block of content) {
@@ -100,16 +104,8 @@ export async function handleAssistantMessage(
   }
 
   // ── File path detection: show "View File" buttons ──
-  const textParts: string[] = [];
-  for (const block of content) {
-    if (block.type === "text" && block.text) {
-      textParts.push(block.text);
-    }
-  }
-  if (textParts.length === 0) return;
-
-  const text = textParts.join("\n");
-  const filePaths = extractFilePaths(text);
+  if (!fullText) return;
+  const filePaths = extractFilePaths(fullText);
   if (filePaths.length > 0) {
     const mapping = bridge.getMapping(chatId, topicId);
     if (mapping) {
@@ -147,20 +143,18 @@ export async function handleStreamEvent(
   topicId: number | undefined,
   msg: BrowserIncomingMessage & { type: "stream_event" },
 ): Promise<void> {
-  const event = msg.event as { type?: string; text?: string; delta?: { text?: string } };
-  const text = event?.delta?.text;
+  const event = msg.event as { delta?: { text?: string } };
+  if (!event?.delta?.text) return;
 
-  if (text) {
-    const k = bridge.mapKey(chatId, topicId);
-
-    // Lock origin message ID on first chunk (prevents race with multi-message)
-    const replyTo = bridge.lastUserMsgId.get(k);
-    if (replyTo && !bridge.responseOriginMsg.has(k)) {
-      bridge.responseOriginMsg.set(k, replyTo);
-    }
-
-    await bridge.streamHandler.appendText(chatId, text, topicId);
+  // Lock origin user message ID on first text delta (for reactions later)
+  const k = bridge.mapKey(chatId, topicId);
+  const replyTo = bridge.lastUserMsgId.get(k);
+  if (replyTo && !bridge.responseOriginMsg.has(k)) {
+    bridge.responseOriginMsg.set(k, replyTo);
   }
+
+  // Deltas only refresh typing — final text is rendered from the assistant msg.
+  bridge.streamHandler.ensureTyping(chatId, topicId);
 }
 
 // ─── Result message handler ─────────────────────────────────────────────────
@@ -172,8 +166,8 @@ export async function handleResultMessage(
   sessionId: string,
   result: CLIResultMessage,
 ): Promise<void> {
-  // Complete the stream (sends final message)
-  await bridge.streamHandler.completeStream(chatId, topicId);
+  // Stop typing indicator; text was already rendered from the assistant msg.
+  bridge.streamHandler.stopTyping(chatId, topicId);
 
   // Clean up tool feed
   bridge.cleanupToolFeed(chatId, topicId);
@@ -261,14 +255,23 @@ export async function handleContextUpdate(
   sessionId: string,
   contextUsedPercent: number,
 ): Promise<void> {
-  if (contextUsedPercent < 80) return;
+  // Warn at the per-session compact threshold (user-configurable via app settings, default 75%).
+  // Fallback 80% when session state is not yet hydrated.
+  const session = bridge.wsBridge.getSession(sessionId);
+  const threshold = session?.state.compact_threshold ?? 80;
+  if (contextUsedPercent < threshold) return;
   if (bridge.compactWarningSent.has(sessionId)) return;
 
   bridge.compactWarningSent.add(sessionId);
+  const mode = session?.state.compact_mode ?? "manual";
+  const hint =
+    mode === "manual"
+      ? "consider running <code>/compact</code> to compress history."
+      : `auto-compact (${mode}) will trigger soon.`;
   await bridge.bot.api
     .sendMessage(
       chatId,
-      `⚠️ <b>Context ${Math.round(contextUsedPercent)}% full</b> — consider running <code>/compact</code> to compress history.`,
+      `⚠️ <b>Context ${Math.round(contextUsedPercent)}% full</b> — ${hint}`,
       { parse_mode: "HTML", message_thread_id: topicId },
     )
     .catch(() => {});

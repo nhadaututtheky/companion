@@ -123,8 +123,8 @@ export async function routeSessionMessage(
       }
 
       case "cli_disconnected": {
-        // CLI process died — flush any pending stream text so it's not lost
-        await bridge.streamHandler.completeStream(chatId, topicId);
+        // CLI process died — stop typing indicator and clean up tool feed.
+        bridge.streamHandler.stopTyping(chatId, topicId);
         bridge.cleanupToolFeed(chatId, topicId);
 
         // Build user-friendly disconnect message
@@ -173,15 +173,39 @@ export async function routeSessionMessage(
 
       case "status_change":
         if (msg.status === "ended") {
-          // Flush any pending stream text before cleanup
-          await bridge.streamHandler.completeStream(chatId, topicId);
+          bridge.streamHandler.stopTyping(chatId, topicId);
           bridge.cleanupToolFeed(chatId, topicId);
           bridge.removeMapping(chatId, topicId);
           bridge.clearPulseState(sessionId);
           // Send summary after a delay (wait for summarizer to finish)
           void sendSessionSummary(bridge, chatId, topicId, sessionId);
+        } else if (msg.status === "compacting") {
+          await bridge.bot.api
+            .sendMessage(
+              chatId,
+              "🔵 <b>Compacting context…</b>\nClaude is compressing history — this may take 10–30s.",
+              { parse_mode: "HTML", message_thread_id: topicId },
+            )
+            .catch(() => {});
+        } else if (msg.status === "idle") {
+          // Compact just finished — reset per-session compact warning so threshold alerts fire again
+          bridge.compactWarningSent.delete(sessionId);
         }
         break;
+
+      case "compact_handoff": {
+        // Smart-compact multi-stage handoff signal from compact-manager
+        const text =
+          msg.stage === "summarizing"
+            ? "📝 <b>Smart compact</b> — summarizing before compression…"
+            : msg.stage === "compacting"
+              ? "🔵 <b>Smart compact</b> — running /compact now…"
+              : "✅ <b>Smart compact</b> — done, context restored.";
+        await bridge.bot.api
+          .sendMessage(chatId, text, { parse_mode: "HTML", message_thread_id: topicId })
+          .catch(() => {});
+        break;
+      }
 
       case "tool_progress":
         // Refresh typing indicator while tools run

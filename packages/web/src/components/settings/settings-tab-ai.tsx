@@ -1,10 +1,71 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FloppyDisk, Eye, EyeSlash } from "@phosphor-icons/react";
+import { FloppyDisk, Eye, EyeSlash, Plug, CheckCircle, XCircle, Trash } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { SettingSection, InputField } from "./settings-tabs";
+
+type TestResult =
+  | { kind: "idle" }
+  | { kind: "running" }
+  | { kind: "ok"; latencyMs: number }
+  | { kind: "fail"; status: number; error: string; latencyMs: number };
+
+function TierModelField({
+  label,
+  value,
+  onChange,
+  suggestedModels,
+  defaultModel,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  suggestedModels: string[];
+  defaultModel: string;
+}) {
+  const isStale = value !== "" && suggestedModels.length > 0 && !suggestedModels.includes(value);
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-medium">{label}</label>
+      {suggestedModels.length > 0 ? (
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="input-bordered text-text-primary bg-bg-elevated cursor-pointer rounded-lg px-3 py-2 text-sm"
+        >
+          <option value="">— Inherit default ({defaultModel || "not set"}) —</option>
+          {suggestedModels.map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
+          {isStale && (
+            <option value={value} disabled>
+              {value} (not available in this provider)
+            </option>
+          )}
+        </select>
+      ) : (
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={defaultModel || "Same as default"}
+          className="input-bordered text-text-primary bg-bg-elevated rounded-lg px-3 py-2 font-mono text-sm"
+        />
+      )}
+      {isStale && (
+        <p className="text-xs" style={{ color: "var(--color-warning, #f59e0b)" }}>
+          &quot;{value}&quot; doesn&apos;t exist in this provider — save will fail at runtime. Pick
+          from the list or clear to inherit default.
+        </p>
+      )}
+    </div>
+  );
+}
 
 // ── Preset Providers ────────────────────────────────────────────────────────
 
@@ -22,17 +83,17 @@ const PRESET_PROVIDERS = [
   {
     name: "Google AI Studio",
     baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
-    models: ["gemma-4-27b-it", "gemma-4-12b-it", "gemini-2.5-flash", "gemini-2.5-pro"],
+    models: ["gemma-4-26b-a4b-it", "gemma-4-31b-it", "gemini-2.5-flash", "gemini-2.5-pro"],
   },
   {
     name: "Groq",
     baseUrl: "https://api.groq.com/openai/v1",
-    models: ["llama-3.3-70b-versatile", "gemma2-9b-it", "gemma-4-12b-it"],
+    models: ["llama-3.3-70b-versatile", "gemma2-9b-it"],
   },
   {
     name: "Ollama (local)",
     baseUrl: "http://localhost:11434/v1",
-    models: ["gemma4:27b", "gemma4:12b", "qwen3:8b", "llama3.2:latest", "codellama:latest"],
+    models: ["gemma4:e27b", "gemma4:e12b", "gemma4:e4b", "qwen3:8b", "llama3.2:latest", "codellama:latest"],
   },
   {
     name: "Custom",
@@ -55,6 +116,8 @@ export function AIProviderTab() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedPreset, setSelectedPreset] = useState("");
+  const [testResult, setTestResult] = useState<TestResult>({ kind: "idle" });
+  const [ollamaTags, setOllamaTags] = useState<string[] | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -85,14 +148,70 @@ export function AIProviderTab() {
 
   function handlePresetChange(name: string) {
     setSelectedPreset(name);
+    setTestResult({ kind: "idle" });
     const preset = PRESET_PROVIDERS.find((p) => p.name === name);
-    if (preset) {
-      setBaseUrl(preset.baseUrl);
-      if (preset.models.length > 0 && !model) {
-        setModel(preset.models[0]!);
-        setModelFast(preset.models[0]!);
-        setModelStrong(preset.models[0]!);
+    if (!preset) return;
+
+    setBaseUrl(preset.baseUrl);
+
+    // Ollama local doesn't need an API key — clear stale keys from paid providers
+    if (preset.baseUrl.includes("11434")) setApiKeyVal("");
+
+    // Reset stale model IDs that belonged to the PREVIOUS provider.
+    // Keep current value only if it appears in the new preset's model list.
+    const nextModels = preset.models;
+    const keepIfValid = (current: string, fallback: string) =>
+      current && nextModels.includes(current) ? current : fallback;
+
+    const newDefault = nextModels[0] ?? "";
+    const nextModel = keepIfValid(model, newDefault);
+    setModel(nextModel);
+    setModelFast(keepIfValid(modelFast, nextModel));
+    setModelStrong(keepIfValid(modelStrong, nextModel));
+  }
+
+  // Auto-fetch installed Ollama tags when baseUrl points at Ollama
+  useEffect(() => {
+    if (!baseUrl.includes("11434")) {
+      setOllamaTags(null);
+      return;
+    }
+    let cancelled = false;
+    api.models
+      .ollamaTags(baseUrl)
+      .then((res) => {
+        if (cancelled) return;
+        setOllamaTags(res.data.reachable ? res.data.tags : null);
+      })
+      .catch(() => {
+        if (!cancelled) setOllamaTags(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [baseUrl]);
+
+  async function handleTestConnection() {
+    if (!baseUrl || !model) {
+      toast.error("Base URL and model are required to test");
+      return;
+    }
+    setTestResult({ kind: "running" });
+    try {
+      const res = await api.models.testConnection({ baseUrl, apiKey: apiKeyVal, model });
+      const { ok, status, latencyMs, error } = res.data;
+      if (ok) {
+        setTestResult({ kind: "ok", latencyMs });
+      } else {
+        setTestResult({ kind: "fail", status, error: error ?? "Unknown error", latencyMs });
       }
+    } catch (err) {
+      setTestResult({
+        kind: "fail",
+        status: 0,
+        error: err instanceof Error ? err.message : String(err),
+        latencyMs: 0,
+      });
     }
   }
 
@@ -124,10 +243,43 @@ export function AIProviderTab() {
     }
   }
 
+  async function handleDisable() {
+    const confirmed = window.confirm(
+      "Disable AI Provider? This clears Base URL, API Key, and model overrides. Claude will fall back to ANTHROPIC_API_KEY env var if set.",
+    );
+    if (!confirmed) return;
+    setSaving(true);
+    try {
+      const keys = [
+        "ai.baseUrl",
+        "ai.apiKey",
+        "ai.model",
+        "ai.modelFast",
+        "ai.modelStrong",
+        "ai.provider",
+      ];
+      for (const key of keys) {
+        await api.settings.del(key).catch(() => {});
+      }
+      setBaseUrl("");
+      setApiKeyVal("");
+      setModel("");
+      setModelFast("");
+      setModelStrong("");
+      setSelectedPreset("");
+      setTestResult({ kind: "idle" });
+      toast.success("AI Provider disabled — reverted to default Claude");
+    } catch (err) {
+      toast.error(String(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (loading) return <div className="py-8 text-center text-xs">Loading...</div>;
 
   const currentPreset = PRESET_PROVIDERS.find((p) => p.name === selectedPreset);
-  const suggestedModels = currentPreset?.models ?? [];
+  const suggestedModels = ollamaTags ?? currentPreset?.models ?? [];
 
   return (
     <div className="flex flex-col gap-5">
@@ -170,13 +322,20 @@ export function AIProviderTab() {
 
           {/* API Key */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium">API Key</label>
+            <label className="text-xs font-medium">
+              API Key
+              {baseUrl.includes("11434") && (
+                <span className="text-text-secondary ml-2 font-normal">
+                  — not required for local Ollama
+                </span>
+              )}
+            </label>
             <div className="relative">
               <input
                 type={showKey ? "text" : "password"}
                 value={apiKeyVal}
                 onChange={(e) => setApiKeyVal(e.target.value)}
-                placeholder="sk-..."
+                placeholder={baseUrl.includes("11434") ? "(leave blank)" : "sk-..."}
                 className="input-bordered text-text-primary bg-bg-elevated w-full rounded-lg px-3 py-2 pr-10 font-mono text-sm"
               />
               <button
@@ -226,20 +385,22 @@ export function AIProviderTab() {
       {/* Advanced: separate fast/strong models */}
       <SettingSection
         title="Model Tiers (optional)"
-        description="Use different models for cheap vs expensive AI calls. Leave blank to use default model for all."
+        description="Use different models for cheap vs expensive AI calls. Leave blank to inherit the default model above."
       >
         <div className="flex flex-col gap-3">
-          <InputField
+          <TierModelField
             label="Fast Model — summaries, convergence check"
             value={modelFast}
             onChange={setModelFast}
-            placeholder={model || "Same as default"}
+            suggestedModels={suggestedModels}
+            defaultModel={model}
           />
-          <InputField
+          <TierModelField
             label="Strong Model — debate agents"
             value={modelStrong}
             onChange={setModelStrong}
-            placeholder={model || "Same as default"}
+            suggestedModels={suggestedModels}
+            defaultModel={model}
           />
         </div>
       </SettingSection>
@@ -249,6 +410,23 @@ export function AIProviderTab() {
         title="Auto Features"
         description="Toggle automatic AI-powered features. Requires a configured provider above."
       >
+        {!baseUrl && (autoSummary || autoInject) && (
+          <div
+            className="mb-3 flex items-start gap-2 rounded-lg px-3 py-2 text-xs"
+            style={{
+              background: "color-mix(in srgb, var(--color-warning, #f59e0b) 12%, transparent)",
+              border:
+                "1px solid color-mix(in srgb, var(--color-warning, #f59e0b) 40%, transparent)",
+              color: "var(--color-warning, #f59e0b)",
+            }}
+          >
+            <XCircle size={14} weight="fill" className="mt-0.5 shrink-0" />
+            <span className="font-medium">
+              No AI provider configured — these toggles will be skipped silently at runtime. Set
+              Base URL + Model above first, or turn them off to avoid confusion.
+            </span>
+          </div>
+        )}
         <div className="flex flex-col gap-3">
           <label className="flex cursor-pointer items-center justify-between">
             <div>
@@ -308,21 +486,102 @@ export function AIProviderTab() {
         </div>
       </SettingSection>
 
-      {/* Save button */}
-      <button
-        onClick={() => void handleSave()}
-        disabled={saving || !baseUrl}
-        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors"
-        style={{
-          background: baseUrl ? "var(--color-accent)" : "var(--color-bg-elevated)",
-          color: baseUrl ? "#fff" : "var(--color-text-muted)",
-          border: "none",
-          opacity: saving ? 0.7 : 1,
-        }}
-      >
-        <FloppyDisk size={16} weight="bold" />
-        {saving ? "Saving..." : "Save AI Provider"}
-      </button>
+      {/* Test + Save buttons */}
+      <div className="flex flex-col gap-2">
+        <div className="flex gap-2">
+          <button
+            onClick={() => void handleTestConnection()}
+            disabled={testResult.kind === "running" || !baseUrl || !model}
+            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors"
+            style={{
+              background: "var(--color-bg-elevated)",
+              color: "var(--color-text-primary)",
+              border: "1px solid var(--color-border)",
+              opacity: testResult.kind === "running" ? 0.7 : 1,
+            }}
+          >
+            <Plug size={16} weight="bold" />
+            {testResult.kind === "running" ? "Testing..." : "Test Connection"}
+          </button>
+          <button
+            onClick={() => void handleSave()}
+            disabled={saving || !baseUrl}
+            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors"
+            style={{
+              background: baseUrl ? "var(--color-accent)" : "var(--color-bg-elevated)",
+              color: baseUrl ? "#fff" : "var(--color-text-muted)",
+              border: "none",
+              opacity: saving ? 0.7 : 1,
+            }}
+          >
+            <FloppyDisk size={16} weight="bold" />
+            {saving ? "Saving..." : "Save AI Provider"}
+          </button>
+        </div>
+
+        {baseUrl && (
+          <button
+            onClick={() => void handleDisable()}
+            disabled={saving}
+            className="flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-medium transition-colors"
+            style={{
+              background: "transparent",
+              color: "var(--color-loss, #ff6b6b)",
+              border: "1px solid color-mix(in srgb, var(--color-loss, #ff6b6b) 40%, transparent)",
+              opacity: saving ? 0.5 : 1,
+            }}
+            aria-label="Disable AI provider and revert to default Claude"
+          >
+            <Trash size={14} weight="bold" />
+            Disable Provider (revert to default Claude)
+          </button>
+        )}
+
+        {testResult.kind === "ok" && (
+          <div
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs"
+            style={{
+              background: "color-mix(in srgb, var(--color-profit, #00d084) 12%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--color-profit, #00d084) 40%, transparent)",
+              color: "var(--color-profit, #00d084)",
+            }}
+          >
+            <CheckCircle size={14} weight="fill" />
+            <span className="font-medium">
+              Connection OK — {testResult.latencyMs}ms round trip
+            </span>
+          </div>
+        )}
+
+        {testResult.kind === "fail" && (
+          <div
+            className="flex flex-col gap-1 rounded-lg px-3 py-2 text-xs"
+            style={{
+              background: "color-mix(in srgb, var(--color-loss, #ff6b6b) 12%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--color-loss, #ff6b6b) 40%, transparent)",
+              color: "var(--color-loss, #ff6b6b)",
+            }}
+          >
+            <div className="flex items-center gap-2 font-medium">
+              <XCircle size={14} weight="fill" />
+              <span>
+                Failed{testResult.status ? ` (${testResult.status})` : ""} · {testResult.latencyMs}
+                ms
+              </span>
+            </div>
+            <pre className="text-text-secondary overflow-x-auto whitespace-pre-wrap break-all font-mono text-[10px]">
+              {testResult.error}
+            </pre>
+          </div>
+        )}
+
+        {ollamaTags !== null && baseUrl.includes("11434") && (
+          <p className="text-text-secondary text-xs">
+            Ollama reachable · {ollamaTags.length} model{ollamaTags.length === 1 ? "" : "s"}{" "}
+            installed
+          </p>
+        )}
+      </div>
     </div>
   );
 }
