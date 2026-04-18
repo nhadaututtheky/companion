@@ -1,0 +1,250 @@
+{
+  "version": "1.0",
+  "project": "companion",
+  "last_validated": "2026-04-19T00:00:00Z",
+  "notes": "Covers session lifecycle, Telegram routing, compact flow, and AI provider. See .rune/INVARIANTS.md for the prose rules (INV-1..INV-12). logic-guardian MUST block edits here without explicit statement of what is preserved.",
+  "components": [
+    {
+      "name": "session-lifecycle",
+      "file_path": "packages/server/src/services/ws-session-lifecycle.ts",
+      "role": "SESSION_LIFECYCLE_ORCHESTRATOR",
+      "status": "ACTIVE",
+      "functions": [
+        {
+          "name": "startSession",
+          "signature": "(opts: StartSessionOpts) => Promise<{ sessionId: string; shortId: string }>",
+          "description": "Creates in-memory session + DB record + launches CLI/SDK. Resume path clears old cliSessionId before creating new session.",
+          "critical": true
+        },
+        {
+          "name": "killSession",
+          "signature": "(sessionId: string) => void",
+          "description": "Terminates session: clears idle/cleanup timers, deletes session settings, kills SDK/CLI process, captures shortId, updates status to 'ended', calls endSessionRecord. Single entry point for all kill paths.",
+          "critical": true
+        }
+      ],
+      "parameters": [
+        { "name": "DEFAULT_SESSION_SETTINGS.idleTimeoutMs", "value": "SESSION_IDLE_TIMEOUT_MS", "source": "@companion/shared constants" },
+        { "name": "USE_SDK_ENGINE", "value": "process.env.USE_SDK_ENGINE === '1'", "source": "env" }
+      ],
+      "dependencies": ["session-store", "compact-manager", "ws-health-idle"],
+      "dependents": ["telegram-commands", "routes/sessions", "telegram-session-router"],
+      "invariant_refs": ["INV-1", "INV-2", "INV-3", "INV-10"],
+      "last_modified": "2026-04-19",
+      "last_modifier": "agent"
+    },
+    {
+      "name": "session-store",
+      "file_path": "packages/server/src/services/session-store.ts",
+      "role": "SESSION_DB_PERSISTENCE",
+      "status": "ACTIVE",
+      "functions": [
+        {
+          "name": "endSessionRecord",
+          "signature": "(sessionId: string) => void",
+          "description": "Marks session ended in DB, clears shortId + cliSessionId. CANONICAL end path — every kill must go through this.",
+          "critical": true
+        },
+        {
+          "name": "createSessionRecord",
+          "signature": "(opts: CreateSessionOpts) => string",
+          "description": "Inserts new session row, generates shortId (collision-free), returns shortId.",
+          "critical": true
+        },
+        {
+          "name": "clearCliSessionId",
+          "signature": "(cliSessionId: string) => void",
+          "description": "Clears cliSessionId on old session when resuming. Prevents double-attach.",
+          "critical": true
+        }
+      ],
+      "dependencies": [],
+      "dependents": ["session-lifecycle", "telegram-idle-manager"],
+      "invariant_refs": ["INV-1", "INV-2", "INV-4"],
+      "last_modified": "2026-04-19"
+    },
+    {
+      "name": "telegram-idle-manager",
+      "file_path": "packages/server/src/telegram/telegram-idle-manager.ts",
+      "role": "TELEGRAM_IDLE_TIMEOUT",
+      "status": "ACTIVE",
+      "functions": [
+        {
+          "name": "getSessionConfig",
+          "signature": "(sessionId: string) => SessionConfig",
+          "description": "Returns cached SessionConfig. On cache miss, loads persisted idleTimeoutMs from telegramSessionMappings. idleTimeoutEnabled=false → 0 (never kill).",
+          "critical": true
+        },
+        {
+          "name": "resetIdleTimer",
+          "signature": "(sessionId: string, chatId: number, topicId?: number) => void",
+          "description": "Bumps generation counter, schedules warning (5m before kill) + kill timer. Stale generations bail via guard.",
+          "critical": true
+        },
+        {
+          "name": "setIdleTimeout",
+          "signature": "(sessionId: string, ms: number) => void",
+          "description": "Updates cfg + persists to DB. Writer entry point; all external writes go here.",
+          "critical": true
+        }
+      ],
+      "parameters": [
+        { "name": "DEFAULT_IDLE_TIMEOUT", "value": 3600000, "source": "telegram-idle-manager.ts (1h)" },
+        { "name": "WARN_BEFORE_MS", "value": "5 * 60 * 1000", "source": "telegram-idle-manager.ts" },
+        { "name": "BUSY_NOTIFY_MS", "value": "15 * 60 * 1000", "source": "telegram-idle-manager.ts" }
+      ],
+      "dependencies": ["session-store", "telegram-bridge"],
+      "dependents": ["telegram-session-router"],
+      "invariant_refs": ["INV-3", "INV-10", "INV-11"],
+      "last_modified": "2026-04-19"
+    },
+    {
+      "name": "telegram-session-router",
+      "file_path": "packages/server/src/telegram/telegram-session-router.ts",
+      "role": "TELEGRAM_MESSAGE_ROUTER",
+      "status": "ACTIVE",
+      "functions": [
+        {
+          "name": "routeSessionMessage",
+          "signature": "(bridge, chatId, topicId, sessionId, msg: BrowserIncomingMessage) => Promise<void>",
+          "description": "Exhaustive switch over BrowserIncomingMessage.type. Adding a new variant requires a case here. Cases: assistant, stream_event, stream_event_batch, result, permission_request, session_init, context_breakdown, context_update, cost_warning, cli_disconnected, status_change (ended/compacting/idle), compact_handoff (summarizing/compacting/done), tool_progress, user_message.",
+          "critical": true
+        }
+      ],
+      "dependencies": ["telegram-session-events", "telegram-permission-handler"],
+      "dependents": ["telegram-bridge"],
+      "invariant_refs": ["INV-6", "INV-7", "INV-8", "INV-9"],
+      "last_modified": "2026-04-19"
+    },
+    {
+      "name": "telegram-session-events",
+      "file_path": "packages/server/src/telegram/telegram-session-events.ts",
+      "role": "TELEGRAM_EVENT_HANDLERS",
+      "status": "ACTIVE",
+      "functions": [
+        {
+          "name": "handleContextUpdate",
+          "signature": "(bridge, chatId, topicId, sessionId, contextUsedPercent: number) => Promise<void>",
+          "description": "Sends Telegram warning when context reaches session.state.compact_threshold (user-configurable, default 75%). Gated by compactWarningSent set (cleared post-compact via status_change=idle).",
+          "critical": true
+        },
+        {
+          "name": "handleResultMessage",
+          "signature": "(bridge, chatId, topicId, sessionId, result: CLIResultMessage) => Promise<void>",
+          "description": "Resets idle timer + sends inline token bar after each turn.",
+          "critical": true
+        },
+        {
+          "name": "sendSessionSummary",
+          "signature": "(bridge, chatId, topicId, sessionId) => Promise<void>",
+          "description": "Polls for summarizer result up to 15s, renders summary with files/metrics.",
+          "critical": false
+        }
+      ],
+      "dependencies": ["telegram-bridge", "ws-bridge"],
+      "dependents": ["telegram-session-router"],
+      "invariant_refs": ["INV-5", "INV-6"],
+      "last_modified": "2026-04-19"
+    },
+    {
+      "name": "compact-manager",
+      "file_path": "packages/server/src/services/compact-manager.ts",
+      "role": "CONTEXT_COMPACT_CONTROLLER",
+      "status": "ACTIVE",
+      "functions": [
+        {
+          "name": "checkSmartCompact",
+          "signature": "(bridge, session, prevTokens) => void",
+          "description": "Evaluates session.state.compact_mode (manual/smart/aggressive) against compact_threshold. Aggressive triggers immediately; smart waits for idle then handoff.",
+          "critical": true
+        },
+        {
+          "name": "triggerSmartCompactHandoff",
+          "signature": "(bridge, session) => void",
+          "description": "Broadcasts compact_handoff { stage: 'summarizing' } → sends handoff prompt to CLI → schedulePostHandoffCompact.",
+          "critical": true
+        }
+      ],
+      "parameters": [
+        { "name": "compact_threshold default", "value": 75, "source": "db/schema.ts sessions.compactThreshold" },
+        { "name": "compact_mode default", "value": "manual", "source": "ws-session-lifecycle.ts DEFAULT" }
+      ],
+      "dependencies": ["ws-bridge", "context-estimator"],
+      "dependents": ["ws-message-handler", "telegram-session-router"],
+      "invariant_refs": ["INV-5", "INV-6", "INV-7"],
+      "last_modified": "2026-04-19"
+    },
+    {
+      "name": "ai-client",
+      "file_path": "packages/server/src/services/ai-client.ts",
+      "role": "AI_PROVIDER_RESOLVER",
+      "status": "ACTIVE",
+      "functions": [
+        {
+          "name": "resolveProvider",
+          "signature": "() => Promise<ProviderConfig>",
+          "description": "Priority chain: DB ai.* settings → env vars → Anthropic fallback. When ai.baseUrl is set, routes ALL Claude-API calls through OpenAI-compatible endpoint.",
+          "critical": true
+        },
+        {
+          "name": "callOpenAICompatible",
+          "signature": "(prompt, opts) => Promise<string>",
+          "description": "3-attempt retry with exponential backoff. Each attempt 1-15s. BAD provider config = 15-45s delay per AI call.",
+          "critical": true
+        }
+      ],
+      "parameters": [
+        { "name": "retry attempts", "value": 3, "source": "ai-client.ts ~line 349" }
+      ],
+      "dependencies": ["settings-helpers"],
+      "dependents": ["summarizer", "debate-agents", "convergence-detector"],
+      "invariant_refs": ["INV-12"],
+      "last_modified": "2026-04-19"
+    },
+    {
+      "name": "ws-health-idle",
+      "file_path": "packages/server/src/services/ws-health-idle.ts",
+      "role": "WS_SIDE_IDLE_KILL",
+      "status": "ACTIVE",
+      "functions": [
+        {
+          "name": "startIdleTimer",
+          "signature": "(session: ActiveSession) => void",
+          "description": "Per-session idle timeout in WS/web path. DIFFERENT from telegram-idle-manager — edits to one path MUST check the other.",
+          "critical": true
+        }
+      ],
+      "dependencies": ["ws-bridge"],
+      "dependents": ["ws-message-handler"],
+      "invariant_refs": ["INV-10"],
+      "last_modified": "2026-04-19"
+    }
+  ],
+  "co_change_groups": [
+    {
+      "name": "session-end-flow",
+      "components": ["session-lifecycle", "session-store", "telegram-idle-manager"],
+      "reason": "All three paths must clear shortId + sessions.cliSessionId + telegramSessionMappings.cliSessionId consistently. Changing one table's write = change the others."
+    },
+    {
+      "name": "compact-flow",
+      "components": ["compact-manager", "telegram-session-router", "telegram-session-events"],
+      "reason": "compact_handoff broadcast → router switch → event handler must all be kept in sync. Threshold reads from session.state, never hardcoded."
+    },
+    {
+      "name": "dual-path-idle",
+      "components": ["ws-health-idle", "telegram-idle-manager"],
+      "reason": "Two independent idle-kill implementations (web vs telegram). Fix in one = check the other for regression (INV-10)."
+    },
+    {
+      "name": "ai-provider-lifecycle",
+      "components": ["ai-client"],
+      "reason": "Provider resolution chain affects ALL internal AI calls. Adding ai.* settings requires: (1) load in resolveProvider, (2) add to settings-tab-ai.tsx UI, (3) add to handleDisable keys array (INV-12)."
+    },
+    {
+      "name": "message-routing-exhaustiveness",
+      "components": ["telegram-session-router"],
+      "reason": "Every new BrowserIncomingMessage variant (shared/types/session.ts) needs a case here — otherwise telegram users silently lose visibility into that event type (INV-7, INV-8)."
+    }
+  ]
+}
