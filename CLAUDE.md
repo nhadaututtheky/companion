@@ -1,5 +1,18 @@
 # Companion
 
+## MUST-READ Invariants (HARD GATE)
+
+**Before editing any of these paths**, open and read `.rune/INVARIANTS.md`:
+
+- `packages/server/src/services/ws-*` — WS bridge, session lifecycle, health/idle
+- `packages/server/src/services/session-store.ts` — DB writes for sessions
+- `packages/server/src/services/compact-manager.ts` — compact flow
+- `packages/server/src/telegram/**` — all Telegram routing and handlers
+- `packages/server/src/services/adapters/**` — CLI/SDK adapters
+- `packages/shared/src/types/session.ts` — shared session types & status machine
+
+Non-negotiable rules INV-1…INV-12 in that file. Violating them = recurring bugs that already shipped before. Skim the Review Checklist at the bottom before submitting any PR that touches these paths.
+
 ## Feature Registry
 
 See `FEATURE_REGISTRY.md` — single source of truth for all ~100 features, key files, relationships, and domain boundaries. **Check before building** to avoid overlap or scattered logic.
