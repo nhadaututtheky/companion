@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ArrowClockwise, CurrencyDollar, FolderOpen } from "@phosphor-icons/react";
 import { Header } from "@/components/layout/header";
 import { api } from "@/lib/api-client";
+import { fmtDateTimeFull } from "@/lib/formatters";
 
 interface Session {
   id: string;
@@ -170,7 +171,7 @@ export default function SessionsPage() {
                   <div className="flex items-center gap-4 text-xs">
                     <span>{s.model}</span>
                     <span>{s.numTurns} turns</span>
-                    <span>{new Date(s.createdAt).toLocaleString()}</span>
+                    <span>{fmtDateTimeFull(s.createdAt)}</span>
                   </div>
                 </div>
                 <div className="text-success flex items-center gap-1 font-mono text-sm font-semibold">

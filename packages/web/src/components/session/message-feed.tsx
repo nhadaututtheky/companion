@@ -19,6 +19,7 @@ import { useComposerStore } from "@/lib/stores/composer-store";
 import { usePinnedMessagesStore } from "@/lib/stores/pinned-messages-store";
 import { getToolMeta, ToolInputRenderer, ToolOutputRenderer } from "./tool-renderers";
 import { DiffSummaryBlock } from "./diff-summary-block";
+import { fmtTime } from "@/lib/formatters";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -490,12 +491,7 @@ const MessageBubble = React.memo(
 
           {/* Timestamp + source badge + cost + pin */}
           <div className="flex items-center gap-1">
-            <span className="text-xs">
-              {new Date(msg.timestamp).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
+            <span className="text-xs">{fmtTime(msg.timestamp)}</span>
             {msg.source && msg.source !== "web" && <SourceBadge source={msg.source} />}
             {msg.costUsd !== undefined && msg.costUsd > 0 && <CostBadge costUsd={msg.costUsd} />}
             {/* Pin button — shows on hover or when already pinned */}

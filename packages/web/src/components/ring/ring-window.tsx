@@ -8,6 +8,7 @@ import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { ChannelPanel } from "@/components/shared/channel-panel";
 import { DebateCreateModal } from "@/components/debate/debate-create-modal";
+import { fmtTime } from "@/lib/formatters";
 
 const GOOGLE_COLORS = [
   "var(--color-google-blue)",
@@ -22,10 +23,6 @@ function getSessionColor(id: string): string {
     hash = ((hash << 5) - hash + id.charCodeAt(i)) | 0;
   }
   return GOOGLE_COLORS[Math.abs(hash) % GOOGLE_COLORS.length]!;
-}
-
-function formatTime(ts: number): string {
-  return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
 interface RingWindowProps {
@@ -609,7 +606,7 @@ export function RingWindow({ anchorX, anchorY }: RingWindowProps) {
                 }}
               >
                 <span style={{ fontSize: 11, color: "var(--color-text-muted, #999)" }}>
-                  {msg.sessionName} · {formatTime(msg.timestamp)}
+                  {msg.sessionName} · {fmtTime(msg.timestamp)}
                 </span>
                 <div
                   style={{

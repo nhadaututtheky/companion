@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ArrowsClockwise, TelegramLogo, CheckCircle, XCircle, Clock } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
+import { fmtTime } from "@/lib/formatters";
 
 interface BotStatus {
   botId: string;
@@ -50,7 +51,7 @@ export function TelegramStatus() {
             </span>
           )}
           {lastUpdated && (
-            <span className="text-xs">&middot; Updated {lastUpdated.toLocaleTimeString()}</span>
+            <span className="text-xs">&middot; Updated {fmtTime(lastUpdated)}</span>
           )}
         </div>
         <button

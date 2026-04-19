@@ -11,6 +11,7 @@ import {
 } from "@phosphor-icons/react";
 import { DirectoryBrowser } from "../directory-browser";
 import { PlatformPicker } from "../platform-picker";
+import { fmtDateShort } from "@/lib/formatters";
 import type { CLIPlatformInfo } from "@/hooks/use-cli-platforms";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -191,10 +192,7 @@ export function StepProject(props: StepProjectProps) {
                       {resumingId === resumable.id ? "Resuming..." : "Resume last session"}
                     </span>
                     <span className="ml-auto text-xs" style={{ color: "#4285F480" }}>
-                      {new Date(resumable.endedAt).toLocaleDateString(undefined, {
-                        month: "short",
-                        day: "numeric",
-                      })}
+                      {fmtDateShort(resumable.endedAt)}
                     </span>
                   </button>
                 )}

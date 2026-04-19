@@ -10,6 +10,7 @@ import { ScheduleList } from "./schedule-list";
 import { ScheduleCalendar } from "./schedule-calendar";
 import { ScheduleForm } from "./schedule-form";
 import { ScheduleRuns } from "./schedule-runs";
+import { fmtDateTime } from "@/lib/formatters";
 import type { Schedule } from "@companion/shared";
 
 export function ScheduleModal() {
@@ -210,12 +211,7 @@ export function ScheduleModal() {
                             className="text-text-muted font-mono text-xs"
                             style={{ fontSize: 10 }}
                           >
-                            {new Date(run.nextRunAt).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                            {fmtDateTime(run.nextRunAt)}
                           </span>
                         </div>
                       ))}

@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
+import { fmtDateShort } from "@/lib/formatters";
 import { TemplatePicker } from "@/components/workflow/template-picker";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -183,10 +184,7 @@ export default function WorkflowsPage() {
                   </span>
 
                   <span className="text-text-muted whitespace-nowrap text-xs">
-                    {new Date(w.createdAt).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                    })}
+                    {fmtDateShort(w.createdAt)}
                   </span>
                 </Link>
               );

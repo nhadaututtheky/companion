@@ -22,6 +22,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { FileTree } from "./file-tree";
 import { FileViewer } from "./file-viewer";
 import { ChangesPanel } from "./changes-panel";
+import { fmtTime } from "@/lib/formatters";
 
 type SidebarTab = "overview" | "changes";
 
@@ -603,7 +604,7 @@ function SnapshotPanel({ sessionId, isActive }: { sessionId: string; isActive: b
               <Camera size={12} className="text-text-muted shrink-0" aria-hidden="true" />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-mono text-xs">
-                  {snap.label || new Date(snap.createdAt).toLocaleTimeString()}
+                  {snap.label || fmtTime(snap.createdAt)}
                 </p>
                 <p className="truncate text-xs">{snap.contentPreview.slice(0, 60)}...</p>
               </div>

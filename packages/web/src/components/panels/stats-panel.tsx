@@ -13,6 +13,12 @@ import {
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import Link from "next/link";
+import {
+  fmtTokens,
+  fmtCost,
+  modelShortLabel as modelLabel,
+  modelColor,
+} from "@/lib/formatters";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -31,35 +37,6 @@ interface StatsPanelProps {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-
-function fmtTokens(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}k`;
-  return String(n);
-}
-
-function fmtCost(n: number): string {
-  if (n === 0) return "$0.00";
-  if (n < 0.01) return "<$0.01";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(n);
-}
-
-function modelLabel(model: string): string {
-  if (model.includes("opus")) return "Opus";
-  if (model.includes("haiku")) return "Haiku";
-  return "Sonnet";
-}
-
-function modelColor(model: string): string {
-  if (model.includes("opus")) return "#a78bfa"; // purple
-  if (model.includes("haiku")) return "#34a853"; // green
-  return "#4285f4"; // blue — sonnet
-}
 
 function heatmapColor(sessions: number): string {
   if (sessions === 0) return "var(--color-bg-elevated)";

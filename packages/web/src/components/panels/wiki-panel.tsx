@@ -18,6 +18,7 @@ import {
   Warning,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
+import { fmtDate } from "@/lib/formatters";
 import {
   useWikiStore,
   type WikiDomain,
@@ -682,7 +683,7 @@ function ArticleView() {
         )}
         {article.meta.compiledAt && (
           <span className="text-text-secondary text-[10px]">
-            {new Date(article.meta.compiledAt).toLocaleDateString()}
+            {fmtDate(article.meta.compiledAt)}
           </span>
         )}
         {article.meta.confidence && (
@@ -947,7 +948,7 @@ function RawView() {
             <div className="min-w-0 flex-1">
               <div className="text-text-primary truncate text-xs">{f.name}</div>
               <div className="text-text-secondary text-[10px]">
-                {fmtBytes(f.sizeBytes)} &middot; {new Date(f.modifiedAt).toLocaleDateString()}
+                {fmtBytes(f.sizeBytes)} &middot; {fmtDate(f.modifiedAt)}
               </div>
             </div>
             <button

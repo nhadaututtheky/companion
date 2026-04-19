@@ -23,6 +23,7 @@ import { PermissionGate } from "@/components/session/permission-gate";
 import { ContextMeter } from "@/components/session/context-meter";
 import { SessionDetails } from "@/components/session/session-details";
 import { ChannelPanel } from "@/components/shared/channel-panel";
+import { modelShortLabel } from "@/lib/formatters";
 import { PulseWarning } from "@/components/pulse/pulse-warning";
 import { AgentTabBar } from "./agent-tab-bar";
 import { SpawnAgentModal } from "@/components/session/spawn-agent-modal";
@@ -113,14 +114,7 @@ function ExpandedModelSwitcher({
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const modelName = model.includes("/") ? model.split("/").pop()! : model;
-  const modelShort = modelName.includes("opus")
-    ? "Opus"
-    : modelName.includes("haiku")
-      ? "Haiku"
-      : modelName.includes("sonnet")
-        ? "Sonnet"
-        : modelName;
+  const modelShort = modelShortLabel(model);
 
   return (
     <div ref={ref} className="relative hidden flex-shrink-0 sm:block">
@@ -156,7 +150,7 @@ function ExpandedModelSwitcher({
           }}
         >
           {MODEL_OPTIONS.map((opt) => {
-            const isCurrent = modelName.includes(opt.id.replace("claude-", "").split("-")[0]!);
+            const isCurrent = model.includes(opt.id.replace("claude-", "").split("-")[0]!);
             return (
               <button
                 key={opt.id}

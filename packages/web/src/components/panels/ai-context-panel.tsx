@@ -27,6 +27,7 @@ import {
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { useContextFeedStore } from "@/lib/stores/context-feed-store";
+import { fmtNumber, fmtDateTimeFull } from "@/lib/formatters";
 import dynamic from "next/dynamic";
 
 const GraphVisualization = dynamic(
@@ -392,7 +393,7 @@ function QuickScrape() {
               {typeof result.metadata?.title === "string" ? result.metadata.title : result.url}
             </span>
             <span className="text-text-muted" style={{ fontFamily: "var(--font-mono)" }}>
-              {wordCount.toLocaleString()} words
+              {fmtNumber(wordCount)} words
             </span>
           </button>
           {expanded && content && (
@@ -1331,7 +1332,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                         }}
                       >
                         <Icon size={14} className="mx-auto mb-0.5" style={{ color }} />
-                        <div className="font-mono text-sm font-bold">{value.toLocaleString()}</div>
+                        <div className="font-mono text-sm font-bold">{fmtNumber(value)}</div>
                         <div className="text-xs">{label}</div>
                       </div>
                     ))}
@@ -1356,7 +1357,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
 
                 {cgJob?.completedAt && (
                   <div className="text-center text-xs">
-                    Last scan: {new Date(cgJob.completedAt).toLocaleString()}
+                    Last scan: {fmtDateTimeFull(cgJob.completedAt)}
                   </div>
                 )}
 

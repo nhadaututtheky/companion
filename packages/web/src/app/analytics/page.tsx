@@ -23,6 +23,14 @@ import {
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import Link from "next/link";
+import {
+  fmtTokens,
+  fmtCost,
+  fmtDuration,
+  fmtDate,
+  modelShortLabel as modelLabel,
+  modelColor,
+} from "@/lib/formatters";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -62,49 +70,6 @@ interface StatsData {
   recentSessions: RecentSession[];
   avgDurationMs: number;
   rtkSummary: RTKSummary;
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-
-function fmtTokens(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}k`;
-  return String(n);
-}
-
-function fmtCost(n: number): string {
-  if (n === 0) return "$0.00";
-  if (n < 0.01) return "<$0.01";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(n);
-}
-
-function fmtDuration(ms: number | null): string {
-  if (ms === null || ms <= 0) return "—";
-  const totalSec = Math.round(ms / 1000);
-  if (totalSec < 60) return `${totalSec}s`;
-  const min = Math.floor(totalSec / 60);
-  const sec = totalSec % 60;
-  if (min < 60) return `${min}m ${sec}s`;
-  const hr = Math.floor(min / 60);
-  const remainMin = min % 60;
-  return `${hr}h ${remainMin}m`;
-}
-
-function modelLabel(model: string): string {
-  if (model.includes("opus")) return "Opus";
-  if (model.includes("haiku")) return "Haiku";
-  return "Sonnet";
-}
-
-function modelColor(model: string): string {
-  if (model.includes("opus")) return "#a78bfa";
-  if (model.includes("haiku")) return "#34a853";
-  return "#4285f4";
 }
 
 // ── KPI Card ──────────────────────────────────────────────────────────────
@@ -635,7 +600,7 @@ function WikiTab({ data }: { data: FeatureData["wiki"] }) {
               </span>
             )}
             <span className="text-text-muted flex-shrink-0 font-mono text-[10px]">
-              {d.lastCompiledAt ? new Date(d.lastCompiledAt).toLocaleDateString() : "never"}
+              {d.lastCompiledAt ? fmtDate(d.lastCompiledAt) : "never"}
             </span>
           </div>
         ))}
@@ -734,7 +699,7 @@ function CodeGraphTab({ data }: { data: FeatureData["codegraph"] }) {
               </span>
             </div>
             <span className="text-text-muted flex-shrink-0 font-mono text-[10px]">
-              {p.lastScannedAt ? new Date(p.lastScannedAt).toLocaleDateString() : "—"}
+              {p.lastScannedAt ? fmtDate(p.lastScannedAt) : "—"}
             </span>
           </div>
         ))}

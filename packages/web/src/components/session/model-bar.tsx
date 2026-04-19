@@ -5,6 +5,7 @@ import { ModelDropdown } from "./model-dropdown";
 import { api } from "@/lib/api-client";
 import { getPersonaById } from "@companion/shared";
 import { PersonaAvatar } from "@/components/persona/persona-avatar";
+import { modelLongLabel, fmtContextWindow } from "@/lib/formatters";
 
 export interface ModelInfo {
   id: string;
@@ -75,7 +76,7 @@ export function ModelBar({
     fetchModels();
   };
 
-  const mainModelLabel = formatModelName(mainModel);
+  const mainModelLabel = modelLongLabel(mainModel);
 
   return (
     <div className="text-text-muted flex items-center gap-1.5 px-1 py-0.5 text-xs">
@@ -99,7 +100,7 @@ export function ModelBar({
               background: "#10b98115",
               color: "#10b981",
             }}
-            title={`${p.name} (${p.providerName})${persona ? ` — ${persona.name}` : ""} — Context: ${formatContextWindow(p.contextWindow)}`}
+            title={`${p.name} (${p.providerName})${persona ? ` — ${persona.name}` : ""} — Context: ${fmtContextWindow(p.contextWindow)}`}
           >
             {persona && <PersonaAvatar persona={persona} size={14} showBadge={false} />}
             {p.free && (
@@ -165,18 +166,3 @@ export function ModelBar({
   );
 }
 
-function formatModelName(model: string): string {
-  if (model.includes("sonnet")) return "Sonnet 4.6";
-  if (model.includes("opus") && model.includes("4-7")) return "Opus 4.7";
-  if (model.includes("opus") && model.includes("4-6")) return "Opus 4.6";
-  if (model.includes("opus")) return "Opus";
-  if (model.includes("haiku")) return "Haiku 4.5";
-  // Strip common prefixes
-  return model.replace(/^(claude-|openai\/|anthropic\/)/, "");
-}
-
-function formatContextWindow(tokens: number): string {
-  if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(0)}M`;
-  if (tokens >= 1_000) return `${(tokens / 1_000).toFixed(0)}K`;
-  return String(tokens);
-}

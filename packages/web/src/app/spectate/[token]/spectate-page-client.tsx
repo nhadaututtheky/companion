@@ -8,6 +8,7 @@ import {
   WarningCircle,
   PaperPlaneRight,
 } from "@phosphor-icons/react";
+import { fmtTime } from "@/lib/formatters";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -298,7 +299,7 @@ export function SpectatePageClient({ params }: { params: Promise<{ token: string
                     : "Assistant"}
               </span>
               <span className="text-[10px]" style={{ color: "#a0aeb830" }}>
-                {new Date(msg.timestamp).toLocaleTimeString()}
+                {fmtTime(msg.timestamp)}
               </span>
             </div>
           </div>

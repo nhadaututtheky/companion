@@ -8,6 +8,7 @@ import { ScheduleList } from "@/components/schedule/schedule-list";
 import { ScheduleCalendar } from "@/components/schedule/schedule-calendar";
 import { ScheduleForm } from "@/components/schedule/schedule-form";
 import { ScheduleRuns } from "@/components/schedule/schedule-runs";
+import { fmtDateTime } from "@/lib/formatters";
 import type { Schedule } from "@companion/shared";
 
 export default function SchedulesPage() {
@@ -174,12 +175,7 @@ export default function SchedulesPage() {
                           className="text-text-muted font-mono text-xs"
                           style={{ fontSize: 10 }}
                         >
-                          {new Date(run.nextRunAt).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {fmtDateTime(run.nextRunAt)}
                         </span>
                       </div>
                     ))}

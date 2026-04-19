@@ -13,6 +13,7 @@ import {
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import Link from "next/link";
+import { modelShortLabel } from "@/lib/formatters";
 import { BUILT_IN_PERSONAS, type Persona, type PersonaCategory } from "@companion/shared";
 import { PersonaAvatar } from "@/components/persona/persona-avatar";
 import { PersonaTooltip } from "@/components/persona/persona-tooltip";
@@ -200,11 +201,7 @@ function TemplateCard({
               )}
               {template.model && (
                 <span className="text-accent bg-bg-elevated rounded px-1.5 py-0.5 text-xs">
-                  {template.model.includes("opus")
-                    ? "Opus"
-                    : template.model.includes("haiku")
-                      ? "Haiku"
-                      : "Sonnet"}
+                  {modelShortLabel(template.model)}
                 </span>
               )}
             </div>

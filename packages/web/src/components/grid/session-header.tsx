@@ -19,6 +19,7 @@ import { SessionSettingsButton } from "./session-settings";
 import { CostBreakdown } from "@/components/session/cost-breakdown";
 import { PulseIndicator } from "@/components/pulse/pulse-indicator";
 import { api } from "@/lib/api-client";
+import { modelShortLabel } from "@/lib/formatters";
 
 const PLATFORM_ICONS: Record<string, { icon: string; color: string }> = {
   claude: { icon: "◈", color: "#D97706" },
@@ -133,23 +134,7 @@ export function SessionHeader({
   }, [modelDropdownOpen]);
 
   const dotColor = STATUS_COLORS[status] ?? STATUS_COLORS.idle;
-  // Strip provider prefix for OpenCode format (e.g., "anthropic/claude-sonnet-4-6" → "claude-sonnet-4-6")
-  const modelName = model.includes("/") ? model.split("/").pop()! : model;
-  const modelShort = modelName.includes("opus")
-    ? "Opus"
-    : modelName.includes("haiku")
-      ? "Haiku"
-      : modelName.includes("sonnet")
-        ? "Sonnet"
-        : modelName.includes("gpt")
-          ? modelName.split("-").slice(0, 2).join("-").toUpperCase()
-          : modelName.includes("gemini")
-            ? "Gemini"
-            : modelName.includes("llama")
-              ? "Llama"
-              : modelName.startsWith("o3") || modelName.startsWith("o4")
-                ? modelName.split("-")[0]!.toUpperCase()
-                : modelName.split("-")[0]!;
+  const modelShort = modelShortLabel(model);
   const channelColor =
     channelStatus === "active" ? "var(--color-accent)" : "var(--color-text-muted)";
   const isActive = !["ended", "error"].includes(status);
@@ -269,7 +254,7 @@ export function SessionHeader({
               color: modelDropdownOpen ? "#fff" : "var(--color-text-muted)",
               border: modelDropdownOpen ? "1px solid var(--color-accent)" : "1px solid transparent",
             }}
-            title={isActive && onSetModel ? "Click to switch model" : modelName}
+            title={isActive && onSetModel ? "Click to switch model" : model}
             aria-label="Switch model"
             aria-expanded={modelDropdownOpen}
           >
@@ -321,7 +306,7 @@ export function SessionHeader({
                 },
                 { id: "claude-haiku-4-5", label: "Haiku 4.5", emoji: "⚡", desc: "Quick tasks" },
               ].map((opt) => {
-                const isCurrent = modelName.includes(opt.id.replace("claude-", "").split("-")[0]!);
+                const isCurrent = model.includes(opt.id.replace("claude-", "").split("-")[0]!);
                 return (
                   <button
                     key={opt.id}

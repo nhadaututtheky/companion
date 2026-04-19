@@ -12,6 +12,7 @@ import {
   CaretRight,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
+import { fmtDateTime } from "@/lib/formatters";
 
 interface PromptEntry {
   id: string;
@@ -272,12 +273,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
                 )}
                 {p.projectSlug && <span className="opacity-70">{p.projectSlug}</span>}
                 <span className="whitespace-nowrap" style={{ marginLeft: "auto" }}>
-                  {new Date(p.createdAt).toLocaleString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {fmtDateTime(p.createdAt)}
                 </span>
               </div>
 

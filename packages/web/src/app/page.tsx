@@ -26,6 +26,7 @@ import { useNotificationPermission } from "@/hooks/use-notifications";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
+import { modelShortLabel, fmtDateTime } from "@/lib/formatters";
 
 const AiContextPanel = dynamic(
   () => import("@/components/panels/ai-context-panel").then((m) => ({ default: m.AiContextPanel })),
@@ -118,9 +119,6 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
     return parts[parts.length - 1] ?? s.cwd;
   };
 
-  const modelShort = (model: string) =>
-    model.includes("opus") ? "Opus" : model.includes("haiku") ? "Haiku" : "Sonnet";
-
   const SourceIcon = ({ source }: { source: string }) => {
     if (source === "telegram")
       return (
@@ -189,13 +187,7 @@ function ResumeBanner({ sessions, onResume, onDismissOne, onDismiss }: ResumeBan
                   className="text-text-muted truncate text-xs"
                   style={{ fontFamily: "var(--font-mono)" }}
                 >
-                  {modelShort(s.model)} &bull;{" "}
-                  {new Date(s.endedAt).toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {modelShortLabel(s.model)} &bull; {fmtDateTime(s.endedAt)}
                 </span>
               </div>
               <button

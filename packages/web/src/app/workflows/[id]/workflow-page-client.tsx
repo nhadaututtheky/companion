@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { api } from "@/lib/api-client";
+import { fmtTime, fmtDateTimeFull } from "@/lib/formatters";
 import { toast } from "sonner";
 import type { WorkflowState } from "@companion/shared";
 
@@ -234,9 +235,8 @@ export function WorkflowPageClient({ params }: PageProps) {
               </div>
               {step.startedAt && (
                 <div className="text-xs">
-                  Started: {new Date(step.startedAt).toLocaleTimeString()}
-                  {step.completedAt &&
-                    ` — Completed: ${new Date(step.completedAt).toLocaleTimeString()}`}
+                  Started: {fmtTime(step.startedAt)}
+                  {step.completedAt && ` — Completed: ${fmtTime(step.completedAt)}`}
                 </div>
               )}
               {step.output && (
@@ -266,10 +266,8 @@ export function WorkflowPageClient({ params }: PageProps) {
               Steps: {state.steps.filter((s) => s.status === "completed").length}/
               {state.steps.length}
             </span>
-            <span>Started: {new Date(state.startedAt).toLocaleString()}</span>
-            {state.completedAt && (
-              <span>Completed: {new Date(state.completedAt).toLocaleString()}</span>
-            )}
+            <span>Started: {fmtDateTimeFull(state.startedAt)}</span>
+            {state.completedAt && <span>Completed: {fmtDateTimeFull(state.completedAt)}</span>}
           </div>
         </div>
       </div>
