@@ -24,6 +24,12 @@ import { useRegistryStore, selectFetchSkills } from "@/lib/suggest/registry-stor
 import { areInlineSuggestionsEnabled } from "@/lib/suggest/settings";
 import type { Suggestion } from "@/lib/suggest/types";
 import { ComposerCore } from "@/components/composer/composer-core";
+import { resizeTextarea } from "@/components/composer/use-auto-resize";
+import { joinWithSpace, readImageAsBase64 } from "@/components/composer/utils";
+
+const FULL_TEXTAREA_MAX_HEIGHT = 200;
+const resizeFullTextarea = (el: HTMLTextAreaElement | null) =>
+  resizeTextarea(el, FULL_TEXTAREA_MAX_HEIGHT);
 
 interface MessageComposerProps {
   onSend: (text: string, images?: Array<{ data: string; mediaType: string; name: string }>) => void;
@@ -146,17 +152,8 @@ export function MessageComposer({
 
   // Voice input — append transcribed speech, then auto-resize.
   const handleTranscript = useCallback((transcript: string) => {
-    setText((prev) => {
-      const separator = prev && !prev.endsWith(" ") ? " " : "";
-      return prev + separator + transcript;
-    });
-    requestAnimationFrame(() => {
-      const el = textareaRef.current;
-      if (el) {
-        el.style.height = "auto";
-        el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
-      }
-    });
+    setText((prev) => joinWithSpace(prev, transcript));
+    requestAnimationFrame(() => resizeFullTextarea(textareaRef.current));
   }, []);
 
   const {
@@ -197,11 +194,12 @@ export function MessageComposer({
       const newText = current.slice(0, start) + payload + current.slice(end);
       setText(newText);
       requestAnimationFrame(() => {
-        if (textareaRef.current) {
-          const newPos = start + payload.length;
-          textareaRef.current.setSelectionRange(newPos, newPos);
-          textareaRef.current.focus();
-        }
+        const el = textareaRef.current;
+        if (!el) return;
+        const newPos = start + payload.length;
+        el.setSelectionRange(newPos, newPos);
+        el.focus();
+        resizeFullTextarea(el);
       });
     } else {
       setText((prev) => prev + payload);
@@ -225,32 +223,32 @@ export function MessageComposer({
   };
 
   // ── Clipboard / file handling ──────────────────────────────────────────────
+  const attachImageFile = useCallback(
+    async (file: File, fallbackLabel = "Pasted image") => {
+      const base64 = await readImageAsBase64(file);
+      if (!base64) return;
+      addAttachment({
+        kind: "image",
+        label: file.name || fallbackLabel,
+        content: base64,
+        meta: { mediaType: file.type },
+      });
+    },
+    [addAttachment],
+  );
+
   const handlePaste = useCallback(
     (e: React.ClipboardEvent) => {
       const items = e.clipboardData?.items;
       if (!items) return;
       for (const item of Array.from(items)) {
-        if (item.type.startsWith("image/")) {
-          e.preventDefault();
-          const file = item.getAsFile();
-          if (!file) continue;
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result as string;
-            const base64 = result.split(",")[1];
-            if (!base64) return;
-            addAttachment({
-              kind: "image",
-              label: file.name || `Pasted image`,
-              content: base64,
-              meta: { mediaType: file.type },
-            });
-          };
-          reader.readAsDataURL(file);
-        }
+        if (!item.type.startsWith("image/")) continue;
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) void attachImageFile(file);
       }
     },
-    [addAttachment],
+    [attachImageFile],
   );
 
   const handleFileSelect = useCallback(
@@ -259,19 +257,7 @@ export function MessageComposer({
       if (!files) return;
       for (const file of Array.from(files)) {
         if (file.type.startsWith("image/")) {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result as string;
-            const base64 = result.split(",")[1];
-            if (!base64) return;
-            addAttachment({
-              kind: "image",
-              label: file.name,
-              content: base64,
-              meta: { mediaType: file.type },
-            });
-          };
-          reader.readAsDataURL(file);
+          void attachImageFile(file, file.name);
         } else {
           const reader = new FileReader();
           reader.onload = () => {
@@ -287,7 +273,7 @@ export function MessageComposer({
       }
       e.target.value = "";
     },
-    [addAttachment],
+    [addAttachment, attachImageFile],
   );
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -338,8 +324,7 @@ export function MessageComposer({
   };
 
   // ── Effective textarea value (mirrors voice interim into the field) ────────
-  const effectiveValue =
-    listening && interim ? text + (text && !text.endsWith(" ") ? " " : "") + interim : text;
+  const effectiveValue = listening && interim ? joinWithSpace(text, interim) : text;
 
   const effectivePlaceholder = isRunning
     ? "Type to interrupt or queue..."
@@ -446,11 +431,9 @@ export function MessageComposer({
           setText(content);
           requestAnimationFrame(() => {
             const el = textareaRef.current;
-            if (el) {
-              el.style.height = "auto";
-              el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
-              el.focus();
-            }
+            if (!el) return;
+            resizeFullTextarea(el);
+            el.focus();
           });
         }}
       />
