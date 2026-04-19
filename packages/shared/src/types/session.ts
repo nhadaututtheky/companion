@@ -302,9 +302,14 @@ export function canAcceptUserMessage(status: SessionStatus): boolean {
   return status === "idle" || status === "plan_mode";
 }
 
+/** Canonical list of terminal session statuses — keep in sync with {@link isTerminal}.
+ *  Exported so DB queries (e.g. `notInArray(sessions.status, TERMINAL_SESSION_STATUSES)`)
+ *  can pin to a single source of truth instead of duplicating the literal array. */
+export const TERMINAL_SESSION_STATUSES: SessionStatus[] = ["ended", "error"];
+
 /** Guard: is the session in a terminal state? */
 export function isTerminal(status: SessionStatus): boolean {
-  return status === "ended" || status === "error";
+  return TERMINAL_SESSION_STATUSES.includes(status);
 }
 
 /** Guard: is the session idle (not processing anything)? */

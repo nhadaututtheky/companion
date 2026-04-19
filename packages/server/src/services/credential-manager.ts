@@ -6,10 +6,12 @@
 import { createHash, randomUUID } from "node:crypto";
 import { eq, and, ne, sql, inArray, notInArray } from "drizzle-orm";
 import { getDb } from "../db/client.js";
-import { accounts, sessions } from "../db/schema.js";
+import { accounts, accountMergeEvents, sessions } from "../db/schema.js";
+import type { AccountMergeBeforeRow } from "../db/schema.js";
 import { encrypt, decrypt, isEncryptionEnabled } from "./crypto.js";
 import { getSqlite } from "../db/client.js";
 import { createLogger } from "../logger.js";
+import { TERMINAL_SESSION_STATUSES } from "@companion/shared";
 
 const log = createLogger("credential-manager");
 
@@ -29,6 +31,11 @@ export interface AccountInfo {
   label: string;
   fingerprint: string;
   identity: string | null;
+  /** Canonical Anthropic account.uuid from /api/oauth/profile (Phase 2 dedup key). */
+  oauthSubject: string | null;
+  email: string | null;
+  displayName: string | null;
+  organizationName: string | null;
   subscriptionType: string | null;
   rateLimitTier: string | null;
   isActive: boolean;
@@ -75,9 +82,15 @@ function computeIdentity(refreshToken: string): string {
 /**
  * Save or update an account. Upserts by identity (stable sha256(refreshToken)),
  * falling back to fingerprint for legacy rows that pre-date the identity column.
- * Returns the account ID.
+ * Returns `{ id, created }` — `created: true` when a fresh row was inserted,
+ * `false` when an existing row was updated. Callers (e.g. credential-watcher)
+ * use `created` to decide whether to force a fresh profile fetch instead of
+ * comparing list snapshots, which is racy under concurrent captures.
  */
-export function saveAccount(label: string, credentials: OAuthCredentials): string {
+export function saveAccount(
+  label: string,
+  credentials: OAuthCredentials,
+): { id: string; created: boolean } {
   if (!isEncryptionEnabled()) {
     throw new Error(
       "Cannot save account: COMPANION_ENCRYPTION_KEY not set. " +
@@ -116,7 +129,7 @@ export function saveAccount(label: string, credentials: OAuthCredentials): strin
         .run();
 
       log.info("Account updated", { id: existing.id, label, identity });
-      return existing.id;
+      return { id: existing.id, created: false };
     }
 
     const id = randomUUID();
@@ -135,7 +148,7 @@ export function saveAccount(label: string, credentials: OAuthCredentials): strin
       .run();
 
     log.info("Account saved", { id, label, identity });
-    return id;
+    return { id, created: true };
   });
 
   return txn();
@@ -195,7 +208,7 @@ export function dedupeAccountsByIdentity(): {
     }
 
     // A session is "live" if its status is anything other than these terminal states.
-    const terminalStatuses = ["ended", "error"];
+    const terminalStatuses = TERMINAL_SESSION_STATUSES;
 
     for (const [identity, group] of groups) {
       if (group.length < 2) continue;
@@ -254,10 +267,15 @@ export function dedupeAccountsByIdentity(): {
         .where(inArray(sessions.accountId, duplicateIds))
         .run();
 
+      // Promote survivor to active if any row in the group was active —
+      // otherwise we'd nuke the active row and leave nothing flagged.
+      const groupHadActive = group.some((r) => r.isActive);
+
       db.update(accounts)
         .set({
           totalCostUsd: totalCost,
           lastUsedAt: latestUsed,
+          isActive: groupHadActive ? true : survivor.isActive,
           updatedAt: new Date(),
         })
         .where(eq(accounts.id, survivor.id))
@@ -279,6 +297,247 @@ export function dedupeAccountsByIdentity(): {
   return txn();
 }
 
+// ─── Phase 2: Dedup by canonical Anthropic identity (oauth_subject) ────────
+
+/**
+ * Outcome of a per-subject merge attempt.
+ * - `merged`: number of duplicate rows deleted (survivor kept)
+ * - `skipped`: true when the live-session guard blocked the merge
+ */
+export interface SubjectMergeResult {
+  merged: number;
+  skipped: boolean;
+}
+
+/**
+ * Merge all account rows that share one canonical `oauth_subject`. Same logic
+ * as {@link dedupeAccountsByIdentity} but keyed by the Anthropic-issued
+ * `account.uuid` instead of the refresh-token hash. This is the only dedup
+ * signal that survives Anthropic rotating the refresh token on each
+ * `claude login`.
+ *
+ * Survivor priority: live session > isActive > most-recent lastUsedAt > oldest.
+ * Live-session guard: if 2+ rows in the group own non-terminal sessions, the
+ * merge is skipped entirely (would orphan a running cli-launcher subprocess).
+ *
+ * Budgets: keeps the **maximum** non-null value across the group for each
+ * budget field — losing a tighter cap is the safer side of "wrong" because
+ * the alternative is silently raising it to null. Phase 3 may surface a
+ * confirm dialog when budgets conflict.
+ */
+export function mergeAccountsBySubject(subject: string): SubjectMergeResult {
+  if (!subject) return { merged: 0, skipped: false };
+
+  const db = getDb();
+  const sqlite = getSqlite();
+
+  const txn = sqlite!.transaction(() => {
+    const rows = db
+      .select()
+      .from(accounts)
+      .where(eq(accounts.oauthSubject, subject))
+      .all();
+    if (rows.length < 2) return { merged: 0, skipped: false };
+
+    const terminalStatuses = TERMINAL_SESSION_STATUSES;
+    const groupIds = rows.map((r) => r.id);
+    const liveRows = db
+      .select({ accountId: sessions.accountId })
+      .from(sessions)
+      .where(
+        and(inArray(sessions.accountId, groupIds), notInArray(sessions.status, terminalStatuses)),
+      )
+      .all();
+    const liveAccountIds = new Set(liveRows.map((r) => r.accountId).filter(Boolean) as string[]);
+
+    if (liveAccountIds.size > 1) {
+      log.warn("Skipping subject merge — multiple live sessions", {
+        subject,
+        liveAccountIds: [...liveAccountIds],
+      });
+      return { merged: 0, skipped: true };
+    }
+
+    const sorted = [...rows].sort((a, b) => {
+      const aLive = liveAccountIds.has(a.id);
+      const bLive = liveAccountIds.has(b.id);
+      if (aLive !== bLive) return aLive ? -1 : 1;
+      if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+      const aUsed = a.lastUsedAt ? a.lastUsedAt.getTime() : 0;
+      const bUsed = b.lastUsedAt ? b.lastUsedAt.getTime() : 0;
+      if (aUsed !== bUsed) return bUsed - aUsed;
+      const aCreated = a.createdAt ? a.createdAt.getTime() : 0;
+      const bCreated = b.createdAt ? b.createdAt.getTime() : 0;
+      return aCreated - bCreated;
+    });
+    const survivor = sorted[0]!;
+    const duplicates = sorted.slice(1);
+    const duplicateIds = duplicates.map((d) => d.id);
+
+    const totalCost = rows.reduce((sum, r) => sum + (r.totalCostUsd ?? 0), 0);
+    const latestUsed = rows.reduce<Date | null>((acc, r) => {
+      if (!r.lastUsedAt) return acc;
+      if (!acc || r.lastUsedAt.getTime() > acc.getTime()) return r.lastUsedAt;
+      return acc;
+    }, null);
+
+    const maxBudget = (key: "session5hBudget" | "weeklyBudget" | "monthlyBudget"): number | null =>
+      rows.reduce<number | null>((max, r) => {
+        const v = r[key];
+        if (v == null) return max;
+        return max == null || v > max ? v : max;
+      }, null);
+
+    // Phase 3: budget conflict = ANY budget field has 2+ distinct non-null
+    // values across the merge group. Different non-null caps means the user
+    // had set incompatible limits per-row, and we silently picked the max —
+    // they need to be told and given the option to apply something tighter.
+    const budgetKeys = ["session5hBudget", "weeklyBudget", "monthlyBudget"] as const;
+    const hasBudgetConflict = budgetKeys.some((key) => {
+      const distinct = new Set<number>();
+      for (const r of rows) {
+        const v = r[key];
+        if (v != null) distinct.add(v);
+      }
+      return distinct.size >= 2;
+    });
+    const beforeState: AccountMergeBeforeRow[] = rows.map((r) => ({
+      id: r.id,
+      label: r.label,
+      session5hBudget: r.session5hBudget,
+      weeklyBudget: r.weeklyBudget,
+      monthlyBudget: r.monthlyBudget,
+      totalCostUsd: r.totalCostUsd ?? 0,
+    }));
+
+    db.update(sessions)
+      .set({ accountId: survivor.id })
+      .where(inArray(sessions.accountId, duplicateIds))
+      .run();
+
+    // If ANY row in the group was the active account, the survivor inherits
+    // that flag — otherwise dropping a survivor that wasn't isActive when an
+    // isActive duplicate is deleted leaves the system with NO active account.
+    const groupHadActive = rows.some((r) => r.isActive);
+
+    db.update(accounts)
+      .set({
+        totalCostUsd: totalCost,
+        lastUsedAt: latestUsed,
+        session5hBudget: maxBudget("session5hBudget"),
+        weeklyBudget: maxBudget("weeklyBudget"),
+        monthlyBudget: maxBudget("monthlyBudget"),
+        // Preserve `skipInRotation = true` if ANY row had it set (safer default).
+        skipInRotation: rows.some((r) => r.skipInRotation),
+        isActive: groupHadActive ? true : survivor.isActive,
+        updatedAt: new Date(),
+      })
+      .where(eq(accounts.id, survivor.id))
+      .run();
+
+    db.delete(accounts).where(inArray(accounts.id, duplicateIds)).run();
+
+    // Surface a UI banner so the user can review (and optionally tighten)
+    // the auto-picked max budget. Recorded INSIDE the transaction so a crash
+    // mid-merge leaves the table consistent with the deletes.
+    if (hasBudgetConflict) {
+      db.insert(accountMergeEvents)
+        .values({
+          id: randomUUID(),
+          survivorAccountId: survivor.id,
+          oauthSubject: subject,
+          beforeState,
+          appliedSession5hBudget: maxBudget("session5hBudget"),
+          appliedWeeklyBudget: maxBudget("weeklyBudget"),
+          appliedMonthlyBudget: maxBudget("monthlyBudget"),
+          mergedAt: new Date(),
+        })
+        .run();
+    }
+
+    log.info("Merged duplicate accounts by subject", {
+      subject,
+      survivor: survivor.id,
+      removed: duplicateIds,
+      budgetConflict: hasBudgetConflict,
+    });
+    return { merged: duplicateIds.length, skipped: false };
+  });
+
+  return txn();
+}
+
+/**
+ * Atomic write of OAuth profile fields onto an account row + merge by subject,
+ * inside a single SQLite transaction. Closes the TOCTOU window where two
+ * concurrent profile fetches could each call `mergeAccountsBySubject` after
+ * the other had written the same `oauth_subject` — the in-flight transactions
+ * would otherwise see overlapping group snapshots.
+ *
+ * Returns the merge result (or `{ merged: 0, skipped: false }` if the subject
+ * still has only one row after the write). Caller is responsible for the
+ * profile fetch + decryption — this helper only touches the DB.
+ */
+export function applyOAuthProfile(
+  accountId: string,
+  patch: {
+    oauthSubject: string;
+    email: string | null;
+    displayName: string | null;
+    organizationUuid: string | null;
+    organizationName: string | null;
+  },
+): SubjectMergeResult {
+  const sqlite = getSqlite();
+  const db = getDb();
+
+  const txn = sqlite!.transaction(() => {
+    const now = new Date();
+    db.update(accounts)
+      .set({
+        oauthSubject: patch.oauthSubject,
+        email: patch.email,
+        displayName: patch.displayName,
+        organizationUuid: patch.organizationUuid,
+        organizationName: patch.organizationName,
+        profileFetchedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(accounts.id, accountId))
+      .run();
+
+    return mergeAccountsBySubject(patch.oauthSubject);
+  });
+
+  return txn();
+}
+
+/**
+ * Iterate every distinct non-null `oauth_subject` and merge duplicate groups.
+ * Idempotent — safe to run on every server startup. Returns counts for logging.
+ */
+export function dedupeAccountsBySubject(): {
+  scanned: number;
+  merged: number;
+  skipped: number;
+} {
+  const db = getDb();
+  const rows = db
+    .select({ subject: accounts.oauthSubject })
+    .from(accounts)
+    .all();
+  const subjects = [...new Set(rows.map((r) => r.subject).filter((s): s is string => !!s))];
+
+  let merged = 0;
+  let skipped = 0;
+  for (const subject of subjects) {
+    const result = mergeAccountsBySubject(subject);
+    merged += result.merged;
+    if (result.skipped) skipped++;
+  }
+  return { scanned: subjects.length, merged, skipped };
+}
+
 /** Check whether an account exists by id. */
 export function accountExists(id: string): boolean {
   const db = getDb();
@@ -286,44 +545,18 @@ export function accountExists(id: string): boolean {
   return !!row;
 }
 
-/** List all accounts (without decrypted tokens). */
-export function listAccounts(): AccountInfo[] {
-  const db = getDb();
-  const rows = db.select().from(accounts).all();
+type AccountRow = typeof accounts.$inferSelect;
 
-  return rows.map((row) => ({
-    id: row.id,
-    label: row.label,
-    fingerprint: row.fingerprint,
-    identity: row.identity ?? null,
-    subscriptionType: row.subscriptionType,
-    rateLimitTier: row.rateLimitTier,
-    isActive: row.isActive,
-    status: row.status,
-    statusUntil: row.statusUntil,
-    totalCostUsd: row.totalCostUsd,
-    session5hBudget: row.session5hBudget ?? null,
-    weeklyBudget: row.weeklyBudget ?? null,
-    monthlyBudget: row.monthlyBudget ?? null,
-    skipInRotation: row.skipInRotation ?? false,
-    lastUsedAt: row.lastUsedAt,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  }));
-}
-
-/** Get the currently active account (the one used for new sessions). */
-export function getActiveAccount(): AccountInfo | undefined {
-  const db = getDb();
-  const row = db.select().from(accounts).where(eq(accounts.isActive, true)).get();
-
-  if (!row) return undefined;
-
+function toAccountInfo(row: AccountRow): AccountInfo {
   return {
     id: row.id,
     label: row.label,
     fingerprint: row.fingerprint,
     identity: row.identity ?? null,
+    oauthSubject: row.oauthSubject ?? null,
+    email: row.email ?? null,
+    displayName: row.displayName ?? null,
+    organizationName: row.organizationName ?? null,
     subscriptionType: row.subscriptionType,
     rateLimitTier: row.rateLimitTier,
     isActive: row.isActive,
@@ -338,6 +571,19 @@ export function getActiveAccount(): AccountInfo | undefined {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
+}
+
+/** List all accounts (without decrypted tokens). */
+export function listAccounts(): AccountInfo[] {
+  const db = getDb();
+  return db.select().from(accounts).all().map(toAccountInfo);
+}
+
+/** Get the currently active account (the one used for new sessions). */
+export function getActiveAccount(): AccountInfo | undefined {
+  const db = getDb();
+  const row = db.select().from(accounts).where(eq(accounts.isActive, true)).get();
+  return row ? toAccountInfo(row) : undefined;
 }
 
 /**
@@ -371,7 +617,9 @@ export function setActiveAccount(id: string): boolean {
 
 /**
  * Delete an account by ID. Returns true if found and deleted.
- * Throws if trying to delete the currently active account.
+ * Throws if the account is currently active OR owns a non-terminal session
+ * (per INV-x: deletion of an account with a live session orphans the running
+ * subprocess on its next DB lookup).
  */
 export function deleteAccount(id: string): boolean {
   const db = getDb();
@@ -386,6 +634,19 @@ export function deleteAccount(id: string): boolean {
 
   if (existing.isActive) {
     throw new Error("Cannot delete the active account — switch to another account first");
+  }
+
+  const liveSession = db
+    .select({ id: sessions.id })
+    .from(sessions)
+    .where(
+      and(eq(sessions.accountId, id), notInArray(sessions.status, TERMINAL_SESSION_STATUSES)),
+    )
+    .get();
+  if (liveSession) {
+    throw new Error(
+      "Cannot delete account with a live session — wait for it to finish or stop it first",
+    );
   }
 
   const sqlite = getSqlite();
@@ -572,26 +833,7 @@ export function findNextReady(excludeId?: string, includeSkipped = false): Accou
     return (liveCost.get(a.id) ?? 0) - (liveCost.get(b.id) ?? 0);
   });
   const row = sorted[0]!;
-
-  return {
-    id: row.id,
-    label: row.label,
-    fingerprint: row.fingerprint,
-    identity: row.identity ?? null,
-    subscriptionType: row.subscriptionType,
-    rateLimitTier: row.rateLimitTier,
-    isActive: row.isActive,
-    status: row.status,
-    statusUntil: row.statusUntil,
-    totalCostUsd: row.totalCostUsd,
-    session5hBudget: row.session5hBudget ?? null,
-    weeklyBudget: row.weeklyBudget ?? null,
-    monthlyBudget: row.monthlyBudget ?? null,
-    skipInRotation: row.skipInRotation ?? false,
-    lastUsedAt: row.lastUsedAt,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
+  return toAccountInfo(row);
 }
 
 /**

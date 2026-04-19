@@ -15,6 +15,7 @@ import {
 } from "@phosphor-icons/react";
 import { SettingSection } from "./settings-tabs";
 import { AccountUsagePanel } from "./account-usage-panel";
+import { MergeEventsBanner } from "./merge-events-banner";
 import {
   accounts as accountsApi,
   type AccountInfo,
@@ -193,6 +194,8 @@ export function AccountsTab() {
             {error}
           </div>
         )}
+
+        <MergeEventsBanner accounts={list} onResolved={refresh} />
 
         {/* Rotation controls: only meaningful once at least 2 accounts exist */}
         {list.length >= 2 && (

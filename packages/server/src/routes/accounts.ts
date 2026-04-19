@@ -25,10 +25,16 @@ import {
   updateAccountSkipRotation,
   findNextReady,
 } from "../services/credential-manager.js";
+import {
+  listPendingMergeEvents,
+  applyMergeEventChoice,
+  dismissMergeEvent,
+} from "../services/account-merge-events.js";
 import { getDb } from "../db/client.js";
 import { accounts, settings } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import { manualCapture } from "../services/credential-watcher.js";
+import { refreshAccountProfileAsync } from "../services/profile-fetcher.js";
 import { getAccountUsage } from "../services/account-usage.js";
 import { getSettingBool } from "../services/settings-helpers.js";
 import { AUTO_SWITCH_KEY } from "../services/account-auto-switch.js";
@@ -126,7 +132,9 @@ accountRoutes.put("/settings", zValidator("json", accountSettingsSchema), (c) =>
 // Save/upsert account
 accountRoutes.post("/", zValidator("json", saveAccountSchema), (c) => {
   const { label, credentials } = c.req.valid("json");
-  const id = saveAccount(label, credentials);
+  const { id } = saveAccount(label, credentials);
+  // Fire-and-forget: backfill canonical Anthropic identity (account.uuid + email).
+  refreshAccountProfileAsync(id, { force: true });
   return c.json({ success: true, data: { id } } satisfies ApiResponse, 201);
 });
 
@@ -165,6 +173,58 @@ accountRoutes.post("/switch-next", async (c) => {
     );
   }
   return c.json({ success: true, data: result } satisfies ApiResponse);
+});
+
+// ─── Phase 3: subject-merge conflict events ─────────────────────────────────
+//
+// When a subject-keyed merge silently picked the max budget across rows that
+// disagreed, the credential manager records an event. The web banner reads
+// these to let the user accept or override the auto-pick.
+//
+// Static routes — MUST stay above dynamic `/:id/...` handlers below so Hono's
+// radix matcher prefers them. (Hono v4 still benefits from explicit ordering
+// because future `POST /:id` additions could shadow `POST /merge-events/:id`.)
+
+const mergeChoiceSchema = z.object({
+  /** "kept" = accept auto-max | "applied:<accountId>" = use that row's caps */
+  choice: z
+    .string()
+    .max(200)
+    .refine((v) => v === "kept" || v.startsWith("applied:"), {
+      message: "choice must be 'kept' or 'applied:<accountId>'",
+    }),
+});
+
+accountRoutes.get("/merge-events", (c) => {
+  return c.json({ success: true, data: listPendingMergeEvents() } satisfies ApiResponse);
+});
+
+accountRoutes.post("/merge-events/:id/apply", zValidator("json", mergeChoiceSchema), (c) => {
+  const id = c.req.param("id");
+  const { choice } = c.req.valid("json");
+  // Validator above guarantees the prefix, so the cast is safe.
+  const result = applyMergeEventChoice(id, choice as "kept" | `applied:${string}`);
+  if (!result.ok) {
+    const status = result.reason === "not_found" ? 404 : 400;
+    return c.json(
+      { success: false, error: result.reason ?? "apply_failed" } satisfies ApiResponse,
+      status,
+    );
+  }
+  return c.json({ success: true, data: { id } } satisfies ApiResponse);
+});
+
+accountRoutes.post("/merge-events/:id/dismiss", (c) => {
+  const id = c.req.param("id");
+  const result = dismissMergeEvent(id);
+  if (!result.ok) {
+    const status = result.reason === "not_found" ? 404 : 400;
+    return c.json(
+      { success: false, error: result.reason ?? "dismiss_failed" } satisfies ApiResponse,
+      status,
+    );
+  }
+  return c.json({ success: true, data: { id } } satisfies ApiResponse);
 });
 
 // Activate account (switches credentials file too)
@@ -273,3 +333,4 @@ accountRoutes.delete("/:id", (c) => {
     );
   }
 });
+

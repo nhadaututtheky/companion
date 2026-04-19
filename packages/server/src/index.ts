@@ -23,8 +23,10 @@ import * as spectatorBridge from "./services/spectator-bridge.js";
 import { startScheduler, stopScheduler } from "./services/scheduler.js";
 import { initWorkspaceRuntime } from "./services/workspace-store.js";
 import { startCredentialWatcher, stopCredentialWatcher } from "./services/credential-watcher.js";
-import { dedupeAccountsByIdentity } from "./services/credential-manager.js";
+import { dedupeAccountsByIdentity, dedupeAccountsBySubject } from "./services/credential-manager.js";
+import { backfillAccountProfiles } from "./services/profile-fetcher.js";
 import { startAutoSwitch, stopAutoSwitch } from "./services/account-auto-switch.js";
+import { pruneResolvedMergeEvents } from "./services/account-merge-events.js";
 import { validateShareToken } from "./services/share-manager.js";
 import { registerGlobalErrorHandlers, flushErrors } from "./services/error-tracker.js";
 import { join, resolve, dirname } from "node:path";
@@ -83,6 +85,27 @@ try {
   log.warn("Account dedupe failed (non-fatal)", { error: String(err) });
 }
 
+// Phase 2: backfill canonical Anthropic identity (account.uuid) for legacy rows,
+// then sweep for any subject duplicates the refresh-token hash missed (migration
+// 0042). Fire-and-forget — the network roundtrip per row mustn't gate boot.
+void backfillAccountProfiles()
+  .then((result) => {
+    if (result.scanned > 0) {
+      log.info("Profile backfill completed", { ...result });
+    }
+    try {
+      const subjectDedup = dedupeAccountsBySubject();
+      if (subjectDedup.merged > 0 || subjectDedup.skipped > 0) {
+        log.info("Subject dedupe completed", { ...subjectDedup });
+      }
+    } catch (err) {
+      log.warn("Subject dedupe failed (non-fatal)", { error: String(err) });
+    }
+  })
+  .catch((err) => {
+    log.warn("Profile backfill failed (non-fatal)", { error: String(err) });
+  });
+
 // Start credential file watcher (multi-account auto-capture) + auto-switch on rate limit
 startCredentialWatcher();
 startAutoSwitch();
@@ -91,6 +114,13 @@ startAutoSwitch();
 const startupCleaned = bulkEndSessions();
 if (startupCleaned > 0) {
   log.info("Startup cleanup: marked zombie sessions as ended", { count: startupCleaned });
+}
+
+// Prune resolved account-merge events older than 30 days (audit log GC).
+try {
+  pruneResolvedMergeEvents(30);
+} catch (err) {
+  log.warn("Merge-events prune failed (non-fatal)", { error: String(err) });
 }
 
 // Cleanup orphan hooks from previous runs (prevents ECONNREFUSED in standalone Claude Code)

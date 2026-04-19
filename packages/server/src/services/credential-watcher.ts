@@ -10,6 +10,7 @@ import { homedir } from "node:os";
 import { createLogger } from "../logger.js";
 import { saveAccount, listAccounts, setActiveAccount } from "./credential-manager.js";
 import { isEncryptionEnabled } from "./crypto.js";
+import { refreshAccountProfileAsync } from "./profile-fetcher.js";
 import { eventBus } from "./event-bus.js";
 import type { OAuthCredentials } from "./credential-manager.js";
 
@@ -81,32 +82,41 @@ async function captureCredentials(): Promise<void> {
       rateLimitTier: oauth.rateLimitTier,
     };
 
-    // Check if this is a new account or update
-    const existingAccounts = listAccounts();
+    // Auto-generate a placeholder label. Profile fetch (below) will overwrite
+    // with `email`/`display_name` once Phase 4 wires that up.
     const subType = oauth.subscriptionType ?? "unknown";
+    const existingAccounts = listAccounts();
     const countOfType = existingAccounts.filter((a) => a.subscriptionType === subType).length;
     const label = `${capitalize(subType)} #${countOfType + 1}`;
 
-    // saveAccount handles upsert by fingerprint — if same token, updates; if new, creates
-    const accountId = saveAccount(label, credentials);
-
-    // Check if this was a new account or update to existing
-    const updatedAccounts = listAccounts();
-    const isNew = updatedAccounts.length > existingAccounts.length;
+    // saveAccount handles upsert by identity → fingerprint. `created` tells us
+    // authoritatively whether a fresh row was inserted (race-free vs. comparing
+    // list snapshots, which can lie under concurrent captures).
+    const { id: accountId, created } = saveAccount(label, credentials);
 
     // Set as active
     setActiveAccount(accountId);
 
+    // Fire-and-forget: populate canonical Anthropic identity (account.uuid + email).
+    // Always force — every credential file change is a real OAuth event, so the
+    // 1h TTL must not gate it (otherwise re-logins inside the hour leave the
+    // dedup-critical oauth_subject pointing at a stale snapshot).
+    refreshAccountProfileAsync(accountId, { force: true });
+
+    const finalLabel = created
+      ? label
+      : (listAccounts().find((a) => a.id === accountId)?.label ?? label);
+
     log.info("Credentials captured", {
       accountId,
       subscriptionType: subType,
-      isNew,
+      isNew: created,
     });
 
     eventBus.emit("account:captured", {
       accountId,
-      label: isNew ? label : (updatedAccounts.find((a) => a.id === accountId)?.label ?? label),
-      isNew,
+      label: finalLabel,
+      isNew: created,
     });
   } catch (err) {
     log.error("Failed to capture credentials", { error: String(err) });

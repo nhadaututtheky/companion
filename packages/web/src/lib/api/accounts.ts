@@ -65,6 +65,31 @@ export interface AccountUsage {
   budgets: AccountBudgets;
 }
 
+/** Snapshot of one row in a merge group, recorded BEFORE the auto-merge ran. */
+export interface MergeBeforeRow {
+  id: string;
+  label: string;
+  session5hBudget: number | null;
+  weeklyBudget: number | null;
+  monthlyBudget: number | null;
+  totalCostUsd: number;
+}
+
+/** A pending budget-conflict surfaced by the dedup pipeline. */
+export interface PendingMergeEvent {
+  id: string;
+  survivorAccountId: string;
+  oauthSubject: string;
+  beforeState: MergeBeforeRow[];
+  appliedSession5hBudget: number | null;
+  appliedWeeklyBudget: number | null;
+  appliedMonthlyBudget: number | null;
+  mergedAt: string;
+}
+
+/** "kept" = accept auto-pick; "applied:<accountId>" = re-apply that row's caps. */
+export type MergeEventChoice = "kept" | `applied:${string}`;
+
 export const accounts = {
   list: () => request<{ data: AccountInfo[] }>("/api/accounts"),
 
@@ -119,6 +144,21 @@ export const accounts = {
 
   capture: () =>
     request<{ data: { captured: boolean } }>("/api/accounts/capture", {
+      method: "POST",
+    }),
+
+  // ── Phase 3: subject-merge conflict events ────────────────────────────────
+  listMergeEvents: () =>
+    request<{ data: PendingMergeEvent[] }>("/api/accounts/merge-events"),
+
+  applyMergeChoice: (eventId: string, choice: MergeEventChoice) =>
+    request<{ data: { id: string } }>(`/api/accounts/merge-events/${eventId}/apply`, {
+      method: "POST",
+      body: JSON.stringify({ choice }),
+    }),
+
+  dismissMergeEvent: (eventId: string) =>
+    request<{ data: { id: string } }>(`/api/accounts/merge-events/${eventId}/dismiss`, {
       method: "POST",
     }),
 };

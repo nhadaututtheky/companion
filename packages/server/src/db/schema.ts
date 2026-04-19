@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // ─── Projects ────────────────────────────────────────────────────────────────
@@ -239,7 +240,16 @@ export const accounts = sqliteTable("accounts", {
   id: text("id").primaryKey(),
   label: text("label").notNull(), // "Work Max", "Personal Pro"
   fingerprint: text("fingerprint").notNull().unique(), // sha256(accessToken)[:16] — legacy, volatile (rotates on OAuth refresh)
-  identity: text("identity"), // sha256(refreshToken)[:16] — stable across access-token refreshes, primary dedup key
+  identity: text("identity"), // sha256(refreshToken)[:16] — stable across access-token refreshes, secondary dedup key
+  // Canonical Anthropic identity from /api/oauth/profile. Populated async after
+  // saveAccount() succeeds. Phase 2 will upsert by oauth_subject so re-logins
+  // with a fresh refresh token still merge into the same row.
+  oauthSubject: text("oauth_subject"), // account.uuid from profile API
+  email: text("email"),
+  displayName: text("display_name"),
+  organizationUuid: text("organization_uuid"),
+  organizationName: text("organization_name"),
+  profileFetchedAt: integer("profile_fetched_at", { mode: "timestamp_ms" }),
   encryptedCredentials: text("encrypted_credentials").notNull(), // AES-256-GCM encrypted claudeAiOauth JSON
   subscriptionType: text("subscription_type"), // "max", "pro", "free"
   rateLimitTier: text("rate_limit_tier"), // "default_claude_max_20x"
@@ -261,6 +271,51 @@ export const accounts = sqliteTable("accounts", {
     .notNull()
     .$defaultFn(() => new Date()),
 });
+
+// ─── Account Merge Events (Phase 3 dedup conflict resolution) ───────────────
+
+/** One row in the `before_state` JSON snapshot. Mirrors the budget-relevant
+ *  columns of an account row at merge time so the UI can re-render choices. */
+export interface AccountMergeBeforeRow {
+  id: string;
+  label: string;
+  session5hBudget: number | null;
+  weeklyBudget: number | null;
+  monthlyBudget: number | null;
+  totalCostUsd: number;
+}
+
+export const accountMergeEvents = sqliteTable(
+  "account_merge_events",
+  {
+    id: text("id").primaryKey(),
+    survivorAccountId: text("survivor_account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    oauthSubject: text("oauth_subject").notNull(),
+    /** JSON array of {@link AccountMergeBeforeRow}. */
+    beforeState: text("before_state", { mode: "json" })
+      .$type<AccountMergeBeforeRow[]>()
+      .notNull(),
+    appliedSession5hBudget: real("applied_session5h_budget"),
+    appliedWeeklyBudget: real("applied_weekly_budget"),
+    appliedMonthlyBudget: real("applied_monthly_budget"),
+    mergedAt: integer("merged_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    resolvedAt: integer("resolved_at", { mode: "timestamp_ms" }),
+    /** "kept" or "applied:<accountId>". Audit only — UI does not depend on it. */
+    resolvedChoice: text("resolved_choice"),
+  },
+  (table) => [
+    // Partial index: only pending events. Matches the SQL migration 0043 so
+    // drizzle-kit generate doesn't drift. Pruning resolved events keeps the
+    // index small + the planner can satisfy listPendingMergeEvents() from it.
+    index("idx_account_merge_events_pending")
+      .on(table.survivorAccountId)
+      .where(sql`${table.resolvedAt} IS NULL`),
+  ],
+);
 
 // ─── Settings (key-value) ────────────────────────────────────────────────────
 
