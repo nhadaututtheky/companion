@@ -1,14 +1,7 @@
 "use client";
-import { useEffect, useRef, useCallback, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { Z } from "@/lib/z-index";
-import {
-  PaperPlaneTilt,
-  Lock,
-  CheckCircle,
-  XCircle,
-  Warning,
-  TelegramLogo,
-} from "@phosphor-icons/react";
+import { Lock, CheckCircle, XCircle, Warning, TelegramLogo } from "@phosphor-icons/react";
 import { useSession } from "@/hooks/use-session";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useShallow } from "zustand/react/shallow";
@@ -18,7 +11,7 @@ import { SessionHeader } from "./session-header";
 import { CompactMessageFeed } from "./compact-message";
 import { AgentTabBar } from "./agent-tab-bar";
 import { SpawnAgentModal } from "@/components/session/spawn-agent-modal";
-import { SlashCommandMenu } from "@/components/session/slash-commands";
+import { ComposerCore } from "@/components/composer/composer-core";
 import { getMaxContextTokens } from "@companion/shared";
 
 interface ChannelInfo {
@@ -88,124 +81,21 @@ function CompactComposer({
   isRunning: boolean;
 }) {
   const [text, setText] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
-  const [slashMenuOpen, setSlashMenuOpen] = useState(false);
-  const [slashQuery, setSlashQuery] = useState("");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
-  const handleSend = () => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    onSend(trimmed);
-    setText("");
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-    }
-  };
-
-  const updateSlashMenu = useCallback((value: string) => {
-    const match = value.match(/^\/(\S*)$/);
-    if (match) {
-      setSlashMenuOpen(true);
-      setSlashQuery("/" + match[1]);
-    } else {
-      setSlashMenuOpen(false);
-    }
-  }, []);
-
-  const handleSlashSelect = useCallback((command: string) => {
-    setText(command + " ");
-    setSlashMenuOpen(false);
-    textareaRef.current?.focus();
-  }, []);
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (slashMenuOpen && ["ArrowUp", "ArrowDown", "Tab", "Escape"].includes(e.key)) {
-      return;
-    }
-    if (slashMenuOpen && e.key === "Enter" && !e.shiftKey) {
-      return;
-    }
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  const handleInput = () => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 72)}px`;
-  };
-
   return (
-    <div
-      ref={wrapperRef}
-      className="relative flex flex-shrink-0 items-end gap-2 px-3 py-2.5"
-      style={{ boxShadow: "0 -1px 0 var(--glass-border)" }}
-    >
-      <SlashCommandMenu
-        query={slashQuery}
-        visible={slashMenuOpen}
-        onSelect={handleSlashSelect}
-        onClose={() => setSlashMenuOpen(false)}
-        anchorRef={wrapperRef}
-      />
-      <div
-        className="bg-bg-elevated flex flex-1 items-end gap-1 px-2.5 py-1.5"
-        style={{
-          borderRadius: "var(--radius-md)",
-          border: isFocused
-            ? "1px solid color-mix(in srgb, var(--color-accent) 50%, transparent)"
-            : "1px solid var(--glass-border)",
-          boxShadow: isFocused
-            ? "0 0 0 3px color-mix(in srgb, var(--color-accent) 10%, transparent)"
-            : "none",
-          transition: "border-color 150ms ease, box-shadow 150ms ease",
+    <div className="flex-shrink-0" style={{ boxShadow: "0 -1px 0 var(--glass-border)" }}>
+      <ComposerCore
+        variant="compact"
+        value={text}
+        onChange={setText}
+        onSend={() => {
+          const trimmed = text.trim();
+          if (!trimmed) return;
+          onSend(trimmed);
+          setText("");
         }}
-      >
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={(e) => {
-            setText(e.target.value);
-            updateSlashMenu(e.target.value);
-          }}
-          onKeyDown={handleKeyDown}
-          onInput={handleInput}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          placeholder={isRunning ? "Type to interrupt…" : "Message…"}
-          rows={1}
-          className="composer-textarea text-text-primary flex-1 resize-none bg-transparent leading-snug"
-          style={{
-            fontSize: 12,
-            maxHeight: 72,
-            minHeight: 18,
-            fontFamily: "var(--font-body)",
-            outline: "none",
-          }}
-          aria-label="Message input"
-        />
-        <button
-          onClick={handleSend}
-          disabled={!text.trim()}
-          className="flex-shrink-0 cursor-pointer rounded-full p-1 transition-all disabled:opacity-40"
-          style={{
-            background: text.trim()
-              ? isRunning
-                ? "#D97706"
-                : "#34A853"
-              : "var(--color-bg-elevated)",
-            color: text.trim() ? "#fff" : "var(--color-text-muted)",
-          }}
-          aria-label="Send message"
-        >
-          <PaperPlaneTilt size={12} weight="fill" />
-        </button>
-      </div>
+        isRunning={isRunning}
+        placeholder={isRunning ? "Type to interrupt…" : "Message…"}
+      />
     </div>
   );
 }

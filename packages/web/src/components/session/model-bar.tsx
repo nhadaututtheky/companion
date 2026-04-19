@@ -82,9 +82,6 @@ export function ModelBar({
       {/* Main session model chip */}
       <span
         className="text-text-secondary bg-bg-elevated inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium"
-        style={{
-          fontSize: 11,
-        }}
         title={`Main session: ${mainModel}`}
       >
         <Lightning size={11} weight="fill" className="text-accent" />
@@ -101,7 +98,6 @@ export function ModelBar({
             style={{
               background: "#10b98115",
               color: "#10b981",
-              fontSize: 11,
             }}
             title={`${p.name} (${p.providerName})${persona ? ` — ${persona.name}` : ""} — Context: ${formatContextWindow(p.contextWindow)}`}
           >
@@ -138,9 +134,6 @@ export function ModelBar({
           onClick={handleOpenDropdown}
           disabled={disabled}
           className="text-text-muted inline-flex cursor-pointer items-center gap-0.5 rounded-md px-1.5 py-0.5 transition-colors disabled:opacity-40"
-          style={{
-            fontSize: 11,
-          }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.background = "var(--color-bg-elevated)";
           }}
