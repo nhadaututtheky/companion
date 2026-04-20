@@ -145,9 +145,7 @@
             <li>Telegram bot for mobile</li>
             <li>Auto session lifecycle + smart compact</li>
             <li>Shared context via Magic Ring</li>
-            <li>WebIntel auto-injects 100+ library docs</li>
             <li>CodeGraph catches missed deps before regressions</li>
-            <li>67% token savings on web content</li>
             <li>Cost budget enforcement per session</li>
           </ul>
         </div>
@@ -254,22 +252,18 @@
       <div class="section-header">
         <span class="section-badge">Intelligence Layer</span>
         <h2>Your agents just got<br><span class="gradient-text">a lot smarter.</span></h2>
-        <p class="section-desc">Companion doesn't just manage sessions — it auto-injects code structure and library docs into every message. Agents skip the searching and start solving.</p>
+        <p class="section-desc">Companion doesn't just manage sessions — it auto-injects code structure into every message. Agents skip the searching and start solving.</p>
       </div>
 
       <!-- Impact metrics -->
       <div class="intel-metrics">
         <div class="intel-metric">
-          <span class="intel-metric-value">67%</span>
-          <span class="intel-metric-label">Token savings on web content</span>
-        </div>
-        <div class="intel-metric">
-          <span class="intel-metric-value">7</span>
+          <span class="intel-metric-value">4</span>
           <span class="intel-metric-label">Auto-injection points</span>
         </div>
         <div class="intel-metric">
-          <span class="intel-metric-value">~50</span>
-          <span class="intel-metric-label">Tool calls saved per session</span>
+          <span class="intel-metric-value">~5</span>
+          <span class="intel-metric-label">Search calls saved per message</span>
         </div>
         <div class="intel-metric">
           <span class="intel-metric-value">70%</span>
@@ -277,69 +271,7 @@
         </div>
       </div>
 
-      <div class="intel-grid">
-        <!-- WebIntel -->
-        <div class="intel-card">
-          <div class="intel-header">
-            <div class="intel-icon intel-icon-web">
-              <svg width="32" height="32" viewBox="0 0 256 256" fill="none"><circle cx="128" cy="128" r="96" stroke="currentColor" stroke-width="16"/><ellipse cx="128" cy="128" rx="40" ry="96" stroke="currentColor" stroke-width="16"/><line x1="32" y1="128" x2="224" y2="128" stroke="currentColor" stroke-width="16"/><line x1="48" y1="88" x2="208" y2="88" stroke="currentColor" stroke-width="12" opacity="0.5"/><line x1="48" y1="168" x2="208" y2="168" stroke="currentColor" stroke-width="12" opacity="0.5"/></svg>
-            </div>
-            <h3>WebIntel</h3>
-            <span class="intel-label">Web Research & Docs</span>
-          </div>
-
-          <ul class="intel-features">
-            <li>
-              <strong>Auto-Inject Docs — 4,000 tokens/lib</strong>
-              <span>Detects 100+ libraries in your messages and auto-injects their latest docs. Saves ~4 tool calls per lookup. 30-min cache, zero redundant fetches.</span>
-            </li>
-            <li>
-              <strong>Web Research — 5 sources, 1 command</strong>
-              <span>Search, batch-scrape top 5 results, synthesize with citations. Budget: 3,000 tokens. One command: <code>/research</code>.</span>
-            </li>
-            <li>
-              <strong>67% Smaller Context</strong>
-              <span>webclaw converts raw HTML to LLM-optimized format — 67% fewer tokens than feeding pages directly. All cached in SQLite with LRU eviction.</span>
-            </li>
-          </ul>
-
-          <!-- WebIntel Mockup -->
-          <div class="intel-mockup">
-            <svg viewBox="0 0 400 200" class="mockup-svg">
-              <!-- Panel background -->
-              <rect x="0" y="0" width="400" height="200" rx="12" fill="var(--bg-card)" stroke="var(--border)" stroke-width="1"/>
-              <!-- Header -->
-              <rect x="0" y="0" width="400" height="36" rx="12" fill="var(--bg-elevated)"/>
-              <rect x="0" y="24" width="400" height="12" fill="var(--bg-elevated)"/>
-              <circle cx="20" cy="18" r="5" fill="#34A853"/>
-              <text x="32" y="22" font-family="Inter" font-size="11" font-weight="600" fill="var(--text-primary)">WebIntel</text>
-              <text x="340" y="22" font-family="JetBrains Mono" font-size="9" fill="#34A853">Online</text>
-              <!-- Cache stats -->
-              <text x="16" y="56" font-family="Inter" font-size="9" fill="var(--text-muted)">CACHE STATS</text>
-              <rect x="16" y="64" width="88" height="28" rx="6" fill="var(--bg-elevated)"/>
-              <text x="24" y="78" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="#4285F4">94%</text>
-              <text x="48" y="78" font-family="Inter" font-size="8" fill="var(--text-muted)">hit rate</text>
-              <rect x="112" y="64" width="88" height="28" rx="6" fill="var(--bg-elevated)"/>
-              <text x="120" y="78" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="var(--text-primary)">2.4 MB</text>
-              <text x="160" y="78" font-family="Inter" font-size="8" fill="var(--text-muted)">cached</text>
-              <rect x="208" y="64" width="88" height="28" rx="6" fill="var(--bg-elevated)"/>
-              <text x="216" y="78" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="var(--text-primary)">847</text>
-              <text x="244" y="78" font-family="Inter" font-size="8" fill="var(--text-muted)">hits</text>
-              <!-- Recent lookups -->
-              <text x="16" y="110" font-family="Inter" font-size="9" fill="var(--text-muted)">AUTO-INJECTED</text>
-              <rect x="16" y="118" width="368" height="24" rx="6" fill="rgba(66,133,244,0.08)"/>
-              <text x="28" y="134" font-family="JetBrains Mono" font-size="9" fill="#4285F4">drizzle-orm</text>
-              <text x="120" y="134" font-family="Inter" font-size="8" fill="var(--text-muted)">Schema, queries, migrations — 12 pages injected</text>
-              <rect x="16" y="148" width="368" height="24" rx="6" fill="rgba(52,168,83,0.08)"/>
-              <text x="28" y="164" font-family="JetBrains Mono" font-size="9" fill="#34A853">@hono/zod-validator</text>
-              <text x="152" y="164" font-family="Inter" font-size="8" fill="var(--text-muted)">Middleware setup, error handling — 4 pages</text>
-              <rect x="16" y="178" width="368" height="24" rx="6" fill="rgba(251,188,4,0.08)"/>
-              <text x="28" y="194" font-family="JetBrains Mono" font-size="9" fill="#FBBC04">grammy</text>
-              <text x="88" y="194" font-family="Inter" font-size="8" fill="var(--text-muted)">Bot API, keyboard, sessions — 8 pages injected</text>
-            </svg>
-          </div>
-        </div>
-
+      <div class="intel-grid" style="grid-template-columns: minmax(0, 720px); justify-content: center;">
         <!-- CodeGraph -->
         <div class="intel-card">
           <div class="intel-header">
@@ -523,7 +455,6 @@
             <li class="check-icon"><strong>Unlimited sessions</strong></li>
             <li class="check-icon"><strong>Multi-bot Telegram</strong></li>
             <li class="check-icon">Multi-platform debate (Codex, Gemini, OpenCode)</li>
-            <li class="check-icon">WebIntel (research + crawl)</li>
             <li class="check-icon">CodeGraph (blast radius, flow trace)</li>
             <li class="check-icon">Custom domain + Let's Encrypt SSL</li>
             <li class="check-icon">Custom personas + RTK Pro</li>
@@ -687,12 +618,12 @@ docker compose up -d
 
         <details class="faq-item">
           <summary>What does Pro unlock?</summary>
-          <p><strong>Pro ($5/mo or $39/yr)</strong> unlocks unlimited sessions, multi-bot Telegram, multi-platform debate (Codex, Gemini, OpenCode), WebIntel (auto docs + web research), CodeGraph (blast radius, flow trace), custom domain with Let's Encrypt SSL, custom personas, and RTK Pro compression. Free tier gives you 2 sessions and 1 bot — enough to try everything.</p>
+          <p><strong>Pro ($5/mo or $39/yr)</strong> unlocks unlimited sessions, multi-bot Telegram, multi-platform debate (Codex, Gemini, OpenCode), CodeGraph (blast radius, flow trace), custom domain with Let's Encrypt SSL, custom personas, and RTK Pro compression. Free tier gives you 2 sessions and 1 bot — enough to try everything.</p>
         </details>
 
         <details class="faq-item">
-          <summary>What are WebIntel and CodeGraph?</summary>
-          <p><strong>WebIntel</strong> detects 100+ libraries in your messages, auto-scrapes their latest docs via webclaw (67% smaller than raw HTML), and injects them into Claude's context — saving ~4 tool calls per lookup with 30-min caching. It also supports <code>/research</code> (5-source synthesis) and <code>/docs</code> (explicit URL scrape). <strong>CodeGraph</strong> scans your codebase across 5 languages, builds a trust-weighted dependency graph, and auto-injects at 4 points: project map at session start, related symbols per message, plan review (catches missed dependencies), and break check (warns before regressions). Together they save 30-50 tool calls per session and reduce agent context-gathering time by ~40-60%.</p>
+          <summary>What is CodeGraph?</summary>
+          <p><strong>CodeGraph</strong> scans your codebase across 5 languages (TypeScript, Python, Rust, Go, Java), builds a trust-weighted dependency graph, and auto-injects at 4 points: project map at session start, related symbols per message, plan review (catches missed dependencies), and break check (warns before regressions). Saves ~5 search calls per message and cuts agent context-gathering time by 40-60%.</p>
         </details>
 
         <details class="faq-item">

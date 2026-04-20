@@ -53,35 +53,6 @@ services:
       retries: 3
 
   # ═══════════════════════════════════════════════════════════════════════════
-  # WEB INTELLIGENCE — webclaw sidecar for web scraping & docs
-  # ═══════════════════════════════════════════════════════════════════════════
-  #
-  # Provides token-optimized web scraping for agent doc lookups and research.
-  # Optional — Companion works fine without it (all web features gracefully skip).
-  #
-  # Uncomment to enable:
-  #
-  # webclaw:
-  #   image: ghcr.io/0xmassi/webclaw:latest
-  #   container_name: companion-webclaw
-  #   restart: unless-stopped
-  #   ports:
-  #     - "3100:3000"  # Expose internally; remove ports line if not debugging
-  #   environment:
-  #     - WEBCLAW_PORT=3000
-  #     - WEBCLAW_HOST=0.0.0.0
-  #     - WEBCLAW_MAX_CONCURRENCY=10
-  #     # Optional: API key for search/cloud features
-  #     - WEBCLAW_API_KEY=${WEBCLAW_API_KEY:-}
-  #     # Optional: auth key for webclaw REST API
-  #     - WEBCLAW_AUTH_KEY=${WEBCLAW_AUTH_KEY:-}
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:3000/v1/health"]
-  #     interval: 30s
-  #     timeout: 5s
-  #     retries: 3
-
-  # ═══════════════════════════════════════════════════════════════════════════
   # CUSTOM DOMAIN — pick ONE option, uncomment the service block
   # ═══════════════════════════════════════════════════════════════════════════
   #

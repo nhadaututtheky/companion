@@ -1,85 +1,45 @@
 # Companion Intelligence Layer — Execution Runbook
 
-> This file is the SINGLE SOURCE OF TRUTH for cross-session execution.
-> Every session MUST read this file first and continue from where the last session left off.
-> Update status IMMEDIATELY after completing each step.
+> Historical cross-session execution log. Both plans below have shipped;
+> WebIntel was subsequently removed (see 2026-04-20 entry). Kept for
+> context on why certain CodeGraph code exists.
 
-## Execution Order
+## Execution History
 
 | # | Plan | Phase | Status | Commit |
 |---|------|-------|--------|--------|
-| 1 | WebIntel | Phase 1: Sidecar + Scrape Service | ✅ Done | 2e94991 |
-| 2 | WebIntel | Phase 2: Agent Auto-Injection | ✅ Done | 48e276c |
-| 3 | WebIntel | Phase 3: Web Research + Crawl | ✅ Done | ab06b91 |
-| 4 | WebIntel | Phase 4: UI + Telegram Commands | ✅ Done | — |
-| 5 | WebIntel | Full Review + Integration Test | ✅ Done | 76047e4 |
-| 6 | CodeGraph | Phase 1: Scanner + Store | ✅ Done | 0c7ca9a |
-| 7 | CodeGraph | Phase 2: Semantic + Diff | ✅ Done | — |
-| 8 | CodeGraph | Phase 3: Agent Interface | ✅ Done | — |
-| 9 | CodeGraph | Phase 4: API + Web UI | ✅ Done | — |
-| 10 | CodeGraph | Full Review + Integration Test | ✅ Done | — |
-| 11 | Bridge | CodeGraph ↔ WebIntel integration | ✅ Done | — |
-| 12 | Final | E2E test all features + ship | ✅ Done | — |
+| 1-5 | WebIntel | All phases + review | 🗑️ Removed 2026-04-20 | — |
+| 6 | CodeGraph | Phase 1: Scanner + Store | ✅ Shipped | 0c7ca9a |
+| 7 | CodeGraph | Phase 2: Semantic + Diff | ✅ Shipped | — |
+| 8 | CodeGraph | Phase 3: Agent Interface | ✅ Shipped | — |
+| 9 | CodeGraph | Phase 4: API + Web UI | ✅ Shipped | — |
+| 10 | CodeGraph | Full Review + Integration Test | ✅ Shipped | — |
+| 11 | ~~Bridge: CodeGraph ↔ WebIntel~~ | ~~Integration~~ | 🗑️ Removed with WebIntel | — |
+| 12 | Final | E2E test all features | ✅ Shipped | — |
 
-## Protocol Per Phase
+## 2026-04-20 — WebIntel removal
 
-```
-1. READ the phase plan file (.rune/plan-*-phaseN.md)
-2. IMPLEMENT all tasks in the phase
-3. VERIFY: bun run build (must pass)
-4. REVIEW: check for bugs, security issues, missing edge cases
-5. FIX: any issues found in review
-6. COMMIT: semantic message (feat: webintel phase N — summary)
-7. UPDATE: mark phase done in this runbook + phase plan file
-8. CONTINUE to next phase (no pause, no questions)
-```
+WebIntel (webclaw Docker sidecar + `/docs` `/research` `/crawl` commands,
+auto doc injection, MCP scrape tools) was retired because:
 
-## Protocol Per Plan Completion (after all phases of a plan)
+- Overlap with Context7 MCP (better at library docs)
+- Overlap with Claude CLI built-in `WebSearch` / `WebFetch`
+- Docker sidecar friction undermined the "1-click self-hosted" USP
+- `feedback_not_claudecode.md` — don't duplicate Claude Code features
 
-```
-1. FULL REVIEW: re-read all files created/modified across all phases
-2. INTEGRATION TEST: verify features work together
-3. FIX: any cross-phase issues
-4. COMMIT: any fixes (fix: webintel review — summary)
-5. UPDATE: mark plan review done in this runbook
-6. CONTINUE to next plan
-```
+CodeGraph's external-package summary was preserved (the file once called
+`codegraph/webintel-bridge.ts` is now `codegraph/external-packages.ts`
+and has no WebIntel dependency — it just extracts npm package names
+from import edges).
 
-## Session Handoff Protocol
-
-If context is running low:
-1. UPDATE this runbook with exact current status
-2. NOTE any in-progress work, decisions made, blockers found
-3. Next session reads this runbook + relevant phase plan and continues
-
-## Current Session Notes
-
-_Updated by each session:_
-
-- **Session start**: 2026-04-01
-- **Last completed step**: CodeGraph Phase 1 (step 6) — 906 nodes, 745 edges in 2.4s
-- **Currently working on**: ALL DONE — WebIntel + CodeGraph complete
-- **Blockers**: None
-- **Decisions made this session**:
-  - webclaw as Docker sidecar (REST API on port 3100)
-  - tree-sitter replaces @swc/core for multi-language support
-  - contextplus patterns adopted: blast radius, token pruning, embeddings
-  - WebIntel before CodeGraph (faster setup, immediate value)
-
-## Key File Locations
+## CodeGraph Reference
 
 | File | Purpose |
 |------|---------|
-| `.rune/plan-webintel.md` | WebIntel master plan |
-| `.rune/plan-webintel-phase1.md` | Phase 1 detail |
-| `.rune/plan-webintel-phase2.md` | Phase 2 detail |
-| `.rune/plan-webintel-phase3.md` | Phase 3 detail |
-| `.rune/plan-webintel-phase4.md` | Phase 4 detail |
 | `.rune/plan-codegraph.md` | CodeGraph master plan |
-| `.rune/plan-codegraph-phase1.md` | Phase 1 detail (updated with tree-sitter) |
+| `.rune/plan-codegraph-phase1.md` | Phase 1 detail (tree-sitter) |
 | `.rune/plan-codegraph-phase2.md` | Phase 2 detail |
 | `.rune/plan-codegraph-phase3.md` | Phase 3 detail |
-| `docker-compose.yml` | Docker services (add webclaw here) |
-| `packages/server/src/services/ws-bridge.ts` | Main injection point for both features |
-| `packages/server/src/services/ai-client.ts` | AI client for summaries/descriptions |
-| `packages/server/src/db/schema.ts` | Drizzle schema |
+| `packages/server/src/codegraph/` | All CodeGraph code |
+| `packages/server/src/codegraph/external-packages.ts` | External package summary (was webintel-bridge.ts) |
+| `packages/server/src/services/ws-user-message.ts` | CodeGraph injection points |

@@ -5,7 +5,6 @@ import {
   X,
   Brain,
   TreeStructure,
-  Globe,
   MagnifyingGlass,
   ArrowClockwise,
   CircleNotch,
@@ -13,16 +12,10 @@ import {
   File,
   CaretDown,
   CaretRight,
-  CheckCircle,
   WarningCircle,
-  Trash,
-  Link as LinkIcon,
-  Key,
   Gear,
   Plus,
   MinusCircle,
-  Play,
-  Package,
   Heartbeat,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
@@ -86,11 +79,6 @@ interface SearchResult {
   isExported: boolean;
   incoming: Array<{ symbolName: string; filePath: string; edgeType: string }>;
   outgoing: Array<{ symbolName: string; filePath: string; edgeType: string }>;
-}
-
-interface WebIntelStatus {
-  available: boolean;
-  cache: { size: number; maxSize: number; hits: number; misses: number };
 }
 
 interface Project {
@@ -317,209 +305,6 @@ function SymbolResults({ results }: { results: SearchResult[] }) {
   );
 }
 
-// ── Quick Scrape ─────────────────────────────────────────────────────────
-
-function QuickScrape() {
-  const [url, setUrl] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{
-    url: string;
-    metadata: Record<string, unknown>;
-    llm?: string;
-    markdown?: string;
-    text?: string;
-  } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(false);
-
-  const handleScrape = useCallback(async () => {
-    if (!url.trim()) return;
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    try {
-      const res = await api.webintel.scrape(url.trim());
-      setResult(res.data);
-      setExpanded(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Scrape failed");
-    } finally {
-      setLoading(false);
-    }
-  }, [url]);
-
-  const content = result?.llm ?? result?.markdown ?? result?.text;
-  const wordCount = content ? content.split(/\s+/).length : 0;
-
-  return (
-    <div className="rounded-lg p-3">
-      <span className="mb-2 block text-xs font-semibold">Quick Scrape</span>
-      <div className="flex gap-1.5">
-        <input
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleScrape()}
-          placeholder="https://docs.example.com"
-          className="input-bordered text-text-primary bg-bg-base flex-1 rounded-md px-2.5 py-1.5 text-xs"
-          aria-label="URL to scrape"
-        />
-        <button
-          onClick={handleScrape}
-          disabled={loading || !url.trim()}
-          className="flex cursor-pointer items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
-          style={{ background: "#4285F4", color: "#fff" }}
-          aria-label="Scrape URL"
-        >
-          {loading ? <CircleNotch size={12} className="animate-spin" /> : <Globe size={12} />}
-          Scrape
-        </button>
-      </div>
-      {error && (
-        <div className="mt-2 flex items-center gap-1.5 text-xs" style={{ color: "#EA4335" }}>
-          <WarningCircle size={12} /> {error}
-        </div>
-      )}
-      {result && (
-        <div className="mt-2">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="flex w-full cursor-pointer items-center gap-1.5 text-xs font-medium"
-            aria-expanded={expanded}
-          >
-            {expanded ? <CaretDown size={10} /> : <CaretRight size={10} />}
-            <CheckCircle size={12} color="#34A853" />
-            <span className="flex-1 truncate text-left">
-              {typeof result.metadata?.title === "string" ? result.metadata.title : result.url}
-            </span>
-            <span className="text-text-muted" style={{ fontFamily: "var(--font-mono)" }}>
-              {fmtNumber(wordCount)} words
-            </span>
-          </button>
-          {expanded && content && (
-            <pre
-              className="text-text-primary bg-bg-base mt-2 overflow-auto whitespace-pre-wrap rounded p-2 text-xs"
-              style={{
-                maxHeight: 300,
-                wordBreak: "break-word",
-              }}
-            >
-              {content.slice(0, 5000)}
-              {content.length > 5000 && "\n\n... [truncated]"}
-            </pre>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Quick Research ────────────────────────────────────────────────────────
-
-function QuickResearch() {
-  const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{
-    content: string;
-    sources: Array<{ title: string; url: string }>;
-  } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(false);
-
-  const handleResearch = useCallback(async () => {
-    if (!query.trim()) return;
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    try {
-      const res = await api.webintel.research(query.trim());
-      setResult(res.data);
-      setExpanded(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Research failed");
-    } finally {
-      setLoading(false);
-    }
-  }, [query]);
-
-  return (
-    <div className="rounded-lg p-3">
-      <span className="mb-2 block text-xs font-semibold">Web Research</span>
-      <div className="flex gap-1.5">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleResearch()}
-          placeholder="Search query..."
-          className="input-bordered text-text-primary bg-bg-base flex-1 rounded-md px-2.5 py-1.5 text-xs"
-          aria-label="Research query"
-        />
-        <button
-          onClick={handleResearch}
-          disabled={loading || !query.trim()}
-          className="flex cursor-pointer items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
-          style={{ background: "#FBBC04", color: "#1a1a1a" }}
-          aria-label="Research topic"
-        >
-          {loading ? (
-            <CircleNotch size={12} className="animate-spin" />
-          ) : (
-            <MagnifyingGlass size={12} />
-          )}
-          Research
-        </button>
-      </div>
-      {error && (
-        <div className="mt-2 flex items-center gap-1.5 text-xs" style={{ color: "#EA4335" }}>
-          <WarningCircle size={12} /> {error}
-        </div>
-      )}
-      {result && (
-        <div className="mt-2">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="flex w-full cursor-pointer items-center gap-1.5 text-xs font-medium"
-            aria-expanded={expanded}
-          >
-            {expanded ? <CaretDown size={10} /> : <CaretRight size={10} />}
-            <CheckCircle size={12} color="#34A853" />
-            {result.sources.length} sources found
-          </button>
-          {expanded && (
-            <div className="mt-2 flex flex-col gap-2">
-              <div className="flex flex-col gap-1">
-                {result.sources.map((s, i) => (
-                  <a
-                    key={i}
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 truncate text-xs"
-                    style={{ color: "#4285F4" }}
-                  >
-                    <LinkIcon size={10} /> {s.title}
-                  </a>
-                ))}
-              </div>
-              <pre
-                className="text-text-primary bg-bg-base overflow-auto whitespace-pre-wrap rounded p-2 text-xs"
-                style={{
-                  maxHeight: 300,
-                  wordBreak: "break-word",
-                }}
-              >
-                {result.content.slice(0, 5000)}
-                {result.content.length > 5000 && "\n\n... [truncated]"}
-              </pre>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Injection Type Helpers ─────────────────────────────────────────────
 
 const INJECTION_META: Record<
@@ -530,7 +315,6 @@ const INJECTION_META: Record<
   message_context: { label: "Code Context", color: "#6366F1", icon: Lightning },
   plan_review: { label: "Plan Review", color: "#F59E0B", icon: File },
   break_check: { label: "Break Check", color: "#EA4335", icon: WarningCircle },
-  web_docs: { label: "Library Docs", color: "#4285F4", icon: Globe },
   activity_feed: { label: "Activity Feed", color: "#3B82F6", icon: Lightning },
   pulse_guidance: { label: "Pulse Guidance", color: "#F59E0B", icon: Heartbeat },
 };
@@ -663,7 +447,6 @@ interface CodeGraphConfigState {
   messageContextEnabled: boolean;
   planReviewEnabled: boolean;
   breakCheckEnabled: boolean;
-  webDocsEnabled: boolean;
   excludePatterns: string[];
   maxContextTokens: number;
 }
@@ -755,12 +538,6 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
             label="Break check (after edits)"
             checked={config.breakCheckEnabled}
             onChange={(v) => save({ breakCheckEnabled: v })}
-            disabled={!config.injectionEnabled}
-          />
-          <ToggleRow
-            label="Library docs (web scraping)"
-            checked={config.webDocsEnabled}
-            onChange={(v) => save({ webDocsEnabled: v })}
             disabled={!config.injectionEnabled}
           />
         </div>
@@ -856,139 +633,6 @@ function SettingsTab({ projectSlug }: { projectSlug: string }) {
   );
 }
 
-// ── Webclaw Setup Wizard ──────────────────────────────────────────────
-
-function WebclawSetup({ onStarted }: { onStarted: () => void }) {
-  const [dockerStatus, setDockerStatus] = useState<{
-    dockerAvailable: boolean;
-    webclawRunning: boolean;
-    webclawHealthy: boolean;
-  } | null>(null);
-  const [starting, setStarting] = useState(false);
-  const [apiKey, setApiKey] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [showManual, setShowManual] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await api.webintel.dockerStatus();
-        if (res.success) setDockerStatus(res.data);
-      } catch {
-        /* ignore */
-      }
-    })();
-  }, []);
-
-  const handleStart = async () => {
-    setStarting(true);
-    setError(null);
-    try {
-      const res = await api.webintel.startWebclaw(apiKey || undefined);
-      if (res.success) {
-        // Wait a moment for container to start, then refresh
-        setTimeout(onStarted, 3000);
-      } else {
-        setError("Failed to start webclaw");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to start webclaw");
-    }
-    setStarting(false);
-  };
-
-  return (
-    <div className="rounded-lg p-3">
-      <div className="mb-2 flex items-center gap-2">
-        <Package size={14} weight="bold" style={{ color: "#4285F4" }} />
-        <span className="text-xs font-semibold">Docs Engine Setup</span>
-      </div>
-
-      <p className="text-text-secondary mb-3 text-xs">
-        Docs Engine auto-injects library documentation into your AI sessions. Works out of the box —{" "}
-        <strong className="text-text-primary">no API key needed</strong> for scraping, docs, and
-        crawling.
-      </p>
-
-      {dockerStatus === null ? (
-        <div className="flex justify-center py-2">
-          <CircleNotch size={16} className="animate-spin" />
-        </div>
-      ) : dockerStatus.dockerAvailable ? (
-        <div className="flex flex-col gap-2">
-          {/* Start button — primary action */}
-          <button
-            onClick={handleStart}
-            disabled={starting}
-            className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold disabled:opacity-50"
-            style={{ background: "#4285F4", color: "#fff" }}
-          >
-            {starting ? (
-              <CircleNotch size={14} className="animate-spin" />
-            ) : (
-              <Play size={14} weight="fill" />
-            )}
-            {starting ? "Starting..." : "Start Docs Engine"}
-          </button>
-
-          {error && (
-            <div className="flex items-center gap-1.5 text-xs" style={{ color: "#EA4335" }}>
-              <WarningCircle size={12} /> {error}
-            </div>
-          )}
-
-          {/* Advanced: API key (collapsed by default) */}
-          <details className="text-text-muted text-xs">
-            <summary className="text-text-muted cursor-pointer py-1">
-              Advanced: Web Search API key (optional)
-            </summary>
-            <div className="mt-1.5 flex flex-col gap-1.5">
-              <p className="text-text-muted" style={{ fontSize: 11 }}>
-                Only needed for <code className="bg-bg-base rounded px-1">/research</code> command.
-                Scraping, docs, and crawling work without it.
-              </p>
-              <input
-                type="text"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Leave empty — not required"
-                className="input-bordered text-text-primary bg-bg-base w-full rounded-md px-2.5 py-1.5 text-xs"
-                aria-label="Webclaw API key for web search"
-              />
-            </div>
-          </details>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          <div
-            className="flex items-center gap-1.5 rounded px-2 py-1.5 text-xs"
-            style={{ background: "#FBBC0415", color: "#FBBC04" }}
-          >
-            <WarningCircle size={12} /> Docker not detected
-          </div>
-          <button
-            onClick={() => setShowManual(!showManual)}
-            className="cursor-pointer text-left text-xs"
-            style={{ color: "#4285F4" }}
-          >
-            {showManual ? "Hide" : "Show"} manual setup instructions
-          </button>
-          {showManual && (
-            <pre className="text-text-primary bg-bg-base overflow-auto whitespace-pre-wrap rounded p-2 text-xs">
-              {`# Install Docker: https://docs.docker.com/get-docker/
-
-# Then run:
-docker run -d -p 3100:3000 \\
-  --name companion-webclaw \\
-  ghcr.io/0xmassi/webclaw:latest`}
-            </pre>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Main Panel ──────────────────────────────────────────────────────────
 
 export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextPanelProps) {
@@ -1009,10 +653,6 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
-
-  // ── WebIntel state
-  const [wiStatus, setWiStatus] = useState<WebIntelStatus | null>(null);
-  const [wiClearing, setWiClearing] = useState(false);
 
   const slug = selectedSlug;
 
@@ -1070,34 +710,22 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
     }
   }, [slug]);
 
-  // ── WebIntel loading
-  const loadWiStatus = useCallback(async () => {
-    try {
-      const res = await api.webintel.status();
-      setWiStatus(res.data);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
   // ── Polling
   useEffect(() => {
     loadCgStatus(); // eslint-disable-line react-hooks/set-state-in-effect
     loadCgStats();
     loadHotFiles();
-    loadWiStatus();
 
     const interval = setInterval(
       () => {
         loadCgStatus();
-        loadWiStatus();
         if (cgScanning) loadCgStats();
       },
       cgScanning ? 3000 : 15000,
     );
 
     return () => clearInterval(interval);
-  }, [loadCgStatus, loadCgStats, loadHotFiles, loadWiStatus, cgScanning]);
+  }, [loadCgStatus, loadCgStats, loadHotFiles, cgScanning]);
 
   // Refresh on scan complete
   useEffect(() => {
@@ -1131,20 +759,6 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
     setSearching(false);
   };
 
-  const handleClearCache = async () => {
-    setWiClearing(true);
-    try {
-      await api.webintel.clearCache();
-      await loadWiStatus();
-    } catch {
-      /* ignore */
-    }
-    setWiClearing(false);
-  };
-
-  const wiAvailable = wiStatus?.available ?? false;
-  const wiCache = wiStatus?.cache;
-
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
@@ -1170,7 +784,6 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
               loadCgStatus();
               loadCgStats();
               loadHotFiles();
-              loadWiStatus();
             }}
             className="cursor-pointer rounded p-1.5"
             aria-label="Refresh"
@@ -1207,7 +820,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
       {/* Content */}
       <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
         {/* Source Status Cards */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <SourceCard
             icon={TreeStructure}
             label="Codebase"
@@ -1218,22 +831,6 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
             action={
               !cgReady && !cgScanning && slug ? { label: "Scan", onClick: handleScan } : undefined
             }
-          />
-          <SourceCard
-            icon={Globe}
-            label="Docs"
-            color="#4285F4"
-            online={wiAvailable}
-            statusText={wiAvailable ? "Online" : "Offline"}
-            detail={wiCache ? `${wiCache.size} cached` : undefined}
-          />
-          <SourceCard
-            icon={Key}
-            label="Search"
-            color="#FBBC04"
-            online={false}
-            statusText="Optional"
-            detail="For /research only"
           />
         </div>
 
@@ -1275,7 +872,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
             {/* No project selected */}
             {!slug && (
               <div className="py-6 text-center text-sm">
-                Select a project above to explore code and docs
+                Select a project above to explore code
               </div>
             )}
 
@@ -1365,42 +962,6 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
                 <GraphVisualization projectSlug={slug} />
               </>
             )}
-
-            {/* Divider */}
-            {slug && cgReady && (
-              <div style={{ boxShadow: "0 -1px 0 var(--color-border)", margin: "4px 0" }} />
-            )}
-
-            {/* WebIntel section */}
-            {wiAvailable && (
-              <>
-                {wiCache && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold">
-                      Docs Cache: {wiCache.size} entries
-                    </span>
-                    <button
-                      onClick={handleClearCache}
-                      disabled={wiClearing || wiCache.size === 0}
-                      className="flex cursor-pointer items-center gap-1 rounded px-2 py-0.5 text-xs disabled:opacity-40"
-                      style={{ color: "#EA4335", background: "#EA433510" }}
-                      aria-label="Clear cache"
-                    >
-                      {wiClearing ? (
-                        <CircleNotch size={10} className="animate-spin" />
-                      ) : (
-                        <Trash size={10} />
-                      )}
-                      Clear
-                    </button>
-                  </div>
-                )}
-                <QuickScrape />
-                <QuickResearch />
-              </>
-            )}
-
-            {!wiAvailable && <WebclawSetup onStarted={loadWiStatus} />}
           </div>
         )}
 

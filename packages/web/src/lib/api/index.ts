@@ -7,7 +7,7 @@ export { request, BASE } from "./base";
 
 export { sessions } from "./sessions";
 export { channels } from "./channels";
-export { fs, terminal, codegraph, webintel, review } from "./devtools";
+export { fs, terminal, codegraph, review } from "./devtools";
 export {
   settings,
   projects,
@@ -33,7 +33,7 @@ export { health, license, stats, errors, snapshots, share, workspaces } from "./
 import { request } from "./base";
 import { sessions } from "./sessions";
 import { channels } from "./channels";
-import { fs, terminal, codegraph, webintel, review } from "./devtools";
+import { fs, terminal, codegraph, review } from "./devtools";
 import {
   settings,
   projects,
@@ -72,7 +72,6 @@ export const api = {
   fs,
   terminal,
   codegraph,
-  webintel,
   review,
   settings,
   projects,

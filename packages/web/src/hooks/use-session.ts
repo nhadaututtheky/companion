@@ -12,6 +12,7 @@ import { api } from "@/lib/api-client";
 import type {
   BrowserIncomingMessage,
   ContentBlock,
+  ContextInjectionType,
   ContextMode,
   SessionState,
   ThinkingMode,
@@ -918,13 +919,7 @@ export function useSession(sessionId: string): UseSessionReturn {
       if (rawMsg.type === "context:injection") {
         useContextFeedStore.getState().pushEvent({
           sessionId: rawMsg.sessionId as string,
-          injectionType: rawMsg.injectionType as
-            | "project_map"
-            | "message_context"
-            | "plan_review"
-            | "break_check"
-            | "web_docs"
-            | "activity_feed",
+          injectionType: rawMsg.injectionType as ContextInjectionType,
           summary: rawMsg.summary as string,
           charCount: rawMsg.charCount as number,
           tokenEstimate: rawMsg.tokenEstimate as number,

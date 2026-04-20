@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
+import { useFetch } from "@/hooks/use-fetch";
 import {
   ArrowLeft,
   ChartBar,
@@ -715,7 +716,6 @@ const INJECTION_LABELS: Record<string, string> = {
   message_context: "Message Context",
   plan_review: "Plan Review",
   break_check: "Break Check",
-  web_docs: "Web Docs",
   activity_feed: "Activity Feed",
 };
 
@@ -724,7 +724,6 @@ const INJECTION_COLORS: Record<string, string> = {
   message_context: "#34A853",
   plan_review: "#FBBC04",
   break_check: "#EA4335",
-  web_docs: "#a78bfa",
   activity_feed: "#06b6d4",
 };
 
@@ -856,46 +855,32 @@ function ContextTab({ data }: { data: FeatureData["context"] }) {
 // ── Main Page ─────────────────────────────────────────────────────────────
 
 export default function AnalyticsPage() {
-  const [data, setData] = useState<StatsData | null>(null);
-  const [featureData, setFeatureData] = useState<FeatureData | null>(null);
   const [activeTab, setActiveTab] = useState<AnalyticsTab>("overview");
-  const [loading, setLoading] = useState(true);
-  const [featureLoading, setFeatureLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchStats = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const { data, loading, error, run: fetchStats } = useFetch<StatsData>(
+    async () => {
       const res = await api.stats.get();
-      if (res.data) setData(res.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load analytics");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return res.data;
+    },
+    { initialLoading: true },
+  );
 
-  const fetchFeatures = useCallback(async () => {
-    if (featureData) return;
-    setFeatureLoading(true);
-    try {
-      const res = await api.stats.features();
-      if (res.data) setFeatureData(res.data);
-    } catch {
-      // Feature data is optional — don't block page
-    } finally {
-      setFeatureLoading(false);
-    }
-  }, [featureData]);
+  const {
+    data: featureData,
+    loading: featureLoading,
+    run: fetchFeatures,
+  } = useFetch<FeatureData>(async () => {
+    const res = await api.stats.features();
+    return res.data;
+  });
 
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
 
   useEffect(() => {
-    if (activeTab !== "overview") fetchFeatures();
-  }, [activeTab, fetchFeatures]);
+    if (activeTab !== "overview" && !featureData) fetchFeatures();
+  }, [activeTab, featureData, fetchFeatures]);
 
   return (
     <div
@@ -960,7 +945,7 @@ export default function AnalyticsPage() {
             style={{ background: "#EA433515", color: "#EA4335", border: "1px solid #EA433530" }}
           >
             <WarningCircle size={16} aria-hidden="true" />
-            {error}
+            {error.message || "Failed to load analytics"}
           </div>
         )}
 

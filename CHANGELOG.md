@@ -2,6 +2,11 @@
 
 All notable changes to Companion are documented here.
 
+## [Unreleased]
+
+### Removed
+- **WebIntel feature retired** — dropped the webclaw Docker sidecar, `/docs` `/research` `/crawl` slash commands, auto library-doc injection, MCP scrape/research/crawl tools, and the entire WebIntel web UI panel (scrape + research + Docker status). Drizzle `web_intel_docs` table dropped via migration `0046_drop_web_intel.sql`. Use Context7 MCP (library docs) or Claude Code's built-in `WebSearch` / `WebFetch` (general web) instead — both cover the same use cases without the self-host friction. The codegraph-side `webintel-bridge.ts` was renamed to `external-packages.ts` and kept (it never actually depended on WebIntel — just extracts npm package names from import edges). `web_intel` feature flag and `codegraph_config.web_docs_enabled` toggle removed from the Pro tier.
+
 ## [0.24.0] - 2026-04-20
 
 ### Fixed

@@ -33,7 +33,6 @@ describe("license — pure getters", () => {
 
   test("hasFeature returns false for pro features on free tier", () => {
     expect(hasFeature("shared_context")).toBe(false);
-    expect(hasFeature("web_intel")).toBe(false);
     expect(hasFeature("codegraph")).toBe(false);
     expect(hasFeature("domain_config")).toBe(false);
     expect(hasFeature("multi_bot_telegram")).toBe(false);

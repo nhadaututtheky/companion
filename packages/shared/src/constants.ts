@@ -68,7 +68,6 @@ export const PRO_FEATURES = [
   ...FREE_FEATURES,
   "shared_context",
   "rtk_pro",
-  "web_intel",
   "codegraph",
   "codegraph_advanced",
   "domain_config",

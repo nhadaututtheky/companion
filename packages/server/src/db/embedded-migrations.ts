@@ -185,4 +185,8 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0045_drop_telegram_idle_columns.sql",
     sql: "-- Session settings unification — Phase 3 cleanup.\n-- Migration 0044 added idle_timeout_ms / idle_timeout_enabled to `sessions`\n-- and backfilled values from `telegram_session_mappings`. Phase 2/3 code\n-- reads + writes those settings exclusively through SessionSettingsService,\n-- which targets the `sessions` row. The mapping-table columns have been\n-- dead since Phase 2 landed; this migration completes the cleanup.\n--\n-- Safety: grep audit (scripts/check-settings-consistency.ts) blocks any\n-- code from writing to these columns. The only remaining reader was the\n-- bootstrap path in telegram-persistence.ts, updated to use the service\n-- in the same commit as this migration.\n--\n-- Rollback: re-create columns + re-run backfill from `sessions`. SQLite\n-- does support DROP COLUMN from v3.35 (2021), so forward migration is\n-- native; down migration would need an explicit ADD COLUMN.\n-- Non-idempotent: embedded migration runner tracks by file name.\n\nALTER TABLE telegram_session_mappings DROP COLUMN idle_timeout_ms;\n--> statement-breakpoint\nALTER TABLE telegram_session_mappings DROP COLUMN idle_timeout_enabled;\n",
   },
+  {
+    name: "0046_drop_web_intel.sql",
+    sql: "-- Drop WebIntel feature: remove web_intel_docs cache table.\n-- web_docs_enabled column on codegraph_config is left in place (orphaned,\n-- harmless) to avoid a table-rebuild dance; drizzle schema no longer\n-- references it, so it is ignored at runtime.\n\nDROP INDEX IF EXISTS idx_webintel_docs_library;\n--> statement-breakpoint\nDROP TABLE IF EXISTS web_intel_docs;\n",
+  },
 ];

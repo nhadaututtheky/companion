@@ -1,16 +1,14 @@
 import { create } from "zustand";
+import type { ContextInjectionType } from "@companion/shared";
+
+/** `pulse_guidance` is a client-only injection type pushed by `pulse-warning.tsx`;
+ *  it never travels over the WS wire. All other variants come from the server. */
+export type ClientInjectionType = ContextInjectionType | "pulse_guidance";
 
 export interface ContextInjectionEvent {
   id: string;
   sessionId: string;
-  injectionType:
-    | "project_map"
-    | "message_context"
-    | "plan_review"
-    | "break_check"
-    | "web_docs"
-    | "activity_feed"
-    | "pulse_guidance";
+  injectionType: ClientInjectionType;
   summary: string;
   charCount: number;
   tokenEstimate: number;

@@ -22,3 +22,7 @@ data/.encryption-key
 test-results/
 playwright-report/
 blob-report/
+.playwright-mcp/
+snapshot-*.yml
+*.bun-build
+.neuralmemory/

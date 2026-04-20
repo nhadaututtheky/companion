@@ -121,7 +121,7 @@ export { incrementalRescan } from "./diff-updater.js";
 /**
  * Get external package dependencies from the code graph.
  */
-export { getExternalPackages, buildDependencySummary } from "./webintel-bridge.js";
+export { getExternalPackages, buildDependencySummary } from "./external-packages.js";
 
 /**
  * Cancel an active scan.

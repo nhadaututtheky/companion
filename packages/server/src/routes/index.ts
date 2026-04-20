@@ -10,7 +10,6 @@ import { templateRoutes } from "./templates.js";
 import { domainRoutes } from "./domain.js";
 import { terminalRoutes } from "./terminal.js";
 import { statsRoutes } from "./stats.js";
-import { webintelRoutes } from "./webintel.js";
 import { codegraphRoutes } from "./codegraph.js";
 import { hookRoutes } from "./hooks.js";
 import { shareRoutes, publicShareRoutes } from "./share.js";
@@ -122,11 +121,6 @@ export function createRoutes(bridge: WsBridge, botRegistry: BotRegistry): Hono {
 
   protectedApi.route("/terminal", terminalRoutes);
   protectedApi.route("/stats", statsRoutes);
-
-  const webintelGated = new Hono();
-  webintelGated.use("*", requireFeature("web_intel"));
-  webintelGated.route("/", webintelRoutes);
-  protectedApi.route("/webintel", webintelGated);
 
   const codegraphGated = new Hono();
   codegraphGated.use("*", requireFeature("codegraph"));

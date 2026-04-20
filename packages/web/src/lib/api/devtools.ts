@@ -157,7 +157,6 @@ export const codegraph = {
         messageContextEnabled: boolean;
         planReviewEnabled: boolean;
         breakCheckEnabled: boolean;
-        webDocsEnabled: boolean;
         excludePatterns: string[];
         maxContextTokens: number;
       };
@@ -170,7 +169,6 @@ export const codegraph = {
     messageContextEnabled?: boolean;
     planReviewEnabled?: boolean;
     breakCheckEnabled?: boolean;
-    webDocsEnabled?: boolean;
     autoReindexEnabled?: boolean;
     excludePatterns?: string[];
     maxContextTokens?: number;
@@ -207,87 +205,6 @@ export const codegraph = {
     }>("/api/codegraph/generate-skills", {
       method: "POST",
       body: JSON.stringify({ projectSlug }),
-    }),
-};
-
-export const webintel = {
-  status: () =>
-    request<{
-      success: boolean;
-      data: {
-        available: boolean;
-        cache: { size: number; maxSize: number; hits: number; misses: number };
-      };
-    }>("/api/webintel/status"),
-
-  scrape: (url: string, opts?: { formats?: string[]; skipCache?: boolean }) =>
-    request<{
-      success: boolean;
-      data: {
-        url: string;
-        metadata: Record<string, unknown>;
-        markdown?: string;
-        llm?: string;
-        text?: string;
-      };
-    }>("/api/webintel/scrape", {
-      method: "POST",
-      body: JSON.stringify({ url, ...opts }),
-    }),
-
-  docs: (url: string, maxTokens?: number) =>
-    request<{ success: boolean; data: { url: string; content: string } }>("/api/webintel/docs", {
-      method: "POST",
-      body: JSON.stringify({ url, maxTokens }),
-    }),
-
-  research: (query: string, maxTokens?: number) =>
-    request<{
-      success: boolean;
-      data: {
-        content: string;
-        sources: Array<{ title: string; url: string }>;
-      };
-    }>("/api/webintel/research", {
-      method: "POST",
-      body: JSON.stringify({ query, maxTokens }),
-    }),
-
-  crawl: (url: string, opts?: { maxDepth?: number; maxPages?: number }) =>
-    request<{ success: boolean; data: { jobId: string } }>("/api/webintel/crawl", {
-      method: "POST",
-      body: JSON.stringify({ url, ...opts }),
-    }),
-
-  jobs: () => request<{ success: boolean; data: unknown[] }>("/api/webintel/jobs"),
-
-  job: (id: string) => request<{ success: boolean; data: unknown }>(`/api/webintel/jobs/${id}`),
-
-  clearCache: () => request<{ success: boolean }>("/api/webintel/cache", { method: "DELETE" }),
-
-  dockerStatus: () =>
-    request<{
-      success: boolean;
-      data: {
-        dockerAvailable: boolean;
-        webclawRunning: boolean;
-        webclawContainerId: string | null;
-        webclawHealthy: boolean;
-      };
-    }>("/api/webintel/docker-status"),
-
-  startWebclaw: (apiKey?: string) =>
-    request<{
-      success: boolean;
-      data: { status: string; containerId?: string };
-    }>("/api/webintel/start-webclaw", {
-      method: "POST",
-      body: JSON.stringify({ apiKey }),
-    }),
-
-  stopWebclaw: () =>
-    request<{ success: boolean; data: { status: string } }>("/api/webintel/stop-webclaw", {
-      method: "POST",
     }),
 };
 

@@ -472,27 +472,6 @@ export const sessionSummaries = sqliteTable("session_summaries", {
     .$defaultFn(() => new Date()),
 });
 
-// ─── WebIntel Docs Cache ───────────────────────────────────────────────────
-
-export const webIntelDocs = sqliteTable(
-  "web_intel_docs",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    libraryName: text("library_name").notNull(),
-    docsUrl: text("docs_url").notNull(),
-    contentHash: text("content_hash").notNull(),
-    llmContent: text("llm_content").notNull(),
-    fetchedAt: integer("fetched_at", { mode: "timestamp_ms" })
-      .notNull()
-      .$defaultFn(() => new Date()),
-    accessCount: integer("access_count").notNull().default(1),
-    lastAccessedAt: integer("last_accessed_at", { mode: "timestamp_ms" })
-      .notNull()
-      .$defaultFn(() => new Date()),
-  },
-  (table) => [index("idx_webintel_docs_library").on(table.libraryName)],
-);
-
 // ─── Session Snapshots ──────────────────────────────────────────────────────
 
 export const sessionSnapshots = sqliteTable(
@@ -723,6 +702,10 @@ export const scheduleRuns = sqliteTable(
 // ─── Error Tracking ─────────────────────────────────────────────────────────
 
 // ─── CodeGraph Config ──────────────────────────────────────────────────────
+// NOTE: The physical table still has `web_docs_enabled INTEGER` from migration
+// 0018 (WebIntel era). It is intentionally orphaned — migration 0046 retires
+// WebIntel but leaves the column to avoid a SQLite table-rebuild. Drizzle
+// ignores columns not declared here, so runtime is unaffected.
 
 export const codegraphConfig = sqliteTable("codegraph_config", {
   projectSlug: text("project_slug").primaryKey(),
@@ -733,7 +716,6 @@ export const codegraphConfig = sqliteTable("codegraph_config", {
     .default(true),
   planReviewEnabled: integer("plan_review_enabled", { mode: "boolean" }).notNull().default(true),
   breakCheckEnabled: integer("break_check_enabled", { mode: "boolean" }).notNull().default(true),
-  webDocsEnabled: integer("web_docs_enabled", { mode: "boolean" }).notNull().default(true),
   autoReindexEnabled: integer("auto_reindex_enabled", { mode: "boolean" }).notNull().default(true),
   excludePatterns: text("exclude_patterns", { mode: "json" })
     .$type<string[]>()

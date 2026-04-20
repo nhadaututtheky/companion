@@ -219,15 +219,6 @@ export const FEATURES: FeatureDef[] = [
     category: "devtools",
     tier: "free",
   },
-  {
-    id: "web-intel",
-    name: "Web Intel",
-    description: "Auto-fetch docs and research from the web for context.",
-    whenToUse: "Working with unfamiliar libraries or APIs.",
-    category: "devtools",
-    tier: "pro",
-  },
-
   // ── Automation ───────────────────────────────────────────────────────────
   {
     id: "mcp-servers",

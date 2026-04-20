@@ -179,7 +179,6 @@ function LicenseSection() {
           <div className="text-text-secondary mb-3 grid grid-cols-2 gap-1.5 text-xs">
             <span>Unlimited sessions</span>
             <span>Multi-bot Telegram</span>
-            <span>WebIntel research</span>
             <span>CodeGraph analysis</span>
             <span>Multi-platform debate</span>
             <span>Domain + SSL</span>

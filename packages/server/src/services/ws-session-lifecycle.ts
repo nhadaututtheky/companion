@@ -57,6 +57,7 @@ import type {
   NormalizedMessage,
   CLIProcess,
   CLIPlatform,
+  ContextInjectionType,
 } from "@companion/shared";
 import { SESSION_IDLE_TIMEOUT_MS, thinkingModeToEffort } from "@companion/shared";
 
@@ -123,13 +124,7 @@ export interface SessionLifecycleBridge {
   updateStatus: (session: ActiveSession, status: SessionStatus) => void;
   emitContextInjection: (
     session: ActiveSession,
-    type:
-      | "project_map"
-      | "message_context"
-      | "plan_review"
-      | "break_check"
-      | "web_docs"
-      | "activity_feed",
+    type: ContextInjectionType,
     label: string,
     size: number,
   ) => void;

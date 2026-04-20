@@ -14,7 +14,7 @@ import {
 import { getMaxContextTokens } from "@companion/shared";
 import { updateSessionCostWarned } from "./session-store.js";
 import type { ActiveSession } from "./session-store.js";
-import type { BrowserIncomingMessage } from "@companion/shared";
+import type { BrowserIncomingMessage, ContextInjectionType } from "@companion/shared";
 import { eq } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { contextInjectionLog, sessions } from "../db/schema.js";
@@ -146,18 +146,12 @@ export function handleControlResponse(session: ActiveSession, msg: Record<string
 /** Emit a context injection event to browsers (for context budget visualization). */
 export function emitContextInjection(
   session: ActiveSession,
-  injectionType:
-    | "project_map"
-    | "message_context"
-    | "plan_review"
-    | "break_check"
-    | "web_docs"
-    | "activity_feed",
+  injectionType: ContextInjectionType,
   summary: string,
   charCount: number,
 ): void {
   const tokenEstimate = Math.ceil(charCount / 4);
-  broadcastToAll(session, {
+  const msg: BrowserIncomingMessage = {
     type: "context:injection",
     sessionId: session.id,
     injectionType,
@@ -165,7 +159,8 @@ export function emitContextInjection(
     charCount,
     tokenEstimate,
     timestamp: Date.now(),
-  } as unknown as BrowserIncomingMessage);
+  };
+  broadcastToAll(session, msg);
 
   logContextInjection(session.id, injectionType, tokenEstimate);
 }

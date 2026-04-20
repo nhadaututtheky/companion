@@ -30,6 +30,29 @@ async function apiCall<T = unknown>(
   return res.json() as Promise<T>;
 }
 
+/**
+ * Remove AI-generated `description` field from code graph nodes before sending to agents.
+ * Nodes are identified by having both `id` and `name` — the description on those is the AI
+ * summary that can be hallucinated; agents should read source directly via their file tools.
+ * Non-node `description` fields (e.g. diagram labels) are preserved.
+ */
+function stripAiDescriptions<T>(data: T): T {
+  if (Array.isArray(data)) {
+    return data.map((item) => stripAiDescriptions(item)) as unknown as T;
+  }
+  if (data !== null && typeof data === "object") {
+    const obj = data as Record<string, unknown>;
+    const isNode = "id" in obj && "name" in obj;
+    const out: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (isNode && key === "description") continue;
+      out[key] = stripAiDescriptions(value);
+    }
+    return out as T;
+  }
+  return data;
+}
+
 // ── Tool Registration ─────────────────────────────────────────────────────────
 
 export function registerTools(server: McpServer): void {
@@ -286,152 +309,6 @@ export function registerTools(server: McpServer): void {
     },
   );
 
-  // ── companion_web_scrape ────────────────────────────────────────────────
-  server.tool(
-    "companion_web_scrape",
-    "Scrape a URL via Companion's webclaw integration. Returns clean, token-optimized content for LLM consumption.",
-    {
-      url: z.string().describe("URL to scrape (must be public http/https)"),
-      maxTokens: z
-        .number()
-        .optional()
-        .describe("Max tokens in response (default: 4000, max: 16000)"),
-      formats: z
-        .array(z.enum(["markdown", "llm", "text", "json"]))
-        .optional()
-        .describe("Output formats (default: ['llm'])"),
-      skipCache: z.boolean().optional().describe("Skip cache and fetch fresh (default: false)"),
-    },
-    async ({ url, maxTokens, formats, skipCache }) => {
-      try {
-        if (maxTokens && !formats) {
-          // Use scrapeForContext for token-budgeted output
-          const res = await apiCall<{ data: { content: string } }>("/webintel/docs", {
-            method: "POST",
-            body: { url, maxTokens: Math.min(maxTokens ?? 4000, 16_000), refresh: skipCache },
-          });
-          return { content: [{ type: "text", text: res.data.content }] };
-        }
-
-        const res = await apiCall<{ data: unknown }>("/webintel/scrape", {
-          method: "POST",
-          body: { url, formats: formats ?? ["llm"], skipCache },
-        });
-        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
-      } catch (err) {
-        return {
-          content: [{ type: "text", text: `Scrape failed: ${String(err)}` }],
-          isError: true,
-        };
-      }
-    },
-  );
-
-  // ── companion_web_research ──────────────────────────────────────────────
-  server.tool(
-    "companion_web_research",
-    "Research a topic by searching the web, scraping top results, and returning synthesized content with source citations.",
-    {
-      query: z.string().describe("Research query (e.g., 'Hono middleware patterns')"),
-      maxTokens: z
-        .number()
-        .optional()
-        .describe("Max tokens in response (default: 3000, max: 8000)"),
-    },
-    async ({ query, maxTokens }) => {
-      try {
-        const res = await apiCall<{
-          data: { content: string; sources: { title: string; url: string }[] };
-        }>("/webintel/research", {
-          method: "POST",
-          body: { query, maxTokens: Math.min(maxTokens ?? 3000, 8000) },
-        });
-
-        const sourcesText = res.data.sources
-          .map((s, i) => `[${i + 1}] ${s.title} — ${s.url}`)
-          .join("\n");
-
-        return {
-          content: [{ type: "text", text: `${res.data.content}\n\n---\nSources:\n${sourcesText}` }],
-        };
-      } catch (err) {
-        return {
-          content: [{ type: "text", text: `Research failed: ${String(err)}` }],
-          isError: true,
-        };
-      }
-    },
-  );
-
-  // ── companion_web_crawl ─────────────────────────────────────────────────
-  server.tool(
-    "companion_web_crawl",
-    "Start an async crawl job on a website. Returns a job ID to poll for results.",
-    {
-      url: z.string().describe("Starting URL to crawl (must be public http/https)"),
-      maxDepth: z.number().optional().describe("Max link depth to follow (default: 2)"),
-      maxPages: z.number().optional().describe("Max pages to crawl (default: 50, max: 200)"),
-    },
-    async ({ url, maxDepth, maxPages }) => {
-      try {
-        const res = await apiCall<{ data: { jobId: string } }>("/webintel/crawl", {
-          method: "POST",
-          body: { url, maxDepth, maxPages },
-        });
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Crawl started. Job ID: ${res.data.jobId}\nUse companion_web_crawl_status to check progress.`,
-            },
-          ],
-        };
-      } catch (err) {
-        return { content: [{ type: "text", text: `Crawl failed: ${String(err)}` }], isError: true };
-      }
-    },
-  );
-
-  // ── companion_web_crawl_status ──────────────────────────────────────────
-  server.tool(
-    "companion_web_crawl_status",
-    "Check the status of an active crawl job",
-    {
-      jobId: z.string().describe("Crawl job ID returned by companion_web_crawl"),
-    },
-    async ({ jobId }) => {
-      try {
-        const res = await apiCall<{ data: unknown }>(`/webintel/jobs/${encodeURIComponent(jobId)}`);
-        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
-      } catch (err) {
-        return {
-          content: [{ type: "text", text: `Job status check failed: ${String(err)}` }],
-          isError: true,
-        };
-      }
-    },
-  );
-
-  // ── companion_web_status ────────────────────────────────────────────────
-  server.tool(
-    "companion_web_status",
-    "Check webclaw sidecar health and cache statistics",
-    {},
-    async () => {
-      try {
-        const res = await apiCall<{ data: { available: boolean; cache: unknown } }>(
-          "/webintel/status",
-        );
-        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
-      } catch (err) {
-        return {
-          content: [{ type: "text", text: `Status check failed: ${String(err)}` }],
-          isError: true,
-        };
-      }
-    },
-  );
-
   // ═══════════════════════════════════════════════════════════════════════════
   // Wiki Knowledge Base Tools
   // ═══════════════════════════════════════════════════════════════════════════
@@ -649,7 +526,7 @@ export function registerTools(server: McpServer): void {
   // ── companion_codegraph_search ──────────────────────────────────────────
   server.tool(
     "companion_codegraph_search",
-    "Search the code graph for symbols (functions, classes, types, hooks, endpoints) by keyword. Returns matching nodes with file paths, descriptions, and relationships.",
+    "Search the code graph for symbols (functions, classes, types, hooks, endpoints) by keyword. Returns matching nodes with file paths and relationships. Read the actual source with your file tools for implementation details — AI-generated summaries are intentionally omitted to avoid hallucinated context.",
     {
       projectSlug: z.string().describe("Project slug"),
       query: z
@@ -661,7 +538,8 @@ export function registerTools(server: McpServer): void {
         const res = await apiCall<{ data: unknown }>(
           `/codegraph/search?project=${encodeURIComponent(projectSlug)}&q=${encodeURIComponent(query)}`,
         );
-        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+        const clean = stripAiDescriptions(res.data);
+        return { content: [{ type: "text", text: JSON.stringify(clean, null, 2) }] };
       } catch (err) {
         return {
           content: [{ type: "text", text: `Search failed: ${String(err)}` }],
@@ -705,7 +583,8 @@ export function registerTools(server: McpServer): void {
         const res = await apiCall<{ data: unknown }>(
           `/codegraph/impact?project=${encodeURIComponent(projectSlug)}&file=${encodeURIComponent(file)}`,
         );
-        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+        const clean = stripAiDescriptions(res.data);
+        return { content: [{ type: "text", text: JSON.stringify(clean, null, 2) }] };
       } catch (err) {
         return {
           content: [{ type: "text", text: `Impact analysis failed: ${String(err)}` }],
@@ -737,7 +616,8 @@ export function registerTools(server: McpServer): void {
           method: "POST",
           body: { project: projectSlug, files, projectDir, since },
         });
-        return { content: [{ type: "text", text: JSON.stringify(res.data, null, 2) }] };
+        const clean = stripAiDescriptions(res.data);
+        return { content: [{ type: "text", text: JSON.stringify(clean, null, 2) }] };
       } catch (err) {
         return {
           content: [{ type: "text", text: `Diff impact analysis failed: ${String(err)}` }],

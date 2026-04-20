@@ -128,7 +128,7 @@ Multi-agent debates + cross-session communication. **Unique to Companion.**
 
 ## 4. DEVTOOLS
 
-Terminal, file explorer, CodeGraph (Tree-sitter WASM AST), WebIntel — developer productivity tools.
+Terminal, file explorer, CodeGraph (Tree-sitter WASM AST) — developer productivity tools.
 
 | Feature | Key File(s) | Connects To |
 |---------|------------|-------------|
@@ -143,12 +143,7 @@ Terminal, file explorer, CodeGraph (Tree-sitter WASM AST), WebIntel — develope
 | CodeGraph trust calculator (symbol reliability) | `codegraph/trust-calculator.ts` | graph-store |
 | CodeGraph event collector (tool event tracking) | `codegraph/event-collector.ts` | ws-bridge, graph-store |
 | CodeGraph analysis (dependency/impact analysis) | `codegraph/analysis.ts` | graph-store, query-engine |
-| CodeGraph WebIntel bridge | `codegraph/webintel-bridge.ts` | web-intel, graph-store |
-| WebIntel (web research via webclaw sidecar) | `web-intel.ts` | webclaw Docker |
-| WebIntel library detector | `web-intel-detector.ts` | web-intel |
-| WebIntel commands (/docs, /research) | `web-intel-handler.ts` | ws-bridge |
-| WebIntel cache (response caching) | `web-intel-cache.ts` | web-intel |
-| WebIntel jobs (background fetch queue) | `web-intel-jobs.ts` | web-intel, scheduler |
+| CodeGraph external-package summary | `codegraph/external-packages.ts` | graph-store |
 
 **Web UI:**
 | Component | File | Connects To |
@@ -158,7 +153,6 @@ Terminal, file explorer, CodeGraph (Tree-sitter WASM AST), WebIntel — develope
 | File tree + viewer | `file-tree.tsx`, `file-viewer.tsx` | filesystem API |
 | CodeGraph visualization | `graph-visualization.tsx` | codegraph API |
 | AI context panel | `ai-context-panel.tsx` | context-feed-store |
-| Browser preview | `browser-preview-panel.tsx` | webintel |
 | Search panel | `search-panel.tsx` | session messages |
 | Stats panel | `stats-panel.tsx` | stats API |
 | Prompt history panel | `prompt-history-panel.tsx` | saved-prompts |
@@ -354,7 +348,7 @@ Auth, license, config, scheduling, database — the foundation.
 │DEVTOOLS│   │  UI/UX    │   │ DESKTOP  │
 │terminal│   │ring,theme │   │ Tauri    │
 │codegraph   │cmd palette│   │ tray     │
-│webintel│   │layout     │   │ updater  │
+│files   │   │layout     │   │ updater  │
 └────────┘   └───────────┘   └──────────┘
 ```
 
@@ -369,7 +363,6 @@ Companion exposes tools via MCP (Model Context Protocol) for Claude Code and oth
 | Agent tools: wiki + codegraph (5 tools) | `mcp/tools-agent.ts` | wiki API, codegraph API |
 | Session tools (list, spawn, send, get, summary) | `mcp/tools.ts` | sessions API |
 | Channel tools (create, send, read, debate, conclude) | `mcp/tools.ts` | channels API |
-| WebIntel tools (scrape, research, crawl, status) | `mcp/tools.ts` | webintel API |
 | Wiki tools (list, read, search, note, core, articles) | `mcp/tools.ts` | wiki API |
 | CodeGraph tools (scan, status, search, stats, impact) | `mcp/tools.ts` | codegraph API |
 | .mcp.json auto-injection (CLI launch) | `adapters/claude-adapter.ts` | MCP agent server |

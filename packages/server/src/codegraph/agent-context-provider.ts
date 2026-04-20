@@ -16,7 +16,7 @@ import {
   type CodeNodeWithEdges as _CodeNodeWithEdges,
 } from "./query-engine.js";
 import { detectCommunities } from "./analysis.js";
-import { getPackageUsageCounts } from "./webintel-bridge.js";
+import { getPackageUsageCounts } from "./external-packages.js";
 import { getDb } from "../db/client.js";
 import { codegraphConfig } from "../db/schema.js";
 
@@ -30,7 +30,6 @@ export interface CodeGraphConfig {
   messageContextEnabled: boolean;
   planReviewEnabled: boolean;
   breakCheckEnabled: boolean;
-  webDocsEnabled: boolean;
   activityFeedEnabled: boolean;
   excludePatterns: string[];
   maxContextTokens: number;
@@ -42,7 +41,6 @@ const DEFAULT_CONFIG: CodeGraphConfig = {
   messageContextEnabled: true,
   planReviewEnabled: true,
   breakCheckEnabled: true,
-  webDocsEnabled: true,
   activityFeedEnabled: true,
   excludePatterns: [],
   maxContextTokens: 800,
@@ -64,7 +62,6 @@ export function getCodeGraphConfig(projectSlug: string): CodeGraphConfig {
       messageContextEnabled: row.messageContextEnabled,
       planReviewEnabled: row.planReviewEnabled,
       breakCheckEnabled: row.breakCheckEnabled,
-      webDocsEnabled: row.webDocsEnabled,
       activityFeedEnabled:
         ((row as Record<string, unknown>).activityFeedEnabled as boolean) ?? true,
       excludePatterns: (row.excludePatterns as string[]) ?? [],
@@ -581,11 +578,9 @@ export function getSkippedInjections(contextUsedPercent: number): Set<string> {
     skip.add("message_context");
     skip.add("plan_review");
     skip.add("activity_feed");
-    skip.add("web_docs");
   } else if (contextUsedPercent > 85) {
     // High: skip non-critical
     skip.add("activity_feed");
-    skip.add("web_docs");
   } else if (contextUsedPercent > 70) {
     // Moderate: skip activity feed only
     skip.add("activity_feed");

@@ -58,6 +58,7 @@ import type {
   CLIControlRequestMessage,
   CLIToolProgressMessage,
   BrowserIncomingMessage,
+  ContextInjectionType,
   SessionStatus,
   NormalizedMessage,
 } from "@companion/shared";
@@ -75,13 +76,7 @@ export interface MessageHandlerBridge {
   persistSession: (session: ActiveSession) => void;
   emitContextInjection: (
     session: ActiveSession,
-    type:
-      | "project_map"
-      | "message_context"
-      | "plan_review"
-      | "break_check"
-      | "web_docs"
-      | "activity_feed",
+    type: ContextInjectionType,
     label: string,
     size: number,
   ) => void;

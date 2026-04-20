@@ -156,6 +156,17 @@ export type BrowserOutgoingMessage =
   | { type: "set_thinking_mode"; mode: ThinkingMode }
   | { type: "set_context_mode"; mode: ContextMode };
 
+/**
+ * Wire types for context-injection events emitted by the server to clients.
+ * Single source of truth — add new variants here, not in per-file unions.
+ */
+export type ContextInjectionType =
+  | "project_map"
+  | "message_context"
+  | "plan_review"
+  | "break_check"
+  | "activity_feed";
+
 /** Messages the bridge sends TO the browser/client */
 export type BrowserIncomingMessage =
   | { type: "session_init"; session: SessionState }
@@ -212,6 +223,15 @@ export type BrowserIncomingMessage =
       timestamp: number;
     }
   | { type: "lock_status"; locked: boolean; owner: string | null; queueSize: number }
+  | {
+      type: "context:injection";
+      sessionId: string;
+      injectionType: ContextInjectionType;
+      summary: string;
+      charCount: number;
+      tokenEstimate: number;
+      timestamp: number;
+    }
   | { type: "session_idle"; sessionId: string; idleDurationMs: number }
   | { type: "idle_warning"; remainingMs: number; message: string }
   | {

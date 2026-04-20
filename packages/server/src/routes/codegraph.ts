@@ -21,7 +21,7 @@ import {
   getRelatedNodes,
   getHotFiles,
 } from "../codegraph/query-engine.js";
-import { getExternalPackages, getPackageUsageCounts } from "../codegraph/webintel-bridge.js";
+import { getExternalPackages, getPackageUsageCounts } from "../codegraph/external-packages.js";
 import {
   fusedSearch,
   computeRiskScores,
@@ -61,7 +61,6 @@ const configSchema = z.object({
   messageContextEnabled: z.boolean().optional(),
   planReviewEnabled: z.boolean().optional(),
   breakCheckEnabled: z.boolean().optional(),
-  webDocsEnabled: z.boolean().optional(),
   autoReindexEnabled: z.boolean().optional(),
   excludePatterns: z.array(z.string()).optional(),
   maxContextTokens: z.number().int().positive().optional(),
@@ -302,7 +301,7 @@ codegraphRoutes.get("/hot-files", (c) => {
   return c.json({ success: true, data: files } satisfies ApiResponse);
 });
 
-// ─── Bridge: CodeGraph ↔ WebIntel ───────────────────────────────────────
+// ─── External Package Summary ───────────────────────────────────────────
 
 /** GET /codegraph/packages?project=slug — external package dependencies */
 codegraphRoutes.get("/packages", (c) => {
@@ -474,7 +473,6 @@ codegraphRoutes.get("/config", (c) => {
     messageContextEnabled: true,
     planReviewEnabled: true,
     breakCheckEnabled: true,
-    webDocsEnabled: true,
     autoReindexEnabled: true,
     excludePatterns: [],
     maxContextTokens: 800,
@@ -517,7 +515,6 @@ codegraphRoutes.put("/config", async (c) => {
         }),
         ...(body.planReviewEnabled !== undefined && { planReviewEnabled: body.planReviewEnabled }),
         ...(body.breakCheckEnabled !== undefined && { breakCheckEnabled: body.breakCheckEnabled }),
-        ...(body.webDocsEnabled !== undefined && { webDocsEnabled: body.webDocsEnabled }),
         ...(body.autoReindexEnabled !== undefined && {
           autoReindexEnabled: body.autoReindexEnabled,
         }),
@@ -536,7 +533,6 @@ codegraphRoutes.put("/config", async (c) => {
         messageContextEnabled: body.messageContextEnabled ?? true,
         planReviewEnabled: body.planReviewEnabled ?? true,
         breakCheckEnabled: body.breakCheckEnabled ?? true,
-        webDocsEnabled: body.webDocsEnabled ?? true,
         autoReindexEnabled: body.autoReindexEnabled ?? true,
         excludePatterns: body.excludePatterns ?? [],
         maxContextTokens: body.maxContextTokens ?? 800,

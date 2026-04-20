@@ -34,7 +34,7 @@ const PRO_FEATURE_HIGHLIGHTS = [
   { icon: <Lightning size={14} weight="fill" />, label: "Unlimited sessions", color: "#f59e0b" },
   { icon: <Users size={14} weight="fill" />, label: "Multi-bot Telegram", color: "#3b82f6" },
   { icon: <Robot size={14} weight="fill" />, label: "Multi-platform debate", color: "#8b5cf6" },
-  { icon: <Globe size={14} weight="fill" />, label: "WebIntel + CodeGraph", color: "#10b981" },
+  { icon: <Globe size={14} weight="fill" />, label: "CodeGraph analysis", color: "#10b981" },
   { icon: <ChartLineUp size={14} weight="fill" />, label: "Domain + SSL", color: "#06b6d4" },
   { icon: <ShieldCheck size={14} weight="fill" />, label: "Personas + RTK Pro", color: "#34A853" },
 ];

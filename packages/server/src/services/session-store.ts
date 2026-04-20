@@ -62,8 +62,6 @@ export interface ActiveSession {
   compactPending?: boolean;
   /** Identity prompt for re-injection after compaction */
   identityPrompt?: string;
-  /** Libraries already auto-injected this session (avoid re-injection) */
-  webIntelInjected?: Set<string>;
   /** Pending CodeGraph context hint to prepend to next user message */
   pendingCodeGraphHint?: string;
   /** State machine for validated status transitions */

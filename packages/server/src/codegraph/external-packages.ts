@@ -1,9 +1,9 @@
 /**
- * CodeGraph ↔ WebIntel Bridge
+ * External package extraction from CodeGraph.
  *
- * After a code graph scan, extracts external package imports and makes them
- * available for WebIntel auto-doc injection. This allows the agent context
- * to include documentation for libraries actually used in the project.
+ * Parses import edges to derive the list of external npm packages a project
+ * depends on, with usage counts. Used by the agent-context provider to
+ * summarise project dependencies for agents.
  */
 
 import { eq } from "drizzle-orm";

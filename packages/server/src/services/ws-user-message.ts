@@ -1,7 +1,7 @@
 /**
  * WsBridge user message handling — extracted from ws-bridge.ts.
  * Handles browser message routing, user message command dispatch, prompt enrichment,
- * CodeGraph context injection, WebIntel enrichment, terminal lock, and engine send.
+ * CodeGraph context injection, terminal lock, and engine send.
  */
 
 import { randomUUID } from "crypto";
@@ -25,13 +25,6 @@ import { classifyByRules } from "./task-classifier.js";
 import { tryAutoDispatch, type DispatchContext } from "./dispatch-router.js";
 import { terminalLock } from "./terminal-lock.js";
 import {
-  handleDocsCommand as handleDocsCmd,
-  handleResearchCommand as handleResearchCmd,
-  handleCrawlCommand as handleCrawlCmd,
-  maybeEnrichWithDocs as enrichWithDocs,
-  type WebIntelBridge,
-} from "./web-intel-handler.js";
-import {
   handlePermissionResponse as _handlePermissionResponse,
   handleInterrupt as _handleInterrupt,
   type PermissionBridge,
@@ -45,6 +38,7 @@ import type { ActiveSession } from "./session-store.js";
 import type {
   BrowserOutgoingMessage,
   BrowserIncomingMessage,
+  ContextInjectionType,
   SessionStatus,
 } from "@companion/shared";
 import { modelSupportsDeepThinking, modelSupports1M, applyContextSuffix } from "@companion/shared";
@@ -60,13 +54,7 @@ export interface UserMessageBridge {
   updateStatus: (session: ActiveSession, status: SessionStatus) => void;
   emitContextInjection: (
     session: ActiveSession,
-    type:
-      | "project_map"
-      | "message_context"
-      | "plan_review"
-      | "break_check"
-      | "web_docs"
-      | "activity_feed",
+    type: ContextInjectionType,
     label: string,
     size: number,
   ) => void;
@@ -216,35 +204,6 @@ export class UserMessageHandler {
         budget: cost_budget_usd,
         spent: total_cost_usd,
       });
-      return;
-    }
-
-    // ── WebIntel: /docs command — fetch web docs and inject into message ──
-    const docsMatch = content.match(/^\/docs\s+(https?:\/\/\S+)(\s+--refresh)?/i);
-    if (docsMatch) {
-      const url = docsMatch[1]!;
-      const refresh = !!docsMatch[2];
-      this.handleDocsCommand(session, content, url, refresh, source);
-      return;
-    }
-
-    // ── WebIntel: /research command — multi-page web research ──
-    const researchMatch = content.match(/^\/research\s+(.+)/i);
-    if (researchMatch) {
-      const query = researchMatch[1]!.trim();
-      this.handleResearchCommand(session, query, source);
-      return;
-    }
-
-    // ── WebIntel: /crawl command — site crawl ──
-    const crawlMatch = content.match(
-      /^\/crawl\s+(https?:\/\/\S+)(?:\s+--depth\s+(\d+))?(?:\s+--max\s+(\d+))?/i,
-    );
-    if (crawlMatch) {
-      const url = crawlMatch[1]!;
-      const depth = Math.min(crawlMatch[2] ? parseInt(crawlMatch[2], 10) : 2, 5);
-      const maxPages = Math.min(crawlMatch[3] ? parseInt(crawlMatch[3], 10) : 50, 200);
-      this.handleCrawlCommand(session, url, depth, maxPages, source);
       return;
     }
 
@@ -415,10 +374,7 @@ export class UserMessageHandler {
       }
     }
 
-    // ── WebIntel: auto-inject library docs (async, best-effort, respects config) ────────
-    // Try to enrich with docs before sending to CLI/SDK (timeout 3s)
-    const webDocsDisabled =
-      cgMsgConfig && (!cgMsgConfig.injectionEnabled || !cgMsgConfig.webDocsEnabled);
+    // ── Send to engine under terminal lock ─────────────────────────────────
     const lockOwner = `${source ?? "web"}-${Date.now()}`;
 
     const sendWithLock = async (finalContent: string) => {
@@ -446,51 +402,9 @@ export class UserMessageHandler {
       }
     };
 
-    if (webDocsDisabled) {
-      void sendWithLock(cgContent);
-    } else {
-      void this.maybeEnrichWithDocs(session, cgContent)
-        .then((enrichedContent) => sendWithLock(enrichedContent))
-        .catch(() => sendWithLock(cgContent));
-    }
+    void sendWithLock(cgContent);
 
     this.bridge.updateStatus(session, "busy");
-  }
-
-  // ── handleDocsCommand ──────────────────────────────────────────────────────
-
-  private handleDocsCommand(
-    session: ActiveSession,
-    originalContent: string,
-    url: string,
-    refresh: boolean,
-    source?: string,
-  ): void {
-    handleDocsCmd(this.webIntelBridge, session, originalContent, url, refresh, source);
-  }
-
-  // ── handleResearchCommand ──────────────────────────────────────────────────
-
-  private handleResearchCommand(session: ActiveSession, query: string, source?: string): void {
-    handleResearchCmd(this.webIntelBridge, session, query, source);
-  }
-
-  // ── handleCrawlCommand ─────────────────────────────────────────────────────
-
-  private handleCrawlCommand(
-    session: ActiveSession,
-    url: string,
-    depth: number,
-    maxPages: number,
-    source?: string,
-  ): void {
-    handleCrawlCmd(this.webIntelBridge, session, url, depth, maxPages, source);
-  }
-
-  // ── maybeEnrichWithDocs ────────────────────────────────────────────────────
-
-  async maybeEnrichWithDocs(session: ActiveSession, content: string): Promise<string> {
-    return enrichWithDocs(this.webIntelBridge, session, content);
   }
 
   // ── sendToEngine ───────────────────────────────────────────────────────────
@@ -535,7 +449,7 @@ export class UserMessageHandler {
 
   /**
    * Send a multimodal message (text + images) directly to CLI.
-   * Bypasses enrichment pipeline — images don't need CodeGraph/WebIntel.
+   * Bypasses enrichment pipeline — images don't need CodeGraph context.
    */
   sendMultimodalMessage(
     session: ActiveSession,
@@ -705,13 +619,4 @@ export class UserMessageHandler {
     _handleStatusCommand(this.bridge.multiBrainBridge, session);
   }
 
-  // ── webIntelBridge getter ──────────────────────────────────────────────────
-
-  private get webIntelBridge(): WebIntelBridge {
-    return {
-      broadcastToAll: this.bridge.broadcastToAll.bind(this.bridge),
-      handleUserMessageInternal: this.handleUserMessageInternal.bind(this),
-      emitContextInjection: this.bridge.emitContextInjection.bind(this.bridge),
-    };
-  }
 }
