@@ -473,6 +473,38 @@ export function getAvailableThinkingModes(model: string): ThinkingMode[] {
   return modelSupportsDeepThinking(model) ? ["adaptive", "off", "deep"] : ["adaptive", "off"];
 }
 
+// ─── Session Settings (persisted, single source of truth in DB) ─────────────
+
+/**
+ * Per-session tuning knobs persisted on the `sessions` table (migration 0044+).
+ *
+ * Phase 1 goal: define the shape. The runtime Map in `ws-bridge.ts` still
+ * only reads/writes the first three fields — new optional fields become
+ * required in Phase 2 when `SessionSettingsService` takes over as the single
+ * writer. Until then, readers MUST tolerate `undefined` for the new fields
+ * and fall back to the corresponding `DEFAULT_*` constant in @companion/shared.
+ *
+ * Every new field here MUST also get:
+ *   1. A column on `sessions` in `schema.ts`
+ *   2. A default in the migration SQL
+ *   3. A `DEFAULT_*` constant in `constants.ts`
+ * (see INV-15 once Phase 3 lands).
+ */
+export interface SessionSettings {
+  /** Idle timeout in milliseconds. 0 = never. */
+  idleTimeoutMs: number;
+  /** When false, the idle timer is suppressed regardless of timeout value. */
+  idleTimeoutEnabled?: boolean;
+  /** When true, idle timer is suppressed (scheduler/workflow driven sessions). */
+  keepAlive: boolean;
+  /** When true, automatically re-inject identity context after compaction. */
+  autoReinjectOnCompact: boolean;
+  /** Thinking mode (adaptive/off/deep) — persists across resume. */
+  thinking_mode?: ThinkingMode;
+  /** Context window mode (200k/1m) — persists across resume. */
+  context_mode?: ContextMode;
+}
+
 // ─── Context Mode (200K vs 1M) ──────────────────────────────────────────────
 
 /**

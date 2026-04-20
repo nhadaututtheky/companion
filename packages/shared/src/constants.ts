@@ -25,6 +25,22 @@ export const MAX_ACTIVE_SESSIONS = 6;
 /** Default idle timeout before auto-killing an API/web session (30 minutes) */
 export const SESSION_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
 
+/**
+ * Defaults for per-session settings persisted on the `sessions` table.
+ *
+ * CRITICAL: these values MUST stay in lock-step with the column defaults
+ * in `packages/server/src/db/migrations/0044_session_settings_unify.sql`
+ * and the Drizzle schema in `packages/server/src/db/schema.ts`. Update
+ * all three together — the migration has no way to reference TS constants.
+ */
+export const DEFAULT_IDLE_TIMEOUT_ENABLED = true;
+export const DEFAULT_KEEP_ALIVE = false;
+export const DEFAULT_AUTO_REINJECT_ON_COMPACT = true;
+export const DEFAULT_THINKING_MODE = "adaptive" as const;
+export const DEFAULT_CONTEXT_MODE = "200k" as const;
+export const DEFAULT_COMPACT_MODE = "manual" as const;
+export const DEFAULT_COMPACT_THRESHOLD = 75;
+
 /** Process liveness check interval (60 seconds) */
 export const HEALTH_CHECK_INTERVAL_MS = 60 * 1000;
 

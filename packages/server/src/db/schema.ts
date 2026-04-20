@@ -89,10 +89,29 @@ export const sessions = sqliteTable(
     costBudgetUsd: real("cost_budget_usd"),
     /** Budget warning state: 0=none, 1=warned at 80%, 2=warned at 100% */
     costWarned: integer("cost_warned").notNull().default(0),
-    /** Compact mode: manual | smart | aggressive */
+    /** Compact mode: manual | smart | aggressive — see DEFAULT_COMPACT_MODE */
     compactMode: text("compact_mode").notNull().default("manual"),
-    /** Context % threshold to trigger compact (default 75) */
+    /** Context % threshold to trigger compact — see DEFAULT_COMPACT_THRESHOLD */
     compactThreshold: integer("compact_threshold").notNull().default(75),
+
+    // Session settings (unified source of truth — migration 0044).
+    // Defaults MUST match @companion/shared constants; see SessionSettings type.
+    /** Idle timeout in milliseconds — see SESSION_IDLE_TIMEOUT_MS */
+    idleTimeoutMs: integer("idle_timeout_ms").notNull().default(1_800_000),
+    /** Whether the idle timer runs (false = suppressed) — see DEFAULT_IDLE_TIMEOUT_ENABLED */
+    idleTimeoutEnabled: integer("idle_timeout_enabled", { mode: "boolean" })
+      .notNull()
+      .default(true),
+    /** Keep-alive flag (scheduler/workflow sessions) — see DEFAULT_KEEP_ALIVE */
+    keepAlive: integer("keep_alive", { mode: "boolean" }).notNull().default(false),
+    /** Auto re-inject identity on compaction — see DEFAULT_AUTO_REINJECT_ON_COMPACT */
+    autoReinjectOnCompact: integer("auto_reinject_on_compact", { mode: "boolean" })
+      .notNull()
+      .default(true),
+    /** Persistent thinking mode — see DEFAULT_THINKING_MODE */
+    thinkingMode: text("thinking_mode").notNull().default("adaptive"),
+    /** Persistent context window mode — see DEFAULT_CONTEXT_MODE */
+    contextMode: text("context_mode").notNull().default("200k"),
 
     // Accumulated metrics
     totalCostUsd: real("total_cost_usd").notNull().default(0),
