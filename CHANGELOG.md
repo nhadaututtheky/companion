@@ -2,6 +2,31 @@
 
 All notable changes to Companion are documented here.
 
+## [0.24.0] - 2026-04-20
+
+### Fixed
+- **Session settings survive resume across all entry points** — idleTimeoutMs / keepAlive / autoReinjectOnCompact / thinking_mode / context_mode / idleTimeoutEnabled now stay attached to the session when resuming from Web "Resume" button, Telegram `/use @shortid`, Telegram `/resume`, or auto-reconnect. The 1-hour-exact edge case (silently dropped by the old `!== 3_600_000` inheritance guard) is now covered by a contract test. See `.rune/INVARIANTS.md` historic violation #5 for the full regression story.
+
+### Changed
+- **Single writer for per-session settings** — introduced `SessionSettingsService` (`packages/server/src/services/session-settings-service.ts`). Every read goes through it; every write emits `session:settings:updated` on the typed event bus so `ws-bridge` and `telegram-idle-manager` caches stay in sync. Removed three independent writers that had been the root cause of recurring "timeout resets" bugs.
+- **Consolidated defaults** — new `DEFAULT_*` constants in `@companion/shared` (`DEFAULT_IDLE_TIMEOUT_ENABLED`, `DEFAULT_KEEP_ALIVE`, `DEFAULT_AUTO_REINJECT_ON_COMPACT`, `DEFAULT_THINKING_MODE`, `DEFAULT_CONTEXT_MODE`, `DEFAULT_COMPACT_MODE`, `DEFAULT_COMPACT_THRESHOLD`). Previously 4 sites had 3 different values.
+- **`sessions` table owns settings** — migrations `0044_session_settings_unify.sql` (add 6 columns + backfill from telegram_session_mappings) and `0045_drop_telegram_idle_columns.sql` (drop the now-dead legacy columns).
+- **API routes** — `POST /api/sessions/:id/resume` no longer hardcodes a 1-hour fallback; client-supplied overrides are the only explicit writes, inheritance comes from the service.
+- **Telegram bridge** — removed the `!== 3_600_000` inheritance guard and the redundant DB read in `startSessionForChat`; lifecycle-level inheritance covers every path.
+
+### Added
+- **`.rune/INVARIANTS.md` INV-13/14/15** — mandatory single-reader/single-writer/new-setting-checklist rules. Every new session-level setting now requires constants + type + DB column + contract scenario.
+- **`scripts/check-settings-consistency.ts`** — CI gate. Fails the build if any file outside `SessionSettingsService` mutates the sessionSettings/sessionConfigs Maps or writes to `telegram_session_mappings.idle_timeout_*`. Wired through `bun run check:settings`.
+- **Contract tests (`settings-resume-inheritance.test.ts`)** — 10 scenarios: every persisted setting × resume, the `idleTimeoutMs === 3_600_000` edge case, inheritance isolation, event emission.
+- **Service integration tests (`session-settings-service.test.ts`)** — 8 cases covering persistence, event payload shape, cache invalidation, partial-patch preservation, validation errors, no-op patch emission.
+- **Migration tests** — `migration-0044.test.ts` (4 cases) and `migration-0045.test.ts` (3 cases) verify backfill + column removal + INSERT compatibility.
+
+### Deferred
+- **Web UI `useSessionSettings` hook with live WS subscription** — server already broadcasts `session_update` on settings change; the hook is purely a cross-tab UX improvement. Will ship when two-tab-edit becomes a reported pain.
+
+### Tests
+- **1019 tests pass, 0 fail** — server suite (726 including 10 new contract + 8 service + 7 migration + 42 ws-bridge reworked), web (271), tsc clean across server/shared/web.
+
 ## [0.22.0] - 2026-04-17
 
 ### Fixed
