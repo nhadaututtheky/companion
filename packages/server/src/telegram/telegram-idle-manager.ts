@@ -87,40 +87,12 @@ export class TelegramIdleManager {
 
   /**
    * Load idle timeout from the unified `sessions` row via SessionSettingsService.
-   *
-   * Pre-Phase-2 this read `telegram_session_mappings.idle_timeout_ms` directly,
-   * which diverged from the WS bridge Map whenever one was updated without the
-   * other. Now both paths share the service's DB-backed cache — a web UI save
-   * and a Telegram /config save both flow through the same emit → both caches
-   * stay in sync.
-   *
-   * Fallback chain: service → mapping table (legacy, for sessions migrated
-   * from pre-0044 DB where the session row somehow lost the column value).
+   * Source of truth — the `telegram_session_mappings.idle_timeout_*` columns
+   * were dropped in migration 0045 after Phase 2/3 consolidation.
    */
   private loadPersistedTimeout(sessionId: string): number {
     const s = sessionSettingsService.get(sessionId);
-    if (s.idleTimeoutEnabled === false) return 0;
-    if (s.idleTimeoutMs > 0) return s.idleTimeoutMs;
-
-    // Legacy fallback — remove in Phase 3 after the mapping column is dropped.
-    try {
-      const db = getDb();
-      const row = db
-        .select({
-          idleTimeoutMs: telegramSessionMappings.idleTimeoutMs,
-          idleTimeoutEnabled: telegramSessionMappings.idleTimeoutEnabled,
-        })
-        .from(telegramSessionMappings)
-        .where(eq(telegramSessionMappings.sessionId, sessionId))
-        .get();
-      if (row) return row.idleTimeoutEnabled ? row.idleTimeoutMs : 0;
-    } catch (err) {
-      log.warn("Failed to read legacy mapping timeout, using default", {
-        sessionId,
-        error: String(err),
-      });
-    }
-    return s.idleTimeoutMs; // final fallback = service default (30 min)
+    return s.idleTimeoutEnabled === false ? 0 : s.idleTimeoutMs;
   }
 
   setSessionPanelMessageId(sessionId: string, messageId: number): void {

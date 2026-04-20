@@ -7,6 +7,7 @@ import { eq, and, isNull } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { telegramSessionMappings } from "../db/schema.js";
 import { createLogger } from "../logger.js";
+import { sessionSettingsService } from "../services/session-settings-service.js";
 
 const log = createLogger("telegram-persistence");
 
@@ -65,9 +66,13 @@ export class TelegramPersistence {
             topicId: topicId || undefined,
           });
           deps.subscribeToSession(row.sessionId, row.chatId, topicId || undefined);
-          // Restore persisted idle timeout into session config
+          // Restore persisted idle timeout into session config via service.
+          // Pre-migration-0045 this read `row.idleTimeoutMs` directly from
+          // the mapping table; that column is gone now.
           const cfg = deps.getSessionConfig(row.sessionId);
-          cfg.idleTimeoutMs = row.idleTimeoutMs;
+          const persisted = sessionSettingsService.get(row.sessionId);
+          cfg.idleTimeoutMs =
+            persisted.idleTimeoutEnabled === false ? 0 : persisted.idleTimeoutMs;
           deps.resetIdleTimer(row.sessionId, row.chatId, topicId || undefined);
           loaded++;
         } else if (row.cliSessionId) {

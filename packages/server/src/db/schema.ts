@@ -209,8 +209,8 @@ export const telegramSessionMappings = sqliteTable("telegram_session_mappings", 
   model: text("model").notNull(),
   topicId: integer("topic_id"),
   pinnedMessageId: integer("pinned_message_id"),
-  idleTimeoutEnabled: integer("idle_timeout_enabled", { mode: "boolean" }).notNull().default(true),
-  idleTimeoutMs: integer("idle_timeout_ms").notNull().default(3_600_000),
+  // `idle_timeout_ms` + `idle_timeout_enabled` lived here until migration
+  // 0045. Source of truth is now `sessions` via SessionSettingsService.
   cliSessionId: text("cli_session_id"),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()

@@ -143,8 +143,8 @@ describe("migration 0044 — session settings unify", () => {
     sqlite.close();
   });
 
-  it("does NOT touch telegram_session_mappings.idle_timeout_ms (phase-3 drops it)", () => {
-    // Guard against accidental column drop in this phase — phase 3 owns that.
+  it("leaves telegram_session_mappings.idle_timeout_* intact (migration 0045 drops them)", () => {
+    // Stop at 0044 exactly — 0045 is a separate migration with its own test.
     const sqlite = freshDbUpTo("0044_session_settings_unify.sql");
     runMigration(sqlite, "0044_session_settings_unify.sql");
 
