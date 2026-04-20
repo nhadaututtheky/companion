@@ -8,7 +8,7 @@ Tree-sitter integration đã ship (regex→AST precision). Giai đoạn này th�
 
 | # | Name | Status | Plan File | Effort | Prerequisite |
 |---|------|--------|-----------|--------|--------------|
-| 0 | Telemetry baseline | ⬚ Pending | plan-codegraph-v2-phase0.md | 2-3d | None |
+| 0 | Telemetry baseline | ✅ Done (97affcd) | plan-codegraph-v2-phase0.md | 2-3d | None |
 | 1 | Real-time diff tracking | ⬚ Pending | plan-codegraph-v2-phase1.md | 5-7d | Phase 0 live |
 | 2 | Temporal query (git blame/log) | ⬚ Pending | plan-codegraph-v2-phase2.md | 3-4d | Phase 1 gate pass |
 | 3 | Semantic embedding search | ⬚ Pending | plan-codegraph-v2-phase3.md | 8-12d | Phase 2 gate pass |

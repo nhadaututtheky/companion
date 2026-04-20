@@ -1,20 +1,22 @@
 # Phase 0: Telemetry Baseline
 
+> ✅ **Shipped** in commit `97affcd feat(codegraph): v2 phase 0 — query telemetry + MCP tool + skill`.
+
 ## Goal
 
 Log mọi CodeGraph query từ agent (type, input, hit count, token saved, latency) để làm chứng cứ quyết định các phase sau. Không có phase 0 = plan 1-3 là đoán mò.
 
 ## Tasks
 
-- [ ] Task 1 — schema: bảng `code_query_log` (id, project_slug, query_type, query_text, result_count, tokens_returned, latency_ms, agent_source, created_at) — `packages/server/src/db/schema.ts`
-- [ ] Task 2 — migration: `packages/server/src/db/migrations/00XX_codegraph_telemetry.sql`
-- [ ] Task 3 — middleware: wrap tất cả query functions trong `query-engine.ts` + `agent-context-provider.ts` để log trước return — `packages/server/src/codegraph/telemetry.ts`
-- [ ] Task 4 — sampling + cap: log tối đa 10K rows/day/project, oldest-first rotation (tránh SQLite bloat)
-- [ ] Task 5 — **MCP tool** `codegraph_telemetry_summary` (primary): cho agent hỏi "hit rate 7d qua", "top query bị miss", "query nào slow". Return structured JSON. — `packages/server/src/mcp/codegraph-tools.ts`
-- [ ] Task 6 — **skill entry** `.claude/skills/codegraph-telemetry.md`: doc cho Claude Code biết khi nào invoke tool trên (trigger: "phân tích hiệu quả codegraph", "query nào agent miss")
-- [ ] Task 7 — API route `GET /api/codegraph/telemetry/:projectSlug?range=7d` — shared by MCP tool + optional dashboard
-- [ ] Task 8 — *(optional)* dashboard UI tab trong CodeGraph page — chỉ làm nếu thời gian cho phép, không block gate — `packages/web/src/app/codegraph/telemetry.tsx`
-- [ ] Task 9 — tests: 3 unit (logger write/read/rotation) + 1 integration (query → log row) + 1 MCP e2e (mock agent call tool → nhận response đúng shape)
+- [x] Task 1 — schema: bảng `code_query_log` — `packages/server/src/db/schema.ts`
+- [x] Task 2 — migration `0041_codegraph_telemetry.sql`
+- [x] Task 3 — middleware: logger trong `query-engine.ts` + `agent-context-provider.ts` — `packages/server/src/codegraph/telemetry.ts`
+- [x] Task 4 — rotation cap 10K rows/day/project
+- [x] Task 5 — **MCP tool** `codegraph_telemetry_summary` registered in `packages/server/src/mcp/tools.ts`
+- [x] Task 6 — **skill entry** `.claude/skills/codegraph-telemetry.md`
+- [x] Task 7 — API route `GET /api/codegraph/telemetry/:projectSlug?range=Nd`
+- [ ] Task 8 — *(optional, deferred)* dashboard UI tab — not blocking gate
+- [x] Task 9 — tests: logger write/read/rotation + MCP shape
 
 ## Acceptance Criteria
 
