@@ -6,7 +6,7 @@
     "dev": "NODE_ENV=development bun run --hot src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target bun",
     "check": "tsc --noEmit",
-    "test": "bun test src/__tests__/ && bun test src/tests/ && bun run test:services",
+    "test": "bun test src/__tests__/ && bun test src/tests/ && bun run test:services && bun test src/services/__tests__/ && bun test src/db/__tests__/",
     "test:services": "bun test src/services/channel-manager.test.ts src/services/project-profiles.test.ts src/services/session-store.test.ts src/services/settings-helpers.test.ts src/services/task-classifier.test.ts src/services/templates.test.ts src/services/ws-broadcast.test.ts src/services/ws-context-tracker.test.ts src/services/ws-permission-handler.test.ts src/services/ws-stream-handler.test.ts && bun test src/services/cli-launcher.test.ts && bun test src/services/ws-message-handler.test.ts && bun test src/services/ws-bridge.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

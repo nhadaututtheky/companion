@@ -7,6 +7,8 @@ import { eq } from "drizzle-orm";
 import { getDb } from "../db/client.js";
 import { telegramSessionMappings } from "../db/schema.js";
 import { createLogger } from "../logger.js";
+import { eventBus } from "../services/event-bus.js";
+import { sessionSettingsService } from "../services/session-settings-service.js";
 
 const log = createLogger("telegram-idle-manager");
 
@@ -50,9 +52,28 @@ export class TelegramIdleManager {
   private readonly sessionConfigs: Map<string, SessionConfig>;
   private readonly bridge: IdleManagerBridgeDeps;
 
+  /** Unsubscribe handle for the settings event listener (lets tests clean up). */
+  private unsubSettings?: () => void;
+
   constructor(sessionConfigs: Map<string, SessionConfig>, bridge: IdleManagerBridgeDeps) {
     this.sessionConfigs = sessionConfigs;
     this.bridge = bridge;
+
+    // Event-driven sync: any write to session settings (web, scheduler, CLI)
+    // must update the cached `idleTimeoutMs` here so the next resetIdleTimer()
+    // picks up the new value. Before Phase 2 this Map was an independent
+    // writer — bug source INV-11.
+    this.unsubSettings = eventBus.on("session:settings:updated", ({ sessionId, settings }) => {
+      const cfg = this.sessionConfigs.get(sessionId);
+      if (!cfg) return; // only telegram-tracked sessions have a cfg
+      cfg.idleTimeoutMs = settings.idleTimeoutEnabled === false ? 0 : settings.idleTimeoutMs;
+    });
+  }
+
+  /** Dispose the event listener (tests + bot restart). */
+  stop(): void {
+    this.unsubSettings?.();
+    this.unsubSettings = undefined;
   }
 
   getSessionConfig(sessionId: string): SessionConfig {
@@ -65,11 +86,23 @@ export class TelegramIdleManager {
   }
 
   /**
-   * Load idle timeout from DB mapping (per-session persistence).
-   * Returns 0 when user disabled timeout, default 1h otherwise.
-   * Called on first getSessionConfig — subsequent calls hit the in-memory cache.
+   * Load idle timeout from the unified `sessions` row via SessionSettingsService.
+   *
+   * Pre-Phase-2 this read `telegram_session_mappings.idle_timeout_ms` directly,
+   * which diverged from the WS bridge Map whenever one was updated without the
+   * other. Now both paths share the service's DB-backed cache — a web UI save
+   * and a Telegram /config save both flow through the same emit → both caches
+   * stay in sync.
+   *
+   * Fallback chain: service → mapping table (legacy, for sessions migrated
+   * from pre-0044 DB where the session row somehow lost the column value).
    */
   private loadPersistedTimeout(sessionId: string): number {
+    const s = sessionSettingsService.get(sessionId);
+    if (s.idleTimeoutEnabled === false) return 0;
+    if (s.idleTimeoutMs > 0) return s.idleTimeoutMs;
+
+    // Legacy fallback — remove in Phase 3 after the mapping column is dropped.
     try {
       const db = getDb();
       const row = db
@@ -82,37 +115,30 @@ export class TelegramIdleManager {
         .get();
       if (row) return row.idleTimeoutEnabled ? row.idleTimeoutMs : 0;
     } catch (err) {
-      log.warn("Failed to load persisted idle timeout, falling back to default", {
+      log.warn("Failed to read legacy mapping timeout, using default", {
         sessionId,
         error: String(err),
       });
     }
-    return 3_600_000;
+    return s.idleTimeoutMs; // final fallback = service default (30 min)
   }
 
   setSessionPanelMessageId(sessionId: string, messageId: number): void {
     this.getSessionConfig(sessionId).panelMessageId = messageId;
   }
 
+  /**
+   * Set idle timeout for a session. Routes through SessionSettingsService so
+   * the single-writer invariant holds — the event listener in the constructor
+   * then updates `cfg.idleTimeoutMs`, so we don't mutate the Map ourselves.
+   */
   setIdleTimeout(sessionId: string, ms: number): void {
-    const cfg = this.getSessionConfig(sessionId);
-    cfg.idleTimeoutMs = ms;
-    this.persistIdleTimeout(sessionId, ms);
-  }
-
-  private persistIdleTimeout(sessionId: string, ms: number): void {
-    try {
-      const db = getDb();
-      db.update(telegramSessionMappings)
-        .set({
-          idleTimeoutEnabled: ms > 0,
-          idleTimeoutMs: ms,
-        })
-        .where(eq(telegramSessionMappings.sessionId, sessionId))
-        .run();
-    } catch (err) {
-      log.error("Failed to persist idle timeout", { sessionId, error: String(err) });
-    }
+    // Ensure there's a cfg entry for the event listener to update.
+    this.getSessionConfig(sessionId);
+    sessionSettingsService.update(sessionId, {
+      idleTimeoutMs: ms,
+      idleTimeoutEnabled: ms > 0,
+    });
   }
 
   /** Reset the idle timer for a session. Called on session start, user message, CLI activity + result events. */

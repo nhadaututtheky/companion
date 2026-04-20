@@ -5,7 +5,7 @@
  * Listeners are called synchronously in registration order.
  */
 
-import type { SessionStatus } from "@companion/shared";
+import type { SessionSettings, SessionStatus } from "@companion/shared";
 import { createLogger } from "../logger.js";
 
 const log = createLogger("event-bus");
@@ -17,6 +17,11 @@ export interface EventMap {
   "session:phase-changed": { sessionId: string; from: SessionStatus; to: SessionStatus };
   "session:ended": { sessionId: string; exitCode?: number; reason?: string };
   "session:message": { sessionId: string; role: "user" | "assistant"; source?: string };
+  /** Emitted by SessionSettingsService AFTER DB write succeeds. Subscribers
+   *  (ws-bridge cache, telegram-idle-manager cache, ws broadcast) listen to
+   *  stay in sync. Payload carries the FULL resolved settings — subscribers
+   *  never need to re-query. */
+  "session:settings:updated": { sessionId: string; settings: SessionSettings };
   "hook:pre-tool-use": {
     sessionId: string;
     toolName: string;

@@ -41,7 +41,7 @@ Bug lặp lại 3+ lần: user set `idleTimeoutMs = 10 phút` → start session 
 | # | Name | Status | Plan File | Effort | Risk |
 |---|------|--------|-----------|--------|------|
 | 1 | Schema unification + default consolidation | ✅ Done | plan-session-settings-unify-phase1.md | M | Low (additive migration + data backfill) |
-| 2 | Single-writer service + event bus propagation | ⬚ Pending | plan-session-settings-unify-phase2.md | L | Med (touches hot paths) |
+| 2 | Single-writer service + event bus propagation | ✅ Done | plan-session-settings-unify-phase2.md | L | Med (touches hot paths) |
 | 3 | Resume path cleanup + contract tests + deprecate old column | ⬚ Pending | plan-session-settings-unify-phase3.md | M | Med (drops column, needs 2-step release) |
 
 **Total estimate**: 1 sprint, 3 sessions (Opus plans phase, Sonnet executes).

@@ -34,6 +34,7 @@ import {
   type ContextBridge,
 } from "./ws-context-tracker.js";
 import { eventBus } from "./event-bus.js";
+import { sessionSettingsService } from "./session-settings-service.js";
 import { getLatestReading } from "./pulse-estimator.js";
 import {
   getActiveSession,
@@ -76,7 +77,9 @@ type StatusChangeCallback = (sessionId: string, status: SessionStatus) => void;
 
 // ─── Session Settings ────────────────────────────────────────────────────────
 
-/** Re-exported from ws-health-idle.ts — keep the same public shape. */
+/** Re-exported from ws-health-idle.ts — keep the same public shape.
+ *  The 6-field persisted form lives on @companion/shared `SessionSettings`;
+ *  this legacy shape is what the in-memory Map + idle timer need. */
 export type SessionSettings = _SessionSettings;
 
 const DEFAULT_SESSION_SETTINGS: SessionSettings = {
@@ -84,6 +87,16 @@ const DEFAULT_SESSION_SETTINGS: SessionSettings = {
   keepAlive: false,
   autoReinjectOnCompact: true,
 };
+
+/** Project the 6-field persisted settings down to the 3-field legacy shape
+ *  the idle-timer/Map path consumes. */
+function toLegacySettings(full: import("@companion/shared").SessionSettings): SessionSettings {
+  return {
+    idleTimeoutMs: full.idleTimeoutEnabled === false ? 0 : full.idleTimeoutMs,
+    keepAlive: full.keepAlive,
+    autoReinjectOnCompact: full.autoReinjectOnCompact,
+  };
+}
 
 export class WsBridge {
   private cliProcesses = new Map<string, CLIProcess>();
@@ -243,6 +256,9 @@ export class WsBridge {
     // (healthIdleBridge closures reference this.sessionLifecycle)
     this.healthIdle.startHealthCheck(() => this.cliProcesses);
     this.healthIdle.startCleanupSweep();
+
+    // Event-driven settings sync (Phase 2 — see session-settings-service.ts).
+    this.subscribeToSettingsEvents();
   }
 
   /** Initialize RTK pipeline with settings from DB */
@@ -311,38 +327,60 @@ export class WsBridge {
     return session ? (session.messageHistory as BrowserIncomingMessage[]) : [];
   }
 
-  /** Update per-session timeout/keep-alive settings. Resets the idle timer with the new value. */
+  /**
+   * Update per-session settings. Delegates to SessionSettingsService (single
+   * writer — writes DB + emits `session:settings:updated`). The event listener
+   * in `subscribeToSettingsEvents` then refreshes this.sessionSettings Map
+   * and applies idle-timer logic. Callers see the same behavior as before.
+   */
   setSessionSettings(sessionId: string, settings: Partial<SessionSettings>): void {
-    const current = this.sessionSettings.get(sessionId) ?? { ...DEFAULT_SESSION_SETTINGS };
-    const next: SessionSettings = { ...current, ...settings };
+    // Legacy 3-field patch → 6-field patch the service expects.
+    const patch: Partial<import("@companion/shared").SessionSettings> = {};
+    if (settings.idleTimeoutMs !== undefined) {
+      patch.idleTimeoutMs = settings.idleTimeoutMs;
+      patch.idleTimeoutEnabled = settings.idleTimeoutMs > 0;
+    }
+    if (settings.keepAlive !== undefined) patch.keepAlive = settings.keepAlive;
+    if (settings.autoReinjectOnCompact !== undefined)
+      patch.autoReinjectOnCompact = settings.autoReinjectOnCompact;
+
+    sessionSettingsService.update(sessionId, patch);
+  }
+
+  /** Get current settings for a session (reads through service cache). */
+  getSessionSettings(sessionId: string): SessionSettings {
+    const cached = this.sessionSettings.get(sessionId);
+    if (cached) return cached;
+    const next = toLegacySettings(sessionSettingsService.get(sessionId));
     this.sessionSettings.set(sessionId, next);
+    return next;
+  }
 
-    log.info("Session settings updated", { sessionId, settings: next });
+  /** Event listener: re-sync Map + apply idle-timer logic on any settings change. */
+  private subscribeToSettingsEvents(): void {
+    eventBus.on("session:settings:updated", ({ sessionId, settings }) => {
+      const next = toLegacySettings(settings);
+      this.sessionSettings.set(sessionId, next);
 
-    // Re-apply idle timer logic based on new settings
-    const session = getActiveSession(sessionId);
-    if (!session) return;
+      const session = getActiveSession(sessionId);
+      if (!session) return;
 
-    if (next.keepAlive) {
-      // Clear idle timer — session is pinned alive
-      this.healthIdle.clearIdleTimer(sessionId);
-      log.info("Keep-alive enabled, idle timer cleared", { sessionId });
-    } else if (next.idleTimeoutMs === 0) {
-      // Explicit "never" timeout — clear timer
-      this.healthIdle.clearIdleTimer(sessionId);
-    } else {
-      // Reset timer with new duration if session is currently idle
-      const st = session.state.status;
-      if (st === "idle") {
+      // Broadcast to any subscribed web clients so UI refreshes instantly.
+      broadcastToAll(session, {
+        type: "session_update",
+        session: { session_id: sessionId },
+      } as never);
+
+      if (next.keepAlive) {
+        this.healthIdle.clearIdleTimer(sessionId);
+        log.info("Keep-alive enabled, idle timer cleared", { sessionId });
+      } else if (next.idleTimeoutMs === 0) {
+        this.healthIdle.clearIdleTimer(sessionId);
+      } else if (session.state.status === "idle") {
         this.healthIdle.clearIdleTimer(sessionId);
         this.healthIdle.startIdleTimer(session, next);
       }
-    }
-  }
-
-  /** Get current settings for a session */
-  getSessionSettings(sessionId: string): SessionSettings {
-    return this.sessionSettings.get(sessionId) ?? { ...DEFAULT_SESSION_SETTINGS };
+    });
   }
 
   // ── Subscriber system (for Telegram, etc.) ──────────────────────────────

@@ -161,13 +161,59 @@ mock.module("./ws-session-lifecycle.js", wsSessionLifecycleMockFactory);
 if (process.platform !== "win32")
   mock.module(import.meta.resolve("./ws-session-lifecycle.js"), wsSessionLifecycleMockFactory);
 
-// ── event-bus ────────────────────────────────────────────────────────────────
+// ── event-bus (fake router so service.update → subscribers actually fire) ──
+const eventHandlers: Record<string, Array<(p: unknown) => void>> = {};
 const eventBusMockFactory = () => ({
-  eventBus: { emit: mock(() => {}) },
+  eventBus: {
+    emit: mock((event: string, payload: unknown) => {
+      for (const h of eventHandlers[event] ?? []) h(payload);
+    }),
+    on: mock((event: string, handler: (p: unknown) => void) => {
+      (eventHandlers[event] = eventHandlers[event] ?? []).push(handler);
+      return () => {
+        const arr = eventHandlers[event];
+        if (!arr) return;
+        const i = arr.indexOf(handler);
+        if (i !== -1) arr.splice(i, 1);
+      };
+    }),
+  },
 });
 mock.module("./event-bus.js", eventBusMockFactory);
 if (process.platform !== "win32")
   mock.module(import.meta.resolve("./event-bus.js"), eventBusMockFactory);
+
+// ── session-settings-service (in-memory substitute, routes through event bus) ─
+const sessionSettingsState = new Map<string, Record<string, unknown>>();
+const SETTINGS_DEFAULTS = {
+  idleTimeoutMs: 1_800_000,
+  idleTimeoutEnabled: true,
+  keepAlive: false,
+  autoReinjectOnCompact: true,
+  thinking_mode: "adaptive" as const,
+  context_mode: "200k" as const,
+};
+const sessionSettingsServiceMockFactory = () => ({
+  sessionSettingsService: {
+    get: mock((id: string) => ({ ...SETTINGS_DEFAULTS, ...sessionSettingsState.get(id) })),
+    update: mock((id: string, patch: Record<string, unknown>) => {
+      const merged = { ...SETTINGS_DEFAULTS, ...sessionSettingsState.get(id), ...patch };
+      sessionSettingsState.set(id, merged);
+      for (const h of eventHandlers["session:settings:updated"] ?? []) {
+        h({ sessionId: id, settings: merged });
+      }
+      return merged;
+    }),
+    invalidate: mock(() => {}),
+    clearCache: mock(() => sessionSettingsState.clear()),
+  },
+});
+mock.module("./session-settings-service.js", sessionSettingsServiceMockFactory);
+if (process.platform !== "win32")
+  mock.module(
+    import.meta.resolve("./session-settings-service.js"),
+    sessionSettingsServiceMockFactory,
+  );
 
 // ── pulse-estimator ───────────────────────────────────────────────────────────
 const pulseEstimatorMockFactory = () => ({
@@ -324,6 +370,8 @@ describe("WsBridge", () => {
   beforeEach(() => {
     // Reset mock state
     mockActiveSessionsMap = new Map();
+    sessionSettingsState.clear();
+    for (const key of Object.keys(eventHandlers)) delete eventHandlers[key];
 
     // Reset all mock call counts
     (mockHealthIdleInstance.startHealthCheck as ReturnType<typeof mock>).mockClear?.();
