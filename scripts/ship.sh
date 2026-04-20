@@ -55,6 +55,13 @@ if [[ "$VERSION" != "$CARGO_VER" ]]; then
   exit 1
 fi
 
+SHARED_VER=$(grep 'APP_VERSION' packages/shared/src/constants.ts | head -1 | sed 's/.*"\(.*\)".*/\1/')
+if [[ "$VERSION" != "$SHARED_VER" ]]; then
+  echo "ERROR: APP_VERSION in packages/shared/src/constants.ts ($SHARED_VER) != tauri.conf.json ($VERSION)"
+  echo "  Bump APP_VERSION so server and MCP report the right version to clients."
+  exit 1
+fi
+
 # ── Pre-flight checks ────────────────────────────────────────────────────────
 for cmd in gh git; do
   if ! command -v "$cmd" &>/dev/null; then
@@ -184,6 +191,13 @@ cat > "$UPDATES_DIR/windows-x86_64.json" <<MANIFEST
 MANIFEST
 
 echo "  Generated: windows-x86_64.json"
+
+# Upload manifest to GitHub release so the baked-in Tauri updater endpoint
+# (releases/latest/download/windows-x86_64.json) serves the new version.
+# Without this, auto-update silent-fails with 404 for all existing clients.
+gh release upload "$TAG" "$UPDATES_DIR/windows-x86_64.json" \
+  --repo "$RELEASE_REPO" --clobber
+echo "  Manifest uploaded to GitHub release."
 
 # Deploy landing to Cloudflare Pages
 if command -v wrangler &>/dev/null; then

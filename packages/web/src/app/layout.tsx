@@ -10,6 +10,7 @@ import { MagicRingMount } from "@/components/ring/magic-ring-mount";
 import { ScheduleModal } from "@/components/schedule/schedule-modal";
 import { UpdateBanner } from "@/components/update-banner";
 import { LicenseProvider } from "@/components/license-provider";
+import { AnalyticsMount } from "@/components/analytics-mount";
 
 export const metadata: Metadata = {
   title: "Companion",
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ScheduleModal />
             <UpdateBanner />
             <LicenseProvider />
+            <AnalyticsMount />
           </AuthGuard>
         </ErrorBoundary>
         <Toaster

@@ -11,15 +11,19 @@ import {
   Lightbulb,
   Link,
   Sparkle,
+  PaperPlaneTilt,
+  ChartBar,
 } from "@phosphor-icons/react";
 import { areTipsEnabled, setTipsEnabled, resetDismissedTips } from "@/components/tips/tip-storage";
 import {
   areInlineSuggestionsEnabled,
   setInlineSuggestionsEnabled,
-} from "@/lib/suggest/settings.js";
+} from "@/lib/suggest/settings";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
+import { FEEDBACK_TYPES, openFeedback, type FeedbackType } from "@/lib/feedback";
+import { isAnalyticsEnabled, setAnalyticsEnabled, trackEvent } from "@/lib/analytics";
 import { SettingSection, InputField } from "./settings-tabs";
 
 // ── License Section ─────────────────────────────────────────────────────────
@@ -349,6 +353,128 @@ function TipsSection() {
   );
 }
 
+// ── Analytics Section ───────────────────────────────────────────────────────
+
+function AnalyticsSection() {
+  const [enabled, setEnabled] = useState(() =>
+    typeof window === "undefined" ? false : isAnalyticsEnabled(),
+  );
+
+  const handleToggle = useCallback(() => {
+    const next = !enabled;
+    setEnabled(next);
+    setAnalyticsEnabled(next);
+    if (next) {
+      void trackEvent("analytics_opt_in");
+      toast.success("Thanks for helping us improve Companion 💛");
+    } else {
+      toast.success("Analytics disabled");
+    }
+  }, [enabled]);
+
+  return (
+    <SettingSection
+      title="Usage Analytics"
+      description="Share anonymous usage data so we know which features matter. No personal data, no tracking across apps."
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ChartBar size={16} weight="fill" className="text-accent" />
+          <span className="text-sm font-medium">Share anonymous usage data</span>
+        </div>
+        <button
+          onClick={handleToggle}
+          className="relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors"
+          style={{
+            background: enabled ? "var(--color-accent)" : "var(--color-bg-elevated)",
+          }}
+          role="switch"
+          aria-checked={enabled}
+          aria-label="Toggle usage analytics"
+        >
+          <span
+            className="inline-block h-4 w-4 rounded-full transition-transform"
+            style={{
+              background: "#fff",
+              transform: enabled ? "translateX(22px)" : "translateX(4px)",
+            }}
+          />
+        </button>
+      </div>
+      <p className="text-text-muted mt-2 text-xs leading-relaxed">
+        Sent via Aptabase (privacy-first). Events: app opened, feature used, feedback sent. No IPs,
+        no user IDs, no prompt content.
+      </p>
+    </SettingSection>
+  );
+}
+
+// ── Feedback Section ────────────────────────────────────────────────────────
+
+function FeedbackSection() {
+  const handleClick = useCallback((type: FeedbackType) => {
+    openFeedback(type);
+    toast.success("Opening Telegram — drop your feedback there, bro 💛", {
+      duration: 2500,
+    });
+  }, []);
+
+  return (
+    <SettingSection
+      title="Feedback & Support"
+      description="Help us shape Companion — send feedback directly via Telegram. No account signup needed."
+    >
+      <div className="flex flex-col gap-2">
+        {(Object.keys(FEEDBACK_TYPES) as FeedbackType[]).map((type) => {
+          const meta = FEEDBACK_TYPES[type];
+          return (
+            <button
+              key={type}
+              onClick={() => handleClick(type)}
+              className="shadow-soft group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all"
+              style={{
+                background: "var(--color-bg-elevated)",
+                border: "1px solid var(--color-border)",
+              }}
+              aria-label={`Send ${meta.label} via Telegram`}
+            >
+              <span
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-base"
+                style={{
+                  background: `${meta.color}15`,
+                  border: `1px solid ${meta.color}40`,
+                }}
+                aria-hidden="true"
+              >
+                {meta.emoji}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div
+                  className="text-text-primary text-sm font-semibold"
+                  style={{ color: meta.color }}
+                >
+                  {meta.label}
+                </div>
+                <div className="text-text-muted truncate text-xs">{meta.description}</div>
+              </div>
+              <PaperPlaneTilt
+                size={14}
+                weight="bold"
+                className="text-text-muted flex-shrink-0 transition-transform group-hover:translate-x-0.5"
+                aria-hidden="true"
+              />
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-text-muted mt-3 text-xs leading-relaxed">
+        Your message opens in Telegram pre-filled with app version + OS info. We usually reply
+        within 24h.
+      </p>
+    </SettingSection>
+  );
+}
+
 // ── General Tab ─────────────────────────────────────────────────────────────
 
 export function GeneralTab() {
@@ -562,6 +688,12 @@ export function GeneralTab() {
 
       {/* Tips & Hints */}
       <TipsSection />
+
+      {/* Usage Analytics */}
+      <AnalyticsSection />
+
+      {/* Feedback & Support */}
+      <FeedbackSection />
 
       {/* Save button */}
       <button

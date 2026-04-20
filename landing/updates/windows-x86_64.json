@@ -1,7 +1,7 @@
 {
-  "version": "0.14.0",
-  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.14.0/Companion_0.14.0_x64-setup.nsis.zip",
-  "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUldSbU0xMmU1aUFEekpEUGkyaGluK2xrdXdRaUQyYWx3TjVoVWROd3dZSER1Nm01QjFVOHFzc1RLby9rdTdIdWpYU1lRTHZ3TExIOVRUdVdhakpLbVRQNGNjWUZEQkhvc0FvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1ODM3OTA2CWZpbGU6Q29tcGFuaW9uXzAuMTQuMF94NjQtc2V0dXAubnNpcy56aXAKU24rVzFpMDZmSHdqbFdCLzJxRVd6K3cxRUgwc1h0d05ETXAzdkJ1TEdZeHRZTHBlUzAveXdBU01sSDI4VzdqREM2QURndVRvalVvMFRrWS9EdllkRHc9PQo=",
-  "notes": "Update to v0.14.0 — UX hardening: message rendering, typography, session lifecycle",
-  "pub_date": "2026-04-10T16:11:46Z"
+  "version": "0.23.0",
+  "url": "https://github.com/nhadaututtheky/companion-release/releases/download/v0.23.0/Companion_0.23.0_x64-setup.exe",
+  "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSR0FuNWFuQThzWitncmxhWmdaMHY1U1VxU0V6Wk81eUZNMVcycUNRV25hZVF0clgxYXhvV2lxS1BybTNzYnZiNkR6QmVWMGRVU2pZNUYvNUFacTJYME5KK0JHSGJxV0FRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2NjgyOTY3CWZpbGU6Q29tcGFuaW9uXzAuMjMuMF94NjQtc2V0dXAuZXhlCnRyS3RTa05vWVlQK1JZZGhPWnNjakUwbHEzOEYranFRVVVldFIzRjhyY1pJWm50cGJRZ1VHcEZqR3FQNFBXSSs1TW1zd2VKbXR1cjhqV0ZuVkZHZEJ3PT0K",
+  "notes": "Update to v0.23.0",
+  "pub_date": "2026-04-20T11:18:16Z"
 }
