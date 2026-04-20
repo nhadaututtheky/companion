@@ -84,6 +84,25 @@ These are contracts between modules that compilers won't catch. Break them and y
 
 ---
 
+## Session Settings (Phase 2/3 Unification)
+
+### INV-13: All session-settings reads go through `SessionSettingsService.get()`
+**Why**: Pre-unification the idle-timer, Telegram bot, and web UI each read from a different location (in-memory Map, mapping table, session state). Diverging writes silently produced stale reads on one path while the others stayed fresh — root cause of the recurring "timeout resets on resume" bug.
+**Where**: `packages/server/src/services/session-settings-service.ts`.
+**Check**: Grep for `sessionSettings.get(` / `sessionConfigs.get(` outside the service — legitimate uses only read from caches the service feeds via event. Never read directly from DB.
+
+### INV-14: All session-settings writes go through `SessionSettingsService.update()`
+**Why**: Any `Map.set()` or direct `UPDATE sessions SET` bypasses the event bus, leaving subscriber caches stale until TTL. That's exactly how the `!== 3_600_000` guard bug (historic violation #5 below) shipped.
+**Where**: Same service.
+**Check**: Grep `.sessionSettings.set(` / `.sessionConfigs.set(` / `UPDATE telegram_session_mappings SET idle_timeout` — all must live inside service or subscriber (read-only) code.
+
+### INV-15: Every new per-session setting needs DB column + type field + default constant + contract test
+**Why**: Before INV-13/14 new settings were bolted onto the in-memory Map without DB backing, guaranteeing they'd be lost on resume. The migration-path must be explicit.
+**Where**: `packages/shared/src/constants.ts` (DEFAULT_*), `packages/shared/src/types/session.ts` (SessionSettings), `packages/server/src/db/schema.ts` (`sessions` table), `packages/server/src/services/__tests__/settings-resume-inheritance.test.ts` (add a SCENARIO).
+**Check**: PR cannot land if any of the four sites is missing.
+
+---
+
 ## Review Checklist
 
 Before submitting a PR that touches session lifecycle, telegram, or compact:
@@ -96,6 +115,8 @@ Before submitting a PR that touches session lifecycle, telegram, or compact:
 - [ ] Edit `ws-session-lifecycle.ts`? → check if `startSessionWithSdk` path needs the same edit
 - [ ] Edit idle kill logic? → check BOTH `ws-health-idle.ts` AND `telegram-idle-manager.ts`
 - [ ] Add new AI provider setting? → extend `handleDisable` keys list
+- [ ] Add new per-session setting? → constants + type + DB column + contract test scenario (INV-15)
+- [ ] Touch session-settings read/write path? → route through `SessionSettingsService` (INV-13/14)
 
 ---
 
@@ -105,3 +126,4 @@ Before submitting a PR that touches session lifecycle, telegram, or compact:
 2. **Telegram never announced compact start** (fixed 2026-04-19) — router had no case for `status_change: "compacting"` or `compact_handoff` type.
 3. **Context warning fixed at 80%** (fixed 2026-04-19) — ignored user-configured `compact_threshold`.
 4. **AI Provider had no disable path** (fixed 2026-04-19) — user could save but not revert.
+5. **Resume regressed again via `!== 3_600_000` guard** (fixed 2026-04-20, Phase 2/3) — a "smart" inheritance check in `telegram-bridge.startSessionForChat` skipped the assignment when old timeout was exactly 1 hour, silently falling back to default. Root cause was not the guard itself but state-split across 5 writers (2 DB tables + 2 Maps + React). Phase 2 centralized writes on `SessionSettingsService`; Phase 3 added contract tests and removed the guard.

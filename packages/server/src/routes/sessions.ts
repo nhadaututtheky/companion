@@ -601,11 +601,17 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         source: "api",
       });
 
-      // Apply idle timeout / keep-alive settings (default to 1h if not specified)
-      bridge.setSessionSettings(sessionId, {
-        idleTimeoutMs: body.idleTimeoutMs ?? 3_600_000,
-        ...(body.keepAlive !== undefined ? { keepAlive: body.keepAlive } : {}),
-      });
+      // Apply ONLY the settings the client explicitly sent. Inherited values
+      // from the resumed session were already persisted via
+      // SessionSettingsService inside ws-session-lifecycle.startSession. Old
+      // code here hardcoded 3_600_000 as the fallback, which silently
+      // clobbered whatever the user had configured — INV-3 regression cycle.
+      const resumePatch: Record<string, unknown> = {};
+      if (body.idleTimeoutMs !== undefined) resumePatch.idleTimeoutMs = body.idleTimeoutMs;
+      if (body.keepAlive !== undefined) resumePatch.keepAlive = body.keepAlive;
+      if (Object.keys(resumePatch).length > 0) {
+        bridge.setSessionSettings(sessionId, resumePatch);
+      }
 
       // Clear cliSessionId on old session so it won't appear in resumable list again
       dismissResumableSession(id);

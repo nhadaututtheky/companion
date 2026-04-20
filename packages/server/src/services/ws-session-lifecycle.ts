@@ -24,6 +24,7 @@ import { revokeAllForSession } from "./share-manager.js";
 import { connectCli, disconnectCli, getWorkspaceForSession } from "./workspace-store.js";
 import { getWorkspaceContext } from "./workspace-context.js";
 import { eventBus } from "./event-bus.js";
+import { sessionSettingsService } from "./session-settings-service.js";
 import { cleanupPulse } from "./pulse-estimator.js";
 import { getActiveAccount, addAccountCost } from "./credential-manager.js";
 import { isEncryptionEnabled } from "./crypto.js";
@@ -333,6 +334,38 @@ export class SessionLifecycleManager {
 
     // Attach shortId to session state for clients
     initialState.short_id = shortId;
+
+    // ── Resume: inherit per-session settings from the previous row ─────────
+    // Without this, the new `sessions` row sticks with migration defaults
+    // and the user's custom idleTimeoutMs / keepAlive / thinking_mode /
+    // context_mode silently resets. This was the INV-3 regression cycle.
+    //
+    // Reads via service so we benefit from its cache and stay on the single
+    // source of truth; writes via service so subscribers (ws-bridge Map,
+    // telegram-idle-manager cfg) pick up the inherited values immediately.
+    if (opts.resume && opts.resumeFromSessionId) {
+      try {
+        const prev = sessionSettingsService.get(opts.resumeFromSessionId);
+        sessionSettingsService.update(sessionId, {
+          idleTimeoutMs: prev.idleTimeoutMs,
+          idleTimeoutEnabled: prev.idleTimeoutEnabled,
+          keepAlive: prev.keepAlive,
+          autoReinjectOnCompact: prev.autoReinjectOnCompact,
+          thinking_mode: prev.thinking_mode,
+          context_mode: prev.context_mode,
+        });
+        log.info("Inherited session settings from resumed session", {
+          sessionId,
+          resumeFromSessionId: opts.resumeFromSessionId,
+          idleTimeoutMs: prev.idleTimeoutMs,
+        });
+      } catch (err) {
+        log.warn("Failed to inherit settings on resume — using defaults", {
+          sessionId,
+          error: String(err),
+        });
+      }
+    }
 
     // Connect session to workspace and inject shared context
     if (opts.workspaceId) {

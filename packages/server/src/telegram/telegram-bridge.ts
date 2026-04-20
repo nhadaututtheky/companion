@@ -17,9 +17,6 @@
  */
 
 import { type Bot, type Context } from "grammy";
-import { getDb } from "../db/client.js";
-import { telegramSessionMappings } from "../db/schema.js";
-import { eq } from "drizzle-orm";
 import { createBot, registerCommands, type BotConfig } from "./bot-factory.js";
 import { StreamHandler } from "./stream-handler.js";
 import { escapeHTML, statusEmoji } from "./formatter.js";
@@ -405,24 +402,18 @@ export class TelegramBridge {
       this.setMapping(chatId, effectiveTopicId, mapping);
       this.subscribeToSession(sessionId, chatId, effectiveTopicId);
 
-      // Inherit idle timeout: from previous active session, or from DB (resume case)
+      // Inherit idle timeout from the active in-memory cfg if we have one.
+      // The resume-from-DB path is no longer needed here: ws-session-lifecycle
+      // already copies settings from the resumed `sessions` row via the
+      // service BEFORE we reach this code — its event invalidates our Map.
+      //
+      // Historic bug (INV-3, fixed 2026-04-19, regressed): we used to read
+      // `telegram_session_mappings.idle_timeout_ms` and skip the assignment
+      // when it equalled 3_600_000, silently dropping the user's choice if
+      // they had picked "1 hour". Kept the comment so the mistake doesn't
+      // come back.
       if (inheritedIdleMs !== undefined) {
         this.setIdleTimeout(sessionId, inheritedIdleMs);
-      } else if (opts?.resume && opts?.cliSessionId) {
-        // Resume from dead session — look up persisted idle timeout from old mapping
-        try {
-          const db = getDb();
-          const oldRow = db
-            .select({ idleTimeoutMs: telegramSessionMappings.idleTimeoutMs })
-            .from(telegramSessionMappings)
-            .where(eq(telegramSessionMappings.cliSessionId, opts.cliSessionId))
-            .get();
-          if (oldRow && oldRow.idleTimeoutMs !== 3_600_000) {
-            this.setIdleTimeout(sessionId, oldRow.idleTimeoutMs);
-          }
-        } catch {
-          // non-fatal — use default
-        }
       }
 
       // Send settings panel (includes status + inline keyboard)
