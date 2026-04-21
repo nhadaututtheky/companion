@@ -244,6 +244,21 @@ export const models = {
       method: "POST",
       body: JSON.stringify({ enabled }),
     }),
+
+  testConnection: (body: { baseUrl: string; apiKey?: string; model: string }) =>
+    request<{
+      success: boolean;
+      data: { ok: boolean; status: number; latencyMs: number; error?: string };
+    }>("/api/models/test-connection", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  ollamaTags: (baseUrl?: string) =>
+    request<{
+      success: boolean;
+      data: { tags: string[]; reachable: boolean };
+    }>(`/api/models/ollama-tags${baseUrl ? `?baseUrl=${encodeURIComponent(baseUrl)}` : ""}`),
 };
 
 export const cliPlatforms = {

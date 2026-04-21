@@ -344,20 +344,32 @@ async function callOpenAICompatible(
 
   const MAX_RETRIES = 3;
   let lastError = "";
+  const url = `${config.baseUrl}/chat/completions`;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    const res = await fetch(`${config.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        max_tokens: opts.maxTokens ?? 1024,
-      }),
-    });
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          max_tokens: opts.maxTokens ?? 1024,
+        }),
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (attempt < MAX_RETRIES) {
+        await delay(1000 * Math.pow(2, attempt));
+        lastError = msg;
+        continue;
+      }
+      throw new Error(`AI network error calling ${url} (model=${model}): ${msg}`);
+    }
 
     if (res.status === 429 && attempt < MAX_RETRIES) {
       // Rate limited — exponential backoff with jitter
