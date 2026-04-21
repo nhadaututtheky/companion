@@ -44,24 +44,28 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
     }
 
     if (args === "on") {
-      session.autoApproveConfig = { enabled: true, timeoutSeconds: 30, allowBash: false };
-      await ctx.reply("Auto-approve <b>enabled</b> (30s timeout, Bash excluded)", {
-        parse_mode: "HTML",
-      });
+      session.autoApproveConfig = { enabled: true, timeoutSeconds: 30, allowBash: true };
+      await ctx.reply(
+        "Auto-approve <b>enabled</b> (30s timeout, Full — all tools).\n" +
+          "Use the panel's 🛡 Safe button to require approval for Bash.",
+        { parse_mode: "HTML" },
+      );
       return;
     }
 
     const seconds = parseInt(args ?? "", 10);
     if (seconds > 0) {
-      session.autoApproveConfig = { enabled: true, timeoutSeconds: seconds, allowBash: false };
-      await ctx.reply(`Auto-approve <b>enabled</b> (${seconds}s timeout)`, { parse_mode: "HTML" });
+      session.autoApproveConfig = { enabled: true, timeoutSeconds: seconds, allowBash: true };
+      await ctx.reply(`Auto-approve <b>enabled</b> (${seconds}s timeout, Full — all tools)`, {
+        parse_mode: "HTML",
+      });
       return;
     }
 
     // Show current status + toggle keyboard
     const config = session.autoApproveConfig;
     const status = config.enabled
-      ? `Enabled (${config.timeoutSeconds}s, bash=${config.allowBash ? "yes" : "no"})`
+      ? `Enabled (${config.timeoutSeconds}s, ${config.allowBash ? "Full — all tools" : "Safe — no terminal"})`
       : "Disabled";
 
     const keyboard = new InlineKeyboard()
@@ -374,13 +378,14 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
     session.autoApproveConfig = {
       enabled: newEnabled,
       timeoutSeconds: newEnabled ? 30 : 0,
-      allowBash: false,
+      allowBash: newEnabled,
     };
 
-    await ctx.answerCallbackQuery(newEnabled ? "Enabled" : "Disabled");
-    await ctx.editMessageText(`Auto-approve: <b>${newEnabled ? "Enabled (30s)" : "Disabled"}</b>`, {
-      parse_mode: "HTML",
-    });
+    await ctx.answerCallbackQuery(newEnabled ? "Enabled (Full — all tools)" : "Disabled");
+    await ctx.editMessageText(
+      `Auto-approve: <b>${newEnabled ? "Enabled (30s, Full — all tools)" : "Disabled"}</b>`,
+      { parse_mode: "HTML" },
+    );
   });
 
   bot.callbackQuery(/^aa:set:(.+):(\d+)$/, async (ctx) => {
@@ -392,9 +397,16 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
       return;
     }
 
-    session.autoApproveConfig = { enabled: true, timeoutSeconds: seconds, allowBash: false };
+    // Preserve Safe/Full choice when already enabled; default to Full on enable.
+    const allowBash = session.autoApproveConfig.enabled
+      ? session.autoApproveConfig.allowBash
+      : true;
+    session.autoApproveConfig = { enabled: true, timeoutSeconds: seconds, allowBash };
     await ctx.answerCallbackQuery(`Set to ${seconds}s`);
-    await ctx.editMessageText(`Auto-approve: <b>Enabled (${seconds}s)</b>`, { parse_mode: "HTML" });
+    await ctx.editMessageText(
+      `Auto-approve: <b>Enabled (${seconds}s${allowBash ? ", Full — all tools" : ", Safe — no terminal"})</b>`,
+      { parse_mode: "HTML" },
+    );
   });
 }
 

@@ -8,7 +8,7 @@ import { getAllActiveSessions, listResumableSessions } from "../../services/sess
 import { escapeHTML } from "../formatter.js";
 import { createLogger } from "../../logger.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
-import { DEFAULT_MODEL } from "@companion/shared";
+import { DEFAULT_MODEL, DEFAULT_PERMISSION_MODE } from "@companion/shared";
 
 const log = createLogger("cmd:session");
 
@@ -525,7 +525,7 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
       const sessionId = await bridge.wsBridge.startSession({
         cwd: homeDir,
         model: DEFAULT_MODEL,
-        permissionMode: "default",
+        permissionMode: DEFAULT_PERMISSION_MODE,
         source: "telegram",
       });
 

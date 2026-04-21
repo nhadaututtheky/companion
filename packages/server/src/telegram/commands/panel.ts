@@ -234,10 +234,14 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
       label = "Auto-approve off";
     } else {
       const seconds = parseInt(preset, 10);
-      // Preserve current allowBash setting when changing timeout
-      const allowBash = session.autoApproveConfig.allowBash;
+      // On transition from off→on, default allowBash=true so user-expected
+      // "approve everything" holds. If already enabled, preserve user's
+      // Safe/Full choice across timeout changes.
+      const allowBash = session.autoApproveConfig.enabled
+        ? session.autoApproveConfig.allowBash
+        : true;
       session.autoApproveConfig = { enabled: true, timeoutSeconds: seconds, allowBash };
-      label = `Auto-approve ${seconds}s`;
+      label = `Auto-approve ${seconds}s${allowBash ? " · Full (all tools)" : " · Safe (no terminal)"}`;
     }
 
     await ctx.answerCallbackQuery(label);
@@ -294,13 +298,13 @@ export function registerPanelCommands(bridge: TelegramBridge): void {
           }),
         );
       }
-      await ctx.answerCallbackQuery("⚠️ Full mode — all tools approved");
+      await ctx.answerCallbackQuery("⚡ Full (all tools) — everything auto-approved");
     } else {
       session.autoApproveConfig = {
         ...session.autoApproveConfig,
         allowBash: false,
       };
-      await ctx.answerCallbackQuery("🛡 Safe mode — dangerous tools excluded");
+      await ctx.answerCallbackQuery("🛡 Safe (no terminal) — Bash still requires approval");
     }
 
     // Refresh panel

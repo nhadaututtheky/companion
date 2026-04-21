@@ -49,6 +49,7 @@ import type { PermissionBridge } from "./ws-permission-handler.js";
 import type { CompactBridge } from "./compact-manager.js";
 import type { RTKPipeline } from "../rtk/index.js";
 import type { ActiveSession } from "./session-store.js";
+import { DEFAULT_PERMISSION_MODE } from "@companion/shared";
 import type {
   CLIMessage,
   CLISystemInitMessage,
@@ -133,7 +134,7 @@ export class MessageHandler {
           tools: msg.tools ?? [],
           mcp_servers: [],
           model: msg.model ?? session.state.model,
-          permissionMode: msg.permissionMode ?? "default",
+          permissionMode: msg.permissionMode ?? DEFAULT_PERMISSION_MODE,
           claude_code_version: msg.cliVersion ?? "unknown",
           slash_commands: [],
           uuid: "",

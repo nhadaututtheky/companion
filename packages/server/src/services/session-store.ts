@@ -11,6 +11,7 @@ import { createLogger } from "../logger.js";
 import { generateShortId } from "./short-id.js";
 import { DebouncedWriter } from "./debounced-writer.js";
 import { SessionStateMachine } from "./session-state-machine.js";
+import { DEFAULT_PERMISSION_MODE } from "@companion/shared";
 import type {
   SessionState,
   SessionStatus,
@@ -189,7 +190,7 @@ export function createSessionRecord(opts: {
           projectSlug: opts.projectSlug,
           model: opts.model,
           cwd: opts.cwd,
-          permissionMode: opts.permissionMode ?? "default",
+          permissionMode: opts.permissionMode ?? DEFAULT_PERMISSION_MODE,
           source: opts.source ?? "api",
           parentId: opts.parentId,
           channelId: opts.channelId,

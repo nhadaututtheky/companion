@@ -21,6 +21,7 @@ import type {
   PermissionMode,
 } from "@anthropic-ai/claude-agent-sdk";
 import { randomUUID } from "crypto";
+import { DEFAULT_PERMISSION_MODE } from "@companion/shared";
 import { createLogger } from "../logger.js";
 
 const log = createLogger("sdk-engine");
@@ -153,7 +154,7 @@ export function startSdkSession(
       abortController,
       cwd: opts.cwd,
       model: opts.model,
-      permissionMode: (opts.permissionMode ?? "default") as PermissionMode,
+      permissionMode: (opts.permissionMode ?? DEFAULT_PERMISSION_MODE) as PermissionMode,
       includePartialMessages: true,
       canUseTool,
       maxTurns: opts.maxTurns ?? DEFAULT_MAX_TURNS,

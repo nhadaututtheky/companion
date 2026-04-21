@@ -153,6 +153,24 @@ export function handleControlRequest(
     return;
   }
 
+  // Hard bypass: if the session runs in bypassPermissions mode, approve
+  // immediately. Claude CLI is launched with --permission-mode
+  // bypassPermissions but still emits control_request for MCP tools and
+  // some SDK paths — forwarding those to Telegram/Web contradicts the
+  // user's "don't ask me" intent. Server-side enforcement guarantees the
+  // bypass is honored regardless of CLI/SDK behavior.
+  if (session.state.permissionMode === "bypassPermissions" && !session.bypassDisabled) {
+    log.info("Bypassing permission (mode=bypassPermissions)", {
+      tool: toolName,
+      requestId: msg.request_id.slice(0, 8),
+    });
+    handlePermissionResponse(bridge, session, {
+      request_id: msg.request_id,
+      behavior: "allow",
+    });
+    return;
+  }
+
   log.info("control_request received", {
     tool: toolName,
     subtype,

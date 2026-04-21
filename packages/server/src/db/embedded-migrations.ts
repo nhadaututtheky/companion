@@ -189,4 +189,8 @@ export const EMBEDDED_MIGRATIONS: Array<{ name: string; sql: string }> = [
     name: "0046_drop_web_intel.sql",
     sql: "-- Drop WebIntel feature: remove web_intel_docs cache table.\n-- web_docs_enabled column on codegraph_config is left in place (orphaned,\n-- harmless) to avoid a table-rebuild dance; drizzle schema no longer\n-- references it, so it is ignored at runtime.\n\nDROP INDEX IF EXISTS idx_webintel_docs_library;\n--> statement-breakpoint\nDROP TABLE IF EXISTS web_intel_docs;\n",
   },
+  {
+    name: "0047_permission_mode_default_bypass.sql",
+    sql: "-- Upgrade default permission mode: any row still on the legacy `\"default\"`\n-- value is migrated to `\"bypassPermissions\"` so the Telegram Safe/Full\n-- buttons (which only toggle `allowBash`) work as users expect — tools\n-- auto-allow instantly instead of waiting on a prompt that nobody sees.\n--\n-- Self-hosted users who intentionally want prompts can still flip a\n-- project back to `default` via the web UI.\n\nUPDATE `projects`\nSET `permission_mode` = 'bypassPermissions'\nWHERE `permission_mode` = 'default';\n--> statement-breakpoint\n\nUPDATE `sessions`\nSET `permission_mode` = 'bypassPermissions'\nWHERE `permission_mode` = 'default' AND `status` IN ('idle', 'starting', 'running', 'waiting');\n--> statement-breakpoint\n\nUPDATE `schedules`\nSET `permission_mode` = 'bypassPermissions'\nWHERE `permission_mode` = 'default';\n",
+  },
 ];

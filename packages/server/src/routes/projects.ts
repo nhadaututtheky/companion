@@ -12,7 +12,7 @@ import {
   deleteProject,
 } from "../services/project-profiles.js";
 import { getProjectSummaries } from "../services/session-summarizer.js";
-import type { ApiResponse } from "@companion/shared";
+import { DEFAULT_PERMISSION_MODE, type ApiResponse } from "@companion/shared";
 
 const projectSchema = z.object({
   slug: z
@@ -60,7 +60,7 @@ projectRoutes.put("/:slug", zValidator("json", projectSchema), (c) => {
     name: body.name,
     dir: body.dir,
     defaultModel: body.defaultModel ?? "claude-sonnet-4-6",
-    permissionMode: body.permissionMode ?? "default",
+    permissionMode: body.permissionMode ?? DEFAULT_PERMISSION_MODE,
     envVars: body.envVars,
   });
 

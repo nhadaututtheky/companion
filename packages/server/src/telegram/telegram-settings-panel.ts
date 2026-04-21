@@ -35,7 +35,7 @@ export async function sendSettingsPanel(
   const aa = session?.autoApproveConfig;
   const aaLabel = !aa?.enabled
     ? "Off"
-    : `${aa.timeoutSeconds}s · ${aa.allowBash ? "⚠️ Full" : "🛡 Safe"}`;
+    : `${aa.timeoutSeconds}s · ${aa.allowBash ? "⚡ Full (all tools)" : "🛡 Safe (no terminal)"}`;
   const idleMs = cfg.idleTimeoutMs;
   const idleLabel =
     idleMs <= 0
@@ -49,7 +49,6 @@ export async function sendSettingsPanel(
             : idleMs === 43_200_000
               ? "12h"
               : `${Math.round(idleMs / 60_000)}m`;
-  const _permMode = session?.state.permissionMode ?? "default";
 
   // Context meter — uses cumulative tokens as rough estimate (actual window may be smaller after compaction)
   const state = session?.state;
@@ -148,9 +147,9 @@ export async function sendSettingsPanel(
           aaEnabled && !aaBash ? "success" : undefined,
         ),
         btn(
-          `⚠️ Full${aaBash ? " ✓" : ""}`,
+          `⚡ Full${aaBash ? " ✓" : ""}`,
           aaEnabled ? `panel:aamode:full:${sessionId}` : `panel:aamode:disabled:${sessionId}`,
-          aaBash ? "danger" : undefined,
+          aaBash ? "success" : undefined,
         ),
       ],
       // Row 3: Idle timeout presets

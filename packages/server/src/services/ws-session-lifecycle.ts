@@ -59,7 +59,11 @@ import type {
   CLIPlatform,
   ContextInjectionType,
 } from "@companion/shared";
-import { SESSION_IDLE_TIMEOUT_MS, thinkingModeToEffort } from "@companion/shared";
+import {
+  SESSION_IDLE_TIMEOUT_MS,
+  thinkingModeToEffort,
+  DEFAULT_PERMISSION_MODE,
+} from "@companion/shared";
 
 const log = createLogger("ws-session-lifecycle");
 
@@ -208,7 +212,7 @@ export class SessionLifecycleManager {
       model: opts.model,
       cwd: opts.cwd,
       tools: [],
-      permissionMode: opts.permissionMode ?? "default",
+      permissionMode: opts.permissionMode ?? DEFAULT_PERMISSION_MODE,
       claude_code_version: "",
       mcp_servers: [],
       total_cost_usd: 0,
@@ -504,7 +508,7 @@ export class SessionLifecycleManager {
         shortId: session.state.short_id ?? sessionId.slice(0, 8),
         projectSlug: opts.projectSlug,
         model: opts.model,
-        permissionMode: opts.permissionMode ?? "default",
+        permissionMode: opts.permissionMode ?? DEFAULT_PERMISSION_MODE,
         cwd: opts.cwd,
         source: opts.source ?? "sdk",
       });
@@ -556,7 +560,7 @@ export class SessionLifecycleManager {
               return s as { name: string; status: string };
             }),
             model: msg.model,
-            permissionMode: msg.permissionMode ?? opts.permissionMode ?? "default",
+            permissionMode: msg.permissionMode ?? opts.permissionMode ?? DEFAULT_PERMISSION_MODE,
             claude_code_version: msg.claude_code_version ?? "",
             slash_commands: [],
             uuid: msg.uuid ?? "",
@@ -816,7 +820,7 @@ export class SessionLifecycleManager {
         shortId: session.state.short_id ?? sessionId.slice(0, 8),
         projectSlug: opts.projectSlug,
         model: opts.model,
-        permissionMode: opts.permissionMode ?? "default",
+        permissionMode: opts.permissionMode ?? DEFAULT_PERMISSION_MODE,
         cwd: opts.cwd,
         source: opts.source ?? "cli",
       });

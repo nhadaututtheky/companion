@@ -8,7 +8,7 @@ export const projects = sqliteTable("projects", {
   name: text("name").notNull(),
   dir: text("dir").notNull(),
   defaultModel: text("default_model").notNull().default("claude-sonnet-4-6"),
-  permissionMode: text("permission_mode").notNull().default("default"),
+  permissionMode: text("permission_mode").notNull().default("bypassPermissions"),
   envVars: text("env_vars", { mode: "json" }).$type<Record<string, string>>(),
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
@@ -64,7 +64,7 @@ export const sessions = sqliteTable(
     status: text("status").notNull().default("starting"),
     cwd: text("cwd").notNull(),
     pid: integer("pid"),
-    permissionMode: text("permission_mode").notNull().default("default"),
+    permissionMode: text("permission_mode").notNull().default("bypassPermissions"),
     claudeCodeVersion: text("claude_code_version"),
     cliSessionId: text("cli_session_id"),
     /** Source that created this session */
@@ -649,7 +649,7 @@ export const schedules = sqliteTable(
       .$type<Record<string, string>>()
       .default({}),
     model: text("model").notNull().default("claude-sonnet-4-6"),
-    permissionMode: text("permission_mode").notNull().default("default"),
+    permissionMode: text("permission_mode").notNull().default("bypassPermissions"),
     triggerType: text("trigger_type").notNull().default("once"), // 'once' | 'cron'
     cronExpression: text("cron_expression"),
     scheduledAt: integer("scheduled_at", { mode: "timestamp_ms" }),

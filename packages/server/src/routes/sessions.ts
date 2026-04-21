@@ -40,7 +40,7 @@ import {
   getResumeCommand,
   clearScanCache,
 } from "../services/session-scanner.js";
-import type { ApiResponse, CLIPlatform } from "@companion/shared";
+import { DEFAULT_PERMISSION_MODE, type ApiResponse, type CLIPlatform } from "@companion/shared";
 import {
   previewDispatch,
   previewDispatchSync,
@@ -293,7 +293,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         name: dirName,
         dir: body.projectDir,
         defaultModel: body.model ?? "claude-sonnet-4-6",
-        permissionMode: body.permissionMode ?? "default",
+        permissionMode: body.permissionMode ?? DEFAULT_PERMISSION_MODE,
       });
       project = getProject(body.projectSlug);
       projectCreated = true;
@@ -305,7 +305,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
     // permissionMode only applies to Claude — other CLIs don't support it
     const permissionMode =
       cliPlatform === "claude"
-        ? (body.permissionMode ?? project?.permissionMode ?? "default")
+        ? (body.permissionMode ?? project?.permissionMode ?? DEFAULT_PERMISSION_MODE)
         : "default";
 
     // Resolve template variables if a templateId and templateVars are provided

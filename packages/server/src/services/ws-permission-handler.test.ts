@@ -226,6 +226,54 @@ describe("ws-permission-handler", () => {
 
       expect(session.pendingPermissions.has("req-exit")).toBe(true);
     });
+
+    it("hard-bypasses any tool when session.state.permissionMode is bypassPermissions", () => {
+      const bridge = createMockBridge();
+      const session = createMockSession({ cliSend: () => {} });
+      session.state = {
+        ...session.state,
+        permissionMode: "bypassPermissions",
+      } as ActiveSession["state"];
+
+      handleControlRequest(bridge, session, {
+        type: "control_request",
+        request_id: "req-bypass",
+        request: {
+          subtype: "tool_use",
+          tool_name: "Bash",
+          input: { command: "rm -rf /tmp/x" },
+          tool_use_id: "tu-4",
+        },
+      } as any);
+
+      expect(session.pendingPermissions.has("req-bypass")).toBe(false);
+      const permMsg = (mockBroadcastToAll.mock.calls as any[][]).find(
+        (c) => c[1].type === "permission_request",
+      );
+      expect(permMsg).toBeUndefined();
+    });
+
+    it("does NOT hard-bypass when bypassDisabled flag is set", () => {
+      const bridge = createMockBridge();
+      const session = createMockSession({ bypassDisabled: true });
+      session.state = {
+        ...session.state,
+        permissionMode: "bypassPermissions",
+      } as ActiveSession["state"];
+
+      handleControlRequest(bridge, session, {
+        type: "control_request",
+        request_id: "req-bypass-blocked",
+        request: {
+          subtype: "tool_use",
+          tool_name: "Bash",
+          input: { command: "ls" },
+          tool_use_id: "tu-5",
+        },
+      } as any);
+
+      expect(session.pendingPermissions.has("req-bypass-blocked")).toBe(true);
+    });
   });
 
   describe("handleInterrupt", () => {
