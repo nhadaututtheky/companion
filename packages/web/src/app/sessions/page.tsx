@@ -5,6 +5,7 @@ import { ArrowClockwise, CurrencyDollar, FolderOpen } from "@phosphor-icons/reac
 import { Header } from "@/components/layout/header";
 import { api } from "@/lib/api-client";
 import { fmtDateTimeFull } from "@/lib/formatters";
+import { useFetch } from "@/hooks/use-fetch";
 
 interface Session {
   id: string;
@@ -56,26 +57,25 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function SessionsPage() {
   const router = useRouter();
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "active" | "ended">("all");
   const [search, setSearch] = useState("");
 
-  const load = async () => {
-    setLoading(true);
-    try {
+  const {
+    data,
+    loading,
+    run: load,
+  } = useFetch<Session[]>(
+    async () => {
       const res = await api.sessions.list();
-      setSessions((res.data as { sessions: Session[] }).sessions ?? []);
-    } catch {
-      //
-    } finally {
-      setLoading(false);
-    }
-  };
+      return (res.data as { sessions: Session[] }).sessions ?? [];
+    },
+    { initialLoading: true, initialData: [] },
+  );
+  const sessions = data ?? [];
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const filtered = sessions.filter((s) => {
     if (

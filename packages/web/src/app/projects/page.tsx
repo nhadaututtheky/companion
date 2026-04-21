@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
+import { useFetch } from "@/hooks/use-fetch";
 import {
   FolderOpen,
   Plus,
@@ -344,22 +345,21 @@ function DeleteConfirmDialog({
 // ── Page ─────────────────────────────────────────────────────────────────
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
   const [editProject, setEditProject] = useState<Project | null | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
+  const {
+    data,
+    loading,
+    run: load,
+  } = useFetch<Project[]>(
+    async () => {
       const res = await api.projects.list();
-      setProjects((res.data as Project[]) ?? []);
-    } catch {
-      //
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return (res.data as Project[]) ?? [];
+    },
+    { initialLoading: true, initialData: [] },
+  );
+  const projects = data ?? [];
 
   useEffect(() => {
     load();

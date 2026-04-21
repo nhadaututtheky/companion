@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import { useFetch } from "@/hooks/use-fetch";
 import {
   Lightning,
   CircleNotch,
@@ -41,27 +42,32 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
 };
 
 export default function WorkflowsPage() {
-  const [workflows, setWorkflows] = useState<WorkflowItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const router = useRouter();
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await api.workflows.list({ status: filter || undefined });
-      setWorkflows(res.data as WorkflowItem[]);
-    } catch {
-      toast.error("Failed to load workflows");
-    } finally {
-      setLoading(false);
-    }
-  }, [filter]);
+  const {
+    data,
+    loading,
+    run: runLoad,
+    refetch,
+  } = useFetch<WorkflowItem[], [string]>(
+    async (status) => {
+      const res = await api.workflows.list({ status: status || undefined });
+      return res.data as WorkflowItem[];
+    },
+    {
+      initialLoading: true,
+      initialData: [],
+      onError: () => toast.error("Failed to load workflows"),
+    },
+  );
+  const workflows = data ?? [];
+  const load = refetch;
 
   useEffect(() => {
-    load();
-  }, [load]);
+    runLoad(filter);
+  }, [runLoad, filter]);
 
   return (
     <div className="bg-bg-base flex flex-col" style={{ height: "100vh" }}>

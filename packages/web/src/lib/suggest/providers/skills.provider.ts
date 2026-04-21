@@ -1,6 +1,6 @@
-import type { Suggestion, SuggestionContext, SuggestionProvider } from "../types.js";
-import { matchKeywords } from "../intent.js";
-import { useRegistryStore } from "../registry-store.js";
+import type { Suggestion, SuggestionContext, SuggestionProvider } from "../types";
+import { matchKeywords } from "../intent";
+import { useRegistryStore } from "../registry-store";
 
 export const skillsProvider: SuggestionProvider = {
   id: "skills",

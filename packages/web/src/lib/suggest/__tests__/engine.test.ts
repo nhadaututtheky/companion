@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "bun:test";
-import { SuggestionEngine } from "../engine.js";
-import type { Suggestion, SuggestionContext, SuggestionProvider } from "../types.js";
+import { SuggestionEngine } from "../engine";
+import type { Suggestion, SuggestionContext, SuggestionProvider } from "../types";
 
 function makeCtx(prompt: string): SuggestionContext {
   return { prompt, cursorPosition: prompt.length };

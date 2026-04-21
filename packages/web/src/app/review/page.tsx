@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { ArrowLeft, File, FolderOpen, SpinnerGap } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
 import { MarkdownReviewer } from "@/components/review/markdown-reviewer";
+import { useFetch } from "@/hooks/use-fetch";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,9 +24,6 @@ export default function ReviewPage() {
   const filePath = searchParams.get("file");
 
   const [files, setFiles] = useState<ReviewFile[]>([]);
-  const [content, setContent] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [activeFile, setActiveFile] = useState<string | null>(filePath);
 
   // Load file list
@@ -42,28 +40,31 @@ export default function ReviewPage() {
   }, [projectSlug]);
 
   // Load file content
+  const {
+    data: content,
+    loading,
+    error,
+    run: runLoadFile,
+  } = useFetch<string, [string]>(async (path) => {
+    if (!projectSlug) throw new Error("No project selected");
+    const res = await api.get<{ success: boolean; data: { path: string; content: string } }>(
+      `/api/review/read?project=${encodeURIComponent(projectSlug)}&file=${encodeURIComponent(path)}`,
+    );
+    return res.data.content;
+  });
+
   const loadFile = useCallback(
     async (path: string) => {
       if (!projectSlug) return;
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await api.get<{ success: boolean; data: { path: string; content: string } }>(
-          `/api/review/read?project=${encodeURIComponent(projectSlug)}&file=${encodeURIComponent(path)}`,
-        );
-        setContent(res.data.content);
+      const result = await runLoadFile(path);
+      if (result !== undefined) {
         setActiveFile(path);
-        // Update URL without reload
         const url = new URL(window.location.href);
         url.searchParams.set("file", path);
         window.history.replaceState({}, "", url.toString());
-      } catch (err) {
-        setError(String(err));
-      } finally {
-        setLoading(false);
       }
     },
-    [projectSlug],
+    [projectSlug, runLoadFile],
   );
 
   // Auto-load file from URL
@@ -181,12 +182,12 @@ export default function ReviewPage() {
               className="rounded-lg px-4 py-3 text-sm"
               style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}
             >
-              {error}
+              {error.message}
             </div>
           </div>
         )}
 
-        {!loading && !error && content !== null && (
+        {!loading && !error && content != null && (
           <div className="mx-auto max-w-3xl px-8 py-6">
             {/* File header */}
             <div
@@ -202,7 +203,7 @@ export default function ReviewPage() {
           </div>
         )}
 
-        {!loading && !error && content === null && (
+        {!loading && !error && content == null && (
           <div className="text-text-secondary flex h-full items-center justify-center">
             <div className="text-center">
               <File size={40} weight="duotone" style={{ margin: "0 auto 12px", opacity: 0.3 }} />

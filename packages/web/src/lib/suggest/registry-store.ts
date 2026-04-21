@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { api } from "@/lib/api-client.js";
+import { api } from "@/lib/api-client";
 
 export interface RegistrySkill {
   name: string;

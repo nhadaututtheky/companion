@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { Sparkle } from "@phosphor-icons/react";
-import type { Suggestion } from "@/lib/suggest/types.js";
+import type { Suggestion } from "@/lib/suggest/types";
 
 interface SuggestionStripProps {
   suggestions: Suggestion[];

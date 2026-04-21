@@ -1,4 +1,4 @@
-import type { Suggestion, SuggestionContext, SuggestionProvider } from "./types.js";
+import type { Suggestion, SuggestionContext, SuggestionProvider } from "./types";
 
 const TOP_N = 3;
 

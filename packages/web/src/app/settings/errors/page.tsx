@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import { useFetch } from "@/hooks/use-fetch";
 import {
   Bug,
   Trash,
@@ -37,29 +38,27 @@ const SOURCE_COLORS: Record<string, string> = {
 };
 
 export default function ErrorsPage() {
-  const [errors, setErrors] = useState<ErrorEntry[]>([]);
-  const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [sourceFilter, setSourceFilter] = useState<string>("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
-  const fetchErrors = useCallback(async (pageOffset: number, source?: string) => {
-    setLoading(true);
-    try {
+  const {
+    data,
+    loading,
+    run: fetchErrors,
+  } = useFetch<{ list: ErrorEntry[]; total: number }, [number, string?]>(
+    async (pageOffset, source) => {
       const res = await api.errors.list({
         source: source || undefined,
         limit: PAGE_SIZE,
         offset: pageOffset,
       });
-      setErrors(res.data);
-      setTotal(res.meta.total);
-    } catch {
-      toast.error("Failed to load errors");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return { list: res.data, total: res.meta.total };
+    },
+    { initialLoading: true, onError: () => toast.error("Failed to load errors") },
+  );
+  const errors = data?.list ?? [];
+  const total = data?.total ?? 0;
 
   useEffect(() => {
     fetchErrors(0, sourceFilter);
@@ -70,9 +69,8 @@ export default function ErrorsPage() {
     try {
       const res = await api.errors.clear();
       toast.success(`Cleared ${res.data.cleared} errors`);
-      setErrors([]);
-      setTotal(0);
       setOffset(0);
+      fetchErrors(0, sourceFilter);
     } catch {
       toast.error("Failed to clear errors");
     }

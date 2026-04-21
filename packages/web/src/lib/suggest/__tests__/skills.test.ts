@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from "bun:test";
-import { matchKeywords } from "../intent.js";
-import { useRegistryStore } from "../registry-store.js";
-import { skillsProvider } from "../providers/skills.provider.js";
-import type { Suggestion, SuggestionContext } from "../types.js";
-import type { RegistrySkill } from "../registry-store.js";
+import { matchKeywords } from "../intent";
+import { useRegistryStore } from "../registry-store";
+import { skillsProvider } from "../providers/skills.provider";
+import type { Suggestion, SuggestionContext } from "../types";
+import type { RegistrySkill } from "../registry-store";
 
 function makeCtx(prompt: string): SuggestionContext {
   return { prompt, cursorPosition: prompt.length };
