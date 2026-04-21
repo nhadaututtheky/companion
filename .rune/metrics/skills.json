@@ -1,10 +1,14 @@
 {
   "version": 1,
-  "updated": "2026-04-12T08:15:15.669Z",
+  "updated": "2026-04-21T17:54:21.061Z",
   "skills": {
     "plan": {
       "total_invocations": 2,
       "last_used": "2026-04-11"
+    },
+    "ship": {
+      "total_invocations": 3,
+      "last_used": "2026-04-19"
     }
   }
 }

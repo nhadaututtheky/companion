@@ -17,7 +17,7 @@ Followup to composer-unify (commits `92aab65` + `4d5e865`). Same playbook applie
 |---|------|--------|-----------|--------|-----------|
 | 1 | Web formatters lib | ✅ Done | plan-simplicity-cleanup-phase1.md | trivial | ~80 |
 | 2 | Date formatters merge | ✅ Done | plan-simplicity-cleanup-phase2.md | trivial | ~40 |
-| 3 | `useFetch` hook | ⬚ Pending | plan-simplicity-cleanup-phase3.md | small | ~120 |
+| 3 | `useFetch` hook | ✅ Done | plan-simplicity-cleanup-phase3.md | small | ~120 |
 | 4 | Route error wrapper | ⬚ Pending | plan-simplicity-cleanup-phase4.md | small | ~100 |
 | 5 | Color palette | ⬚ Deferred | plan-simplicity-cleanup-phase5.md | small | ~70 |
 

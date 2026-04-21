@@ -6,7 +6,7 @@ Extract `setLoading(true) → try/catch → setLoading(false)` boilerplate from 
 
 ## Tasks
 
-- [ ] Create `packages/web/src/hooks/use-fetch.ts`:
+- [x] Create `packages/web/src/hooks/use-fetch.ts`:
   ```ts
   interface UseFetchOptions<T> {
     onError?: (err: unknown) => void;  // page decides UX (toast/inline/silent)
@@ -21,18 +21,22 @@ Extract `setLoading(true) → try/catch → setLoading(false)` boilerplate from 
   }
   function useFetch<T>(fn: (...args: any[]) => Promise<T>, opts?: UseFetchOptions<T>): UseFetchResult<T>
   ```
-- [ ] Add `packages/web/src/hooks/__tests__/use-fetch.test.ts`:
+- [x] Add `packages/web/src/hooks/__tests__/use-fetch.test.ts`:
   - Loading state cycle (false → true → false)
   - Success populates `data`, clears `error`
   - Error populates `error`, calls `onError`, clears `loading`
   - `refetch` re-uses last args
   - `data` retained on subsequent error (don't clobber stale-ok data)
-- [ ] Migrate 3 representative pages first (different error UX styles):
-  - `app/analytics/page.tsx` — silent error
-  - `app/projects/page.tsx` — toast error
-  - `app/schedules/page.tsx` — inline error
-- [ ] After Sonnet review of those 3, batch migrate remaining: `sessions`, `login`, `review`, `settings/*`
-- [ ] Run `bun test` + `bunx tsc --noEmit`
+- [x] Migrate pages (7 targets):
+  - [x] `app/analytics/page.tsx` — stats inline + features silent
+  - [x] `app/projects/page.tsx` — silent error (actions use toast separately)
+  - [x] `app/sessions/page.tsx` — silent error on list
+  - [x] `app/workflows/page.tsx` — toast on load fail, filter-driven refetch
+  - [x] `app/review/page.tsx` — inline error + loadFile with side effects (URL update)
+  - [x] `app/settings/errors/page.tsx` — toast on fail, paginated fetch with args
+  - [ ] `app/schedules/page.tsx` — NOT MIGRATED: doesn't fit pattern (no `setLoading(true)` on refresh, keeps stale data on error)
+  - [ ] `app/login/page.tsx` — NOT MIGRATED: `validatePin` returns bool (never throws); error is UI validation string not fetch error
+- [x] Run `bun test` + `bunx tsc --noEmit` (271 pass, tsc clean)
 
 ## Acceptance Criteria
 

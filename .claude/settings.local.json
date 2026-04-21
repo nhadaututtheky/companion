@@ -1,8 +1,21 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(node \"C:/Users/X/.claude/plugins/marketplaces/rune-kit/hooks/run-hook.cjs\" pre-tool-guard)",
+      "Bash(node \"C:/Users/X/.claude/scripts/suggest-compact.js\")"
+    ]
+  },
   "mcpServers": {
     "xlabs": {
       "type": "url",
       "url": "http://localhost:3461/mcp"
+    },
+    "xlabs-remote": {
+      "type": "url",
+      "url": "https://admin.theio.vn/api/mcp",
+      "headers": {
+        "Authorization": "Bearer xlabs-51c7dc363484ff116418c3cbe0f56101c5670e674146eafc"
+      }
     }
   }
 }
