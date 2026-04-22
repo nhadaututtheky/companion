@@ -11,7 +11,16 @@ import type { AccountMergeBeforeRow } from "../db/schema.js";
 import { encrypt, decrypt, isEncryptionEnabled } from "./crypto.js";
 import { getSqlite } from "../db/client.js";
 import { createLogger } from "../logger.js";
-import { TERMINAL_SESSION_STATUSES } from "@companion/shared";
+import {
+  TERMINAL_SESSION_STATUSES,
+  QUOTA_STALE_AFTER_MS,
+  DEFAULT_ACCOUNT_SWITCH_THRESHOLD,
+  ACCOUNT_SWITCH_THRESHOLD_KEY,
+  maxQuotaUtil,
+} from "@companion/shared";
+import type { AccountQuota } from "@companion/shared";
+import { rowToAccountQuota, refreshStaleQuotas } from "./usage-fetcher.js";
+import { getSettingNumber } from "./settings-helpers.js";
 
 const log = createLogger("credential-manager");
 
@@ -47,6 +56,8 @@ export interface AccountInfo {
   monthlyBudget: number | null;
   skipInRotation: boolean;
   lastUsedAt: Date | null;
+  /** Anthropic-reported quota windows, or null when never fetched. Phase 2. */
+  quota: AccountQuota | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -568,6 +579,7 @@ function toAccountInfo(row: AccountRow): AccountInfo {
     monthlyBudget: row.monthlyBudget ?? null,
     skipInRotation: row.skipInRotation ?? false,
     lastUsedAt: row.lastUsedAt,
+    quota: rowToAccountQuota(row),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -794,6 +806,84 @@ export function markRateLimited(id: string): number {
  * caller has already vetted the candidate pool (e.g. exposed by a UI button).
  */
 export function findNextReady(excludeId?: string, includeSkipped = false): AccountInfo | undefined {
+  const sorted = readSortedReadyRows(excludeId, includeSkipped);
+  const row = sorted[0];
+  return row ? toAccountInfo(row) : undefined;
+}
+
+/**
+ * Phase 2 — async picker with JIT refresh + Anthropic-quota gate.
+ *
+ * Pipeline:
+ *   1. Refresh every `ready` row whose `quota_fetched_at` is older than
+ *      `QUOTA_STALE_AFTER_MS` (or null). Bounded latency (2s × concurrency 3).
+ *   2. Re-read rows, sort by LRU+cost (same as sync), then:
+ *      - PREFER rows with `maxUtil < switchThreshold`
+ *      - If ALL eligible rows are over threshold → pick the LEAST-over-limit
+ *        (`min(maxUtil)`), so the reactive path still has a fighting chance.
+ *      - Rows with `quota == null` OR stale `fetched_at` treat `maxUtil=0`
+ *        (don't block on missing data — reactive regex path is our safety net).
+ *
+ * Callers that can afford latency (session start, reactive auto-switch,
+ * manual switch-next) should use this. Callers that can't (sync code paths,
+ * tests) can stay on the sync variant — the reactive regex path is still
+ * our safety net there.
+ */
+export async function findNextReadyAsync(
+  excludeId?: string,
+  includeSkipped = false,
+): Promise<AccountInfo | undefined> {
+  // JIT refresh: only touches stale `ready` rows, concurrency-capped. The
+  // TTL guard inside usage-fetcher makes this a near-no-op when quotas were
+  // touched recently.
+  try {
+    await refreshStaleQuotas();
+  } catch (err) {
+    log.warn("refreshStaleQuotas failed before quota gate — continuing with stale data", {
+      error: String(err),
+    });
+  }
+
+  const sorted = readSortedReadyRows(excludeId, includeSkipped);
+  if (sorted.length === 0) return undefined;
+
+  const switchThreshold = getSettingNumber(
+    ACCOUNT_SWITCH_THRESHOLD_KEY,
+    DEFAULT_ACCOUNT_SWITCH_THRESHOLD,
+  );
+  const staleCutoff = Date.now() - QUOTA_STALE_AFTER_MS;
+
+  // Compute one maxUtil per row. Null quota or stale → 0 so the gate never
+  // excludes a row we don't have data for; the reactive path will still catch
+  // a real rate-limit if this guess is wrong.
+  type Scored = { row: AccountRow; maxUtil: number; hasFreshQuota: boolean };
+  const scored: Scored[] = sorted.map((row) => {
+    const quota = rowToAccountQuota(row);
+    const fetchedAtMs = quota?.fetchedAt ?? 0;
+    const hasFreshQuota = !!quota && fetchedAtMs > staleCutoff;
+    const util = hasFreshQuota ? (maxQuotaUtil(quota) ?? 0) : 0;
+    return { row, maxUtil: util, hasFreshQuota };
+  });
+
+  const underThreshold = scored.filter((s) => s.maxUtil < switchThreshold);
+  if (underThreshold.length > 0) {
+    const winner = underThreshold[0]!; // sorted upstream by LRU+cost
+    return toAccountInfo(winner.row);
+  }
+
+  // Deadlock fallback: every eligible account is at/over the switch
+  // threshold. Pick the least-over-limit so the session can still try; if
+  // it rate-limits we fall back to the reactive auto-switch + cooldown.
+  log.warn("All eligible accounts over switch threshold — picking least-over-limit", {
+    switchThreshold,
+    count: scored.length,
+  });
+  const fallback = [...scored].sort((a, b) => a.maxUtil - b.maxUtil)[0]!;
+  return toAccountInfo(fallback.row);
+}
+
+/** Shared sort used by both sync + async pickers. Purely DB reads, no I/O. */
+function readSortedReadyRows(excludeId: string | undefined, includeSkipped: boolean): AccountRow[] {
   const db = getDb();
   const rows = excludeId
     ? db
@@ -804,11 +894,10 @@ export function findNextReady(excludeId?: string, includeSkipped = false): Accou
     : db.select().from(accounts).where(eq(accounts.status, "ready")).all();
 
   const eligible = includeSkipped ? rows : rows.filter((r) => !r.skipInRotation);
-  if (eligible.length === 0) return undefined;
+  if (eligible.length === 0) return [];
 
   // Tiebreaker cost comes from the live sessions table, not the denormalized
   // accounts.totalCostUsd column which can drift (missed cost events, resets).
-  // Scoped to just the eligible IDs to avoid scanning unrelated sessions.
   const eligibleIds = eligible.map((r) => r.id);
   const liveCost = new Map<string, number>();
   const costRows = db
@@ -825,15 +914,12 @@ export function findNextReady(excludeId?: string, includeSkipped = false): Accou
   }
 
   // Least recently used first (null = never used → oldest). Ties broken by lowest cost.
-  // Copy before sort to preserve caller-facing immutability.
-  const sorted = [...eligible].sort((a, b) => {
+  return [...eligible].sort((a, b) => {
     const aTime = a.lastUsedAt ? a.lastUsedAt.getTime() : 0;
     const bTime = b.lastUsedAt ? b.lastUsedAt.getTime() : 0;
     if (aTime !== bTime) return aTime - bTime;
     return (liveCost.get(a.id) ?? 0) - (liveCost.get(b.id) ?? 0);
   });
-  const row = sorted[0]!;
-  return toAccountInfo(row);
 }
 
 /**

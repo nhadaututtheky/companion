@@ -7,13 +7,23 @@ import { eventBus } from "./event-bus.js";
 import {
   getActiveAccount,
   markRateLimited,
-  findNextReady,
+  findNextReadyAsync,
   switchAccount,
   resetExpiredCooldowns,
 } from "./credential-manager.js";
 import { isEncryptionEnabled } from "./crypto.js";
-import { getSettingBool } from "./settings-helpers.js";
+import { getSettingBool, getSettingNumber } from "./settings-helpers.js";
 import { createLogger } from "../logger.js";
+import {
+  ACCOUNT_SWITCH_THRESHOLD_KEY,
+  DEFAULT_ACCOUNT_SWITCH_THRESHOLD,
+  maxQuotaUtil,
+  QUOTA_STALE_AFTER_MS,
+} from "@companion/shared";
+import { rowToAccountQuota } from "./usage-fetcher.js";
+import { getDb } from "../db/client.js";
+import { accounts } from "../db/schema.js";
+import { eq } from "drizzle-orm";
 
 /** Settings key: "true" to let the auto-switch system pick a new account on rate-limit. */
 export const AUTO_SWITCH_KEY = "accounts.autoSwitchEnabled";
@@ -53,6 +63,13 @@ async function handleRateLimited(payload: {
     return;
   }
 
+  // Phase 2: proactive-miss detector. Before we mark this account rate-limited,
+  // check whether our quota gate could have seen this coming. If the account
+  // had FRESH quota data below the switch threshold AND still hit a real rate
+  // limit, the threshold is too lenient (or Anthropic's util is lagging). This
+  // log is the only breadcrumb for tuning defaults in production.
+  logProactiveMissIfApplicable(activeAccount.id);
+
   // Always mark rate-limited (so UI shows correct state + cooldown timer runs)
   // Then gate the actual switch behind the user toggle.
   const cooldownMs = markRateLimited(activeAccount.id);
@@ -77,8 +94,10 @@ async function handleRateLimited(payload: {
 
   // Find next ready account (skip-in-rotation filtered out first; fall back to
   // skipped accounts rather than deadlocking if the user has flagged everything).
-  let nextAccount = findNextReady(activeAccount.id);
-  if (!nextAccount) nextAccount = findNextReady(activeAccount.id, true);
+  // Async variant refreshes stale quotas JIT so the fallback pick isn't itself
+  // already over-limit.
+  let nextAccount = await findNextReadyAsync(activeAccount.id);
+  if (!nextAccount) nextAccount = await findNextReadyAsync(activeAccount.id, true);
   if (!nextAccount) {
     log.warn("All accounts rate-limited — no auto-switch possible");
     eventBus.emit("account:all_limited", {
@@ -133,6 +152,40 @@ export function startAutoSwitch(): void {
   }, 60_000);
 
   log.info("Account auto-switch started");
+}
+
+/**
+ * If this account's quota was fresh AND under the switch threshold but we
+ * still hit a real rate limit, the proactive gate *should* have caught it.
+ * Emit a warn log so defaults can be tuned. Silent when quota is stale or
+ * missing — that's a known limitation of Alt D (on-demand), not a miss.
+ */
+function logProactiveMissIfApplicable(accountId: string): void {
+  try {
+    const db = getDb();
+    const row = db.select().from(accounts).where(eq(accounts.id, accountId)).get();
+    if (!row) return;
+    const quota = rowToAccountQuota(row);
+    if (!quota) return;
+    const ageMs = Date.now() - quota.fetchedAt;
+    if (ageMs >= QUOTA_STALE_AFTER_MS) return; // Stale — expected miss.
+    const util = maxQuotaUtil(quota);
+    if (util == null) return;
+    const switchThreshold = getSettingNumber(
+      ACCOUNT_SWITCH_THRESHOLD_KEY,
+      DEFAULT_ACCOUNT_SWITCH_THRESHOLD,
+    );
+    if (util >= switchThreshold) return; // Gate would have fired — not a miss.
+    log.warn("Proactive quota miss — rate_limited hit while util below threshold", {
+      accountId,
+      util,
+      switchThreshold,
+      quotaAgeMs: ageMs,
+    });
+  } catch (err) {
+    // Non-fatal: this is observability-only.
+    log.debug("proactive-miss detector error", { accountId, error: String(err) });
+  }
 }
 
 /** Stop the auto-switch system. Call on server shutdown. */

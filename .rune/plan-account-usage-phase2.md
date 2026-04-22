@@ -1,5 +1,7 @@
 # Phase 2: Round-Robin Fix + Inline Quota Bars (MVP)
 
+> **Status:** 2A (server) done 2026-04-22. 2B (web UI) pending.
+
 ## Goal
 
 Two wins in one phase:
@@ -12,8 +14,8 @@ Ship gate: if both work well for 1 week, mark feature done. Phase 3 (background 
 
 ## Tasks
 
-### 2.1 Round-robin proactive gate — `credential-manager.ts`
-- [ ] Split `findNextReady` into sync + async variants:
+### 2.1 Round-robin proactive gate — `credential-manager.ts` ✅
+- [x] Split `findNextReady` into sync + async variants:
   - `findNextReady(excludeId?, includeSkipped?)` — keep existing sync behavior as fallback
   - `findNextReadyAsync(excludeId?, includeSkipped?)` — new: refreshes stale quotas JIT, then applies quota gate
 - [ ] Quota gate logic:
@@ -28,20 +30,20 @@ Ship gate: if both work well for 1 week, mark feature done. Phase 3 (background 
   - Called from `findNextReadyAsync` before the pick
 - [ ] Callers updated: `session-start` / `account-auto-switch.handleRateLimited` → use async variant
 
-### 2.2 Keep reactive fallback alive
-- [ ] `account-auto-switch.ts` regex → event path UNCHANGED. Proactive gate is a layer on top, not a replacement.
-- [ ] When reactive swap triggers after a failed request, log a "proactive miss" warning — signals quota data was stale. Helps tune TTL.
+### 2.2 Keep reactive fallback alive ✅
+- [x] `account-auto-switch.ts` regex → event path UNCHANGED. Proactive gate is a layer on top, not a replacement.
+- [x] When reactive swap triggers after a failed request, log a "proactive miss" warning — signals quota data was stale. Helps tune TTL.
 
-### 2.3 Settings: `accounts.warnThreshold` + `accounts.switchThreshold`
-- [ ] Two new rows in `app_settings` key-value table
-- [ ] Defaults: `warnThreshold=0.7`, `switchThreshold=0.9`
-- [ ] Slider step: `0.05` (display as 5% increments — 50%, 55%, ..., 95%)
-- [ ] Expose in `settings-helpers.getSettingNumber(key, default)`
-- [ ] Server validation on `PATCH /api/accounts/settings`:
-  - Clamp each to `[0.5, 0.95]`
-  - Snap to nearest 0.05 multiple
-  - Enforce `warnThreshold < switchThreshold` with min gap `0.05` (auto-bump the other slider if conflict)
-  - Return normalized values so client can reflect server's final state
+### 2.3 Settings: `accounts.warnThreshold` + `accounts.switchThreshold` ✅ (server)
+- [x] Two new rows in `app_settings` key-value table (stored via existing `settings` table convention)
+- [x] Defaults: `warnThreshold=0.7`, `switchThreshold=0.9`
+- [x] Slider step: `0.05` (display as 5% increments — 50%, 55%, ..., 95%)
+- [x] Expose in `settings-helpers.getSettingNumber(key, default)`
+- [x] Server validation on `PATCH /api/accounts/settings`:
+  - [x] Clamp each to `[0.5, 0.95]`
+  - [x] Snap to nearest 0.05 multiple
+  - [x] Enforce `warnThreshold + 0.05 <= switchThreshold` (with fence fallback for MIN/MAX corners)
+  - [x] Return normalized values so client can reflect server's final state
 - [ ] Web UI — in `accounts-tab.tsx` settings section (near auto-switch toggle):
   - Two sliders stacked: "Warning at %" and "Auto-switch at %"
   - Warn slider range: `[0.5, switchThreshold - 0.05]`, step `0.05`
@@ -50,13 +52,13 @@ Ship gate: if both work well for 1 week, mark feature done. Phase 3 (background 
   - Labels explain each: "Highlight bar when quota reaches X%" / "Skip account in rotation when quota reaches X%"
   - Disabled if `autoSwitchEnabled=false` (greyed, with tooltip)
 
-### 2.4 REST extension — `routes/accounts.ts`
-- [ ] `GET /api/accounts` list response now includes `quota` field per account
-- [ ] `POST /api/accounts/:id/quota/refresh` — force-fetch; rate-limited 1 call / 10s / account
+### 2.4 REST extension — `routes/accounts.ts` ✅
+- [x] `GET /api/accounts` list response now includes `quota` field per account (via `toAccountInfo`)
+- [x] `POST /api/accounts/:id/quota/refresh` — force-fetch; rate-limited 1 call / 10s / account (429 + Retry-After)
 
-### 2.5 Shared types — `packages/shared/src/types/account.ts`
-- [ ] `AccountQuota` interface (already defined in Phase 1)
-- [ ] Extend `AccountInfo` in `lib/api/accounts.ts` with `quota?: AccountQuota`
+### 2.5 Shared types — `packages/shared/src/types/account.ts` ✅
+- [x] `AccountQuota` interface (already defined in Phase 1)
+- [x] Extend `AccountInfo` in server's `credential-manager.ts` with `quota: AccountQuota | null`
 
 ### 2.6 Web UI — inline bars in card
 - [ ] Extract `AccountQuotaBars` component (~70 LOC, presentational)
@@ -82,8 +84,12 @@ Ship gate: if both work well for 1 week, mark feature done. Phase 3 (background 
 - [ ] Rename section title from "5h session" → "5h (this device)"; "weekly" → "weekly (this device)"
 - [ ] No data-source change — still computes from local sessions. Just truth-in-labeling.
 
-### 2.9 Tests
-- [ ] `credential-manager.findNextReadyAsync.test.ts`:
+### 2.9 Tests (server slice ✅)
+- [x] `find-next-ready-async.test.ts` — 8 scenarios (quota-gated round-robin)
+- [x] `refresh-stale-quotas.test.ts` — 6 scenarios (concurrency, TTL, skip rules)
+- [x] `account-thresholds.test.ts` — 9 scenarios (clamp/snap/min-gap fence fallback)
+
+- [ ] (web slice) `credential-manager.findNextReadyAsync.test.ts`:
   - Account with 5h=95%, weekly=20% (maxUtil=0.95 > 0.9) → excluded
   - Account with 5h=20%, weekly=92% (maxUtil=0.92) → also excluded (MAX covers weekly)
   - All accounts over threshold → min-maxUtil picked

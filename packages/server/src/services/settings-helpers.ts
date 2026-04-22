@@ -32,3 +32,15 @@ export function getSettingBool(key: string, fallback: boolean): boolean {
   if (val === undefined) return fallback;
   return val === "true";
 }
+
+/**
+ * Get a setting as a float number with fallback. Used by the per-account
+ * quota thresholds (`accounts.warnThreshold`, `accounts.switchThreshold`).
+ * Returns `fallback` on NaN / missing / non-numeric — never throws.
+ */
+export function getSettingNumber(key: string, fallback: number): number {
+  const val = getSetting(key);
+  if (val === undefined) return fallback;
+  const num = Number(val);
+  return Number.isFinite(num) ? num : fallback;
+}

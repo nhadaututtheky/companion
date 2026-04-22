@@ -18,14 +18,18 @@
  *   - Phase 3 (deferred): smart poller
  */
 
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, lt, or } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "../db/client.js";
 import { accounts } from "../db/schema.js";
 import { createLogger } from "../logger.js";
 import { getAccessToken, refreshAccessToken } from "./oauth-token-service.js";
-import { QUOTA_REFRESH_TTL_MS } from "@companion/shared";
-import type { AccountOverageStatus, AccountQuota, AccountQuotaWindow } from "@companion/shared";
+import { QUOTA_REFRESH_TTL_MS, QUOTA_STALE_AFTER_MS } from "@companion/shared";
+import type {
+  AccountOverageStatus,
+  AccountQuota,
+  AccountQuotaWindow,
+} from "@companion/shared";
 
 const log = createLogger("usage-fetcher");
 
@@ -255,6 +259,144 @@ function mapWindow(
   const resetsSec = window.resets_at;
   if (typeof util !== "number" || typeof resetsSec !== "number") return null;
   return { util, resetsAt: resetsSec * 1_000 };
+}
+
+// ─── Bulk staleness refresher (Phase 2 JIT) ────────────────────────────────
+
+/** Default concurrency for {@link refreshStaleQuotas}. */
+export const DEFAULT_QUOTA_REFRESH_CONCURRENCY = 3;
+
+/** Per-call timeout budget for {@link refreshStaleQuotas}. Bounds session-start latency. */
+export const DEFAULT_QUOTA_REFRESH_TIMEOUT_MS = 2_000;
+
+export interface RefreshStaleQuotasResult {
+  scanned: number;
+  refreshed: number;
+  failed: number;
+}
+
+/**
+ * Refresh quota for every `ready` account whose `quota_fetched_at` is null
+ * or older than `maxAgeMs`. Parallelized with a concurrency cap so the
+ * JIT refresh called from `findNextReadyAsync` doesn't stampede Anthropic.
+ * Individual calls are wrapped in a racing `setTimeout` so one slow host
+ * never blocks the whole pick.
+ *
+ * Skips accounts with `status` in (`expired`, `error`) or `skipInRotation`
+ * = true — those are already filtered by the inner `refreshAccountUsage`,
+ * but we also drop them here to keep the active worker set tight.
+ */
+export async function refreshStaleQuotas(
+  maxAgeMs: number = QUOTA_STALE_AFTER_MS,
+  opts: { concurrency?: number; timeoutMs?: number } = {},
+): Promise<RefreshStaleQuotasResult> {
+  const concurrency = Math.max(1, opts.concurrency ?? DEFAULT_QUOTA_REFRESH_CONCURRENCY);
+  const perCallTimeoutMs = opts.timeoutMs ?? DEFAULT_QUOTA_REFRESH_TIMEOUT_MS;
+  const db = getDb();
+  const staleBefore = new Date(Date.now() - maxAgeMs);
+
+  const rows = db
+    .select({ id: accounts.id })
+    .from(accounts)
+    .where(
+      and(
+        eq(accounts.status, "ready"),
+        eq(accounts.skipInRotation, false),
+        or(isNull(accounts.quotaFetchedAt), lt(accounts.quotaFetchedAt, staleBefore)),
+      ),
+    )
+    .all();
+
+  if (rows.length === 0) return { scanned: 0, refreshed: 0, failed: 0 };
+
+  let refreshed = 0;
+  let failed = 0;
+  const queue = rows.map((r) => r.id);
+
+  async function worker(): Promise<void> {
+    while (queue.length > 0) {
+      const id = queue.shift();
+      if (!id) break;
+      const winner = await Promise.race([
+        refreshAccountUsage(id).then((q) => ({ kind: "done" as const, quota: q })),
+        new Promise<{ kind: "timeout" }>((resolve) =>
+          setTimeout(() => resolve({ kind: "timeout" }), perCallTimeoutMs),
+        ),
+      ]);
+      if (winner.kind === "timeout") {
+        failed++;
+        log.warn("Quota refresh timeout — falling back to stale data", { accountId: id });
+      } else if (winner.quota) {
+        refreshed++;
+      } else {
+        // No-op (TTL hit, skipped account, expired status) — don't count as failure.
+      }
+    }
+  }
+
+  const workers: Promise<void>[] = [];
+  const n = Math.min(concurrency, rows.length);
+  for (let i = 0; i < n; i++) workers.push(worker());
+  await Promise.all(workers);
+
+  log.info("refreshStaleQuotas complete", {
+    scanned: rows.length,
+    refreshed,
+    failed,
+    maxAgeMs,
+  });
+  return { scanned: rows.length, refreshed, failed };
+}
+
+// ─── DB row → AccountQuota mapper ───────────────────────────────────────────
+
+/** Shape-compatible subset of an accounts row needed to rebuild AccountQuota. */
+export interface AccountQuotaRow {
+  quotaFiveHourUtil: number | null;
+  quotaFiveHourResetsAt: Date | number | null;
+  quotaSevenDayUtil: number | null;
+  quotaSevenDayResetsAt: Date | number | null;
+  quotaSevenDayOpusUtil: number | null;
+  quotaSevenDayOpusResetsAt: Date | number | null;
+  quotaSevenDaySonnetUtil: number | null;
+  quotaSevenDaySonnetResetsAt: Date | number | null;
+  quotaOverageStatus: string | null;
+  quotaFetchedAt: Date | number | null;
+}
+
+function toMs(v: Date | number | null): number | null {
+  if (v == null) return null;
+  return v instanceof Date ? v.getTime() : Number(v);
+}
+
+function buildWindow(
+  util: number | null,
+  resetsAt: Date | number | null,
+): AccountQuotaWindow | null {
+  if (typeof util !== "number") return null;
+  const ms = toMs(resetsAt);
+  if (ms == null) return null;
+  return { util, resetsAt: ms };
+}
+
+/**
+ * Reconstruct an `AccountQuota` from a raw DB row. Returns null when we've
+ * never successfully fetched for this account (so callers can distinguish
+ * "unknown" from "known-zero"). Shared by `routes/accounts.ts` (list payload)
+ * and `credential-manager.toAccountInfo`.
+ */
+export function rowToAccountQuota(row: AccountQuotaRow): AccountQuota | null {
+  const fetchedAt = toMs(row.quotaFetchedAt);
+  if (fetchedAt == null) return null;
+
+  return {
+    fiveHour: buildWindow(row.quotaFiveHourUtil, row.quotaFiveHourResetsAt),
+    sevenDay: buildWindow(row.quotaSevenDayUtil, row.quotaSevenDayResetsAt),
+    sevenDayOpus: buildWindow(row.quotaSevenDayOpusUtil, row.quotaSevenDayOpusResetsAt),
+    sevenDaySonnet: buildWindow(row.quotaSevenDaySonnetUtil, row.quotaSevenDaySonnetResetsAt),
+    overageStatus: (row.quotaOverageStatus as AccountOverageStatus | null) ?? null,
+    fetchedAt,
+  };
 }
 
 /** Write all 4 window pairs + overage + fetched_at in one UPDATE. */

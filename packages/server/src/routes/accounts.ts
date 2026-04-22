@@ -23,7 +23,7 @@ import {
   accountExists,
   updateAccountBudgets,
   updateAccountSkipRotation,
-  findNextReady,
+  findNextReadyAsync,
 } from "../services/credential-manager.js";
 import {
   listPendingMergeEvents,
@@ -36,9 +36,17 @@ import { eq } from "drizzle-orm";
 import { manualCapture } from "../services/credential-watcher.js";
 import { refreshAccountProfileAsync } from "../services/profile-fetcher.js";
 import { getAccountUsage } from "../services/account-usage.js";
-import { getSettingBool } from "../services/settings-helpers.js";
+import { refreshAccountUsage } from "../services/usage-fetcher.js";
+import { getSettingBool, getSettingNumber } from "../services/settings-helpers.js";
 import { AUTO_SWITCH_KEY } from "../services/account-auto-switch.js";
-import type { ApiResponse } from "@companion/shared";
+import {
+  ACCOUNT_SWITCH_THRESHOLD_KEY,
+  ACCOUNT_WARN_THRESHOLD_KEY,
+  DEFAULT_ACCOUNT_SWITCH_THRESHOLD,
+  DEFAULT_ACCOUNT_WARN_THRESHOLD,
+  normalizeThresholdPair,
+} from "@companion/shared";
+import type { AccountThresholds, ApiResponse } from "@companion/shared";
 
 const credentialsSchema = z.object({
   accessToken: z.string().min(1),
@@ -74,7 +82,11 @@ const skipRotationSchema = z.object({
 });
 
 const accountSettingsSchema = z.object({
-  autoSwitchEnabled: z.boolean(),
+  autoSwitchEnabled: z.boolean().optional(),
+  warnThreshold: z.number().min(0).max(1).optional(),
+  switchThreshold: z.number().min(0).max(1).optional(),
+  /** UI hint so the validator knows which side to prefer when enforcing the gap. */
+  lastChanged: z.enum(["warn", "switch"]).optional(),
 });
 
 /** Upsert a setting row. Keeps the existing convention used by routes/domain.ts. */
@@ -108,24 +120,76 @@ accountRoutes.get("/active", (c) => {
   return c.json({ success: true, data: active ?? null } satisfies ApiResponse);
 });
 
-// Get account manager settings (auto-switch toggle).
+// Get account manager settings (auto-switch toggle + quota thresholds).
 // Registered before any dynamic `/:id/...` routes to avoid router ambiguity.
 accountRoutes.get("/settings", (c) => {
   return c.json({
     success: true,
     data: {
       autoSwitchEnabled: getSettingBool(AUTO_SWITCH_KEY, true),
+      warnThreshold: getSettingNumber(
+        ACCOUNT_WARN_THRESHOLD_KEY,
+        DEFAULT_ACCOUNT_WARN_THRESHOLD,
+      ),
+      switchThreshold: getSettingNumber(
+        ACCOUNT_SWITCH_THRESHOLD_KEY,
+        DEFAULT_ACCOUNT_SWITCH_THRESHOLD,
+      ),
     },
   } satisfies ApiResponse);
 });
 
-// Update account manager settings
+// Update account manager settings. All fields optional — PATCH-style. Thresholds
+// are normalized server-side (clamp / snap / enforce min gap) so the client
+// can render whatever the server echoes back without doing its own math.
 accountRoutes.put("/settings", zValidator("json", accountSettingsSchema), (c) => {
-  const { autoSwitchEnabled } = c.req.valid("json");
-  setAccountSetting(AUTO_SWITCH_KEY, autoSwitchEnabled ? "true" : "false");
+  const patch = c.req.valid("json");
+  if (patch.autoSwitchEnabled !== undefined) {
+    setAccountSetting(AUTO_SWITCH_KEY, patch.autoSwitchEnabled ? "true" : "false");
+  }
+
+  const haveThreshold = patch.warnThreshold !== undefined || patch.switchThreshold !== undefined;
+  let thresholds: AccountThresholds;
+  if (haveThreshold) {
+    const current: AccountThresholds = {
+      warnThreshold: getSettingNumber(
+        ACCOUNT_WARN_THRESHOLD_KEY,
+        DEFAULT_ACCOUNT_WARN_THRESHOLD,
+      ),
+      switchThreshold: getSettingNumber(
+        ACCOUNT_SWITCH_THRESHOLD_KEY,
+        DEFAULT_ACCOUNT_SWITCH_THRESHOLD,
+      ),
+    };
+    thresholds = normalizeThresholdPair(
+      {
+        warnThreshold: patch.warnThreshold ?? current.warnThreshold,
+        switchThreshold: patch.switchThreshold ?? current.switchThreshold,
+      },
+      { lastChanged: patch.lastChanged },
+    );
+    setAccountSetting(ACCOUNT_WARN_THRESHOLD_KEY, String(thresholds.warnThreshold));
+    setAccountSetting(ACCOUNT_SWITCH_THRESHOLD_KEY, String(thresholds.switchThreshold));
+  } else {
+    thresholds = {
+      warnThreshold: getSettingNumber(
+        ACCOUNT_WARN_THRESHOLD_KEY,
+        DEFAULT_ACCOUNT_WARN_THRESHOLD,
+      ),
+      switchThreshold: getSettingNumber(
+        ACCOUNT_SWITCH_THRESHOLD_KEY,
+        DEFAULT_ACCOUNT_SWITCH_THRESHOLD,
+      ),
+    };
+  }
+
   return c.json({
     success: true,
-    data: { autoSwitchEnabled },
+    data: {
+      autoSwitchEnabled: getSettingBool(AUTO_SWITCH_KEY, true),
+      warnThreshold: thresholds.warnThreshold,
+      switchThreshold: thresholds.switchThreshold,
+    },
   } satisfies ApiResponse);
 });
 
@@ -148,15 +212,17 @@ accountRoutes.post("/capture", async (c) => {
   } satisfies ApiResponse);
 });
 
-// Manual "switch to next available" — picks LRU ready account that is not skipped.
-// Falls back to skipped accounts only if no non-skipped ready account exists.
-// Single-flight guard prevents concurrent callers from double-switching.
+// Manual "switch to next available" — picks LRU ready account under the
+// switch-threshold quota gate. Falls back to skipped accounts only if no
+// non-skipped ready account exists. Single-flight guard prevents concurrent
+// callers from double-switching. Uses the async picker so the manual flow
+// gets JIT quota refresh for free.
 accountRoutes.post("/switch-next", async (c) => {
   if (!switchNextInFlight) {
     switchNextInFlight = (async () => {
       const active = getActiveAccount();
-      let target = findNextReady(active?.id);
-      if (!target) target = findNextReady(active?.id, true);
+      let target = await findNextReadyAsync(active?.id);
+      if (!target) target = await findNextReadyAsync(active?.id, true);
       if (!target) return null;
       const ok = await switchAccount(target.id);
       if (!ok) return null;
@@ -258,6 +324,52 @@ accountRoutes.put("/:id/status", zValidator("json", statusSchema), (c) => {
     return c.json({ success: false, error: "Account not found" } satisfies ApiResponse, 404);
   }
   return c.json({ success: true, data: { id, status } } satisfies ApiResponse);
+});
+
+// ─── Anthropic quota (Phase 2) ──────────────────────────────────────────────
+
+/** Client-facing refresh rate-limit: 1 call / 10 s / account. */
+const QUOTA_REFRESH_COOLDOWN_MS = 10_000;
+const lastQuotaRefreshAt = new Map<string, number>();
+
+/**
+ * Force-refresh the Anthropic quota for one account. Calls are rate-limited
+ * per-account so a user spamming the refresh button doesn't hammer
+ * Anthropic. The internal TTL inside usage-fetcher still applies — bypass
+ * it with `force: true` here because the user explicitly asked.
+ */
+accountRoutes.post("/:id/quota/refresh", async (c) => {
+  const id = c.req.param("id");
+  if (!accountExists(id)) {
+    return c.json({ success: false, error: "Account not found" } satisfies ApiResponse, 404);
+  }
+
+  const now = Date.now();
+  const last = lastQuotaRefreshAt.get(id);
+  if (last && now - last < QUOTA_REFRESH_COOLDOWN_MS) {
+    const retryAfterMs = QUOTA_REFRESH_COOLDOWN_MS - (now - last);
+    c.header("Retry-After", String(Math.ceil(retryAfterMs / 1000)));
+    return c.json(
+      {
+        success: false,
+        error: "Quota refresh rate-limited — try again shortly",
+      } satisfies ApiResponse,
+      429,
+    );
+  }
+  lastQuotaRefreshAt.set(id, now);
+
+  const quota = await refreshAccountUsage(id, { force: true });
+  if (!quota) {
+    return c.json(
+      {
+        success: false,
+        error: "Quota refresh failed — see server logs",
+      } satisfies ApiResponse,
+      502,
+    );
+  }
+  return c.json({ success: true, data: quota } satisfies ApiResponse);
 });
 
 // Per-account usage (heatmap + windows + model breakdown + custom budgets)
