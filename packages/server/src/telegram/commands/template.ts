@@ -5,6 +5,7 @@
 import { InlineKeyboard } from "grammy";
 import { escapeHTML } from "../formatter.js";
 import { createLogger } from "../../logger.js";
+import { formatProjectButton } from "../ui/project-status.js";
 import {
   listTemplates,
   getTemplate,
@@ -232,7 +233,7 @@ export function registerTemplateCommands(bridge: TelegramBridge): void {
       const keyboard = new InlineKeyboard();
       const tplId = tpl.id.slice(0, 8);
       for (const p of projects) {
-        keyboard.text(`📂 ${p.name}`, `tpl:p:${tplId}:${p.slug}`).row();
+        keyboard.text(formatProjectButton(p), `tpl:p:${tplId}:${p.slug}`).row();
       }
       await ctx
         .editMessageText(`${tpl.icon} <b>${escapeHTML(tpl.name)}</b>\nSelect project:`, {

@@ -9,6 +9,12 @@ import { escapeHTML } from "../formatter.js";
 import { createLogger } from "../../logger.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
 import { DEFAULT_MODEL, DEFAULT_PERMISSION_MODE } from "@companion/shared";
+import {
+  formatProjectButton,
+  getProjectStatusEmoji,
+  PROJECT_STATE_EMOJI,
+  PROJECT_STATE_LABEL,
+} from "../ui/project-status.js";
 
 const log = createLogger("cmd:session");
 
@@ -70,9 +76,9 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
       // Projects exist but no sessions yet — "ready to go" message
       const keyboard = new InlineKeyboard();
       for (let i = 0; i < projects.length; i += 2) {
-        keyboard.text(`📂 ${projects[i]!.name}`, `project:${projects[i]!.slug}`);
+        keyboard.text(formatProjectButton(projects[i]!), `project:${projects[i]!.slug}`);
         if (i + 1 < projects.length) {
-          keyboard.text(`📂 ${projects[i + 1]!.name}`, `project:${projects[i + 1]!.slug}`);
+          keyboard.text(formatProjectButton(projects[i + 1]!), `project:${projects[i + 1]!.slug}`);
         }
         keyboard.row();
       }
@@ -96,11 +102,14 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     const rows: Btn[][] = [];
     for (let i = 0; i < projects.length; i += 2) {
       const row: Btn[] = [
-        { text: `📂 ${projects[i]!.name}`, callback_data: `project:${projects[i]!.slug}` },
+        {
+          text: formatProjectButton(projects[i]!),
+          callback_data: `project:${projects[i]!.slug}`,
+        },
       ];
       if (i + 1 < projects.length) {
         row.push({
-          text: `📂 ${projects[i + 1]!.name}`,
+          text: formatProjectButton(projects[i + 1]!),
           callback_data: `project:${projects[i + 1]!.slug}`,
         });
       }
@@ -112,6 +121,8 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     await ctx.reply(
       [
         "👋 <b>Companion</b> — Select a project to start:",
+        "",
+        `<b>Status:</b> ${PROJECT_STATE_EMOJI.active} ${PROJECT_STATE_LABEL.active}  ·  ${PROJECT_STATE_EMOJI.waiting} ${PROJECT_STATE_LABEL.waiting}  ·  ${PROJECT_STATE_EMOJI["idle-resumable"]} ${PROJECT_STATE_LABEL["idle-resumable"]}  ·  ${PROJECT_STATE_EMOJI.none} ${PROJECT_STATE_LABEL.none}`,
         "",
         "<b>Quick commands:</b>",
         "/new — Start a session  ·  /stop — Stop",
@@ -182,7 +193,7 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
 
       const keyboard = new InlineKeyboard();
       for (const p of projects) {
-        keyboard.text(`📂 ${p.name}`, `new:${p.slug}`).row();
+        keyboard.text(formatProjectButton(p), `new:${p.slug}`).row();
       }
 
       await ctx.reply("Select a project for new session:", {
@@ -321,7 +332,7 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     const keyboard = new InlineKeyboard();
     for (const p of projects) {
       const dead = bridge.getDeadSessionByProject(chatId, p.slug);
-      const label = dead ? `↩ ${p.name}` : `📂 ${p.name} (new)`;
+      const label = dead ? `↩ ${p.name}` : `${getProjectStatusEmoji(p.slug)} ${p.name} (new)`;
       keyboard.text(label, dead ? `resume:${p.slug}:${chatId}` : `new:${p.slug}`).row();
     }
 
