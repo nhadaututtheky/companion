@@ -3,14 +3,15 @@
  * Each feature has metadata for display, discovery, and navigation.
  */
 
-export type FeatureTier = "free" | "pro";
+export type FeatureTier = "free" | "pro" | "external";
 export type FeatureCategory =
   | "session"
   | "intelligence"
   | "collaboration"
   | "devtools"
   | "automation"
-  | "security";
+  | "security"
+  | "works-with";
 
 export interface FeatureDef {
   id: string;
@@ -25,6 +26,12 @@ export interface FeatureDef {
   settingsTab?: string;
   /** Whether this feature has a toggle in feature settings */
   toggleable?: boolean;
+  /**
+   * External URL to open when the feature is actioned — used by the
+   * "Works Better With" category for third-party companion tools
+   * (Rune Kit, Neural Memory). Mutually exclusive with panel/settingsTab.
+   */
+  externalUrl?: string;
 }
 
 export const CATEGORY_LABELS: Record<FeatureCategory, string> = {
@@ -34,6 +41,7 @@ export const CATEGORY_LABELS: Record<FeatureCategory, string> = {
   devtools: "Developer Tools",
   automation: "Automation",
   security: "Security & Access",
+  "works-with": "Works Better With",
 };
 
 export const CATEGORY_ORDER: FeatureCategory[] = [
@@ -43,6 +51,7 @@ export const CATEGORY_ORDER: FeatureCategory[] = [
   "devtools",
   "automation",
   "security",
+  "works-with",
 ];
 
 export const FEATURES: FeatureDef[] = [
@@ -280,5 +289,29 @@ export const FEATURES: FeatureDef[] = [
     category: "security",
     tier: "free",
     settingsTab: "general",
+  },
+
+  // ── Works Better With (external tools) ───────────────────────────────────
+  {
+    id: "rune-kit",
+    name: "Rune Kit",
+    description:
+      "Opinionated skill library for Claude Code — recipes, invariants, and playbooks agents can invoke by name.",
+    whenToUse:
+      "Want agents to follow your team's conventions without re-teaching them each session.",
+    category: "works-with",
+    tier: "external",
+    externalUrl: "https://rune-kit.github.io/rune/",
+  },
+  {
+    id: "neural-memory",
+    name: "Neural Memory",
+    description:
+      "Persistent cross-session memory for agents — captures decisions, errors, and patterns with semantic recall.",
+    whenToUse:
+      "Long-running projects where agents keep forgetting past decisions, mistakes, or house rules.",
+    category: "works-with",
+    tier: "external",
+    externalUrl: "https://neuralmemory.theio.vn/",
   },
 ];

@@ -7,6 +7,7 @@ import {
   MagnifyingGlass,
   Crown,
   ArrowRight,
+  ArrowSquareOut,
   Gear,
   CaretUp,
   CaretDown,
@@ -73,6 +74,11 @@ export function FeatureGuideModal() {
 
   const handleAction = useCallback(
     (feature: FeatureDef) => {
+      if (feature.externalUrl) {
+        window.open(feature.externalUrl, "_blank", "noopener,noreferrer");
+        setOpen(false);
+        return;
+      }
       if (feature.panel) {
         if (feature.panel === "stats") {
           useUiStore.getState().setStatsBarOpen(true);
@@ -235,7 +241,7 @@ export function FeatureGuideModal() {
 // ── Feature Row (compact) ────────────────────────────────────────────────
 
 function FeatureRow({ feature, onAction }: { feature: FeatureDef; onAction: () => void }) {
-  const hasAction = feature.panel || feature.settingsTab;
+  const hasAction = feature.panel || feature.settingsTab || feature.externalUrl;
 
   return (
     <div
@@ -257,14 +263,25 @@ function FeatureRow({ feature, onAction }: { feature: FeatureDef; onAction: () =
             className="rounded-full px-1.5 py-0.5 text-[9px] font-medium"
             style={{
               background:
-                feature.tier === "pro" ? "rgba(234, 179, 8, 0.12)" : "rgba(16, 185, 129, 0.12)",
-              color: feature.tier === "pro" ? "#eab308" : "#10b981",
+                feature.tier === "pro"
+                  ? "rgba(234, 179, 8, 0.12)"
+                  : feature.tier === "external"
+                    ? "rgba(139, 92, 246, 0.12)"
+                    : "rgba(16, 185, 129, 0.12)",
+              color:
+                feature.tier === "pro"
+                  ? "#eab308"
+                  : feature.tier === "external"
+                    ? "#8b5cf6"
+                    : "#10b981",
             }}
           >
             {feature.tier === "pro" ? (
               <span className="flex items-center gap-0.5">
                 <Crown size={8} weight="fill" /> PRO
               </span>
+            ) : feature.tier === "external" ? (
+              "3RD-PARTY"
             ) : (
               "FREE"
             )}
@@ -281,7 +298,11 @@ function FeatureRow({ feature, onAction }: { feature: FeatureDef; onAction: () =
             background: "color-mix(in srgb, var(--color-accent) 8%, transparent)",
           }}
         >
-          {feature.panel ? (
+          {feature.externalUrl ? (
+            <>
+              Visit <ArrowSquareOut size={9} weight="bold" />
+            </>
+          ) : feature.panel ? (
             <>
               Open <ArrowRight size={9} />
             </>
