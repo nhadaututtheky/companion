@@ -16,6 +16,7 @@ import { resolveShortId } from "../../services/short-id.js";
 import { getActiveSession } from "../../services/session-store.js";
 import { getBotRegistry } from "../registry-holder.js";
 import type { Api } from "grammy";
+import { getPack } from "../ide/registry.js";
 
 export function registerConfigCommands(bridge: TelegramBridge): void {
   const bot = bridge.bot;
@@ -307,6 +308,16 @@ export function registerConfigCommands(bridge: TelegramBridge): void {
     const session = bridge.wsBridge.getSession(mapping.sessionId);
     if (!session) {
       await ctx.reply("Session not found.");
+      return;
+    }
+
+    // Gate on pack capability — Codex / Gemini have no thinking-budget flag.
+    const pack = getPack(session.state.cli_platform);
+    if (!pack.supports.thinking) {
+      await ctx.reply(
+        `<b>${escapeHTML(pack.label)}</b> doesn't expose a thinking-budget control. This command only works with Claude sessions.`,
+        { parse_mode: "HTML" },
+      );
       return;
     }
 

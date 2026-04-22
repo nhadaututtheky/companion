@@ -3,9 +3,10 @@
  */
 
 import type { TelegramBridge } from "../telegram-bridge.js";
-import { isPermissionDangerous } from "../formatter.js";
+import { isPermissionDangerous, escapeHTML } from "../formatter.js";
 import type { PermissionRequest } from "@companion/shared";
 import type { PermCallbackEntry } from "../telegram-permission-handler.js";
+import { getPack } from "../ide/registry.js";
 
 export function registerControlCommands(bridge: TelegramBridge): void {
   const bot = bridge.bot;
@@ -133,6 +134,18 @@ export function registerControlCommands(bridge: TelegramBridge): void {
     const mapping = bridge.getMapping(ctx.chat.id, ctx.message?.message_thread_id);
     if (!mapping) {
       await ctx.reply("No active session.");
+      return;
+    }
+
+    // Gate on pack capability — only Claude has a compaction flow. Other
+    // platforms either run one-shot (Codex) or don't expose the primitive.
+    const session = bridge.wsBridge.getSession(mapping.sessionId);
+    const pack = getPack(session?.state.cli_platform);
+    if (!pack.supports.compact) {
+      await ctx.reply(
+        `<b>${escapeHTML(pack.label)}</b> doesn't support context compaction. Use /clear instead if you want a fresh conversation.`,
+        { parse_mode: "HTML" },
+      );
       return;
     }
 

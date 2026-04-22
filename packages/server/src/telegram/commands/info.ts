@@ -17,6 +17,7 @@ import { sessions, dailyCosts } from "../../db/schema.js";
 import { listSessions, renameSession } from "../../services/session-store.js";
 import { getMaxContextTokens } from "@companion/shared";
 import type { TelegramBridge } from "../telegram-bridge.js";
+import { getPack } from "../ide/registry.js";
 
 export function registerInfoCommands(bridge: TelegramBridge): void {
   const bot = bridge.bot;
@@ -131,15 +132,10 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
   });
 
   // ── /model [name] — Change model ──────────────────────────────────────
-
-  const ALLOWED_MODELS = [
-    "claude-opus-4-7",
-    "claude-opus-4-6",
-    "claude-sonnet-4-6",
-    "claude-haiku-4-5",
-    "claude-opus-4-5",
-    "claude-sonnet-4-5",
-  ] as const;
+  //
+  // Dynamic per-platform list: reads the active session's IDE pack instead
+  // of hardcoding Claude models. Codex sessions see GPT-5 / o4-mini; Gemini
+  // sees its own. Fallback is still Claude if the session lacks a platform.
 
   bot.command("model", async (ctx) => {
     const mapping = bridge.getMapping(ctx.chat.id, ctx.message?.message_thread_id);
@@ -148,59 +144,56 @@ export function registerInfoCommands(bridge: TelegramBridge): void {
       return;
     }
 
+    const session = bridge.wsBridge.getSession(mapping.sessionId);
+    const pack = getPack(session?.state.cli_platform);
+    const allowed = pack.models.map((m) => m.value);
     const args = ctx.match?.trim();
 
     if (args) {
-      if (!ALLOWED_MODELS.includes(args as (typeof ALLOWED_MODELS)[number])) {
-        const validList = ALLOWED_MODELS.map((m) => `• <code>${escapeHTML(m)}</code>`).join("\n");
+      if (!allowed.includes(args)) {
+        const validList = pack.models
+          .map((m) => `• <code>${escapeHTML(m.value)}</code> — ${escapeHTML(m.label)}`)
+          .join("\n");
         await ctx.reply(
-          `❌ Unknown model. Use /model to see available options.\n\n<b>Valid models:</b>\n${validList}`,
+          `❌ Unknown model for ${pack.label}. Use /model to see available options.\n\n<b>Valid ${pack.label} models:</b>\n${validList}`,
           { parse_mode: "HTML" },
         );
         return;
       }
 
-      // Direct model set
       bridge.wsBridge.handleBrowserMessage(
         mapping.sessionId,
-        JSON.stringify({
-          type: "set_model",
-          model: args,
-        }),
+        JSON.stringify({ type: "set_model", model: args }),
       );
       await ctx.reply(`Model set to <code>${escapeHTML(args)}</code>`, { parse_mode: "HTML" });
       return;
     }
 
-    const session = bridge.wsBridge.getSession(mapping.sessionId);
-    const current = shortModelName(session?.state.model ?? mapping.model);
+    const currentModel = session?.state.model ?? mapping.model;
     const sid = mapping.sessionId;
 
-    const models = [
-      { label: "Opus 4.6", key: "o46" },
-      { label: "Sonnet 4.6", key: "s46" },
-      { label: "Haiku 4.5", key: "h45" },
-      { label: "Opus 4.5", key: "o45" },
-      { label: "Sonnet 4.5", key: "s45" },
-    ];
-
-    const btns = models.map((m) => {
-      const isCurrent = current === m.label;
+    const btns = pack.models.map((m) => {
+      const isCurrent = currentModel === m.value;
       return {
         text: `${m.label}${isCurrent ? " ✓" : ""}`,
-        callback_data: `pm:${m.key}:${sid}`,
-        ...(isCurrent ? { style: "success" } : {}),
+        callback_data: `pm:${m.value}:${sid}`,
+        ...(isCurrent ? { style: "success" as const } : {}),
       };
     });
 
-    const keyboard = {
-      inline_keyboard: [btns.slice(0, 3), btns.slice(3)],
-    };
+    // Split into rows of max 3 buttons each so narrow devices don't wrap ugly
+    const rows: (typeof btns)[] = [];
+    for (let i = 0; i < btns.length; i += 3) {
+      rows.push(btns.slice(i, i + 3));
+    }
 
-    await ctx.reply(`Current: <b>${escapeHTML(current)}</b>\nSelect model:`, {
-      parse_mode: "HTML",
-      reply_markup: keyboard as unknown as InlineKeyboard,
-    });
+    await ctx.reply(
+      `${pack.emoji} <b>${escapeHTML(pack.label)}</b> — current: <code>${escapeHTML(shortModelName(currentModel))}</code>\nSelect model:`,
+      {
+        parse_mode: "HTML",
+        reply_markup: { inline_keyboard: rows } as unknown as InlineKeyboard,
+      },
+    );
   });
 
   // ── /todo — Forward to Claude's built-in task list ────────────────────
