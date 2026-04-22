@@ -1,9 +1,14 @@
 /**
- * CodeGraph Skills Generator — auto-generates .claude/skills/ files
- * from code graph data so Claude Code sessions start with project-aware context.
+ * CodeGraph Skills Generator — auto-generates project-aware context files.
+ *
+ * Two flavors:
+ *   - `.claude/skills/companion-*.md` — consumed by Claude Code's skill loader.
+ *   - `AGENTS.md` (project root) — the cross-CLI convention Codex / OpenCode /
+ *     Gemini / Cursor all auto-read. Updated idempotently via marker-delimited
+ *     block so a user-maintained AGENTS.md is never clobbered.
  */
 
-import { existsSync, mkdirSync, writeFileSync, realpathSync } from "fs";
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
 import { join, resolve } from "path";
 import { createLogger } from "../logger.js";
 import { getDb } from "../db/client.js";
@@ -132,6 +137,99 @@ This analyzes your git diff and returns:
   return { filename: "companion-impact-check.md", content };
 }
 
+// ─── AGENTS.md (cross-CLI convention: Codex / OpenCode / Gemini / Cursor) ──
+
+const AGENTS_MARKER_BEGIN = "<!-- companion:begin — auto-generated, edit outside these markers -->";
+const AGENTS_MARKER_END = "<!-- companion:end -->";
+
+function buildAgentsBlock(
+  projectSlug: string,
+  stats: { files: number; nodes: number; edges: number },
+  hotFiles: Array<{ filePath: string; incomingEdges: number; outgoingEdges: number }>,
+  communities: Array<{ id: string; label: string; files: string[]; nodeCount: number }>,
+): string {
+  const topHot = hotFiles
+    .slice(0, 8)
+    .map((f) => `- \`${f.filePath}\` (${f.incomingEdges + f.outgoingEdges} connections)`)
+    .join("\n");
+
+  const topCommunities = communities
+    .slice(0, 6)
+    .map((c) => `- **${c.label}** (${c.nodeCount} symbols)`)
+    .join("\n");
+
+  return [
+    AGENTS_MARKER_BEGIN,
+    `# ${projectSlug} — Agent Guide`,
+    "",
+    "You're running inside **Companion**, a multi-CLI agent platform. Session",
+    "activity, costs, and file changes are captured automatically.",
+    "",
+    "## Project at a glance",
+    `- **${stats.files}** files · **${stats.nodes}** symbols · **${stats.edges}** edges`,
+    "",
+    "## Entry points (highest coupling)",
+    topHot || "- _No hot files detected yet — run a full scan._",
+    "",
+    "## Architecture clusters",
+    topCommunities || "- _No clusters detected yet._",
+    "",
+    "## MCP tools available",
+    "- `companion_codegraph_search` — find symbols by keyword",
+    "- `companion_codegraph_impact` — blast radius of a file",
+    "- `companion_codegraph_diff_impact` — pre-commit impact analysis",
+    "- `companion_wiki_search` / `companion_wiki_note` — project knowledge base",
+    "",
+    "## Workflow tips",
+    "1. Before editing a hot file, run `companion_codegraph_impact` to see dependents.",
+    "2. After discovering a non-obvious pattern, save it via `companion_wiki_note`.",
+    "3. Before committing, run `companion_codegraph_diff_impact` to catch broad reach.",
+    AGENTS_MARKER_END,
+  ].join("\n");
+}
+
+/** Merge our block into AGENTS.md without touching user-authored sections. */
+function writeAgentsMd(
+  projectDir: string,
+  projectSlug: string,
+  stats: { files: number; nodes: number; edges: number },
+  hotFiles: Array<{ filePath: string; incomingEdges: number; outgoingEdges: number }>,
+  communities: Array<{ id: string; label: string; files: string[]; nodeCount: number }>,
+): boolean {
+  try {
+    const agentsPath = join(projectDir, "AGENTS.md");
+    const resolved = resolve(agentsPath);
+    if (!resolved.startsWith(resolve(projectDir))) return false;
+
+    const block = buildAgentsBlock(projectSlug, stats, hotFiles, communities);
+
+    let existing = "";
+    if (existsSync(agentsPath)) {
+      existing = readFileSync(agentsPath, "utf-8");
+    }
+
+    const beginIdx = existing.indexOf(AGENTS_MARKER_BEGIN);
+    const endIdx = existing.indexOf(AGENTS_MARKER_END, beginIdx >= 0 ? beginIdx : 0);
+
+    let merged: string;
+    if (beginIdx >= 0 && endIdx > beginIdx) {
+      const before = existing.slice(0, beginIdx).replace(/\s+$/, "");
+      const after = existing.slice(endIdx + AGENTS_MARKER_END.length).replace(/^\s+/, "");
+      merged = [before, block, after].filter((s) => s.length > 0).join("\n\n");
+    } else if (existing.trim().length > 0) {
+      merged = `${existing.replace(/\s+$/, "")}\n\n${block}\n`;
+    } else {
+      merged = `${block}\n`;
+    }
+
+    writeFileSync(agentsPath, merged, "utf-8");
+    return true;
+  } catch (err) {
+    log.warn("Failed to write AGENTS.md", { projectSlug, error: String(err) });
+    return false;
+  }
+}
+
 function generateWikiNoteSkill(): GeneratedSkill {
   const content = `# Wiki Notes
 
@@ -159,9 +257,13 @@ companion_wiki_note(domain="architecture", content="Pattern X is used because Y"
 // ─── Main Generator ─────────────────────────────────────────────────────
 
 /**
- * Generate project-specific Claude Code skills from codegraph data.
- * Writes files to <projectDir>/.claude/skills/.
- * Returns list of generated skill filenames.
+ * Generate project-specific context files from codegraph data.
+ *
+ * Writes two flavors:
+ *   - `.claude/skills/companion-*.md` (only when `.claude/` exists — skipped
+ *     on non-Claude-only projects to stay out of the way).
+ *   - `AGENTS.md` at project root — always updated so Codex / OpenCode /
+ *     Gemini pick up the same context. Managed region is marker-delimited.
  */
 export function generateSkills(projectSlug: string): SkillsResult {
   const db = getDb();
@@ -185,18 +287,7 @@ export function generateSkills(projectSlug: string): SkillsResult {
     throw new Error("Path traversal detected in project directory");
   }
 
-  // Only generate if .claude/ exists (respect project structure)
-  if (!existsSync(claudeDir)) {
-    log.info("No .claude/ directory, skipping skills generation", { projectSlug });
-    return { generated: [], skipped: ["no .claude/ directory"], dir: skillsDir };
-  }
-
-  // Ensure skills/ dir exists
-  if (!existsSync(skillsDir)) {
-    mkdirSync(skillsDir, { recursive: true });
-  }
-
-  // Gather data from codegraph
+  // Gather data from codegraph (needed by both output flavors)
   const stats = getProjectStats(projectSlug);
   const hotFiles = getHotFiles(projectSlug, 15);
   let communities: Array<{
@@ -212,6 +303,31 @@ export function generateSkills(projectSlug: string): SkillsResult {
     log.debug("Communities unavailable for skills", { error: String(err) });
   }
 
+  const generated: string[] = [];
+  const skipped: string[] = [];
+
+  // AGENTS.md — always write (serves Codex / OpenCode / Gemini / Cursor)
+  if (writeAgentsMd(projectDir, projectSlug, stats, hotFiles, communities)) {
+    generated.push("AGENTS.md");
+  } else {
+    skipped.push("AGENTS.md");
+  }
+
+  // .claude/skills/ — only when .claude/ exists (Claude-only, opt-in via dir)
+  if (!existsSync(claudeDir)) {
+    log.info("No .claude/ directory, skipping Claude skills", { projectSlug });
+    return {
+      generated,
+      skipped: [...skipped, "no .claude/ directory for Claude skills"],
+      dir: skillsDir,
+    };
+  }
+
+  // Ensure skills/ dir exists
+  if (!existsSync(skillsDir)) {
+    mkdirSync(skillsDir, { recursive: true });
+  }
+
   // Generate all skills
   const skills: GeneratedSkill[] = [
     generateExploringSkill(projectSlug, stats, hotFiles, communities),
@@ -219,9 +335,6 @@ export function generateSkills(projectSlug: string): SkillsResult {
     generateImpactCheckSkill(),
     generateWikiNoteSkill(),
   ];
-
-  const generated: string[] = [];
-  const skipped: string[] = [];
 
   for (const skill of skills) {
     try {
@@ -243,7 +356,10 @@ export function generateSkills(projectSlug: string): SkillsResult {
 }
 
 /**
- * Check if skills should be auto-generated (after first scan, if .claude/ exists).
+ * Check if context files should be auto-generated after a scan. AGENTS.md is
+ * cheap and helpful for every CLI, so we return true whenever the project has
+ * a resolvable directory — the `.claude/skills/` branch still no-ops when the
+ * user has no .claude/ dir.
  */
 export function shouldAutoGenerateSkills(projectSlug: string): boolean {
   try {
@@ -254,8 +370,7 @@ export function shouldAutoGenerateSkills(projectSlug: string): boolean {
       .where(eq(projects.slug, projectSlug))
       .get();
 
-    if (!project) return false;
-    return existsSync(join(project.dir, ".claude"));
+    return !!project?.dir && existsSync(project.dir);
   } catch {
     return false;
   }

@@ -12,6 +12,7 @@ import { startSdkSession } from "./sdk-engine.js";
 import { summarizeSession, buildSummaryInjection } from "./session-summarizer.js";
 import { saveSessionFindings } from "../wiki/feedback.js";
 import { buildSessionContext } from "./session-context.js";
+import { buildAdapterContextPrefix } from "./adapter-context-builder.js";
 import {
   buildProjectMap,
   getCodeGraphConfig,
@@ -691,6 +692,7 @@ export class SessionLifecycleManager {
       permissionMode?: string;
       prompt?: string;
       resume?: boolean;
+      resumeFromSessionId?: string;
       cliSessionId?: string;
       source?: string;
       envVars?: Record<string, string>;
@@ -723,6 +725,30 @@ export class SessionLifecycleManager {
     planWatcher.start();
     this.bridge.setPlanWatcher(sessionId, planWatcher);
 
+    // Non-Claude platforms receive the prompt via CLI args, not stdin, so we
+    // must pre-enrich it with session context / CodeGraph / prior-session
+    // replay before launch. Claude does this AFTER launch in sendInitialPrompt.
+    let launchPrompt = opts.prompt;
+    const nonClaudeWantsContext =
+      cliPlatform !== "claude" && (opts.prompt || (opts.resume && opts.resumeFromSessionId));
+    if (nonClaudeWantsContext) {
+      const approvalMode = opts.platformOptions?.approvalMode as string | undefined;
+      const prefix = buildAdapterContextPrefix({
+        sessionId,
+        shortId: session.state.short_id ?? sessionId.slice(0, 8),
+        projectSlug: opts.projectSlug,
+        cwd: opts.cwd,
+        model: opts.model,
+        permissionMode: opts.permissionMode,
+        source: opts.source,
+        cliPlatform,
+        resumeFromSessionId: opts.resume ? opts.resumeFromSessionId : undefined,
+        planMode: approvalMode === "plan",
+      });
+      const body = opts.prompt ?? "Please continue from where the previous session left off.";
+      launchPrompt = prefix + body;
+    }
+
     // Launch CLI process via adapter registry
     const hooksUrl = this.bridge.getHooksBaseUrl();
     const launchPromise = launchCLI(
@@ -731,7 +757,7 @@ export class SessionLifecycleManager {
         cwd: opts.cwd,
         model: opts.model,
         permissionMode: opts.permissionMode,
-        prompt: opts.prompt,
+        prompt: launchPrompt,
         resume: opts.resume,
         cliSessionId: opts.cliSessionId,
         envVars: opts.envVars,

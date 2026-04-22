@@ -207,6 +207,7 @@ export function StepConfig(props: StepConfigProps) {
           <p className="mb-2 text-xs font-semibold">APPROVAL MODE</p>
           <div className="flex gap-2">
             {[
+              { value: "plan", label: "Plan", desc: "Plan only, no execution" },
               { value: "suggest", label: "Suggest", desc: "Review all changes" },
               { value: "auto-edit", label: "Auto-edit", desc: "Auto-approve file edits" },
               { value: "full-auto", label: "Full Auto", desc: "No prompts" },
@@ -214,7 +215,7 @@ export function StepConfig(props: StepConfigProps) {
               <button
                 key={opt.value}
                 onClick={() => onCodexApprovalModeChange(opt.value)}
-                className="flex flex-1 cursor-pointer flex-col items-center gap-1 rounded-lg px-3 py-2.5 text-xs transition-colors"
+                className="flex flex-1 cursor-pointer flex-col items-center gap-1 rounded-lg px-2.5 py-2.5 text-xs transition-colors"
                 style={{
                   background:
                     codexApprovalMode === opt.value ? "#10B98115" : "var(--color-bg-elevated)",
@@ -227,7 +228,7 @@ export function StepConfig(props: StepConfigProps) {
                 }}
               >
                 <span className="font-semibold">{opt.label}</span>
-                <span className="text-text-muted" style={{ fontSize: 10 }}>
+                <span className="text-text-muted text-center" style={{ fontSize: 10 }}>
                   {opt.desc}
                 </span>
               </button>

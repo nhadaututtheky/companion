@@ -216,10 +216,14 @@ export class CodexAdapter implements CLIAdapter {
       args.push("--full-auto");
     }
 
-    // Approval mode
+    // Approval mode. "plan" is a Companion-layer concept — Codex doesn't accept
+    // it natively, so we map to the most conservative native mode (`suggest`)
+    // and rely on the prompt prefix injected by ws-session-lifecycle to hold
+    // the model back from executing anything.
     const approvalMode = opts.platformOptions?.approvalMode as string | undefined;
     if (approvalMode) {
-      args.push("-a", approvalMode);
+      const native = approvalMode === "plan" ? "suggest" : approvalMode;
+      args.push("-a", native);
     }
 
     // Prompt must come LAST as positional arg — codex exec otherwise waits on stdin
