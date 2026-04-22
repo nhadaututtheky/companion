@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   ArrowSquareUpRight,
   X,
@@ -8,49 +8,15 @@ import {
   DownloadSimple,
   CaretDown,
 } from "@phosphor-icons/react";
-import { api } from "@/lib/api-client";
 import { Z } from "@/lib/z-index";
 import { isTauriEnv } from "@/lib/tauri";
+import { useUpdateCheck } from "@/hooks/use-update-check";
 
 // ── Types ──────────────────────────────────────────────────────────────────
-
-interface UpdateInfo {
-  available: boolean;
-  currentVersion: string;
-  latestVersion: string;
-  releaseUrl: string;
-  releaseNotes: string;
-  publishedAt: string;
-}
 
 type UpdatePhase = "idle" | "downloading" | "installing" | "done" | "error";
 
 // ── Tauri global API types ─────────────────────────────────────────────────
-
-interface TauriEvent<T> {
-  payload: T;
-}
-
-interface TauriUpdatePayload {
-  current: string;
-  version: string;
-  body: string;
-}
-
-/**
- * Access Tauri's global event listener (available when withGlobalTauri: true).
- * Returns undefined in browser / Docker mode.
- */
-function getTauriListen():
-  | ((event: string, handler: (e: TauriEvent<TauriUpdatePayload>) => void) => Promise<() => void>)
-  | undefined {
-  const w = globalThis as unknown as Record<string, unknown>;
-  const tauri = w.__TAURI__ as Record<string, unknown> | undefined;
-  const eventModule = tauri?.event as Record<string, unknown> | undefined;
-  return eventModule?.listen as
-    | ((event: string, handler: (e: TauriEvent<TauriUpdatePayload>) => void) => Promise<() => void>)
-    | undefined;
-}
 
 /**
  * Access Tauri updater check() via global API.
@@ -94,89 +60,6 @@ async function tauriRelaunch(): Promise<void> {
   if (relaunchFn) {
     await relaunchFn();
   }
-}
-
-// ── Hook ───────────────────────────────────────────────────────────────────
-
-const DISMISS_KEY = "companion_update_dismissed";
-const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 hours
-const RELEASE_BASE_URL = "https://github.com/nhadaututtheky/companion-release/releases";
-
-function useUpdateCheck() {
-  const [update, setUpdate] = useState<UpdateInfo | null>(null);
-  const [dismissed, setDismissed] = useState(false);
-
-  const applyUpdate = useCallback((info: UpdateInfo) => {
-    if (info.available) {
-      const dismissedVersion = localStorage.getItem(DISMISS_KEY);
-      if (dismissedVersion === info.latestVersion) {
-        setDismissed(true);
-      } else {
-        setDismissed(false);
-      }
-    }
-    setUpdate(info);
-  }, []);
-
-  const checkNow = useCallback(
-    async (force = false) => {
-      try {
-        const info = await api.updateCheck.check(force);
-        applyUpdate(info);
-      } catch {
-        // Silently fail — update check is non-critical
-      }
-    },
-    [applyUpdate],
-  );
-
-  const dismiss = useCallback((version: string) => {
-    localStorage.setItem(DISMISS_KEY, version);
-    setDismissed(true);
-  }, []);
-
-  // Listen for Tauri's native update-available event (emitted by Rust updater)
-  useEffect(() => {
-    const listen = getTauriListen();
-    if (!listen) return;
-
-    let unlisten: (() => void) | undefined;
-    listen("update-available", (event: TauriEvent<TauriUpdatePayload>) => {
-      const { current, version, body } = event.payload;
-      applyUpdate({
-        available: true,
-        currentVersion: current,
-        latestVersion: version,
-        releaseUrl: `${RELEASE_BASE_URL}/tag/v${version}`,
-        releaseNotes: body,
-        publishedAt: "",
-      });
-    }).then((fn) => {
-      unlisten = fn;
-    });
-
-    return () => {
-      unlisten?.();
-    };
-  }, [applyUpdate]);
-
-  // Server-side check on mount + interval (works for both Docker and Tauri)
-  useEffect(() => {
-    const initialTimer = setTimeout(() => {
-      void checkNow();
-    }, 5000);
-
-    const interval = setInterval(() => {
-      void checkNow();
-    }, CHECK_INTERVAL_MS);
-
-    return () => {
-      clearTimeout(initialTimer);
-      clearInterval(interval);
-    };
-  }, [checkNow]);
-
-  return { update, dismissed, dismiss, checkNow };
 }
 
 // ── Component ──────────────────────────────────────────────────────────────

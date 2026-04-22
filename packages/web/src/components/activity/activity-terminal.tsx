@@ -11,13 +11,16 @@ import {
   CurrencyDollar,
   CaretDown,
   CaretRight,
+  DownloadSimple,
 } from "@phosphor-icons/react";
+import { APP_VERSION } from "@companion/shared";
 import {
   useActivityStore,
   type ActivityLog,
   type ActivityLogType,
 } from "@/lib/stores/activity-store";
 import { useSessionStore } from "@/lib/stores/session-store";
+import { useUpdateCheck } from "@/hooks/use-update-check";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
@@ -150,6 +153,51 @@ function FilterSelect({
   );
 }
 
+// ── Version Badge ─────────────────────────────────────────────────────────
+
+/**
+ * Always-visible version display embedded in the Activity Terminal header.
+ * Shows the current app version; when an update is available, swaps to a
+ * highlighted "v{new} available" badge that opens the update banner on click.
+ *
+ * Reuses `useUpdateCheck` — the same hook `UpdateBanner` subscribes to, so
+ * both surfaces share a single HTTP polling + Tauri event listener pair.
+ */
+function VersionBadge() {
+  const { update, dismissed, undismiss } = useUpdateCheck();
+  const hasUpdate = !!update?.available;
+
+  if (hasUpdate) {
+    const latest = update!.latestVersion;
+    return (
+      <button
+        onClick={() => {
+          if (dismissed) undismiss();
+        }}
+        className="text-accent flex cursor-pointer items-center gap-1 rounded px-1.5 py-px font-mono text-[10px] transition-opacity hover:opacity-80"
+        style={{
+          background: "var(--color-accent)15",
+          border: "1px solid var(--color-accent)40",
+        }}
+        aria-label={`Update to v${latest} available`}
+        title={`Update to v${latest} available — click to ${dismissed ? "reopen" : "open"} update dialog`}
+      >
+        <DownloadSimple size={10} weight="bold" />
+        <span>v{latest}</span>
+      </button>
+    );
+  }
+
+  return (
+    <span
+      className="text-text-muted rounded bg-transparent px-1.5 py-px font-mono text-[10px]"
+      title="Companion — up to date"
+    >
+      v{APP_VERSION}
+    </span>
+  );
+}
+
 // ── Activity Terminal ─────────────────────────────────────────────────────
 
 interface ActivityTerminalProps {
@@ -271,11 +319,14 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
           {displayLogs.length}
         </span>
 
+        {/* Spacer (always on — pushes version badge + filters to the right) */}
+        <div style={{ flex: 1 }} />
+
+        {/* Version badge — always visible, collapsed or expanded */}
+        <VersionBadge />
+
         {open && (
           <>
-            {/* Spacer */}
-            <div style={{ flex: 1 }} />
-
             {/* Filter: session */}
             <FilterSelect
               value={filterSession}
