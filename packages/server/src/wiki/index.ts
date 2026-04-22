@@ -37,6 +37,14 @@ export { compileWiki } from "./compiler.js";
 // Feedback loop (session findings → raw)
 export { saveSessionFindings } from "./feedback.js";
 
+// Bootstrap (config persistence + auto-provision)
+export {
+  initWikiConfig,
+  loadWikiConfigFromDb,
+  persistWikiConfigToDb,
+  autoProvisionDefaultDomain,
+} from "./bootstrap.js";
+
 // Query archive (self-archiving queries)
 export { archiveQuery } from "./query-archive.js";
 

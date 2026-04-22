@@ -44,3 +44,32 @@ export function getSettingNumber(key: string, fallback: number): number {
   const num = Number(val);
   return Number.isFinite(num) ? num : fallback;
 }
+
+/**
+ * Upsert a single setting value. Silently no-ops if the DB is unavailable
+ * — we never want config-persistence to crash a caller.
+ */
+export function setSetting(key: string, value: string): void {
+  try {
+    const db = getDb();
+    const existing = db.select().from(settings).where(eq(settings.key, key)).get();
+    const now = new Date();
+    if (existing) {
+      db.update(settings).set({ value, updatedAt: now }).where(eq(settings.key, key)).run();
+    } else {
+      db.insert(settings).values({ key, value, updatedAt: now }).run();
+    }
+  } catch {
+    // swallow — settings persistence is best-effort
+  }
+}
+
+/** Delete a setting; no-op if missing or DB unavailable. */
+export function deleteSetting(key: string): void {
+  try {
+    const db = getDb();
+    db.delete(settings).where(eq(settings.key, key)).run();
+  } catch {
+    // swallow
+  }
+}

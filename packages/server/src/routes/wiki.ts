@@ -50,6 +50,7 @@ import {
   writeNote,
   getWikiConfig,
   setWikiConfig,
+  persistWikiConfigToDb,
   readChangelog,
   readPreviousVersion,
 } from "../wiki/index.js";
@@ -80,6 +81,9 @@ export function createWikiRoutes(): Hono {
     (c) => {
       const updates = c.req.valid("json");
       const config = setWikiConfig(updates);
+      // Persist across restarts — otherwise defaultDomain resets to null
+      // and Wiki L0 injection silently stops working.
+      persistWikiConfigToDb();
       return c.json<ApiResponse>({ success: true, data: config });
     },
   );

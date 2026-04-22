@@ -29,6 +29,7 @@ import { startAutoSwitch, stopAutoSwitch } from "./services/account-auto-switch.
 import { pruneResolvedMergeEvents } from "./services/account-merge-events.js";
 import { validateShareToken } from "./services/share-manager.js";
 import { registerGlobalErrorHandlers, flushErrors } from "./services/error-tracker.js";
+import { initWikiConfig } from "./wiki/index.js";
 import { join, resolve, dirname } from "node:path";
 import { existsSync, statSync } from "node:fs";
 
@@ -64,6 +65,10 @@ runMigrations();
 // Seed default session templates + workflow templates
 seedDefaultTemplates();
 seedWorkflowTemplates();
+
+// Rehydrate wiki config from DB so defaultDomain survives restart, and
+// auto-provision a default domain from PROJECT_SLUG on fresh installs.
+initWikiConfig();
 
 // Register global error handlers for tracking
 registerGlobalErrorHandlers();
