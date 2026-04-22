@@ -463,7 +463,17 @@ export function deleteArticle(
   log.info("Deleted wiki article", { domain, slug });
 }
 
-/** Quick note — agent writes directly without compile cycle */
+/**
+ * Quick note — agent writes an immediate draft article AND deposits a copy
+ * into the `raw/` bin so the LLM compiler will later polish it into a
+ * canonical article on the next compile run.
+ *
+ * Dual-write is intentional: the draft gives same-session readers immediate
+ * access (via `wiki_search` / `wiki_read`), while the raw copy preserves the
+ * Karpathy pattern where raw material → LLM compiler → polished article.
+ * When compile runs, it rewrites the draft with a polished version sharing
+ * the same slug, upgrading confidence from "inferred" to "extracted".
+ */
 export function writeNote(
   domain: string,
   content: string,
@@ -507,6 +517,30 @@ export function writeNote(
 
   writeArticle(domain, slug, meta, content, cwd, ctx);
   rebuildIndex(domain, cwd);
+
+  // Dual-write: deposit a copy in raw/ so the compiler picks it up on next run.
+  // Filename is timestamped so concurrent notes don't collide, slug-tagged so
+  // the compiler can see which draft this raw belongs to.
+  try {
+    const dateSlug = now.slice(0, 10);
+    const timeSlug = now.slice(11, 19).replace(/:/g, "");
+    const safeSlug = slug || "note";
+    const rawFilename = `note-${dateSlug}-${timeSlug}-${safeSlug}.md`.slice(0, 200);
+    const tagsLine = (options?.tags ?? []).join(", ") || "-";
+    const rawContent =
+      `# ${title}\n\n` +
+      `${content}\n\n` +
+      `<!-- agent-note\n` +
+      `  session: ${ctx?.sessionId ?? "-"}\n` +
+      `  model:   ${ctx?.model ?? "-"}\n` +
+      `  reason:  ${ctx?.reason ?? "-"}\n` +
+      `  tags:    ${tagsLine}\n` +
+      `  draft:   ${slug}\n` +
+      `-->\n`;
+    writeRawFile(domain, rawFilename, rawContent, cwd);
+  } catch (err) {
+    log.debug("Raw bin dual-write skipped", { domain, slug, error: String(err) });
+  }
 
   return { slug, title, tokens, tags: meta.tags, compiledAt: now, confidence: meta.confidence };
 }

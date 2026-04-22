@@ -10,7 +10,7 @@ import { createLogger } from "../logger.js";
 import { isFeatureEnabled } from "../services/context-budget.js";
 import { getSessionRecord } from "../services/session-store.js";
 import { getSessionSummary } from "../services/session-summarizer.js";
-import { getWikiConfig, writeRawFile, listDomains } from "./store.js";
+import { getWikiConfig, writeRawFile, listDomains, listRawFiles } from "./store.js";
 import { compileWiki } from "./compiler.js";
 
 const log = createLogger("wiki-feedback");
@@ -109,15 +109,25 @@ ${files}
       filename,
     });
 
-    // Auto-compile: process the newly saved raw file into wiki articles
-    // Fire-and-forget — compilation failure should not block session cleanup
-    compileWiki({ domain, rawFiles: [filename] }, rootPath)
+    // Auto-compile: process the session findings file plus any uncompiled agent
+    // notes (from `companion_wiki_note` calls during the session) so the LLM
+    // compiler polishes them into canonical articles in one batch.
+    // Fire-and-forget — compilation failure should not block session cleanup.
+    const uncompiledRaw = listRawFiles(domain, rootPath)
+      .filter((f) => !f.compiled)
+      .map((f) => f.name);
+    const rawFilesToCompile = uncompiledRaw.includes(filename)
+      ? uncompiledRaw
+      : [filename, ...uncompiledRaw];
+
+    compileWiki({ domain, rawFiles: rawFilesToCompile }, rootPath)
       .then((result) => {
         if (result.articlesWritten.length > 0) {
-          log.info("Auto-compiled session findings into wiki articles", {
+          log.info("Auto-compiled session findings + agent notes into wiki articles", {
             sessionId,
             domain,
             articles: result.articlesWritten,
+            rawFilesProcessed: result.rawFilesProcessed.length,
           });
         }
       })
