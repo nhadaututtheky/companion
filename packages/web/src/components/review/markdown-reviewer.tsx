@@ -3,7 +3,8 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Copy, Check, ChatText, PaperPlaneTilt, X } from "@phosphor-icons/react";
+import { ChatText, PaperPlaneTilt, X } from "@phosphor-icons/react";
+import { CodeBlock } from "@/components/chat/code-block";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -17,32 +18,6 @@ interface CommentPopup {
 interface MarkdownReviewerProps {
   content: string;
   onComment: (afterLine: number, comment: string, selectedText?: string) => Promise<void>;
-}
-
-// ── Copy Button ──────────────────────────────────────────────────────────────
-
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }, [text]);
-
-  return (
-    <button
-      onClick={handleCopy}
-      className="absolute right-2 top-2 cursor-pointer rounded p-1 opacity-0 transition-opacity group-hover:opacity-100"
-      style={{
-        background: "rgba(255,255,255,0.1)",
-        color: copied ? "#34A853" : "rgba(255,255,255,0.6)",
-      }}
-      aria-label="Copy code"
-    >
-      {copied ? <Check size={14} weight="bold" /> : <Copy size={14} />}
-    </button>
-  );
 }
 
 // ── Comment Input Popup ──────────────────────────────────────────────────────
@@ -295,32 +270,17 @@ export function MarkdownReviewer({ content, onComment }: MarkdownReviewerProps) 
               const codeText = String(children).replace(/\n$/, "");
 
               if (isBlock || codeText.includes("\n")) {
+                // LineBlock preserves the markdown line-number attributes so
+                // review comment anchoring still works; the inner renderer is
+                // the shared Shiki-highlighted CodeBlock.
                 return (
-                  <LineBlock
-                    node={node as unknown as AstNode}
-                    tag="div"
-                    className="group relative my-3 overflow-hidden rounded-lg"
-                  >
-                    {lang && (
-                      <div
-                        className="px-3 py-1 font-mono text-xs"
-                        style={{ background: "#2d2d2d", color: "#999" }}
-                      >
-                        {lang}
-                      </div>
-                    )}
-                    <pre
-                      className="m-0 overflow-auto p-3 font-mono"
-                      style={{
-                        background: "#1e1e1e",
-                        color: "#d4d4d4",
-                        fontSize: 14,
-                        lineHeight: 1.55,
-                      }}
-                    >
-                      <code {...props}>{codeText}</code>
-                    </pre>
-                    <CopyButton text={codeText} />
+                  <LineBlock node={node as unknown as AstNode} tag="div" className="my-3">
+                    <CodeBlock
+                      code={codeText}
+                      lang={lang || undefined}
+                      maxHeight={400}
+                      fontSize={14}
+                    />
                   </LineBlock>
                 );
               }

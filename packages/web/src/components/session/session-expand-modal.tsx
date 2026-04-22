@@ -11,6 +11,13 @@
  * route still works for direct URL visits" UX without the build-time
  * constraint.
  *
+ * URL sync: when the modal opens, we `pushState` the matching
+ * `/sessions/{id}` URL so (a) the address bar reflects what the user is
+ * looking at and the URL is shareable, and (b) the browser Back button
+ * closes the modal instead of leaving the app. A popstate listener
+ * mirrors the browser nav into the store. On close we pop our pushed
+ * entry so the prior URL is restored cleanly.
+ *
  * Rendered from `app/page.tsx` so the layout.tsx has no @modal slot.
  */
 
@@ -54,6 +61,38 @@ export function SessionExpandModal() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [sessionId, handleClose]);
+
+  // URL sync: push /sessions/{id} when the modal opens; pop it on close;
+  // listen for browser Back/Forward and mirror into the store.
+  useEffect(() => {
+    if (!sessionId) return;
+    if (typeof window === "undefined") return;
+
+    const target = `/sessions/${sessionId}`;
+    const entryPath = window.location.pathname;
+    let pushed = false;
+
+    if (entryPath !== target) {
+      window.history.pushState({ sessionModal: sessionId }, "", target);
+      pushed = true;
+    }
+
+    const onPopState = () => {
+      // Back/Forward navigated away from our pushed entry — close the modal.
+      setExpandedSession(null);
+    };
+    window.addEventListener("popstate", onPopState);
+
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+      // Pop our pushed entry so the previous URL is restored when the modal
+      // closes via Esc / X / backdrop. Guarded so we never pop someone
+      // else's history if the user has navigated elsewhere in between.
+      if (pushed && window.location.pathname === target) {
+        window.history.back();
+      }
+    };
+  }, [sessionId, setExpandedSession]);
 
   if (!sessionId) return null;
 
