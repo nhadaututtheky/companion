@@ -657,11 +657,20 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
   const slug = selectedSlug;
 
   // ── Load projects
+  //
+  // Defensive shallow clone on every API response below is a workaround for
+  // a React 19 + Next 16 production-build crash: "Cannot assign to read only
+  // property 'constructor' of object '[object Object]'". The prod build
+  // freezes response objects deeper than dev, and something in the CodeGraph
+  // render path attempts to mutate the constructor descriptor on a frozen
+  // object. Cloning before setState detaches the state from the frozen
+  // source, avoiding the mutation site entirely. Dev mode was unaffected
+  // because dev doesn't freeze aggressively.
   useEffect(() => {
     (async () => {
       try {
         const res = await api.projects.list();
-        setProjects((res.data ?? []) as Project[]);
+        setProjects(((res.data ?? []) as Project[]).map((p) => ({ ...p })));
       } catch {
         /* ignore */
       }
@@ -682,7 +691,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
       const res = await api.codegraph.status(slug);
       if (res.success) {
         setCgReady(res.data.ready);
-        setCgJob(res.data.job);
+        setCgJob(res.data.job ? { ...res.data.job } : null);
         setCgScanning(res.data.job?.status === "scanning" || res.data.job?.status === "describing");
       }
     } catch {
@@ -694,7 +703,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
     if (!slug) return;
     try {
       const res = await api.codegraph.stats(slug);
-      if (res.success) setCgStats(res.data);
+      if (res.success) setCgStats(res.data ? { ...res.data } : null);
     } catch {
       /* ignore */
     }
@@ -704,7 +713,7 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
     if (!slug) return;
     try {
       const res = await api.codegraph.hotFiles(slug, 8);
-      if (res.success) setHotFiles(res.data);
+      if (res.success) setHotFiles((res.data ?? []).map((f) => ({ ...f })));
     } catch {
       /* ignore */
     }
@@ -752,7 +761,16 @@ export function AiContextPanel({ onClose, projectSlug: initialSlug }: AiContextP
     setSearching(true);
     try {
       const res = await api.codegraph.search(slug, searchQuery);
-      if (res.success) setSearchResults(res.data as SearchResult[]);
+      if (res.success) {
+        // Defensive clone — see loadProjects above for rationale.
+        setSearchResults(
+          (res.data as SearchResult[]).map((r) => ({
+            ...r,
+            incoming: r.incoming.map((e) => ({ ...e })),
+            outgoing: r.outgoing.map((e) => ({ ...e })),
+          })),
+        );
+      }
     } catch {
       /* ignore */
     }
