@@ -444,62 +444,16 @@ p {
   }
 }
 
-/* ── Glass Overlay Animations ────────────────────────────────────────────── */
-
-/* Backdrop */
-.glass-backdrop-enter {
-  opacity: 0;
-  transition: opacity 250ms ease-out;
-}
-.glass-backdrop-enter-active {
-  opacity: 1;
-}
-.glass-backdrop-exit {
-  opacity: 1;
-  transition: opacity 200ms ease-in;
-}
-.glass-backdrop-exit-active {
-  opacity: 0;
-}
-
-/* Card */
-.glass-enter {
-  opacity: 0;
-  transform: scale(0.95);
-  transition:
-    opacity 250ms ease-out,
-    transform 250ms ease-out;
-}
-.glass-enter-active {
-  opacity: 1;
-  transform: scale(1);
-}
-.glass-exit {
-  opacity: 1;
-  transform: scale(1);
-  transition:
-    opacity 200ms ease-in,
-    transform 200ms ease-in;
-}
-.glass-exit-active {
-  opacity: 0;
-  transform: scale(0.95);
-}
-
 /* Dark mode glass card */
 .dark .dark\:bg-glass-dark {
   background: rgba(30, 30, 30, 0.85) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .glass-enter,
-  .glass-enter-active,
-  .glass-exit,
-  .glass-exit-active,
-  .glass-backdrop-enter,
-  .glass-backdrop-enter-active,
-  .glass-backdrop-exit,
-  .glass-backdrop-exit-active {
+  /* .glass-enter* / .glass-backdrop-* classes removed alongside the
+     ExpandedSession component they animated. Keep the reduced-motion block
+     for the remaining animations below. */
+  .noop-reduced-motion {
     transition: none !important;
     animation: none !important;
   }
