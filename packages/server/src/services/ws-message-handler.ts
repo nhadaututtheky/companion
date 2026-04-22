@@ -440,8 +440,19 @@ export class MessageHandler {
         phase === "init"
           ? `[Wiki KB — domain "${wikiCtx.domain}" context loaded at session start]`
           : `[Wiki KB — re-injection after compaction — domain "${wikiCtx.domain}"]`;
-      const toolsHint =
-        "Use `companion_wiki_search` / `companion_wiki_read` MCP tools to retrieve more articles on-demand. Use `companion_wiki_note` to persist new findings.";
+      const toolsHint = [
+        "### How to use this wiki (persistent across sessions)",
+        "",
+        "**Reading** — call `companion_wiki_search` to find articles, `companion_wiki_read` to load a full article.",
+        "",
+        "**Writing — do this proactively, not only when asked.** Call `companion_wiki_note` whenever you:",
+        "- Fix a bug and learn the underlying root cause",
+        "- Discover a non-obvious pattern, convention, or invariant in the codebase",
+        "- Infer a hidden constraint, gotcha, or undocumented API contract",
+        "- Make a judgment call that a future session would need context to repeat",
+        "",
+        "Notes start as rough drafts in the raw bin; the wiki compiler later polishes them into canonical articles. Think of this wiki as your shared notebook with every future agent working on this project — a note you write now compounds for every session after.",
+      ].join("\n");
       const content = `${header}\n\n${wikiCtx.content}\n\n---\n${toolsHint}`;
 
       const ndjson = JSON.stringify({
