@@ -2,10 +2,26 @@
 
 All notable changes to Companion are documented here.
 
-## [Unreleased]
+## [0.27.0] - 2026-04-22
 
-### Removed
-- **WebIntel feature retired** — dropped the webclaw Docker sidecar, `/docs` `/research` `/crawl` slash commands, auto library-doc injection, MCP scrape/research/crawl tools, and the entire WebIntel web UI panel (scrape + research + Docker status). Drizzle `web_intel_docs` table dropped via migration `0046_drop_web_intel.sql`. Use Context7 MCP (library docs) or Claude Code's built-in `WebSearch` / `WebFetch` (general web) instead — both cover the same use cases without the self-host friction. The codegraph-side `webintel-bridge.ts` was renamed to `external-packages.ts` and kept (it never actually depended on WebIntel — just extracts npm package names from import edges). `web_intel` feature flag and `codegraph_config.web_docs_enabled` toggle removed from the Pro tier.
+### Fixed
+- **Wiki L0 injection was a no-op for every session** — `handleSystemInit` in `ws-message-handler.ts` computed the wiki context then threw the content away. Every session logged "Wiki L0 injected" while zero bytes actually reached Claude. Now the content flows through `bridge.sendToCLI` as a user NDJSON message, mirroring the post-compact identity re-injection pattern. The Wiki L0 is also re-injected via `maybeReinjectIdentity` so core rules survive context compaction.
+- **Wiki config was in-memory only, reset on every restart** — `WikiConfig.defaultDomain` defaulted to `null` and never loaded from DB, so even after manual configuration via the web UI the setting vanished on restart, silently disabling Wiki L0 for all new sessions. New `wiki/bootstrap.ts` persists the config to the `settings` key-value table and rehydrates on startup via `initWikiConfig()` wired into `index.ts` after `runMigrations()`.
+- **Auto-provision skipped `_index.md`** — spotted by E2E test: `autoProvisionDefaultDomain` did `mkdirSync` but never wrote the initial index, so `retriever.getSessionContext()` returned `null` for freshly-provisioned domains and Wiki L0 still did nothing. Bootstrap now calls `createDomain()` when the dir doesn't exist, guaranteeing a readable `_index.md` from the very first session.
+
+### Added
+- **Cross-adapter MCP registration (Codex / Gemini / OpenCode)** — each non-Claude CLI uses a different config format; Claude's `.mcp.json` is incompatible. `injectCompanionMcpCodex/Gemini/OpenCode` helpers now write `.codex/config.toml` (TOML with marker-delimited block), `.gemini/settings.json`, and `opencode.json` (nested `mcp.servers`) respectively. All four adapters (Claude + the three new ones) now register `companion-agent` via `adapters/mcp-injection.ts` so the Wiki KB + CodeGraph tools are reachable regardless of CLI. All write project-scoped files — never `~/.*` — so cleanup cannot damage user global config.
+- **Shared MCP injection helper** — moved `.mcp.json` injection logic out of `claude-adapter.ts` into `adapters/mcp-injection.ts` so every MCP-capable adapter shares the preserve/merge/restore flow. Exports `COMPANION_MCP_SERVER_KEY = "companion-agent"` and four `injectCompanionMcp*` functions.
+- **Karpathy-style Wiki coaching in L0 footer** — agents previously saw a single line "use `wiki_note` to persist findings". Replaced with explicit trigger heuristics: save after bug fixes with root cause, non-obvious patterns, hidden constraints, and judgment calls. Frames the wiki as a shared notebook with every future agent so the motivation is compounding value, not just a tool reference.
+- **`companion_wiki_note` now routes through raw bin** — `writeNote()` dual-writes: draft article (immediate same-session readability) + raw copy at `raw/note-YYYY-MM-DD-HHMMSS-<slug>.md` with session/model/reason/draft-slug metadata in HTML comment. `saveSessionFindings()` compiles ALL uncompiled raw files on session end (not just the session-summary), so agent notes get LLM-polished into canonical articles upgrading confidence from "inferred" to "extracted".
+- **Seeded companion wiki domain** — ships `wiki/companion/_core.md` (distilled top invariants from `.rune/INVARIANTS.md` — session lifecycle, compact flow, dual-path, session-settings unification, AI provider disable paths, cross-cutting rules, PR review checklist) plus three raw files (`invariants-full.md`, `architecture-overview.md`, `project-context.md`) awaiting LLM polish. Solves the cold-start empty-wiki death spiral where agents search, find nothing, stop searching.
+- **Wiki telemetry + `GET /api/wiki/stats`** — in-memory counters for `search/search_hit/search_miss`, `read/read_hit/read_miss`, `note`, `l0_inject/l0_skip`, `compile_run/compile_article`. Tracks cumulative tokens delivered to agents vs tokens returned by search/read. Exposed with per-domain rollup so the question "are agents actually using the wiki?" finally has numeric evidence. In-memory only — swap in `codeQueryLog` table with `wiki.*` queryType prefix if cross-restart persistence is needed later.
+
+### Changed
+- **`setSetting` / `deleteSetting` helpers added to `settings-helpers.ts`** — previously only read helpers existed (`getSetting`, `getSettingBool`, `getSettingInt`, `getSettingNumber`), which silently pushed every new config field into ad-hoc route handlers. Write helpers complete the API surface and are used by the new wiki bootstrap.
+
+### Tests
+- **66 unit tests across 5 files pass** — `ws-message-handler` (30 including 3 new Wiki injection cases), `mcp-injection` (12 covering Claude/Gemini/OpenCode/Codex file schema + idempotency + user-content preservation), `wiki/store` (4 for dual-write), `wiki/bootstrap` (13 for persistence round-trip + auto-provision + E2E fresh-install bootstrap), `wiki/telemetry` (7 for counter logic).
 
 ## [0.24.0] - 2026-04-20
 
