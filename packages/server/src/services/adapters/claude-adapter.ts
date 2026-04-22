@@ -4,7 +4,7 @@
  */
 
 import { mkdirSync, writeFileSync, readFileSync, existsSync, unlinkSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { createLogger } from "../../logger.js";
 import type {
   CLIAdapter,
@@ -29,6 +29,7 @@ import type {
 
 import { eventBus } from "../event-bus.js";
 import { getActiveAccount } from "../credential-manager.js";
+import { injectCompanionMcp } from "./mcp-injection.js";
 
 const log = createLogger("claude-adapter");
 
@@ -244,99 +245,6 @@ function injectHooksConfig(
 
   activeHookPaths.set(settingsPath, cleanup);
   return cleanup;
-}
-
-// ─── MCP Config Injection ──────────────────────────────────────────────────
-
-/** Path to the slim MCP server entry point (resolved at module load). */
-const AGENT_MCP_ENTRY = resolve(import.meta.dir, "../../mcp/index-agent.ts");
-
-/**
- * Inject .mcp.json in the project directory so Claude Code discovers
- * the Companion slim MCP server (wiki KB + codegraph impact).
- *
- * Returns a cleanup function that removes the injected config.
- */
-function injectMcpConfig(
-  cwd: string,
-  apiUrl: string,
-  apiKey: string,
-  projectSlug: string,
-): () => void {
-  const mcpJsonPath = join(cwd, ".mcp.json");
-
-  // Preserve existing .mcp.json content
-  let existing: { mcpServers?: Record<string, unknown> } = {};
-  let hadExisting = false;
-  try {
-    if (existsSync(mcpJsonPath)) {
-      existing = JSON.parse(readFileSync(mcpJsonPath, "utf-8")) as typeof existing;
-      hadExisting = true;
-    }
-  } catch {
-    // start fresh
-  }
-
-  const originalServers = existing.mcpServers ? { ...existing.mcpServers } : undefined;
-
-  const mcpConfig = {
-    ...existing,
-    mcpServers: {
-      ...existing.mcpServers,
-      "companion-agent": {
-        command: "bun",
-        args: ["run", AGENT_MCP_ENTRY],
-        env: {
-          COMPANION_API_URL: apiUrl,
-          API_KEY: apiKey,
-          PROJECT_SLUG: projectSlug,
-        },
-      },
-    },
-  };
-
-  writeFileSync(mcpJsonPath, JSON.stringify(mcpConfig, null, 2), "utf-8");
-  log.info("Injected MCP config", { mcpJsonPath, projectSlug });
-
-  return () => {
-    try {
-      if (!existsSync(mcpJsonPath)) return;
-
-      if (originalServers !== undefined) {
-        // Restore original servers (remove only our key)
-        const current = JSON.parse(readFileSync(mcpJsonPath, "utf-8")) as typeof existing;
-        const servers = { ...(current.mcpServers ?? {}) };
-        delete servers["companion-agent"];
-        if (Object.keys(servers).length > 0) {
-          writeFileSync(
-            mcpJsonPath,
-            JSON.stringify({ ...current, mcpServers: servers }, null, 2),
-            "utf-8",
-          );
-        } else if (hadExisting) {
-          const { mcpServers: _, ...rest } = current;
-          if (Object.keys(rest).length > 0) {
-            writeFileSync(mcpJsonPath, JSON.stringify(rest, null, 2), "utf-8");
-          } else {
-            unlinkSync(mcpJsonPath);
-          }
-        } else {
-          unlinkSync(mcpJsonPath);
-        }
-      } else if (!hadExisting) {
-        // We created the file — remove it entirely
-        unlinkSync(mcpJsonPath);
-      } else {
-        // Had existing but no mcpServers — restore original
-        const current = JSON.parse(readFileSync(mcpJsonPath, "utf-8")) as typeof existing;
-        const { mcpServers: _, ...rest } = current;
-        writeFileSync(mcpJsonPath, JSON.stringify(rest, null, 2), "utf-8");
-      }
-      log.debug("Cleaned up MCP config", { mcpJsonPath });
-    } catch (err) {
-      log.warn("Failed to clean up MCP config", { error: String(err) });
-    }
-  };
 }
 
 // ─── NDJSON → NormalizedMessage Parser ──────────────────────────────────────
@@ -564,7 +472,7 @@ export class ClaudeAdapter implements CLIAdapter {
     const apiUrl = process.env.COMPANION_API_URL ?? `http://localhost:${process.env.PORT ?? 3579}`;
     const apiKey = process.env.API_KEY ?? "";
     const projectSlug = opts.platformOptions?.projectSlug as string | undefined;
-    const mcpCleanup = injectMcpConfig(opts.cwd, apiUrl, apiKey, projectSlug ?? "");
+    const mcpCleanup = injectCompanionMcp(opts.cwd, apiUrl, apiKey, projectSlug ?? "");
 
     log.info("Launching Claude CLI", {
       binary,
