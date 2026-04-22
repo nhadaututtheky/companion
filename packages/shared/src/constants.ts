@@ -2,7 +2,7 @@ export const DEFAULT_PORT = 3579;
 export const DEFAULT_MODEL = "claude-sonnet-4-6";
 export const DEFAULT_PERMISSION_MODE = "bypassPermissions";
 export const DB_PATH = "data/companion.db";
-export const APP_VERSION = "0.26.0";
+export const APP_VERSION = "0.27.0";
 
 /** Max message length for Telegram */
 export const TELEGRAM_MAX_LENGTH = 4096;
