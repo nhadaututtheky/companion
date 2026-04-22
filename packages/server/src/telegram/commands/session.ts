@@ -10,9 +10,8 @@ import { createLogger } from "../../logger.js";
 import type { TelegramBridge } from "../telegram-bridge.js";
 import { DEFAULT_MODEL, DEFAULT_PERMISSION_MODE } from "@companion/shared";
 import {
-  formatProjectButton,
-  getProjectStatusEmoji,
-  PROJECT_STATE_EMOJI,
+  addProjectButton,
+  buildProjectButton,
   PROJECT_STATE_LABEL,
 } from "../ui/project-status.js";
 
@@ -76,13 +75,13 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
       // Projects exist but no sessions yet — "ready to go" message
       const keyboard = new InlineKeyboard();
       for (let i = 0; i < projects.length; i += 2) {
-        keyboard.text(formatProjectButton(projects[i]!), `project:${projects[i]!.slug}`);
+        addProjectButton(keyboard, projects[i]!, `project:${projects[i]!.slug}`);
         if (i + 1 < projects.length) {
-          keyboard.text(formatProjectButton(projects[i + 1]!), `project:${projects[i + 1]!.slug}`);
+          addProjectButton(keyboard, projects[i + 1]!, `project:${projects[i + 1]!.slug}`);
         }
         keyboard.row();
       }
-      keyboard.text("⚡ Quick Session (no project)", "quick:session").row();
+      keyboard.text("⚡ Quick Session (no project)", "quick:session").primary().row();
 
       await ctx.reply(
         [
@@ -97,32 +96,29 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
       return;
     }
 
-    // Regular flow: projects + sessions exist — show project picker
-    type Btn = { text: string; callback_data: string };
+    // Regular flow: projects + sessions exist — show project picker.
+    // Raw array form is used (instead of InlineKeyboard builder) because
+    // we want 2 columns; buildProjectButton attaches the Bot API 9.4
+    // `style` field directly so the button color reflects live status.
+    type Btn = ReturnType<typeof buildProjectButton>;
     const rows: Btn[][] = [];
     for (let i = 0; i < projects.length; i += 2) {
-      const row: Btn[] = [
-        {
-          text: formatProjectButton(projects[i]!),
-          callback_data: `project:${projects[i]!.slug}`,
-        },
-      ];
+      const row: Btn[] = [buildProjectButton(projects[i]!, `project:${projects[i]!.slug}`)];
       if (i + 1 < projects.length) {
-        row.push({
-          text: formatProjectButton(projects[i + 1]!),
-          callback_data: `project:${projects[i + 1]!.slug}`,
-        });
+        row.push(buildProjectButton(projects[i + 1]!, `project:${projects[i + 1]!.slug}`));
       }
       rows.push(row);
     }
     // Quick session at bottom
-    rows.push([{ text: "⚡ Quick Session (no project)", callback_data: "quick:session" }]);
+    rows.push([
+      { text: "⚡ Quick Session (no project)", callback_data: "quick:session", style: "primary" },
+    ]);
 
     await ctx.reply(
       [
         "👋 <b>Companion</b> — Select a project to start:",
         "",
-        `<b>Status:</b> ${PROJECT_STATE_EMOJI.active} ${PROJECT_STATE_LABEL.active}  ·  ${PROJECT_STATE_EMOJI.waiting} ${PROJECT_STATE_LABEL.waiting}  ·  ${PROJECT_STATE_EMOJI["idle-resumable"]} ${PROJECT_STATE_LABEL["idle-resumable"]}  ·  ${PROJECT_STATE_EMOJI.none} ${PROJECT_STATE_LABEL.none}`,
+        `<b>Colors:</b> green = ${PROJECT_STATE_LABEL.active.toLowerCase()}, blue = ${PROJECT_STATE_LABEL.waiting.toLowerCase()}, red = ${PROJECT_STATE_LABEL.error.toLowerCase()}, gray = ${PROJECT_STATE_LABEL["idle-resumable"].toLowerCase()} / ${PROJECT_STATE_LABEL.none.toLowerCase()}`,
         "",
         "<b>Quick commands:</b>",
         "/new — Start a session  ·  /stop — Stop",
@@ -193,7 +189,8 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
 
       const keyboard = new InlineKeyboard();
       for (const p of projects) {
-        keyboard.text(formatProjectButton(p), `new:${p.slug}`).row();
+        addProjectButton(keyboard, p, `new:${p.slug}`);
+        keyboard.row();
       }
 
       await ctx.reply("Select a project for new session:", {
@@ -332,8 +329,12 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     const keyboard = new InlineKeyboard();
     for (const p of projects) {
       const dead = bridge.getDeadSessionByProject(chatId, p.slug);
-      const label = dead ? `↩ ${p.name}` : `${getProjectStatusEmoji(p.slug)} ${p.name} (new)`;
-      keyboard.text(label, dead ? `resume:${p.slug}:${chatId}` : `new:${p.slug}`).row();
+      if (dead) {
+        keyboard.text(`↩ ${p.name}`, `resume:${p.slug}:${chatId}`).primary().row();
+      } else {
+        addProjectButton(keyboard, p, `new:${p.slug}`, "(new)");
+        keyboard.row();
+      }
     }
 
     await ctx.reply("Select a project to resume or start:", { reply_markup: keyboard });
