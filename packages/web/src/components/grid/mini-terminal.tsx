@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useRef, useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Z } from "@/lib/z-index";
 import { Lock, CheckCircle, XCircle, Warning, TelegramLogo } from "@phosphor-icons/react";
 import { useSession } from "@/hooks/use-session";
@@ -146,11 +145,11 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
   useArtifactExtractor(sessionId, parentHook.messages);
   const previewArtifactCount = usePreviewArtifactCount(sessionId);
   const openPreviewPanel = usePreviewStore((s) => s.openPanel);
-  const router = useRouter();
+  const setExpandedSession = useSessionStore((s) => s.setExpandedSession);
   const handlePreview = useCallback(() => {
     openPreviewPanel(sessionId);
-    router.push(`/sessions/${sessionId}`);
-  }, [sessionId, openPreviewPanel, router]);
+    setExpandedSession(sessionId);
+  }, [sessionId, openPreviewPanel, setExpandedSession]);
 
   // Context meter — prefer real-time data from CLI polling (per-turn delta = actual context usage)
   // Fallback to cumulative totals only when real-time data hasn't arrived yet

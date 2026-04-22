@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useMemo, useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Z } from "@/lib/z-index";
 import { useShallow } from "zustand/react/shallow";
 import { ArrowCounterClockwise, X, TelegramLogo, Globe, Trash } from "@phosphor-icons/react";
@@ -58,6 +57,13 @@ const FeatureGuideModal = dynamic(
   () =>
     import("@/components/feature-guide/feature-guide-modal").then((m) => ({
       default: m.FeatureGuideModal,
+    })),
+  { ssr: false },
+);
+const SessionExpandModal = dynamic(
+  () =>
+    import("@/components/session/session-expand-modal").then((m) => ({
+      default: m.SessionExpandModal,
     })),
   { ssr: false },
 );
@@ -512,21 +518,18 @@ export default function DashboardPage() {
     setNewSessionOpen(false);
   }, [setNewSessionOpen]);
 
-  const router = useRouter();
   const handleExpand = useCallback(
     (id: string) => {
-      // Navigate to `/sessions/{id}` — the intercepting route at
-      // `app/@modal/(..)sessions/[id]/page.tsx` catches this nav and renders
-      // the SessionView in a modal overlay. Direct URL visits still go to the
-      // standalone fullpage at `app/sessions/[id]/page.tsx`.
-      router.push(`/sessions/${id}`);
+      // State-driven overlay: setting `expandedSessionId` makes
+      // `<SessionExpandModal />` (mounted below) render a centered modal
+      // with <SessionView sessionId={id} />. Direct URL visits still use
+      // the standalone fullpage at `app/sessions/[id]/page.tsx`.
+      setExpandedSession(id);
     },
-    [router],
+    [setExpandedSession],
   );
 
   const handleCloseExpanded = useCallback(() => {
-    // Modal's own close handler navigates back; this is still referenced by
-    // the Esc key wiring below for when the modal isn't the top of the stack.
     setExpandedSession(null);
   }, [setExpandedSession]);
 
@@ -539,9 +542,9 @@ export default function DashboardPage() {
           "linear-gradient(135deg, var(--color-bg-base) 0%, color-mix(in srgb, var(--color-accent) 3%, var(--color-bg-base)) 50%, var(--color-bg-base) 100%)",
       }}
     >
-      {/* Session detail modal is now rendered via parallel route slot
-         `app/@modal/(..)sessions/[id]/page.tsx`, reached by router.push
-         from handleExpand. No component to mount here. */}
+      {/* Session detail modal — state-driven, reads expandedSessionId from
+         the session store. See components/session/session-expand-modal.tsx. */}
+      <SessionExpandModal />
 
       {/* Modal stack: only the top-priority open modal renders. See ui-store.ts selectTopOpenModal. */}
       <NewSessionModal open={topModal === "new-session"} onClose={handleCloseNewSession} />
