@@ -585,33 +585,46 @@ export function AccountUsagePanel({ accountId }: { accountId: string }) {
           No sessions recorded yet for this account. Usage will appear here once you run a session.
         </div>
       )}
-      {/* Plan usage (Anthropic-style) */}
+      {/* Plan usage (local device estimate) */}
       <div className="flex flex-col gap-4">
+        <div
+          className="rounded-md px-3 py-2 text-xs leading-relaxed"
+          style={{
+            background: "color-mix(in srgb, var(--color-accent) 8%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--color-accent) 20%, transparent)",
+            color: "var(--color-text-secondary)",
+          }}
+        >
+          <strong style={{ color: "var(--color-text-primary)" }}>This device only.</strong>{" "}
+          The bars below are a local USD estimate of sessions Companion ran on this machine — not
+          the Anthropic rate-limit bars above. Sessions you ran elsewhere (other machine or direct
+          CLI) are not counted.
+        </div>
         <div className="flex items-center justify-between">
           <h4
             className="text-xs font-semibold uppercase tracking-wider"
             style={{ color: "var(--color-text-muted)" }}
           >
-            Plan Usage Limits
+            This device's billing estimate
           </h4>
           <BudgetsEditor budgets={budgets} onSave={handleSaveBudgets} />
         </div>
         <ProgressBar
-          label="Current session"
+          label="5h (this device)"
           sublabel={resetLabel(windows.session5h.resetAt)}
           value={windows.session5h.cost}
           max={limits.session5hBudget}
           format="cost"
         />
         <ProgressBar
-          label="Weekly"
+          label="Weekly (this device)"
           sublabel={resetLabel(windows.weekly.resetAt)}
           value={windows.weekly.cost}
           max={limits.weeklyBudget}
           format="cost"
         />
         <ProgressBar
-          label="Monthly"
+          label="Monthly (this device)"
           sublabel={resetLabel(windows.monthly.resetAt)}
           value={windows.monthly.cost}
           max={limits.monthlyBudget}

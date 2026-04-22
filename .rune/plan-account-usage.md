@@ -19,7 +19,7 @@ Ship **Alt D (on-demand)** first. Evolve to **Alt A (smart-cadence poll)** only 
 | # | Name | Status | Plan File | Summary |
 |---|------|--------|-----------|---------|
 | 1 | Fetcher + Schema | ✅ Done (2026-04-22) | `plan-account-usage-phase1.md` | `usage-fetcher.ts`, DB columns, OAuth refresh helper, 14 tests |
-| 2 | Round-robin fix + inline bars (MVP) | ⬚ Pending | `plan-account-usage-phase2.md` | (a) `findNextReady` gates on Anthropic quota; (b) inline bars in account card |
+| 2 | Round-robin fix + inline bars (MVP) | ✅ Done (2026-04-22) | `plan-account-usage-phase2.md` | (a) `findNextReady` gates on Anthropic quota; (b) inline bars in account card |
 | 3 | Smart Poller (evolve if needed) | ⬚ Deferred | `plan-account-usage-phase3.md` | Visibility-aware poller, staggered, backoff, 429 handling |
 | 4 | SDK Header Intercept (optional) | ⬚ Deferred | `plan-account-usage-phase4.md` | Zero-cost realtime for SDK engine users only |
 

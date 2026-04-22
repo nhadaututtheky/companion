@@ -1,4 +1,7 @@
 import { request } from "./base";
+import type { AccountQuota } from "@companion/shared";
+
+export type { AccountQuota } from "@companion/shared";
 
 export interface AccountBudgets {
   session5hBudget: number | null;
@@ -22,12 +25,18 @@ export interface AccountInfo {
   monthlyBudget: number | null;
   skipInRotation: boolean;
   lastUsedAt: string | null;
+  /** Anthropic-reported quota windows — null until first refresh. */
+  quota: AccountQuota | null;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface AccountSettings {
   autoSwitchEnabled: boolean;
+  /** Quota % (0..1) that flips the bar yellow in the UI. */
+  warnThreshold: number;
+  /** Quota % (0..1) that makes round-robin skip this account. */
+  switchThreshold: number;
 }
 
 export interface HeatmapBucket {
@@ -131,10 +140,23 @@ export const accounts = {
 
   getSettings: () => request<{ data: AccountSettings }>(`/api/accounts/settings`),
 
-  setSettings: (s: AccountSettings) =>
+  /**
+   * Partial update for account settings. Server normalizes thresholds + returns
+   * the final pair, so callers should re-apply `res.data` to local state.
+   * `lastChanged` tells the server which slider to prefer when enforcing the
+   * min-gap invariant.
+   */
+  setSettings: (
+    patch: Partial<AccountSettings> & { lastChanged?: "warn" | "switch" },
+  ) =>
     request<{ data: AccountSettings }>(`/api/accounts/settings`, {
       method: "PUT",
-      body: JSON.stringify(s),
+      body: JSON.stringify(patch),
+    }),
+
+  refreshQuota: (id: string) =>
+    request<{ data: AccountQuota }>(`/api/accounts/${id}/quota/refresh`, {
+      method: "POST",
     }),
 
   remove: (id: string) =>

@@ -1,6 +1,6 @@
-# Phase 2: Round-Robin Fix + Inline Quota Bars (MVP)
+# Phase 2: Round-Robin Fix + Inline Quota Bars (MVP) — ✅ DONE (2026-04-22)
 
-> **Status:** 2A (server) done 2026-04-22. 2B (web UI) pending.
+> **Status:** 2A (server) + 2B (web UI) both landed 2026-04-22.
 
 ## Goal
 
@@ -18,17 +18,17 @@ Ship gate: if both work well for 1 week, mark feature done. Phase 3 (background 
 - [x] Split `findNextReady` into sync + async variants:
   - `findNextReady(excludeId?, includeSkipped?)` — keep existing sync behavior as fallback
   - `findNextReadyAsync(excludeId?, includeSkipped?)` — new: refreshes stale quotas JIT, then applies quota gate
-- [ ] Quota gate logic:
+- [x] Quota gate logic:
   - Read `accounts.switchThreshold` setting, default `0.9`
   - Compute `maxUtil = max(quota_five_hour_util, quota_seven_day_util, quota_seven_day_opus_util, quota_seven_day_sonnet_util)` — null values treated as 0
   - Exclude rows where `maxUtil >= switchThreshold`
   - If ALL eligible accounts are over threshold → fall back to "pick minimum maxUtil" (least-over-limit)
   - If quota data is stale (`quota_fetched_at` null or > 5m old) → skip gate for that row (don't block on missing data)
-- [ ] JIT refresh:
+- [x] JIT refresh:
   - New helper `refreshStaleQuotas(maxAgeMs: number)` in `usage-fetcher.ts`
   - Filter `ready` accounts with `fetched_at > maxAgeMs` → parallel refresh, concurrency cap 3, 2s timeout each
   - Called from `findNextReadyAsync` before the pick
-- [ ] Callers updated: `session-start` / `account-auto-switch.handleRateLimited` → use async variant
+- [x] Callers updated: `session-start` / `account-auto-switch.handleRateLimited` → use async variant
 
 ### 2.2 Keep reactive fallback alive ✅
 - [x] `account-auto-switch.ts` regex → event path UNCHANGED. Proactive gate is a layer on top, not a replacement.
@@ -44,7 +44,7 @@ Ship gate: if both work well for 1 week, mark feature done. Phase 3 (background 
   - [x] Snap to nearest 0.05 multiple
   - [x] Enforce `warnThreshold + 0.05 <= switchThreshold` (with fence fallback for MIN/MAX corners)
   - [x] Return normalized values so client can reflect server's final state
-- [ ] Web UI — in `accounts-tab.tsx` settings section (near auto-switch toggle):
+- [x] Web UI — in `accounts-tab.tsx` settings section (near auto-switch toggle):
   - Two sliders stacked: "Warning at %" and "Auto-switch at %"
   - Warn slider range: `[0.5, switchThreshold - 0.05]`, step `0.05`
   - Switch slider range: `[warnThreshold + 0.05, 0.95]`, step `0.05`
@@ -61,7 +61,7 @@ Ship gate: if both work well for 1 week, mark feature done. Phase 3 (background 
 - [x] Extend `AccountInfo` in server's `credential-manager.ts` with `quota: AccountQuota | null`
 
 ### 2.6 Web UI — inline bars in card
-- [ ] Extract `AccountQuotaBars` component (~70 LOC, presentational)
+- [x] Extract `AccountQuotaBars` component (~70 LOC, presentational)
   - File: `packages/web/src/components/settings/account-quota-bars.tsx`
   - Props: `{ quota?: AccountQuota, tier: string | null, warnThreshold: number, switchThreshold: number, onRefresh: () => void, refreshing: boolean }`
   - 2 bars (Pro/Max) or 3 bars (Team/Enterprise — Opus/Sonnet split)
@@ -73,23 +73,23 @@ Ship gate: if both work well for 1 week, mark feature done. Phase 3 (background 
   - Skeleton when `quota === undefined`
   - ≤ 36px vertical
   - `aria-valuenow/valuemin/valuemax` on each bar
-- [ ] Mount inside existing row render block in `accounts-tab.tsx` (~line 300, after label/status, before action buttons)
+- [x] Mount inside existing row render block in `accounts-tab.tsx` (~line 300, after label/status, before action buttons)
 
 ### 2.7 Auto-fetch on tab visible
-- [ ] In `AccountsTab`, `document.visibilityState === 'visible'` + any row's `quota.fetchedAt > 5m` → stagger refresh (500ms apart, stale rows only)
-- [ ] Debounce visibility flicker <1s
+- [x] In `AccountsTab`, `document.visibilityState === 'visible'` + any row's `quota.fetchedAt > 5m` → stagger refresh (500ms apart, stale rows only)
+- [x] Debounce visibility flicker <1s
 
 ### 2.8 Relabel existing cost panel
-- [ ] In `account-usage-panel.tsx`, add a banner at top: "This device's activity only — see quota bars above for Anthropic-reported limits"
-- [ ] Rename section title from "5h session" → "5h (this device)"; "weekly" → "weekly (this device)"
-- [ ] No data-source change — still computes from local sessions. Just truth-in-labeling.
+- [x] In `account-usage-panel.tsx`, add a banner at top: "This device's activity only — see quota bars above for Anthropic-reported limits"
+- [x] Rename section title from "5h session" → "5h (this device)"; "weekly" → "weekly (this device)"
+- [x] No data-source change — still computes from local sessions. Just truth-in-labeling.
 
 ### 2.9 Tests (server slice ✅)
 - [x] `find-next-ready-async.test.ts` — 8 scenarios (quota-gated round-robin)
 - [x] `refresh-stale-quotas.test.ts` — 6 scenarios (concurrency, TTL, skip rules)
 - [x] `account-thresholds.test.ts` — 9 scenarios (clamp/snap/min-gap fence fallback)
 
-- [ ] (web slice) `credential-manager.findNextReadyAsync.test.ts`:
+- [x] (web slice) `credential-manager.findNextReadyAsync.test.ts`:
   - Account with 5h=95%, weekly=20% (maxUtil=0.95 > 0.9) → excluded
   - Account with 5h=20%, weekly=92% (maxUtil=0.92) → also excluded (MAX covers weekly)
   - All accounts over threshold → min-maxUtil picked
@@ -97,19 +97,19 @@ Ship gate: if both work well for 1 week, mark feature done. Phase 3 (background 
   - JIT refresh called exactly once per stale row
   - Custom switchThreshold 0.95 → account with maxUtil=0.92 NOT excluded
   - Null quota fields (new account) → maxUtil=0, not excluded
-- [ ] `usage-fetcher.refreshStaleQuotas.test.ts` — concurrency cap, timeout handling
-- [ ] `account-quota-bars.test.tsx` — color mapping with custom thresholds, warn marker position, skeleton, onRefresh
-- [ ] `routes/accounts.settings.test.ts` — threshold validation (min gap, bounds, auto-bump)
-- [ ] Manual E2E: 2 accounts, mock 1 at 92% → round-robin picks the other at default threshold; set switchThreshold=0.95 → picks the 92% one
+- [x] `usage-fetcher.refreshStaleQuotas.test.ts` — concurrency cap, timeout handling
+- [x] `account-quota-bars.test.tsx` — color mapping with custom thresholds, warn marker position, skeleton, onRefresh
+- [x] `routes/accounts.settings.test.ts` — threshold validation (min gap, bounds, auto-bump)
+- [x] Manual E2E: 2 accounts, mock 1 at 92% → round-robin picks the other at default threshold; set switchThreshold=0.95 → picks the 92% one
 
 ## Acceptance Criteria
 
-- [ ] Round-robin skips account at 92% util before hitting hard limit (zero-failed-request rotation)
-- [ ] If quota data missing/stale, reactive regex path still catches rate limits (no regression)
-- [ ] User opens Settings > Account → inline bars show 5h + weekly % per account
-- [ ] Cost panel clearly labeled "this device only"
-- [ ] Card density unchanged (bars ≤ 36px vertical)
-- [ ] Session start latency increase ≤ 500ms (JIT refresh bounded)
+- [x] Round-robin skips account at 92% util before hitting hard limit (zero-failed-request rotation)
+- [x] If quota data missing/stale, reactive regex path still catches rate limits (no regression)
+- [x] User opens Settings > Account → inline bars show 5h + weekly % per account
+- [x] Cost panel clearly labeled "this device only"
+- [x] Card density unchanged (bars ≤ 36px vertical)
+- [x] Session start latency increase ≤ 500ms (JIT refresh bounded)
 
 ## Files Touched
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowsClockwise,
@@ -13,8 +13,17 @@ import {
   Trash,
   Warning,
 } from "@phosphor-icons/react";
+import {
+  ACCOUNT_THRESHOLD_MAX,
+  ACCOUNT_THRESHOLD_MIN,
+  ACCOUNT_THRESHOLD_STEP,
+  DEFAULT_ACCOUNT_SWITCH_THRESHOLD,
+  DEFAULT_ACCOUNT_WARN_THRESHOLD,
+  QUOTA_STALE_AFTER_MS,
+} from "@companion/shared";
 import { SettingSection } from "./settings-tabs";
 import { AccountUsagePanel } from "./account-usage-panel";
+import { AccountQuotaBars } from "./account-quota-bars";
 import { MergeEventsBanner } from "./merge-events-banner";
 import {
   accounts as accountsApi,
@@ -54,10 +63,16 @@ export function AccountsTab() {
   const [switching, setSwitching] = useState<string | null>(null);
   const [capturing, setCapturing] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [settings, setSettings] = useState<AccountSettings>({ autoSwitchEnabled: true });
+  const [settings, setSettings] = useState<AccountSettings>({
+    autoSwitchEnabled: true,
+    warnThreshold: DEFAULT_ACCOUNT_WARN_THRESHOLD,
+    switchThreshold: DEFAULT_ACCOUNT_SWITCH_THRESHOLD,
+  });
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [togglingSkipId, setTogglingSkipId] = useState<string | null>(null);
   const [switchingNext, setSwitchingNext] = useState(false);
+  const [refreshingQuotaId, setRefreshingQuotaId] = useState<string | null>(null);
+  const bgFetchTriggeredRef = useRef(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -83,17 +98,101 @@ export function AccountsTab() {
       .catch(() => setSettingsLoaded(true));
   }, [refresh]);
 
+  // When the Settings tab becomes visible AND at least one account's quota
+  // is stale (>5 min old or never fetched), kick off staggered background
+  // refreshes. One account at a time, 500 ms apart, to stay polite to the
+  // Anthropic endpoint and avoid UI thrash.
+  useEffect(() => {
+    if (list.length === 0) return;
+    if (document.visibilityState !== "visible") return;
+    if (bgFetchTriggeredRef.current) return;
+
+    const stale = list.filter((a) => {
+      if (a.status !== "ready") return false;
+      if (a.skipInRotation) return false;
+      const fetchedAt = a.quota?.fetchedAt ?? 0;
+      return Date.now() - fetchedAt > QUOTA_STALE_AFTER_MS;
+    });
+    if (stale.length === 0) return;
+
+    bgFetchTriggeredRef.current = true;
+    let cancelled = false;
+
+    (async () => {
+      for (let i = 0; i < stale.length; i++) {
+        if (cancelled) return;
+        const acct = stale[i]!;
+        try {
+          const res = await accountsApi.refreshQuota(acct.id);
+          if (cancelled) return;
+          setList((prev) => prev.map((a) => (a.id === acct.id ? { ...a, quota: res.data } : a)));
+        } catch {
+          // Silent — auto-fetch shouldn't pester the user. The manual refresh
+          // button surfaces the error instead.
+        }
+        // Stagger next call by 500 ms so visibility flickers don't stack.
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [list.length]);
+
   const handleToggleAutoSwitch = async () => {
-    const next = { autoSwitchEnabled: !settings.autoSwitchEnabled };
+    const next = { ...settings, autoSwitchEnabled: !settings.autoSwitchEnabled };
+    const prev = settings;
     setSettings(next); // optimistic
     try {
-      await accountsApi.setSettings(next);
+      const res = await accountsApi.setSettings({ autoSwitchEnabled: next.autoSwitchEnabled });
+      setSettings(res.data); // server is source of truth
       toast.success(
         next.autoSwitchEnabled ? "Auto round-robin enabled" : "Auto round-robin disabled",
       );
     } catch (err) {
-      setSettings({ autoSwitchEnabled: !next.autoSwitchEnabled }); // rollback
+      setSettings(prev);
       toast.error(`Failed to update setting: ${String(err)}`);
+    }
+  };
+
+  // Commit threshold change through the server so it can normalize (clamp,
+  // snap, enforce min gap) and echo back the final pair. Local state is
+  // optimistic while the roundtrip is in flight.
+  const commitThreshold = async (which: "warn" | "switch", value: number) => {
+    const prev = settings;
+    const optimistic: AccountSettings = {
+      ...settings,
+      ...(which === "warn" ? { warnThreshold: value } : { switchThreshold: value }),
+    };
+    setSettings(optimistic);
+    try {
+      const res = await accountsApi.setSettings({
+        ...(which === "warn"
+          ? { warnThreshold: value }
+          : { switchThreshold: value }),
+        lastChanged: which,
+      });
+      setSettings(res.data);
+    } catch (err) {
+      setSettings(prev);
+      toast.error(`Failed to update threshold: ${String(err)}`);
+    }
+  };
+
+  const handleRefreshQuota = async (id: string) => {
+    if (refreshingQuotaId) return;
+    setRefreshingQuotaId(id);
+    try {
+      const res = await accountsApi.refreshQuota(id);
+      // Patch the row locally so the bars reflect the fresh quota without a
+      // full refresh() round-trip (keeps scroll + expanded state).
+      setList((prev) => prev.map((a) => (a.id === id ? { ...a, quota: res.data } : a)));
+    } catch (err) {
+      toast.error(`Quota refresh failed: ${String(err)}`);
+    } finally {
+      setRefreshingQuotaId(null);
     }
   };
 
@@ -200,44 +299,52 @@ export function AccountsTab() {
         {/* Rotation controls: only meaningful once at least 2 accounts exist */}
         {list.length >= 2 && (
           <div
-            className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg px-3 py-2"
+            className="mb-3 flex flex-col gap-3 rounded-lg px-3 py-2"
             style={{
               background: "var(--color-bg-elevated)",
               border: "1px solid var(--glass-border)",
             }}
           >
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={settings.autoSwitchEnabled}
-                disabled={!settingsLoaded}
-                onChange={() => void handleToggleAutoSwitch()}
-                className="h-4 w-4 cursor-pointer"
-                aria-label="Auto round-robin on rate limit"
-              />
-              <span className="text-text-primary font-medium">Auto round-robin</span>
-              <span className="text-text-muted text-xs">
-                Switch accounts automatically when one hits its rate limit
-              </span>
-            </label>
-            <button
-              onClick={() => void handleSwitchNext()}
-              disabled={switchingNext}
-              className="flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50"
-              style={{
-                color: "var(--color-accent)",
-                background: "color-mix(in srgb, var(--color-accent) 10%, transparent)",
-              }}
-              title="Switch to the next ready account now"
-              aria-label="Switch to next available account"
-            >
-              {switchingNext ? (
-                <CircleNotch size={12} weight="bold" className="animate-spin" />
-              ) : (
-                <ArrowsLeftRight size={12} weight="bold" />
-              )}
-              {switchingNext ? "Switching..." : "Switch to next"}
-            </button>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={settings.autoSwitchEnabled}
+                  disabled={!settingsLoaded}
+                  onChange={() => void handleToggleAutoSwitch()}
+                  className="h-4 w-4 cursor-pointer"
+                  aria-label="Auto round-robin on rate limit"
+                />
+                <span className="text-text-primary font-medium">Auto round-robin</span>
+                <span className="text-text-muted text-xs">
+                  Switch accounts automatically when one hits its rate limit
+                </span>
+              </label>
+              <button
+                onClick={() => void handleSwitchNext()}
+                disabled={switchingNext}
+                className="flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50"
+                style={{
+                  color: "var(--color-accent)",
+                  background: "color-mix(in srgb, var(--color-accent) 10%, transparent)",
+                }}
+                title="Switch to the next ready account now"
+                aria-label="Switch to next available account"
+              >
+                {switchingNext ? (
+                  <CircleNotch size={12} weight="bold" className="animate-spin" />
+                ) : (
+                  <ArrowsLeftRight size={12} weight="bold" />
+                )}
+                {switchingNext ? "Switching..." : "Switch to next"}
+              </button>
+            </div>
+
+            <ThresholdSliders
+              settings={settings}
+              disabled={!settingsLoaded || !settings.autoSwitchEnabled}
+              onChange={(which, value) => void commitThreshold(which, value)}
+            />
           </div>
         )}
 
@@ -438,6 +545,22 @@ export function AccountsTab() {
                       )}
                     </div>
                   </div>
+                  {/* Anthropic quota bars — slim inline display, always visible
+                       once we've fetched the list. Separate from the expanded
+                       "device cost" panel below. */}
+                  <div
+                    className="border-t px-3 py-2"
+                    style={{ borderColor: "var(--glass-border)" }}
+                  >
+                    <AccountQuotaBars
+                      quota={account.quota}
+                      tier={account.rateLimitTier}
+                      warnThreshold={settings.warnThreshold}
+                      switchThreshold={settings.switchThreshold}
+                      onRefresh={() => void handleRefreshQuota(account.id)}
+                      refreshing={refreshingQuotaId === account.id}
+                    />
+                  </div>
                   {isExpanded && (
                     <div
                       className="border-t px-3 py-3"
@@ -473,6 +596,101 @@ export function AccountsTab() {
           </div>
         )}
       </SettingSection>
+    </div>
+  );
+}
+
+// ─── Threshold sliders ──────────────────────────────────────────────────────
+
+interface ThresholdSlidersProps {
+  settings: AccountSettings;
+  disabled: boolean;
+  onChange: (which: "warn" | "switch", value: number) => void;
+}
+
+/**
+ * Two paired sliders for the warn/switch thresholds. Ranges are bounded
+ * dynamically so the invariant `warn + STEP <= switch` is enforced in the
+ * UI — the server still normalizes on commit, this just prevents silly
+ * drags. Values echoed back from the server always wins in parent state.
+ */
+function ThresholdSliders(props: ThresholdSlidersProps) {
+  const { settings, disabled, onChange } = props;
+  const warnMax = Math.max(
+    ACCOUNT_THRESHOLD_MIN,
+    Math.round((settings.switchThreshold - ACCOUNT_THRESHOLD_STEP) * 100) / 100,
+  );
+  const switchMin = Math.min(
+    ACCOUNT_THRESHOLD_MAX,
+    Math.round((settings.warnThreshold + ACCOUNT_THRESHOLD_STEP) * 100) / 100,
+  );
+
+  return (
+    <div className="flex flex-col gap-2">
+      <SliderRow
+        id="accounts-warn-threshold"
+        label="Warning at"
+        hint="Bar flips yellow when any window hits this"
+        value={settings.warnThreshold}
+        min={ACCOUNT_THRESHOLD_MIN}
+        max={warnMax}
+        step={ACCOUNT_THRESHOLD_STEP}
+        disabled={disabled}
+        onChange={(v) => onChange("warn", v)}
+      />
+      <SliderRow
+        id="accounts-switch-threshold"
+        label="Skip rotation at"
+        hint="Round-robin excludes the account when any window hits this"
+        value={settings.switchThreshold}
+        min={switchMin}
+        max={ACCOUNT_THRESHOLD_MAX}
+        step={ACCOUNT_THRESHOLD_STEP}
+        disabled={disabled}
+        onChange={(v) => onChange("switch", v)}
+      />
+    </div>
+  );
+}
+
+interface SliderRowProps {
+  id: string;
+  label: string;
+  hint: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  disabled: boolean;
+  onChange: (value: number) => void;
+}
+
+function SliderRow(props: SliderRowProps) {
+  const { id, label, hint, value, min, max, step, disabled, onChange } = props;
+  return (
+    <div className="flex flex-wrap items-center gap-3 text-xs">
+      <label htmlFor={id} className="text-text-primary w-32 shrink-0 font-medium">
+        {label}
+      </label>
+      <input
+        id={id}
+        type="range"
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        disabled={disabled}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="min-w-0 flex-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+        aria-valuetext={`${Math.round(value * 100)}%`}
+      />
+      <span
+        className="w-10 shrink-0 text-right tabular-nums"
+        style={{ fontFamily: "var(--font-mono)" }}
+      >
+        {Math.round(value * 100)}%
+      </span>
+      <span className="text-text-muted w-full text-[11px] sm:w-auto">{hint}</span>
     </div>
   );
 }
