@@ -1559,6 +1559,15 @@ code {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(234, 67, 53, 0.2));
 }
 
+.intel-icon-wiki {
+  background: linear-gradient(135deg, rgba(251, 188, 4, 0.15), rgba(242, 101, 34, 0.15));
+  color: #F26522;
+}
+
+.dark .intel-icon-wiki {
+  background: linear-gradient(135deg, rgba(251, 188, 4, 0.25), rgba(242, 101, 34, 0.2));
+}
+
 .intel-header h3 {
   font-family: var(--font-display);
   font-size: 1.375rem;

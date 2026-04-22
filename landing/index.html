@@ -258,20 +258,20 @@
       <!-- Impact metrics -->
       <div class="intel-metrics">
         <div class="intel-metric">
-          <span class="intel-metric-value">4</span>
-          <span class="intel-metric-label">Auto-injection points</span>
+          <span class="intel-metric-value">4+L0-L3</span>
+          <span class="intel-metric-label">Context layers auto-loaded</span>
         </div>
         <div class="intel-metric">
           <span class="intel-metric-value">~5</span>
           <span class="intel-metric-label">Search calls saved per message</span>
         </div>
         <div class="intel-metric">
-          <span class="intel-metric-value">70%</span>
-          <span class="intel-metric-label">Fewer missed dependencies</span>
+          <span class="intel-metric-value">74K → 20K</span>
+          <span class="intel-metric-label">Session context shrunk by Wiki</span>
         </div>
       </div>
 
-      <div class="intel-grid" style="grid-template-columns: minmax(0, 720px); justify-content: center;">
+      <div class="intel-grid">
         <!-- CodeGraph -->
         <div class="intel-card">
           <div class="intel-header">
@@ -341,6 +341,75 @@
               <rect x="120" y="186" width="200" height="14" rx="3" fill="rgba(66,133,244,0.15)"/>
               <rect x="120" y="186" width="80" height="14" rx="3" fill="#4285F4" opacity="0.6"/>
               <text x="204" y="197" font-family="JetBrains Mono" font-size="8" font-weight="700" fill="var(--text-primary)">17</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Wiki KB -->
+        <div class="intel-card">
+          <div class="intel-header">
+            <div class="intel-icon intel-icon-wiki">
+              <svg width="32" height="32" viewBox="0 0 256 256" fill="none"><path d="M56 40h104a32 32 0 0 1 32 32v152H88a32 32 0 0 1-32-32V40Z" stroke="currentColor" stroke-width="14" stroke-linejoin="round"/><path d="M56 40v152a32 32 0 0 1 32-32h104" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/><line x1="88" y1="88" x2="160" y2="88" stroke="currentColor" stroke-width="12" stroke-linecap="round"/><line x1="88" y1="120" x2="144" y2="120" stroke="currentColor" stroke-width="12" stroke-linecap="round"/></svg>
+            </div>
+            <h3>Wiki KB</h3>
+            <span class="intel-label">Living Docs for Agents</span>
+          </div>
+
+          <ul class="intel-features">
+            <li>
+              <strong>4-Layer Lazy Loading (L0 → L3)</strong>
+              <span>L0 index always injected (~500 tokens). L1 rules when hot. L2 patterns on demand. L3 examples only when the agent asks. Full 74K knowledge base, 20K in-context.</span>
+            </li>
+            <li>
+              <strong>Cross-Adapter — Claude, Codex, Gemini, OpenCode</strong>
+              <span>One wiki feeds every CLI. Tool name rotates per adapter (<code>companion_wiki_note</code> for Claude, MCP for the rest) so agents record discoveries as they work.</span>
+            </li>
+            <li>
+              <strong>Raw → Polished Pipeline</strong>
+              <span>Agents dump raw notes; a background LLM pass deduplicates, tags, and promotes them to structured articles. Your team's learnings compound.</span>
+            </li>
+          </ul>
+
+          <!-- Wiki KB Mockup -->
+          <div class="intel-mockup">
+            <svg viewBox="0 0 400 200" class="mockup-svg">
+              <rect x="0" y="0" width="400" height="200" rx="12" fill="var(--bg-card)" stroke="var(--border)" stroke-width="1"/>
+              <!-- Header -->
+              <rect x="0" y="0" width="400" height="36" rx="12" fill="var(--bg-elevated)"/>
+              <rect x="0" y="24" width="400" height="12" fill="var(--bg-elevated)"/>
+              <circle cx="20" cy="18" r="5" fill="#F26522"/>
+              <text x="32" y="22" font-family="Inter" font-size="11" font-weight="600" fill="var(--text-primary)">Wiki — companion</text>
+              <text x="320" y="22" font-family="JetBrains Mono" font-size="9" fill="#34A853">142 articles</text>
+
+              <!-- Layer legend -->
+              <text x="16" y="56" font-family="Inter" font-size="9" fill="var(--text-muted)">LAYERS</text>
+
+              <!-- L0 -->
+              <rect x="16" y="66" width="40" height="22" rx="4" fill="#34A853" opacity="0.9"/>
+              <text x="36" y="81" text-anchor="middle" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="white">L0</text>
+              <text x="62" y="81" font-family="Inter" font-size="10" fill="var(--text-primary)">_index · always injected</text>
+              <text x="330" y="81" font-family="JetBrains Mono" font-size="9" fill="var(--text-muted)">500 tok</text>
+
+              <!-- L1 -->
+              <rect x="16" y="96" width="40" height="22" rx="4" fill="#4285F4" opacity="0.85"/>
+              <text x="36" y="111" text-anchor="middle" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="white">L1</text>
+              <text x="62" y="111" font-family="Inter" font-size="10" fill="var(--text-primary)">rules · invariants · conventions</text>
+              <text x="330" y="111" font-family="JetBrains Mono" font-size="9" fill="var(--text-muted)">3K tok</text>
+
+              <!-- L2 -->
+              <rect x="16" y="126" width="40" height="22" rx="4" fill="#FBBC04" opacity="0.8"/>
+              <text x="36" y="141" text-anchor="middle" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="var(--text-primary)">L2</text>
+              <text x="62" y="141" font-family="Inter" font-size="10" fill="var(--text-primary)">patterns · recipes · on demand</text>
+              <text x="330" y="141" font-family="JetBrains Mono" font-size="9" fill="var(--text-muted)">9K tok</text>
+
+              <!-- L3 -->
+              <rect x="16" y="156" width="40" height="22" rx="4" fill="#EA4335" opacity="0.7"/>
+              <text x="36" y="171" text-anchor="middle" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="white">L3</text>
+              <text x="62" y="171" font-family="Inter" font-size="10" fill="var(--text-primary)">examples · agent-requested</text>
+              <text x="330" y="171" font-family="JetBrains Mono" font-size="9" fill="var(--text-muted)">61K tok</text>
+
+              <!-- Bottom hint -->
+              <text x="16" y="192" font-family="JetBrains Mono" font-size="8" fill="var(--text-muted)">→ agents pull down the layers they need, never the whole wiki</text>
             </svg>
           </div>
         </div>
