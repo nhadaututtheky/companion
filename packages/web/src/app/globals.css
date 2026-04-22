@@ -662,19 +662,13 @@ p {
 }
 
 /* ── Expanded Session: full-screen on mobile ─────────────────────────────── */
-@media (max-width: 767px) {
-  /* The outer centering wrapper: remove padding so card fills screen */
-  .glass-enter.glass-enter-active {
-    padding: 0 !important;
-    align-items: stretch !important;
-  }
-  /* The card: full screen, no radius */
-  .expanded-session-card {
-    border-radius: 0 !important;
-    max-height: 100vh !important;
-    height: 100dvh !important;
-  }
-}
+/*
+ * Mobile overrides for the old ExpandedSession floating card were removed
+ * together with `components/grid/expanded-session.tsx`. The session detail
+ * modal now renders via the parallel-route interceptor at
+ * `app/@modal/(..)sessions/[id]/page.tsx`, which sizes itself via inline
+ * style and does not need `.expanded-session-card` / `.glass-enter`.
+ */
 
 /* ── Mobile Sidebar Overlay ──────────────────────────────────────────────── */
 @media (max-width: 767px) {

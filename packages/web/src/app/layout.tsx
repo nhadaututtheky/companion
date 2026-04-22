@@ -39,7 +39,23 @@ const themeScript = `
 })();
 `;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+  modal,
+}: {
+  children: React.ReactNode;
+  /**
+   * Parallel route slot for intercepted routes. Enables navigation like
+   * `/sessions/[id]` to render as a modal overlay when clicked from `/`,
+   * while still being a standalone page when opened via direct URL.
+   * See `app/@modal/(..)sessions/[id]/page.tsx`.
+   *
+   * Marked optional because Next.js's generated `LayoutProps<"/">` type does
+   * not include parallel slots until the dev server picks them up; making
+   * this optional keeps `tsc` green in a cold checkout.
+   */
+  modal?: React.ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -52,6 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SettingsModalProvider />
             <ThemeSync />
             {children}
+            {modal}
             <MagicRingMount />
             <ScheduleModal />
             <UpdateBanner />

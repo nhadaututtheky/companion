@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Z } from "@/lib/z-index";
 import { useShallow } from "zustand/react/shallow";
 import { ArrowCounterClockwise, X, TelegramLogo, Globe, Trash } from "@phosphor-icons/react";
@@ -8,7 +9,6 @@ import { BottomStatsBar } from "@/components/layout/bottom-stats-bar";
 import { NavSidebar } from "@/components/layout/nav-sidebar";
 import { ProjectSidebar } from "@/components/layout/project-sidebar";
 // StatsGrid moved to Header
-import { ExpandedSession } from "@/components/grid/expanded-session";
 import { MultiSessionLayout } from "@/components/layout/multi-session-layout";
 import { NewSessionModal } from "@/components/session/new-session-modal";
 import { CompanionLogo } from "@/components/layout/companion-logo";
@@ -512,14 +512,21 @@ export default function DashboardPage() {
     setNewSessionOpen(false);
   }, [setNewSessionOpen]);
 
+  const router = useRouter();
   const handleExpand = useCallback(
     (id: string) => {
-      setExpandedSession(id);
+      // Navigate to `/sessions/{id}` — the intercepting route at
+      // `app/@modal/(..)sessions/[id]/page.tsx` catches this nav and renders
+      // the SessionView in a modal overlay. Direct URL visits still go to the
+      // standalone fullpage at `app/sessions/[id]/page.tsx`.
+      router.push(`/sessions/${id}`);
     },
-    [setExpandedSession],
+    [router],
   );
 
   const handleCloseExpanded = useCallback(() => {
+    // Modal's own close handler navigates back; this is still referenced by
+    // the Esc key wiring below for when the modal isn't the top of the stack.
     setExpandedSession(null);
   }, [setExpandedSession]);
 
@@ -532,8 +539,9 @@ export default function DashboardPage() {
           "linear-gradient(135deg, var(--color-bg-base) 0%, color-mix(in srgb, var(--color-accent) 3%, var(--color-bg-base)) 50%, var(--color-bg-base) 100%)",
       }}
     >
-      {/* Expanded session overlay (Phase 3) */}
-      <ExpandedSession sessionId={expandedSessionId} onClose={handleCloseExpanded} />
+      {/* Session detail modal is now rendered via parallel route slot
+         `app/@modal/(..)sessions/[id]/page.tsx`, reached by router.push
+         from handleExpand. No component to mount here. */}
 
       {/* Modal stack: only the top-priority open modal renders. See ui-store.ts selectTopOpenModal. */}
       <NewSessionModal open={topModal === "new-session"} onClose={handleCloseNewSession} />
