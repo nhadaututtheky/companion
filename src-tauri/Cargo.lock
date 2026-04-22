@@ -550,7 +550,7 @@ dependencies = [
 
 [[package]]
 name = "companion"
-version = "0.27.0"
+version = "0.29.0"
 dependencies = [
  "dirs 5.0.1",
  "env_logger",
