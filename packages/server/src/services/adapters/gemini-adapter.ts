@@ -26,6 +26,7 @@ import type {
   AdapterLaunchOptions,
   NormalizedMessage,
 } from "@companion/shared";
+import { injectCompanionMcpGemini } from "./mcp-injection.js";
 
 const log = createLogger("gemini-adapter");
 
@@ -210,6 +211,13 @@ export class GeminiAdapter implements CLIAdapter {
     }
     if (opts.envVars) Object.assign(env, opts.envVars);
 
+    // Inject companion-agent MCP config so Wiki KB + CodeGraph tools are
+    // reachable from Gemini sessions.
+    const apiUrl = process.env.COMPANION_API_URL ?? `http://localhost:${process.env.PORT ?? 3579}`;
+    const apiKey = process.env.API_KEY ?? "";
+    const projectSlug = (opts.platformOptions?.projectSlug as string | undefined) ?? "";
+    const mcpCleanup = injectCompanionMcpGemini(opts.cwd, apiUrl, apiKey, projectSlug);
+
     const proc = Bun.spawn(["gemini", ...args], {
       cwd: opts.cwd,
       env,
@@ -281,6 +289,7 @@ export class GeminiAdapter implements CLIAdapter {
 
     const exited = proc.exited.then((code) => {
       log.info("Gemini CLI exited", { pid, code, sessionId: opts.sessionId });
+      mcpCleanup();
       onExit(code);
       return code;
     });

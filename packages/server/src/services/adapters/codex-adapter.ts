@@ -25,6 +25,7 @@ import type {
   AdapterLaunchOptions,
   NormalizedMessage,
 } from "@companion/shared";
+import { injectCompanionMcpCodex } from "./mcp-injection.js";
 
 const log = createLogger("codex-adapter");
 
@@ -239,6 +240,13 @@ export class CodexAdapter implements CLIAdapter {
     }
     if (opts.envVars) Object.assign(env, opts.envVars);
 
+    // Inject companion-agent MCP config (TOML) so Wiki KB + CodeGraph tools
+    // are reachable from Codex sessions.
+    const apiUrl = process.env.COMPANION_API_URL ?? `http://localhost:${process.env.PORT ?? 3579}`;
+    const apiKey = process.env.API_KEY ?? "";
+    const projectSlug = (opts.platformOptions?.projectSlug as string | undefined) ?? "";
+    const mcpCleanup = injectCompanionMcpCodex(opts.cwd, apiUrl, apiKey, projectSlug);
+
     const proc = Bun.spawn(["codex", ...args], {
       cwd: opts.cwd,
       env,
@@ -309,6 +317,7 @@ export class CodexAdapter implements CLIAdapter {
 
     const exited = proc.exited.then((code) => {
       log.info("Codex CLI exited", { pid, code, sessionId: opts.sessionId });
+      mcpCleanup();
       onExit(code);
       return code;
     });

@@ -17,6 +17,7 @@ import type {
   AdapterLaunchOptions,
   NormalizedMessage,
 } from "@companion/shared";
+import { injectCompanionMcpOpenCode } from "./mcp-injection.js";
 
 const log = createLogger("opencode-adapter");
 
@@ -356,6 +357,13 @@ export class OpenCodeAdapter implements CLIAdapter {
     }
     if (opts.envVars) Object.assign(env, opts.envVars);
 
+    // Inject companion-agent MCP config so Wiki KB + CodeGraph tools are
+    // reachable from OpenCode sessions.
+    const apiUrl = process.env.COMPANION_API_URL ?? `http://localhost:${process.env.PORT ?? 3579}`;
+    const apiKey = process.env.API_KEY ?? "";
+    const projectSlug = (opts.platformOptions?.projectSlug as string | undefined) ?? "";
+    const mcpCleanup = injectCompanionMcpOpenCode(opts.cwd, apiUrl, apiKey, projectSlug);
+
     const proc = Bun.spawn(["opencode", ...args], {
       cwd: opts.cwd,
       env,
@@ -426,6 +434,7 @@ export class OpenCodeAdapter implements CLIAdapter {
 
     const exited = proc.exited.then((code) => {
       log.info("OpenCode CLI exited", { pid, code, sessionId: opts.sessionId });
+      mcpCleanup();
       onExit(code);
       return code;
     });
