@@ -886,3 +886,18 @@ a:hover {
     }
   }
 }
+
+/* ── Shiki code block — normalise the <pre> shiki emits. Its own background
+   is overridden by the wrapper; we only keep padding + mono font here so
+   first paint (before shiki loads) and hydrated paint look identical. */
+.shiki-host > pre,
+.shiki-host > .shiki {
+  margin: 0;
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  background: transparent !important;
+  overflow-x: auto;
+}
+.shiki-host code {
+  font-family: inherit;
+}

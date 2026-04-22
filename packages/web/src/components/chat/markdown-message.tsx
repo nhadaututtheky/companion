@@ -1,33 +1,8 @@
 "use client";
-import React, { useState, useCallback } from "react";
+import React from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Copy, Check } from "@phosphor-icons/react";
-
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }, [text]);
-
-  return (
-    <button
-      onClick={handleCopy}
-      className="absolute right-2 top-2 cursor-pointer rounded p-1 opacity-0 transition-opacity group-hover:opacity-100"
-      style={{
-        background: "rgba(255,255,255,0.1)",
-        color: copied ? "#34A853" : "rgba(255,255,255,0.6)",
-      }}
-      aria-label="Copy code"
-    >
-      {copied ? <Check size={14} weight="bold" /> : <Copy size={14} />}
-    </button>
-  );
-}
+import { CodeBlock } from "./code-block";
 
 // ── Shared (compact-independent) components ──────────────────────────────────
 
@@ -138,31 +113,12 @@ function buildComponents(compact: boolean): Partial<Components> {
 
       if (isBlock || codeText.includes("\n")) {
         return (
-          <div
-            className="group relative my-2 overflow-hidden rounded-lg"
-            style={{ maxHeight: maxCodeH }}
-          >
-            {lang && (
-              <div
-                className="px-3 py-1 font-mono text-xs"
-                style={{ background: "#2d2d2d", color: "#999" }}
-              >
-                {lang}
-              </div>
-            )}
-            <pre
-              className="m-0 overflow-auto p-3 font-mono"
-              style={{
-                background: "#1e1e1e",
-                color: "#d4d4d4",
-                fontSize: codeFontSize,
-                lineHeight: 1.55,
-              }}
-            >
-              <code {...props}>{codeText}</code>
-            </pre>
-            <CopyButton text={codeText} />
-          </div>
+          <CodeBlock
+            code={codeText}
+            lang={lang || undefined}
+            maxHeight={maxCodeH}
+            fontSize={codeFontSize}
+          />
         );
       }
 
