@@ -129,6 +129,7 @@ if (process.platform !== "win32")
 
 import { MessageHandler } from "./ws-message-handler.js";
 import { forceFlushStreamBatch } from "./ws-stream-handler.js";
+import { getWikiStartContext } from "./context-budget.js";
 import type { ActiveSession } from "./session-store.js";
 import type { MessageHandlerBridge } from "./ws-message-handler.js";
 
@@ -510,6 +511,108 @@ describe("MessageHandler", () => {
       expect((bridge.persistSession as ReturnType<typeof mock>).mock.calls.length).toBeGreaterThan(
         0,
       );
+    });
+
+    it("sends Wiki L0 content via sendToCLI when wiki context is configured", () => {
+      (getWikiStartContext as ReturnType<typeof mock>).mockImplementationOnce(() => ({
+        content: "## Core Rules\n- Rule A\n- Rule B",
+        tokens: 150,
+        domain: "companion",
+        domains: ["companion"],
+      }));
+
+      handler.handleSystemInit(session, {
+        type: "system",
+        subtype: "init",
+        cwd: "/test",
+        session_id: "s1",
+        tools: [],
+        mcp_servers: [],
+        model: "claude-sonnet-4-6",
+        permissionMode: "default",
+        claude_code_version: "1.0.0",
+        slash_commands: [],
+        uuid: "",
+      } as any);
+
+      const sendCalls = (bridge.sendToCLI as ReturnType<typeof mock>).mock.calls;
+      const wikiCall = sendCalls.find((c: any[]) => {
+        try {
+          const parsed = JSON.parse(c[1] as string);
+          return parsed?.message?.content?.includes?.("Wiki KB");
+        } catch {
+          return false;
+        }
+      });
+      expect(wikiCall).toBeDefined();
+      const parsed = JSON.parse(wikiCall![1] as string);
+      expect(parsed.type).toBe("user");
+      expect(parsed.message.role).toBe("user");
+      expect(parsed.message.content).toContain("## Core Rules");
+      expect(parsed.message.content).toContain("companion_wiki_search");
+    });
+
+    it("skips Wiki injection when wiki context is not configured (returns null)", () => {
+      (getWikiStartContext as ReturnType<typeof mock>).mockImplementationOnce(() => null);
+
+      handler.handleSystemInit(session, {
+        type: "system",
+        subtype: "init",
+        cwd: "/test",
+        session_id: "s1",
+        tools: [],
+        mcp_servers: [],
+        model: "claude-sonnet-4-6",
+        permissionMode: "default",
+        claude_code_version: "1.0.0",
+        slash_commands: [],
+        uuid: "",
+      } as any);
+
+      const sendCalls = (bridge.sendToCLI as ReturnType<typeof mock>).mock.calls;
+      const wikiCall = sendCalls.find((c: any[]) => {
+        try {
+          const parsed = JSON.parse(c[1] as string);
+          return parsed?.message?.content?.includes?.("Wiki KB");
+        } catch {
+          return false;
+        }
+      });
+      expect(wikiCall).toBeUndefined();
+    });
+
+    it("skips Wiki injection for non-Claude adapters (claude_code_version='unknown')", () => {
+      (getWikiStartContext as ReturnType<typeof mock>).mockImplementationOnce(() => ({
+        content: "should not reach CLI",
+        tokens: 50,
+        domain: "companion",
+        domains: ["companion"],
+      }));
+
+      handler.handleSystemInit(session, {
+        type: "system",
+        subtype: "init",
+        cwd: "/test",
+        session_id: "s1",
+        tools: [],
+        mcp_servers: [],
+        model: "gpt-4o",
+        permissionMode: "default",
+        claude_code_version: "unknown",
+        slash_commands: [],
+        uuid: "",
+      } as any);
+
+      const sendCalls = (bridge.sendToCLI as ReturnType<typeof mock>).mock.calls;
+      const wikiCall = sendCalls.find((c: any[]) => {
+        try {
+          const parsed = JSON.parse(c[1] as string);
+          return parsed?.message?.content?.includes?.("Wiki KB");
+        } catch {
+          return false;
+        }
+      });
+      expect(wikiCall).toBeUndefined();
     });
   });
 

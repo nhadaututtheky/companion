@@ -341,18 +341,10 @@ export class MessageHandler {
       log.error("Failed to estimate context breakdown", { error: String(err) });
     }
 
-    // Inject wiki L0 context if enabled and domain configured
-    try {
-      const wikiCtx = getWikiStartContext(session.state.cwd);
-      if (wikiCtx) {
-        log.info("Wiki L0 injected", {
-          sessionId: session.id,
-          domain: wikiCtx.domain,
-          tokens: wikiCtx.tokens,
-        });
-      }
-    } catch (err) {
-      log.debug("Wiki context injection skipped", { error: String(err) });
+    // Inject wiki L0 context if enabled and domain configured.
+    // Gated to Claude CLI — non-Claude adapters need adapter-specific user-message plumbing.
+    if (msg.claude_code_version && msg.claude_code_version !== "unknown") {
+      this.injectWikiContext(session, "init");
     }
 
     log.info("CLI initialized", {
@@ -425,6 +417,48 @@ export class MessageHandler {
       message: { role: "user", content: reinjectMsg },
     });
     this.bridge.sendToCLI(session, ndjson);
+
+    // Also re-inject Wiki L0 domain context so core rules survive compaction.
+    this.injectWikiContext(session, "compact");
+  }
+
+  // ── injectWikiContext ─────────────────────────────────────────────────────
+
+  /**
+   * Inject the Wiki KB L0 domain context into the Claude CLI as a user message,
+   * so the agent sees core rules + article index + MCP tool hints inline.
+   * Claude-only — non-Claude adapters need their own user-message plumbing.
+   *
+   * @param phase "init" at session start, "compact" after context compaction.
+   */
+  private injectWikiContext(session: ActiveSession, phase: "init" | "compact"): void {
+    try {
+      const wikiCtx = getWikiStartContext(session.state.cwd);
+      if (!wikiCtx) return;
+
+      const header =
+        phase === "init"
+          ? `[Wiki KB — domain "${wikiCtx.domain}" context loaded at session start]`
+          : `[Wiki KB — re-injection after compaction — domain "${wikiCtx.domain}"]`;
+      const toolsHint =
+        "Use `companion_wiki_search` / `companion_wiki_read` MCP tools to retrieve more articles on-demand. Use `companion_wiki_note` to persist new findings.";
+      const content = `${header}\n\n${wikiCtx.content}\n\n---\n${toolsHint}`;
+
+      const ndjson = JSON.stringify({
+        type: "user",
+        message: { role: "user", content },
+      });
+      this.bridge.sendToCLI(session, ndjson);
+
+      log.info(`Wiki L0 injected (${phase})`, {
+        sessionId: session.id,
+        domain: wikiCtx.domain,
+        tokens: wikiCtx.tokens,
+        bytes: content.length,
+      });
+    } catch (err) {
+      log.debug("Wiki context injection failed", { phase, error: String(err) });
+    }
   }
 
   // ── handleAssistant ───────────────────────────────────────────────────────
