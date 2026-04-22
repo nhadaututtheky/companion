@@ -14,6 +14,7 @@ import {
   DownloadSimple,
 } from "@phosphor-icons/react";
 import { APP_VERSION } from "@companion/shared";
+import { useLicenseStore } from "@/lib/stores/license-store";
 import {
   useActivityStore,
   type ActivityLog,
@@ -198,6 +199,73 @@ function VersionBadge() {
   );
 }
 
+// ── Tier Badge ────────────────────────────────────────────────────────────
+
+/**
+ * Always-visible tier pill sitting next to the version badge. Free / trial
+ * users see a clickable orange "Go Pro" chip that opens the upgrade modal;
+ * Pro users see a muted confirmation pill (no action).
+ */
+function TierBadge() {
+  const tier = useLicenseStore((s) => s.tier);
+  const daysLeft = useLicenseStore((s) => s.daysLeft);
+  const loaded = useLicenseStore((s) => s.loaded);
+  const promptUpgrade = useLicenseStore((s) => s.promptUpgrade);
+
+  if (!loaded) return null;
+
+  if (tier === "pro") {
+    return (
+      <span
+        className="text-success rounded px-1.5 py-px font-mono text-[10px] font-semibold"
+        style={{
+          background: "color-mix(in srgb, var(--color-success) 12%, transparent)",
+          border: "1px solid color-mix(in srgb, var(--color-success) 25%, transparent)",
+        }}
+        title="Pro license active"
+      >
+        PRO
+      </span>
+    );
+  }
+
+  const label =
+    tier === "trial"
+      ? daysLeft != null
+        ? `TRIAL · ${daysLeft}d`
+        : "TRIAL"
+      : "FREE → Go Pro";
+
+  const accent = tier === "trial" ? "var(--color-warning)" : "var(--color-accent)";
+
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        promptUpgrade(
+          tier === "trial"
+            ? "Keep Pro features after your trial ends"
+            : "Unlock unlimited sessions + Pro intelligence",
+        )
+      }
+      className="cursor-pointer rounded px-1.5 py-px font-mono text-[10px] font-semibold transition-opacity hover:opacity-90"
+      style={{
+        color: accent,
+        background: `color-mix(in srgb, ${accent} 12%, transparent)`,
+        border: `1px solid color-mix(in srgb, ${accent} 30%, transparent)`,
+      }}
+      aria-label={tier === "trial" ? "Trial active — click to upgrade" : "Free tier — click to go Pro"}
+      title={
+        tier === "trial"
+          ? `Trial${daysLeft != null ? ` — ${daysLeft} days left` : ""} · click to upgrade`
+          : "Free tier · click to see Pro features"
+      }
+    >
+      {label}
+    </button>
+  );
+}
+
 // ── Activity Terminal ─────────────────────────────────────────────────────
 
 interface ActivityTerminalProps {
@@ -322,7 +390,8 @@ export function ActivityTerminal({ open, onToggle }: ActivityTerminalProps) {
         {/* Spacer (always on — pushes version badge + filters to the right) */}
         <div style={{ flex: 1 }} />
 
-        {/* Version badge — always visible, collapsed or expanded */}
+        {/* Tier + version badges — always visible, collapsed or expanded */}
+        <TierBadge />
         <VersionBadge />
 
         {open && (

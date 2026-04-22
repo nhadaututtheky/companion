@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useCallback, useState } from "react";
 import { Z } from "@/lib/z-index";
 import { useShallow } from "zustand/react/shallow";
-import { ArrowCounterClockwise, X, TelegramLogo, Globe, Trash } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, X, TelegramLogo, Globe, Trash, Sparkle } from "@phosphor-icons/react";
 import { Header } from "@/components/layout/header";
 import { BottomStatsBar } from "@/components/layout/bottom-stats-bar";
 import { NavSidebar } from "@/components/layout/nav-sidebar";
@@ -21,6 +21,7 @@ import { FloatingStatsBar } from "@/components/panels/floating-stats-bar";
 import { TipBanner } from "@/components/tips/tip-banner";
 import { useSessionStore } from "@/lib/stores/session-store";
 import { useUiStore, selectTopOpenModal } from "@/lib/stores/ui-store";
+import { useLicenseStore } from "@/lib/stores/license-store";
 import { useNotificationPermission } from "@/hooks/use-notifications";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -71,6 +72,11 @@ const SessionExpandModal = dynamic(
 // ── Empty center state ─────────────────────────────────────────────────────
 
 function EmptyCenter() {
+  const tier = useLicenseStore((s) => s.tier);
+  const loaded = useLicenseStore((s) => s.loaded);
+  const promptUpgrade = useLicenseStore((s) => s.promptUpgrade);
+  const showProCta = loaded && tier !== "pro";
+
   return (
     <div className="flex h-full flex-col items-center justify-center gap-6 px-8">
       <CompanionLogo size="lg" />
@@ -80,6 +86,49 @@ function EmptyCenter() {
       <div className="mt-2 w-full max-w-md">
         <TipBanner context="dashboard" />
       </div>
+      {showProCta && (
+        <button
+          type="button"
+          onClick={() =>
+            promptUpgrade(
+              tier === "trial"
+                ? "Keep unlimited sessions + Pro intelligence after your trial"
+                : "Unlock unlimited sessions + Pro intelligence",
+            )
+          }
+          className="group mt-2 flex w-full max-w-md cursor-pointer items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors"
+          style={{
+            background: "color-mix(in srgb, var(--color-accent) 6%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--color-accent) 22%, transparent)",
+          }}
+          aria-label="Unlock Pro — open upgrade modal"
+        >
+          <span
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg"
+            style={{
+              background: "color-mix(in srgb, var(--color-accent) 15%, transparent)",
+              color: "var(--color-accent)",
+            }}
+            aria-hidden="true"
+          >
+            <Sparkle size={18} weight="fill" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="text-text-primary block text-sm font-semibold">
+              {tier === "trial" ? "Keep Pro after your trial" : "Unlock unlimited sessions"}
+            </span>
+            <span className="text-text-muted block text-xs">
+              $5/mo · multi-bot Telegram · CodeGraph · debate with Codex/Gemini
+            </span>
+          </span>
+          <span
+            className="text-accent flex-shrink-0 text-xs font-semibold transition-transform group-hover:translate-x-0.5"
+            aria-hidden="true"
+          >
+            Go Pro →
+          </span>
+        </button>
+      )}
     </div>
   );
 }
