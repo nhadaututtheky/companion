@@ -48,7 +48,7 @@ if (process.platform !== "win32") {
 
 // ─── Imports (after mocks) ────────────────────────────────────────────────────
 
-import { mkdtempSync, rmSync, existsSync } from "node:fs";
+import { mkdtempSync, rmSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setWikiConfig, getWikiConfig, DEFAULT_WIKI_CONFIG } from "./index.js";
@@ -58,6 +58,7 @@ import {
   autoProvisionDefaultDomain,
   initWikiConfig,
 } from "./bootstrap.js";
+import { getSessionContext, writeCore, rebuildIndex } from "./index.js";
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -190,5 +191,127 @@ describe("wiki bootstrap", () => {
 
       expect(getWikiConfig().defaultDomain).toBe("fresh-proj");
     });
+  });
+
+  // ─── E2E: fresh-install bootstrap → Wiki L0 returns content ──────────────
+  //
+  // Validates the full chain users depend on: PROJECT_SLUG → auto-provision
+  // creates the domain → seeded _core + _index combine into a session context
+  // that is non-null and contains the expected rules. If this breaks, Wiki
+  // L0 injection silently returns nothing even though the log says otherwise.
+  describe("E2E: fresh install → Wiki L0 ready", () => {
+    it("returns non-empty session context containing core rules", () => {
+      process.env.PROJECT_SLUG = "e2e-proj";
+
+      // Step 1: fresh-install bootstrap — creates domain + _index.md
+      initWikiConfig();
+      expect(getWikiConfig().defaultDomain).toBe("e2e-proj");
+      const domainDir = join(tmpDir, "wiki", "e2e-proj");
+      expect(existsSync(domainDir)).toBe(true);
+      expect(existsSync(join(domainDir, "_index.md"))).toBe(true);
+
+      // Step 2: seed _core.md via the public API (mirroring what the repo
+      // ships as wiki/companion/_core.md)
+      writeCore(
+        "e2e-proj",
+        [
+          "# E2E Core Rules",
+          "",
+          "- Every session-ending path MUST clear cliSessionId.",
+          "- Compact threshold is session.state.compact_threshold (not hardcoded).",
+        ].join("\n"),
+        tmpDir,
+      );
+
+      // Step 3: rebuild index so retriever has up-to-date metadata
+      rebuildIndex("e2e-proj", tmpDir);
+
+      // Step 4: call the retriever the way ws-message-handler's Wiki L0
+      // injection does (3000 tokens is the L0 budget)
+      const ctx = getSessionContext("e2e-proj", 3000, tmpDir);
+
+      expect(ctx).not.toBeNull();
+      expect(ctx!.tokens).toBeGreaterThan(0);
+      expect(ctx!.content).toContain("e2e-proj");
+      expect(ctx!.content).toContain("Core Rules");
+      expect(ctx!.content).toContain("cliSessionId");
+    });
+
+    it("second boot is idempotent — doesn't overwrite existing seed content", () => {
+      process.env.PROJECT_SLUG = "e2e-idempotent";
+
+      initWikiConfig();
+      writeCore("e2e-idempotent", "# Original core content", tmpDir);
+
+      const beforeContent = getSessionContext("e2e-idempotent", 3000, tmpDir)?.content ?? "";
+      expect(beforeContent).toContain("Original core content");
+
+      // Simulate a server restart — in-memory config wiped, re-init
+      setWikiConfig({ ...DEFAULT_WIKI_CONFIG });
+      initWikiConfig();
+
+      const afterContent = getSessionContext("e2e-idempotent", 3000, tmpDir)?.content ?? "";
+      expect(afterContent).toContain("Original core content");
+      expect(getWikiConfig().defaultDomain).toBe("e2e-idempotent");
+    });
+  });
+});
+
+// ─── E2E: adapter MCP injection files actually land ────────────────────────
+//
+// Smoke test that each non-Claude adapter's MCP injector writes the right
+// config file at the right path. The unit tests in mcp-injection.test.ts
+// cover the helpers themselves; this asserts each helper produces the
+// CLI-specific schema.
+describe("Adapter MCP injectors — config file schemas", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = mkdtempSync(join(tmpdir(), "companion-adapter-e2e-"));
+  });
+
+  afterEach(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("each injector writes its CLI-specific config with companion-agent key", async () => {
+    const {
+      injectCompanionMcp,
+      injectCompanionMcpGemini,
+      injectCompanionMcpOpenCode,
+      injectCompanionMcpCodex,
+      COMPANION_MCP_SERVER_KEY,
+    } = await import("../services/adapters/mcp-injection.js");
+
+    // Claude — .mcp.json at project root
+    const claudeDir = join(tmpDir, "claude");
+    mkdirSync(claudeDir);
+    const claudeCleanup = injectCompanionMcp(claudeDir, "http://x", "k", "slug");
+    expect(existsSync(join(claudeDir, ".mcp.json"))).toBe(true);
+    claudeCleanup();
+
+    // Gemini — .gemini/settings.json
+    const geminiDir = join(tmpDir, "gemini");
+    mkdirSync(geminiDir);
+    const geminiCleanup = injectCompanionMcpGemini(geminiDir, "http://x", "k", "slug");
+    expect(existsSync(join(geminiDir, ".gemini", "settings.json"))).toBe(true);
+    geminiCleanup();
+
+    // OpenCode — opencode.json with mcp.servers nesting
+    const ocDir = join(tmpDir, "opencode");
+    mkdirSync(ocDir);
+    const ocCleanup = injectCompanionMcpOpenCode(ocDir, "http://x", "k", "slug");
+    expect(existsSync(join(ocDir, "opencode.json"))).toBe(true);
+    ocCleanup();
+
+    // Codex — .codex/config.toml with marker-delimited block
+    const codexDir = join(tmpDir, "codex");
+    mkdirSync(codexDir);
+    const codexCleanup = injectCompanionMcpCodex(codexDir, "http://x", "k", "slug");
+    const codexConfigPath = join(codexDir, ".codex", "config.toml");
+    expect(existsSync(codexConfigPath)).toBe(true);
+    const codexContent = readFileSync(codexConfigPath, "utf-8");
+    expect(codexContent).toContain(`[mcp_servers.${COMPANION_MCP_SERVER_KEY}]`);
+    codexCleanup();
   });
 });

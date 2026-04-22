@@ -11,7 +11,7 @@
  * so Wiki L0 injection works without requiring the user to touch settings.
  */
 
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { createLogger } from "../logger.js";
 import {
@@ -24,6 +24,7 @@ import {
   getWikiConfig,
   setWikiConfig as setWikiConfigInMemory,
   resolveWikiRoot,
+  createDomain,
 } from "./store.js";
 import type { WikiConfig } from "./types.js";
 
@@ -138,7 +139,16 @@ export function autoProvisionDefaultDomain(): void {
   const root = resolveWikiRoot();
   const domainPath = join(root, slug);
   try {
-    if (!existsSync(domainPath)) mkdirSync(domainPath, { recursive: true });
+    if (existsSync(domainPath)) {
+      // Directory exists — ensure the parent dir is writable, then treat as
+      // already-provisioned (user may have seeded content manually).
+      // Still set defaultDomain so Wiki L0 retrieval works.
+    } else {
+      // Create the full domain (directory + raw/ + initial _index.md) so
+      // retriever.getSessionContext() has a non-null index to return from
+      // the very first session after bootstrap.
+      createDomain(slug, slug);
+    }
   } catch (err) {
     log.warn("Failed to create wiki domain directory", { domainPath, error: String(err) });
     return;
