@@ -9,9 +9,11 @@
  * NOT intercepted — the standalone page at `app/sessions/[id]/page.tsx`
  * renders the full page. Same SessionView component, different chrome.
  *
- * Convention: `(..)sessions/[id]` tells Next.js to intercept the
- * `/sessions/[id]` route from the parent segment (`app/`), which is where
- * this `@modal` slot lives.
+ * Convention: `(.)sessions/[id]` tells Next.js to intercept the
+ * `/sessions/[id]` route at the SAME segment level as this `@modal` slot.
+ * Both `@modal` and `sessions/` live under the root `app/` directory, so
+ * `(.)` is the correct marker — `(..)` would be invalid at the root level
+ * (Next.js throws "Cannot use (..) marker at the root level").
  */
 
 import { use, useEffect, useCallback } from "react";
