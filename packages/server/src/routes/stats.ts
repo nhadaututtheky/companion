@@ -625,3 +625,39 @@ statsRoutes.get("/features", (c) => {
     },
   } satisfies ApiResponse);
 });
+
+// ─── GET /api/stats/context-injections?sessionId=... ─────────────────────────
+// Timeline of context injections for a single session — used by the Analytics
+// "AI Context → Top Sessions" drill-down.
+statsRoutes.get("/context-injections", (c) => {
+  const db = getDb();
+  const sessionId = c.req.query("sessionId");
+  if (!sessionId) {
+    return c.json({ success: false, error: "sessionId required" } satisfies ApiResponse, 400);
+  }
+
+  let rows: Array<{ type: string; tokens: number; createdAt: number }> = [];
+  try {
+    rows = db
+      .select({
+        type: contextInjectionLog.injectionType,
+        tokens: contextInjectionLog.tokenCount,
+        createdAt: contextInjectionLog.createdAt,
+      })
+      .from(contextInjectionLog)
+      .where(eq(contextInjectionLog.sessionId, sessionId))
+      .orderBy(desc(contextInjectionLog.createdAt))
+      .limit(200)
+      .all()
+      .map((r) => ({
+        type: r.type,
+        tokens: r.tokens ?? 0,
+        createdAt:
+          r.createdAt instanceof Date ? r.createdAt.getTime() : (r.createdAt as unknown as number),
+      }));
+  } catch {
+    // table may not exist yet
+  }
+
+  return c.json({ success: true, data: rows } satisfies ApiResponse);
+});

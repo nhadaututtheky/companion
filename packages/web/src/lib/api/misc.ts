@@ -98,6 +98,11 @@ export const stats = {
         };
       };
     }>("/api/stats/features"),
+  contextInjections: (sessionId: string) =>
+    request<{
+      success: boolean;
+      data: Array<{ type: string; tokens: number; createdAt: number }>;
+    }>(`/api/stats/context-injections?sessionId=${encodeURIComponent(sessionId)}`),
 };
 
 export const errors = {

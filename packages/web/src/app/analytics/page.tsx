@@ -29,6 +29,7 @@ import {
   fmtCost,
   fmtDuration,
   fmtDate,
+  fmtDateTime,
   modelShortLabel as modelLabel,
   modelColor,
 } from "@/lib/formatters";
@@ -822,30 +823,127 @@ function ContextTab({ data }: { data: FeatureData["context"] }) {
         accentColor="#4285f4"
       />
 
-      {/* Top sessions */}
+      {/* Top sessions — click a row to drill into its injection timeline */}
       {data.topSessions.length > 0 && (
         <div className="flex flex-col gap-3">
           <span className="text-xs font-semibold uppercase tracking-wide">Top Sessions</span>
+          <p className="text-text-muted -mt-1 text-xs">
+            Sessions receiving the most context injections. Click to expand the per-session timeline.
+          </p>
           {data.topSessions.slice(0, 5).map((s) => (
-            <div
-              key={s.sessionId}
-              className="shadow-soft bg-bg-card flex items-center gap-3 rounded-xl p-3"
-            >
-              <div className="min-w-0 flex-1">
-                <Link
-                  href={`/sessions/${s.sessionId}`}
-                  className="font-mono text-sm hover:underline"
-                  style={{ color: "#4285f4" }}
-                >
-                  {s.sessionId.slice(0, 12)}...
-                </Link>
-              </div>
-              <span className="font-mono text-sm font-bold">{s.injections}</span>
-              <span className="text-text-muted font-mono text-[10px]">
-                {fmtTokens(s.tokens)} tok
-              </span>
-            </div>
+            <TopSessionRow key={s.sessionId} session={s} />
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Top Session Row (collapsible drill-down) ─────────────────────────────
+
+interface ContextInjection {
+  type: string;
+  tokens: number;
+  createdAt: number;
+}
+
+function TopSessionRow({
+  session,
+}: {
+  session: { sessionId: string; injections: number; tokens: number };
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [rows, setRows] = useState<ContextInjection[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleToggle = async () => {
+    const next = !expanded;
+    setExpanded(next);
+    if (next && rows === null && !loading) {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await api.stats.contextInjections(session.sessionId);
+        setRows(res.data);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load injections");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  return (
+    <div className="shadow-soft bg-bg-card flex flex-col overflow-hidden rounded-xl">
+      <button
+        type="button"
+        onClick={handleToggle}
+        className="flex cursor-pointer items-center gap-3 p-3 text-left transition-colors hover:bg-[var(--color-bg-hover)]"
+        aria-expanded={expanded}
+        aria-controls={`inj-${session.sessionId}`}
+      >
+        {expanded ? (
+          <CaretDown size={12} weight="bold" className="text-text-muted flex-shrink-0" />
+        ) : (
+          <CaretRight size={12} weight="bold" className="text-text-muted flex-shrink-0" />
+        )}
+        <div className="min-w-0 flex-1">
+          <span className="font-mono text-sm" style={{ color: "#4285f4" }}>
+            {session.sessionId.slice(0, 12)}…
+          </span>
+        </div>
+        <span className="font-mono text-sm font-bold">{session.injections}</span>
+        <span className="text-text-muted font-mono text-[10px]">
+          {fmtTokens(session.tokens)} tok
+        </span>
+      </button>
+
+      {expanded && (
+        <div
+          id={`inj-${session.sessionId}`}
+          className="bg-bg-elevated flex flex-col gap-1 p-3"
+          style={{ boxShadow: "inset 0 1px 0 var(--color-border)" }}
+        >
+          {loading && (
+            <div className="text-text-muted flex items-center gap-2 py-2 text-xs">
+              <CircleNotch size={12} className="animate-spin" />
+              Loading injections…
+            </div>
+          )}
+          {error && <div className="text-danger text-xs">{error}</div>}
+          {!loading && !error && rows && rows.length === 0 && (
+            <p className="text-text-muted py-2 text-xs">No injections recorded for this session.</p>
+          )}
+          {!loading && rows && rows.length > 0 && (
+            <ul className="flex flex-col">
+              {rows.map((r, i) => {
+                const color = INJECTION_COLORS[r.type] ?? "#4285f4";
+                return (
+                  <li
+                    key={`${r.createdAt}-${i}`}
+                    className="flex items-center gap-3 py-1.5"
+                    style={{ boxShadow: i > 0 ? "inset 0 1px 0 var(--color-border)" : undefined }}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="h-2 w-2 flex-shrink-0 rounded-full"
+                      style={{ background: color }}
+                    />
+                    <span className="text-text-primary text-xs font-medium">
+                      {INJECTION_LABELS[r.type] ?? r.type}
+                    </span>
+                    <span className="text-text-muted flex-1 font-mono text-[11px]">
+                      {fmtDateTime(r.createdAt)}
+                    </span>
+                    <span className="text-text-muted font-mono text-[11px]">
+                      {fmtTokens(r.tokens)} tok
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
       )}
     </div>
