@@ -59,6 +59,10 @@ export interface EventMap {
     reason: string;
   };
   "account:all_limited": { reason: string };
+  /** Emitted by oauth-token-service when refresh returns 400 invalid_refresh_token.
+   *  Signals the UI to surface a "re-authenticate" toast and the rotation
+   *  scheduler to drop this account from the pool. */
+  "account:expired": { accountId: string; label?: string; reason: string };
 }
 
 type EventName = keyof EventMap;

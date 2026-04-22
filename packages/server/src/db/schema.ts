@@ -283,6 +283,28 @@ export const accounts = sqliteTable("accounts", {
   // When true, auto-switch rotation will skip this account (manual switch still works).
   skipInRotation: integer("skip_in_rotation", { mode: "boolean" }).notNull().default(false),
   lastUsedAt: integer("last_used_at", { mode: "timestamp_ms" }),
+
+  // Anthropic-reported quota utilization (migration 0048). Populated by
+  // usage-fetcher.ts via GET /api/oauth/usage. `*_resets_at` is stored in
+  // unix ms (writer multiplies Anthropic's seconds value by 1000 so every
+  // timestamp column here uses the same unit). All nullable — Pro/Max
+  // accounts return `five_hour` + `seven_day`, Team/Enterprise return
+  // `five_hour` + `seven_day_opus` + `seven_day_sonnet`, so several of
+  // these columns stay null per account forever.
+  quotaFiveHourUtil: real("quota_five_hour_util"),
+  quotaFiveHourResetsAt: integer("quota_five_hour_resets_at", { mode: "timestamp_ms" }),
+  quotaSevenDayUtil: real("quota_seven_day_util"),
+  quotaSevenDayResetsAt: integer("quota_seven_day_resets_at", { mode: "timestamp_ms" }),
+  quotaSevenDayOpusUtil: real("quota_seven_day_opus_util"),
+  quotaSevenDayOpusResetsAt: integer("quota_seven_day_opus_resets_at", { mode: "timestamp_ms" }),
+  quotaSevenDaySonnetUtil: real("quota_seven_day_sonnet_util"),
+  quotaSevenDaySonnetResetsAt: integer("quota_seven_day_sonnet_resets_at", {
+    mode: "timestamp_ms",
+  }),
+  /** `allowed` | `allowed_warning` | `rejected` — Anthropic extra-usage state. */
+  quotaOverageStatus: text("quota_overage_status"),
+  quotaFetchedAt: integer("quota_fetched_at", { mode: "timestamp_ms" }),
+
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .$defaultFn(() => new Date()),

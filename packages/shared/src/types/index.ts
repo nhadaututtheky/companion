@@ -8,3 +8,4 @@ export * from "./cli-adapter";
 export * from "./orchestration";
 export * from "./workspace";
 export * from "./scanned-session";
+export * from "./account";
