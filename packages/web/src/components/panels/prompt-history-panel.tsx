@@ -111,7 +111,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
       style={{
         flexDirection: "column",
         height: "100%",
-        background: "var(--bg-base)",
+        background: "var(--color-bg-base)",
       }}
     >
       {/* Header */}
@@ -121,19 +121,19 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
           alignItems: "center",
           gap: 8,
           padding: "8px 12px",
-          borderBottom: "1px solid var(--border-color)",
+          borderBottom: "1px solid var(--color-border)",
         }}
       >
         <ClockCounterClockwise
           size={16}
           weight="bold"
           className="shrink-0"
-          style={{ color: "var(--text-secondary)" }}
+          style={{ color: "var(--color-text-secondary)" }}
         />
-        <span className="font-semibold" style={{ fontSize: 13, color: "var(--text-primary)" }}>
+        <span className="font-semibold" style={{ fontSize: 13, color: "var(--color-text-primary)" }}>
           Prompt History
         </span>
-        <span style={{ fontSize: 11, color: "var(--text-secondary)", marginLeft: "auto" }}>
+        <span style={{ fontSize: 11, color: "var(--color-text-secondary)", marginLeft: "auto" }}>
           {total > 0 && `${total} prompts`}
         </span>
         <button
@@ -142,7 +142,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
           style={{
             background: "none",
             border: "none",
-            color: "var(--text-secondary)",
+            color: "var(--color-text-secondary)",
             padding: 4,
             borderRadius: "var(--radius-sm)",
           }}
@@ -157,7 +157,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
         className="shrink-0"
         style={{
           padding: "8px 12px",
-          borderBottom: "1px solid var(--border-color)",
+          borderBottom: "1px solid var(--color-border)",
         }}
       >
         <div
@@ -165,8 +165,8 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
           style={{
             alignItems: "center",
             gap: 6,
-            background: "var(--bg-card)",
-            border: "1px solid var(--border-color)",
+            background: "var(--color-bg-card)",
+            border: "1px solid var(--color-border)",
             borderRadius: "var(--radius-md)",
             padding: "4px 8px",
           }}
@@ -174,7 +174,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
           <MagnifyingGlass
             size={14}
             className="shrink-0"
-            style={{ color: "var(--text-secondary)" }}
+            style={{ color: "var(--color-text-secondary)" }}
           />
           <input
             ref={inputRef}
@@ -188,7 +188,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
               background: "none",
               border: "none",
               outline: "none",
-              color: "var(--text-primary)",
+              color: "var(--color-text-primary)",
               fontSize: 13,
             }}
           />
@@ -199,7 +199,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
               style={{
                 background: "none",
                 border: "none",
-                color: "var(--text-secondary)",
+                color: "var(--color-text-secondary)",
                 padding: 2,
               }}
               aria-label="Clear search"
@@ -216,7 +216,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
           <div className="flex" style={{ justifyContent: "center", padding: 24 }}>
             <CircleNotch
               size={20}
-              style={{ animation: "spin 1s linear infinite", color: "var(--text-secondary)" }}
+              style={{ animation: "spin 1s linear infinite", color: "var(--color-text-secondary)" }}
             />
           </div>
         ) : prompts.length === 0 && hasSearched ? (
@@ -224,7 +224,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
             className="text-center"
             style={{
               padding: 24,
-              color: "var(--text-secondary)",
+              color: "var(--color-text-secondary)",
               fontSize: 13,
             }}
           >
@@ -236,11 +236,11 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
               key={p.id}
               style={{
                 padding: "8px 12px",
-                borderBottom: "1px solid var(--border-color)",
+                borderBottom: "1px solid var(--color-border)",
                 cursor: "default",
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLDivElement).style.background = "var(--bg-card)";
+                (e.currentTarget as HTMLDivElement).style.background = "var(--color-bg-card)";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLDivElement).style.background = "transparent";
@@ -254,14 +254,14 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
                   gap: 6,
                   marginBottom: 4,
                   fontSize: 11,
-                  color: "var(--text-secondary)",
+                  color: "var(--color-text-secondary)",
                 }}
               >
                 {!sessionId && p.sessionName && (
                   <span
                     className="overflow-hidden whitespace-nowrap font-medium"
                     style={{
-                      background: "var(--bg-elevated, var(--bg-card))",
+                      background: "var(--color-bg-elevated)",
                       padding: "1px 6px",
                       borderRadius: "var(--radius-sm)",
                       maxWidth: 140,
@@ -282,7 +282,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
                 className="overflow-hidden whitespace-pre-wrap"
                 style={{
                   fontSize: 13,
-                  color: "var(--text-primary)",
+                  color: "var(--color-text-primary)",
                   lineHeight: 1.4,
                   wordBreak: "break-word",
                   maxHeight: 80,
@@ -301,10 +301,10 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
                     alignItems: "center",
                     gap: 4,
                     background: "none",
-                    border: "1px solid var(--border-color)",
+                    border: "1px solid var(--color-border)",
                     borderRadius: "var(--radius-sm)",
                     padding: "2px 8px",
-                    color: copiedId === p.id ? "var(--success, #10b981)" : "var(--text-secondary)",
+                    color: copiedId === p.id ? "var(--color-success)" : "var(--color-text-secondary)",
                     fontSize: 11,
                     transition: "color 150ms",
                   }}
@@ -321,10 +321,10 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
                       alignItems: "center",
                       gap: 4,
                       background: "none",
-                      border: "1px solid var(--border-color)",
+                      border: "1px solid var(--color-border)",
                       borderRadius: "var(--radius-sm)",
                       padding: "2px 8px",
-                      color: "var(--text-secondary)",
+                      color: "var(--color-text-secondary)",
                       fontSize: 11,
                     }}
                     aria-label="Resend prompt"
@@ -348,9 +348,9 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
             justifyContent: "center",
             gap: 8,
             padding: "6px 12px",
-            borderTop: "1px solid var(--border-color)",
+            borderTop: "1px solid var(--color-border)",
             fontSize: 12,
-            color: "var(--text-secondary)",
+            color: "var(--color-text-secondary)",
           }}
         >
           <button
@@ -360,7 +360,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
               background: "none",
               border: "none",
               cursor: currentPage <= 1 ? "default" : "pointer",
-              color: currentPage <= 1 ? "var(--border-color)" : "var(--text-secondary)",
+              color: currentPage <= 1 ? "var(--color-border)" : "var(--color-text-secondary)",
               padding: 4,
             }}
             aria-label="Previous page"
@@ -377,7 +377,7 @@ export function PromptHistoryPanel({ sessionId, onResend, onClose }: PromptHisto
               background: "none",
               border: "none",
               cursor: currentPage >= totalPages ? "default" : "pointer",
-              color: currentPage >= totalPages ? "var(--border-color)" : "var(--text-secondary)",
+              color: currentPage >= totalPages ? "var(--color-border)" : "var(--color-text-secondary)",
               padding: 4,
             }}
             aria-label="Next page"
