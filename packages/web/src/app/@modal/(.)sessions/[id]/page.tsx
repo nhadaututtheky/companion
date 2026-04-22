@@ -23,7 +23,7 @@ import { X } from "@phosphor-icons/react";
 import { SessionView } from "@/components/session/session-view";
 import { PanelErrorBoundary } from "@/components/ui/panel-error-boundary";
 import { Z } from "@/lib/z-index";
-import { usePreviewStore } from "@/lib/stores/preview-store";
+import { usePreviewPanelOpen } from "@/lib/stores/preview-store";
 import { useSessionStore } from "@/lib/stores/session-store";
 
 const DesignPreviewPanel = dynamic(
@@ -41,7 +41,7 @@ interface PageProps {
 export default function SessionModalPage({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const previewPanelOpen = usePreviewStore((s) => s.panelOpen);
+  const previewPanelOpen = usePreviewPanelOpen(id);
   const setExpandedSession = useSessionStore((s) => s.setExpandedSession);
 
   // Sync grid dim state — SessionGrid looks at `expandedSessionId` to fade
@@ -128,7 +128,7 @@ export default function SessionModalPage({ params }: PageProps) {
         {/* Design Preview page (slides in from right) */}
         <div className="session-slide-page session-slide-preview">
           <PanelErrorBoundary name="Design Preview">
-            <DesignPreviewPanel />
+            <DesignPreviewPanel sessionId={id} />
           </PanelErrorBoundary>
         </div>
       </div>

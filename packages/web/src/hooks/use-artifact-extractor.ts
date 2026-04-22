@@ -60,9 +60,9 @@ function extractFromToolResults(msg: Message): PreviewArtifact[] {
 
 /**
  * Watches messages for visual tool outputs (HTML/SVG/images from MCP tools)
- * and adds them to the preview store automatically.
+ * and adds them to the preview store under the given sessionId.
  */
-export function useArtifactExtractor(messages: Message[]) {
+export function useArtifactExtractor(sessionId: string, messages: Message[]) {
   const addArtifact = usePreviewStore((s) => s.addArtifact);
   const processedRef = useRef<Set<string>>(new Set());
 
@@ -73,10 +73,10 @@ export function useArtifactExtractor(messages: Message[]) {
 
       const artifacts = extractFromToolResults(msg);
       for (const artifact of artifacts) {
-        addArtifact(artifact);
+        addArtifact(sessionId, artifact);
       }
 
       processedRef.current.add(msg.id);
     }
-  }, [messages, addArtifact]);
+  }, [sessionId, messages, addArtifact]);
 }

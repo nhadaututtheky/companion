@@ -8,55 +8,107 @@ export interface PreviewArtifact {
   timestamp: number;
 }
 
-interface PreviewStore {
-  /** All collected artifacts for the current session */
+interface SessionPreviewState {
   artifacts: PreviewArtifact[];
-  /** Currently viewed artifact index (-1 = none / panel closed) */
   activeIndex: number;
-  /** Whether the design panel is open (slide active) */
   panelOpen: boolean;
+}
 
-  addArtifact: (artifact: PreviewArtifact) => void;
-  removeArtifact: (id: string) => void;
-  clearArtifacts: () => void;
-  openPanel: (index?: number) => void;
-  closePanel: () => void;
-  setActiveIndex: (index: number) => void;
+const EMPTY_ARTIFACTS: PreviewArtifact[] = [];
+const DEFAULT_STATE: SessionPreviewState = Object.freeze({
+  artifacts: EMPTY_ARTIFACTS,
+  activeIndex: 0,
+  panelOpen: false,
+});
+
+interface PreviewStore {
+  /**
+   * Artifacts + panel state keyed by sessionId. Each session owns its own
+   * preview surface — opening a session's preview never leaks artifacts
+   * from a different session.
+   */
+  bySession: Record<string, SessionPreviewState>;
+
+  addArtifact: (sessionId: string, artifact: PreviewArtifact) => void;
+  removeArtifact: (sessionId: string, id: string) => void;
+  clearArtifacts: (sessionId: string) => void;
+  openPanel: (sessionId: string, index?: number) => void;
+  closePanel: (sessionId: string) => void;
+  setActiveIndex: (sessionId: string, index: number) => void;
+}
+
+function updateSession(
+  state: PreviewStore,
+  sessionId: string,
+  update: (cur: SessionPreviewState) => SessionPreviewState,
+): PreviewStore {
+  const cur = state.bySession[sessionId] ?? DEFAULT_STATE;
+  const next = update(cur);
+  if (next === cur) return state;
+  return { ...state, bySession: { ...state.bySession, [sessionId]: next } };
 }
 
 export const usePreviewStore = create<PreviewStore>((set) => ({
-  artifacts: [],
-  activeIndex: 0,
-  panelOpen: false,
+  bySession: {},
 
-  addArtifact: (artifact) =>
+  addArtifact: (sessionId, artifact) =>
+    set((s) =>
+      updateSession(s, sessionId, (cur) => {
+        if (cur.artifacts.some((a) => a.content === artifact.content)) return cur;
+        return { ...cur, artifacts: [...cur.artifacts, artifact] };
+      }),
+    ),
+
+  removeArtifact: (sessionId, id) =>
+    set((s) =>
+      updateSession(s, sessionId, (cur) => {
+        const removedIndex = cur.artifacts.findIndex((a) => a.id === id);
+        if (removedIndex === -1) return cur;
+        const filtered = cur.artifacts.filter((a) => a.id !== id);
+        const newActive =
+          removedIndex <= cur.activeIndex
+            ? Math.max(0, cur.activeIndex - 1)
+            : Math.min(cur.activeIndex, Math.max(0, filtered.length - 1));
+        return { ...cur, artifacts: filtered, activeIndex: newActive };
+      }),
+    ),
+
+  clearArtifacts: (sessionId) =>
     set((s) => {
-      // Deduplicate by content hash (avoid re-adding same artifact)
-      const exists = s.artifacts.some((a) => a.content === artifact.content);
-      if (exists) return s;
-      return { artifacts: [...s.artifacts, artifact] };
+      if (!(sessionId in s.bySession)) return s;
+      const rest = { ...s.bySession };
+      delete rest[sessionId];
+      return { ...s, bySession: rest };
     }),
 
-  removeArtifact: (id) =>
-    set((s) => {
-      const removedIndex = s.artifacts.findIndex((a) => a.id === id);
-      const filtered = s.artifacts.filter((a) => a.id !== id);
-      const newActive =
-        removedIndex !== -1 && removedIndex <= s.activeIndex
-          ? Math.max(0, s.activeIndex - 1)
-          : Math.min(s.activeIndex, filtered.length - 1);
-      return { artifacts: filtered, activeIndex: newActive };
-    }),
+  openPanel: (sessionId, index) =>
+    set((s) =>
+      updateSession(s, sessionId, (cur) => ({
+        ...cur,
+        panelOpen: true,
+        activeIndex: index ?? Math.max(0, cur.artifacts.length - 1),
+      })),
+    ),
 
-  clearArtifacts: () => set({ artifacts: [], activeIndex: 0, panelOpen: false }),
+  closePanel: (sessionId) =>
+    set((s) =>
+      updateSession(s, sessionId, (cur) => (cur.panelOpen ? { ...cur, panelOpen: false } : cur)),
+    ),
 
-  openPanel: (index) =>
-    set((s) => ({
-      panelOpen: true,
-      activeIndex: index ?? Math.max(0, s.artifacts.length - 1),
-    })),
-
-  closePanel: () => set({ panelOpen: false }),
-
-  setActiveIndex: (index) => set({ activeIndex: index }),
+  setActiveIndex: (sessionId, index) =>
+    set((s) => updateSession(s, sessionId, (cur) => ({ ...cur, activeIndex: index }))),
 }));
+
+// ── Helper selectors — use these instead of raw usePreviewStore where possible ──
+
+export const usePreviewArtifacts = (sessionId: string): PreviewArtifact[] =>
+  usePreviewStore((s) => s.bySession[sessionId]?.artifacts ?? EMPTY_ARTIFACTS);
+
+export const usePreviewArtifactCount = (sessionId: string): number =>
+  usePreviewStore((s) => s.bySession[sessionId]?.artifacts.length ?? 0);
+
+export const usePreviewActiveIndex = (sessionId: string): number =>
+  usePreviewStore((s) => s.bySession[sessionId]?.activeIndex ?? 0);
+
+export const usePreviewPanelOpen = (sessionId: string): boolean =>
+  usePreviewStore((s) => s.bySession[sessionId]?.panelOpen ?? false);

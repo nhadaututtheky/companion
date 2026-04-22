@@ -48,7 +48,7 @@ import { PersonaChip } from "@/components/persona/persona-chip";
 import { PanelErrorBoundary } from "@/components/ui/panel-error-boundary";
 import { TipBanner } from "@/components/tips/tip-banner";
 import { usePinnedMessagesStore } from "@/lib/stores/pinned-messages-store";
-import { usePreviewStore } from "@/lib/stores/preview-store";
+import { usePreviewStore, usePreviewArtifactCount } from "@/lib/stores/preview-store";
 import { useSession } from "@/hooks/use-session";
 import { useArtifactExtractor } from "@/hooks/use-artifact-extractor";
 import { useSessionStore } from "@/lib/stores/session-store";
@@ -214,11 +214,10 @@ export function SessionView({ sessionId, onBack }: SessionViewProps) {
   const [promptHistoryOpen, setPromptHistoryOpen] = useState(false);
   const [terminalOpen, setTerminalOpen] = useState(false);
 
-  // Artifact extraction + preview panel
-  useArtifactExtractor(messages);
-  const previewArtifactCount = usePreviewStore((s) => s.artifacts.length);
+  // Artifact extraction + preview panel (keyed per-session)
+  useArtifactExtractor(sessionId, messages);
+  const previewArtifactCount = usePreviewArtifactCount(sessionId);
   const openPreviewPanel = usePreviewStore((s) => s.openPanel);
-  const clearPreviewArtifacts = usePreviewStore((s) => s.clearArtifacts);
 
   const handlePersonaSwitch = useCallback(
     async (personaId: string | null) => {
@@ -237,11 +236,6 @@ export function SessionView({ sessionId, onBack }: SessionViewProps) {
   const pinCount = getPins(sessionId).length;
 
   const toggleTerminal = useCallback(() => setTerminalOpen((v) => !v), []);
-
-  // Clear preview artifacts when unmounting (leaving session)
-  useEffect(() => {
-    return () => clearPreviewArtifacts();
-  }, [clearPreviewArtifacts]);
 
   // Ctrl+` keyboard shortcut for terminal toggle
   useEffect(() => {
@@ -391,7 +385,7 @@ export function SessionView({ sessionId, onBack }: SessionViewProps) {
 
             {/* Design Preview toggle — always visible */}
             <button
-              onClick={() => openPreviewPanel()}
+              onClick={() => openPreviewPanel(sessionId)}
               className="relative inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors"
               style={{
                 color: previewArtifactCount > 0 ? "#a855f7" : "var(--color-text-muted)",

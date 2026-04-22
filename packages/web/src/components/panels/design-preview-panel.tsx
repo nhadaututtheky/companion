@@ -16,7 +16,12 @@ import {
   ShieldCheck,
   ShieldSlash,
 } from "@phosphor-icons/react";
-import { usePreviewStore, type PreviewArtifact } from "@/lib/stores/preview-store";
+import {
+  usePreviewStore,
+  usePreviewArtifacts,
+  usePreviewActiveIndex,
+  type PreviewArtifact,
+} from "@/lib/stores/preview-store";
 
 const VIEWPORTS = [
   { id: "desktop", label: "Desktop", icon: Monitor, width: "100%" },
@@ -94,12 +99,21 @@ function SourceViewer({ artifact }: { artifact: PreviewArtifact }) {
   );
 }
 
-export function DesignPreviewPanel() {
-  const artifacts = usePreviewStore((s) => s.artifacts);
-  const activeIndex = usePreviewStore((s) => s.activeIndex);
-  const closePanel = usePreviewStore((s) => s.closePanel);
-  const setActiveIndex = usePreviewStore((s) => s.setActiveIndex);
-  const removeArtifact = usePreviewStore((s) => s.removeArtifact);
+export function DesignPreviewPanel({ sessionId }: { sessionId: string }) {
+  const artifacts = usePreviewArtifacts(sessionId);
+  const activeIndex = usePreviewActiveIndex(sessionId);
+  const closePanelRaw = usePreviewStore((s) => s.closePanel);
+  const setActiveIndexRaw = usePreviewStore((s) => s.setActiveIndex);
+  const removeArtifactRaw = usePreviewStore((s) => s.removeArtifact);
+  const closePanel = useCallback(() => closePanelRaw(sessionId), [closePanelRaw, sessionId]);
+  const setActiveIndex = useCallback(
+    (i: number) => setActiveIndexRaw(sessionId, i),
+    [setActiveIndexRaw, sessionId],
+  );
+  const removeArtifact = useCallback(
+    (id: string) => removeArtifactRaw(sessionId, id),
+    [removeArtifactRaw, sessionId],
+  );
 
   const panelRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState<"desktop" | "tablet" | "mobile">("desktop");

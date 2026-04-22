@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { SessionView } from "@/components/session/session-view";
 import { PanelErrorBoundary } from "@/components/ui/panel-error-boundary";
-import { usePreviewStore } from "@/lib/stores/preview-store";
+import { usePreviewPanelOpen } from "@/lib/stores/preview-store";
 
 const DesignPreviewPanel = dynamic(
   () =>
@@ -34,7 +34,7 @@ interface PageProps {
 export function SessionPageClient({ params }: PageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const previewPanelOpen = usePreviewStore((s) => s.panelOpen);
+  const previewPanelOpen = usePreviewPanelOpen(id);
 
   return (
     <div className="session-slide-container" data-preview-open={previewPanelOpen || undefined}>
@@ -49,7 +49,7 @@ export function SessionPageClient({ params }: PageProps) {
       {/* ── Design Preview Page (slides in from right) ── */}
       <div className="session-slide-page session-slide-preview">
         <PanelErrorBoundary name="Design Preview">
-          <DesignPreviewPanel />
+          <DesignPreviewPanel sessionId={id} />
         </PanelErrorBoundary>
       </div>
     </div>

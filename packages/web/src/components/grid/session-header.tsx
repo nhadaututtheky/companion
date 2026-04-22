@@ -12,6 +12,7 @@ import {
   BellSlash,
   BellRinging,
   Plus,
+  PaintBrush,
   TelegramLogo,
 } from "@phosphor-icons/react";
 import { useSessionStore } from "@/lib/stores/session-store";
@@ -55,6 +56,10 @@ interface SessionHeaderProps {
   cacheCreationTokens?: number;
   cacheReadTokens?: number;
   sessionColor?: string;
+  /** Count of design preview artifacts for this session (0 hides the button). */
+  previewArtifactCount?: number;
+  /** Click handler for the Preview button — usually navigates into the session with the preview pane open. */
+  onPreview?: () => void;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -94,6 +99,8 @@ export function SessionHeader({
   cacheReadTokens,
   cliPlatform,
   sessionColor,
+  previewArtifactCount = 0,
+  onPreview,
 }: SessionHeaderProps) {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
@@ -391,6 +398,34 @@ export function SessionHeader({
             title="Spawn new agent"
           >
             <Plus size={14} weight="bold" />
+          </button>
+        )}
+
+        {/* Preview — visible only when this session has captured artifacts */}
+        {onPreview && previewArtifactCount > 0 && (
+          <button
+            onClick={onPreview}
+            className="relative flex flex-shrink-0 cursor-pointer items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium transition-colors"
+            style={{
+              color: "#a855f7",
+              background: "color-mix(in srgb, #a855f7 10%, transparent)",
+              border: "1px solid color-mix(in srgb, #a855f7 25%, transparent)",
+            }}
+            aria-label={`Open design preview (${previewArtifactCount} artifact${previewArtifactCount > 1 ? "s" : ""})`}
+            title={`Design preview — ${previewArtifactCount} artifact${previewArtifactCount > 1 ? "s" : ""}`}
+          >
+            <PaintBrush size={12} weight="bold" aria-hidden="true" />
+            <span
+              className="rounded-full px-1 text-center font-mono font-bold leading-tight"
+              style={{
+                background: "#a855f7",
+                color: "#fff",
+                fontSize: 9,
+                minWidth: 14,
+              }}
+            >
+              {previewArtifactCount}
+            </span>
           </button>
         )}
 

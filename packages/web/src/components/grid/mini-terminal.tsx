@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Z } from "@/lib/z-index";
 import { Lock, CheckCircle, XCircle, Warning, TelegramLogo } from "@phosphor-icons/react";
 import { useSession } from "@/hooks/use-session";
@@ -12,6 +13,8 @@ import { CompactMessageFeed } from "./compact-message";
 import { AgentTabBar } from "./agent-tab-bar";
 import { SpawnAgentModal } from "@/components/session/spawn-agent-modal";
 import { ComposerCore } from "@/components/composer/composer-core";
+import { useArtifactExtractor } from "@/hooks/use-artifact-extractor";
+import { usePreviewStore, usePreviewArtifactCount } from "@/lib/stores/preview-store";
 import { getMaxContextTokens } from "@companion/shared";
 
 interface ChannelInfo {
@@ -137,6 +140,18 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
   const isRunning = session?.status === "running" || session?.status === "busy";
   const hasChildren = !!childIds && childIds.length > 0;
 
+  // Extract artifacts from the PARENT session's messages so the Preview badge
+  // in this mini card reflects this session regardless of which brain tab is
+  // active. (Child sessions are not exposed on the grid; they ride the parent.)
+  useArtifactExtractor(sessionId, parentHook.messages);
+  const previewArtifactCount = usePreviewArtifactCount(sessionId);
+  const openPreviewPanel = usePreviewStore((s) => s.openPanel);
+  const router = useRouter();
+  const handlePreview = useCallback(() => {
+    openPreviewPanel(sessionId);
+    router.push(`/sessions/${sessionId}`);
+  }, [sessionId, openPreviewPanel, router]);
+
   // Context meter — prefer real-time data from CLI polling (per-turn delta = actual context usage)
   // Fallback to cumulative totals only when real-time data hasn't arrived yet
   const contextData = (() => {
@@ -213,6 +228,7 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
 
     useSessionStore.getState().setSession(sessionId, { status: "ended", shortId: undefined });
     useSessionStore.getState().removeFromGrid(sessionId);
+    usePreviewStore.getState().clearArtifacts(sessionId);
     try {
       await api.sessions.stop(sessionId);
     } catch {
@@ -267,6 +283,8 @@ export function MiniTerminal({ sessionId, onExpand }: MiniTerminalProps) {
         source={session?.state?.source}
         onSetModel={setModel}
         onMinimize={handleMinimize}
+        previewArtifactCount={previewArtifactCount}
+        onPreview={previewArtifactCount > 0 ? handlePreview : undefined}
       />
 
       {/* WS Status banner */}
