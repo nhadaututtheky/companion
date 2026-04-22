@@ -341,31 +341,33 @@ export function SessionView({ sessionId, onBack }: SessionViewProps) {
               </button>
             </div>
 
-            {/* Mid-session model + thinking mode + persona selectors */}
+            {/* Mid-session model + thinking mode + persona selectors.
+                Not disabled during "starting" — a session can legitimately
+                stay in that state for a long time (resume/CLI-spawn hiccups)
+                and locking the whole toolbar was the main reason the modal
+                appeared "broken" compared to the mini. If the backend can't
+                accept the change yet it rejects with a toast — far better
+                UX than a silent cursor-not-allowed. */}
             {session?.status !== "ended" && session?.status !== "error" && (
               <>
                 <ModelSelector
                   currentModel={session?.model ?? "claude-sonnet-4-6"}
                   onModelChange={setModel}
-                  disabled={session?.status === "starting"}
                 />
                 <ThinkingModeSelector
                   currentMode={session?.state?.thinking_mode ?? "adaptive"}
                   currentModel={session?.model ?? "claude-sonnet-4-6"}
                   onModeChange={setThinkingMode}
-                  disabled={session?.status === "starting"}
                 />
                 <ContextModeSelector
                   currentMode={session?.state?.context_mode ?? "200k"}
                   currentModel={session?.model ?? "claude-sonnet-4-6"}
                   onModeChange={setContextMode}
-                  disabled={session?.status === "starting"}
                 />
                 {session?.personaId && (
                   <PersonaChip
                     personaId={session.personaId}
                     onSwitch={handlePersonaSwitch}
-                    disabled={session?.status === "starting"}
                   />
                 )}
               </>
