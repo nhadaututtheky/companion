@@ -14,6 +14,9 @@ import {
   buildProjectButton,
   PROJECT_STATE_LABEL,
 } from "../ui/project-status.js";
+import { renderIdePicker, renderProjectPickerForIde } from "../ui/ide-picker.js";
+import { getPack, shouldShowIdePicker } from "../ide/registry.js";
+import type { CLIPlatform } from "@companion/shared";
 
 const log = createLogger("cmd:session");
 
@@ -66,6 +69,14 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
         },
       );
       return;
+    }
+
+    // Multi-IDE picker: only when bot is generic AND >1 CLI detected.
+    // A role-pinned bot (role: "codex") skips this and falls through to the
+    // project picker, keeping the single-IDE UX tight.
+    if (await shouldShowIdePicker(bridge.config.role)) {
+      const rendered = await renderIdePicker(ctx);
+      if (rendered) return;
     }
 
     // Check if any sessions have ever been created
@@ -474,11 +485,24 @@ export function registerSessionCommands(bridge: TelegramBridge): void {
     await bridge.startSessionForChat(ctx, slug);
   });
 
-  bot.callbackQuery(/^new:(.+)$/, async (ctx) => {
-    const slug = ctx.match[1]!;
+  // `new:<slug>` — default/role IDE. `new:<platform>:<slug>` — explicit IDE
+  // chosen via the IDE picker. Both paths funnel through startSessionForChat,
+  // which resolves the platform (explicit > bot.role > first detected).
+  bot.callbackQuery(/^new:(?:(claude|codex|gemini|opencode):)?(.+)$/, async (ctx) => {
+    const platform = ctx.match[1] as CLIPlatform | undefined;
+    const slug = ctx.match[2]!;
     await ctx.answerCallbackQuery();
-    await bridge.startSessionForChat(ctx, slug);
+    await bridge.startSessionForChat(ctx, slug, { cliPlatform: platform });
   });
+
+  // IDE picker — first step when multiple CLIs are installed. Edits the same
+  // message to show projects scoped to the chosen IDE.
+  bot.callbackQuery(/^ide:(claude|codex|gemini|opencode)$/, async (ctx) => {
+    const platform = ctx.match[1]! as CLIPlatform;
+    await ctx.answerCallbackQuery();
+    await renderProjectPickerForIde(ctx, getPack(platform));
+  });
+
 
   bot.callbackQuery(/^stop:confirm:(.+)$/, async (ctx) => {
     const sessionId = ctx.match[1]!;

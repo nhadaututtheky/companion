@@ -57,6 +57,11 @@ import { TelegramForumTopics } from "./telegram-forum-topics.js";
 import { TelegramSubscriptions } from "./telegram-subscriptions.js";
 import { TelegramPersistence } from "./telegram-persistence.js";
 
+// IDE registry (Phase 2: revive bot.role + default platform resolution)
+import { getPack, resolveDefaultPack } from "./ide/registry.js";
+import { defaultModel } from "./ide/types.js";
+import type { CLIPlatform } from "@companion/shared";
+
 const log = createLogger("telegram-bridge");
 
 // ─── Chat-Session Mapping ───────────────────────────────────────────────────
@@ -329,6 +334,21 @@ export class TelegramBridge {
 
   // ── Session management ────────────────────────────────────────────────
 
+  /**
+   * Resolve the IDE/platform for a new session:
+   *   1. Explicit override (user tapped an IDE picker)
+   *   2. Bot role pin (admin configured bot for a single IDE)
+   *   3. First detected CLI on the host
+   * Claude is the ultimate fallback if nothing is detected.
+   */
+  async resolveCliPlatform(explicit?: CLIPlatform): Promise<CLIPlatform> {
+    if (explicit) return explicit;
+    const role = this.config.role;
+    if (role && role !== "general") return role;
+    const defaultPack = await resolveDefaultPack();
+    return defaultPack.platform;
+  }
+
   async startSessionForChat(
     ctx: Context,
     projectSlug: string,
@@ -340,6 +360,10 @@ export class TelegramBridge {
       permissionMode?: string;
       thinkingMode?: import("@companion/shared").ThinkingMode;
       contextMode?: import("@companion/shared").ContextMode;
+      /** Explicit IDE override. If omitted, falls back to bot.role or default pack. */
+      cliPlatform?: import("@companion/shared").CLIPlatform;
+      /** Platform-specific options (Codex approvalMode, Gemini sandbox/yolo). */
+      platformOptions?: Record<string, unknown>;
     },
   ): Promise<void> {
     const chatId = ctx.chat!.id;
@@ -377,7 +401,13 @@ export class TelegramBridge {
       this.killSession(existing.sessionId);
     }
 
-    const effectiveModel = opts?.model ?? project.defaultModel;
+    // Resolve IDE: explicit override > bot role pin > first detected.
+    // Bot role pin (e.g. role="codex") forces every session on this bot to
+    // that platform, regardless of how it was started (revives the previously
+    // dead config field).
+    const resolvedPlatform = await this.resolveCliPlatform(opts?.cliPlatform);
+    const pack = getPack(resolvedPlatform);
+    const effectiveModel = opts?.model ?? (resolvedPlatform === "claude" ? project.defaultModel : defaultModel(pack));
     const effectivePermission = opts?.permissionMode ?? project.permissionMode;
 
     try {
@@ -391,6 +421,8 @@ export class TelegramBridge {
         cliSessionId: opts?.cliSessionId,
         thinkingMode: opts?.thinkingMode,
         contextMode: opts?.contextMode,
+        cliPlatform: resolvedPlatform,
+        platformOptions: opts?.platformOptions,
       });
 
       const mapping: ChatMapping = {
