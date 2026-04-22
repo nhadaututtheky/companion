@@ -15,6 +15,7 @@ import {
 } from "./session-store.js";
 import { getFullBreakdown } from "./context-budget.js";
 import { getWikiStartContext } from "./context-budget.js";
+import { recordWikiOp } from "../wiki/index.js";
 import {
   buildProjectMap,
   buildMessageContext as _buildMessageContext,
@@ -434,7 +435,10 @@ export class MessageHandler {
   private injectWikiContext(session: ActiveSession, phase: "init" | "compact"): void {
     try {
       const wikiCtx = getWikiStartContext(session.state.cwd);
-      if (!wikiCtx) return;
+      if (!wikiCtx) {
+        recordWikiOp({ type: "l0_skip", source: phase });
+        return;
+      }
 
       const header =
         phase === "init"
@@ -460,6 +464,13 @@ export class MessageHandler {
         message: { role: "user", content },
       });
       this.bridge.sendToCLI(session, ndjson);
+
+      recordWikiOp({
+        type: "l0_inject",
+        domain: wikiCtx.domain,
+        tokens: wikiCtx.tokens,
+        source: phase,
+      });
 
       log.info(`Wiki L0 injected (${phase})`, {
         sessionId: session.id,

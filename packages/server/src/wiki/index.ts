@@ -45,6 +45,10 @@ export {
   autoProvisionDefaultDomain,
 } from "./bootstrap.js";
 
+// Telemetry (in-memory counters — agent consumption signal)
+export { recordWikiOp, getWikiStats, resetWikiStats } from "./telemetry.js";
+export type { WikiOpType, WikiOpEvent, WikiTelemetrySummary } from "./telemetry.js";
+
 // Query archive (self-archiving queries)
 export { archiveQuery } from "./query-archive.js";
 

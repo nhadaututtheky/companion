@@ -53,6 +53,8 @@ import {
   persistWikiConfigToDb,
   readChangelog,
   readPreviousVersion,
+  recordWikiOp,
+  getWikiStats,
 } from "../wiki/index.js";
 import type { WriteContext } from "../wiki/types.js";
 
@@ -64,6 +66,16 @@ export function createWikiRoutes(): Hono {
   /** Get wiki config */
   app.get("/config", (c) => {
     return c.json<ApiResponse>({ success: true, data: getWikiConfig() });
+  });
+
+  // ─── Telemetry ──────────────────────────────────────────────────────
+
+  /**
+   * Wiki consumption stats — in-memory counters since last server start.
+   * Use this to answer "are agents actually using the wiki?"
+   */
+  app.get("/stats", (c) => {
+    return c.json<ApiResponse>({ success: true, data: getWikiStats() });
   });
 
   /** Update wiki config */
@@ -156,8 +168,17 @@ export function createWikiRoutes(): Hono {
     const { domain, slug } = c.req.param();
     const article = readArticle(domain, slug);
     if (!article) {
+      recordWikiOp({ type: "read", domain, source: "rest" });
+      recordWikiOp({ type: "read_miss", domain, source: "rest" });
       return c.json<ApiResponse>({ success: false, error: "Article not found" }, 404);
     }
+    recordWikiOp({
+      type: "read",
+      domain,
+      source: "rest",
+      tokens: article.meta.tokens,
+    });
+    recordWikiOp({ type: "read_hit", domain, source: "rest" });
     return c.json<ApiResponse>({ success: true, data: article });
   });
 
@@ -285,6 +306,7 @@ export function createWikiRoutes(): Hono {
         undefined,
         ctx,
       );
+      recordWikiOp({ type: "note", domain, tokens: ref.tokens, source: "rest" });
       return c.json<ApiResponse>({ success: true, data: ref }, 201);
     },
   );
@@ -356,6 +378,13 @@ export function createWikiRoutes(): Hono {
         const results = body.projectSlug
           ? searchWithCodeGraph(domain, body.query, body.projectSlug)
           : searchArticles(domain, body.query);
+        const hitCount = Array.isArray(results) ? results.length : 0;
+        recordWikiOp({ type: "search", domain, source: "rest" });
+        recordWikiOp({
+          type: hitCount > 0 ? "search_hit" : "search_miss",
+          domain,
+          source: "rest",
+        });
         return c.json<ApiResponse>({ success: true, data: results });
       }
 
@@ -369,6 +398,13 @@ export function createWikiRoutes(): Hono {
 
       // Self-archive: save Q&A as raw material for future compile cycles
       archiveQuery(domain, body.query, result);
+
+      recordWikiOp({ type: "search", domain, source: "rest", tokens: result.totalTokens });
+      recordWikiOp({
+        type: result.articles.length > 0 ? "search_hit" : "search_miss",
+        domain,
+        source: "rest",
+      });
 
       return c.json<ApiResponse>({ success: true, data: result });
     },

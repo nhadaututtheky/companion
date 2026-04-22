@@ -16,6 +16,7 @@ import {
   rebuildIndex,
   clearFlags,
 } from "./store.js";
+import { recordWikiOp } from "./telemetry.js";
 import {
   type CompileRequest,
   type CompileResult,
@@ -126,6 +127,8 @@ export async function compileWiki(
   const articlesWritten: ArticleRef[] = [];
   const errors: Array<{ file: string; error: string }> = [];
 
+  recordWikiOp({ type: "compile_run", domain });
+
   try {
     const response = await callCompiler(domain, rawContents, existingArticles, core, overwrite);
     const parsed = parseCompilerOutput(response);
@@ -162,6 +165,7 @@ export async function compileWiki(
         tags: article.tags,
         compiledAt: meta.compiledAt,
       });
+      recordWikiOp({ type: "compile_article", domain, tokens });
     }
 
     // Rebuild index after writing
