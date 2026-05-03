@@ -1,7 +1,9 @@
 /**
- * Skills discovery routes.
- * GET /api/skills          — list all skill sources with tree structure
- * GET /api/skills/content  — read a single skill file content (?path=...)
+ * Skills discovery + harness toggle routes.
+ * GET  /api/skills                 — list all skill sources with tree structure
+ * GET  /api/skills/content         — read a single skill file content (?path=...)
+ * GET  /api/skills/harness         — list harness skills with toggle states
+ * POST /api/skills/harness/toggle  — flip the per-project enabled flag
  */
 
 import { Hono } from "hono";
@@ -9,6 +11,7 @@ import { readdirSync, readFileSync, statSync, existsSync } from "fs";
 import { homedir } from "os";
 import { join, resolve, sep } from "path";
 import type { ApiResponse } from "@companion/shared";
+import { getActiveSkillStates, setSkillToggle, clearSkillToggle } from "../services/skill-router.js";
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -309,4 +312,96 @@ skillsRoutes.get("/content", (c) => {
     }
     return c.json({ success: false, error: "Failed to read file" } satisfies ApiResponse, 500);
   }
+});
+
+// ── Harness Skills (Phase 1: activation rules) ──────────────────────
+
+/**
+ * GET /api/skills/harness?projectDir=&projectSlug=
+ *
+ * List harness skills (.md with triggers + tools frontmatter) and their
+ * resolved enabled state for the given project.
+ */
+skillsRoutes.get("/harness", (c) => {
+  const projectDir = c.req.query("projectDir");
+  const projectSlug = c.req.query("projectSlug");
+  if (!projectDir) {
+    return c.json(
+      { success: false, error: "Missing projectDir query parameter" } satisfies ApiResponse,
+      400,
+    );
+  }
+
+  try {
+    const states = getActiveSkillStates(resolve(projectDir), projectSlug);
+    return c.json({
+      success: true,
+      data: states.map((s) => ({
+        id: s.skill.id,
+        name: s.skill.name,
+        description: s.skill.description,
+        triggers: s.skill.triggers,
+        tools: s.skill.tools,
+        priority: s.skill.priority ?? 5,
+        filePath: s.skill.filePath,
+        enabled: s.enabled,
+        explicit: s.explicit,
+      })),
+    } satisfies ApiResponse);
+  } catch (err) {
+    return c.json(
+      { success: false, error: `Failed to load harness skills: ${String(err)}` } satisfies ApiResponse,
+      500,
+    );
+  }
+});
+
+/**
+ * POST /api/skills/harness/toggle
+ * Body: { projectSlug: string, skillId: string, enabled: boolean | null }
+ *
+ * Set or clear the per-project toggle. `enabled: null` removes the row
+ * (revert to default behaviour).
+ */
+skillsRoutes.post("/harness/toggle", async (c) => {
+  let body: { projectSlug?: string; skillId?: string; enabled?: boolean | null };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ success: false, error: "Invalid JSON body" } satisfies ApiResponse, 400);
+  }
+
+  const projectSlug = body.projectSlug?.trim();
+  const skillId = body.skillId?.trim();
+  if (!projectSlug || !skillId) {
+    return c.json(
+      { success: false, error: "projectSlug and skillId are required" } satisfies ApiResponse,
+      400,
+    );
+  }
+  // Charset + length guard so attackers can't seed huge / weird rows.
+  // skill_id has no FK so we enforce shape here, not at the DB.
+  const SAFE_ID = /^[a-z0-9][a-z0-9_-]{0,127}$/i;
+  if (!SAFE_ID.test(projectSlug)) {
+    return c.json(
+      { success: false, error: "Invalid projectSlug shape" } satisfies ApiResponse,
+      400,
+    );
+  }
+  if (!SAFE_ID.test(skillId)) {
+    return c.json(
+      { success: false, error: "Invalid skillId shape (alphanumeric/_/- up to 128 chars)" } satisfies ApiResponse,
+      400,
+    );
+  }
+
+  const ok =
+    body.enabled === null
+      ? clearSkillToggle(projectSlug, skillId)
+      : setSkillToggle(projectSlug, skillId, Boolean(body.enabled));
+
+  if (!ok) {
+    return c.json({ success: false, error: "Failed to persist toggle" } satisfies ApiResponse, 500);
+  }
+  return c.json({ success: true, data: { projectSlug, skillId, enabled: body.enabled } } satisfies ApiResponse);
 });

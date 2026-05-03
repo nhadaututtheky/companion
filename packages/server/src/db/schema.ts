@@ -1,5 +1,13 @@
 import { sql } from "drizzle-orm";
-import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
+import {
+  sqliteTable,
+  text,
+  integer,
+  real,
+  index,
+  uniqueIndex,
+  primaryKey,
+} from "drizzle-orm/sqlite-core";
 
 // ─── Projects ────────────────────────────────────────────────────────────────
 
@@ -862,5 +870,33 @@ export const sessionInsights = sqliteTable(
     index("idx_insights_project").on(table.projectSlug),
     index("idx_insights_type").on(table.type),
     index("idx_insights_hash").on(table.contentHash),
+  ],
+);
+
+// ─── Harness Skill Toggles (Phase 1: harness layer) ────────────────────────
+
+/**
+ * Per-project enable/disable for harness skills.
+ *
+ * Skills live as `.md` files in `.claude/skills/`; this table records the
+ * project-level on/off state for each skill id. Absence of a row means
+ * "use default from HARNESS_DEFAULT_ENABLED_SKILL_IDS" — lazy creation
+ * avoids a backfill migration.
+ */
+export const harnessSkillToggles = sqliteTable(
+  "harness_skill_toggles",
+  {
+    projectSlug: text("project_slug")
+      .notNull()
+      .references(() => projects.slug, { onDelete: "cascade" }),
+    skillId: text("skill_id").notNull(),
+    enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [
+    primaryKey({ columns: [table.projectSlug, table.skillId] }),
+    index("idx_harness_skill_toggles_project").on(table.projectSlug),
   ],
 );

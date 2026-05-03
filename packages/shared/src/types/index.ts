@@ -9,3 +9,5 @@ export * from "./orchestration";
 export * from "./workspace";
 export * from "./scanned-session";
 export * from "./account";
+export * from "./skill";
+export * from "./harness-metric";

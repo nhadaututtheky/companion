@@ -3,7 +3,7 @@
  */
 
 import { Hono } from "hono";
-import { detectAllPlatforms, clearDetectionCache } from "../services/adapters/adapter-registry.js";
+import { detectAllPlatforms, clearDetectionCache, listPlatformModels } from "../services/adapters/adapter-registry.js";
 
 const app = new Hono();
 
@@ -30,6 +30,38 @@ app.get("/", async (c) => {
   }));
 
   return c.json({ platforms });
+});
+
+/** GET /api/cli-platforms/models — List available models for all platforms */
+app.get("/models", async (c) => {
+  const platformId = c.req.query("platform");
+  const KNOWN_PLATFORMS = new Set(["claude", "codex", "gemini", "opencode"]);
+
+  if (platformId) {
+    if (!KNOWN_PLATFORMS.has(platformId)) {
+      return c.json({ models: [], platform: platformId, error: "Unknown platform" }, 400);
+    }
+    const raw = await listPlatformModels(platformId as "claude" | "codex" | "gemini" | "opencode");
+    const models = raw.map((m) => ({ value: m.id, label: m.name }));
+    return c.json({ models, platform: platformId });
+  }
+
+  const results = await detectAllPlatforms();
+  const modelsByPlatform: Record<string, Array<{ value: string; label: string }>> = {};
+
+  await Promise.all(
+    results.map(async ({ platform, detection }) => {
+      if (detection.available) {
+        const models = await listPlatformModels(platform);
+        modelsByPlatform[platform] = models.map((m) => ({
+          value: m.id,
+          label: m.name,
+        }));
+      }
+    }),
+  );
+
+  return c.json({ models: modelsByPlatform });
 });
 
 /** POST /api/cli-platforms/refresh — Clear detection cache and re-detect */

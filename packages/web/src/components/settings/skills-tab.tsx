@@ -13,6 +13,7 @@ import {
   MagnifyingGlass,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api-client";
+import { HarnessSkillsPanel } from "./harness-skills-panel";
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -284,7 +285,9 @@ export function SkillsTab() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <HarnessSkillsPanel />
+
       {groups.length === 0 ? (
         <EmptyState />
       ) : (

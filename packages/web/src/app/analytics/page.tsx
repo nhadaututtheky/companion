@@ -448,7 +448,7 @@ interface FeatureData {
   };
 }
 
-type AnalyticsTab = "overview" | "rtk" | "wiki" | "codegraph" | "context";
+type AnalyticsTab = "overview" | "rtk" | "wiki" | "codegraph" | "context" | "harness";
 
 const TABS: Array<{ id: AnalyticsTab; label: string }> = [
   { id: "overview", label: "Overview" },
@@ -456,7 +456,17 @@ const TABS: Array<{ id: AnalyticsTab; label: string }> = [
   { id: "wiki", label: "Wiki KB" },
   { id: "codegraph", label: "CodeGraph" },
   { id: "context", label: "AI Context" },
+  { id: "harness", label: "Harness" },
 ];
+
+/** Tabs that consume the shared `api.stats.features()` payload.
+ *  Harness loads its own data via `/api/analytics/harness/usage`. */
+const FEATURE_DATA_TABS: ReadonlySet<AnalyticsTab> = new Set([
+  "rtk",
+  "wiki",
+  "codegraph",
+  "context",
+]);
 
 // ── RTK Tab ──────────────────────────────────────────────────────────────
 
@@ -950,6 +960,231 @@ function TopSessionRow({
   );
 }
 
+// ── Harness Tab ──────────────────────────────────────────────────────────
+
+interface HarnessAggregate {
+  tool: string;
+  calls: number;
+  errors: number;
+  timeouts: number;
+  p50DurationMs: number;
+  p95DurationMs: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  compressedCalls: number;
+}
+
+interface HarnessSummary {
+  windowStartMs: number;
+  windowEndMs: number;
+  totalCalls: number;
+  tools: HarnessAggregate[];
+}
+
+const HARNESS_RANGES: Array<{ id: "24h" | "7d" | "30d"; label: string; ms: number }> = [
+  { id: "24h", label: "24 hours", ms: 24 * 60 * 60 * 1000 },
+  { id: "7d", label: "7 days", ms: 7 * 24 * 60 * 60 * 1000 },
+  { id: "30d", label: "30 days", ms: 30 * 24 * 60 * 60 * 1000 },
+];
+
+function HarnessTab() {
+  const [range, setRange] = useState<"24h" | "7d" | "30d">("24h");
+  const [data, setData] = useState<HarnessSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const window = HARNESS_RANGES.find((r) => r.id === range)!;
+        const now = Date.now();
+        const params = new URLSearchParams({
+          from_ms: String(now - window.ms),
+          to_ms: String(now),
+        });
+        const res = await api.get<{ data: HarnessSummary }>(
+          `/api/analytics/harness/usage?${params.toString()}`,
+        );
+        if (!cancelled) setData(res.data);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [range]);
+
+  if (loading && !data) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-20">
+        <CircleNotch size={20} className="animate-spin" aria-hidden="true" />
+        <span className="text-sm">Loading harness usage…</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div
+        className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm"
+        style={{ background: "#EA433515", color: "#EA4335" }}
+      >
+        <WarningCircle size={16} aria-hidden="true" />
+        {error}
+      </div>
+    );
+  }
+
+  if (!data || data.totalCalls === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-20">
+        <Lightning size={40} weight="light" className="text-text-muted" />
+        <p className="text-text-muted text-sm">
+          No harness MCP tool calls recorded yet. Start a session and use a Companion tool to see metrics here.
+        </p>
+        <RangePicker range={range} onChange={setRange} />
+      </div>
+    );
+  }
+
+  const totalErrors = data.tools.reduce((s, t) => s + t.errors, 0);
+  const errorRatePct = data.totalCalls > 0 ? (totalErrors / data.totalCalls) * 100 : 0;
+  const topTool = data.tools[0];
+  // Median of per-tool medians is statistically misleading — use the
+  // top tool's p50 as a representative number instead.
+  const topToolP50 = topTool ? Math.round(topTool.p50DurationMs) : 0;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wide">
+          Harness MCP usage — {data.totalCalls.toLocaleString()} calls
+        </span>
+        <RangePicker range={range} onChange={setRange} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <KpiCard
+          label="Total Calls"
+          value={fmtTokens(data.totalCalls)}
+          sub={`window: ${HARNESS_RANGES.find((r) => r.id === range)!.label}`}
+          icon={<Lightning size={14} weight="fill" />}
+          accent="#4285f4"
+        />
+        <KpiCard
+          label="Top Tool"
+          value={topTool ? topTool.tool : "—"}
+          sub={topTool ? `${topTool.calls} calls` : ""}
+          icon={<Stack size={14} weight="fill" />}
+          accent="#34A853"
+        />
+        <KpiCard
+          label="Top Tool P50"
+          value={topTool ? `${topToolP50}ms` : "—"}
+          sub={topTool ? `p95 ${Math.round(topTool.p95DurationMs)}ms` : ""}
+          icon={<Clock size={14} weight="fill" />}
+          accent="#a78bfa"
+        />
+        <KpiCard
+          label="Error Rate"
+          value={`${errorRatePct.toFixed(1)}%`}
+          sub={`${totalErrors} errors`}
+          icon={<WarningCircle size={14} weight="fill" />}
+          accent={errorRatePct > 5 ? "#EA4335" : "#94a3b8"}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide">Per-tool breakdown</span>
+        <div className="shadow-soft bg-bg-card overflow-hidden rounded-xl">
+          <table className="w-full text-xs">
+            <thead>
+              <tr>
+                <th className="px-3 py-2 text-left font-semibold">Tool</th>
+                <th className="px-3 py-2 text-right font-semibold">Calls</th>
+                <th className="px-3 py-2 text-right font-semibold">P50</th>
+                <th className="px-3 py-2 text-right font-semibold">P95</th>
+                <th className="px-3 py-2 text-right font-semibold">Errors</th>
+                <th className="px-3 py-2 text-right font-semibold">Compressed</th>
+                <th className="px-3 py-2 text-right font-semibold">Tokens In/Out</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.tools.map((t) => (
+                <tr key={t.tool} style={{ boxShadow: "0 -1px 0 var(--color-border)" }}>
+                  <td className="px-3 py-2 font-mono text-[11px]">
+                    {t.tool}
+                  </td>
+                  <td
+                    className="px-3 py-2 text-right font-mono"
+                    style={{ fontFamily: "var(--font-mono, monospace)" }}
+                  >
+                    {t.calls}
+                  </td>
+                  <td className="text-text-secondary px-3 py-2 text-right font-mono">
+                    {Math.round(t.p50DurationMs)}ms
+                  </td>
+                  <td className="text-text-secondary px-3 py-2 text-right font-mono">
+                    {Math.round(t.p95DurationMs)}ms
+                  </td>
+                  <td
+                    className="px-3 py-2 text-right font-mono"
+                    style={{ color: t.errors > 0 ? "#EA4335" : "var(--color-text-muted)" }}
+                  >
+                    {t.errors}
+                  </td>
+                  <td className="text-text-secondary px-3 py-2 text-right font-mono">
+                    {t.compressedCalls}
+                  </td>
+                  <td className="text-text-muted px-3 py-2 text-right font-mono text-[10px]">
+                    {fmtTokens(t.totalInputTokens)} / {fmtTokens(t.totalOutputTokens)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <p className="text-text-muted text-xs">
+        Window: {new Date(data.windowStartMs).toLocaleString()} → {new Date(data.windowEndMs).toLocaleString()}
+      </p>
+    </div>
+  );
+}
+
+function RangePicker({
+  range,
+  onChange,
+}: {
+  range: "24h" | "7d" | "30d";
+  onChange: (r: "24h" | "7d" | "30d") => void;
+}) {
+  return (
+    <div className="flex gap-1 rounded-lg" style={{ background: "var(--color-bg-elevated)" }}>
+      {HARNESS_RANGES.map((r) => (
+        <button
+          key={r.id}
+          onClick={() => onChange(r.id)}
+          className="cursor-pointer rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors"
+          style={{
+            background: range === r.id ? "var(--color-accent)" : "transparent",
+            color: range === r.id ? "#fff" : "var(--color-text-muted)",
+          }}
+        >
+          {r.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────
 
 export default function AnalyticsPage() {
@@ -976,8 +1211,9 @@ export default function AnalyticsPage() {
     fetchStats();
   }, [fetchStats]);
 
+  // Harness tab loads its own data; skip the shared features fetch for it.
   useEffect(() => {
-    if (activeTab !== "overview" && !featureData) fetchFeatures();
+    if (FEATURE_DATA_TABS.has(activeTab) && !featureData) fetchFeatures();
   }, [activeTab, featureData, fetchFeatures]);
 
   return (
@@ -1236,7 +1472,7 @@ export default function AnalyticsPage() {
         )}
 
         {/* Feature tabs */}
-        {activeTab !== "overview" && featureLoading && (
+        {FEATURE_DATA_TABS.has(activeTab) && featureLoading && (
           <div className="flex items-center justify-center gap-2 py-20">
             <CircleNotch size={20} className="animate-spin" aria-hidden="true" />
             <span className="text-sm">Loading feature data...</span>
@@ -1249,6 +1485,7 @@ export default function AnalyticsPage() {
         {activeTab === "context" && featureData?.context && (
           <ContextTab data={featureData.context} />
         )}
+        {activeTab === "harness" && <HarnessTab />}
       </main>
     </div>
   );

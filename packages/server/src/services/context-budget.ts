@@ -30,7 +30,13 @@ const _log = createLogger("context-budget");
 
 // ─── Feature Toggles ────────────────────────────────────────────────────────
 
-export type ToggleableFeature = "wiki" | "codegraph" | "pulse" | "agentContext" | "rtk";
+export type ToggleableFeature =
+  | "wiki"
+  | "codegraph"
+  | "pulse"
+  | "agentContext"
+  | "rtk"
+  | "harnessSkills";
 
 const FEATURE_DEFAULTS: Record<ToggleableFeature, boolean> = {
   wiki: true,
@@ -38,6 +44,7 @@ const FEATURE_DEFAULTS: Record<ToggleableFeature, boolean> = {
   pulse: true,
   agentContext: true,
   rtk: true,
+  harnessSkills: true,
 };
 
 /** Check if a feature is enabled (checks DB setting, falls back to default) */
@@ -107,6 +114,14 @@ export const BUDGET_SOURCES: BudgetSource[] = [
     priority: 4,
     feature: "codegraph",
     maxTokens: 2_000,
+    sessionStart: true,
+  },
+  {
+    id: "harness_skills",
+    label: "Harness Activation Hints",
+    priority: 4,
+    feature: "harnessSkills",
+    maxTokens: 1_500,
     sessionStart: true,
   },
   {

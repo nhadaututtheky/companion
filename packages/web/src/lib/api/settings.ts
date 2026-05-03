@@ -284,6 +284,12 @@ export const cliPlatforms = {
       }>;
     }>("/api/cli-platforms"),
 
+  models: (platform?: string) =>
+    request<{
+      models: Array<{ value: string; label: string }> | Record<string, Array<{ value: string; label: string }>>;
+      platform?: string;
+    }>(`/api/cli-platforms/models${platform ? `?platform=${encodeURIComponent(platform)}` : ""}`),
+
   refresh: () =>
     request<{
       platforms: Array<{

@@ -177,6 +177,9 @@ export function RTKSettings() {
         </div>
       )}
 
+      {/* Harness Auto-Compress (Phase 2) */}
+      {enabled && <HarnessAutoCompressPanel />}
+
       {/* Strategy Toggle */}
       {enabled && (
         <div className="shadow-soft bg-bg-card rounded-xl p-5">
@@ -246,6 +249,108 @@ export function RTKSettings() {
           {saving ? "Saving..." : "Save RTK Settings"}
         </button>
       </div>
+    </div>
+  );
+}
+
+// ── Harness Auto-Compress Panel ───────────────────────────────────────
+
+function HarnessAutoCompressPanel() {
+  const [enabled, setEnabled] = useState(true);
+  const [threshold, setThreshold] = useState(4000);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.get<{
+          data: { enabled: boolean; thresholdTokens: number };
+        }>("/api/rtk/auto-compress-config");
+        if (cancelled) return;
+        setEnabled(res.data.enabled);
+        setThreshold(res.data.thresholdTokens);
+      } catch {
+        // Use defaults
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function persist(next: { enabled?: boolean; thresholdTokens?: number }) {
+    setSaving(true);
+    try {
+      await api.post("/api/rtk/auto-compress-config", next);
+    } catch (err) {
+      toast.error(`Auto-compress save failed: ${String(err)}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return null;
+
+  return (
+    <div className="shadow-soft bg-bg-card rounded-xl p-5">
+      <div className="mb-2 flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold">Auto-Compress Tool Outputs</h2>
+          <p className="mt-1 text-xs">
+            Companion MCP tools (wiki, codegraph, etc) over the threshold get compressed
+            before reaching the agent. Skips errors and the compress tool itself.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            const next = !enabled;
+            setEnabled(next);
+            void persist({ enabled: next });
+          }}
+          disabled={saving}
+          className="relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full transition-colors"
+          style={{ background: enabled ? "#34A853" : "var(--color-bg-elevated)" }}
+          role="switch"
+          aria-checked={enabled}
+          aria-label="Toggle auto-compress"
+        >
+          <span
+            className="inline-block h-4 w-4 rounded-full bg-white transition-transform"
+            style={{ transform: enabled ? "translateX(24px)" : "translateX(4px)" }}
+          />
+        </button>
+      </div>
+
+      {enabled && (
+        <div className="mt-4">
+          <div className="mb-2 flex items-center justify-between text-xs">
+            <span className="font-medium">Threshold</span>
+            <span className="font-mono">{threshold.toLocaleString()} tokens</span>
+          </div>
+          <input
+            type="range"
+            min={1000}
+            max={16000}
+            step={500}
+            value={threshold}
+            onChange={(e) => setThreshold(Number(e.target.value))}
+            onMouseUp={() => persist({ thresholdTokens: threshold })}
+            onTouchEnd={() => persist({ thresholdTokens: threshold })}
+            className="w-full cursor-pointer"
+            aria-label="Auto-compress threshold tokens"
+          />
+          <div className="mt-1 flex justify-between text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+            <span>1K</span>
+            <span>4K (default)</span>
+            <span>16K</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

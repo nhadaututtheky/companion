@@ -17,6 +17,8 @@ import { buildSummaryInjection } from "./session-summarizer.js";
 import { buildProjectMap, getCodeGraphConfig } from "../codegraph/agent-context-provider.js";
 import { isGraphReady } from "../codegraph/index.js";
 import { getSessionMessages } from "./session-store.js";
+import { getEnabledSkills, renderActivationHints } from "./skill-router.js";
+import { isFeatureEnabled } from "./context-budget.js";
 import type { CLIPlatform } from "@companion/shared";
 
 const log = createLogger("adapter-context");
@@ -76,6 +78,16 @@ export function buildAdapterContextPrefix(opts: AdapterContextOpts): string {
       }
     } catch (err) {
       log.debug("CodeGraph project map unavailable", { error: String(err) });
+    }
+  }
+
+  if (isFeatureEnabled("harnessSkills")) {
+    try {
+      const enabled = getEnabledSkills(opts.cwd, opts.projectSlug);
+      const hints = renderActivationHints(enabled, 1500);
+      if (hints) parts.push(hints);
+    } catch (err) {
+      log.debug("Harness activation hints unavailable", { error: String(err) });
     }
   }
 

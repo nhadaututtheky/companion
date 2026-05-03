@@ -360,12 +360,47 @@ Companion exposes tools via MCP (Model Context Protocol) for Claude Code and oth
 |---------|------------|-------------|
 | MCP server — full (stdio transport) | `mcp/server.ts`, `mcp/index.ts` | HTTP API proxy |
 | MCP server — agent-slim (auto-injected) | `mcp/server-agent.ts`, `mcp/index-agent.ts` | HTTP API proxy |
-| Agent tools: wiki + codegraph (5 tools) | `mcp/tools-agent.ts` | wiki API, codegraph API |
+| Agent tools: 7 tools (wiki, codegraph, ask, compress) | `mcp/tools-agent.ts` | wiki API, codegraph API, /companion-ask, /rtk |
 | Session tools (list, spawn, send, get, summary) | `mcp/tools.ts` | sessions API |
 | Channel tools (create, send, read, debate, conclude) | `mcp/tools.ts` | channels API |
 | Wiki tools (list, read, search, note, core, articles) | `mcp/tools.ts` | wiki API |
 | CodeGraph tools (scan, status, search, stats, impact) | `mcp/tools.ts` | codegraph API |
 | .mcp.json auto-injection (CLI launch) | `adapters/claude-adapter.ts` | MCP agent server |
+
+---
+
+## 12. HARNESS ENGINEER LAYER
+
+Cross-CLI activation rules + auto-compression + meta-tool + metrics
+that turn Wiki/CodeGraph/RTK from "configured but unused" into a real
+agent-facing harness. See `.rune/plan-harness-layer*.md` for design.
+
+| Feature | Key File(s) | Connects To |
+|---------|------------|-------------|
+| **Phase 1** Skill activation rules | `services/skill-loader.ts`, `skill-router.ts`, `skill-seed.ts` | adapter-context-builder (non-Claude CLIs) |
+| Skill toggle (per-project DB) | `db/schema.ts` (`harness_skill_toggles`), `routes/skills.ts` | settings UI |
+| 4 starter skills auto-seeded | `.claude/skills/companion-*.md` | runtime seeded by skill-seed.ts |
+| Web toggle UI | `web/components/settings/harness-skills-panel.tsx` | /api/skills/harness |
+| **Phase 2** RTK MCP exposure | `rtk/api.ts`, `routes/rtk.ts` | RTK pipeline |
+| `companion_compress` MCP tool | `mcp/tools-agent.ts` | /api/rtk/compress |
+| Auto-chain wrapper (>4K compress) | `mcp/tools-agent.ts` (`withAutoChain`) | /api/rtk/compress |
+| Auto-compress settings UI | `web/components/settings/rtk-settings.tsx` | /api/rtk/auto-compress-config |
+| **Phase 3** Meta-tool `companion_ask` | `services/companion-ask.ts`, `companion-ask-merger.ts` | wiki retriever, codegraph graph-store, rtk/api |
+| /api/companion-ask REST | `routes/companion-ask.ts` | companion-ask service |
+| **Phase 4** Metrics logger | `services/harness-metrics-logger.ts` | `.rune/metrics/harness-tools.jsonl` |
+| /api/analytics/harness routes | `routes/analytics-harness.ts` | metrics logger |
+| `withMetrics` MCP wrapper (fire-and-forget log) | `mcp/tools-agent.ts` | /api/analytics/harness/log |
+| Web "Harness" tab | `web/app/analytics/page.tsx` (`HarnessTab`) | /api/analytics/harness/usage |
+
+**Status**: All 4 phases shipped 2026-05-03. 59 unit tests pass. Touch
+zones strictly outside INV paths (no ws-*, telegram, session-store,
+compact-manager, services/adapters/, session-settings-service).
+
+**Activation chain** (cross-CLI):
+1. Session start → `adapter-context-builder` injects skill activation hints into prefix (non-Claude)
+2. Agent calls `companion_*` MCP tool → handler runs → output >4K? auto-compress
+3. Metric POSTed to /api/analytics/harness/log → buffered → ndjson append
+4. Analytics dashboard reads + aggregates → KPI cards + per-tool table
 
 ---
 
@@ -384,6 +419,10 @@ CodeGraph → Project Map → Session Start Context ✓
 CodeGraph → Per-Message Relevance → Agent Context ✓
 Wiki L0 → Session Start Context ✓
 Wiki L1 → Per-Message Context ✓
+Harness Skills → Adapter Prefix → non-Claude CLI Activation Hints ✓ (Phase 1)
+MCP Tool Output >4K → Auto-Compress → Token Savings ✓ (Phase 2)
+Agent Question → companion_ask → Wiki + CodeGraph + RTK Unified Answer ✓ (Phase 3)
+Every MCP Tool Call → harness-tools.jsonl → Analytics > Harness Tab ✓ (Phase 4)
 ```
 
 ### Disconnected / Zombie Chains (Need Wiring)

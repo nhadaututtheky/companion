@@ -161,6 +161,19 @@ export interface CLIDetectResult {
   path?: string;
 }
 
+export interface CLIModelInfo {
+  id: string;
+  name: string;
+  provider?: string;
+  contextWindow?: number;
+  capabilities?: {
+    toolUse?: boolean;
+    streaming?: boolean;
+    vision?: boolean;
+    reasoning?: boolean;
+  };
+}
+
 /**
  * CLIAdapter — Abstract interface for AI coding CLI platforms.
  * Each platform (Claude, Codex, Gemini, OpenCode) implements this.
@@ -189,4 +202,10 @@ export interface CLIAdapter {
    * e.g., Claude expects NDJSON, others may expect plain text.
    */
   formatUserMessage(content: string): string;
+
+  /**
+   * List available models for this CLI platform.
+   * Returns list of available models with metadata.
+   */
+  listModels?(): Promise<CLIModelInfo[]>;
 }

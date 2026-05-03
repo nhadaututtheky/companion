@@ -4,7 +4,7 @@
  */
 
 import { createLogger } from "../../logger.js";
-import type { CLIAdapter, CLIPlatform, CLIDetectResult } from "@companion/shared";
+import type { CLIAdapter, CLIPlatform, CLIDetectResult, CLIModelInfo } from "@companion/shared";
 import { ClaudeAdapter } from "./claude-adapter.js";
 import { CodexAdapter } from "./codex-adapter.js";
 import { GeminiAdapter } from "./gemini-adapter.js";
@@ -125,4 +125,28 @@ export function registerAdapter(platform: CLIPlatform, adapter: CLIAdapter): voi
   adapters.set(platform, adapter);
   detectionCache.delete(platform);
   log.info("Adapter registered", { platform });
+}
+
+/**
+ * List available models for a specific platform.
+ * Falls back to empty list if the adapter doesn't support listing.
+ */
+export async function listPlatformModels(platform: CLIPlatform): Promise<CLIModelInfo[]> {
+  ensureRegistered();
+
+  const adapter = adapters.get(platform);
+  if (!adapter) {
+    return [];
+  }
+
+  if (typeof adapter.listModels === "function") {
+    try {
+      return await adapter.listModels();
+    } catch (err) {
+      log.warn("Failed to list models for platform", { platform, error: String(err) });
+      return [];
+    }
+  }
+
+  return [];
 }

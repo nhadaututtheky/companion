@@ -355,4 +355,13 @@ export class CodexAdapter implements CLIAdapter {
   formatUserMessage(content: string): string {
     return content;
   }
+
+  async listModels(): Promise<import("@companion/shared").CLIModelInfo[]> {
+    return [
+      { id: "gpt-4.1", name: "GPT-4.1", provider: "openai" },
+      { id: "o4-mini", name: "o4-mini", provider: "openai" },
+      { id: "o3", name: "o3", provider: "openai" },
+      { id: "codex-mini-latest", name: "Codex Mini", provider: "openai" },
+    ];
+  }
 }

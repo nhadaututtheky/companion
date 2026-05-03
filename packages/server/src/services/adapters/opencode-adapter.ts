@@ -16,6 +16,7 @@ import type {
   CLIProcess,
   AdapterLaunchOptions,
   NormalizedMessage,
+  CLIModelInfo,
 } from "@companion/shared";
 import { injectCompanionMcpOpenCode } from "./mcp-injection.js";
 
@@ -349,6 +350,7 @@ export class OpenCodeAdapter implements CLIAdapter {
       model: opts.model,
       sessionId: opts.sessionId,
       hasPrompt: !!opts.prompt,
+      args: args.join(" "),
     });
 
     const env: Record<string, string> = {};
@@ -378,6 +380,12 @@ export class OpenCodeAdapter implements CLIAdapter {
     const stderrLines: string[] = [];
     const MAX_STDERR = 20;
 
+    // Collect stderr lines for error diagnostics
+    const pushStderr = (line: string) => {
+      stderrLines.push(line.slice(0, 300));
+      if (stderrLines.length > MAX_STDERR) stderrLines.shift();
+    };
+
     const readStream = async (stream: ReadableStream<Uint8Array> | null, label: string) => {
       if (!stream) return;
       const reader = stream.getReader();
@@ -400,13 +408,10 @@ export class OpenCodeAdapter implements CLIAdapter {
               if (msg) {
                 onMessage(msg);
               } else {
-                // Non-JSON stdout line — diagnostic noise, funnel to stderr buffer
-                stderrLines.push(trimmed.slice(0, 300));
-                if (stderrLines.length > MAX_STDERR) stderrLines.shift();
+                pushStderr(trimmed);
               }
             } else {
-              stderrLines.push(trimmed.slice(0, 300));
-              if (stderrLines.length > MAX_STDERR) stderrLines.shift();
+              pushStderr(trimmed);
             }
           }
         }
@@ -415,13 +420,9 @@ export class OpenCodeAdapter implements CLIAdapter {
           if (label === "stdout") {
             const msg = parseOpenCodeMessage(trimmed);
             if (msg) onMessage(msg);
-            else {
-              stderrLines.push(trimmed.slice(0, 300));
-              if (stderrLines.length > MAX_STDERR) stderrLines.shift();
-            }
+            else pushStderr(trimmed);
           } else {
-            stderrLines.push(trimmed.slice(0, 300));
-            if (stderrLines.length > MAX_STDERR) stderrLines.shift();
+            pushStderr(trimmed);
           }
         }
       } catch (err) {
@@ -467,5 +468,58 @@ export class OpenCodeAdapter implements CLIAdapter {
 
   formatUserMessage(content: string): string {
     return content;
+  }
+
+  /**
+   * List available models from OpenCode.
+   * Runs `opencode models --format json` to get the list.
+   * Falls back to hardcoded list if command fails.
+   */
+  async listModels(): Promise<CLIModelInfo[]> {
+    try {
+      const proc = Bun.spawn(["opencode", "models", "--format", "json"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
+
+      const output = await new Response(proc.stdout).text();
+      const code = await proc.exited;
+
+      if (code === 0 && output.trim()) {
+        const parsed = JSON.parse(output) as Array<{ id: string; name: string; provider?: string }>;
+        return parsed.map((m) => ({
+          id: m.id,
+          name: m.name,
+          provider: m.provider,
+        }));
+      }
+
+      return this.getFallbackModels();
+    } catch (err) {
+      log.warn("Failed to list OpenCode models, using fallback", { error: String(err) });
+      return this.getFallbackModels();
+    }
+  }
+
+  /**
+   * Fallback models when `opencode models` fails.
+   * These are popular models that work well with OpenCode.
+   */
+  private getFallbackModels(): CLIModelInfo[] {
+    return [
+      { id: "anthropic/claude-sonnet-4-7", name: "Claude Sonnet 4.7", provider: "anthropic" },
+      { id: "anthropic/claude-sonnet-4-6", name: "Claude Sonnet 4.6", provider: "anthropic" },
+      { id: "anthropic/claude-opus-4-7", name: "Claude Opus 4.7", provider: "anthropic" },
+      { id: "anthropic/claude-haiku-4-5", name: "Claude Haiku 4.5", provider: "anthropic" },
+      { id: "openai/gpt-4.1", name: "GPT-4.1", provider: "openai" },
+      { id: "openai/o4-mini", name: "o4-mini", provider: "openai" },
+      { id: "openai/o3", name: "o3", provider: "openai" },
+      { id: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro", provider: "google" },
+      { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "google" },
+      { id: "groq/llama-3.3-70b-versatile", name: "Llama 3.3 70B (Groq)", provider: "groq" },
+      { id: "groq/mixtral-8x7b", name: "Mixtral 8x7B (Groq)", provider: "groq" },
+      { id: "opencode-zen/big-pickle", name: "Big Pickle (Zen)", provider: "opencode-zen" },
+      { id: "opencode-zen/qwen3.6-plus-free", name: "Qwen 3.6 Plus (Zen)", provider: "opencode-zen" },
+    ];
   }
 }
