@@ -23,6 +23,8 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import type { ApiResponse } from "@companion/shared";
+import { createLogger } from "../logger.js";
+import { createFail } from "./_middleware/error-wrapper.js";
 import {
   listDomains,
   createDomain,
@@ -57,6 +59,9 @@ import {
   getWikiStats,
 } from "../wiki/index.js";
 import type { WriteContext } from "../wiki/types.js";
+
+const log = createLogger("routes:wiki");
+const fail = createFail(log);
 
 export function createWikiRoutes(): Hono {
   const app = new Hono();
@@ -128,7 +133,7 @@ export function createWikiRoutes(): Hono {
         const domain = createDomain(slug, name);
         return c.json<ApiResponse>({ success: true, data: domain }, 201);
       } catch (err) {
-        return c.json<ApiResponse>({ success: false, error: String(err) }, 400);
+        return fail("wiki operation", err, c, { exposeError: true, status: 400 });
       }
     },
   );
@@ -150,7 +155,7 @@ export function createWikiRoutes(): Hono {
       deleteDomain(domain);
       return c.json<ApiResponse>({ success: true });
     } catch (err) {
-      return c.json<ApiResponse>({ success: false, error: String(err) }, 404);
+      return fail("wiki operation", err, c, { exposeError: true, status: 404 });
     }
   });
 
@@ -231,7 +236,7 @@ export function createWikiRoutes(): Hono {
         writeArticle(domain, slug, meta, body.content, undefined, ctx);
         return c.json<ApiResponse>({ success: true, data: { slug, ...meta } });
       } catch (err) {
-        return c.json<ApiResponse>({ success: false, error: String(err) }, 400);
+        return fail("wiki operation", err, c, { exposeError: true, status: 400 });
       }
     },
   );
@@ -243,7 +248,7 @@ export function createWikiRoutes(): Hono {
       deleteArticle(domain, slug);
       return c.json<ApiResponse>({ success: true });
     } catch (err) {
-      return c.json<ApiResponse>({ success: false, error: String(err) }, 404);
+      return fail("wiki operation", err, c, { exposeError: true, status: 404 });
     }
   });
 
@@ -264,7 +269,7 @@ export function createWikiRoutes(): Hono {
       writeCore(domain, content);
       return c.json<ApiResponse>({ success: true });
     } catch (err) {
-      return c.json<ApiResponse>({ success: false, error: String(err) }, 400);
+      return fail("wiki operation", err, c, { exposeError: true, status: 400 });
     }
   });
 
@@ -350,7 +355,7 @@ export function createWikiRoutes(): Hono {
         );
         return c.json<ApiResponse>({ success: true, data: result });
       } catch (err) {
-        return c.json<ApiResponse>({ success: false, error: String(err) }, 500);
+        return fail("wiki operation", err, c, { exposeError: true });
       }
     },
   );
@@ -463,7 +468,7 @@ export function createWikiRoutes(): Hono {
       const result = lintDomain(domain);
       return c.json<ApiResponse>({ success: true, data: result });
     } catch (err) {
-      return c.json<ApiResponse>({ success: false, error: String(err) }, 400);
+      return fail("wiki operation", err, c, { exposeError: true, status: 400 });
     }
   });
 
@@ -493,7 +498,7 @@ export function createWikiRoutes(): Hono {
         writeRawFile(domain, filename, content);
         return c.json<ApiResponse>({ success: true }, 201);
       } catch (err) {
-        return c.json<ApiResponse>({ success: false, error: String(err) }, 400);
+        return fail("wiki operation", err, c, { exposeError: true, status: 400 });
       }
     },
   );
@@ -505,7 +510,7 @@ export function createWikiRoutes(): Hono {
       deleteRawFile(domain, filename);
       return c.json<ApiResponse>({ success: true });
     } catch (err) {
-      return c.json<ApiResponse>({ success: false, error: String(err) }, 404);
+      return fail("wiki operation", err, c, { exposeError: true, status: 404 });
     }
   });
 

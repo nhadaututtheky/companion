@@ -49,8 +49,10 @@ import {
 } from "../services/dispatch-router.js";
 import { extractInsights, type SessionSummaryInput } from "../services/session-memory.js";
 import { resolvePersona } from "../services/custom-personas.js";
+import { createFail } from "./_middleware/error-wrapper.js";
 
 const log = createLogger("routes:sessions");
+const fail = createFail(log);
 
 // Allowlist of valid Claude model identifiers — prevents CLI argument injection
 const ALLOWED_MODELS = [
@@ -386,11 +388,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         201,
       );
     } catch (err) {
-      log.error("Failed to create session", { error: String(err) });
-      return c.json(
-        { success: false, error: "Failed to create session" } satisfies ApiResponse,
-        500,
-      );
+      return fail("create session", err, c);
     }
   });
 
@@ -619,11 +617,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
       log.info("Session resumed via API", { originalId: id, newSessionId: sessionId });
       return c.json({ success: true, data: { sessionId } } satisfies ApiResponse, 201);
     } catch (err) {
-      log.error("Failed to resume session", { id, error: String(err) });
-      return c.json(
-        { success: false, error: "Failed to resume session" } satisfies ApiResponse,
-        500,
-      );
+      return fail("resume session", err, c, { context: { id } });
     }
   });
 
@@ -942,11 +936,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         data: { id, contentLength: content.length },
       } satisfies ApiResponse);
     } catch (err) {
-      log.error("Failed to save snapshot", { sessionId, error: String(err) });
-      return c.json(
-        { success: false, error: "Failed to save snapshot" } satisfies ApiResponse,
-        500,
-      );
+      return fail("save snapshot", err, c, { context: { sessionId } });
     }
   });
 
@@ -1209,8 +1199,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         201,
       );
     } catch (err) {
-      log.error("Failed to start session debate round", { sessionId, error: String(err) });
-      return c.json({ success: false, error: "Failed to start debate" } satisfies ApiResponse, 500);
+      return fail("start session debate round", err, c, { context: { sessionId } });
     }
   });
 
@@ -1324,11 +1313,7 @@ export function sessionRoutes(bridge: WsBridge, botRegistry?: BotRegistry) {
         201,
       );
     } catch (err) {
-      log.error("Failed to spawn child session", { parentId, error: String(err) });
-      return c.json(
-        { success: false, error: "Failed to spawn child session" } satisfies ApiResponse,
-        500,
-      );
+      return fail("spawn child session", err, c, { context: { parentId } });
     }
   });
 

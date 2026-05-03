@@ -40,7 +40,12 @@ import {
 import { getDb } from "../db/client.js";
 import { codegraphConfig } from "../db/schema.js";
 import { summarize } from "../codegraph/telemetry.js";
+import { createLogger } from "../logger.js";
+import { createFail } from "./_middleware/error-wrapper.js";
 import type { ApiResponse } from "@companion/shared";
+
+const log = createLogger("routes:codegraph");
+const fail = createFail(log);
 
 export const codegraphRoutes = new Hono();
 
@@ -85,8 +90,8 @@ codegraphRoutes.post("/scan", async (c) => {
   try {
     const jobId = await scanProject(projectSlug);
     return c.json({ success: true, data: { jobId } } satisfies ApiResponse);
-  } catch {
-    return c.json({ success: false, error: "Operation failed" } satisfies ApiResponse, 400);
+  } catch (err) {
+    return fail("scan project", err, c, { status: 400, context: { projectSlug } });
   }
 });
 
@@ -107,8 +112,8 @@ codegraphRoutes.post("/rescan", async (c) => {
   try {
     const result = await incrementalRescan(projectSlug, files);
     return c.json({ success: true, data: result } satisfies ApiResponse);
-  } catch {
-    return c.json({ success: false, error: "Operation failed" } satisfies ApiResponse, 400);
+  } catch (err) {
+    return fail("rescan project", err, c, { status: 400, context: { projectSlug } });
   }
 });
 
@@ -129,8 +134,8 @@ codegraphRoutes.post("/describe", async (c) => {
   try {
     const described = await describeNodes(projectSlug);
     return c.json({ success: true, data: { described } } satisfies ApiResponse);
-  } catch {
-    return c.json({ success: false, error: "Operation failed" } satisfies ApiResponse, 400);
+  } catch (err) {
+    return fail("describe nodes", err, c, { status: 400, context: { projectSlug } });
   }
 });
 
@@ -595,7 +600,7 @@ codegraphRoutes.post("/generate-skills", async (c) => {
     const result = generateSkills(parsed.data.projectSlug);
     return c.json({ success: true, data: result } satisfies ApiResponse);
   } catch (err) {
-    return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
+    return fail("generate skills", err, c, { exposeError: true });
   }
 });
 
@@ -669,6 +674,6 @@ codegraphRoutes.get("/diagram", (c) => {
         );
     }
   } catch (err) {
-    return c.json({ success: false, error: String(err) } satisfies ApiResponse, 500);
+    return fail("generate diagram", err, c, { exposeError: true, context: { type } });
   }
 });

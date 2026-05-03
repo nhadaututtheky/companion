@@ -21,8 +21,10 @@ import { createLogger } from "../logger.js";
 import type { ApiResponse, CLIPlatform } from "@companion/shared";
 import { hasFeature } from "../services/license.js";
 import type { WsBridge } from "../services/ws-bridge.js";
+import { createFail } from "./_middleware/error-wrapper.js";
 
 const log = createLogger("routes:channels");
+const fail = createFail(log);
 
 const createChannelSchema = z.object({
   projectSlug: z.string().optional(),
@@ -88,11 +90,7 @@ export function channelRoutes(bridge: WsBridge): Hono {
       log.info("Channel created via API", { id: channel.id, type: body.type });
       return c.json({ success: true, data: channel } satisfies ApiResponse, 201);
     } catch (err) {
-      log.error("Failed to create channel", { error: String(err) });
-      return c.json(
-        { success: false, error: "Failed to create channel" } satisfies ApiResponse,
-        500,
-      );
+      return fail("create channel", err, c);
     }
   });
 
@@ -130,8 +128,7 @@ export function channelRoutes(bridge: WsBridge): Hono {
 
       return c.json({ success: true, data: message } satisfies ApiResponse, 201);
     } catch (err) {
-      log.error("Failed to post message", { channelId: id, error: String(err) });
-      return c.json({ success: false, error: "Failed to post message" } satisfies ApiResponse, 500);
+      return fail("post message", err, c, { context: { channelId: id } });
     }
   });
 
@@ -149,11 +146,7 @@ export function channelRoutes(bridge: WsBridge): Hono {
       updateChannelStatus(id, status);
       return c.json({ success: true } satisfies ApiResponse);
     } catch (err) {
-      log.error("Failed to update channel status", { id, error: String(err) });
-      return c.json(
-        { success: false, error: "Failed to update channel status" } satisfies ApiResponse,
-        500,
-      );
+      return fail("update channel status", err, c, { context: { id } });
     }
   });
 
@@ -166,8 +159,10 @@ export function channelRoutes(bridge: WsBridge): Hono {
       linkSession(id, sessionId);
       return c.json({ success: true } satisfies ApiResponse);
     } catch (err) {
-      log.error("Failed to link session", { channelId: id, sessionId, error: String(err) });
-      return c.json({ success: false, error: "Failed to link session" } satisfies ApiResponse, 400);
+      return fail("link session", err, c, {
+        status: 400,
+        context: { channelId: id, sessionId },
+      });
     }
   });
 
@@ -179,11 +174,7 @@ export function channelRoutes(bridge: WsBridge): Hono {
       unlinkSession(sessionId);
       return c.json({ success: true } satisfies ApiResponse);
     } catch (err) {
-      log.error("Failed to unlink session", { sessionId, error: String(err) });
-      return c.json(
-        { success: false, error: "Failed to unlink session" } satisfies ApiResponse,
-        500,
-      );
+      return fail("unlink session", err, c, { context: { sessionId } });
     }
   });
 
@@ -241,8 +232,8 @@ export function channelRoutes(bridge: WsBridge): Hono {
         } satisfies ApiResponse,
         201,
       );
-    } catch {
-      return c.json({ success: false, error: "Failed to start debate" } satisfies ApiResponse, 500);
+    } catch (err) {
+      return fail("start debate", err, c);
     }
   });
 
@@ -339,13 +330,10 @@ export function channelRoutes(bridge: WsBridge): Hono {
         201,
       );
     } catch (err) {
-      return c.json(
-        {
-          success: false,
-          error: err instanceof Error ? err.message : "Failed to start CLI debate",
-        } satisfies ApiResponse,
-        500,
-      );
+      // exposeError: startCLIDebate throws actionable messages ("agent
+      // platform 'X' not detected", "model unsupported", etc) — the user
+      // needs to see them to fix their request.
+      return fail("start CLI debate", err, c, { exposeError: true });
     }
   });
 
