@@ -29,6 +29,7 @@ if (process.platform !== "win32")
 // Import AFTER mock
 import {
   getActiveSkillStates,
+  getActiveSkillStatesWithStatus,
   getEnabledSkills,
   renderActivationHints,
   setSkillToggle,
@@ -135,6 +136,40 @@ describe("getActiveSkillStates", () => {
     const impact = states.find((s) => s.skill.id === "companion-impact");
     expect(impact?.enabled).toBe(true);
     expect(impact?.explicit).toBe(false);
+  });
+});
+
+describe("getActiveSkillStatesWithStatus", () => {
+  it("returns togglesError=null on the happy path", () => {
+    insertProject!("p1");
+    setSkillToggle("p1", "companion-impact", false);
+    const { states, togglesError } = getActiveSkillStatesWithStatus(tmp, "p1");
+    expect(togglesError).toBeNull();
+    expect(states.find((s) => s.skill.id === "companion-impact")?.enabled).toBe(false);
+  });
+
+  it("surfaces togglesError when the DB read throws and falls back to defaults", () => {
+    // Force the next getDb() call to throw; states should still be returned
+    // with default enabled flags so the UI keeps rendering, but togglesError
+    // is non-null so it can show a warning banner.
+    const realDb = currentDb;
+    currentDb = null;
+    try {
+      const { states, togglesError } = getActiveSkillStatesWithStatus(tmp, "p1");
+      expect(togglesError).not.toBeNull();
+      expect(togglesError).toContain("Test DB not initialised");
+      // Defaults still apply — companion-impact is in HARNESS_DEFAULT_ENABLED_SKILL_IDS
+      const impact = states.find((s) => s.skill.id === "companion-impact");
+      expect(impact?.enabled).toBe(true);
+      expect(impact?.explicit).toBe(false);
+    } finally {
+      currentDb = realDb;
+    }
+  });
+
+  it("returns togglesError=null when projectSlug is omitted (no DB read attempted)", () => {
+    const { togglesError } = getActiveSkillStatesWithStatus(tmp, undefined);
+    expect(togglesError).toBeNull();
   });
 });
 

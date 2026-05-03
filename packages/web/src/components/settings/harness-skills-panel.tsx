@@ -28,6 +28,13 @@ export function HarnessSkillsPanel() {
   const [skills, setSkills] = useState<HarnessSkillRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * Non-null when the server failed to read the per-project toggle row
+   * from the DB — the displayed `enabled` flags are defaults, not the
+   * user's saved choices. Surfaced as a warning banner so misconfigured
+   * deployments don't masquerade as "all skills disabled by user".
+   */
+  const [togglesError, setTogglesError] = useState<string | null>(null);
   const [pending, setPending] = useState<Set<string>>(new Set());
 
   const selectedProject = useMemo(
@@ -62,16 +69,19 @@ export function HarnessSkillsPanel() {
   const reloadSkills = useCallback(async (project: ProjectRow) => {
     setLoading(true);
     setError(null);
+    setTogglesError(null);
     setPending(new Set());
     try {
       const params = new URLSearchParams({
         projectDir: project.dir,
         projectSlug: project.slug,
       });
-      const res = await api.get<{ data: HarnessSkillRow[] }>(
-        `/api/skills/harness?${params.toString()}`,
-      );
-      setSkills(Array.isArray(res.data) ? res.data : []);
+      const res = await api.get<{
+        data: { skills: HarnessSkillRow[]; togglesError: string | null };
+      }>(`/api/skills/harness?${params.toString()}`);
+      const payload = res.data;
+      setSkills(Array.isArray(payload?.skills) ? payload.skills : []);
+      setTogglesError(payload?.togglesError ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load harness skills");
       setSkills([]);
@@ -162,6 +172,14 @@ export function HarnessSkillsPanel() {
       {error && (
         <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
           {error}
+        </div>
+      )}
+
+      {togglesError && (
+        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+          <strong>Heads up:</strong> couldn&apos;t read your saved toggle state
+          ({togglesError}). The flags below are the defaults, not your
+          choices — toggling now will overwrite once the database recovers.
         </div>
       )}
 

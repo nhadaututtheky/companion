@@ -50,28 +50,57 @@ function sanitizeTrigger(raw: string): string | null {
 /**
  * Resolve which skills are active for a project. Each result entry is
  * tagged with `enabled` (effective) and `explicit` (user toggled).
+ *
+ * Backwards-compatible thin wrapper over `getActiveSkillStatesWithStatus`
+ * that drops the toggle-error flag. Prefer the *WithStatus variant in new
+ * code so DB read failures can be surfaced to the UI instead of silently
+ * defaulting to "all skills off".
  */
 export function getActiveSkillStates(
   projectDir: string,
   projectSlug: string | undefined,
 ): ActiveSkillState[] {
+  return getActiveSkillStatesWithStatus(projectDir, projectSlug).states;
+}
+
+/**
+ * Same as `getActiveSkillStates` but also returns a `togglesError` field
+ * when the per-project toggle row read failed (DB unavailable, schema
+ * mismatch, etc). Callers that surface state to humans should use this
+ * and render a banner — silent fallback to defaults masks misconfigured
+ * deployments.
+ */
+export interface ActiveSkillStatesResult {
+  states: ActiveSkillState[];
+  /** Non-null when the toggle row read failed for `projectSlug`. */
+  togglesError: string | null;
+}
+
+export function getActiveSkillStatesWithStatus(
+  projectDir: string,
+  projectSlug: string | undefined,
+): ActiveSkillStatesResult {
   if (!seededProjects.has(projectDir)) {
     seedDefaultHarnessSkills(projectDir);
     seededProjects.add(projectDir);
   }
 
   const skills = loadHarnessSkills(projectDir);
-  if (skills.length === 0) return [];
+  if (skills.length === 0) return { states: [], togglesError: null };
 
-  const toggles = projectSlug ? readTogglesFor(projectSlug) : new Map<string, boolean>();
+  const toggleResult = projectSlug
+    ? readTogglesForWithStatus(projectSlug)
+    : { toggles: new Map<string, boolean>(), error: null };
 
-  return skills.map((skill) => {
-    const explicit = toggles.has(skill.id);
+  const states = skills.map((skill) => {
+    const explicit = toggleResult.toggles.has(skill.id);
     const enabled = explicit
-      ? toggles.get(skill.id) === true
+      ? toggleResult.toggles.get(skill.id) === true
       : HARNESS_DEFAULT_ENABLED_SKILL_IDS.includes(skill.id);
     return { skill, enabled, explicit };
   });
+
+  return { states, togglesError: toggleResult.error };
 }
 
 /** Filtered view: only the skills currently enabled. */
@@ -167,6 +196,18 @@ export function getTriggerSuffixForTool(toolName: string, skills: HarnessSkill[]
 
 /** Read all toggle rows for a project into a map<skillId, enabled>. */
 function readTogglesFor(projectSlug: string): Map<string, boolean> {
+  return readTogglesForWithStatus(projectSlug).toggles;
+}
+
+/**
+ * Same as `readTogglesFor` but also reports the read error (if any) so
+ * the caller can decide whether to surface it. The Map is always returned
+ * non-null — callers that ignore the error get the historical "fall back
+ * to defaults" behaviour.
+ */
+function readTogglesForWithStatus(
+  projectSlug: string,
+): { toggles: Map<string, boolean>; error: string | null } {
   const out = new Map<string, boolean>();
   try {
     const db = getDb();
@@ -178,10 +219,11 @@ function readTogglesFor(projectSlug: string): Map<string, boolean> {
     for (const row of rows) {
       out.set(row.skillId, row.enabled);
     }
+    return { toggles: out, error: null };
   } catch (err) {
-    log.debug("Failed to read toggles", { projectSlug, error: String(err) });
+    log.warn("Failed to read harness toggles", { projectSlug, error: String(err) });
+    return { toggles: out, error: String(err) };
   }
-  return out;
 }
 
 /**

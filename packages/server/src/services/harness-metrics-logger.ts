@@ -120,7 +120,18 @@ class MetricsBuffer {
       renameSync(activePath, rotatedJsonl);
       log.info("Rotated harness metrics", { activePath, rotatedJsonl, size });
     } catch (err) {
-      log.warn("Failed to rotate harness metrics", { error: String(err) });
+      const code = (err as NodeJS.ErrnoException).code;
+      // Windows holds an exclusive lock when streamLines is reading the
+      // active file (e.g. an Analytics tab refresh hits at the same instant
+      // we try to rotate). EBUSY/EPERM/EACCES are recoverable — defer
+      // rotation: clear the throttle so the next flush retries immediately,
+      // and let the file grow past ROTATE_SIZE_BYTES temporarily.
+      if (code === "EBUSY" || code === "EPERM" || code === "EACCES") {
+        log.debug("Harness rotate deferred — file locked", { code, size });
+        this.rotateChecked = 0;
+        return;
+      }
+      log.warn("Failed to rotate harness metrics", { error: String(err), code });
       return;
     }
 

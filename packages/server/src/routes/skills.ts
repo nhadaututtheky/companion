@@ -11,7 +11,7 @@ import { readdirSync, readFileSync, statSync, existsSync } from "fs";
 import { homedir } from "os";
 import { join, resolve, sep } from "path";
 import type { ApiResponse } from "@companion/shared";
-import { getActiveSkillStates, setSkillToggle, clearSkillToggle } from "../services/skill-router.js";
+import { getActiveSkillStatesWithStatus, setSkillToggle, clearSkillToggle } from "../services/skill-router.js";
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -333,20 +333,29 @@ skillsRoutes.get("/harness", (c) => {
   }
 
   try {
-    const states = getActiveSkillStates(resolve(projectDir), projectSlug);
+    const { states, togglesError } = getActiveSkillStatesWithStatus(
+      resolve(projectDir),
+      projectSlug,
+    );
     return c.json({
       success: true,
-      data: states.map((s) => ({
-        id: s.skill.id,
-        name: s.skill.name,
-        description: s.skill.description,
-        triggers: s.skill.triggers,
-        tools: s.skill.tools,
-        priority: s.skill.priority ?? 5,
-        filePath: s.skill.filePath,
-        enabled: s.enabled,
-        explicit: s.explicit,
-      })),
+      data: {
+        skills: states.map((s) => ({
+          id: s.skill.id,
+          name: s.skill.name,
+          description: s.skill.description,
+          triggers: s.skill.triggers,
+          tools: s.skill.tools,
+          priority: s.skill.priority ?? 5,
+          filePath: s.skill.filePath,
+          enabled: s.enabled,
+          explicit: s.explicit,
+        })),
+        // Non-null when per-project toggle row read failed. UI shows a
+        // banner so the user knows the displayed enabled flags are
+        // defaults, not their actual saved choices.
+        togglesError,
+      },
     } satisfies ApiResponse);
   } catch (err) {
     return c.json(
