@@ -18,8 +18,8 @@ Followup to composer-unify (commits `92aab65` + `4d5e865`). Same playbook applie
 | 1 | Web formatters lib | ✅ Done | plan-simplicity-cleanup-phase1.md | trivial | ~80 |
 | 2 | Date formatters merge | ✅ Done | plan-simplicity-cleanup-phase2.md | trivial | ~40 |
 | 3 | `useFetch` hook | ✅ Done | plan-simplicity-cleanup-phase3.md | small | ~120 |
-| 4 | Route error wrapper | ⬚ Pending | plan-simplicity-cleanup-phase4.md | small | ~100 |
-| 5 | Color palette | ⬚ Deferred | plan-simplicity-cleanup-phase5.md | small | ~70 |
+| 4 | Route error wrapper | ✅ Done (2026-05-03, commit `bef21a5`) | plan-simplicity-cleanup-phase4.md | small | ~17 net (4 of 29 files) |
+| 5 | Color palette | ⬚ Deferred — design system pass | plan-simplicity-cleanup-phase5.md | small | ~70 |
 
 **Total potential**: ~410 LOC removed without losing functionality.
 
